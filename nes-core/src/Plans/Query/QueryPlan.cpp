@@ -113,7 +113,7 @@ std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<OperatorNodePtr> leafOperators;
     // Maintain a list of visited nodes as there are multiple root nodes
-    std::set<u_int64_t> visitedOpIds;
+    std::set<uint64_t> visitedOpIds;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators) {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);

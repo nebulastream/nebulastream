@@ -128,7 +128,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                       return leftValue.compare(rightValue) < 0;
                   });
 
-        for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
+        for (unsigned long i = 0; i < sortedCommutativeFields.size(); i++) {
             auto originalField = allCommutativeFields[i];
             auto updatedField = sortedCommutativeFields[i];
 
@@ -216,7 +216,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                       return leftValue.compare(rightValue) < 0;
                   });
 
-        for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
+        for (unsigned long i = 0; i < sortedCommutativeFields.size(); i++) {
             auto originalField = allCommutativeFields[i];
             auto updatedField = sortedCommutativeFields[i];
 
@@ -310,7 +310,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
                       return leftValue.compare(rightValue) < 0;
                   });
 
-        for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
+        for (unsigned long i = 0; i < sortedCommutativeFields.size(); i++) {
             auto originalField = allCommutativeFields[i];
             auto updatedField = sortedCommutativeFields[i];
 
@@ -389,7 +389,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
                       return leftValue.compare(rightValue) < 0;
                   });
 
-        for (uint i = 0; i < sortedCommutativeFields.size(); i++) {
+        for (unsigned long i = 0; i < sortedCommutativeFields.size(); i++) {
             auto originalField = allCommutativeFields[i];
             auto updatedField = sortedCommutativeFields[i];
 

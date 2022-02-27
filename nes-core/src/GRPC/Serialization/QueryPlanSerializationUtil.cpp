@@ -48,7 +48,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
 
     //Serialize the root operator ids
     for (const auto& rootOperator : rootOperators) {
-        u_int64_t rootOperatorId = rootOperator->getId();
+        uint64_t rootOperatorId = rootOperator->getId();
         serializableQueryPlan->add_rootoperatorids(rootOperatorId);
     }
 
