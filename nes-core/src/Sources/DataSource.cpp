@@ -217,11 +217,11 @@ void DataSource::runningRoutine() {
     //TDOD startup delay
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
     if (gatheringMode == GatheringMode::INTERVAL_MODE) {
-        runningRoutineWithInterval();
+        runningRoutineWithGatheringInterval();
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         runningRoutineWithIngestionRate();
     } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
-        runningRoutineAdaptive();
+        runningRoutineAdaptiveGatheringInterval();
     }
 }
 
@@ -310,7 +310,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-void DataSource::runningRoutineWithInterval() {
+void DataSource::runningRoutineWithGatheringInterval() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
@@ -335,7 +335,7 @@ void DataSource::runningRoutineWithInterval() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-                NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
+                NES_TRACE("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
                                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
                                                        << " orgID=" << this->operatorId);
@@ -358,6 +358,7 @@ void DataSource::runningRoutineWithInterval() {
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
 
+        // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
             std::this_thread::sleep_for(gatheringInterval);
         }
@@ -371,7 +372,7 @@ void DataSource::runningRoutineWithInterval() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-void DataSource::runningRoutineAdaptive() {
+void DataSource::runningRoutineAdaptiveGatheringInterval() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
@@ -402,10 +403,10 @@ void DataSource::runningRoutineAdaptive() {
                 auto& buf = optBuf.value();
 
                 if (this->gatheringInterval.count() != 0) {
-                    NES_DEBUG("DataSource old gatheringInterval = " << this->gatheringInterval.count() << "ms");
+                    NES_DEBUG("DataSource old sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
                     this->kFilter.updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter.getNewGatheringInterval();
-                    NES_DEBUG("DataSource new gatheringInterval = " << this->gatheringInterval.count() << "ms");
+                    NES_DEBUG("DataSource new sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
                 }
 
                 NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()

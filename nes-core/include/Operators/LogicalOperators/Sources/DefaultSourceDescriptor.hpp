@@ -38,12 +38,12 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     /**
      * @brief Get the frequency to produce the buffers
      */
-    std::chrono::milliseconds getFrequency() const;
+    std::chrono::milliseconds getSourceGatheringInterval() const;
 
     /**
      * @brief Get the frequency as number of times units
      */
-    uint64_t getFrequencyCount() const;
+    uint64_t getSourceGatheringIntervalCount() const;
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
@@ -55,9 +55,9 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     explicit DefaultSourceDescriptor(SchemaPtr schema,
                                      std::string streamName,
                                      uint64_t numbersOfBufferToProduce,
-                                     uint64_t gatheringInterval);
+                                     uint64_t sourceGatheringInterval);
     const uint64_t numbersOfBufferToProduce;
-    const std::chrono::milliseconds gatheringInterval;
+    const std::chrono::milliseconds sourceGatheringInterval;
 };
 
 using DefaultSourceDescriptorPtr = std::shared_ptr<DefaultSourceDescriptor>;

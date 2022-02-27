@@ -156,7 +156,7 @@ message SerializableOperator{
 
     message SerializableDefaultSourceDescriptor {
       uint64 numBuffersToProcess = 1;
-      uint64 gatheringInterval = 2;
+      uint64 sourceGatheringInterval = 2;
       SerializableSchema sourceSchema = 3;
     }
 

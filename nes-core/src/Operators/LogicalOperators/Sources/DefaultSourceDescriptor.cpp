@@ -19,19 +19,20 @@
 namespace NES {
 
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency)
-    : SourceDescriptor(std::move(schema)), numbersOfBufferToProduce(numbersOfBufferToProduce), gatheringInterval(frequency) {}
+    : SourceDescriptor(std::move(schema)), numbersOfBufferToProduce(numbersOfBufferToProduce),
+      sourceGatheringInterval(frequency) {}
 
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema,
                                                  std::string streamName,
                                                  uint64_t numbersOfBufferToProduce,
-                                                 uint64_t gatheringInterval)
+                                                 uint64_t sourceGatheringInterval)
     : SourceDescriptor(std::move(schema), std::move(streamName)), numbersOfBufferToProduce(numbersOfBufferToProduce),
-      gatheringInterval(gatheringInterval) {}
+      sourceGatheringInterval(sourceGatheringInterval) {}
 
 uint64_t DefaultSourceDescriptor::getNumbersOfBufferToProduce() const { return numbersOfBufferToProduce; }
 
-std::chrono::milliseconds DefaultSourceDescriptor::getFrequency() const { return gatheringInterval; }
-uint64_t DefaultSourceDescriptor::getFrequencyCount() const { return gatheringInterval.count(); }
+std::chrono::milliseconds DefaultSourceDescriptor::getSourceGatheringInterval() const { return sourceGatheringInterval; }
+uint64_t DefaultSourceDescriptor::getSourceGatheringIntervalCount() const { return sourceGatheringInterval.count(); }
 
 SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
@@ -48,19 +49,19 @@ bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         return false;
     }
     auto otherSource = other->as<DefaultSourceDescriptor>();
-    return numbersOfBufferToProduce == otherSource->getNumbersOfBufferToProduce() && gatheringInterval == otherSource->getFrequency()
+    return numbersOfBufferToProduce == otherSource->getNumbersOfBufferToProduce() && sourceGatheringInterval == otherSource->getSourceGatheringInterval()
         && getSchema()->equals(otherSource->getSchema());
 }
 
 std::string DefaultSourceDescriptor::toString() {
-    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(gatheringInterval.count())
+    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(sourceGatheringInterval.count())
         + "ms)";
 }
 SourceDescriptorPtr DefaultSourceDescriptor::copy() {
     auto copy = DefaultSourceDescriptor::create(schema->copy(),
                                                 std::move(logicalSourceName),
                                                 numbersOfBufferToProduce,
-                                                gatheringInterval.count());
+                                                sourceGatheringInterval.count());
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }

@@ -87,7 +87,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                               bufferManager,
                                                               queryManager,
                                                               defaultSourceDescriptor->getNumbersOfBufferToProduce(),
-                                                              defaultSourceDescriptor->getFrequencyCount(),
+                                                              defaultSourceDescriptor->getSourceGatheringIntervalCount(),
                                                               operatorId,
                                                               numSourceLocalBuffers,
                                                               successors);

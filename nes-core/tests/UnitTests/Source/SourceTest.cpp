@@ -170,9 +170,9 @@ class MockDataSource : public DataSource {
         : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
             // nop
         };
-    MOCK_METHOD(void, runningRoutineWithInterval, ());
+    MOCK_METHOD(void, runningRoutineWithGatheringInterval, ());
     MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
-    MOCK_METHOD(void, runningRoutineAdaptive, ());
+    MOCK_METHOD(void, runningRoutineAdaptiveGatheringInterval, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
     MOCK_METHOD(SourceType, getType, (), (const));
