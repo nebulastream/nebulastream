@@ -273,7 +273,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                 schema,
                 logicalSourceName,
                 defaultSourceType->getNumberOfBuffersToProduce()->getValue(),
-                std::chrono::milliseconds(defaultSourceType->getGatheringInterval()->getValue()).count());
+                std::chrono::milliseconds(defaultSourceType->getSourceGatheringInterval()->getValue()).count());
         }
 #ifdef ENABLE_MQTT_BUILD
         case MQTT_SOURCE: {
