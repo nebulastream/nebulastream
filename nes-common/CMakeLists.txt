@@ -24,10 +24,12 @@ add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
 target_link_libraries(nes-common PUBLIC ${LIBRARIES})
 target_include_directories(nes-common PUBLIC "include")
 
-add_custom_command(TARGET nes-common POST_BUILD
-        COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${CMAKE_BINARY_DIR}/include/nebulastream)
+#TODO select the headers to copy more fine-grained
+register_public_header(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/)
+
+# Add headers from dependencies
+#TODO select dependency headers more fine-grained
+register_public_header(nes-common ${PATH_TO_DEB_SOURCE_CODE}/include/)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

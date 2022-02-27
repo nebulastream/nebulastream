@@ -64,10 +64,8 @@ endforeach()
 
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_custom_command(TARGET nes POST_BUILD
-        COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${CMAKE_BINARY_DIR}/include/nebulastream)
+#TODO select the headers to copy more fine-grained
+register_public_header(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 if (GRPC_LIBRARIES)
     target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
