@@ -27,7 +27,7 @@ class MonitoringSource : public DefaultSource {
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
                      uint64_t numbersOfBufferToProduce,
-                     uint64_t gatheringInterval,
+                     uint64_t sourceGatheringInterval,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});

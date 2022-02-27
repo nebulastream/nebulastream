@@ -978,7 +978,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
                   "SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
         auto defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
-        defaultSerializedSourceDescriptor.set_gatheringinterval(defaultSourceDescriptor->getFrequencyCount());
+        defaultSerializedSourceDescriptor.set_gatheringinterval(defaultSourceDescriptor->getSourceGatheringIntervalCount());
         defaultSerializedSourceDescriptor.set_numbufferstoprocess(defaultSourceDescriptor->getNumbersOfBufferToProduce());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(),

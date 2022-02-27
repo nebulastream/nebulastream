@@ -57,7 +57,7 @@ bool DefaultSourceType::equal(const PhysicalSourceTypePtr& other) { return !othe
 
 const Configurations::IntConfigOption& DefaultSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
-const Configurations::IntConfigOption& DefaultSourceType::getGatheringInterval() const { return sourceGatheringInterval; }
+const Configurations::IntConfigOption& DefaultSourceType::getSourceGatheringInterval() const { return sourceGatheringInterval; }
 
 void DefaultSourceType::reset() {
     //nothing
@@ -67,6 +67,6 @@ void DefaultSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToPr
     this->numberOfBuffersToProduce->setValue(numberOfBuffersToProduce);
 }
 
-void DefaultSourceType::setGatheringInterval(uint32_t sourceGatheringInterval) { this->sourceGatheringInterval->setValue(sourceGatheringInterval); }
+void DefaultSourceType::setSourceGatheringInterval(uint32_t sourceGatheringInterval) { this->sourceGatheringInterval->setValue(sourceGatheringInterval); }
 
 }// namespace NES

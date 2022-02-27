@@ -261,7 +261,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     /**
     * @brief running routine with a fixed gathering interval
     */
-    virtual void runningRoutineWithInterval();
+    virtual void runningRoutineWithGatheringInterval();
 
     /**
     * @brief running routine with a fix ingestion rate
@@ -271,7 +271,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     /**
     * @brief running routine with an adaptive rate (defaults to KF)
     */
-    virtual void runningRoutineAdaptive();
+    virtual void runningRoutineAdaptiveGatheringInterval();
 
     /**
      * @brief the KF associated with a source.

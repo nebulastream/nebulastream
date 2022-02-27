@@ -55,11 +55,11 @@ class DefaultSourceType : public PhysicalSourceType {
 
     const Configurations::IntConfigOption& getNumberOfBuffersToProduce() const;
 
-    const Configurations::IntConfigOption& getGatheringInterval() const;
+    const Configurations::IntConfigOption& getSourceGatheringInterval() const;
 
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
-    void setGatheringInterval(uint32_t sourceGatheringInterval);
+    void setSourceGatheringInterval(uint32_t sourceGatheringInterval);
 
     std::string toString() override;
 
