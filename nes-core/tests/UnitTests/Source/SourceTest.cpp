@@ -659,8 +659,8 @@ TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::INTERVAL_MODE,
                                {});
-    ON_CALL(mDataSource, runningRoutineWithInterval()).WillByDefault(Return());
-    EXPECT_CALL(mDataSource, runningRoutineWithInterval()).Times(Exactly(1));
+    ON_CALL(mDataSource, runningRoutineWithGatheringInterval()).WillByDefault(Return());
+    EXPECT_CALL(mDataSource, runningRoutineWithGatheringInterval()).Times(Exactly(1));
     mDataSource.runningRoutine();
 }
 
@@ -685,8 +685,8 @@ TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::ADAPTIVE_MODE,
                                {});
-    ON_CALL(mDataSource, runningRoutineAdaptive()).WillByDefault(Return());
-    EXPECT_CALL(mDataSource, runningRoutineAdaptive()).Times(Exactly(1));
+    ON_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).WillByDefault(Return());
+    EXPECT_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).Times(Exactly(1));
     mDataSource.runningRoutine();
 }
 
