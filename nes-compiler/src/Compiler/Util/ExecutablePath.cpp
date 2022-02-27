@@ -40,8 +40,7 @@ bool isInLocalInstallDir() {
         && std::filesystem::exists(executablePath.append("include"));
 }
 
-std::ostream& ExecutablePath::operator<<(std::ostream& os,
-                                                        const ExecutablePath::RuntimePathConfig& config) {
+std::ostream& ExecutablePath::operator<<(std::ostream& os, const ExecutablePath::RuntimePathConfig& config) {
     os << "\nclangBinaryPath: " << config.clangBinaryPath << "\n";
     os << "includePaths: \n";
     for (auto includeDir : config.includePaths) {
@@ -56,8 +55,10 @@ std::ostream& ExecutablePath::operator<<(std::ostream& os,
 
 RuntimePathConfig loadRuntimePathConfig() {
     auto runtimePathConfig = RuntimePathConfig();
-    //runtimePathConfig.libs.push_back("-lnes");
-    //runtimePathConfig.libs.push_back("-lnes-common");
+#ifdef defined(__APPLE__)
+    runtimePathConfig.libs.push_back("-lnes");
+    runtimePathConfig.libs.push_back("-lnes-common");
+#endif
 
     if (isInUNIXInstallDir()) {
         NES_DEBUG("Detected a unix install dir as a execution location");

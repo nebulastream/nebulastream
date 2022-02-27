@@ -73,13 +73,14 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
     }
     compilationFlags.addFlag("-shared");
-    // add libs
-    for(auto libs : runtimePathConfig.libs){
-        compilationFlags.addFlag(libs);
-    }
+
     // add header
     for(auto libPaths : runtimePathConfig.libPaths){
         compilationFlags.addFlag(std::string("-L") + libPaths);
+    }
+    // add libs
+    for(auto libs : runtimePathConfig.libs){
+        compilationFlags.addFlag(libs);
     }
     // add header
     for(auto includePath : runtimePathConfig.includePaths){
