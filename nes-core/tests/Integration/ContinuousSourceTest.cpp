@@ -225,7 +225,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setGatheringInterval(3);
+    defaultSourceType1->setSourceGatheringInterval(3);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -276,7 +276,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setGatheringInterval(1);
+    defaultSourceType1->setSourceGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -386,7 +386,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setGatheringInterval(1);
+    defaultSourceType1->setSourceGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
