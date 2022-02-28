@@ -19,8 +19,11 @@ message(STATUS "Client Source Files: ${NES_CLIENT_SOURCE_FILES}")
 
 # Add Library
 add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
-target_include_directories(nes-client PUBLIC "include")
-target_link_libraries(nes-client PRIVATE nes)
+target_link_libraries(nes-client PRIVATE ${LIBRARIES})
+target_include_directories(nes-client PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+target_link_libraries(nes-client PRIVATE nes nes-grpc)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -31,7 +34,9 @@ else ()
 endif ()
 
 #Add the nes client and headers to cpack
-install(TARGETS nes-client LIBRARY
+install(TARGETS nes-client
+        EXPORT NebulaStreamTargets
+        LIBRARY
         COMPONENT nesLibrary)
 
 include(GNUInstallDirs)
