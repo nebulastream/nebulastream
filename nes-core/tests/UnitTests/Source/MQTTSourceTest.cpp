@@ -241,6 +241,89 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
+
+TEST_F(MQTTSourceTest, testDeployOneWorkerWithMQTTSourceConfigTFLite) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
+
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    //register logical stream qnv
+    std::string stream = R"(Schema::create()->addField(createField("id", UINT64))
+                                   ->addField(createField("SepalLengthCm", FLOAT32))
+                                   ->addField(createField("SepalWidthCm", FLOAT32))
+                                   ->addField(createField("PetalLengthCm", FLOAT32))
+                                   ->addField(createField("PetalWidthCm", FLOAT32))
+                                   ->addField(createField("SpeciesCode", UINT64))
+                                   ->addField(createField("CreationTime", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalSource("iris", stream);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->coordinatorPort = port;
+    mqttSourceType->setUrl("127.0.0.1:1883");
+    mqttSourceType->setClientId("cpp-mqtt-iris");
+    mqttSourceType->setUserName("emqx");
+    mqttSourceType->setTopic("iris");
+    mqttSourceType->setQos(2);
+    mqttSourceType->setCleanSession(true);
+    mqttSourceType->setFlushIntervalMS(2000);
+    mqttSourceType->setInputFormat("CSV");
+    auto physicalSource = PhysicalSource::create("iris","iris_phys", mqttSourceType);
+    wrkConf->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
+    NES_INFO("QueryDeploymentTest: Submit query");
+        string query = R"(Query::from("iris")
+        .inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc_copy_3.tflite",
+                            {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
+                            {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+        .filter((Attribute("iris0") > Attribute("iris1") && Attribute("iris0") > Attribute("iris2") && Attribute("SpeciesCode") > 0) ||
+                (Attribute("iris1") > Attribute("iris0") && Attribute("iris1") > Attribute("iris2") && (Attribute("SpeciesCode") < 1 || Attribute("SpeciesCode") > 1)) ||
+                (Attribute("iris2") > Attribute("iris0") && Attribute("iris2") > Attribute("iris1") && Attribute("SpeciesCode") < 2), 0.1)
+        .sink(FileSinkDescriptor::create(")"
+            + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    sleep(10);
+
+    std::cout << "\n\n --------- CONTENT --------- \n\n";
+    std::ifstream ifs(outputFilePath);
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    std::cout << content;
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+}
+
 //TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDataset) {
 //    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
 //    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();

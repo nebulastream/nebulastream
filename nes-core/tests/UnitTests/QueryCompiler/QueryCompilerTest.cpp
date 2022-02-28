@@ -171,7 +171,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,
@@ -184,15 +184,18 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    // mock GRPC deployment process
-    std::filesystem::copy("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite", "/tmp/iris_95acc.tflite");
-
-    auto query = Query::from("streamName")
+    auto query = Query::from(logicalSourceName)
                      .inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite",
                                  {Attribute("F1"), Attribute("F1"), Attribute("F1"), Attribute("F1")},
                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -233,7 +236,7 @@ TEST_F(QueryCompilerTest, mapQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from("streamName")
+    auto query = Query::from(logicalSourceName)
                      .map(Attribute("F2") = Attribute("F1") + 2.0)
                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
