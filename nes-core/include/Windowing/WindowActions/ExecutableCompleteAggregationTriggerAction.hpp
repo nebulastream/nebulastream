@@ -77,7 +77,7 @@ class ExecutableCompleteAggregationTriggerAction
                   uint64_t currentWatermark,
                   uint64_t lastWatermark,
                   Runtime::WorkerContextRef workerContext) override {
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
+        NES_TRACE("ExecutableCompleteAggregationTriggerAction (id="
                   << id << " " << this->windowDefinition->getDistributionType()->toString()
                   << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
 
@@ -102,7 +102,7 @@ class ExecutableCompleteAggregationTriggerAction
                              currentWatermark,
                              lastWatermark,
                              workerContext);//put key into this
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
                                                                      << "nextEdge=" << it.second->nextEdge << " id=" << id);
         }
@@ -111,7 +111,7 @@ class ExecutableCompleteAggregationTriggerAction
             tupleBuffer.setWatermark(currentWatermark);
             tupleBuffer.setOriginId(windowDefinition->getOriginId());
             //write remaining buffer
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                       << this->windowDefinition->getDistributionType()->toString()
                       << "): Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
@@ -141,7 +141,7 @@ class ExecutableCompleteAggregationTriggerAction
                           uint64_t lastWatermark,
                           Runtime::WorkerContextRef workerContext) {
 
-        NES_DEBUG("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
+        NES_TRACE("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
         // create result vector of windows
@@ -164,7 +164,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction"
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction"
                       << id << ": (" << this->windowDefinition->getDistributionType()->toString() << "): trigger sliceid="
                       << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
@@ -178,7 +178,7 @@ class ExecutableCompleteAggregationTriggerAction
                       << id << " (" << this->windowDefinition->getDistributionType()->toString()
                       << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
         } else {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                       << id << ": aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
                       << " > lastWatermark=" << lastWatermark);
         }
@@ -199,7 +199,7 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
+                NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                           << id << ": (" << this->windowDefinition->getDistributionType()->toString() << "): key=" << key
                           << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()

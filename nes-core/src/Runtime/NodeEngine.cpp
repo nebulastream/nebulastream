@@ -426,18 +426,18 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     std::unique_lock lock(engineMutex);
     std::vector<QueryStatisticsPtr> queryStatistics;
 
-    NES_DEBUG("QueryManager: Check if query is registered");
+    NES_TRACE("QueryManager: Check if query is registered");
     auto foundQuerySubPlanIds = queryIdToQuerySubPlanIds.find(queryId);
-    NES_DEBUG("Found members = " << foundQuerySubPlanIds->second.size());
+    NES_TRACE("Found members = " << foundQuerySubPlanIds->second.size());
     if (foundQuerySubPlanIds == queryIdToQuerySubPlanIds.end()) {
         NES_ERROR("QueryManager::getQueryStatistics: query does not exists " << queryId);
         return queryStatistics;
     }
 
-    NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << queryId);
+    NES_TRACE("QueryManager: Extracting query execution ids for the input query " << queryId);
     std::vector<QuerySubPlanId> querySubPlanIds = (*foundQuerySubPlanIds).second;
     for (auto querySubPlanId : querySubPlanIds) {
-        NES_DEBUG("querySubPlanId=" << querySubPlanId << " stat="
+        NES_TRACE("querySubPlanId=" << querySubPlanId << " stat="
                                     << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
         queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
     }
@@ -449,10 +449,10 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
     std::vector<QueryStatistics> queryStatistics;
 
     for (auto& plan : queryIdToQuerySubPlanIds) {
-        NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << plan.first);
+        NES_TRACE("QueryManager: Extracting query execution ids for the input query " << plan.first);
         std::vector<QuerySubPlanId> querySubPlanIds = plan.second;
         for (auto querySubPlanId : querySubPlanIds) {
-            NES_DEBUG("querySubPlanId=" << querySubPlanId << " stat="
+            NES_TRACE("querySubPlanId=" << querySubPlanId << " stat="
                                         << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
 
             queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId).operator*());
