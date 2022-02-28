@@ -572,6 +572,38 @@ install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-cl
 
 install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
 
+set(INCLUDE_INSTALL_DIR include/ )
+set(LIB_INSTALL_DIR lib/ )
+set(SYSCONFIG_INSTALL_DIR etc/foo/ )
+include(CMakePackageConfigHelpers)
+
+#export(EXPORT NebulaStreamTargets
+#        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
+ #       NAMESPACE NebulaStream::
+#        )
+
+configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
+        INSTALL_DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake
+        PATH_VARS INCLUDE_INSTALL_DIR SYSCONFIG_INSTALL_DIR)
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
+        VERSION 1
+        COMPATIBILITY AnyNewerVersion )
+
+set(ConfigPackageLocation lib/NebulaStream/cmake)
+install(EXPORT NebulaStreamTargets
+        FILE
+        NebulaStreamTargets.cmake
+        NAMESPACE
+        NebulaStream::
+        DESTINATION
+        ${ConfigPackageLocation}
+        )
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
+        DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake )
+
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")

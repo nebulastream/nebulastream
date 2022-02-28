@@ -17,26 +17,28 @@ add_subdirectory(src)
 set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
 set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
 
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nes-grpc/)
 file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
 foreach (PROTO_FILE ${PROTO_FILES})
     get_filename_component(FILENAME ${PROTO_FILE} "NAME")
-    string(REGEX REPLACE "[.]proto$" ".pb.cc" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
+    string(REGEX REPLACE "[.]proto$" ".pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
     list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".pb.h" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
+    string(REGEX REPLACE "[.]proto$" ".pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
+    list(APPEND OUTPUT_HEADER ${OUTPUT_HEADER})
+    string(REGEX REPLACE "[.]proto$" ".grpc.pb.cc" OUTPUT_SOURCE ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
     list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.cc" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.h" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
+    string(REGEX REPLACE "[.]proto$" ".grpc.pb.h" OUTPUT_HEADER ${CMAKE_BINARY_DIR}/nes-grpc/${FILENAME})
+    list(APPEND OUTPUT_HEADER ${OUTPUT_HEADER})
 endforeach ()
 
 message(STATUS "Found the following Proto files: " ${OUTPUT_SOURCES})
+message(STATUS "Found the following Proto header: " ${OUTPUT_HEADER})
 
 add_custom_command(
         OUTPUT ${OUTPUT_SOURCES}
         COMMAND ${_PROTOBUF_PROTOC}
-        ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
-        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+        ARGS --grpc_out "${CMAKE_BINARY_DIR}/nes-grpc/"
+        --cpp_out "${CMAKE_BINARY_DIR}/nes-grpc/"
         -I "${PROTO_PATH}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${PROTO_FILE_PATH}"
@@ -46,15 +48,21 @@ macro(target_public_headers TARGET)
     set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${ARGN}")
 endmacro()
 
+add_library(nes-grpc STATIC ${OUTPUT_SOURCES})
+target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
+target_include_directories(nes-grpc PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>)
+
 # Add Library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 message(STATUS "Found the following NES_CORE_SOURCE_FILES files: " ${NES_CORE_SOURCE_FILES})
-add_library(nes SHARED ${NES_CORE_SOURCE_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
-target_include_directories(nes PUBLIC "include")
-target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES} )
+add_library(nes SHARED ${NES_CORE_SOURCE_FILES} ${OUTPUT_SOURCES})
+target_include_directories(nes PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+#target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(nes PRIVATE ${LIBRARIES} ${PROTOBUF_LIBRARIES} )
 target_link_libraries(nes PUBLIC nes-common nes-compiler)
-target_link_libraries(nes PUBLIC ${GRPC_LIBRARIES})
+target_link_libraries(nes PRIVATE nes-grpc)
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach(dir ${LIBA_INCLUDES})
@@ -68,24 +76,22 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 register_public_header(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 if (GRPC_LIBRARIES)
-    target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
+    target_link_libraries(nes PRIVATE nes-grpc)
 endif ()
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
 target_include_directories(nesCoordinator PUBLIC "include")
 target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-if (GRPC_LIBRARIES)
-    target_link_libraries(nesCoordinator PUBLIC ${GRPC_LIBRARIES})
-endif ()
+target_link_libraries(nesCoordinator PRIVATE nes-grpc)
+
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC nes )
 target_include_directories(nesWorker PUBLIC "include")
 target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-if (GRPC_LIBRARIES)
-    target_link_libraries(nesWorker PUBLIC ${GRPC_LIBRARIES})
-endif ()
+target_link_libraries(nesWorker  PRIVATE nes-grpc)
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
@@ -97,7 +103,9 @@ endif ()
 
 
 #Add the nes lib and headers to cpack
-install(TARGETS nes LIBRARY
+install(TARGETS nes
+        EXPORT NebulaStreamTargets
+        LIBRARY
         COMPONENT nesLibrary)
 message(STATUS "nes lib dir ${CMAKE_INSTALL_FULL_LIBDIR}")
 

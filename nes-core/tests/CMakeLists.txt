@@ -38,7 +38,7 @@ target_include_directories(nes-tests INTERFACE ${GTEST_INCLUDE_DIRS} "../include
 target_include_directories(nes-tests INTERFACE "${CMAKE_BINARY_DIR}")
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-tests INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/util/")
-target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
+target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util nes-grpc)
 
 
 #-------------------------------##############----------------------------------
@@ -519,7 +519,7 @@ add_test(NAME adaptive-sensor-tests COMMAND adaptive-sensor-tests)
 
 ### Geographical Location Tests ###
 add_executable(geographical-location-unit-tests "UnitTests/Common/GeographicalLocationTest.cpp")
-target_link_libraries(geographical-location-unit-tests nes ${GTEST_LIBRARIES})
+target_link_libraries(geographical-location-unit-tests nes-tests)
 add_test(NAME geographical-location-unit-tests COMMAND geographical-location-unit-tests)
 
 #------------------------------- # Integration Test Suite --------------------------------
