@@ -12,6 +12,16 @@
     limitations under the License.
 */
 
+/* TODO readd the first line:
+         statistics->setTimestampFirstProcessedTask(now, true);
+        statistics->setTimestampLastProcessedTask(now);
+
+        statistics->incProcessedTasks();
+        statistics->incProcessedBuffers();
+
+ *
+ */
+
 /* TODO put into:
  bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager) {
 ->
@@ -48,6 +58,10 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
 /*
  * add to Reconfig... constructors:
  -1, // any querID
+ */
+
+/* start query, make this true:
+ * statistics->setTimestampQueryStart(now, false);
  */
 
 #include <Network/NetworkSink.hpp>
