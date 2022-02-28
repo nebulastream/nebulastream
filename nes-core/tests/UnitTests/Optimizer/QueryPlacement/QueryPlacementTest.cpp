@@ -132,40 +132,28 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         globalExecutionPlan = GlobalExecutionPlan::create();
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     }
-    void setupComplexTopologyAndStreamCatalog() {
+    void setupComplexTopologyAndStreamCatalog(std::vector<uint16_t> resources) {
         topology = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 10);
-        rootNode->addNodeProperty("tf_installed", false);
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
+        rootNode->addNodeProperty("tf_installed", true);
         topology->setAsRoot(rootNode);
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1]);
         sourceNode1->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
         sourceNode2->addNodeProperty("tf_installed", true);
         topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
-        TopologyNodePtr sourceNode11 = TopologyNode::create(4, "localhost", 123, 124, 4);
-        sourceNode11->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode11);
+        TopologyNodePtr sourceNode3 = TopologyNode::create(4, "localhost", 123, 124, resources[1]);
+//        sourceNode3->addNodeProperty("tf_installed", true);
+        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode3);
 
-        TopologyNodePtr sourceNode12 = TopologyNode::create(5, "localhost", 123, 124, 4);
-        sourceNode12->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode12);
-
-        TopologyNodePtr sourceNode21 = TopologyNode::create(6, "localhost", 123, 124, 4);
-        sourceNode21->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode21);
-
-        TopologyNodePtr sourceNode22 = TopologyNode::create(7, "localhost", 123, 124, 4);
-        sourceNode22->addNodeProperty("tf_installed", false);
-        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode22);
-
-        TopologyNodePtr sourceNode121 = TopologyNode::create(8, "localhost", 123, 124, 1);
-        sourceNode121->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode12, sourceNode121);
+        TopologyNodePtr sourceNode4 = TopologyNode::create(5, "localhost", 123, 124, resources[2]);
+//        sourceNode4->addNodeProperty("tf_installed", true);
+        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode4);
 
         std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
                            ->addField(createField("SepalLengthCm", FLOAT32))
@@ -179,21 +167,21 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         streamCatalog->addLogicalStream(streamName, schema);
         auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
 
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setSourceFrequency(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
-        MQTTSourceTypePtr mqttSourceType = MQTTSourceType::create();
-        auto physicalSource = PhysicalSource::create(streamName, "test2", mqttSourceType);
-
-
-        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode11);
-        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode22);
-        SourceCatalogEntryPtr streamCatalogEntry3 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode121);
-        SourceCatalogEntryPtr streamCatalogEntry4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode21);
+        SourceCatalogEntryPtr streamCatalogEntry1 =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode3);
+        SourceCatalogEntryPtr streamCatalogEntry2 =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode4);
 
         streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
         streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry3);
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry4);
 
+        globalExecutionPlan = GlobalExecutionPlan::create();
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     }
 
     void setupComplexTopologyAndStreamCatalog2() {
@@ -334,28 +322,16 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 /* Test query placement with Ml heuristic strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
-    setupComplexTopologyAndStreamCatalog2();
-
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
-                                                                              globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              z3Context);
-
+    setupComplexTopologyAndStreamCatalog({100, 100, 100});
     Query query = Query::from("iris")
-                  .inferModel("models/iris.tflite",
-                              {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
-                              {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
-                  .filter(Attribute("iris0") < 3.0, 1)
-                  .project(Attribute("iris1"), Attribute("iris2"))
-                  .sink(PrintSinkDescriptor::create());
-
+                      .inferModel("models/iris.tflite",
+                                  {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},
+                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                      .filter(Attribute("iris0") < 3.0, 1)
+                      .project(Attribute("iris1"), Attribute("iris2"))
+                      .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
@@ -365,43 +341,13 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
-    signatureInferencePhase->execute(queryPlan);
-
-    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::MlHeuristic, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
-    //Assertion
-//    ASSERT_EQ(executionNodes.size(), 3u);
-//    for (const auto& executionNode : executionNodes) {
-//        if (executionNode->getId() == 1u) {
-//            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-//            ASSERT_EQ(querySubPlans.size(), 1u);
-//            auto querySubPlan = querySubPlans[0u];
-//            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-//            ASSERT_EQ(actualRootOperators.size(), 1u);
-//            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-//            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
-//            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
-//            for (const auto& children : actualRootOperator->getChildren()) {
-//                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
-//            }
-//        } else {
-//            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
-//            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-//            ASSERT_EQ(querySubPlans.size(), 1u);
-//            auto querySubPlan = querySubPlans[0];
-//            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-//            ASSERT_EQ(actualRootOperators.size(), 1u);
-//            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-//            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-//            for (const auto& children : actualRootOperator->getChildren()) {
-//                EXPECT_TRUE(children->instanceOf<InferModelLogicalOperatorNode>());
-//            }
-//        }
-//    }
 }
 
 /* Test query placement with top down strategy  */
