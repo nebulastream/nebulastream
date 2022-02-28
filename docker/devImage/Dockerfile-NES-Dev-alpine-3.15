@@ -9,6 +9,11 @@ RUN apk add --no-cache --no-progress -q cmake --repository=http://dl-cdn.alpinel
     libdwarf-dev \
     binutils-dev \
     libunwind-dev \
+    libgcc \
+    gcc-objc \
+    musl \
+    musl-dev \
+    libstdc++ \
     elfutils-dev \
     openssl-dev \
     clang-extra-tools \
