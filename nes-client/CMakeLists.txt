@@ -23,7 +23,7 @@ target_link_libraries(nes-client PRIVATE ${LIBRARIES})
 target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes-client PRIVATE nes nes-grpc)
+target_link_libraries(nes-client PUBLIC nes)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

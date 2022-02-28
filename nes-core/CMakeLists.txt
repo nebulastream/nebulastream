@@ -48,9 +48,14 @@ macro(target_public_headers TARGET)
     set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${ARGN}")
 endmacro()
 
-add_library(nes-grpc STATIC ${OUTPUT_SOURCES})
+add_library(nes-grpc SHARED ${OUTPUT_SOURCES})
 target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
 target_include_directories(nes-grpc PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>)
+install(TARGETS nes-grpc
+        EXPORT NebulaStreamTargets
+        LIBRARY
+        COMPONENT nesLibrary)
+
 
 # Add Library
 get_source(nes-core NES_CORE_SOURCE_FILES)
@@ -61,8 +66,7 @@ target_include_directories(nes PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 #target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(nes PRIVATE ${LIBRARIES} ${PROTOBUF_LIBRARIES} )
-target_link_libraries(nes PUBLIC nes-common nes-compiler)
-target_link_libraries(nes PRIVATE nes-grpc)
+target_link_libraries(nes PUBLIC nes-common nes-compiler nes-grpc)
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach(dir ${LIBA_INCLUDES})

@@ -29,7 +29,7 @@ namespace NES::Client {
 
 RemoteClient::RemoteClient(const std::string& coordinatorHost, uint16_t coordinatorRESTPort, std::chrono::seconds requestTimeout)
     : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort), requestTimeout(requestTimeout) {
-    NES::setupLogging("nesRemoteClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+    //NES::setupLogging("nesRemoteClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     if (coordinatorHost.empty()) {
         throw ClientException("host name for coordinator is empty");
