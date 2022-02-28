@@ -258,7 +258,7 @@ void DataSource::runningRoutineWithIngestionRate() {
 
             if (optBuf.has_value()) {
                 // here we got a valid buffer
-                NES_DEBUG("DataSource: add task for buffer");
+                NES_TRACE("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
                 emitWorkFromSource(buf);
 
@@ -267,7 +267,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             } else {
                 NES_ERROR("DataSource: Buffer is invalid");
             }
-            NES_DEBUG("DataSource: buffersProcessedCnt=" << buffersProcessedCnt
+            NES_TRACE("DataSource: buffersProcessedCnt=" << buffersProcessedCnt
                                                          << " buffersPerSecond=" << gatheringIngestionRate);
         }
 
@@ -276,7 +276,7 @@ void DataSource::runningRoutineWithIngestionRate() {
 
         //next point in time when to start producing again
         nextPeriodStartTime = uint64_t(startPeriod + (100));
-        NES_DEBUG("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
+        NES_TRACE("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
                                                       << " nextPeriodStartTime=" << nextPeriodStartTime);
 
         //If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
@@ -295,7 +295,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
-        NES_DEBUG("DataSource: Done with period " << curPeriod++
+        NES_TRACE("DataSource: Done with period " << curPeriod++
                                                   << " "
                                                      "and overall buffers="
                                                   << processedOverallBufferCnt << " sleepCnt=" << sleepCnt

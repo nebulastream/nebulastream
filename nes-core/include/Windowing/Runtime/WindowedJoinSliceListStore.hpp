@@ -106,7 +106,7 @@ class WindowedJoinSliceListStore {
             if (itSlice->getEndTs() > watermark) {
                 break;
             }
-            NES_DEBUG("WindowedJoinSliceListStore removeSlicesUntil: watermark="
+            NES_TRACE("WindowedJoinSliceListStore removeSlicesUntil: watermark="
                       << watermark << " from slice endts=" << itSlice->getEndTs()
                       << " sliceMetaData size=" << sliceMetaData.size() << " content size=" << content.size());
 
@@ -115,7 +115,7 @@ class WindowedJoinSliceListStore {
 
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         content.erase(content.begin(), itAggs);
-        NES_DEBUG("WindowedJoinSliceListStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
+        NES_TRACE("WindowedJoinSliceListStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
                                                                                             << " content=" << content.size());
     }
 
@@ -124,7 +124,7 @@ class WindowedJoinSliceListStore {
      * @param slice the slice to add
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_DEBUG("appendSlice with start " << slice.getStartTs());
+        NES_TRACE("appendSlice with start " << slice.getStartTs());
         std::lock_guard lock(internalMutex);
         sliceMetaData.emplace_back(slice);
         content.emplace_back(std::vector<ValueType>());

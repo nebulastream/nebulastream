@@ -838,7 +838,7 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
         auto numOfInputTuples = task.getNumberOfInputTuples();
         profiler->startSampling();
 #endif
-        NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
+        NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
 #ifdef ENABLE_PAPI_PROFILER
         profiler->stopSampling(numOfInputTuples);
@@ -963,12 +963,10 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                           Execution::SuccessorExecutablePipeline executable,
                                           uint32_t queueId) {
-    NES_DEBUG("Add Work for executable for queue=" << queueId);
+    NES_TRACE("Add Work for executable for queue=" << queueId);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)                                  \
     || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
-//        NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
-//                        "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer " << buffer
                                                                 << " queueId=" << queueId);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
@@ -988,17 +986,17 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
             qepId = (*executablePipeline)->getQuerySubPlanId();
         }
-        NES_DEBUG("put qepId=" << qepId << " into queue " << qepId % numberOfQueues);
+        NES_TRACE("put qepId=" << qepId << " into queue " << qepId % numberOfQueues);
         taskQueues[queueId % numberOfQueues].write(Task(executable, buffer, getNextTaskId()));
 #endif
     }
 #else
-    NES_DEBUG("Ignoring parameter numaNode =" << numaNode);
+    NES_TRACE("Ignoring parameter numaNode =" << numaNode);
     std::unique_lock lock2(workMutex);
     // dispatch buffer as task
     if (auto* nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
-            NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
+            NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer.getOriginId()
                                                                     << " sequence:" << buffer.getSequenceNumber());
             taskQueue.emplace_back(executable, buffer, getNextTaskId());
@@ -1016,7 +1014,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 }
 //#define LIGHT_WEIGHT_STATISTICS
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
-    NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
+    NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
     if (task.isReconfiguration()) {
         return;
     }
@@ -1127,7 +1125,7 @@ std::string QueryManager::getQueryManagerStatistics() {
 
 QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
-    NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
+    NES_TRACE("QueryManager::getQueryStatistics: for qep=" << qepId);
     return queryToStatisticsMap.find(qepId);
 }
 
