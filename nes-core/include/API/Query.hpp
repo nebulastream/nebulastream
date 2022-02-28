@@ -214,6 +214,7 @@ class Times {
      */
     Times(const uint64_t occurrences, Query& originalQuery);
 
+    Times(Query& originalQuery);
     /**
      * @brief: calls internal the original seqWith function with all the gathered parameters.
      * @param windowType
@@ -225,6 +226,7 @@ class Times {
     Query& originalQuery;
     uint64_t minOccurrences;
     uint64_t maxOccurrences;
+    bool bounded;
 };
 //TODO the 2 methods below are a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
 /**
@@ -282,18 +284,25 @@ class Query {
     CEPOperatorBuilder::Seq seqWith(const Query& subQueryRhs);
 
     /**
-     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
-     * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
+     * @brief can be called on the original query to detect an number event occurrences between minOccurrence and maxOccurence in a stream
+     * @param minOccurrences
+     * @param maxOccurrences
+     * @return the query
      */
     CEPOperatorBuilder::Times times(const uint64_t minOccurrences, const uint64_t maxOccurrences);
 
     /**
-     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
-     * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
+     * @brief can be called on the original query to detect an exact number event occurrences in a stream
+     * @param occurrences
+     * @return the query
      */
-    CEPOperatorBuilder::Times times(const uint64_t maxOccurrences);
+    CEPOperatorBuilder::Times times(const uint64_t occurrences);
+
+    /**
+     * @brief can be called on the original query to detect multiple occurences of specified events in a stream
+     * @return the query
+     */
+    CEPOperatorBuilder::Times times();
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
@@ -364,16 +373,6 @@ class Query {
      * @return query
      */
     Query& map(FieldAssignmentExpressionNodePtr const& mapExpression);
-
-    /**
-     * @brief: This operator is a CEP operator, in CEP engines also called iteration operator. It
-     * allows for multiple occurrences of a specified event, i.e., tuples.
-     * Thus, 'times' enables patterns of arbitrary length (when only minOccurrences are defined)
-     * @param minOccurrences: minimal number of occurrences of a specified event, i.e., tuples
-     * @param maxOccurrences: maximal number of occurrences of a specified event, i.e., tuples
-     * @return the pattern
-     */
-    //Query& times(uint64_t minOccurrences, uint64_t maxOccurrences);
 
     /**
      * @brief Add sink operator for the query.
