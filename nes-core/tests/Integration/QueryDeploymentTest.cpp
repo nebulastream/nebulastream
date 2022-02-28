@@ -846,83 +846,120 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
-
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
-    remove("test.out");
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    wrkConf->setTfInstalled(true);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    std::string outputFilePath = "test.out";
-    NES_INFO("QueryDeploymentTest: Submit query");
-
-    string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc_copy_3.tflite",
+    string query = R"(Query::from("test").inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc_copy_3.tflite",
                         {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
                         {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
-                        .filter(Attribute("iris0") > 0)
-                        .sink(FileSinkDescriptor::create(")"
-                   + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+                        .filter(Attribute("iris0") > 0))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("test", defaultLogicalSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("test") //2
+                                  .attachWorkerWithMemorySourceToCoordinator("test");//3
 
-//    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "MlHeuristic");
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    for (int i = 0; i < 10; ++i) {
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
+    }
+    testHarness.validate().setupTopology();
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER,default_logical$iris0:(Float),default_logical$iris1:(Float),default_logical$iris2:(Float)\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n"
-                             "1,1,0.434282,0.312879,0.252839\n";
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
+    struct Output {
+        uint32_t id;
+        uint32_t value;
+        float_t iris0;
+        float_t iris1;
+        float_t iris2;
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    // 0.434282392
+    // 0.312878728
+    // 0.252838939
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-//    bool retStopWrk2 = wrk2->stop(true);
-//    EXPECT_TRUE(retStopWrk2);
-
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
-    int response = remove("test.out");
-    EXPECT_TRUE(response == 0);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "BottomUp", "NONE", "IN_MEMORY");
+    for (auto record : actualOutput){
+        std::cout << record.id << ", " << record.value << ", " << record.iris0 << ", " << record.iris1 << ", " << record.iris2 << std::endl;
+    }
+//    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
 }
+//TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
+//    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+//    coordinatorConfig->setRpcPort(rpcPort);
+//    coordinatorConfig->setRestPort(restPort);
+//    NES_INFO("QueryDeploymentTest: Start coordinator");
+//    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+//    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+//    EXPECT_NE(port, 0UL);
+//    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+//
+//    NES_INFO("QueryDeploymentTest: Start worker 1");
+//    wrkConf->setCoordinatorPort(port);
+//    wrkConf->setRpcPort(port + 10);
+//    wrkConf->setDataPort(port + 11);
+//    wrkConf->setTfInstalled(true);
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart1);
+//    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+//
+//    QueryServicePtr queryService = crd->getQueryService();
+//    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+//
+//    std::string outputFilePath = "test.out";
+//    NES_INFO("QueryDeploymentTest: Submit query");
+//
+//    string query = R"(Query::from("default_logical").inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc_copy_3.tflite",
+//                        {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
+//                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+//                        .filter(Attribute("iris0") > 0)
+//                        .sink(FileSinkDescriptor::create(")"
+//                   + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+//
+////    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+//    QueryId queryId = queryService->validateAndQueueAddRequest(query, "MlHeuristic");
+//    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+//    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+//
+//    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER,default_logical$iris0:(Float),default_logical$iris1:(Float),default_logical$iris2:(Float)\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n"
+//                             "1,1,0.434282,0.312879,0.252839\n";
+//
+//    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+//
+//    NES_INFO("QueryDeploymentTest: Remove query");
+//    queryService->validateAndQueueStopRequest(queryId);
+//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+//
+//    NES_INFO("QueryDeploymentTest: Stop worker 1");
+//    bool retStopWrk1 = wrk1->stop(true);
+//    EXPECT_TRUE(retStopWrk1);
+//
+//    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+//    bool retStopCord = crd->stopCoordinator(true);
+//    EXPECT_TRUE(retStopCord);
+//    NES_INFO("QueryDeploymentTest: Test finished");
+//    int response = remove("test.out");
+//    EXPECT_TRUE(response == 0);
+//}
 
 //TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDatasource) {
 //

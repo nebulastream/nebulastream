@@ -64,7 +64,7 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
-    void placeOperator(QueryId queryId,
+    bool placeOperator(QueryId queryId,
                        const OperatorNodePtr& operatorNode,
                        TopologyNodePtr candidateTopologyNode,
                        const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
@@ -75,7 +75,7 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    bool placeOperatorOnTopologyNode(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode);
+//    bool placeOperatorOnTopologyNode(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode);
 
     bool canInferModelOperatorBePlacedOnTopologyNode(TopologyNodePtr candidateTopologyNode);
 
