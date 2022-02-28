@@ -44,10 +44,8 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                            request->numberofslots());
     }
 
-    auto registrationMetrics = Metric{RegistrationMetrics(request->registrationmetrics()), MetricType::RuntimeMetric};
-    auto metricPtr = std::shared_ptr<Metric>(&registrationMetrics);
-    std::vector<MetricPtr> metrics = std::vector<MetricPtr>{metricPtr};
-    monitoringManager->addMonitoringData(id, metrics);
+    auto registrationMetrics = std::make_shared<Metric>(RegistrationMetrics(request->registrationmetrics()), MetricType::RegistrationMetric);
+    monitoringManager->addMonitoringData(id, registrationMetrics);
 
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);

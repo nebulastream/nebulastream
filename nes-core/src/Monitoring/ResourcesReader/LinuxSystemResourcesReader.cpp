@@ -12,14 +12,12 @@
     limitations under the License.
 */
 
-#ifdef __linux__
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 
@@ -163,7 +161,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
         auto cpuStats = LinuxSystemResourcesReader::readCpuStats();
         auto totalStats = cpuStats.getTotal();
         output.totalCPUJiffies = totalStats.user + totalStats.system + totalStats.idle;
-        output.cpuCoreNum = LinuxSystemResourcesReader::readCpuStats().size()-1;
+        output.cpuCoreNum = LinuxSystemResourcesReader::readCpuStats().size() - 1;
 
         if (access(metricLocations[1].c_str(), F_OK) != -1) {
             std::string periodLine;
@@ -405,4 +403,3 @@ uint64_t LinuxSystemResourcesReader::getWallTimeInNs() {
     return duration;
 }
 }// namespace NES
-#endif

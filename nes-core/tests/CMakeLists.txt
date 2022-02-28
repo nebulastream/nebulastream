@@ -632,25 +632,25 @@ add_executable(network-stack-integration-test "Integration/NetworkStackIntegrati
 target_link_libraries(network-stack-integration-test nes-tests)
 add_test(NAME network-stack-integration-test COMMAND network-stack-integration-test)
 
+# ResourcesReaderTest
+add_executable(resources-reader-test "UnitTests/Monitoring/ResourcesReaderTest.cpp")
+target_link_libraries(resources-reader-test nes-tests)
+add_test(NAME resources-reader-test COMMAND resources-reader-test)
+
 # MetricCollectorTest
 add_executable(metric-collector-test "UnitTests/Monitoring/MetricCollectorTest.cpp")
-target_link_libraries(metric-collector-test nes ${GTEST_LIBRARIES})
+target_link_libraries(metric-collector-test nes-tests)
 add_test(NAME metric-collector-test COMMAND metric-collector-test)
 
-# MetricReaderTest
-add_executable(metric-reader-test "UnitTests/Monitoring/MetricReaderTest.cpp")
-target_link_libraries(metric-reader-test nes ${GTEST_LIBRARIES})
-add_test(NAME metric-reader-test COMMAND metric-reader-test)
+# MetricStoreTest
+add_executable(metric-store-test "UnitTests/Monitoring/MetricStoreTest.cpp")
+target_link_libraries(metric-store-test nes-tests)
+add_test(NAME metric-store-test COMMAND metric-store-test)
 
-# MonitoringStackTest
-add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.cpp")
-target_link_libraries(monitoring-stack-test nes-tests)
-add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
-
-# MonitoringSerializationTest
-add_executable(monitoring-serialization-test "UnitTests/Monitoring/MonitoringSerializationTest.cpp")
-target_link_libraries(monitoring-serialization-test nes-tests)
-add_test(NAME monitoring-serialization-test COMMAND monitoring-serialization-test)
+# UserDefinedMonitoringTest
+add_executable(user-defined-monitoring-test "UnitTests/Monitoring/UserDefinedMonitoringTest.cpp")
+target_link_libraries(user-defined-monitoring-test nes-tests)
+add_test(NAME user-defined-monitoring-test COMMAND user-defined-monitoring-test)
 
 # MonitoringIntegrationTest
 add_executable(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp")
