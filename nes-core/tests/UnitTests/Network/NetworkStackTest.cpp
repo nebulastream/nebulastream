@@ -904,22 +904,19 @@ TEST_F(NetworkStackTest, testNetworkSinkBufferingAndUnBuffering) {
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
 
+        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
+        auto nodeEngine =
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
+
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
                                                          0,
-                                                         netManager,
                                                          nodeLocation,
                                                          nesPartition,
-                                                         bMgr,
-                                                         nullptr,
-                                                         bSt,
+                                                         nodeEngine,
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES);
-        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
-        auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
-
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
@@ -936,7 +933,7 @@ TEST_F(NetworkStackTest, testNetworkSinkBufferingAndUnBuffering) {
                     }
                     if(i == 51){
                         workerContext.getNetworkChannel(nesPartition.getOperatorId())->setBuffering(false);
-                        workerContext.getNetworkChannel(nesPartition.getOperatorId())->unbufferData();
+                        workerContext.getNetworkChannel(nesPartition.getOperatorId())->emptyBuffer();
                     }
                     auto buffer = buffMgr->getBufferBlocking();
                     for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
