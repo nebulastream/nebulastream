@@ -51,10 +51,14 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
     void inferStringSignature() override;
     OperatorNodePtr copy() override;
     void setProjectSchema(SchemaPtr schema);
+    void setOriginId(uint64_t originId);
+
+    void inferInputOrigins() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;
     SchemaPtr projectSchema;
+    uint64_t originId;
 };
 
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;

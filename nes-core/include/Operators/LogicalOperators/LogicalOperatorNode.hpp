@@ -54,6 +54,13 @@ class LogicalOperatorNode : public virtual OperatorNode {
     void setZ3Signature(Optimizer::QuerySignaturePtr signature);
 
     /**
+     * @brief Infers the input origin of a logical operator.
+     * If this operator dose not assign new origin ids, e.g., windowing,
+     * this function collects the origin ids from all upstream operators.
+     */
+    virtual void inferInputOrigins();
+
+    /**
      * @brief Get the String based signature for the operator
      */
     virtual void inferStringSignature() = 0;

@@ -157,6 +157,9 @@ class OperatorNode : public Node {
      */
     bool hasProperty(const std::string& key);
 
+    void setInputOriginIds(std::vector<uint64_t> originIds);
+    std::vector<uint64_t> getInputOriginIds();
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
@@ -181,6 +184,11 @@ class OperatorNode : public Node {
      * @brief Map of properties of the current node
      */
     std::unordered_map<std::string, std::any> properties;
+
+    /**
+     * @brief List of input origin ids
+     */
+     std::vector<uint64_t> inputOriginIds;
 };
 
 }// namespace NES
