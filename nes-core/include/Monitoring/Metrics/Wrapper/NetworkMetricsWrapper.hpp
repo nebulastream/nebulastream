@@ -22,27 +22,23 @@
 namespace NES {
 
 /**
- * @brief Wrapper class to represent the metrics read from the OS about Network data.
+ * @brief Wrapper class to represent a tuple buffer with multiple NetworkMetrics objects.
  */
 class NetworkMetricsWrapper {
   public:
     NetworkMetricsWrapper() = default;
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
+     * @brief Writes a wrapper object to a given TupleBuffer.
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
+     * @brief Parses a wrapper object from a given TupleBuffer.
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
@@ -73,21 +69,18 @@ class NetworkMetricsWrapper {
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
- * @param the CpuMetrics
- * @param the schema
+ * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
+ * @param the metrics
  * @param the TupleBuffer
- * @param the prefix as std::string
+ * @param the tuple index indicating the location of the tuple
 */
 void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
- * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
- * @param schema
- * @param buf
- * @param prefix
- * @return The object
+ * @brief The deserialize method to read metrics from the given Schema and TupleBuffer.
+ * @param the metrics
+ * @param the TupleBuffer
+ * @param the tuple index indicating the location of the tuple
 */
 void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 

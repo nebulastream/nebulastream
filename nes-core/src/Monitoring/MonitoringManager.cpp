@@ -20,12 +20,9 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Storage/MetricStore.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cpprest/http_client.h>
 #include <utility>
 
 namespace NES {
@@ -144,6 +141,7 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
 }
 
 bool MonitoringManager::registerMonitoringLogical(StreamCatalogPtr) {
+    // TODO: Will be addressed in issue 2620
     // Check if logical stream already exists
     /**
     if (enableMonitoring) {

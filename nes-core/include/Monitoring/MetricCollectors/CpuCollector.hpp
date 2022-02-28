@@ -20,6 +20,9 @@
 
 namespace NES {
 
+/**
+ * The metric collector class for CPU metrics. Metric collectors are required for the integration with data sources.
+ */
 class CpuCollector : public MetricCollector {
   public:
     explicit CpuCollector();

@@ -17,6 +17,9 @@
 
 namespace NES {
 
+/**
+ * The metric collector class for memory metrics. Metric collectors are required for the integration with data sources.
+ */
 class MemoryCollector : public MetricCollector {
   public:
     explicit MemoryCollector();

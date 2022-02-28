@@ -14,15 +14,14 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
-#include "Monitoring/MonitoringPlan.hpp"
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/CoordinatorRPCServer.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+
 namespace NES {
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {

@@ -21,7 +21,16 @@
 namespace NES {
 
 /**
- * @brief This class represents the metric values read from /proc/net/dev.
+ * @brief This class represents the metric values read from /proc/net/dev:
+ * bytes The total number of bytes of data transmitted or received by the interface.
+ * packets The total number of packets of data transmitted or received by the interface.
+ * errs The total number of transmit or receive errors detected by the device driver.
+ * fifo The number of FIFO buffer errors.
+ * frame The number of packet framing errors.
+ * colls The number of collisions detected on the interface.
+ * compressed The number of compressed packets transmitted or received by the device driver. (This appears to be unused in the 2.2.15 kernel.)
+ * carrier The number of carrier losses detected by the device driver.
+ * multicast The number of multicast frames transmitted or received by the device driver.
  */
 class NetworkMetrics {
   public:
@@ -35,20 +44,16 @@ class NetworkMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
-     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
-     * @param schema
+     * @brief Writes a metrics objects from a given Schema and TupleBuffer.
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
-     * @param schema
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
@@ -83,20 +88,18 @@ class NetworkMetrics {
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
- * @param the CpuMetrics
- * @param the schema
+ * @brief Writes metrics objects to a given Schema and TupleBuffer.
+ * @param the metrics
  * @param the TupleBuffer
- * @param the prefix as std::string
- */
+ * @param the tuple index indicating the location of the tuple
+*/
 void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
- * @brief Parses a metrics objects from a given Schema and TupleBuffer.
- * @param schema
- * @param buf
- * @param prefix
- * @return The object
+ * @brief Parses metrics objects from a given Schema and TupleBuffer.
+ * @param the metrics
+ * @param the TupleBuffer
+ * @param the tuple index indicating the location of the tuple
 */
 void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
@@ -109,4 +112,4 @@ web::json::value asJson(const NetworkMetrics& metrics);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_

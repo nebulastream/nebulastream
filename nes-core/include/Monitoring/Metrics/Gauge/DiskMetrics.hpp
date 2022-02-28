@@ -35,20 +35,16 @@ class DiskMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
+     * @brief Writes a DiskMetrics objects from a given Schema and TupleBuffer.
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
+     * @brief Parses a DiskMetrics objects from a given Schema and TupleBuffer.
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
@@ -73,18 +69,16 @@ using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
 /**
  * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
  * @param the metrics
- * @param the schema
  * @param the TupleBuffer
- * @param the prefix as std::string
- */
+ * @param the tuple index indicating the location of the tuple
+*/
 void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses metrics objects from a given Schema and TupleBuffer.
- * @param schema
- * @param buf
- * @param prefix
- * @return The object
+ * @param the metrics
+ * @param the TupleBuffer
+ * @param the tuple index indicating the location of the tuple
 */
 void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 

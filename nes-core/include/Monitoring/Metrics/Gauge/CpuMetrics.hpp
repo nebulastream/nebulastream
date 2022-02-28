@@ -23,7 +23,16 @@
 namespace NES {
 
 /**
- * @brief This class represents the metrics read from /proc/stat.
+ * @brief This class represents the metrics read from /proc/stat:
+    * %usr – % CPU usage at the user level
+    * %nice – % CPU usage for user processes labeled “nice”
+    * %sys – % CPU usage at the system (Linux kernel) level
+    * %iowait – % CPU usage idling waiting on a disk read/write
+    * %irq – % CPU usage handling hardware interrupts
+    * %soft – % CPU usage handing software interrupts
+    * %steal – % CPU usage being forced to wait for a hypervisor handling other virtual processors
+    * %guest – % CPU usage spent running a virtual processor
+    * %idle – % CPU usage on idle time (no processes, and not waiting on a disk read/write)
  */
 class CpuMetrics {
   public:
@@ -37,20 +46,16 @@ class CpuMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
-     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
-     * @param schema
+     * @brief Writes a metrics objects from a given Schema and TupleBuffer.
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
-     * @param schema
      * @param buf
-     * @param prefix
-     * @return The object
+     * @param tupleIndex
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
@@ -87,20 +92,19 @@ class CpuMetrics {
 /**
  * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
  * @param the CpuMetrics
- * @param the schema
  * @param the TupleBuffer
- * @param the prefix as std::string
+ * @param the tuple index indicating the location of the tuple
  */
-void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses a metrics objects from a given Schema and TupleBuffer.
- * @param schema
- * @param buf
- * @param prefix
+ * @param the CpuMetrics
+ * @param the TupleBuffer
+ * @param the tuple index indicating the location of the tuple
  * @return The object
 */
-void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses the metric to JSON
@@ -109,7 +113,6 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byt
  */
 web::json::value asJson(const CpuMetrics& metrics);
 
-
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_

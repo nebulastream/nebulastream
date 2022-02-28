@@ -13,10 +13,7 @@
 */
 
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 
@@ -58,8 +55,6 @@ web::json::value asJson(std::string stringMetric) {
     return metricsJson;
 }
 
-web::json::value asJson(std::shared_ptr<Metric> ptrMetric) {
-    return asJson(*ptrMetric);
-}
+web::json::value asJson(std::shared_ptr<Metric> ptrMetric) { return asJson(*ptrMetric); }
 
 }// namespace NES

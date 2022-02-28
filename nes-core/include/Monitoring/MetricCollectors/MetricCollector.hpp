@@ -22,6 +22,9 @@ namespace NES {
 
 class Metric;
 
+/**
+ * The metric collector base class. Metric collectors are required for the integration with data sources.
+ */
 class MetricCollector {
   protected:
     //  -- Constructors --

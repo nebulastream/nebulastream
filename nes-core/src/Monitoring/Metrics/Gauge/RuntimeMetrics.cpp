@@ -16,13 +16,12 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
-#include <cstring>
 
 namespace NES {
 
@@ -35,7 +34,7 @@ RuntimeMetrics::RuntimeMetrics()
 SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
-    SchemaPtr schema = Schema::create()
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "wallTimeNs", BasicType::UINT64)
                            ->addField(prefix + "memoryUsageInBytes", BasicType::UINT64)
                            ->addField(prefix + "cpuLoadInJiffies", BasicType::UINT64)
@@ -49,31 +48,35 @@ SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {
 }
 
 void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    auto byteOffset = tupleIndex * sizeof(RuntimeMetrics);
-    NES_ASSERT(byteOffset + sizeof(RuntimeMetrics) <= buf.getBufferSize(), "RuntimeMetrics: Content does not fit in TupleBuffer");
-    NES_ASSERT(sizeof(RuntimeMetrics) == RuntimeMetrics::getSchema("")->getSchemaSizeInBytes(),
-               sizeof(RuntimeMetrics) << "!=" << RuntimeMetrics::getSchema("")->getSchemaSizeInBytes());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(RuntimeMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
-    memcpy(tbuffer + byteOffset, this, sizeof(RuntimeMetrics));
+    uint64_t cnt = 0;
+    buffer[tupleIndex][cnt++].write<uint64_t>(wallTimeNs);
+    buffer[tupleIndex][cnt++].write<uint64_t>(memoryUsageInBytes);
+    buffer[tupleIndex][cnt++].write<uint64_t>(cpuLoadInJiffies);
+    buffer[tupleIndex][cnt++].write<uint64_t>(blkioBytesRead);
+    buffer[tupleIndex][cnt++].write<uint64_t>(blkioBytesWritten);
+    buffer[tupleIndex][cnt++].write<uint64_t>(batteryStatusInPercent);
+    buffer[tupleIndex][cnt++].write<uint64_t>(latCoord);
+    buffer[tupleIndex][cnt++].write<uint64_t>(longCoord);
+
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
 void RuntimeMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    //get index where the schema is starting
-    auto schema = getSchema("");
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(RuntimeMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+    uint64_t cnt = 0;
 
-    int cnt = 0;
-
-    wallTimeNs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    memoryUsageInBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    cpuLoadInJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    blkioBytesRead = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    blkioBytesWritten = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    batteryStatusInPercent = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    latCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    longCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    wallTimeNs = buffer[tupleIndex][cnt++].read<uint64_t>();
+    memoryUsageInBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
+    cpuLoadInJiffies = buffer[tupleIndex][cnt++].read<uint64_t>();
+    blkioBytesRead = buffer[tupleIndex][cnt++].read<uint64_t>();
+    blkioBytesWritten = buffer[tupleIndex][cnt++].read<uint64_t>();
+    batteryStatusInPercent = buffer[tupleIndex][cnt++].read<uint64_t>();
+    latCoord = buffer[tupleIndex][cnt++].read<uint64_t>();
+    longCoord = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
 web::json::value RuntimeMetrics::toJson() const {
