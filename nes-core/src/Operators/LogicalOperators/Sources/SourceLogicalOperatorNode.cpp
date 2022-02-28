@@ -76,9 +76,8 @@ void SourceLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
 }
 
-void SourceLogicalOperatorNode::setOriginId(uint64_t originId) {
-    this->originId = originId;
-}
+void SourceLogicalOperatorNode::setOriginId(uint64_t originId) { this->originId = originId; }
 
 void SourceLogicalOperatorNode::inferInputOrigins() { this->inputOriginIds = {originId}; }
+uint64_t SourceLogicalOperatorNode::getOriginId() { return originId; }
 }// namespace NES

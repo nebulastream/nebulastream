@@ -22,7 +22,11 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(uint64_t id) : id(id), properties() { NES_INFO("Creating Operator " << id); }
+OperatorNode::OperatorNode(uint64_t id) : id(id), properties(), inputOriginIds() { NES_INFO("Creating Operator " << id); }
+OperatorNode::OperatorNode(uint64_t id, std::vector<uint64_t> inputOriginIds)
+    : id(id), properties(), inputOriginIds(inputOriginIds) {
+    NES_INFO("Creating Operator " << id);
+}
 
 uint64_t OperatorNode::getId() const { return id; }
 
