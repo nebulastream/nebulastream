@@ -15,7 +15,7 @@
 include(ExternalProject)
 
 add_executable(remote-client-test "Client/RemoteClientTest.cpp")
-target_link_libraries(remote-client-test nes-client nes-tests nes-tests)
+target_link_libraries(remote-client-test nes-client nes-tests)
 add_test(NAME remote-client-test COMMAND remote-client-test)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
