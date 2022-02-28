@@ -6,13 +6,13 @@ RUN mkdir -p /nebulastream/build && \
     cd /nebulastream/build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
     make version && make -j8 && cpack && mv *.deb /nes.deb && \
-    rm -rf /nebulastream/build/nes-dependencies-v1ls-x64-linux-nes.7z
+    rm -rf /nebulastream/build/nes-dependencies-v14-x64-linux-nes.7z
 
 
 FROM ubuntu:20.04 AS execimg
 
 COPY --from=buildimg /nes.deb .
-COPY --from=buildimg /nebulastream/build/nes-dependencies-v13-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v13-x64-linux-nes/installed/x64-linux-nes/
+COPY --from=buildimg /nebulastream/build/nes-dependencies-v14-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v13-x64-linux-nes/installed/x64-linux-nes/
 
 RUN dpkg -i /nes.deb && rm -rf /*.deb
 
