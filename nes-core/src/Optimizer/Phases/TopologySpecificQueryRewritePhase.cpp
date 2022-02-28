@@ -16,6 +16,7 @@
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <utility>
 
@@ -33,12 +34,14 @@ TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(SourceCatal
         LogicalSourceExpansionRule::create(std::move(sourceCatalog), configuration.performOnlySourceOperatorExpansion);
     distributeWindowRule = DistributeWindowRule::create(configuration);
     distributeJoinRule = DistributeJoinRule::create();
+    originIdInferenceRule = OriginIdInferenceRule::create();
 }
 
 QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     queryPlan = logicalSourceExpansionRule->apply(queryPlan);
     queryPlan = distributeJoinRule->apply(queryPlan);
-    return distributeWindowRule->apply(queryPlan);
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    return originIdInferenceRule->apply(queryPlan);
 }
 
 }// namespace NES::Optimizer

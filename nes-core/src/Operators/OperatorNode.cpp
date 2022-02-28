@@ -169,4 +169,8 @@ bool OperatorNode::hasProperty(const std::string& key) { return properties.find(
 
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
+void OperatorNode::setInputOriginIds(std::vector<uint64_t> originIds) { this->inputOriginIds = originIds; }
+
+std::vector<uint64_t> OperatorNode::getInputOriginIds() { return inputOriginIds; }
+
 }// namespace NES

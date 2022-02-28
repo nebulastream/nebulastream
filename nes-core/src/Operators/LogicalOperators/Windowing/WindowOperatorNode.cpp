@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 
 namespace NES {
 
@@ -20,5 +21,7 @@ WindowOperatorNode::WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr con
     : OperatorNode(id), LogicalUnaryOperatorNode(id), windowDefinition(windowDefinition) {}
 
 Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const { return windowDefinition; }
+
+void WindowOperatorNode::inferInputOrigins() { this->inputOriginIds = {windowDefinition->getOriginId()}; }
 
 }// namespace NES

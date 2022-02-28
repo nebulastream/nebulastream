@@ -35,6 +35,8 @@ class WindowOperatorNode : public LogicalUnaryOperatorNode {
     */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition() const;
 
+    void inferInputOrigins() override;
+
   protected:
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
