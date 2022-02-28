@@ -59,6 +59,10 @@ CEPOperatorBuilder::Times Query::times(const uint64_t maxOccurrences) {
     return CEPOperatorBuilder::Times(maxOccurrences, *this);
 }
 
+CEPOperatorBuilder::Times Query::times() {
+    return CEPOperatorBuilder::Times(*this);
+}
+
 namespace JoinOperatorBuilder {
 
 JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
@@ -171,30 +175,47 @@ std::string keyAssignmentLeft() {
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
     : originalQuery(originalQuery), minOccurrences(minOccurrences),
-      maxOccurrences(maxOccurrences){
+      maxOccurrences(maxOccurrences),bounded(true){
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Times::Times(const uint64_t occurrences, Query& originalQuery)
-    : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(occurrences) {
+    : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(occurrences), bounded(true) {
+    originalQuery.map(Attribute("Count") = 1);
+}
+
+Times::Times(Query& originalQuery)
+    : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(0), bounded(false) {
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
+    auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
+    // if no min and max occurrence is defined, apply count without filter
+    if(!bounded){
+        return originalQuery.window(windowType)
+                .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));
+    }
+    else{
+    // if min and/or max occurrence are defined, apply count without filter
+        if (maxOccurrences == 0) {
+            return originalQuery.window(windowType)
+                .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
+                .filter(Attribute("Count") >= minOccurrences);
+        }
 
-    if (minOccurrences == 0) {
+        if (minOccurrences == 0) {
+            return originalQuery.window(windowType)
+                .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
+                .filter(Attribute("Count") == maxOccurrences);
+        }
+
         return originalQuery.window(windowType)
-            .apply(API::Sum(Attribute("Count")))
-            .filter(Attribute("Count") == maxOccurrences);
+            .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
+            .filter(Attribute("Count") >= minOccurrences && Attribute("Count") <= maxOccurrences);
     }
-    if (maxOccurrences == 0) {
-        return originalQuery.window(windowType)
-            .apply(API::Sum(Attribute("Count")))
-            .filter(Attribute("Count") > maxOccurrences);
-    }
-    return originalQuery.window(windowType)
-        .apply(API::Sum(Attribute("Count")))
-        .filter(Attribute("Count") >= minOccurrences && Attribute("Count") <= maxOccurrences);
+
+    return originalQuery;
 }
 
 }// namespace CEPOperatorBuilder
@@ -387,13 +408,6 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
-
-//Query& Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences) {
-   // NES_DEBUG("Pattern: enter iteration function with (min, max)" << minOccurrences << "," << maxOccurrences);
-   // OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minOccurrences, maxOccurrences);
-   // qeryPlan->appendOperatorAsNewRoot(op);
-   // return *this;
-//}
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
