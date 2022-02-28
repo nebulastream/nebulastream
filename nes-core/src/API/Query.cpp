@@ -51,6 +51,14 @@ CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOpe
 
 CEPOperatorBuilder::Seq Query::seqWith(const Query& subQueryRhs) { return CEPOperatorBuilder::Seq(subQueryRhs, *this); }
 
+CEPOperatorBuilder::Times Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences) {
+    return CEPOperatorBuilder::Times(minOccurrences, maxOccurrences, *this);
+}
+
+CEPOperatorBuilder::Times Query::times(const uint64_t maxOccurrences) {
+    return CEPOperatorBuilder::Times(maxOccurrences, *this);
+}
+
 namespace JoinOperatorBuilder {
 
 JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
@@ -160,6 +168,35 @@ std::string keyAssignmentLeft() {
     std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
     return cepLeftKey;
 }
+
+Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
+    : originalQuery(originalQuery), minOccurrences(minOccurrences),
+      maxOccurrences(maxOccurrences){
+    originalQuery.map(Attribute("Count") = 1);
+}
+
+Times::Times(const uint64_t occurrences, Query& originalQuery)
+    : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(occurrences) {
+    originalQuery.map(Attribute("Count") = 1);
+}
+
+Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
+
+    if (minOccurrences == 0) {
+        return originalQuery.window(windowType)
+            .apply(API::Sum(Attribute("Count")))
+            .filter(Attribute("Count") == maxOccurrences);
+    }
+    if (maxOccurrences == 0) {
+        return originalQuery.window(windowType)
+            .apply(API::Sum(Attribute("Count")))
+            .filter(Attribute("Count") > maxOccurrences);
+    }
+    return originalQuery.window(windowType)
+        .apply(API::Sum(Attribute("Count")))
+        .filter(Attribute("Count") >= minOccurrences && Attribute("Count") <= maxOccurrences);
+}
+
 }// namespace CEPOperatorBuilder
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
@@ -351,12 +388,12 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     return *this;
 }
 
-Query& Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences) {
-    NES_DEBUG("Pattern: enter iteration function with (min, max)" << minOccurrences << "," << maxOccurrences);
-    OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minOccurrences, maxOccurrences);
-    queryPlan->appendOperatorAsNewRoot(op);
-    return *this;
-}
+//Query& Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences) {
+   // NES_DEBUG("Pattern: enter iteration function with (min, max)" << minOccurrences << "," << maxOccurrences);
+   // OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minOccurrences, maxOccurrences);
+   // qeryPlan->appendOperatorAsNewRoot(op);
+   // return *this;
+//}
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
