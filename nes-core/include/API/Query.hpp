@@ -195,6 +195,37 @@ class Seq {
     ExpressionNodePtr onLeftKey;
     ExpressionNodePtr onRightKey;
 };
+
+class Times {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param minOccurance
+     * @param maxOccurance
+     * @param originalQuery
+     */
+    Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery);
+
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param minOccurance
+     * @param maxOccurance
+     * @param originalQuery
+     */
+    Times(const uint64_t occurrences, Query& originalQuery);
+
+    /**
+     * @brief: calls internal the original seqWith function with all the gathered parameters.
+     * @param windowType
+     * @return the query with the result of the original seqWith function is returned.
+     */
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+
+  private:
+    Query& originalQuery;
+    uint64_t minOccurrences;
+    uint64_t maxOccurrences;
+};
 //TODO the 2 methods below are a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
 /**
      * @brief: this function creates a virtual key for the left side of the binary operator
@@ -249,6 +280,20 @@ class Query {
      * @return object where where() function is defined and can be called by user
      */
     CEPOperatorBuilder::Seq seqWith(const Query& subQueryRhs);
+
+    /**
+     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    CEPOperatorBuilder::Times times(const uint64_t minOccurrences, const uint64_t maxOccurrences);
+
+    /**
+     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    CEPOperatorBuilder::Times times(const uint64_t maxOccurrences);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
@@ -328,7 +373,7 @@ class Query {
      * @param maxOccurrences: maximal number of occurrences of a specified event, i.e., tuples
      * @return the pattern
      */
-    Query& times(uint64_t minOccurrences, uint64_t maxOccurrences);
+    //Query& times(uint64_t minOccurrences, uint64_t maxOccurrences);
 
     /**
      * @brief Add sink operator for the query.
