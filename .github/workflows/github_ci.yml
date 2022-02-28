@@ -50,7 +50,7 @@ jobs:
           access_token: ${{ github.token }}
       - name: testing
         run: |
-          ${{ github.event }}
+          echo "${{ github.event }}"
 #      - name: Build Docker
 #        id: builddocker
 #        continue-on-error: true
