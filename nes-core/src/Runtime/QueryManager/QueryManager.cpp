@@ -874,11 +874,12 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestamp();
+        NES_ASSERT(creation != 0, "Error time stamps are wrong");
         auto now =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
         auto diff = now - creation;
-        //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
+//        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
         NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
         statistics->incLatencySum(diff);
 
