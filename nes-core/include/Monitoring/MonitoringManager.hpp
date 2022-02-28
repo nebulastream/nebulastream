@@ -38,9 +38,14 @@ using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 */
 class MonitoringManager {
   public:
-    //  -- Constructors --
-    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
+    /**
+     * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
+     * @param workerClient RPC client
+     * @param topology the topology
+     * @param enableMonitoring flag to indicate if monitoring is enabled or not
+     */
     MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
+    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
     MonitoringManager(const MonitoringManager&) = default;
     MonitoringManager(MonitoringManager&&) = default;
     //  -- Assignment --

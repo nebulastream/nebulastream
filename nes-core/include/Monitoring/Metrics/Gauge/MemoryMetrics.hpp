@@ -36,18 +36,16 @@ class MemoryMetrics {
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
-     * @param schema
      * @param buf
-     * @param prefix
+     * @param tupleIndex
      * @return The object
     */
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
-     * @param schema
      * @param buf
-     * @param prefix
+     * @param tupleIndex
      * @return The object
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
@@ -79,20 +77,18 @@ class MemoryMetrics {
 using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
 
 /**
- * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
- * @param the CpuMetrics
- * @param the schema
+ * @brief Writes metrics objects to a given Schema and TupleBuffer.
+ * @param the metrics
  * @param the TupleBuffer
- * @param the prefix as std::string
- */
+ * @param the tuple index indicating the location of the tuple
+*/
 void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
- * @brief Parses a metrics objects from a given Schema and TupleBuffer.
- * @param schema
- * @param buf
- * @param prefix
- * @return The object
+ * @brief Parses metrics objects from a given Schema and TupleBuffer.
+ * @param the metrics
+ * @param the TupleBuffer
+ * @param the tuple index indicating the location of the tuple
 */
 void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 

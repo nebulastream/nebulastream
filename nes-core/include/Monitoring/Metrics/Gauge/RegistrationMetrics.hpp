@@ -24,12 +24,23 @@ using SerializableRegistrationMetricsPtr = std::shared_ptr<SerializableRegistrat
 namespace NES {
 
 /**
- * Class representing the static metrics within NES.
+ * Class representing the static metrics that are transmitted during node registration in NES.
+ * totalMemoryBytes; the total available memory on the node in bytes
+ * cpuCoreNum; number of cores
+ * totalCPUJiffies; user+idle+system (Note: This value can change everytime it is read via AbstractSystemResourcesReader) Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
+ * cpuPeriodUS; the CPU CFS scheduler period in microseconds
+ * cpuQuotaUS; CPU CFS quota in microseconds
+ * isMoving; flag to indicate if the node is changing geo-location
+ * hasBattery; flag to indicate if the node is running on a battery
  */
 class RegistrationMetrics {
   public:
     RegistrationMetrics();
     RegistrationMetrics(bool isMoving, bool hasBattery);
+    /**
+     * Ctor to create a RegistrationMetrics object out of a protobuf message.
+     * @param metrics in protobuf
+     */
     explicit RegistrationMetrics(const SerializableRegistrationMetrics& metrics);
 
     /**
@@ -74,7 +85,7 @@ class RegistrationMetrics {
 
     uint64_t totalMemoryBytes;
 
-    uint32_t cpuCoreNum;
+    uint64_t cpuCoreNum;
     uint64_t
         totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via AbstractSystemResourcesReader)
 

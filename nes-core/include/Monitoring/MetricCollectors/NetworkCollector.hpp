@@ -20,6 +20,9 @@
 
 namespace NES {
 
+/**
+ * The metric collector class for network metrics. Metric collectors are required for the integration with data sources.
+ */
 class NetworkCollector : public MetricCollector {
   public:
     explicit NetworkCollector();

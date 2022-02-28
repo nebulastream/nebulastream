@@ -12,22 +12,19 @@
     limitations under the License.
 */
 
-#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 
-#include "API/Schema.hpp"
-#include "Monitoring/Util/MetricUtils.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
-#include "Runtime/MemoryLayout/RowLayoutField.hpp"
-#include "Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp"
-#include "Util/Logger.hpp"
-#include "Util/UtilityFunctions.hpp"
+#include <API/Schema.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
-#include <cstring>
 
 namespace NES {
 
 SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
-    auto schema = Schema::create()
+    auto schema = Schema::create(Schema::ROW_LAYOUT)
                       ->addField(prefix + "TOTAL_RAM", BasicType::UINT64)
                       ->addField(prefix + "TOTAL_SWAP", BasicType::UINT64)
                       ->addField(prefix + "FREE_RAM", BasicType::UINT64)
@@ -45,32 +42,45 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
 }
 
 void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    auto byteOffset = tupleIndex * sizeof(MemoryMetrics);
-    NES_ASSERT(byteOffset + sizeof(MemoryMetrics) <= buf.getBufferSize(), "MemoryMetrics: Content does not fit in TupleBuffer");
-    memcpy(tbuffer + byteOffset, this, sizeof(MemoryMetrics));
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+
+    uint64_t cnt = 0;
+    buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_RAM);
+    buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_SWAP);
+    buffer[tupleIndex][cnt++].write<uint64_t>(FREE_RAM);
+    buffer[tupleIndex][cnt++].write<uint64_t>(SHARED_RAM);
+    buffer[tupleIndex][cnt++].write<uint64_t>(BUFFER_RAM);
+    buffer[tupleIndex][cnt++].write<uint64_t>(FREE_SWAP);
+    buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_HIGH);
+    buffer[tupleIndex][cnt++].write<uint64_t>(FREE_HIGH);
+    buffer[tupleIndex][cnt++].write<uint64_t>(PROCS);
+    buffer[tupleIndex][cnt++].write<uint64_t>(MEM_UNIT);
+    buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_1MIN);
+    buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_5MIN);
+    buffer[tupleIndex][cnt++].write<uint64_t>(LOADS_15MIN);
+
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
 void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    //get index where the schema is starting
-    auto schema = getSchema("");
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
-    int cnt = 0;
-    TOTAL_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    TOTAL_SWAP = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    FREE_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    SHARED_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    BUFFER_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    FREE_SWAP = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    TOTAL_HIGH = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    FREE_HIGH = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    PROCS = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    MEM_UNIT = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    LOADS_1MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    LOADS_5MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    LOADS_15MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    uint64_t cnt = 0;
+    TOTAL_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    TOTAL_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();
+    FREE_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    SHARED_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    BUFFER_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
+    FREE_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();
+    TOTAL_HIGH = buffer[tupleIndex][cnt++].read<uint64_t>();
+    FREE_HIGH = buffer[tupleIndex][cnt++].read<uint64_t>();
+    PROCS = buffer[tupleIndex][cnt++].read<uint64_t>();
+    MEM_UNIT = buffer[tupleIndex][cnt++].read<uint64_t>();
+    LOADS_1MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
+    LOADS_5MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
+    LOADS_15MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
 SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
@@ -110,8 +120,6 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const MemoryMetrics& metrics) {
-    return metrics.toJson();
-}
+web::json::value asJson(const MemoryMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES

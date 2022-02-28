@@ -12,24 +12,22 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
 namespace NES {
 
 SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
-    SchemaPtr schema = Schema::create()
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "core_num", BasicType::UINT64)
                            ->addField(prefix + "user", BasicType::UINT64)
                            ->addField(prefix + "nice", BasicType::UINT64)
@@ -45,30 +43,41 @@ SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
 }
 
 void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    auto byteOffset = tupleIndex * sizeof(CpuMetrics);
-    NES_ASSERT(byteOffset + sizeof(CpuMetrics) <= buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
-    memcpy(tbuffer + byteOffset, this, sizeof(CpuMetrics));
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+
+    uint64_t cnt = 0;
+    buffer[tupleIndex][cnt++].write<uint64_t>(core_num);
+    buffer[tupleIndex][cnt++].write<uint64_t>(user);
+    buffer[tupleIndex][cnt++].write<uint64_t>(nice);
+    buffer[tupleIndex][cnt++].write<uint64_t>(system);
+    buffer[tupleIndex][cnt++].write<uint64_t>(idle);
+    buffer[tupleIndex][cnt++].write<uint64_t>(iowait);
+    buffer[tupleIndex][cnt++].write<uint64_t>(irq);
+    buffer[tupleIndex][cnt++].write<uint64_t>(softirq);
+    buffer[tupleIndex][cnt++].write<uint64_t>(steal);
+    buffer[tupleIndex][cnt++].write<uint64_t>(guest);
+    buffer[tupleIndex][cnt++].write<uint64_t>(guestnice);
+
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
 void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    //get index where the schema is starting
-    auto schema = getSchema("");
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
     int cnt = 0;
-    core_num = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    core_num = buffer[tupleIndex][cnt++].read<uint64_t>();
+    user = buffer[tupleIndex][cnt++].read<uint64_t>();
+    nice = buffer[tupleIndex][cnt++].read<uint64_t>();
+    system = buffer[tupleIndex][cnt++].read<uint64_t>();
+    idle = buffer[tupleIndex][cnt++].read<uint64_t>();
+    iowait = buffer[tupleIndex][cnt++].read<uint64_t>();
+    irq = buffer[tupleIndex][cnt++].read<uint64_t>();
+    softirq = buffer[tupleIndex][cnt++].read<uint64_t>();
+    steal = buffer[tupleIndex][cnt++].read<uint64_t>();
+    guest = buffer[tupleIndex][cnt++].read<uint64_t>();
+    guestnice = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
@@ -103,16 +112,14 @@ bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
 
 bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.writeToBuffer(buf, byteOffset);
+void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.readFromBuffer(buf, byteOffset);
+void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const CpuMetrics& metrics) {
-    return metrics.toJson();
-}
+web::json::value asJson(const CpuMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES

@@ -20,6 +20,9 @@
 
 namespace NES {
 
+/**
+ * The metric collector class for disk metrics. Metric collectors are required for the integration with data sources.
+ */
 class DiskCollector : public MetricCollector {
   public:
     explicit DiskCollector();

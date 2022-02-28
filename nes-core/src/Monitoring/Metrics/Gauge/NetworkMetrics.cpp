@@ -12,26 +12,22 @@
     limitations under the License.
 */
 
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
-#include "API/AttributeField.hpp"
-#include "API/Schema.hpp"
-#include "Common/DataTypes/FixedChar.hpp"
-#include "Monitoring/Util/MetricUtils.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
-#include "Runtime/MemoryLayout/RowLayoutField.hpp"
-#include "Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp"
-#include "Runtime/TupleBuffer.hpp"
-#include "Util/Logger.hpp"
-#include "Util/UtilityFunctions.hpp"
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/FixedChar.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
-#include <cstring>
 
 namespace NES {
 
 SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
-    SchemaPtr schema = Schema::create()
+    SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "name", BasicType::UINT64)
                            ->addField(prefix + "rBytes", BasicType::UINT64)
                            ->addField(prefix + "rPackets", BasicType::UINT64)
@@ -55,37 +51,55 @@ SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
 }
 
 void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    auto byteOffset = tupleIndex * sizeof(NetworkMetrics);
-    NES_ASSERT(byteOffset + sizeof(NetworkMetrics) <= buf.getBufferSize(), "NetworkMetrics: Content does not fit in TupleBuffer");
-    memcpy(tbuffer + byteOffset, this, sizeof(NetworkMetrics));
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(NetworkMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+
+    uint64_t cnt = 0;
+    buffer[tupleIndex][cnt++].write<uint64_t>(interfaceName);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rBytes);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rPackets);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rErrs);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rDrop);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rFifo);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rFrame);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rCompressed);
+    buffer[tupleIndex][cnt++].write<uint64_t>(rMulticast);
+
+    buffer[tupleIndex][cnt++].write<uint64_t>(tBytes);
+    buffer[tupleIndex][cnt++].write<uint64_t>(tPackets);
+    buffer[tupleIndex][cnt++].write<uint64_t>(tErrs);
+    buffer[tupleIndex][cnt++].write<uint64_t>(tDrop);
+    buffer[tupleIndex][cnt++].write<uint64_t>(tFifo);
+    buffer[tupleIndex][cnt++].write<uint64_t>(tColls);
+    buffer[tupleIndex][cnt++].write<uint64_t>(tCarrier);
+    buffer[tupleIndex][cnt++].write<uint64_t>(tCompressed);
+
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
 void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
-    //get index where the schema is starting
-    auto schema = getSchema("");
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(NetworkMetrics::getSchema(""), buf.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
-    int cnt = 0;
-    interfaceName = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rFrame = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    rMulticast = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    uint64_t cnt = 0;
+    interfaceName = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rPackets = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rErrs = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rDrop = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rFifo = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rFrame = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rCompressed = buffer[tupleIndex][cnt++].read<uint64_t>();
+    rMulticast = buffer[tupleIndex][cnt++].read<uint64_t>();
 
-    tBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    tPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    tErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    tDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    tFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    tColls = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    tCarrier = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
-    tCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    tBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
+    tPackets = buffer[tupleIndex][cnt++].read<uint64_t>();
+    tErrs = buffer[tupleIndex][cnt++].read<uint64_t>();
+    tDrop = buffer[tupleIndex][cnt++].read<uint64_t>();
+    tFifo = buffer[tupleIndex][cnt++].read<uint64_t>();
+    tColls = buffer[tupleIndex][cnt++].read<uint64_t>();
+    tCarrier = buffer[tupleIndex][cnt++].read<uint64_t>();
+    tCompressed = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
 web::json::value NetworkMetrics::toJson() const {
@@ -129,8 +143,6 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-web::json::value asJson(const NetworkMetrics& metrics) {
-    return metrics.toJson();
-}
+web::json::value asJson(const NetworkMetrics& metrics) { return metrics.toJson(); }
 
 }// namespace NES

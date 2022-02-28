@@ -32,21 +32,21 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class CustomMonitoringTest : public Testing::NESBaseTest {
+class UserDefinedMonitoringTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
 
     static void SetUpTestCase() {
-        NES::setupLogging("CustomMonitoringTest.log", NES::LOG_DEBUG);
-        NES_INFO("ResourcesReaderTest: Setup CustomMonitoringTest test class.");
+        NES::setupLogging("UserDefinedMonitoringTest.log", NES::LOG_DEBUG);
+        NES_INFO("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "CustomMonitoringTest: Tear down CustomMonitoringTest class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest class." << std::endl; }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        std::cout << "CustomMonitoringTest: Setup CustomMonitoringTest test case." << std::endl;
+        std::cout << "UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case." << std::endl;
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
@@ -54,10 +54,10 @@ class CustomMonitoringTest : public Testing::NESBaseTest {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "CustomMonitoringTest: Tear down CustomMonitoringTest test case." << std::endl; }
+    void TearDown() override { std::cout << "UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest test case." << std::endl; }
 };
 
-TEST_F(CustomMonitoringTest, testRuntimeConcepts) {
+TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
     web::json::value metricsJson{};
     std::vector<Metric> metrics;
 
@@ -70,10 +70,10 @@ TEST_F(CustomMonitoringTest, testRuntimeConcepts) {
         metricsJson[i] = asJson(metrics[i]);
     }
 
-    NES_DEBUG("CustomMonitoringTest: Json Concepts: " << metricsJson);
+    NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: " << metricsJson);
 }
 
-TEST_F(CustomMonitoringTest, testJsonRuntimeConcepts) {
+TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
     auto monitoringPlan = MonitoringPlan::createDefaultPlan();
     auto monitoringCatalog = MonitoringCatalog::defaultCatalog();
     web::json::value metricsJson{};
@@ -83,7 +83,7 @@ TEST_F(CustomMonitoringTest, testJsonRuntimeConcepts) {
         Metric metric = collector->readMetric();
         metricsJson[toString(metric.getMetricType())] = asJson(metric);
     }
-    NES_DEBUG("CustomMonitoringTest: Json Concepts: " << metricsJson);
+    NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: " << metricsJson);
 }
 
 }// namespace NES

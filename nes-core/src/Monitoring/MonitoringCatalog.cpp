@@ -42,8 +42,8 @@ MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
     return create(metrics);
 }
 
-MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricCollectorType) {
-    return metricMap.at(metricCollectorType);
+MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) {
+    return metricMap.at(metricType);
 }
 
 }// namespace NES
