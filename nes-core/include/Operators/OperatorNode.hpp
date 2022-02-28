@@ -31,6 +31,7 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class OperatorNode : public Node {
   public:
     explicit OperatorNode(OperatorId id);
+    explicit OperatorNode(OperatorId id, std::vector<uint64_t> inputOriginIds);
 
     ~OperatorNode() noexcept override = default;
 
@@ -188,7 +189,7 @@ class OperatorNode : public Node {
     /**
      * @brief List of input origin ids
      */
-     std::vector<uint64_t> inputOriginIds;
+    std::vector<uint64_t> inputOriginIds;
 };
 
 }// namespace NES

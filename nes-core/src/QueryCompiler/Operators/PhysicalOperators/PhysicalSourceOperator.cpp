@@ -23,14 +23,14 @@ PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
     : OperatorNode(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
       sourceDescriptor(std::move(sourceDescriptor)) {}
 
-PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
+std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(OperatorId id,
                                                    const SchemaPtr& inputSchema,
                                                    const SchemaPtr& outputSchema,
                                                    const SourceDescriptorPtr& sourceDescriptor) {
     return std::make_shared<PhysicalSourceOperator>(id, inputSchema, outputSchema, sourceDescriptor);
 }
 
-PhysicalOperatorPtr
+std::shared_ptr<PhysicalSourceOperator>
 PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor) {
     return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
 }

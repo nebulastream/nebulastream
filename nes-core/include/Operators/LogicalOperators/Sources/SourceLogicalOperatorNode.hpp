@@ -52,6 +52,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
     OperatorNodePtr copy() override;
     void setProjectSchema(SchemaPtr schema);
     void setOriginId(uint64_t originId);
+    uint64_t getOriginId();
 
     void inferInputOrigins() override;
 

@@ -116,6 +116,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
             PhysicalOperators::PhysicalSourceOperator::create(logicalSourceOperator->getInputSchema(),
                                                               logicalSourceOperator->getOutputSchema(),
                                                               logicalSourceOperator->getSourceDescriptor());
+        physicalSourceOperator->setOriginId(logicalSourceOperator->getOriginId());
         operatorNode->replace(physicalSourceOperator);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         auto logicalSinkOperator = operatorNode->as<SinkLogicalOperatorNode>();
@@ -257,6 +258,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
+    // TODO this currently just mimics the old usage of the set of input origins.
+    windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
