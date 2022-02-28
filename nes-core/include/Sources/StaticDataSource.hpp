@@ -18,6 +18,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <fstream>
 
 namespace NES {
 
@@ -70,6 +71,10 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      */
     void onEvent(Runtime::BaseEvent &) final;
 
+    void open() override;
+
+    void preloadBuffers();
+
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
@@ -97,19 +102,31 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
     virtual void recycleUnpooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
 
   private:
+    /* message & late start system */
     bool lateStart;
     bool startCalled = false;
 
+    /* preloading */
+    bool eagerLoading = true;
+    bool onlySendDataWhenLoadingIsFinished = true;
+
+    /* file parsing */
+    bool fileEnded = false;
+    std::ifstream input;
+    CSVParserPtr inputParser;
+    uint64_t currentPositionInFile{0};
+    std::vector<Runtime::TupleBuffer> filledBuffers;
+
     std::string pathTableFile;
     uint64_t numTuplesPerBuffer;
-    std::shared_ptr<uint8_t> memoryArea;
-    size_t memoryAreaSize;
-    uint64_t currentPositionInBytes;
     uint64_t tupleSizeInBytes;
     uint64_t bufferSize;
-    size_t numTuples;// in table
 
-    void fillBuffer(::NES::Runtime::TupleBuffer& buffer);
+    size_t numTuples;// in table
+    size_t numTuplesEmitted = 0;
+    size_t numBuffersEmitted = 0;
+
+    void fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer);
 };
 
 using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;

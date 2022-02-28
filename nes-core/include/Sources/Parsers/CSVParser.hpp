@@ -19,6 +19,9 @@
 
 namespace NES {
 
+class CSVParser;
+using CSVParserPtr = std::shared_ptr<CSVParser>;
+
 class CSVParser : public Parser {
 
   public:

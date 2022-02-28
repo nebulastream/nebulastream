@@ -16,7 +16,7 @@
 #define NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Sources/StaticDataSource.hpp>
+#include <Util/GatheringMode.hpp>
 #include <Util/SourceMode.hpp>
 
 namespace NES::Experimental {

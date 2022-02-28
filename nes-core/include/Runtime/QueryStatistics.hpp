@@ -55,6 +55,12 @@ class QueryStatistics {
     [[nodiscard]] uint64_t getTimestampQueryStart() const;
 
     /**
+   * @brief getter for timestampFirstProcessedTask
+   * @return timestampFirstProcessedTask  In MS.
+   */
+    [[nodiscard]] uint64_t getTimestampFirstProcessedTask() const;
+
+    /**
    * @brief getter for timestampLastProcessedTask
    * @return timestampLastProcessedTask  In MS.
    */
@@ -82,6 +88,14 @@ class QueryStatistics {
     * @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
    */
     void setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite);
+
+
+    /**
+    * @brief setter for timestampFirstProcessedTask
+    * @param timestampFirstProcessedTask In MS.
+    * @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
+   */
+    void setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite);
 
     /**
    * @brief setter for timestampLastProcessedTask
@@ -206,6 +220,7 @@ class QueryStatistics {
     std::atomic<uint64_t> availableFixedBufferSum = 0;
 
     std::atomic<uint64_t> timestampQueryStart = 0;
+    std::atomic<uint64_t> timestampFirstProcessedTask = 0;
     std::atomic<uint64_t> timestampLastProcessedTask = 0;
 
   private:
