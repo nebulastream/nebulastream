@@ -59,8 +59,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                       GatheringMode::INTERVAL_MODE,// todo: this is a placeholder. gathering mode is unnecessary for static data.
                       std::move(successors)),
                       lateStart(lateStart),
-                      pathTableFile(pathTableFile),
-                      currentPositionInBytes(0) {
+                      pathTableFile(pathTableFile) {
 
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
@@ -70,7 +69,6 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     this->sourceAffinity = sourceAffinity;
     bufferSize = localBufferManager->getBufferSize();
 
-    std::ifstream input;
     input.open(this->pathTableFile);
     NES_ASSERT(input.is_open(),
                "StaticDataSource: "
@@ -83,14 +81,8 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     // reset ifstream to beginning of file
     input.seekg(0, input.beg);
 
-    memoryAreaSize = tupleSizeInBytes * numTuples;
-    uint8_t* memoryAreaPtr = reinterpret_cast<uint8_t*>(malloc(memoryAreaSize));
-    memoryArea = static_cast<const std::shared_ptr<uint8_t>>(memoryAreaPtr);
-
-    // setup a dynamic buffer around the memoryArea, so that the CSV parser can fill it
-    auto rowLayout = ::NES::Runtime::MemoryLayouts::RowLayout::create(this->schema, memoryAreaSize);
-    auto wrappedMemory = ::NES::Runtime::TupleBuffer::wrapMemory(memoryAreaPtr, memoryAreaSize, this);
-    auto dynamicBuffer = ::NES::Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, wrappedMemory);
+    numTuplesPerBuffer = bufferSize / tupleSizeInBytes;
+    numBuffersToProcess = numTuples / numTuplesPerBuffer + (numTuples % numTuplesPerBuffer != 0);
 
     // setup file parser
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -100,37 +92,22 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
         physicalTypes.push_back(physicalField);
     }
     std::string delimiter = "|";
-    auto inputParser = std::make_shared<CSVParser>(this->schema->getSize(), physicalTypes, delimiter);
+    inputParser = std::make_shared<CSVParser>(this->schema->getSize(), physicalTypes, delimiter);
 
-    // read file into memory
-    std::string line;
-    for (size_t tupleCount = 0; tupleCount < numTuples; tupleCount++) {
-        std::getline(input, line);
-        NES_TRACE("StaticDataSource line=" << tupleCount << " val=" << line);
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, this->schema);
+    NES_DEBUG("StaticDataSource() eagerLoading=" << eagerLoading
+                << " numBuffersToProcess=" << numBuffersToProcess
+                << " numBuffersToProcess=" << numBuffersToProcess
+                << " numTuplesPerBuffer=" << numTuplesPerBuffer);
+
+
+    if (eagerLoading) {
+        this->numSourceLocalBuffers = this->numBuffersToProcess;
+        preloadBuffers();
     }
-
-    // if the memory area is smaller than a buffer
-    if (memoryAreaSize <= bufferSize) {
-        numTuplesPerBuffer = std::floor(double(memoryAreaSize) / double(this->tupleSizeInBytes));
-    } else {
-        //if the memory area spans multiple buffers
-        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->tupleSizeInBytes;
-        auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->tupleSizeInBytes));
-        if (restTuples > numberOfTuplesPerBuffer) {
-            numTuplesPerBuffer = numberOfTuplesPerBuffer;
-        } else {
-            numTuplesPerBuffer = restTuples;
-        }
-    }
-
-    // we know how many buffers this static source contains.
-    // the last buffer might not be full but every tuple will get emitted.
-    numTuplesPerBuffer = bufferSize / tupleSizeInBytes;
-    this->numBuffersToProcess = (numTuples + numTuplesPerBuffer - 1) / numTuplesPerBuffer;// same div trick as above
-
-    NES_DEBUG("StaticDataSource() memoryAreaSize=" << memoryAreaSize);
-    NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
+    auto now =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+            .count();
+    NES_WARNING("StaticDataSource created. (Eager loading: " << eagerLoading << ") Timestamp: " << now);
 }
 
 bool StaticDataSource::start() {
@@ -163,54 +140,91 @@ void StaticDataSource::onEvent(Runtime::BaseEvent & event) {
     }
 }
 
-std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {
-    NES_DEBUG("StaticDataSource::receiveData called on " << operatorId);
-    auto buffer = this->bufferManager->getBufferBlocking();
-    fillBuffer(buffer);
-    NES_DEBUG("StaticDataSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
-
-    if (buffer.getNumberOfTuples() == 0) {
-        return std::nullopt;
+void StaticDataSource::open() {
+    // in the case of eager loading the static data source has already been opened
+    if (!eagerLoading) {
+        DataSource::open();
     }
-    return buffer;
+
+    // but we might want to wait for the preloading to finish, for benchmarking reasons:
+    if (eagerLoading && this->bufferManager != nullptr // <- has previously been opened
+        && onlySendDataWhenLoadingIsFinished) {
+        while (filledBuffers.size() < numBuffersToProcess) {
+            // this will stall the start of runningRouting()
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
 }
 
-void StaticDataSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
-    NES_DEBUG("StaticDataSource::fillBuffer: start at pos=" << currentPositionInBytes << " memoryAreaSize=" << memoryAreaSize);
-    if (generatedTuples >= numTuples) {
+void StaticDataSource::preloadBuffers() {
+    // open source, register bufferManager:
+    DataSource::open();
+
+    // preload buffers:
+    for (size_t i = 0; i < numBuffersToProcess; ++i) {
+        auto dynamicBuffer = DataSource::allocateBuffer();
+        fillBuffer(dynamicBuffer);
+        filledBuffers.push_back(dynamicBuffer.getBuffer());
+    }
+}
+
+std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {
+    NES_DEBUG("StaticDataSource::receiveData called on " << operatorId);
+    if (numBuffersToProcess == numBuffersEmitted || numTuples == numTuplesEmitted) {
+        NES_DEBUG("StaticDataSource::receiveData: All data emitted, return nullopt");
+        return std::nullopt;
+    }
+
+    if (eagerLoading) {
+        // todo alternatively we could keep buffers and not recycle them
+        NES_DEBUG("StaticDataSource::receiveData: Emit preloaded buffer.");
+        NES_ASSERT2_FMT(!filledBuffers.empty(), "StaticDataSource buffers should be preloaded.");
+        auto buffer = filledBuffers.front();
+        filledBuffers.erase(filledBuffers.begin());
+        return buffer;
+    }
+
+    NES_DEBUG("StaticDataSource::receiveData: Read and emit new buffer from " << pathTableFile);
+    auto dynamicBuffer = DataSource::allocateBuffer();
+    fillBuffer(dynamicBuffer);
+    return dynamicBuffer.getBuffer();
+}
+
+void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
+    NES_DEBUG("StaticDataSource::fillBuffer: start at pos=" << currentPositionInFile);
+    if (this->fileEnded) {
         NES_WARNING("StaticDataSource::fillBuffer: but file has already ended");
         buffer.setNumberOfTuples(0);
         return;
     }
+    input.seekg(currentPositionInFile, std::ifstream::beg);
 
     uint64_t generatedTuplesThisPass = 0;
-    // fill buffer maximally
-    if (numTuplesPerBuffer == 0) {
-        generatedTuplesThisPass = buffer.getBufferSize() / tupleSizeInBytes;
-    } else {
-        generatedTuplesThisPass = numTuplesPerBuffer;
+    //fill buffer maximally
+    NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSizeInBytes < buffer.getBuffer().getBufferSize(), "Wrong parameters");
+    NES_DEBUG("StaticDataSource::fillBuffer: fill buffer with #tuples=" << numTuplesPerBuffer
+                << " of size=" << tupleSizeInBytes);
+
+    std::string line;
+    uint64_t tupleCount = 0;
+
+    while (tupleCount < numTuplesPerBuffer) {
+        if (generatedTuples >= numTuples) {
+            fileEnded = true;
+            break;
+        }
+        std::getline(input, line);
+        NES_TRACE("StaticDataSource line=" << tupleCount << " val=" << line);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema);
+        ++tupleCount;
+        ++generatedTuples;
     }
-    // with all tuples remaining
-    if (generatedTuples + generatedTuplesThisPass > numTuples) {
-        generatedTuplesThisPass = numTuples - generatedTuples;
-    }
-    NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSizeInBytes < buffer.getBufferSize(), "Wrong parameters");
 
-    NES_DEBUG("StaticDataSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass
-                                                                        << " of size=" << tupleSizeInBytes);
-
-    uint8_t* tmp = memoryArea.get() + currentPositionInBytes;
-    memcpy(buffer.getBuffer(), tmp, tupleSizeInBytes * generatedTuplesThisPass);
-
-    buffer.setNumberOfTuples(generatedTuplesThisPass);
-    generatedTuples += generatedTuplesThisPass;
-    currentPositionInBytes = generatedTuples * tupleSizeInBytes;
+    currentPositionInFile = input.tellg();
+    buffer.setNumberOfTuples(tupleCount);
     generatedBuffers++;
-
-    NES_TRACE("StaticDataSource::fillBuffer: emitted buffer. generatedBuffers="
-              << generatedBuffers << " generatedTuples=" << generatedTuples
-              << " currentPositionInBytes=" << currentPositionInBytes);
-    NES_TRACE("StaticDataSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer, schema));
+    NES_DEBUG("StaticDataSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
+    NES_TRACE("StaticDataSource::fillBuffer: read filled buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 std::string StaticDataSource::toString() const {

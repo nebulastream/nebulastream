@@ -14,6 +14,8 @@
 
 #include <Runtime/QueryStatistics.hpp>
 #include <sstream>
+#include <Util/Logger.hpp>
+
 namespace NES::Runtime {
 
 uint64_t QueryStatistics::getProcessedTasks() const { return processedTasks.load(); }
@@ -23,6 +25,8 @@ uint64_t QueryStatistics::getProcessedTuple() const { return processedTuple.load
 uint64_t QueryStatistics::getProcessedBuffers() const { return processedBuffers.load(); }
 
 uint64_t QueryStatistics::getTimestampQueryStart() const { return timestampQueryStart.load(); }
+
+uint64_t QueryStatistics::getTimestampFirstProcessedTask() const { return timestampFirstProcessedTask.load(); }
 
 uint64_t QueryStatistics::getTimestampLastProcessedTask() const { return timestampLastProcessedTask.load(); }
 
@@ -41,7 +45,14 @@ void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->process
 
 void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite = false) {
     if (!noOverwrite || this->timestampQueryStart == 0) {
+        NES_DEBUG("QueryStatistics::setTimestampQueryStart called with " << timestampQueryStart);
         this->timestampQueryStart = timestampQueryStart;
+    }
+}
+void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite = false) {
+    if (!noOverwrite || this->timestampFirstProcessedTask == 0) {
+        NES_DEBUG("QueryStatistics::setTimestampFirstProcessedTask called with " << timestampFirstProcessedTask);
+        this->timestampFirstProcessedTask = timestampFirstProcessedTask;
     }
 }
 
