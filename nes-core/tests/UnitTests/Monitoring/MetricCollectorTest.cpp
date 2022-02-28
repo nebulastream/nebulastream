@@ -32,6 +32,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Storage/MetricStore.hpp>
 
 namespace NES {
@@ -80,20 +81,29 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
+    auto reader = SystemResourcesReaderFactory::getSystemResourcesReader();
+    auto readMetrics = reader->readNetworkStats();
+
     auto networkCollector = NetworkCollector();
     Metric networkMetric = networkCollector.readMetric();
     EXPECT_EQ(networkMetric.getMetricType(), MetricType::WrappedNetworkMetrics);
 
     NetworkMetricsWrapper wrappedMetric = networkMetric.getValue<NetworkMetricsWrapper>();
-    NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
+    EXPECT_EQ(readMetrics.size(), wrappedMetric.size());
 
-    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    totalMetrics.writeToBuffer(tupleBuffer, 0);
-    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+    if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
+        NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
 
-    NetworkMetrics parsedMetric{};
-    readFromBuffer(parsedMetric, tupleBuffer, 0);
-    EXPECT_EQ(totalMetrics, parsedMetric);
+        auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+        totalMetrics.writeToBuffer(tupleBuffer, 0);
+        EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+
+        NetworkMetrics parsedMetric{};
+        readFromBuffer(parsedMetric, tupleBuffer, 0);
+        EXPECT_EQ(totalMetrics, parsedMetric);
+    } else {
+        NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorSingleMetrics. Abstract reader found.");
+    }
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
@@ -112,20 +122,29 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
+    auto reader = SystemResourcesReaderFactory::getSystemResourcesReader();
+    auto readMetrics = reader->readCpuStats();
+
     auto cpuCollector = CpuCollector();
     Metric cpuMetric = cpuCollector.readMetric();
     EXPECT_EQ(cpuMetric.getMetricType(), MetricType::WrappedCpuMetrics);
 
     CpuMetricsWrapper wrappedMetric = cpuMetric.getValue<CpuMetricsWrapper>();
-    CpuMetrics totalMetrics = wrappedMetric.getValue(0);
+    EXPECT_EQ(readMetrics.size(), wrappedMetric.size());
 
-    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    totalMetrics.writeToBuffer(tupleBuffer, 0);
-    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+    if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
+        CpuMetrics totalMetrics = wrappedMetric.getValue(0);
 
-    CpuMetrics parsedMetric;
-    readFromBuffer(parsedMetric, tupleBuffer, 0);
-    EXPECT_EQ(totalMetrics, parsedMetric);
+        auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+        totalMetrics.writeToBuffer(tupleBuffer, 0);
+        EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+
+        CpuMetrics parsedMetric;
+        readFromBuffer(parsedMetric, tupleBuffer, 0);
+        EXPECT_EQ(totalMetrics, parsedMetric);
+    } else {
+        NES_DEBUG("MetricCollectorTest: Skipping testCpuCollectorSingleMetrics. Abstract reader found.");
+    }
 }
 
 TEST_F(MetricCollectorTest, testDiskCollector) {
