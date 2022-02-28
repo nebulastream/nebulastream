@@ -95,7 +95,8 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                                                const NesPartition& nesPartition,
                                                                Runtime::BufferManagerPtr bufferManager,
                                                                std::chrono::milliseconds waitTime,
-                                                               uint8_t retryTimes) {
+                                                               uint8_t retryTimes,
+                                                               std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer) {
     NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
     return NetworkChannel::create(server->getContext(),
@@ -104,7 +105,8 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
                                   exchangeProtocol,
                                   std::move(bufferManager),
                                   waitTime,
-                                  retryTimes);
+                                  retryTimes,
+                                  std::move(buffer));
 }
 
 EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(const NodeLocation& nodeLocation,

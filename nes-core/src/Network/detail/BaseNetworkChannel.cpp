@@ -22,9 +22,10 @@ namespace NES::Network::detail {
 BaseNetworkChannel::BaseNetworkChannel(zmq::socket_t&& zmqSocket,
                                        const ChannelId channelId,
                                        std::string&& address,
-                                       Runtime::BufferManagerPtr&& bufferManager)
+                                       Runtime::BufferManagerPtr&& bufferManager,
+                                       std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer)
     : socketAddr(std::move(address)), zmqSocket(std::move(zmqSocket)), channelId(channelId),
-      bufferManager(std::move(bufferManager)) {}
+      bufferManager(std::move(bufferManager)), buffer(std::move(buffer)) {}
 
 void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
 
@@ -43,5 +44,8 @@ void BaseNetworkChannel::close(bool isEventOnly) {
 }
 void BaseNetworkChannel::setBuffering(bool status) {
     isBuffering = status;
+}
+std::queue<std::pair<Runtime::TupleBuffer, uint64_t>> BaseNetworkChannel::stealBuffer() {
+    return std::move(buffer);
 }
 }// namespace NES::Network::detail

@@ -29,6 +29,8 @@ enum ReconfigurationType : uint8_t {
     HardEndOfStream,
     //use BufferData for reconfiguration tasks that stop transfer of data over NetworkSinks and instead buffer data on NetworkSink OutputChannels
     BufferData,
+    //use UpdateNetworkSink for reconfiguration tasks that change where a NetworkSink sends data to
+    UpdateNetworkSink,
 
 };
 }

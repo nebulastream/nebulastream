@@ -83,12 +83,19 @@ class NetworkDataSender : public BaseChannelType {
         return false;
     }
 
-    void unbufferData(){
+    bool emptyBuffer(){
         while(!this->buffer.empty()){
             std::pair<Runtime::TupleBuffer, uint64_t> pair = this->buffer.front();
-            sendBuffer(pair.first, pair.second);
-            this->buffer.pop();
+            if(sendBuffer(pair.first, pair.second)) {
+                this->buffer.pop();
+                continue;
+            }
+            else {
+                NES_DEBUG("NetworkDataSender: Error sending buffered data");
+                return false;
+            }
         }
+        return  true;
     }
 };
 

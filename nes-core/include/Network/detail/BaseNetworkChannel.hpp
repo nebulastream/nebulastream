@@ -46,7 +46,8 @@ class BaseNetworkChannel {
     explicit BaseNetworkChannel(zmq::socket_t&& zmqSocket,
                                 ChannelId channelId,
                                 std::string&& address,
-                                Runtime::BufferManagerPtr&& bufferManager);
+                                Runtime::BufferManagerPtr&& bufferManager,
+                                std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer = {});
 
     /**
      * @brief Method to handle the error
@@ -61,6 +62,8 @@ class BaseNetworkChannel {
     void close(bool isEventOnly);
 
     void setBuffering(bool status);
+
+    std::queue<std::pair<Runtime::TupleBuffer,uint64_t>> stealBuffer();
 
     //why arent virtual functions allowed here?
 

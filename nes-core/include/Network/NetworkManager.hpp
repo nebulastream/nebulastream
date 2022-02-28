@@ -23,7 +23,7 @@
 #include <functional>
 #include <memory>
 #include <string>
-
+#include <queue>
 namespace NES::Network {
 
 /**
@@ -122,7 +122,8 @@ class NetworkManager {
                                                    const NesPartition& nesPartition,
                                                    Runtime::BufferManagerPtr bufferManager,
                                                    std::chrono::milliseconds waitTime,
-                                                   uint8_t retryTimes);
+                                                   uint8_t retryTimes,
+                                                   std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer = {});
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to

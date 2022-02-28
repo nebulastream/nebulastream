@@ -20,6 +20,7 @@
 #include <Network/detail/NetworkDataSender.hpp>
 #include <Network/detail/NetworkEventSender.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <queue>
 
 namespace NES {
 namespace Network {
@@ -48,7 +49,8 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     explicit NetworkChannel(zmq::socket_t&& zmqSocket,
                             ChannelId channelId,
                             std::string&& address,
-                            Runtime::BufferManagerPtr bufferManager);
+                            Runtime::BufferManagerPtr bufferManager,
+                            std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer = {});
 
     /**
      * @brief close the output channel and release resources
@@ -81,7 +83,8 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
                                     ExchangeProtocol& protocol,
                                     Runtime::BufferManagerPtr bufferManager,
                                     std::chrono::milliseconds waitTime,
-                                    uint8_t retryTimes);
+                                    uint8_t retryTimes,
+                                    std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer = {});
 };
 
 /**
@@ -103,7 +106,8 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
     explicit EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
                                      ChannelId channelId,
                                      std::string&& address,
-                                     Runtime::BufferManagerPtr bufferManager);
+                                     Runtime::BufferManagerPtr bufferManager,
+                                     std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer);
 
     /**
      * @brief close the output channel and release resources

@@ -29,7 +29,8 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         ExchangeProtocol& protocol,
                                         Runtime::BufferManagerPtr bufferManager,
                                         std::chrono::milliseconds waitTime,
-                                        uint8_t retryTimes) {
+                                        uint8_t retryTimes,
+                                        std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer = {}) {
     // TODO create issue to make the network channel allocation async
     // TODO currently, we stall the worker threads
     // TODO as a result, this kills performance of running queries if we submit a new query
@@ -94,7 +95,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                         break;
                     }
                     NES_DEBUG(channelName << ": Connection established with server " << socketAddr << " for " << channelId);
-                    return std::make_unique<T>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(bufferManager));
+                    return std::make_unique<T>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(bufferManager), std::move(buffer));
                 }
                 case Messages::MessageType::ErrorMessage: {
                     // if server receives a message that an error occurred
@@ -149,8 +150,9 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
 NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
                                const ChannelId channelId,
                                std::string&& address,
-                               Runtime::BufferManagerPtr bufferManager)
-    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {
+                               Runtime::BufferManagerPtr bufferManager,
+                               std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer)
+    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager), std::move(buffer)) {
     NES_DEBUG("Initializing NetworkChannel " << channelId);
 }
 
@@ -164,21 +166,24 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                          ExchangeProtocol& protocol,
                                          Runtime::BufferManagerPtr bufferManager,
                                          std::chrono::milliseconds waitTime,
-                                         uint8_t retryTimes) {
+                                         uint8_t retryTimes,
+                                         std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer) {
     return detail::createNetworkChannel<NetworkChannel>(zmqContext,
                                                         std::move(socketAddr),
                                                         nesPartition,
                                                         protocol,
                                                         bufferManager,
                                                         waitTime,
-                                                        retryTimes);
+                                                        retryTimes,
+                                                        std::move(buffer));
 }
 
 EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
                                                  const ChannelId channelId,
                                                  std::string&& address,
-                                                 Runtime::BufferManagerPtr bufferManager)
-    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {
+                                                 Runtime::BufferManagerPtr bufferManager,
+                                                 std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& buffer)
+    : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager), std::move(buffer)) {
     NES_DEBUG("Initializing EventOnlyNetworkChannel " << channelId);
 }
 
