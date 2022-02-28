@@ -373,12 +373,9 @@ class LambdaSourceProxy : public LambdaSource {
 
 class MonitoringSourceProxy : public MonitoringSource {
   public:
-    MonitoringSourceProxy(const MonitoringPlanPtr& monitoringPlan,
-                          MetricCatalogPtr metricCatalog,
+    MonitoringSourceProxy(const MetricCollectorPtr& metricCollector,
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
-                          const uint64_t numbersOfBufferToProduce,
-                          uint64_t gatheringInterval,
                           uint64_t numbersOfBufferToProduce,
                           uint64_t frequency,
                           OperatorId operatorId,
@@ -388,7 +385,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                            bufferManager,
                            queryManager,
                            numbersOfBufferToProduce,
-                           gatheringInterval,
+                           frequency,
                            operatorId,
                            numSourceLocalBuffers,
                            successors){};

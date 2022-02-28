@@ -13,8 +13,12 @@
 
 add_source_files(nes-core
         AbstractSystemResourcesReader.cpp
-        LinuxSystemResourcesReader.cpp
         SystemResourcesReaderFactory.cpp
-)
+        )
 
-
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Linux-specific stuff
+    add_source_files(nes-core
+            LinuxSystemResourcesReader.cpp
+            )
+endif ()
