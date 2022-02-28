@@ -82,7 +82,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                    << " check key=" << rightHashTable.first
                                                                    << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
-                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN){
+                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN) {
                         if (leftHashTable.first == rightHashTable.first) {
 
                             NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
@@ -167,34 +167,20 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto leftLock = std::unique_lock(leftStore->mutex());
         auto listLeft = leftStore->getAppendList();
         auto slicesLeft = leftStore->getSliceMetadata();
-        NES_TRACE("content left side for key=" << key);
-        size_t id = 0;
-        for (auto& left : slicesLeft) {
-            NES_TRACE("left start=" << left.getStartTs() << " left end=" << left.getEndTs() << " id=" << id++);
-        }
 
-        NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: leftStore trigger " << windows.size() << " windows, on "
-                                                           << slicesLeft.size() << " slices");
-        for (uint64_t sliceId = 0; sliceId < slicesLeft.size(); sliceId++) {
-            NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << "::leftStore trigger sliceid=" << sliceId
-                                                               << " start=" << slicesLeft[sliceId].getStartTs()
-                                                               << " end=" << slicesLeft[sliceId].getEndTs());
-        }
-
-        uint64_t slideSize = joinDefinition->getWindowType()->getSize().getTime();
-
-        auto rightLock = std::unique_lock(leftStore->mutex());
-        auto slicesRight = rightStore->getSliceMetadata();
+        auto rightLock = std::unique_lock(rightStore->mutex());
         auto listRight = rightStore->getAppendList();
-        NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: content right side for key=" << key);
-        id = 0;
-        for (auto& right : slicesRight) {
-            NES_TRACE("right start=" << right.getStartTs() << " right end=" << right.getEndTs() << " id=" << id++);
+        auto slicesRight = rightStore->getSliceMetadata();
+
+        if (leftStore->empty() || rightStore->empty()) {
+            NES_WARNING("Found left store empty: " << leftStore->empty() << " and right store empty: " << rightStore->empty());
+            NES_WARNING("Skipping join as left or right slices should not be empty");
+            return 0;
         }
 
         if (currentWatermark > lastWatermark) {
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: joinWindows trigger because currentWatermark="
-                                                               << currentWatermark << " > lastWatermark=" << lastWatermark);
+                                                               << currentWatermark << " > lastWatermaQueryrk=" << lastWatermark);
             joinDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);
         } else {
             NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
@@ -219,8 +205,11 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                           << " slices[sliceId].getEndTs()=" << slicesLeft[sliceId].getEndTs());
                 if (window.getStartTs() <= slicesLeft[sliceId].getStartTs()
                     && window.getEndTs() >= slicesLeft[sliceId].getEndTs()) {
+
                     size_t currentNumberOfTuples = tupleBuffer.getNumberOfTuples();
-                    NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
+                    NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " :: Right Slice Size :: " << slicesRight.size()
+                                                                       << " and  Left Slice Size :: " << slicesLeft.size());
+                    NES_DEBUG("ExecutableNestedLoopJoinTriggerAction "
                               << id << ":: window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
                               << slicesRight[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()
                               << " slices[sliceId].getEndTs()=" << slicesRight[sliceId].getEndTs());
@@ -255,6 +244,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                         tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     }
                 }
+                uint64_t slideSize = joinDefinition->getWindowType()->getSize().getTime();
                 NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":: largestClosedWindow=" << largestClosedWindow
                                                                    << " slideSize=" << slideSize);
 
@@ -308,4 +298,4 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     uint64_t id;
 };
 }// namespace NES::Join
-#endif  // NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
