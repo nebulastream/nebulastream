@@ -12,9 +12,15 @@ on:
   pull_request:
     branches:
       - '*'
+  workflow_dispatch:
+    inputs:
+      trigger-value:
+        description: 'Enter new version to release (major.minor.patch)'
+        required: true
+
 jobs:
   build-x64-linux:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to') && ${{github.event.action == 'workflow_dispatch' }}"
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     strategy:
