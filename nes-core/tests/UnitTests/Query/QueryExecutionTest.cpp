@@ -148,6 +148,7 @@ class WindowSource : public NES::DefaultSource {
                         numbersOfBufferToProduce,
                         frequency,
                         1,
+                        0,
                         12,
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
@@ -268,6 +269,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -369,6 +371,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -436,6 +439,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -1128,6 +1132,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });

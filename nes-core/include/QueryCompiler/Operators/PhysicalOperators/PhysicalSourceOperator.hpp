@@ -31,11 +31,14 @@ class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScan
                                       const SourceDescriptorPtr& sourceDescriptor);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     SourceDescriptorPtr getSourceDescriptor();
+    void setOriginId(uint64_t originId);
+    uint64_t getOriginId();
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;
+    uint64_t originId;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

@@ -40,6 +40,11 @@
 #define OPERATORID 1
 #endif
 
+#ifndef ORIGINID
+#define ORIGINID 1
+#endif
+
+
 #ifndef NUMSOURCELOCALBUFFERS
 #define NUMSOURCELOCALBUFFERS 12
 #endif
@@ -104,6 +109,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        queryManager,
                                        mqttSourceType,
                                        OPERATORID,
+                                       ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
                                        INPUTFORMAT);
@@ -128,6 +134,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        queryManager,
                                        mqttSourceType,
                                        OPERATORID,
+                                       ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
                                        INPUTFORMAT);
@@ -155,6 +162,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
                                        queryManager,
                                        mqttSourceType,
                                        OPERATORID,
+                                       ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
                                        INPUTFORMAT);

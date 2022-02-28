@@ -145,6 +145,7 @@ DataSourcePtr createTestSourceCodeGen(const Runtime::BufferManagerPtr& bPtr, con
                                            1,
                                            1,
                                            1,
+                                           0,
                                            12);
 }
 
@@ -158,8 +159,7 @@ class SelectionDataGenSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1,
-                          12,
+                          1, 0, 12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 
@@ -210,8 +210,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1,
-                          12,
+                          1, 0, 12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 
@@ -279,8 +278,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1,
-                          12,
+                          1, 0, 12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 
@@ -325,8 +323,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1,
-                          12,
+                          1, 0, 12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 

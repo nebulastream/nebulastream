@@ -97,6 +97,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       LOCAL_ADDRESS,
                                       *zmqPort,
                                       1,
+                                      0,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     std::cout << zmq_source->toString() << std::endl;

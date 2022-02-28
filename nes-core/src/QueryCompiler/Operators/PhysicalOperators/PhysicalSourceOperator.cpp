@@ -35,6 +35,10 @@ PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, So
     return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
 }
 
+uint64_t PhysicalSourceOperator::getOriginId() { return originId; }
+
+void PhysicalSourceOperator::setOriginId(uint64_t originId) { this->originId = originId; }
+
 SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }
 
 std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }

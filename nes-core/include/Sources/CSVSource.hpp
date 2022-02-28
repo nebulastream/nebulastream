@@ -47,6 +47,7 @@ class CSVSource : public DataSource {
                        Runtime::QueryManagerPtr queryManager,
                        CSVSourceTypePtr csvSourceType,
                        OperatorId operatorId,
+                       uint64_t originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);

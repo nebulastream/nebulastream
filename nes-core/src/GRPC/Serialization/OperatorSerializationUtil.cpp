@@ -212,6 +212,11 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         serializedOperator.add_childrenids(child->as<OperatorNode>()->getId());
     }
 
+    // serialize and append origin id
+    for (const auto& originId : operatorNode->getInputOriginIds()) {
+        serializedOperator.add_originids(originId);
+    }
+
     NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
                                                        << serializedOperator.details().type_url());
     return serializedOperator;
@@ -336,6 +341,12 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         joinOp->getJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
     }
 
+    // de-serialize and append origin id
+    std::vector<uint64_t> originIds;
+    for (const auto& originId : serializedOperator.originids()) {
+        originIds.push_back(originId);
+    }
+    operatorNode->setInputOriginIds(originIds);
     NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator.DebugString() << " to "
                                                           << operatorNode->toString());
     return operatorNode;

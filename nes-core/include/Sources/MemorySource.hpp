@@ -50,6 +50,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
                           uint64_t numBuffersToProcess,
                           uint64_t gatheringValue,
                           OperatorId operatorId,
+                          uint64_t originId,
                           size_t numSourceLocalBuffers,
                           GatheringMode::Value gatheringMode,
                           uint64_t sourceAffinity,
