@@ -105,7 +105,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     uint64_t uniqueNetworkSinkDescriptorId;
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
-    const NodeLocation receiverLocation;
+    NodeLocation receiverLocation;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
     size_t numOfProducers;

@@ -99,6 +99,16 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             //clean up ZMQ connection?
             break;
         }
+        case Runtime::UpdateNetworkSink: {
+            auto updatedReceiverLocation = task.getUserData<Network::NodeLocation>();
+            //TODO: manage suppartition counter. Unregistering needs alteration ?
+            auto channel =
+                networkManager->registerSubpartitionProducer(updatedReceiverLocation, nesPartition, bufferManager, waitTime, retryTimes, workerContext.getNetworkChannel(nesPartition.getOperatorId())->stealBuffer());
+            NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
+            workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
+            workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
+
+        }
         default: {
             break;
         }
@@ -114,6 +124,10 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
         case Runtime::SoftEndOfStream: {
             networkManager->unregisterSubpartitionProducer(nesPartition);
             break;
+        }
+        case Runtime::UpdateNetworkSink: {
+            NodeLocation updatedReceiverLocation = task.getUserData<Network::NodeLocation>();
+            receiverLocation = updatedReceiverLocation; //TODO: does anything else break if I set receiverLocation to non const?
         }
         default: {
             break;
