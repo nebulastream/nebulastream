@@ -193,6 +193,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                       this->nodeEngine->getQueryManager(),
                                       csvSourceType,
                                       1,
+                                      0,
                                       12,
                                       {pipeline});
 
@@ -234,7 +235,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     csvSourceType->setGatheringInterval(frequency);
 
     const DataSourcePtr source =
-        createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), csvSourceType, 1, 12, {});
+        createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), csvSourceType, 1, 0, 12, {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();

@@ -34,6 +34,7 @@ class ConvertLogicalToPhysicalSource {
      * @return Data source pointer for the physical source
      */
     static DataSourcePtr createDataSource(OperatorId operatorId,
+                                          uint64_t originId,
                                           const SourceDescriptorPtr& sourceDescriptor,
                                           const Runtime::NodeEnginePtr& nodeEngine,
                                           size_t numSourceLocalBuffers,

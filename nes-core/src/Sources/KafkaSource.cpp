@@ -34,8 +34,9 @@ KafkaSource::KafkaSource(SchemaPtr schema,
                          bool autoCommit,
                          uint64_t kafkaConsumerTimeout,
                          OperatorId operatorId,
+                         uint64_t originId,
                          size_t numSourceLocalBuffers)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers), brokers(brokers), topic(topic),
+    : DataSource(schema, bufferManager, queryManager, operatorId, originId, numSourceLocalBuffers), brokers(brokers), topic(topic),
       groupId(groupId), autoCommit(autoCommit), kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()},

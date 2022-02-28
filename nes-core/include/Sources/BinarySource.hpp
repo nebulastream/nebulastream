@@ -35,6 +35,7 @@ class BinarySource : public DataSource {
                           Runtime::QueryManagerPtr queryManager,
                           const std::string& file_path,
                           OperatorId operatorId,
+                          uint64_t originId,
                           size_t numSourceLocalBuffers,
                           GatheringMode::Value gatheringMode,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);

@@ -45,14 +45,14 @@ DataSource::DataSource(SchemaPtr pSchema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
+                       uint64_t originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
                        uint64_t taskQueueId)
-    : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
-      localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
-      schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
+    : Runtime::Reconfigurable(), DataEmitter(),queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
+      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
       sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), kFilter(std::make_unique<KalmanFilter>()) {
     this->kFilter->setDefaultValues();
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
@@ -71,7 +71,7 @@ DataSource::DataSource(SchemaPtr pSchema,
 
 void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // set the origin id for this source
-    buffer.setOriginId(operatorId);
+    buffer.setOriginId(originId);
     // set the creation timestamp
     //    buffer.setCreationTimestamp(
     //        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())

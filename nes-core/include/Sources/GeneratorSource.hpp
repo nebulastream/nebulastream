@@ -41,6 +41,7 @@ class GeneratorSource : public DataSource {
                     Runtime::QueryManagerPtr queryManager,
                     uint64_t numbersOfBufferToProduce,
                     OperatorId operatorId,
+                    uint64_t originId,
                     size_t numSourceLocalBuffers,
                     GatheringMode::Value gatheringMode,
                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -48,6 +49,7 @@ class GeneratorSource : public DataSource {
                      std::move(bufferManager),
                      std::move(queryManager),
                      operatorId,
+                     originId,
                      numSourceLocalBuffers,
                      gatheringMode,
                      std::move(successors)) {

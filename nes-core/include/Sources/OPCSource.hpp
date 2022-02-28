@@ -49,6 +49,7 @@ class OPCSource : public DataSource {
                        std::string password,
                        std::string user,
                        OperatorId operatorId,
+                       uint64_t originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);

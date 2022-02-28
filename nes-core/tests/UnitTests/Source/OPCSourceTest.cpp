@@ -161,7 +161,7 @@ class OPCSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
  */
 TEST_F(OPCSourceTest, OPCSourceInit) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, {});
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 0, 12, {});
 
     SUCCEED();
 }
@@ -171,7 +171,7 @@ TEST_F(OPCSourceTest, OPCSourceInit) {
  */
 TEST_F(OPCSourceTest, OPCSourcePrint) {
 
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, {});
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 0, 12, {});
 
     std::string expected =
         "OPC_SOURCE(SCHEMA(var:INTEGER ), URL= opc.tcp://localhost:4840, NODE_INDEX= 1, NODE_IDENTIFIER= the.answer. ";
@@ -194,7 +194,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     });
     t1.detach();
     auto test_schema = Schema::create()->addField("var", UINT32);
-    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 12, {});
+    auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1, 0, 12, {});
     opcSource->open();
 
     p.get_future().get();

@@ -148,6 +148,7 @@ class WindowSource : public NES::DefaultSource {
                         numbersOfBufferToProduce,
                         frequency,
                         1,
+                        0,
                         12,
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
@@ -297,6 +298,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -367,6 +369,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -436,6 +439,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -508,6 +512,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -722,6 +727,7 @@ TEST_F(ProjectionTest, mergeQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });

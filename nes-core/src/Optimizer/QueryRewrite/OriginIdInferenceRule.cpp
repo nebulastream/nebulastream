@@ -33,6 +33,7 @@ QueryPlanPtr OriginIdInferenceRule::apply(QueryPlanPtr queryPlan) {
     for (auto source : queryPlan->getSourceOperators()) {
         source->setOriginId(originIdCounter++);
     }
+
     // window
     for (auto windowOperator : queryPlan->getOperatorByType<WindowOperatorNode>()) {
         windowOperator->getWindowDefinition()->setOriginId(originIdCounter++);

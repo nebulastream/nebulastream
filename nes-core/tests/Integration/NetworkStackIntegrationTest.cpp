@@ -408,6 +408,7 @@ class TestSourceWithLatch : public DefaultSource {
                         /*bufferCnt*/ 1,
                         /*frequency*/ 0,
                         operatorId,
+                        0,
                         numSourceLocalBuffers,
                         successors),
           latch(std::move(latch)) {}

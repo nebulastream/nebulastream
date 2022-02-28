@@ -167,7 +167,14 @@ class MockDataSource : public DataSource {
                    size_t numSourceLocalBuffers,
                    GatheringMode::Value gatheringMode,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
+        : DataSource(schema,
+                     bufferManager,
+                     queryManager,
+                     operatorId,
+                     0,
+                     numSourceLocalBuffers,
+                     gatheringMode,
+                     executableSuccessors){
             // nop
         };
 
@@ -209,10 +216,11 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                      bufferManager,
                      queryManager,
                      operatorId,
+                     0,
                      numSourceLocalBuffers,
                      gatheringMode,
-                     executableSuccessors) {
-        ON_CALL(*this, runningRoutine()).WillByDefault(InvokeWithoutArgs([&]() {
+                     executableSuccessors){
+            ON_CALL(*this, runningRoutine()).WillByDefault(InvokeWithoutArgs([&]() {
             completedPromise.set_value(true);
             return;
         }));
@@ -241,6 +249,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
                      bufferManager,
                      queryManager,
                      operatorId,
+                     0,
                      numSourceLocalBuffers,
                      gatheringMode,
                      executableSuccessors){};
@@ -285,6 +294,7 @@ class BinarySourceProxy : public BinarySource {
                        queryManager,
                        file_path,
                        operatorId,
+                       0,
                        numSourceLocalBuffers,
                        GatheringMode::INTERVAL_MODE,
                        successors){};
@@ -312,6 +322,7 @@ class CSVSourceProxy : public CSVSource {
                     queryManager,
                     sourceConfig,
                     operatorId,
+                    0,
                     numSourceLocalBuffers,
                     GatheringMode::INTERVAL_MODE,
                     successors){};
@@ -341,6 +352,7 @@ class GeneratorSourceProxy : public GeneratorSource {
                           queryManager,
                           numbersOfBufferToProduce,
                           operatorId,
+                          0,
                           numSourceLocalBuffers,
                           gatheringMode,
                           successors){};
@@ -363,6 +375,7 @@ class DefaultSourceProxy : public DefaultSource {
                         numbersOfBufferToProduce,
                         gatheringInterval,
                         operatorId,
+                        0,
                         numSourceLocalBuffers,
                         successors){};
 };
@@ -387,6 +400,7 @@ class LambdaSourceProxy : public LambdaSource {
                        gatheringValue,
                        std::move(generationFunction),
                        operatorId,
+                       0,
                        numSourceLocalBuffers,
                        gatheringMode,
                        0,
@@ -414,6 +428,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                            numbersOfBufferToProduce,
                            frequency,
                            operatorId,
+                           0,
                            numSourceLocalBuffers,
                            successors){};
 };
@@ -490,6 +505,7 @@ class SourceTest : public Testing::NESBaseTest {
         this->numberOfBuffers = 1;
         this->numberOfTuplesToProcess = this->numberOfBuffers * (this->buffer_size / this->tuple_size);
         this->operatorId = 1;
+        this->originId = 1;
         this->numSourceLocalBuffersDefault = 12;
         this->gatheringInterval = 1000;
         this->wrong_filepath = "this_doesnt_exist";
@@ -548,8 +564,8 @@ class SourceTest : public Testing::NESBaseTest {
     std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head;
     SchemaPtr schema, lambdaSchema;
     uint8_t* singleMemoryArea;
-    uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault,
-        gatheringInterval, queryId, sourceAffinity;
+    uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
+        numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity;
     size_t bufferAreaSize;
     std::shared_ptr<uint8_t> singleBufferMemoryArea;
 };
@@ -560,8 +576,9 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                       this->nodeEngine->getBufferManager(),
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
-                                                      this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+                                                      this->originId,
+                                                                               this->numSourceLocalBuffersDefault,
+                                                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getOperatorId(), this->operatorId);
 }
 
@@ -586,8 +603,9 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
                                                       this->nodeEngine->getBufferManager(),
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
-                                                      this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+                                                      this->originId,
+                                                                               this->numSourceLocalBuffersDefault,
+                                                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getSchema(), this->schema);
 }
 
@@ -698,8 +716,9 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
                                                       this->nodeEngine->getBufferManager(),
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
-                                                      this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+                                                      0,
+                                                                               this->numSourceLocalBuffersDefault,
+                                                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::INTERVAL_MODE);
     ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(GatheringMode::getFromString("clearly_an_erroneous_string"));

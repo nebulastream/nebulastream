@@ -35,6 +35,7 @@ class MaterializedViewSource : public DataSource {
                            Runtime::BufferManagerPtr bufferManager,
                            Runtime::QueryManagerPtr queryManager,
                            OperatorId operatorId,
+                           uint64_t originId,
                            size_t numSourceLocalBuffers,
                            GatheringMode::Value gatheringMode,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
