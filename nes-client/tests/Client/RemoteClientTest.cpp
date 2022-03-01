@@ -286,4 +286,28 @@ TEST_F(RemoteClientTest, SubmitNonExistingLogicalStreamQueryTest) {
     stopQuery(queryId);
 }
 
+/**
+ * @brief Test if retrieving the execution plan works properly
+ * @result execution plan is as expected
+ */
+TEST_F(RemoteClientTest, StopAStoppedQuery) {
+    Query query = Query::from("default_logical");
+    int64_t queryId = client->submitQuery(query);
+
+    EXPECT_TRUE(stopQuery(queryId));
+    sleep(3);
+    EXPECT_TRUE(stopQuery(queryId));
+}
+
+/**
+ * @brief Test if retrieving the execution plan works properly
+ * @result execution plan is as expected
+ */
+TEST_F(RemoteClientTest, StopAInvalidQueryId) {
+    Query query = Query::from("default_logical");
+    int64_t queryId = client->submitQuery(query);
+    sleep(2);
+    EXPECT_FALSE(stopQuery(queryId + 1));
+}
+
 }// namespace NES
