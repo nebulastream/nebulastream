@@ -281,7 +281,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
 
                     if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
                         web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("Invalid Protobuf message");
+                        errorResponse["detail"] = web::json::value::string("QueryController: Invalid Protobuf message");
                         badRequestImpl(message, errorResponse);
                         return;
                     }
@@ -291,6 +291,12 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
 
                     std::string* queryString = protobufMessage->mutable_querystring();
                     auto* context = protobufMessage->mutable_context();
+                    if (!context->contains("placement")) {
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("QueryController: No placement strategy found.");
+                        badRequestImpl(message, errorResponse);
+                        return;
+                    }
                     std::string placementStrategy = context->at("placement").value();
                     std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
                     std::string lineageString = DEFAULT_TOLERANCE_TYPE;
@@ -300,14 +306,19 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     if (context->contains("lineage")) {
                         lineageString = context->at("lineage").value();
                     }
-
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
                     if (faultToleranceMode == FaultToleranceType::INVALID) {
-                        throw log4cxx::helpers::Exception("QueryController: unable to find given fault tolerance type");
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("QueryController: unable to find given fault tolerance type");
+                        badRequestImpl(message, errorResponse);
+                        return;
                     }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     if (lineageMode == LineageType::INVALID) {
-                        throw log4cxx::helpers::Exception("QueryController: unable to find given lineage type");
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("QueryController: unable to find given lineage type");
+                        badRequestImpl(message, errorResponse);
+                        return;
                     }
 
                     QueryId queryId = queryService->addQueryRequest(*queryString,
