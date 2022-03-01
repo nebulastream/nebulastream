@@ -261,9 +261,10 @@ TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
     Query query = Query::from("default_logical");
     int64_t queryId = client->submitQuery(query);
 
-    std::string queries = client->getQueries(Registered);
-    std::string expect = "[{\"queryId\":";
-    EXPECT_TRUE(queries.compare(0, expect.size() - 1, expect));
+    std::string queryStatus = client->getQueryStatus(queryId);
+
+    std::string expect = "[{\"status\":";
+    EXPECT_TRUE(queryStatus.compare(0, expect.size() - 1, expect));
     stopQuery(queryId);
 }
 }// namespace NES
