@@ -85,19 +85,6 @@ class QueryService {
                              const LineageType lineage = LineageType::NONE);
 
     /**
-     * @brief This method is used for submitting the queries directly to the system.
-     * @param queryPlan : Query Plan Pointer Object
-     * @param placementStrategyName : Name of the placement strategy
-     * @param faultTolerance : fault-tolerance guarantee for the given query.
-     * @param lineage : lineage type for the given query.
-     * @return query id
-     */
-    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan,
-                             const std::string& placementStrategyName,
-                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                             const LineageType lineage = LineageType::NONE);
-
-    /**
      * @brief
      * @param queryString
      * @param queryPlan : Query Plan Pointer Object
