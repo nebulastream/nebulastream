@@ -119,7 +119,6 @@ class QueryService {
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
-    Configurations::OptimizerConfiguration optimizerConfiguration;
 };
 
 };// namespace NES
