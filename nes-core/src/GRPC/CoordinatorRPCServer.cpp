@@ -36,7 +36,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                            request->grpcport(),
                                                            request->dataport(),
                                                            request->numberofslots(),
-                                                           request->coordinates());
+                                                           GeographicalLocation(request->coordinates()));
     } else {
         id = topologyManagerService->registerNode(request->address(),
                                                            request->grpcport(),
@@ -228,12 +228,12 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
-    std::vector<std::pair<uint64_t , GeographicalLocation>> inRange = topologyManagerService->getNodesIdsInRange(request->coord(), request->radius());
+    std::vector<std::pair<uint64_t , GeographicalLocation>> inRange = topologyManagerService->getNodesIdsInRange(GeographicalLocation(request->coord()), request->radius());
 
     for (auto elem : inRange) {
         NodeGeoInfo* nodeInfo = reply->add_nodes();
         nodeInfo->set_id(elem.first);
-        nodeInfo->set_allocated_coord(elem.second);
+        nodeInfo->set_allocated_coord(new Coordinates {elem.second});
     }
     return Status::OK;
 }
