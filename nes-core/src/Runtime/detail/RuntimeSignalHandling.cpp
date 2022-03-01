@@ -18,6 +18,7 @@
 #include <Util/StacktraceLoader.hpp>
 #include <csignal>
 #include <dlfcn.h>
+#include <folly/experimental/exception_tracer/ExceptionTracerLib.h>
 #include <string>
 
 namespace NES::Runtime {
@@ -88,6 +89,24 @@ void nesMemoryAllocationHandler() {
     Exceptions::invokeErrorHandlers(currentException, std::move(stacktrace));
 }
 
+void cxaThrowHook(void* ex, std::type_info* info, void (**deleter)(void*)) noexcept {
+    using namespace std::string_literals;
+
+    ((void) ex);
+    ((void) deleter);
+    auto* exceptionName = reinterpret_cast<const std::type_info*>(info)->name();
+    int status;
+    std::unique_ptr<char, void (*)(void*)> realExceptionName(abi::__cxa_demangle(exceptionName, 0, 0, &status), &std::free);
+    if (status == 0) {
+        auto zmqErrorType = "zmq::error_t"s;
+        if (zmqErrorType.compare(reinterpret_cast<const char*>(realExceptionName.get())) != 0) {
+            auto stacktrace = NES::collectAndPrintStacktrace();
+            NES_ERROR("Exception caught: " << realExceptionName.get() << " with stacktrace: " << stacktrace);
+        }
+    }
+    //Ventura: do not invoke error handlers here, as we let the exception to be intercepted in some catch block
+}
+
 struct ErrorHandlerLoader {
   public:
     explicit ErrorHandlerLoader() {
@@ -103,37 +122,10 @@ struct ErrorHandlerLoader {
         std::signal(SIGABRT, nesErrorHandler);
         std::signal(SIGSEGV, nesErrorHandler);
         std::signal(SIGBUS, nesErrorHandler);
+        folly::exception_tracer::registerCxaThrowCallback(cxaThrowHook);
     }
 };
 static ErrorHandlerLoader loader;
 
 }// namespace detail
 }// namespace NES::Runtime
-//#ifdef __clang__
-//#pragma clang diagnostic push
-//#pragma clang diagnostic ignored "-Winvalid-noreturn"
-//extern "C" {
-//_LIBCXXABI_NORETURN void __cxa_throw(void* ex, std::type_info* info, void (*dest)(void*)) {
-//    using namespace std::string_literals;
-//
-//    static void (*const rethrow_func)(void*, void*, void (*)(void*)) =
-//        (void (*)(void*, void*, void (*)(void*))) dlsym(RTLD_NEXT, "__cxa_throw");
-//
-//    auto* exceptionName = reinterpret_cast<const std::type_info*>(info)->name();
-//    int status;
-//    std::unique_ptr<char, void (*)(void*)> realExceptionName(abi::__cxa_demangle(exceptionName, 0, 0, &status), &std::free);
-//    if (status == 0) {
-//        auto zmqErrorType = "zmq::error_t"s;
-//        if (zmqErrorType.compare(reinterpret_cast<const char*>(realExceptionName.get())) != 0) {
-//            auto stacktrace = NES::collectAndPrintStacktrace();
-//            NES_ERROR("Exception caught: " << realExceptionName.get() << " with stacktrace: " << stacktrace);
-//        }
-//    }
-//    //Ventura: do not invoke error handlers here, as we let the exception to be intercepted in some catch block
-//    rethrow_func(ex, info, dest);
-//}
-//}
-//#pragma clang diagnostic pop
-//#else
-//#error "Unsupported compiler"
-//#endif
