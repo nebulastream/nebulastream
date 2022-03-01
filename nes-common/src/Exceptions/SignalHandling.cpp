@@ -53,7 +53,6 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace) {
     invokeErrorHandlers(exception, std::move(stacktrace));
 }
 
-
 void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener) {
     NES_TRACE("installGlobalErrorListener");
     std::unique_lock lock(globalErrorListenerMutex);
@@ -72,4 +71,4 @@ void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener) {
         }
     }
 }
-}// namespace NES
+}// namespace NES::Exceptions

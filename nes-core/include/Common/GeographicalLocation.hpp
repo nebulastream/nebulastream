@@ -13,9 +13,12 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
 #define NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
-#include <CoordinatorRPCService.grpc.pb.h>
+
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
+
+
+class Coordinates;
 
 namespace NES {
 
@@ -39,7 +42,7 @@ class GeographicalLocation {
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param coord: the coordinate object
      */
-    GeographicalLocation(Coordinates coord);
+    GeographicalLocation(const Coordinates& coord);
 
     /**
      * @brief constructs a Geographical location from a tuple of doubles

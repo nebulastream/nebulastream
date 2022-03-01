@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <CoordinatorRPCService.grpc.pb.h>
 #include <Common/GeographicalLocation.hpp>
 #include <Util/Logger.hpp>
 #include <exception>
@@ -27,7 +27,7 @@ GeographicalLocation::GeographicalLocation(double latitude, double longitude) {
     this->longitude = longitude;
 }
 
-GeographicalLocation::GeographicalLocation(Coordinates coord) : GeographicalLocation(coord.lat(), coord.lng()) {}
+GeographicalLocation::GeographicalLocation(const Coordinates& coord) : GeographicalLocation(coord.lat(), coord.lng()) {}
 
 GeographicalLocation GeographicalLocation::fromString(const std::string coordinates) {
     if (coordinates.empty()) {
