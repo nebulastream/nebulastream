@@ -138,26 +138,6 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
     throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
 }
 
-uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan,
-                                       const std::string& placementStrategyName,
-                                       const FaultToleranceType faultTolerance,
-                                       const LineageType lineage) {
-    try {
-        QueryCatalogEntryPtr entry = queryCatalog->addNewQuery("", queryPlan, placementStrategyName);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
-        if (entry) {
-            PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
-            queryRequestQueue->add(request);
-            return queryPlan->getQueryId();
-        }
-    } catch (...) {
-        throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
-    }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
-}
-
 uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName,

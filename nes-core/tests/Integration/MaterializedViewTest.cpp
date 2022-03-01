@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "../util/NesBaseTest.hpp"
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -33,10 +34,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include "../util/NesBaseTest.hpp"
 
 class MaterializedViewTest : public Testing::NESBaseTest {
-public:
+  public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MaterializedViewTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MaterializedViewTest test class.");
@@ -82,7 +82,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     Query query = Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(1));
     auto queryPlan = query.getQueryPlan();
     queryPlan->setQueryId(1);
-    auto queryId = queryService->addQueryRequest(queryPlan, "BottomUp");
+    auto queryId = queryService->addQueryRequest("", queryPlan, "BottomUp");
 
     NES_INFO("MaterializedViewTupleViewSinkTest: queryId" << queryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -129,14 +129,13 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     Query adhoc_query = Query::from("stream").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
     adhoc_queryPlan->setQueryId(1);
-    auto adhocQueryId = queryService->addQueryRequest(adhoc_queryPlan, "BottomUp");
+    auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, "BottomUp");
 
     NES_INFO("MaterializedViewTupleBufferSourceTest: queryId" << adhocQueryId);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
@@ -193,22 +192,20 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-
     Query maintenance_query =
         Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(viewId));
     auto maintenance_queryPlan = maintenance_query.getQueryPlan();
     maintenance_queryPlan->setQueryId(1);
-    auto maintenanceQueryId = queryService->addQueryRequest(maintenance_queryPlan, "BottomUp");
+    auto maintenanceQueryId = queryService->addQueryRequest("", maintenance_queryPlan, "BottomUp");
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId" << maintenanceQueryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(maintenanceQueryId, queryCatalog));
 
-
     Query adhoc_query = Query::from("stream2").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
     adhoc_queryPlan->setQueryId(2);
-    auto adhocQueryId = queryService->addQueryRequest(adhoc_queryPlan, "BottomUp");
+    auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, "BottomUp");
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId" << adhocQueryId);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalog));
