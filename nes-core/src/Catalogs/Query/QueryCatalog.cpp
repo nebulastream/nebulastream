@@ -27,10 +27,7 @@ std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(std::string s
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog : fetching all queries with status " << status);
     std::transform(status.begin(), status.end(), status.begin(), ::toupper);
-    if (stringToQueryStatusMap.find(status) == stringToQueryStatusMap.end()) {
-        throw InvalidArgumentException("status", status);
-    }
-    QueryStatus queryStatus = stringToQueryStatusMap[status];
+    auto queryStatus = stringToQueryStatusMap(status);
     std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueries(queryStatus);
     std::map<uint64_t, std::string> result;
     for (auto const& [key, value] : queries) {

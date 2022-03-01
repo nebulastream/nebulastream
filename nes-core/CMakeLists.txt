@@ -12,6 +12,7 @@
 
 # Add Source Code
 add_subdirectory(src)
+include(GNUInstallDirs)
 
 # Proto file
 set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
@@ -49,52 +50,45 @@ macro(target_public_headers TARGET)
 endmacro()
 
 add_library(nes-grpc SHARED ${OUTPUT_SOURCES})
-target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
-target_include_directories(nes-grpc PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>)
+target_link_libraries(nes-grpc PRIVATE ${GRPC_LIBRARIES})
+target_include_directories(nes-grpc PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+
+register_public_header(nes-grpc ${CMAKE_BINARY_DIR}/nes-grpc/)
 install(TARGETS nes-grpc
         EXPORT NebulaStreamTargets
-        LIBRARY
-        COMPONENT nesLibrary)
+        COMPONENT nesLibrary
+        DESTINATION lib)
 
-
-# Add Library
+# Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 message(STATUS "Found the following NES_CORE_SOURCE_FILES files: " ${NES_CORE_SOURCE_FILES})
-add_library(nes SHARED ${NES_CORE_SOURCE_FILES} ${OUTPUT_SOURCES})
+
+add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-#target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(nes PRIVATE ${LIBRARIES} ${PROTOBUF_LIBRARIES} )
-target_link_libraries(nes PUBLIC nes-common nes-compiler nes-grpc)
+target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler )
+
+
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
-foreach(dir ${LIBA_INCLUDES})
+foreach (dir ${LIBA_INCLUDES})
     string(APPEND INCLUDE_COMPILER_STRING "/I${dir} ")
     message(STATUS "LIBNES inclues ${dir}")
-endforeach()
+endforeach ()
 
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
 #TODO select the headers to copy more fine-grained
 register_public_header(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
-if (GRPC_LIBRARIES)
-    target_link_libraries(nes PRIVATE nes-grpc)
-endif ()
-
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
-target_include_directories(nesCoordinator PUBLIC "include")
-target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(nesCoordinator PRIVATE nes-grpc)
-
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
-target_link_libraries(nesWorker PUBLIC nes )
-target_include_directories(nesWorker PUBLIC "include")
-target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(nesWorker  PRIVATE nes-grpc)
+target_link_libraries(nesWorker PUBLIC nes)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -104,20 +98,16 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-
-
 #Add the nes lib and headers to cpack
 install(TARGETS nes
         EXPORT NebulaStreamTargets
         LIBRARY
         COMPONENT nesLibrary)
-message(STATUS "nes lib dir ${CMAKE_INSTALL_FULL_LIBDIR}")
 
 install(TARGETS nesCoordinator nesWorker
         RUNTIME
         COMPONENT nesExecutables)
 
-include(GNUInstallDirs)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/include/nebulastream
         COMPONENT nesHeaders
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

@@ -21,10 +21,14 @@ message(STATUS "Common Source Files: ${NES_COMMON_SOURCE_FILES}")
 
 # Add Library
 add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
-target_link_libraries(nes-common PRIVATE ${LIBRARIES})
+target_link_libraries(nes-common PUBLIC ${LIBRARIES})
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+
+set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
+        $<BUILD_INTERFACE:${LIBRARIES}>
+        $<INSTALL_INTERFACE:>)
 
 #TODO select the headers to copy more fine-grained
 register_public_header(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/)

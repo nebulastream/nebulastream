@@ -19,11 +19,11 @@ message(STATUS "Client Source Files: ${NES_CLIENT_SOURCE_FILES}")
 
 # Add Library
 add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
-target_link_libraries(nes-client PRIVATE ${LIBRARIES})
+target_link_libraries(nes-client PRIVATE nes)
 target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-target_link_libraries(nes-client PUBLIC nes)
+
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

@@ -16,8 +16,8 @@
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
 #include <API/Query.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Client/QueryConfig.hpp>
+#include <Catalogs/Query/QueryStatus.hpp>
 #include <chrono>
 
 namespace NES {

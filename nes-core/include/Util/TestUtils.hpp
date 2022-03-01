@@ -201,7 +201,7 @@ class TestUtils {
             }
 
             if (status == QueryStatus::Failed || status == QueryStatus::Stopped) {
-                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + queryStatusToStringMap[status]);
+                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " +  toString(status));
                 return false;
             }
 

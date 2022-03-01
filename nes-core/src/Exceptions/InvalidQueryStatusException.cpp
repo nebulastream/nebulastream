@@ -22,10 +22,10 @@ InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<Query
 
     std::stringstream expectedStatus;
     for (QueryStatus status : expectedStatuses) {
-        expectedStatus << queryStatusToStringMap[status] << " ";
+        expectedStatus << toString(status) << " ";
     }
     message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
-        + queryStatusToStringMap[actualStatus];
+        + toString(actualStatus);
 }
 
 const char* InvalidQueryStatusException::what() const noexcept { return message.c_str(); }
