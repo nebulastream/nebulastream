@@ -21,7 +21,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>

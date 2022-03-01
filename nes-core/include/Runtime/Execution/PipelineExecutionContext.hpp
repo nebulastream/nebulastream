@@ -92,8 +92,6 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     }
 
     std::string toString() const;
-    uint64_t getNumberOfWorkerThreads() const;
-    Runtime::BufferManagerPtr getBufferManager() const;
 
     /**
      * @brief Returns the number of worker threads

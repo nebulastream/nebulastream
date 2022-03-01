@@ -232,6 +232,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     }
 
     /**
+    * @brief maps querySubId to query id
+    * @return query id
+    */
+    uint64_t getQueryId(uint64_t querySubPlanId) const;
+
+    /**
      * @brief introduces end of stream to all QEPs connected to this source
      * @param operatorId the id of the source
      * @param graceful hard or soft termination

@@ -60,7 +60,6 @@ class WorkerContext {
      * @return TupleBuffer
      */
     TupleBuffer allocateTupleBuffer();
-    std::shared_ptr<AbstractBufferProvider> getBufferProvider();
 
     /**
      * @brief Returns the local buffer provider

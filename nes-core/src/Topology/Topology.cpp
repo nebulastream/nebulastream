@@ -99,7 +99,7 @@ bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, Geographical
 
     nodePointIndex.Add(newLoc, node);
 #else
-    NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
+    NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index" << newLat << newLng);
     NES_INFO("init = " << init);
 #endif
     node->setCoordinates(geoLoc);

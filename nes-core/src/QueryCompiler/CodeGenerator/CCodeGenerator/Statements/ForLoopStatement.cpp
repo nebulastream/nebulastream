@@ -48,17 +48,6 @@ ForLoopStatement::ForLoopStatement(ExpressionStatementPtr condition,
     }
 }
 
-ForLoopStatement::ForLoopStatement(ExpressionStatementPtr condition,
-                                   ExpressionStatementPtr advance,
-                                   std::vector<StatementPtr> loop_body)
-    : varDeclaration(nullptr), condition(std::move(condition)), advance(std::move(advance)),
-      body(std::make_shared<CompoundStatement>()) {
-    for (auto const& stmt : loop_body) {
-        if (stmt) {
-            body->addStatement(stmt);
-        }
-    }
-}
 
 StatementPtr ForLoopStatement::createCopy() const { return std::make_shared<ForLoopStatement>(*this); }
 

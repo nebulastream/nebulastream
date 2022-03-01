@@ -16,7 +16,7 @@
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>

@@ -907,6 +907,15 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
 #endif
 }
 
+uint64_t QueryManager::getQueryId(uint64_t querySubPlanId) const {
+    std::unique_lock lock(statisticsMutex);
+    auto iterator = runningQEPs.find(querySubPlanId);
+    if (iterator != runningQEPs.end()) {
+        return iterator->second->getQueryId();
+    }
+    return -1;
+}
+
 Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(QuerySubPlanId id) {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);

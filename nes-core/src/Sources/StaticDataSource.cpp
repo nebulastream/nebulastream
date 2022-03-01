@@ -16,7 +16,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Runtime/internal/apex_memmove.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
