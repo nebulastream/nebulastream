@@ -172,6 +172,33 @@ std::string RemoteClient::getQueryExecutionPlan(uint64_t queryId) {
     return jsonReturn.serialize();
 }
 
+std::string RemoteClient::getQueryStatus(uint64_t queryId) {
+    auto restMethod = web::http::methods::GET;
+    auto path = "query/query-status?queryId=" + std::to_string(queryId);
+    auto message = "";
+
+    web::json::value jsonReturn;
+    web::http::client::http_client_config cfg;
+    cfg.set_timeout(requestTimeout);
+    NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
+    web::http::client::http_client client(getHostName(), cfg);
+    client.request(restMethod, path, message)
+        .then([](const web::http::http_response& response) {
+            return response.extract_json();
+        })
+        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
+            NES_INFO("RemoteClient::send: received response");
+            try {
+                jsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
+                throw ClientException("RemoteClient::send: error while setting return.");
+            }
+        })
+        .wait();
+    return jsonReturn.serialize();
+}
+
 bool RemoteClient::stopQuery(uint64_t queryId) {
     auto restMethod = web::http::methods::DEL;
     auto path = "query/stop-query?queryId=" + std::to_string(queryId);

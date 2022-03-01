@@ -75,6 +75,13 @@ class RemoteClient {
     std::string getQueryExecutionPlan(uint64_t queryId);
 
     /**
+     * @brief get query status of a query
+     * @param uint64_t query id
+     * @return query status
+     */
+    std::string getQueryStatus(uint64_t queryId);
+
+    /**
      * @brief get current topology
      * @return topology
      */

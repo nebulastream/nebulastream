@@ -58,6 +58,13 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         try {
             // get the queryId from user input
             QueryId queryId = std::stoi(queryParameter->second);
+            NES_DEBUG("Query Controller: Get the registered query");
+            if (!queryCatalog->queryExists(queryId)) {
+                web::json::value errorResponse{};
+                errorResponse["detail"] = web::json::value::string("Provided QueryId does not exist");
+                badRequestImpl(request, errorResponse);
+                return;
+            }
             NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
             // get the execution-plan for given query id
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
@@ -74,10 +81,11 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         //Check if the path contains the query id
         auto param = parameters.find("queryId");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            NES_ERROR("QueryController: Unable to find query ID for the GET query-plan request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
+            return;
         }
 
         try {
@@ -88,11 +96,12 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             NES_DEBUG("UtilityFunctions: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
                 web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("QueryService: Unable to find query with id " + std::to_string(queryId)
-                                                                   + " in query catalog.");
+                errorResponse["detail"] = web::json::value::string("Query Controller: Unable to find query with id " + std::to_string(queryId)
+                                                             + " in query catalog.");
                 badRequestImpl(request, errorResponse);
                 return;
             }
+
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
             NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
@@ -119,18 +128,20 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
+            return;
         }
 
         try {
             // get the queryId from user input
             QueryId queryId = std::stoi(param->second);
-
-            //Call the service
-            NES_DEBUG("Check whether query exists in query catalog");
+            NES_DEBUG("Query Controller: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
-                throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
-                                             + " in query catalog.");
+                web::json::value errorResponse{};
+                errorResponse["detail"] = web::json::value::string("Provided QueryId does not exist");
+                badRequestImpl(request, errorResponse);
+                return;
             }
+
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
             auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
 
@@ -154,7 +165,54 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             RuntimeUtils::printStackTrace();
             internalServerErrorImpl(request);
         }
-    } else {
+    } else if (path[1] == "query-status") {
+        NES_INFO("QueryController:: GET query-status");
+
+        auto const queryParameter = parameters.find("queryId");
+
+        if (queryParameter == parameters.end()) {
+            NES_ERROR("QueryController: Unable to find query ID for the GET query-status request");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
+            badRequestImpl(request, errorResponse);
+            return;
+        }
+        try {
+            // get the queryId from user input
+            QueryId queryId = std::stoi(queryParameter->second);
+            //Call the service
+            NES_DEBUG("Query Controller: Get the registered query");
+            if (!queryCatalog->queryExists(queryId)) {
+                web::json::value errorResponse{};
+                errorResponse["detail"] = web::json::value::string("Provided QueryId does not exist");
+                badRequestImpl(request, errorResponse);
+                return;
+            }
+
+            QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+
+            NES_DEBUG("QueryController:: Getting the json representation of status");
+            web::json::value result{};
+            auto node = web::json::value::object();
+            // use the id of the root operator to fill the id field
+            node["status"] = web::json::value::string(queryCatalogEntry->getQueryStatusAsString());
+            //Prepare the response
+            successMessageImpl(request, node);
+            return;
+
+            NES_DEBUG("QueryController:: query-status requested queryId: " << queryId);
+            // get the execution-plan for given query id
+            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
+            NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
+            //Prepare the response
+            successMessageImpl(request, executionPlanJson);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+        }
+    }
+    else {
         resourceNotFoundImpl(request);
     }
 }

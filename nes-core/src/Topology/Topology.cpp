@@ -78,8 +78,8 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
 bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init) {
 #ifdef S2DEF
-   double newLat = geoLoc.getLatitude();
-   double newLng = geoLoc.getLongitude();
+    double newLat = geoLoc.getLatitude();
+    double newLng = geoLoc.getLongitude();
     S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));
     NES_DEBUG("updating location of Node to: " << newLat << ", " << newLng);
 
