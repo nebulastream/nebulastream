@@ -42,7 +42,7 @@ option(NES_USE_LLD "Use LLD" OFF)
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
-endif()
+endif ()
 
 if (NOT CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
     message(FATAL_ERROR "Disabling CMAKE_USE_LATCH_FREE_BUFFER_MANAGER is not supported for now, please enable it")
@@ -305,6 +305,7 @@ else ()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif ()
 set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
+set(LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES})
 
 
 # LibZMQ
@@ -374,7 +375,7 @@ if (USE_S2)
     set(LIBRARIES ${LIBRARIES} s2)
     add_compile_definitions(S2DEF)
     message(STATUS "s2 is enabled")
-else()
+else ()
     message(STATUS "s2 is disabled")
 endif ()
 
@@ -403,7 +404,7 @@ endif (NES_USE_MQTT)
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
     enable_language(CUDA)
-    if(NOT ${CUDAToolkit_FOUND})
+    if (NOT ${CUDAToolkit_FOUND})
         message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
     endif ()
     set(CMAKE_CUDA_STANDARD 17)
@@ -480,7 +481,6 @@ else ()
 endif ()
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 message("-- LLVM version ${LLVM_ROOT_DIR}")
-
 
 
 # Set definition values.
@@ -572,23 +572,20 @@ install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-cl
 
 install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
 
-set(INCLUDE_INSTALL_DIR include/ )
-set(LIB_INSTALL_DIR lib/ )
-set(SYSCONFIG_INSTALL_DIR etc/foo/ )
 include(CMakePackageConfigHelpers)
 
-#export(EXPORT NebulaStreamTargets
-#        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
- #       NAMESPACE NebulaStream::
-#        )
+export(EXPORT NebulaStreamTargets
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
+        NAMESPACE NebulaStream::
+        )
 
 configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        INSTALL_DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake
-        PATH_VARS INCLUDE_INSTALL_DIR SYSCONFIG_INSTALL_DIR)
+        INSTALL_DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake)
+
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
         VERSION 1
-        COMPATIBILITY AnyNewerVersion )
+        COMPATIBILITY AnyNewerVersion)
 
 set(ConfigPackageLocation lib/NebulaStream/cmake)
 install(EXPORT NebulaStreamTargets
@@ -596,19 +593,20 @@ install(EXPORT NebulaStreamTargets
         NebulaStreamTargets.cmake
         NAMESPACE
         NebulaStream::
+        EXPORT_LINK_INTERFACE_LIBRARIES
         DESTINATION
         ${ConfigPackageLocation}
         )
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake )
+        DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake)
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
 set(CPACK_PACKAGE_RELEASE 1)
-set(CPACK_STRIP_FILES TRUE)
+#set(CPACK_STRIP_FILES TRUE)
 set(CPACK_PACKAGE_CONTACT "Team NebulaStream")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
 set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
@@ -622,7 +620,7 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 INCLUDE(CPack)
 
-# macros for guard once
+# macros ffor guard once
 include(cmake/GuardOnce.cmake)
 
 #Other configurations

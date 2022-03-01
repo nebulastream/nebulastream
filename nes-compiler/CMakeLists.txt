@@ -22,7 +22,6 @@ message(STATUS "Compiler Source Files: ${NES_COMPILER_SOURCE_FILES}")
 # Add Library
 add_library(nes-compiler SHARED ${NES_COMPILER_SOURCE_FILES})
 target_link_libraries(nes-compiler PUBLIC nes-common)
-target_link_libraries(nes-compiler PRIVATE ${LIBRARIES})
 target_include_directories(nes-compiler PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

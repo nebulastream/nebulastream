@@ -24,12 +24,13 @@
 #include <Util/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <cpprest/http_client.h>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 
 namespace NES::Client {
 
 RemoteClient::RemoteClient(const std::string& coordinatorHost, uint16_t coordinatorRESTPort, std::chrono::seconds requestTimeout)
     : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort), requestTimeout(requestTimeout) {
-    //NES::setupLogging("nesRemoteClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+    NES::setupLogging("nesRemoteClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     if (coordinatorHost.empty()) {
         throw ClientException("host name for coordinator is empty");
@@ -253,10 +254,7 @@ std::string RemoteClient::getQueries() {
 }
 
 std::string RemoteClient::getQueries(const QueryStatus& status) {
-    if (queryStatusToStringMap.find(status) == queryStatusToStringMap.end()) {
-        throw InvalidArgumentException("status", "");
-    }
-    std::string queryStatus = queryStatusToStringMap[status];
+    std::string queryStatus = toString(status);
 
     auto restMethod = web::http::methods::POST;
     auto path = "queries?status=" + queryStatus;

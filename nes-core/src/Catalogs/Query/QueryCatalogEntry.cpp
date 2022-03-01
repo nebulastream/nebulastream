@@ -37,7 +37,7 @@ void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) { t
 
 QueryStatus QueryCatalogEntry::getQueryStatus() const { return queryStatus; }
 
-std::string QueryCatalogEntry::getQueryStatusAsString() const { return queryStatusToStringMap[queryStatus]; }
+std::string QueryCatalogEntry::getQueryStatusAsString() const { return toString(queryStatus); }
 
 void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) { this->queryStatus = queryStatus; }
 
