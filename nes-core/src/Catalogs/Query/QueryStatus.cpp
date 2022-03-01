@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Query/QueryStatus.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 namespace NES {
@@ -46,7 +47,8 @@ QueryStatus stringToQueryStatusMap(std::string queryStatus) {
     } else if (queryStatus == "MIGRATING") {
         return Migrating;
     } else {
-        NES_THROW_RUNTIME_ERROR("No valid query status to parse");
+        NES_ERROR("No valid query status to parse");
+        throw InvalidArgumentException("status", queryStatus);
     }
 };
 
