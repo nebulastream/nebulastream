@@ -23,6 +23,10 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Util/Logger.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Query.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 
 #include <unistd.h>
 
@@ -95,7 +99,7 @@ TEST_F(RemoteClientTest, TestConnectionTest) {
 }
 
 /**
- * @brief Test if doploying a query over the REST api works properly
+ * @brief Test if deploying a query over the REST api works properly
  * @result deployed query ID is valid
  */
 TEST_F(RemoteClientTest, DeployQueryTest) {
@@ -145,6 +149,24 @@ TEST_F(RemoteClientTest, GetQueryPlanTest) {
 
     std::string expect = "{\"edges\":";
     EXPECT_TRUE(query_plan.compare(0, expect.size() - 1, expect));
+
+    stopQuery(queryId);
+}
+
+/**
+ * @brief Test if correct error message is thrown for query plan retrieval with invalid query id
+ * @result the information that query id does not exist
+ */
+TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
+    Query query = Query::from("default_logical");
+    int64_t queryId = client->submitQuery(query);
+    sleep(2);
+    int64_t nonExistingQueryId = queryId + 1;
+    std::string response = client->getQueryPlan(nonExistingQueryId);
+
+    std::string expect = "{\"detail\":\"QueryService: Unable to find query with id " + to_string(nonExistingQueryId) + " in query catalog.\"}";
+    EXPECT_EQ(response,expect);
+
     stopQuery(queryId);
 }
 
