@@ -32,9 +32,6 @@ Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buffer, 
 ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     // execute this task.
     // a task could be a executable pipeline, or a data sink.
-    if (true) {
-        throw std::runtime_error("ankit");
-    }
     if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
         return (*executablePipeline)->execute(buf, workerContext);
     }
