@@ -41,7 +41,7 @@ jobs:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v3
         with:
-          token: ${{ github.token }}
+          ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
