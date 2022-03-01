@@ -15,7 +15,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <string>
+#include <Exceptions/CoordinatesOutOfRangeException.hpp>
+#include <Exceptions/InvalidCoordinateFormatException.hpp>
 
 namespace NES {
 

@@ -20,7 +20,6 @@
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
-#include <Common/GeographicalLocation.hpp>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -31,6 +30,9 @@ class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 class RegistrationMetrics;
+
+class GeographicalLocation;
+using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.

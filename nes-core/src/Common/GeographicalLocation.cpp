@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <CoordinatorRPCService.pb.h>
 #include <Common/GeographicalLocation.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <exception>
+#include <Exceptions/CoordinatesOutOfRangeException.hpp>
+#include <Exceptions/InvalidCoordinateFormatException.hpp>
 
 namespace NES {
 
@@ -27,14 +29,14 @@ GeographicalLocation::GeographicalLocation(double latitude, double longitude) {
     this->longitude = longitude;
 }
 
-GeographicalLocation::GeographicalLocation(Coordinates coord) : GeographicalLocation(coord.lat(), coord.lng()) {}
+GeographicalLocation::GeographicalLocation(const Coordinates& coord) : GeographicalLocation(coord.lat(), coord.lng()) {}
 
-GeographicalLocation GeographicalLocation::fromString(const std::string coordinates) {
+GeographicalLocation GeographicalLocation::fromString(const std::string& coordinates) {
     if (coordinates.empty()) {
         throw InvalidCoordinateFormatException();
     }
     std::stringstream ss(coordinates);
-    double lat = NAN;
+    double lat;
     ss >> lat;
     char seperator = 0;
     ss >> seperator;
@@ -42,7 +44,7 @@ GeographicalLocation GeographicalLocation::fromString(const std::string coordina
         NES_WARNING("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
         throw InvalidCoordinateFormatException();
     }
-    double lng = NAN;
+    double lng;
     ss >> lng;
 
     return {lat, lng};
