@@ -392,7 +392,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     if (coordinates.has_value()) {
         NES_DEBUG("Registered node is a field node");
-        request.set_allocated_coordinates(coordinates.value());
+        request.set_allocated_coordinates(new Coordinates {coordinates.value()});
     } else {
         NES_DEBUG("Registered node is an inner (non field) node");
     }
@@ -477,7 +477,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
 std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(GeographicalLocation coord,
                                                                                                double radius) {
     GetNodesInRangeRequest request;
-    request.set_allocated_coord(coord);
+    request.set_allocated_coord(new Coordinates {coord});
     request.set_radius(radius);
     GetNodesInRangeReply reply;
     ClientContext context;

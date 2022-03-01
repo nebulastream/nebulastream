@@ -55,10 +55,10 @@ GeographicalLocation::operator std::tuple<double, double>() {return std::make_tu
 
 GeographicalLocation::GeographicalLocation(std::tuple<double, double> coordTuple) : GeographicalLocation(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
 
-GeographicalLocation::operator Coordinates*() {
-    auto coordinates = new Coordinates;
-    coordinates->set_lat(latitude);
-    coordinates->set_lng(longitude);
+GeographicalLocation::operator Coordinates() const {
+    Coordinates coordinates;
+    coordinates.set_lat(latitude);
+    coordinates.set_lng(longitude);
     return coordinates;
 }
 
