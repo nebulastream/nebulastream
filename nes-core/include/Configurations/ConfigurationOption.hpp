@@ -166,6 +166,10 @@ const std::string PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION = "performDistributedW
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributedWindowChildThreshold";
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
 
+//Runtine configuration
+const std::string NUMBER_OF_QUEUES = "numberOfQueues";
+const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
+const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 
 //Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator

@@ -67,7 +67,6 @@ class ThreadPool {
 
     bool isRunning() const { return running; }
 
-  private:
 
     /**
      * @brief start the Thread pool
@@ -79,6 +78,7 @@ class ThreadPool {
      */
     bool start();
 
+  private:
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
        * 1.) Check if running is still true

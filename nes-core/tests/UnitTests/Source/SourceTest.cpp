@@ -13,8 +13,8 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
-#include <Runtime/NodeEngineFactory.hpp>
 #include "Runtime/QueryManager/QueryManager.hpp"
+#include <Runtime/NodeEngineFactory.hpp>
 #include <cstring>
 #include <iostream>
 #include <limits>
@@ -364,7 +364,9 @@ class LambdaSourceProxy : public LambdaSource {
                        operatorId,
                        numSourceLocalBuffers,
                        gatheringMode,
-                       0, 0, successors){};
+                       0,
+                       0,
+                       successors){};
 
   private:
     FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeInterval);
@@ -504,7 +506,13 @@ class SourceTest : public Testing::NESBaseTest {
     std::shared_ptr<Runtime::Execution::ExecutablePipeline>
     createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage, std::shared_ptr<SinkMedium> sink) {
         auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
-        return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, this->queryId, context, executableStage, 1, {sink});
+        return Runtime::Execution::ExecutablePipeline::create(0,
+                                                              this->queryId,
+                                                              this->queryId,
+                                                              context,
+                                                              executableStage,
+                                                              1,
+                                                              {sink});
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
@@ -693,7 +701,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0,  0, this->nodeEngine, "source-test-freq-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-freq-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -734,7 +742,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-ingest-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-ingest-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -779,7 +787,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -824,7 +832,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -871,7 +879,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -1965,11 +1973,8 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     std::cout << "E2EBase: Test finished" << std::endl;
 }
 
-
 TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
-    crdConf->setRpcPort(4000);
-    crdConf->setRestPort(8081);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
@@ -1981,9 +1986,6 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
@@ -2023,24 +2025,24 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto physicalSource1 = PhysicalSource::create("input1", "test_stream", lambdaSourceType1);
     auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, "ingestionrate");
     auto physicalSource2 = PhysicalSource::create("input2", "test_stream", lambdaSourceType2);
-    wrkConf->addPhysicalSource(physicalSource1);
-    wrkConf->addPhysicalSource(physicalSource2);
-    auto wrk1 = std::make_shared<NES::NesWorker>(wrkConf);
+    wrkConf->physicalSources.add(physicalSource1);
+    wrkConf->physicalSources.add(physicalSource2);
+    auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 
-    string query1 =
-        R"(Query::from("input1").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
+    string query1 = R"(Query::from("input1").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
 
-    string query2 =
-        R"(Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
+    string query2 = R"(Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto queryId1 =
+        queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
-    auto queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto queryId2 =
+        queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     queryCatalog->printQueries();

@@ -56,7 +56,9 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
       locationCoordinates(getGeoLocOptionFromString(workerConfig->locationCoordinates.getValue())),
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
-      enableMonitoring(workerConfig->enableMonitoring.getValue()) {
+      numberOfQueues(workerConfig->numberOfQueues.getValue()),
+      numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
+      queryManagerMode(workerConfig->queryManagerMode.getValue()) {
     log4cxx::MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -142,7 +144,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
                                                                   workerToCoreMapping,
-                                                                  queuePinList);
+                                                                  "DEBUG",
+                                                                  "OPERATOR_FUSION",
+                                                                  "ALL",
+                                                                  "DEFAULT",
+                                                                  numberOfQueues,
+                                                                  numberOfThreadsPerQueue,
+                                                                  queryManagerMode);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create(enableMonitoring);
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << enableMonitoring);
@@ -282,9 +290,7 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
     return success;
 }
 
-const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const {
-    return workerConfig;
-}
+const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const { return workerConfig; }
 
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     NES_ASSERT(!physicalSources.empty(), "invalid physical sources");
@@ -374,10 +380,7 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-bool NesWorker::hasLocation() {
-    return locationCoordinates.has_value();
-}
-
+bool NesWorker::hasLocation() { return locationCoordinates.has_value(); }
 
 bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
     locationCoordinates = geoLoc;
@@ -386,26 +389,24 @@ bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
 
 //TODO #2475 check first if the node is mobile and if it is, then return a value from the gps/csv interface once the interface is implemented
 //TODO #2475 also add another function that will only return a position if the node is a mobile node
-std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() {
-    return locationCoordinates;
-}
+std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() { return locationCoordinates; }
 
 //std::optional<std::tuple<double, double>> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
 std::optional<GeographicalLocation> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
-        try {
-            return GeographicalLocation::fromString(coordinates);
-        } catch (std::exception& e) {
-            NES_WARNING("could not retrieve location from string: " << e.what());
-            NES_WARNING("empty optional will be returned as location");
-            return {};
-        }
+    try {
+        return GeographicalLocation::fromString(coordinates);
+    } catch (std::exception& e) {
+        NES_WARNING("could not retrieve location from string: " << e.what());
+        NES_WARNING("empty optional will be returned as location");
+        return {};
+    }
 }
 
-std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius){
+std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 
-std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(double radius){
+std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(double radius) {
     auto coord = getCurrentOrPermanentGeoLoc();
     if (coord.has_value()) {
         return getNodeIdsInRange(coord.value(), radius);
@@ -413,8 +414,6 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRa
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};
 }
-
-
 
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);

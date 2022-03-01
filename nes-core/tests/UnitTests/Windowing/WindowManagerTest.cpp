@@ -147,50 +147,6 @@ TEST_F(WindowManagerTest, PartitionedHashMap) {
     }
 }
 
-TEST_F(WindowManagerTest, MergePartitionedHashMap) {
-    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto partitionedHashMapT1 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
-    auto partitionedHashMapT2 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
-    for (uint64_t i = 0; i < 1000; ++i) {
-        auto* entry = partitionedHashMapT1.getEntry(i);
-        entry->value = 42;
-        auto* entry2 = partitionedHashMapT2.getEntry(i);
-        entry2->value = 42;
-    }
-
-    auto globalSliceStore = Experimental::GlobalAggregateStore<uint64_t, uint64_t>(bufferManager);
-
-    // merges partitions
-    for (uint64_t i = 0; i < 2; i++) {
-
-        auto& partition = globalSliceStore.getPartition(i);
-        auto& slice = partition->getSlice(0);
-        auto partition1 = partitionedHashMapT1.extractPartition(i);
-        slice->addPartition(std::move(partition1));
-
-        auto partition2 = partitionedHashMapT2.extractPartition(i);
-        auto result = slice->addPartition(std::move(partition2));
-        if (result == 2) {
-            // merge thread local state
-            auto& globalAggregate = slice->getGlobalState();
-            for(auto& partition: slice->getPartitions()){
-                for(uint64_t index = 0; index < partition->size(); index++){
-                    auto* partitionEntry = (*partition)[index];
-                    auto* globalEntry = globalAggregate.getEntry(partitionEntry->key);
-                    globalEntry->value = globalEntry->value + partitionEntry->value;
-                }
-            }
-            auto globalPartition = globalAggregate.extractPartition(0);
-            for(uint64_t index = 0; index < globalPartition->size(); index++){
-                auto* partitionEntry = (*globalPartition)[index];
-                std::cout <<  partitionEntry->key << " - " << partitionEntry->value  << std::endl;
-            }
-
-
-        }
-    }
-}
-
 TEST_F(WindowManagerTest, testSumAggregation) {
     auto aggregation = ExecutableSumAggregation<int64_t>::create();
     auto partial = aggregation->lift(1L);

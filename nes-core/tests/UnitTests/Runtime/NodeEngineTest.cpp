@@ -275,7 +275,7 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& o
     DataSinkPtr sink = createTextFileSink(sch, queryId, engine, outPath, false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, queryId, context, executable, 1, {sink});
+    auto pipeline = ExecutablePipeline::create(0, queryId, queryId, context, executable, 1, {sink});
     auto source =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline});
     auto executionPlan = ExecutableQueryPlan::create(queryId,
@@ -362,7 +362,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     auto sink1 = createTextFileSink(sch1, 0, engine, getTestResourceFolder() / "qep1.txt", false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
+    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, context1, executable1, 1, {sink1});
     auto source1 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline1});
     auto executionPlan =
@@ -372,7 +372,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     auto sink2 = createTextFileSink(sch2, 0, engine, getTestResourceFolder() / "qep2.txt", false);
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(0, 2, context2, executable2, 1, {sink2});
+    auto pipeline2 = ExecutablePipeline::create(0, 2,2 , context2, executable2, 1, {sink2});
     auto source2 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12, {pipeline2});
     auto executionPlan2 =
@@ -415,7 +415,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     auto sink1 = createTextFileSink(sch1, 1, engine, getTestResourceFolder() / "qep1.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
+    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, context1, executable1, 1, {sink1});
     auto source1 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline1});
     auto executionPlan =
@@ -426,7 +426,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(1, 2, context2, executable2, 1, {sink2});
+    auto pipeline2 = ExecutablePipeline::create(1, 2, 2, context2, executable2, 1, {sink2});
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12, {pipeline2});
     auto executionPlan2 =
@@ -459,7 +459,7 @@ TEST_F(NodeEngineTest, testParallelSameSink) {
     auto sharedSink = createTextFileSink(sch1, 0, engine, getTestResourceFolder() / "qep12.txt", false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(1, 1, context1, executable1, 1, {sharedSink});
+    auto pipeline1 = ExecutablePipeline::create(1, 1, 1, context1, executable1, 1, {sharedSink});
     auto source1 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline1});
     auto executionPlan = ExecutableQueryPlan::create(1,
@@ -472,7 +472,7 @@ TEST_F(NodeEngineTest, testParallelSameSink) {
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(2, 2, context2, executable2, 1, {sharedSink});
+    auto pipeline2 = ExecutablePipeline::create(2, 2, 2, context2, executable2, 1, {sharedSink});
 
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12, {pipeline2});
@@ -512,11 +512,11 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     auto sink1 = createTextFileSink(sch1, 0, engine, getTestResourceFolder() / "qep3.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
+    auto pipeline1 = ExecutablePipeline::create(0, 1, 1, context1, executable1, 1, {sink1});
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(1, 2, context2, executable2, 1, {sink1});
+    auto pipeline2 = ExecutablePipeline::create(1, 2, 2, context2, executable2, 1, {sink1});
     auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
                                                                 engine->getQueryManager(),
                                                                 1,

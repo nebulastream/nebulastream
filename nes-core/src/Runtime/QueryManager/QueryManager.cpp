@@ -859,8 +859,8 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     auto executable = task.getExecutable();
     if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
         querySubPlanId = (*sink)->getParentPlanId();
-        queryId = (*sink)->getQueryId();
-        NES_DEBUG("QueryManager::completedWork: task for sink");
+        NES_DEBUG("QueryManager::completedWork: task for sink querySubPlanId=" << querySubPlanId);
+        return;
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
         queryId = (*executablePipeline)->getQueryId();
