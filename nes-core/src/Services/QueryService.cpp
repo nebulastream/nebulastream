@@ -40,8 +40,7 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
                            SourceCatalogPtr sourceCatalog,
                            std::shared_ptr<QueryParsingService> queryParsingService,
                            Configurations::OptimizerConfiguration optimizerConfiguration)
-    : queryCatalog(std::move(queryCatalog)), queryRequestQueue(std::move(queryRequestQueue)),
-      optimizerConfiguration(optimizerConfiguration) {
+    : queryCatalog(std::move(queryCatalog)), queryRequestQueue(std::move(queryRequestQueue)) {
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
     semanticQueryValidation =
