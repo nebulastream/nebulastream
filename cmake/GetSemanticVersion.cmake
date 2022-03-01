@@ -81,4 +81,4 @@ else ()
     set(${PROJECT_NAME}_VERSION "UNKNOWN")
 endif ()
 
-message("NES Version: " ${${PROJECT_NAME}_VERSION})
+message("NebulaStream Version: " ${${PROJECT_NAME}_VERSION})

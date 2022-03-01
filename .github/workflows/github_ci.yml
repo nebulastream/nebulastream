@@ -21,7 +21,7 @@ on:
 jobs:
   build-x64-linux:
     if: >-
-      ${{ github.event_name == 'workflow_dispatch' }}
+      ${{ github.event_name == 'workflow_dispatch' }} && ${{  }}
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     strategy:
@@ -48,6 +48,15 @@ jobs:
         uses: styfle/cancel-workflow-action@0.7.0
         with:
           access_token: ${{ github.token }}
+      - uses: tspascoal/get-user-teams-membership@v1
+        id: checkUserMember
+        with:
+          username: ${{ github.actor }}
+          team: 'nebulastream'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: ${{ steps.checkUserMember.outputs.isTeamMember == 'false' }}
+        run: |
+          echo "::set-output name=run_jobs::false"
       - name: testing
         run: |
           echo "${{ github.event_name }}"
