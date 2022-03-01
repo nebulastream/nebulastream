@@ -196,13 +196,21 @@ class Seq {
     ExpressionNodePtr onRightKey;
 };
 
+/**
+     * @brief: This operator is a CEP operator, in CEP engines also called iteration operator. It
+     * allows for multiple occurrences of a specified event, i.e., tuples.
+     * Thus, 'times' enables patterns of arbitrary length (when only minOccurrences are defined) or
+     * requires a specified number of tuples (minOccurrence, maxOccurrence) to occur
+     * The Times operator requires the call of the window operator afterwards
+     * @return the query
+     */
+
 class Times {
   public:
     /**
      * @brief Constructor. Initialises always subQueryRhs and original Query
-     * @param minOccurance
-     * @param maxOccurance
-     * @param originalQuery
+     * @param minOccurrences: minimal number of occurrences of a specified event, i.e., tuples
+     * @param maxOccurrences: maximal number of occurrences of a specified event, i.e., tuples
      */
     Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery);
 
