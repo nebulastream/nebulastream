@@ -39,7 +39,7 @@ jobs:
             require_test: "true"
     steps:
       - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           ssh-strict: 'false'
