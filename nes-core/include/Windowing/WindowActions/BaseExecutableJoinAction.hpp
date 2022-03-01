@@ -38,7 +38,9 @@ class BaseExecutableJoinAction {
 
     void emitBuffer(Runtime::TupleBuffer& tupleBuffer) {
         tupleBuffer.setSequenceNumber(++emitSequenceNumber);
-        weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
+        if (!weakExecutionContext.expired()) {
+            weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
+        }
     };
 
     virtual SchemaPtr getJoinSchema() = 0;

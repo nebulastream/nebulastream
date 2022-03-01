@@ -45,7 +45,9 @@ class BaseExecutableWindowAction {
 
     void emitBuffer(Runtime::TupleBuffer& tupleBuffer) {
         tupleBuffer.setSequenceNumber(++emitSequenceNumber);
-        weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
+        if (!weakExecutionContext.expired()) {
+            weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
+        }
     };
 
     void setup(const Runtime::Execution::PipelineExecutionContextPtr& executionContext) {
@@ -61,4 +63,4 @@ class BaseExecutableWindowAction {
 };
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOWACTIONS_BASEEXECUTABLEWINDOWACTION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWACTIONS_BASEEXECUTABLEWINDOWACTION_HPP_
