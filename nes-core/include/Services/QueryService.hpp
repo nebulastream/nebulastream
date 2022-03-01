@@ -16,8 +16,8 @@
 #define NES_INCLUDE_SERVICES_QUERYSERVICE_HPP_
 
 #include <API/Query.hpp>
-#include <Plans/Query/QueryId.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Plans/Query/QueryId.hpp>
 
 namespace NES::Optimizer {
 class SyntacticQueryValidation;
@@ -109,15 +109,19 @@ class QueryService {
     bool validateAndQueueStopRequest(QueryId queryId);
 
   private:
+    /**
+     * Assign operator ids to the query plan
+     * @param queryPlan: the query plan to which operator ids need to be assigned
+     */
+    void assignOperatorIds(QueryPlanPtr queryPlan);
+
     QueryCatalogPtr queryCatalog;
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     Configurations::OptimizerConfiguration optimizerConfiguration;
-
-    void assignQueryAndOperatorIds(QueryPlanPtr queryPlan);
 };
 
 };// namespace NES
 
-#endif  // NES_INCLUDE_SERVICES_QUERYSERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_QUERYSERVICE_HPP_

@@ -39,9 +39,7 @@ SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPt
     return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks);
 }
 
-void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
-
-    auto queryPlan = inputQuery->getQueryPlan();
+void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
 
     // Checking if the logical source can be found in the source catalog
     logicalSourceValidityCheck(queryPlan, sourceCatalog);
@@ -66,7 +64,7 @@ void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
     }
 }
 
-void SemanticQueryValidation::advanceSemanticQueryValidation(QueryPlanPtr& queryPlan) {
+void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr& queryPlan) {
     try {
         // Creating a z3 context for the signature inference and the z3 solver
         z3::ContextPtr context = std::make_shared<z3::context>();
