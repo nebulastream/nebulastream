@@ -44,7 +44,6 @@ class MonitoringService {
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
-     * @param id of the node
      * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
     web::json::value requestMonitoringDataAsJson(uint64_t nodeId);
