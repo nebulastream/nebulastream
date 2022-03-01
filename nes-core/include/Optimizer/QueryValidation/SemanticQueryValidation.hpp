@@ -39,9 +39,9 @@ class SemanticQueryValidation {
   public:
     /**
      * @brief Checks the semantic validity of a Query object
-     * @param inputQuery: query to check
+     * @param queryPlan: query to check
      */
-    void validate(const QueryPtr& inputQuery);
+    void validate(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Constructor for the SemanticQueryValidation class
@@ -61,10 +61,9 @@ class SemanticQueryValidation {
      * Performs advance semantic validation of the queries. For example, checking if the filters in the query are semantically valid.
      * @param queryPlan: query plan on which the semantic validation is to be applied
      */
-    void advanceSemanticQueryValidation(QueryPlanPtr& queryPlan);
+    void advanceSemanticQueryValidation(const QueryPlanPtr& queryPlan);
 
   private:
-
     /**
      * @brief Checks if the logical source in the provided QueryPlan is valid
      * @param queryPlan: query plan to check

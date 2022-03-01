@@ -55,53 +55,82 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
 
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-
-    NES_INFO("QueryService: Executing Syntactic validation");
-    QueryPtr query;
     try {
         // Checking the syntactic validity and compiling the query string to an object
-        NES_INFO("QueryService: check validation of a query");
-        query = syntacticQueryValidation->validate(queryString);
-    } catch (const std::exception& exc) {
+        NES_INFO("QueryService: check validation of a query.");
+        QueryPtr query = syntacticQueryValidation->validate(queryString);
+
+        //Assign additional configurations
+        QueryPlanPtr queryPlan = query->getQueryPlan();
+        queryPlan->setQueryId(queryId);
+        queryPlan->setFaultToleranceType(faultTolerance);
+        queryPlan->setLineageType(lineage);
+
+        // perform semantic validation
+        semanticQueryValidation->validate(queryPlan);
+
+        PlacementStrategy::Value placementStrategy;
+        try {
+            placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+        } catch (...) {
+            NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
+            throw InvalidArgumentException("placementStrategyName", placementStrategyName);
+        }
+
+        QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+        if (queryCatalogEntry) {
+            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            queryRequestQueue->add(request);
+            return queryId;
+        }
+    } catch (const InvalidQueryException& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
-        // On compilation error we record the query to the catalog as failed
         queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
         queryCatalog->setQueryFailureReason(queryId, exc.what());
-        throw InvalidQueryException(exc.what());
+        throw exc;
     }
+    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
+}
 
-    PlacementStrategy::Value placementStrategy;
-    NES_INFO("QueryService: Validating placement strategy name.");
+uint64_t QueryService::addQueryRequest(const std::string& queryString,
+                                       const QueryPlanPtr& queryPlan,
+                                       const std::string& placementStrategyName,
+                                       const FaultToleranceType faultTolerance,
+                                       const LineageType lineage) {
+
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
     try {
-        placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
-    } catch (...) {
-        NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
-        throw InvalidArgumentException("placementStrategyName", placementStrategyName);
-    }
 
-    QueryPlanPtr queryPlan = query->getQueryPlan();
-    queryPlan->setQueryId(queryId);
-    queryPlan->setFaultToleranceType(faultTolerance);
-    queryPlan->setLineageType(lineage);
+        //Assign additional configurations
+        queryPlan->setQueryId(queryId);
+        queryPlan->setFaultToleranceType(faultTolerance);
+        queryPlan->setLineageType(lineage);
 
-    NES_INFO("QueryService: Executing Semantic validation");
-    try {
-        // Checking semantic validity
-        semanticQueryValidation->validate(query);
-    } catch (const std::exception& exc) {
-        // If semantically invalid, we record the query to the catalog as failed
-        NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));
+        // assign the id for the query and individual operators
+        assignOperatorIds(queryPlan);
+
+        // perform semantic validation
+        semanticQueryValidation->validate(queryPlan);
+
+        PlacementStrategy::Value placementStrategy;
+        try {
+            placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+        } catch (...) {
+            NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
+            throw InvalidArgumentException("placementStrategyName", placementStrategyName);
+        }
+
+        QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+        if (queryCatalogEntry) {
+            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            queryRequestQueue->add(request);
+            return queryPlan->getQueryId();
+        }
+    } catch (const InvalidQueryException& exc) {
+        NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
         queryCatalog->setQueryFailureReason(queryId, exc.what());
-        throw InvalidQueryException(exc.what());
-    }
-
-    NES_INFO("QueryService: Queuing the query for the execution");
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
-    if (entry) {
-        auto request = RunQueryRequest::create(queryPlan, placementStrategy);
-        queryRequestQueue->add(request);
-        return queryId;
+        throw exc;
     }
     throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
 }
@@ -128,43 +157,17 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
     auto queryPlan = query.getQueryPlan();
     queryPlan->setFaultToleranceType(faultTolerance);
     queryPlan->setLineageType(lineage);
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
-    if (entry) {
+    QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+    if (queryCatalogEntry) {
         PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
         auto request = RunQueryRequest::create(queryPlan, placementStrategy);
         queryRequestQueue->add(request);
         return queryPlan->getQueryId();
     }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
+    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog queryCatalogEntry");
 }
 
-uint64_t QueryService::addQueryRequest(const std::string& queryString,
-                                       const QueryPlanPtr& queryPlan,
-                                       const std::string& placementStrategyName,
-                                       const FaultToleranceType faultTolerance,
-                                       const LineageType lineage) {
-    try {
-        // assign the id for the query and individual operators
-        assignQueryAndOperatorIds(queryPlan);
-        QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
-        if (entry) {
-            PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
-            queryRequestQueue->add(request);
-            return queryPlan->getQueryId();
-        }
-    } catch (...) {
-        throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
-    }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
-}
-
-void QueryService::assignQueryAndOperatorIds(QueryPlanPtr queryPlan) {
-    // Set the queryId
-    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
-
+void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
     for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
