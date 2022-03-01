@@ -358,16 +358,24 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
         //Check if the path contains the query id
         auto param = parameters.find("queryId");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            NES_ERROR("QueryController: Unable to find query Id for the GET execution-plan request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
         try {
-             QueryId queryId = std::stoi(param->second);
-            NES_DEBUG("QueryController: Prepare Input query from user string: " << std::to_string(queryId));
-
+            //Prepare Input query from user string
+            QueryId queryId = std::stoi(param->second);
+            //Call the service
+            NES_DEBUG("Check whether query exists in query catalog");
+            if (!queryCatalog->queryExists(queryId)) {
+                NES_ERROR("QueryController: Unable to find query with provided query Id for the DEL request");
+                web::json::value errorResponse{};
+                errorResponse["detail"] = web::json::value::string("Parameter queryId does not exist");
+                badRequestImpl(request, errorResponse);
+                return;
+            }
             bool success = queryService->validateAndQueueStopRequest(queryId);
             //Prepare the response
             web::json::value result{};
