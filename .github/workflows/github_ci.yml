@@ -56,7 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - name: testing-last-job
         run: |
-          echo "${{ steps.checkUserMember.outputs }}"
+          echo "${{ steps.checkUserMember.outputs.teams }}"
       - name: testing
         run: |
           echo "${{ github.event_name }}"
