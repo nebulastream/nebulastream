@@ -267,4 +267,23 @@ TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
     EXPECT_TRUE(queryStatus.compare(0, expect.size() - 1, expect));
     stopQuery(queryId);
 }
+
+/**
+ * @brief Test error handling for wrong queries (unknown logical stream)
+ * @result expected failure message
+ */
+TEST_F(RemoteClientTest, SubmitNonExistingLogicalStreamQueryTest) {
+    Query query = Query::from("default_");
+    auto queryPlan = query.getQueryPlan();
+    int64_t queryId = client->submitQuery(queryPlan);
+
+    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
+    auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
+    // Expect that the query id and query sub plan id from the deserialized query plan are valid
+    EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
+    EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
+
+    stopQuery(queryId);
+}
+
 }// namespace NES
