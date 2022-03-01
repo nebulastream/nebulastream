@@ -23,6 +23,11 @@ namespace NES {
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor, OperatorId id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), sourceDescriptor(sourceDescriptor) {}
 
+SourceLogicalOperatorNode::SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor,
+                                                     OperatorId id,
+                                                     uint64_t originId)
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), sourceDescriptor(sourceDescriptor), originId(originId) {}
+
 bool SourceLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<SourceLogicalOperatorNode>()->getId() == id;
 }
@@ -56,7 +61,7 @@ void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDe
 void SourceLogicalOperatorNode::setProjectSchema(SchemaPtr schema) { projectSchema = std::move(schema); }
 
 OperatorNodePtr SourceLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);
+    auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id, originId);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);

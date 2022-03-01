@@ -24,11 +24,16 @@ namespace PhysicalOperators {
  */
 class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
-    PhysicalSourceOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+    PhysicalSourceOperator(OperatorId id,
+                           uint64_t originId,
+                           SchemaPtr inputSchema,
+                           SchemaPtr outputSchema,
+                           SourceDescriptorPtr sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator> create(OperatorId id,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const SourceDescriptorPtr& sourceDescriptor);
+                                                          uint64_t originId,
+                                                          const SchemaPtr& inputSchema,
+                                                          const SchemaPtr& outputSchema,
+                                                          const SourceDescriptorPtr& sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator>
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     SourceDescriptorPtr getSourceDescriptor();
