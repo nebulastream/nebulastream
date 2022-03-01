@@ -65,17 +65,8 @@ project(NES CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
-if (POLICY CMP0004)
-    cmake_policy(SET CMP0004 OLD)
-endif ()
-
 # Find project version
 include(cmake/GetSemanticVersion.cmake)
-
-# Update Version Automatically
-#if (IS_GIT_DIRECTORY)
-#    configure_file(cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Version/version.hpp)
-#endif ()
 
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
@@ -583,8 +574,9 @@ configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         INSTALL_DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake)
 
+
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        VERSION 1
+        VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}"
         COMPATIBILITY AnyNewerVersion)
 
 set(ConfigPackageLocation lib/NebulaStream/cmake)
@@ -598,22 +590,28 @@ install(EXPORT NebulaStreamTargets
         ${ConfigPackageLocation}
         )
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
         DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake)
+
+
+#INSTALL(FILES Icons/RQExhib.png DESTINATION /reetiPrograms/RApplications/Icons)
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
 set(CPACK_PACKAGE_RELEASE 1)
 #set(CPACK_STRIP_FILES TRUE)
-set(CPACK_PACKAGE_CONTACT "Team NebulaStream")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
+set(CPACK_PACKAGE_CONTACT "nebulastream@dima.tu-berlin.de")
+set(CPACK_PACKAGE_DESCRIPTION "NebulaStream is a general purpose, end-to-end data management system for the IoT. It provides an out-of-the box experience with rich data processing functionalities and a high ease-of-use.")
 set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
+set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/cmake/\\\\logo.bmp")
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}-${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_PROCESSOR}")
 
 ##This allows call to ldconfig to load the configuration after installation
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")

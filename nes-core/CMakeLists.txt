@@ -32,9 +32,6 @@ foreach (PROTO_FILE ${PROTO_FILES})
     list(APPEND OUTPUT_HEADER ${OUTPUT_HEADER})
 endforeach ()
 
-message(STATUS "Found the following Proto files: " ${OUTPUT_SOURCES})
-message(STATUS "Found the following Proto header: " ${OUTPUT_HEADER})
-
 add_custom_command(
         OUTPUT ${OUTPUT_SOURCES}
         COMMAND ${_PROTOBUF_PROTOC}
@@ -63,8 +60,6 @@ install(TARGETS nes-grpc
 
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
-message(STATUS "Found the following NES_CORE_SOURCE_FILES files: " ${NES_CORE_SOURCE_FILES})
-
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

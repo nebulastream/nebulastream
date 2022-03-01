@@ -15,8 +15,6 @@
 add_subdirectory(src)
 get_source(nes-client NES_CLIENT_SOURCE_FILES)
 
-message(STATUS "Client Source Files: ${NES_CLIENT_SOURCE_FILES}")
-
 # Add Library
 add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
 target_link_libraries(nes-client PRIVATE nes)
