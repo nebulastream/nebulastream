@@ -15,8 +15,9 @@
 #include <GRPC/GRPCLibraryInitializer.hpp>
 #include <grpcpp/grpcpp.h>
 namespace NES {
-void GrpcLibraryInizializer() { grpc_init(); }
+GrpcLibraryInizializer::GrpcLibraryInizializer() { grpc_init(); }
 
-void GrpcLibraryDeinizializer() { grpc_shutdown(); }
+GrpcLibraryInizializer::~GrpcLibraryInizializer() { grpc_shutdown(); }
 }// namespace NES
 
+static NES::GrpcLibraryInizializer singleton;

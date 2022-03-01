@@ -16,10 +16,11 @@
 #define NES_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
 
 namespace NES {
-
-void GrpcLibraryInizializer() __attribute__((constructor));
-void GrpcLibraryDeinizializer();
-
+class GrpcLibraryInizializer {
+  public:
+    GrpcLibraryInizializer();
+    ~GrpcLibraryInizializer();
+};
 }// namespace NES
 
 #endif// NES_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
