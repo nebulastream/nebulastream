@@ -44,16 +44,16 @@ class NetworkMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
-     * @brief Writes a metrics objects from a given Schema and TupleBuffer.
-     * @param buf
-     * @param tupleIndex
+     * @brief Writes a metrics objects to the given TupleBuffer and index.
+     * @param buf the tuple buffer
+     * @param tupleIndex the index indication its location in the buffer
     */
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
-     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
-     * @param buf
-     * @param tupleIndex
+     * @brief Parses a metrics objects from a TupleBuffer..
+     * @param buf the tuple buffer
+     * @param the tuple index indicating the location of the tuple
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
