@@ -87,8 +87,11 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             //Call the service
             NES_DEBUG("UtilityFunctions: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
-                throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
-                                             + " in query catalog.");
+                web::json::value errorResponse{};
+                errorResponse["detail"] = web::json::value::string("QueryService: Unable to find query with id " + std::to_string(queryId)
+                                                                   + " in query catalog.");
+                badRequestImpl(request, errorResponse);
+                return;
             }
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
