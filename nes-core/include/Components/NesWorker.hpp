@@ -237,11 +237,6 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      */
     bool setNodeLocationCoordinates(const GeographicalLocation& geoLoc);
 
-
-    void onFatalError(int signalNumber, std::string callstack);
-
-    void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack);
-
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;

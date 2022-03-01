@@ -39,7 +39,7 @@ const string worker = "\n"
                       "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
                       "▒█▄▀▄█ ▀▀▀▀ ▀░▀▀ ▀░▀ ▀▀▀ ▀░▀▀";
 
-namespace NES::Runtime {
+namespace NES::Exceptions {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 }
 
