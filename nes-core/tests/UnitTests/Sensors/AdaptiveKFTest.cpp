@@ -496,7 +496,7 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMagnitudeTest) {
     // empty filter
     KFProxy kfProxy{10};
     kfProxy.init(initialState);
-    kfProxy.setFrequency(std::chrono::milliseconds{4000});
+    kfProxy.setGatheringInterval(std::chrono::milliseconds{4000});
 
     // start measurements vector
     Eigen::VectorXd y(1);
@@ -519,7 +519,7 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest) {
     // empty filter
     KFProxy kfProxy{10};
     kfProxy.init(initialState);
-    kfProxy.setFrequency(std::chrono::milliseconds{4000});
+    kfProxy.setGatheringInterval(std::chrono::milliseconds{4000});
 
     // start measurements vector
     Eigen::VectorXd y(1);
@@ -528,7 +528,7 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest) {
     for(uint64_t i = 1; i < measurements.size(); ++i) {
         y << measurements[i];
         std::cout << "Measurement: " << y.value() << std::endl;
-        std::cout << "Old freq: " << kfProxy.getCurrentFrequency().count() << std::endl;
+        std::cout << "Old freq: " << kfProxy.getCurrentGatheringInterval().count() << std::endl;
         kfProxy.update(y);
         auto newFreq = kfProxy.getExponentialFrequency();
         std::cout << "New freq: " << newFreq.count() << std::endl;
@@ -545,7 +545,7 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialWithLimitTest) {
     // empty filter
     KFProxy kfProxy{10};
     kfProxy.init(initialState);
-    kfProxy.setFrequency(std::chrono::milliseconds{4000});
+    kfProxy.setGatheringInterval(std::chrono::milliseconds{4000});
 
     // start measurements vector
     Eigen::VectorXd y(1);
@@ -554,7 +554,7 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialWithLimitTest) {
     for(uint64_t i = 1; i < measurements.size(); ++i) {
         y << measurements[i];
         std::cout << "Measurement: " << y.value() << std::endl;
-        std::cout << "Old freq: " << kfProxy.getCurrentFrequency().count() << std::endl;
+        std::cout << "Old freq: " << kfProxy.getCurrentGatheringInterval().count() << std::endl;
         kfProxy.update(y);
         auto newFreq = kfProxy.getExponentialFrequencyWithHalfLimit();
         std::cout << "New freq: " << newFreq.count() << std::endl;
