@@ -29,10 +29,7 @@ bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr buffe
     auto hasLastField = Util::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
                                        metricSchema->get(metricSchema->getSize() - 1)->getName());
 
-    if (!hasName || !hasLastField) {
-        return false;
-    }
-    return true;
+    return hasName && hasLastField;
 }
 
 web::json::value MetricUtils::toJson(std::vector<MetricPtr> metrics) {

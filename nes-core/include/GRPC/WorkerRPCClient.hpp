@@ -140,7 +140,6 @@ class WorkerRPCClient {
     /**
      * @brief Requests from a remote worker node its monitoring data.
      * @param ipAddress
-     * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
     static std::string requestMonitoringData(const std::string& address);

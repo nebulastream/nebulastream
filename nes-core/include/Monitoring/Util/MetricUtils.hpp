@@ -41,7 +41,7 @@ class MetricUtils {
     static web::json::value toJson(std::vector<MetricPtr> metrics);
 
     /**
-     * Converts a vector of metrics into json.
+     * Converts a map of metric types to metrics into json.
      * @param metrics
      * @return json of metrics
      */

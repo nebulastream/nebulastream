@@ -37,7 +37,7 @@ class MonitoringService {
     MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
 
     /**
-     * @brief Submitting a monitoring plan to all nodes which indicates which metrics have to be sampled.
+     * @brief Registers a monitoring plan at all nodes. A MonitoringPlan indicates which metrics have to be sampled at a node.
      * @param monitoringPlan
      * @return json to indicate if it was successfully
      */
@@ -47,22 +47,22 @@ class MonitoringService {
      * @brief Requests from a remote worker node its monitoring data.
      * @param id of the node
      * @param the buffer where the data will be written into
-     * @return a tuple with the schema and tuplebuffer
+     * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
     web::json::value requestMonitoringDataAsJson(uint64_t nodeId);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
      * @param the buffer where the data will be written into
-     * @return a tuple with the schema and tuplebuffer
+     * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
     web::json::value requestMonitoringDataFromAllNodesAsJson();
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
      * @param the buffer where the data will be written into
-     * @return a tuple with the schema and tuplebuffer
-     */
+     * @return a json with all metrics indicated by the registered MonitoringPlan.
+    */
     web::json::value requestNewestMonitoringDataFromMetricStoreAsJson();
 
     /**
@@ -75,7 +75,7 @@ class MonitoringService {
      * @brief Returns bool if monitoring is enabled or not.
      * @return Monitoring flag
      */
-    bool isEnableMonitoring() const;
+    bool isMonitoringEnabled() const;
 
   private:
     MonitoringManagerPtr monitoringManager;

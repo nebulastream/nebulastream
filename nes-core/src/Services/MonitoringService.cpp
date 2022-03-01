@@ -95,5 +95,5 @@ web::json::value MonitoringService::requestNewestMonitoringDataFromMetricStoreAs
 
 const MonitoringManagerPtr MonitoringService::getMonitoringManager() const { return monitoringManager; }
 
-bool MonitoringService::isEnableMonitoring() const { return enableMonitoring; }
+bool MonitoringService::isMonitoringEnabled() const { return enableMonitoring; }
 }// namespace NES

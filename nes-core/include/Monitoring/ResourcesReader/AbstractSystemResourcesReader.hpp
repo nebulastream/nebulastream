@@ -57,15 +57,14 @@ class AbstractSystemResourcesReader {
     virtual RegistrationMetrics readRegistrationMetrics();
 
     /**
-    * @brief This method reads CPU information from /proc/stat.
+    * @brief This method reads CPU information.
     * Warning: Does not return correct values in containerized environments.
-    * @return A map where for each CPU the according /proc/stat information are returned in the form
-    * e.g., output["user1"] = 1234, where user is the metric and 1 the cpu core
+    * @return A CpuMetricsWrapper object containing a vector<CpuMetrics> objects.
     */
     virtual CpuMetricsWrapper readCpuStats();
 
     /**
-    * @brief This method reads memory information from sysinfo
+    * @brief This method reads memory information from the operating system.
     * Warning: Does not return correct values in containerized environments.
     * @return A map with the memory information
     */
@@ -79,9 +78,8 @@ class AbstractSystemResourcesReader {
     virtual DiskMetrics readDiskStats();
 
     /**
-    * @brief This methods reads network statistics from /proc/net/dev and returns them for each interface in a
-    * separate map
-    * @return a map where each interface is mapping the according network statistics map.
+    * @brief This methods reads network statistics for each interface and returns a wrapper object containing this information.
+    * @return A NetworkMetricsWrapper object containing the network statistics for each available interface.
     */
     virtual NetworkMetricsWrapper readNetworkStats();
 

@@ -33,7 +33,7 @@ using namespace Configurations;
 MonitoringAgent::MonitoringAgent() : MonitoringAgent(true) {}
 
 MonitoringAgent::MonitoringAgent(bool enabled)
-    : MonitoringAgent(MonitoringPlan::createDefaultPlan(), MonitoringCatalog::defaultCatalog(), enabled) {}
+    : MonitoringAgent(MonitoringPlan::defaultPlan(), MonitoringCatalog::defaultCatalog(), enabled) {}
 
 MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled)
     : monitoringPlan(monitoringPlan), catalog(catalog), enabled(enabled) {
@@ -52,20 +52,22 @@ void MonitoringAgent::startContinuousMonitoring(NesWorkerPtr) {
     if (enabled) {
         NES_NOT_IMPLEMENTED();
     } else {
-        NES_INFO("MonitoringDisabled: ");
+        NES_INFO("MonitoringAgent: Monitoring disabled.");
     }
 }
 
 std::vector<Metric> MonitoringAgent::getMetricsFromPlan() {
     std::vector<Metric> output;
     if (enabled) {
+        NES_DEBUG("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");
         for (auto type : monitoringPlan->getMetricTypes()) {
             auto collector = catalog->getMetricCollector(type);
             Metric metric = collector->readMetric();
             output.emplace_back(metric);
         }
+    } else {
+        NES_WARNING("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() returns empty vector.");
     }
-    NES_WARNING("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() returns empty vector.");
     return output;
 }
 

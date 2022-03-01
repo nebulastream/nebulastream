@@ -21,7 +21,7 @@
 namespace NES {
 
 /**
- * The metric collector class for disk metrics. Metric collectors are required for the integration with data sources.
+ * The DiskCollector class enables measuring and writing records of class Metrics/Gauge/DiskMetrics into a TupleBuffer.
  */
 class DiskCollector : public MetricCollector {
   public:

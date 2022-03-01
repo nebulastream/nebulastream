@@ -74,7 +74,7 @@ TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
 }
 
 TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
-    auto monitoringPlan = MonitoringPlan::createDefaultPlan();
+    auto monitoringPlan = MonitoringPlan::defaultPlan();
     auto monitoringCatalog = MonitoringCatalog::defaultCatalog();
     web::json::value metricsJson{};
 

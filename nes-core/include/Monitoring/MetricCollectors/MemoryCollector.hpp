@@ -18,7 +18,7 @@
 namespace NES {
 
 /**
- * The metric collector class for memory metrics. Metric collectors are required for the integration with data sources.
+ * The MemoryCollector class enables measuring and writing records of class Metrics/Gauge/MemoryMetrics into a TupleBuffer.
  */
 class MemoryCollector : public MetricCollector {
   public:

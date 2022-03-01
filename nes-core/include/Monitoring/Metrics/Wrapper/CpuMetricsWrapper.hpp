@@ -51,7 +51,7 @@ class CpuMetricsWrapper {
     [[nodiscard]] CpuMetrics getValue(unsigned int cpuCore) const;
 
     /**
-     * @brief The number of CPU metrics contained in the wrapper. The number is not equivalent to the number of cores.
+     * @brief The number of CPU metrics contained in the wrapper. The number is equivalent to the number of cores + 1.
      * @return Number of CPU metrics
      */
     [[nodiscard]] uint64_t size() const;
