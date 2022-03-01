@@ -57,11 +57,11 @@ class MetricCollectorTest : public Testing::NESBaseTest {
         std::cout << "MetricCollectorTest: Setup MetricCollectorTest test case." << std::endl;
 
         unsigned int numCPU = std::thread::hardware_concurrency();
-        bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-        bufferSize = 4096 + (numCPU + 1) * sizeof(CpuMetrics) + sizeof(CpuMetricsWrapper);
+        bufferSize = (numCPU + 1) * sizeof(CpuMetrics) + sizeof(CpuMetricsWrapper);
+        bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
     }
 
-    /* Will be called before a test is executed. */
+    /* Will be called after a test is executed. */
     void TearDown() override { std::cout << "MetricCollectorTest: Tear down MetricCollectorTest test case." << std::endl; }
 };
 

@@ -27,7 +27,6 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
  */
@@ -46,27 +45,24 @@ class MonitoringService {
     /**
      * @brief Requests from a remote worker node its monitoring data.
      * @param id of the node
-     * @param the buffer where the data will be written into
      * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
     web::json::value requestMonitoringDataAsJson(uint64_t nodeId);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
-     * @param the buffer where the data will be written into
      * @return a json with all metrics indicated by the registered MonitoringPlan.
      */
     web::json::value requestMonitoringDataFromAllNodesAsJson();
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
-     * @param the buffer where the data will be written into
      * @return a json with all metrics indicated by the registered MonitoringPlan.
     */
     web::json::value requestNewestMonitoringDataFromMetricStoreAsJson();
 
     /**
-     * Getter for MonitoringManager
+     * @brief Getter for MonitoringManager
      * @return The MonitoringManager
      */
     [[nodiscard]] const MonitoringManagerPtr getMonitoringManager() const;
@@ -87,4 +83,4 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
