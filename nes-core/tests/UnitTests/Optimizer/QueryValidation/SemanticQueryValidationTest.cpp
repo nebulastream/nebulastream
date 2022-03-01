@@ -60,7 +60,7 @@ class SemanticQueryValidationTest : public testing::Test {
         auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
         QueryPtr filterQuery = queryParsingService->createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
-        semanticQueryValidation->validate(filterQuery);
+        semanticQueryValidation->validate(filterQuery->getQueryPlan());
     }
 
     void TestForException(std::string queryString) { EXPECT_THROW(CallValidation(queryString), InvalidQueryException); }
@@ -183,7 +183,7 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
                      .map(Attribute("value") = Attribute("value") + 2)
                      .sink(FileSinkDescriptor::create(""));
 
-    semanticQueryValidation->validate(std::make_shared<Query>(query));
+    semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan());
 }
 
 // Test a query with an invalid "project" operator
@@ -206,7 +206,7 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
                      .filter(Attribute("id") < 42)
                      .sink(FileSinkDescriptor::create(""));
 
-    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)), InvalidQueryException);
+    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
 }
 
 // Test a query with an invalid logical source having to physical source defined
@@ -221,7 +221,7 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
                      .map(Attribute("value") = Attribute("value") + 2)
                      .project(Attribute("id").as("new_id"), Attribute("value"))
                      .sink(FileSinkDescriptor::create(""));
-    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)), InvalidQueryException);
+    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), InvalidQueryException);
 }
 
 }// namespace NES
