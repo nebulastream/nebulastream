@@ -169,6 +169,10 @@ if (NOT APPLE)
         add_link_options("-fuse-ld=lld")
     endif ()
 endif ()
+
+# as per backwards.h
+add_link_options("-ldw")
+
 include(cmake/Sanitizers.cmake)
 
 if (ENABLE_IWYU)
