@@ -13,9 +13,9 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
 #define NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
-#include <CoordinatorRPCService.grpc.pb.h>
-#include <Exceptions/CoordinatesOutOfRangeException.hpp>
-#include <Exceptions/InvalidCoordinateFormatException.hpp>
+#include <string>
+
+class Coordinates;
 
 namespace NES {
 
@@ -39,7 +39,7 @@ class GeographicalLocation {
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param coord: the coordinate object
      */
-    GeographicalLocation(Coordinates coord);
+    GeographicalLocation(const Coordinates& coord);
 
     /**
      * @brief constructs a Geographical location from a tuple of doubles
@@ -71,13 +71,13 @@ class GeographicalLocation {
      * @brief getter for the latitude
      * @return the latitude in degrees [-90, 90]
      */
-    double getLatitude() const;
+    [[nodiscard]] double getLatitude() const;
 
     /**
      * @brief getter for the longitude
      * @return the longitude in degrees [-180, 180]
      */
-    double getLongitude() const;
+    [[nodiscard]] double getLongitude() const;
 
 
     /**
@@ -87,7 +87,7 @@ class GeographicalLocation {
      * @param coordinates: string of the format "<latitude>, <longitude>"
      * @return a GeographicalLocation object
      */
-    static GeographicalLocation fromString(const std::string coordinates);
+    static GeographicalLocation fromString(const std::string& coordinates);
 
     /**
      * @brief checks if the a pair of doubles represents valid coordinates (abs(lat) < 90 and abs(lng) < 180)

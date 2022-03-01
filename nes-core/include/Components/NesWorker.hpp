@@ -26,7 +26,6 @@
 #include <vector>
 #include <memory>
 #include <optional>
-#include <Common/GeographicalLocation.hpp>
 
 namespace grpc {
 class Server;
@@ -34,6 +33,7 @@ class ServerCompletionQueue;
 };// namespace grpc
 
 namespace NES {
+class GeographicalLocation;
 
 class WorkerRPCServer;
 class CoordinatorRPCClient;

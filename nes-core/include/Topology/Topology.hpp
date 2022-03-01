@@ -21,7 +21,6 @@
 #include <mutex>
 #include <optional>
 #include <vector>
-#include <Common/GeographicalLocation.hpp>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -35,6 +34,8 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
+class GeographicalLocation;
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
