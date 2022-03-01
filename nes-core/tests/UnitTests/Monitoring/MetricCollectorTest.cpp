@@ -198,7 +198,7 @@ TEST_F(MetricCollectorTest, testRuntimeConcepts) {
 }
 
 TEST_F(MetricCollectorTest, testJsonRuntimeConcepts) {
-    auto monitoringPlan = MonitoringPlan::createDefaultPlan();
+    auto monitoringPlan = MonitoringPlan::defaultPlan();
     auto monitoringCatalog = MonitoringCatalog::defaultCatalog();
     web::json::value metricsJson{};
 

@@ -116,7 +116,7 @@ std::unordered_map<MetricType, MetricPtr> MonitoringManager::getMonitoringDataFr
 }
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {
-    NES_ERROR("MonitoringManager: Adding metrics disabled for node " << nodeId);
+    NES_DEBUG("MonitoringManager: Adding metrics for node " << nodeId);
     metricStore->addMetrics(nodeId, metrics);
 }
 
@@ -131,7 +131,7 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
         TopologyNodePtr node = topology->findNodeWithId(nodeId);
         if (node) {
             NES_DEBUG("MonitoringManager: No registered plan found. Returning default plan for node " + std::to_string(nodeId));
-            return MonitoringPlan::createDefaultPlan();
+            return MonitoringPlan::defaultPlan();
         }
         NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
                                 + " failed. Node does not exist in topology.");
@@ -146,7 +146,7 @@ bool MonitoringManager::registerMonitoringLogical(StreamCatalogPtr) {
     /**
     if (enableMonitoring) {
         const auto* logicalStreamName = "monitoring";
-        auto schema = getSchema(MonitoringPlan::createDefaultPlan());
+        auto schema = getSchema(MonitoringPlan::defaultPlan());
 
         if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_DEBUG("MonitoringManager: logical source does not exist in the stream catalog, adding a new logical stream "

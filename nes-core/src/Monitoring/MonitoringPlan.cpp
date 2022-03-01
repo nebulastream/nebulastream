@@ -24,7 +24,7 @@ MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
     return std::shared_ptr<MonitoringPlan>(new MonitoringPlan(metrics));
 }
 
-MonitoringPlanPtr MonitoringPlan::createDefaultPlan() {
+MonitoringPlanPtr MonitoringPlan::defaultPlan() {
     std::set<MetricType> metricCollectors{CpuMetric, DiskMetric, MemoryMetric, NetworkMetric};
     return MonitoringPlan::create(metricCollectors);
 }

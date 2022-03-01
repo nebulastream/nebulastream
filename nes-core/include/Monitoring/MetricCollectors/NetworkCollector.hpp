@@ -21,7 +21,7 @@
 namespace NES {
 
 /**
- * The metric collector class for network metrics. Metric collectors are required for the integration with data sources.
+ * The NetworkCollector class enables measuring and writing records of class Metrics/Gauge/NetworkMetrics into a TupleBuffer.
  */
 class NetworkCollector : public MetricCollector {
   public:

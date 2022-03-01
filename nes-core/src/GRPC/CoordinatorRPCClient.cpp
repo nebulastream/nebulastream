@@ -379,7 +379,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
-                                        RegistrationMetrics registrationMetrics,
+                                        const RegistrationMetrics& registrationMetrics,
                                         std::optional<GeographicalLocation> coordinates) {
 
     RegisterNodeRequest request;

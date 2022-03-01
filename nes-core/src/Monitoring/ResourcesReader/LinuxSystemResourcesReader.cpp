@@ -192,16 +192,15 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
 
 CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
     std::string metricLocation = "/proc/stat";
-    CpuMetrics totalCpu{};
-    unsigned int numCPU = std::thread::hardware_concurrency() + 1;
-    auto cpu = std::vector<CpuMetrics>(numCPU);
+    unsigned int numCpuMetrics = std::thread::hardware_concurrency() + 1;
+    auto cpu = std::vector<CpuMetrics>(numCpuMetrics);
 
     if (access(metricLocation.c_str(), F_OK) == -1) {
         return AbstractSystemResourcesReader::readCpuStats();
     }
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading CPU stats for number of CPUs " << numCPU);
+        NES_DEBUG("LinuxSystemResourcesReader: Reading CPU stats for number of CPUs " << numCpuMetrics);
         std::ifstream fileStat(metricLocation);
         std::string line;
 

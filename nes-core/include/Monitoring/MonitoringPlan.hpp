@@ -29,7 +29,7 @@ namespace NES {
 class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
-    static MonitoringPlanPtr createDefaultPlan();
+    static MonitoringPlanPtr defaultPlan();
 
     /**
      * @brief Add a specific metric to the plan

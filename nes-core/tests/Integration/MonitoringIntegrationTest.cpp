@@ -100,7 +100,7 @@ TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
     auto plan = MonitoringPlan::create(metrics);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
-    EXPECT_TRUE(crd->getMonitoringService()->isEnableMonitoring());
+    EXPECT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
     auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
@@ -170,7 +170,7 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
     auto plan = MonitoringPlan::create(metrics);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
-    EXPECT_TRUE(crd->getMonitoringService()->isEnableMonitoring());
+    EXPECT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
@@ -243,7 +243,7 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
 
-    EXPECT_FALSE(crd->getMonitoringService()->isEnableMonitoring());
+    EXPECT_FALSE(crd->getMonitoringService()->isMonitoringEnabled());
 
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());

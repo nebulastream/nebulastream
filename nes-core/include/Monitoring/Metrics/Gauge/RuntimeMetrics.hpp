@@ -35,17 +35,16 @@ class RuntimeMetrics {
     static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
-     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+     * @brief Writes a metrics objects from a given Schema and TupleBuffer.
      * @param buf
      * @param tupleIndex
-     * @return The object
     */
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
      * @param buf
-     * @param tupleIndex
+     * @param the tuple index indicating the location of the tuple
      * @return The object
     */
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
