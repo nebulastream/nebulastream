@@ -178,8 +178,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
-                                                                   Configurations::QueryCompilerConfiguration(),
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
+                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -223,15 +222,14 @@ TEST_F(QueryCompilerTest, mapQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
                                                                    12,
                                                                    12,
-                                                                   Configurations::QueryCompilerConfiguration(),
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
+                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);

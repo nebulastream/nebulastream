@@ -168,7 +168,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-        csvSourceType->setSourceFrequency(0);
+        csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
@@ -224,7 +224,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-        csvSourceType->setSourceFrequency(0);
+        csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
@@ -327,7 +327,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
