@@ -87,7 +87,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * 1.) check if bool running is false, if false return, if not stop source
      * 2.) stop thread by join
      */
-    virtual bool stop(bool graceful);
+    [[nodiscard]] virtual bool stop(bool graceful);
 
     /**
      * @brief running routine while source is active
@@ -224,6 +224,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const;
 
+
+    [[nodiscard]] virtual bool fail();
+
   protected:
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
@@ -239,7 +242,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode::Value gatheringMode;
     SourceType type;
-    std::atomic<bool> wasGracefullyStopped{true};
+    bool wasGracefullyStopped{true};
     std::atomic_bool running{false};
     uint64_t sourceAffinity;
     uint64_t taskQueueId;

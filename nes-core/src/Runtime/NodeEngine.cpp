@@ -205,21 +205,35 @@ bool NodeEngine::undeployQuery(QueryId queryId) {
 bool NodeEngine::unregisterQuery(QueryId queryId) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("Runtime: unregisterQuery query=" << queryId);
-    if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
-
-        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+    bool ret = true;
+    if (auto it = queryIdToQuerySubPlanIds.find(queryId); it != queryIdToQuerySubPlanIds.end()) {
+        auto& querySubPlanIds = it->second;
         if (querySubPlanIds.empty()) {
             NES_ERROR("Runtime: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
         }
 
-        for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->deregisterQuery(deployedQEPs[querySubPlanId])) {
+        for (const auto querySubPlanId : querySubPlanIds) {
+            auto qep = deployedQEPs[querySubPlanId];
+            bool isStopped = false;
+            switch (qep->getStatus()) {
+                case Execution::ExecutableQueryPlanStatus::Created:
+                case Execution::ExecutableQueryPlanStatus::Deployed:
+                case Execution::ExecutableQueryPlanStatus::Running: {
+                    isStopped = queryManager->stopQuery(qep, false);
+                    break;
+                }
+                default: {
+                    isStopped = true;
+                    break;
+                };
+            }
+            if (isStopped && queryManager->deregisterQuery(qep)) {
                 deployedQEPs.erase(querySubPlanId);
                 NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " succeeded");
             } else {
                 NES_ERROR("Runtime: unregister of QEP " << querySubPlanId << " failed");
-                return false;
+                ret = false;
             }
         }
         queryIdToQuerySubPlanIds.erase(queryId);
@@ -382,10 +396,8 @@ void NodeEngine::onEvent(NES::Network::NesPartition, NES::Runtime::BaseEvent&) {
     // nop :: kept as legacy
 }
 
-void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
-    // propagate EOS to the locally running QEPs that use the network source
-    NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
-    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
+void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage) {
+    // nop :: kept as legacy
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
@@ -400,7 +412,7 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());
+            NES_ASSERT(false, err.getErrorTypeAsString());
             break;
         }
     }

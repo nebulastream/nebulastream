@@ -35,6 +35,10 @@ class DataEmitter : public Runtime::RuntimeEventListener {
 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 
+    virtual void onEndOfStream(bool isGraceful) {
+        ((void) isGraceful);
+    }
+
     virtual void onEvent(Runtime::BaseEvent&) override {}
 };
 }// namespace NES

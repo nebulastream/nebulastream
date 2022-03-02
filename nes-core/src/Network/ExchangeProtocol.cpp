@@ -109,6 +109,8 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         NES_ASSERT2_FMT(!endOfStreamMessage.isEventChannel(),
                         "Received EOS on data channel for consumer " << endOfStreamMessage.getChannelId().toString());
         if (partitionManager->unregisterSubpartitionConsumer(endOfStreamMessage.getChannelId().getNesPartition())) {
+            partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
+                ->onEndOfStream(endOfStreamMessage.isGraceful());
             protocolListener->onEndOfStream(endOfStreamMessage);
         } else {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from "
