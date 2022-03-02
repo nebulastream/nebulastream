@@ -301,12 +301,12 @@ jobs:
           echo "Package NebulaStream with version: $nes_version for: ${{ matrix.osversion }}"
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eversion="${{ matrix.osversion }}" -esystem="${{ matrix.osversion }}" -earch="${{ matrix.osversion }}" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_build_${{ matrix.osversion }}
       - name: Release
-          uses: softprops/action-gh-release@v1
-          id: createrelease
-          with:
-            tag_name: "v0.1.61"
-            files: |
-              $GITHUB_WORKSPACE/build/NebulaStream-${{ matrix.osversion }}-${{ matrix.osversion }}-${{ matrix.osversion }}.deb
+        uses: softprops/action-gh-release@v1
+        id: createrelease
+        with:
+         tag_name: "v0.1.61"
+         files: |
+           $GITHUB_WORKSPACE/build/NebulaStream-${{ matrix.osversion }}-${{ matrix.osversion }}-${{ matrix.osversion }}.deb
       - name: Upload
         uses: actions/upload-artifact@v2
         if: failure()
