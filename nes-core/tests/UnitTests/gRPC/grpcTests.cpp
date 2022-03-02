@@ -130,8 +130,9 @@ TEST_F(grpcTests, testGrpcSendErrorNotification) {
     EXPECT_TRUE(retStart);
     NES_INFO("GrpcNotifyErrorTest: Worker started successfully");
 
+    coordinatorConfig->numberOfBuffersInGlobalBufferManager = 2 * 1024 * 1024 * 1024;
     uint64_t workerId = wrk->getWorkerId();
-    std::string errormsg = "Something went wrong.";
+    std::string errormsg = "Too much memory allocation";
     bool successOfTransferringErrors = wrk->notifyErrors(workerId, errormsg);
     EXPECT_TRUE(successOfTransferringErrors);
 
