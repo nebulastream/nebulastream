@@ -132,7 +132,7 @@ TEST_F(grpcTests, testGrpcSendErrorNotification) {
 
     uint64_t workerId = wrk->getWorkerId();
     std::string errormsg = "Something went wrong.";
-    bool successOfTransferringErrors = wrk->sendErrors(workerId, errormsg);
+    bool successOfTransferringErrors = wrk->notifyErrors(workerId, errormsg);
     EXPECT_TRUE(successOfTransferringErrors);
 
     // stop coordinator and worker

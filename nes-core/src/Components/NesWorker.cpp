@@ -374,7 +374,7 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     return success;
 }
 
-bool NesWorker::sendErrors(uint64_t workerId, std::string errorMsg) {
+bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
@@ -393,7 +393,7 @@ void NesWorker::onFatalError(int signalNumber, std::string string){
     // save errors in errorMsg
     errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + string;
     //send it to Coordinator
-    this->sendErrors(this->getWorkerId(), errorMsg);
+    this->notifyErrors(this->getWorkerId(), errorMsg);
 }
 
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string string) {
@@ -406,7 +406,7 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
     // save errors in errorMsg
     errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + string;
     //send it to Coordinator
-    this->sendErrors(this->getWorkerId(), errorMsg);
+    this->notifyErrors(this->getWorkerId(), errorMsg);
 }
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
