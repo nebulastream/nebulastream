@@ -295,4 +295,6 @@ uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
+void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr&, Execution::ExecutableQueryPlanStatus) {}
+
 }// namespace NES::Runtime
