@@ -29,7 +29,7 @@ uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() const { return numSour
 
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
-    options.setCompilationStrategy(OPTIMIZE);
+    options.setCompilationStrategy(DEBUG);
     options.setPipeliningStrategy(OPERATOR_FUSION);
     options.setFilterProcessingStrategy(BRANCHED);
     options.setNumSourceLocalBuffers(64);

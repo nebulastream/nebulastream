@@ -58,7 +58,7 @@ using Runtime::TupleBuffer;
 class QueryExecutionTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
+        NES::setupLogging("QueryExecutionTest.log", NES::LOG_TRACE);
         NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
     }
     /* Will be called before a test is executed. */

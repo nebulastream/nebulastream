@@ -828,7 +828,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         }
         //NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
         //                "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
-        NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer " << buffer
+        NES_DEBUG("QueryManager: added Task this pipelineID=" << (*nextPipeline)->getPipelineId() << "  for Number of next pipelines " << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer
                                                                 << " queueId=" << queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
@@ -862,6 +862,11 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
         NES_DEBUG("QueryManager::completedWork: task for sink querySubPlanId=" << querySubPlanId);
         return;
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
+        if((*executablePipeline)->isReconfiguration())
+        {
+            NES_DEBUG("QueryManager::completedWork: task reconfig task");
+            return;
+        }
         querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
         queryId = (*executablePipeline)->getQueryId();
         NES_DEBUG(
@@ -874,7 +879,6 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestamp();
-        NES_ASSERT(creation != 0, "Error time stamps are wrong");
         auto now =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();

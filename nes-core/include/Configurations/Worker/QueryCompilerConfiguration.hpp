@@ -42,7 +42,7 @@ class QueryCompilerConfiguration : public BaseConfiguration {
      */
     EnumOption<QueryCompilation::QueryCompilerOptions::CompilationStrategy> compilationStrategy = {
         QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
-        QueryCompilation::QueryCompilerOptions::CompilationStrategy::OPTIMIZE,
+        QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG,
         "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]."};
 
     /**

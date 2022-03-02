@@ -183,7 +183,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configuration queryManagerMode
      * The modus in which the query manager is running
      */
-    StringOption queryManagerMode = {QUERY_MANAGER_MODE, "", "Which mode the query manager is running in."};
+    StringOption queryManagerMode = {QUERY_MANAGER_MODE, "Dynamic", "Which mode the query manager is running in."};
 
 
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }

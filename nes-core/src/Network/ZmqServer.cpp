@@ -47,7 +47,8 @@ class UlimitNumFdChanger {
         struct rlimit limit;
         limit.rlim_cur = oldSoftNumFileLimit;
         limit.rlim_max = oldHardNumFileLimit;
-        NES_ASSERT(setrlimit(RLIMIT_NOFILE, &limit) == 0, "Cannot set ulimit");
+//        NES_ASSERT(setrlimit(RLIMIT_NOFILE, &limit) == 0, "Cannot set ulimit");
+        setrlimit(RLIMIT_NOFILE, &limit);
     }
 
   private:
