@@ -306,7 +306,7 @@ jobs:
         with:
          tag_name: "v0.1.61"
          files: |
-           $GITHUB_WORKSPACE/build/NebulaStream-${{ matrix.osversion }}-${{ matrix.osversion }}-${{ matrix.osversion }}.deb
+           /build/NebulaStream-${{ matrix.osversion }}-${{ matrix.osversion }}-${{ matrix.osversion }}.deb
       - name: Upload
         uses: actions/upload-artifact@v2
         if: failure()
