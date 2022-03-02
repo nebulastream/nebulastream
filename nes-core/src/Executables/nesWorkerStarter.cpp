@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
     } catch (std::exception& exp) {
         NES_ERROR("Problem with worker: " << exp.what());
         std::shared_ptr<std::exception> e = std::make_shared<std::exception>(exp);
-        nesWorker->onFatalException(e, "Problem with worker");
+        //   nesWorker->onFatalException(e, "Problem with worker");
         return 1;
     } catch (...) {
         NES_ERROR("Unknown exception was thrown");
