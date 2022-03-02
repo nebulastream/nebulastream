@@ -559,26 +559,27 @@ add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLE
 
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)
-
-
 install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
 
+
+
 include(CMakePackageConfigHelpers)
-
-export(EXPORT NebulaStreamTargets
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
-        NAMESPACE NebulaStream::
-        )
-
+# Create the Config.cmake files, which enables find_package(NebulaStream) from external CMAKE projects.
 configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         INSTALL_DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake)
 
+# Create Targets.cmake file, which exposes NebulaStream targets to external CMAKE projects
+export(EXPORT NebulaStreamTargets
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
+        NAMESPACE NebulaStream::)
 
+# Create version_file to enable specific version imports
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
         VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}"
         COMPATIBILITY AnyNewerVersion)
 
+# Install NebulaStreamConfig, NebulaStreamConfigVersion, and NebulaStreamTargets to exported package
 set(ConfigPackageLocation lib/NebulaStream/cmake)
 install(EXPORT NebulaStreamTargets
         FILE
@@ -589,15 +590,12 @@ install(EXPORT NebulaStreamTargets
         DESTINATION
         ${ConfigPackageLocation}
         )
-
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${LIB_INSTALL_DIR}/NebulaStream/cmake)
+        DESTINATION ${LIB_INSTALL_DIR}${ConfigPackageLocation})
 
-
-#INSTALL(FILES Icons/RQExhib.png DESTINATION /reetiPrograms/RApplications/Icons)
-
+# Configure CPackage
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
@@ -610,7 +608,6 @@ set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev")
-set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/cmake/\\\\logo.bmp")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}-${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_PROCESSOR}")
 
 ##This allows call to ldconfig to load the configuration after installation

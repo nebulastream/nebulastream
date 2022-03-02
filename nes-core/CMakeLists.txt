@@ -14,7 +14,7 @@
 add_subdirectory(src)
 include(GNUInstallDirs)
 
-# Proto file
+# Generate protobuf and grpc files and add them to individual nes-grpc target
 set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
 set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
 
@@ -46,6 +46,7 @@ macro(target_public_headers TARGET)
     set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${ARGN}")
 endmacro()
 
+# Add nes-grpc library
 add_library(nes-grpc SHARED ${OUTPUT_SOURCES})
 target_link_libraries(nes-grpc PRIVATE ${GRPC_LIBRARIES})
 target_include_directories(nes-grpc PUBLIC
