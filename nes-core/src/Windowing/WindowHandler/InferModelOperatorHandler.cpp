@@ -1,6 +1,4 @@
 /*
-    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -39,13 +37,10 @@ void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionConte
                                 uint32_t localStateVariableId) {
     std::cout << stateManager->getNodeId() << std::endl;
     std::cout << localStateVariableId << std::endl;
-
-
-    // implement start here
 }
 
 void InferModelOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
-    // implement stop here
+
 }
 void InferModelOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
     Runtime::Execution::OperatorHandler::reconfigure(task, context);
