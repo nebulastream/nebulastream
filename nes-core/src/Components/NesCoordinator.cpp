@@ -229,6 +229,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->numberOfBuffersPerWorker = numberOfBuffersPerWorker;
         workerConfig->numberOfBuffersInGlobalBufferManager = numberOfBuffersInGlobalBufferManager;
         workerConfig->enableMonitoring = enableMonitoring;
+        workerConfig->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     }
 
     auto workerConfigCopy = workerConfig;

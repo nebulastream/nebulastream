@@ -73,6 +73,8 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
                                                 Initialize,
                                                 shared_from_this(),
                                                 std::make_any<uint32_t>(activeProducers.load()));
+        NES_DEBUG("QuerySup Plan Id ....................... " << querySubPlanId << " Operator Handler size ..................."
+                                                              << pipelineContext->getOperatorHandlers().size());
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->start(pipelineContext, stateManager, localStateVariableId);
             localStateVariableId++;
@@ -87,9 +89,9 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
 bool ExecutablePipeline::stop() {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
-//        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-//            operatorHandler->stop(pipelineContext);
-//        }
+        //        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+        //            operatorHandler->stop(pipelineContext);
+        //        }
         return executablePipelineStage->stop(*pipelineContext.get()) == 0;
     }
     return expected == PipelineStatus::PipelineStopped;

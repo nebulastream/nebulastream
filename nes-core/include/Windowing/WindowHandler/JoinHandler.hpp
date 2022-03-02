@@ -67,28 +67,35 @@ class JoinHandler : public AbstractJoinHandler {
    */
     bool start(Runtime::StateManagerPtr stateManager, uint32_t localStateVariableId) override {
         std::unique_lock lock(mutex);
-        this->stateManager = stateManager;
-        StateId stateId = {stateManager->getNodeId(), id, localStateVariableId};
-        NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
-
-        //Defines a callback to execute every time a new key-value pair is created
-        auto leftDefaultCallback = [](const KeyType&) {
-            return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
-        };
-        auto rightDefaultCallback = [](const KeyType&) {
-            return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>();
-        };
-        this->leftJoinState =
-            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
-                stateId,
-                leftDefaultCallback);
-        this->rightJoinState =
-            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
-                stateId,
-                rightDefaultCallback);
-
         if (isRunning.compare_exchange_strong(expected, true)) {
+            this->stateManager = stateManager;
+            StateId stateIdLeft = {stateManager->getNodeId(), id, localStateVariableId};
+            NES_DEBUG("Left Info: Node id " << stateIdLeft.nodeId << ", handler id " << stateIdLeft.handlerId << ", local id "
+                                            << stateIdLeft.localId);
+            NES_DEBUG("Left .................. " << std::hash<NES::StateId>()(stateIdLeft));
+            localStateVariableId++;
+            StateId stateIdRight = {stateManager->getNodeId(), id, localStateVariableId};
+            NES_DEBUG("Right Info: Node id " << stateIdRight.nodeId << ", handler id " << stateIdRight.handlerId << ", local id "
+                                             << stateIdRight.localId);
+            NES_DEBUG("Right ............... " << std::hash<NES::StateId>()(stateIdRight));
+            NES_DEBUG("JoinHandler start id=" << id << " " << this);
+
+            //Defines a callback to execute every time a new key-value pair is created
+            auto leftDefaultCallback = [](const KeyType&) {
+                return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
+            };
+            auto rightDefaultCallback = [](const KeyType&) {
+                return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>();
+            };
+            this->leftJoinState =
+                stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
+                    stateIdLeft,
+                    leftDefaultCallback);
+            this->rightJoinState =
+                stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
+                    stateIdRight,
+                    rightDefaultCallback);
             return executablePolicyTrigger->start(this->shared_from_base<AbstractJoinHandler>());
         }
         return false;
@@ -109,6 +116,7 @@ class JoinHandler : public AbstractJoinHandler {
             //            StateManager::instance().unRegisterState(leftJoinState);
             //            StateManager::instance().unRegisterState(rightJoinState);
         }
+
         return result;
     }
 
@@ -332,4 +340,4 @@ class JoinHandler : public AbstractJoinHandler {
     Runtime::StateManagerPtr stateManager;
 };
 }// namespace NES::Join
-#endif  // NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINHANDLER_HPP_

@@ -51,6 +51,7 @@ class StateManager {
     StateVariable<Key, Value>* registerStateWithDefault(const StateId& variableStateId,
                                                         std::function<Value(const Key&)>&& defaultCallback) {
         std::unique_lock<std::mutex> lock(mutex);
+        NES_ASSERT(stateVariables.find(variableStateId) == stateVariables.end(), "State variable with this id already exists");
         auto stateVariable = new StateVariable<Key, Value>(variableStateId, std::move(defaultCallback));
         stateVariables[variableStateId] = stateVariable;
         return stateVariable;

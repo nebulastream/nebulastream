@@ -154,7 +154,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                        uint64_t currentWatermark,
                        uint64_t lastWatermark,
                        Runtime::WorkerContextRef workerContext) {
-        NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
+        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
                                                            << currentWatermark << " lastWatermark=" << lastWatermark);
         size_t numberOfFlushedRecords = 0;
         if (this->weakExecutionContext.expired()) {
@@ -164,13 +164,21 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto executionContext = this->weakExecutionContext.lock();
         auto windows = std::vector<Windowing::WindowState>();
 
+        NES_DEBUG("Before acquiring locks");
+
         auto leftLock = std::unique_lock(leftStore->mutex());
+        NES_DEBUG("Acquired left lock");
         auto listLeft = leftStore->getAppendList();
+        NES_DEBUG("Fetched left list");
         auto slicesLeft = leftStore->getSliceMetadata();
+        NES_DEBUG("Fetched left slice");
 
         auto rightLock = std::unique_lock(rightStore->mutex());
+        NES_DEBUG("Acquired right lock");
         auto listRight = rightStore->getAppendList();
+        NES_DEBUG("Fetched right list");
         auto slicesRight = rightStore->getSliceMetadata();
+        NES_DEBUG("Fetched right slice");
 
         if (leftStore->empty() || rightStore->empty()) {
             NES_WARNING("Found left store empty: " << leftStore->empty() << " and right store empty: " << rightStore->empty());
