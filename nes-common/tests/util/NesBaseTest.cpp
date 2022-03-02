@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fstream>
 
 namespace NES::Testing {
 
@@ -63,7 +64,7 @@ class ShmFixedVector {
             }
             NES_ASSERT(ret, "cannot create shared area");
         } else {
-            while (!std::filesystem::exists("/tmp/nes.tests.begin")) {
+            while (!std::filesystem::exists(std::filesystem::temp_directory_path() / "nes.tests.begin")) {
             }
         }
         mem = reinterpret_cast<uint8_t*>(mmap(nullptr, mmapSize, PROT_READ | PROT_WRITE, MAP_SHARED, shmemFd, 0));
@@ -76,7 +77,11 @@ class ShmFixedVector {
         if (created) {
             metadata->refCnt.store(1);
             metadata->currentIndex.store(0);
-            std::filesystem::create_directories("/tmp/nes.tests.begin");
+            auto filePath = std::filesystem::temp_directory_path() / "nes.tests.begin";
+            std::ofstream file;
+            file.open(filePath);
+            NES_ASSERT2_FMT(file.good(), "cannot open file " << filePath);
+            file.close();
         } else {
             metadata->refCnt.fetch_add(1);
         }
@@ -89,7 +94,7 @@ class ShmFixedVector {
         if (doCleanup) {
             if (0 == shm_unlink(name.c_str())) {
                 // no process has the shared memory segment open
-                std::filesystem::remove_all("/tmp/nes.tests.begin");
+                std::filesystem::remove_all(std::filesystem::temp_directory_path() / "nes.tests.begin");
             }
         }
     }
