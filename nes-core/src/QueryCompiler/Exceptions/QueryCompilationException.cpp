@@ -16,9 +16,7 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES::QueryCompilation {
 
-QueryCompilationException::QueryCompilationException(const std::string& message)
-    : Exceptions::RuntimeException(message, NES::collectAndPrintStacktrace()) {
-    NES_ERROR(message);
-}
+QueryCompilationException::QueryCompilationException(const std::string& message, std::source_location location)
+    : Exceptions::RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
 
 }// namespace NES::QueryCompilation

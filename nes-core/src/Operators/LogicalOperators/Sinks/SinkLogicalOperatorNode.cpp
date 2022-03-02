@@ -47,6 +47,7 @@ std::string SinkLogicalOperatorNode::toString() const {
 
 OperatorNodePtr SinkLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, id);
+    copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);

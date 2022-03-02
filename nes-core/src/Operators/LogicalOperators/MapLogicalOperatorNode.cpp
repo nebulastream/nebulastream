@@ -71,6 +71,7 @@ std::string MapLogicalOperatorNode::toString() const {
 
 OperatorNodePtr MapLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);
+    copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);

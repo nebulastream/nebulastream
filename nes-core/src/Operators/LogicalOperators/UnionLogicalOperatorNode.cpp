@@ -69,6 +69,7 @@ bool UnionLogicalOperatorNode::inferSchema() {
 
 OperatorNodePtr UnionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createUnionOperator(id);
+    copy->setInputOriginIds(inputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setZ3Signature(z3Signature);

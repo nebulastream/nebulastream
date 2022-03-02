@@ -61,6 +61,7 @@ std::string RenameSourceOperatorNode::getNewSourceName() { return newSourceName;
 
 OperatorNodePtr RenameSourceOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createRenameSourceOperator(newSourceName, id);
+    copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
