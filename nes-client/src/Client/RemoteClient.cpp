@@ -199,7 +199,7 @@ std::string RemoteClient::getQueryStatus(uint64_t queryId) {
     return jsonReturn.serialize();
 }
 
-bool RemoteClient::stopQuery(uint64_t queryId) {
+std::string RemoteClient::stopQuery(uint64_t queryId) {
     auto restMethod = web::http::methods::DEL;
     auto path = "query/stop-query?queryId=" + std::to_string(queryId);
     auto message = "";
@@ -223,7 +223,7 @@ bool RemoteClient::stopQuery(uint64_t queryId) {
             }
         })
         .wait();
-    return jsonReturn.at("success").as_bool();
+    return jsonReturn.serialize();;
 }
 
 std::string RemoteClient::getTopology() {
