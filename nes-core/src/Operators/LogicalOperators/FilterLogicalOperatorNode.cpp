@@ -54,6 +54,7 @@ bool FilterLogicalOperatorNode::inferSchema() {
 
 OperatorNodePtr FilterLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
+    copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);

@@ -50,6 +50,7 @@ bool SliceCreationOperator::equal(NodePtr const& rhs) const { return rhs->instan
 
 OperatorNodePtr SliceCreationOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition, id);
+    copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     for (auto [key, value] : properties) {

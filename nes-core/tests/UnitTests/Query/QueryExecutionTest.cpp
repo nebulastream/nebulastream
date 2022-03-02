@@ -30,6 +30,7 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -86,6 +87,8 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
         distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+        originIdInferenceRule = Optimizer::OriginIdInferenceRule::create();
     }
 
     void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
@@ -115,10 +118,25 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
+    Runtime::Execution::ExecutableQueryPlanPtr prepareExecutableQueryPlan(
+        QueryPlanPtr queryPlan,
+        QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
+        queryPlan = typeInferencePhase->execute(queryPlan);
+        queryPlan = distributeWindowRule->apply(queryPlan);
+        queryPlan = originIdInferenceRule->apply(queryPlan);
+        queryPlan = typeInferencePhase->execute(queryPlan);
+        auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+        auto queryCompiler = TestUtils::createTestQueryCompiler(options);
+        auto result = queryCompiler->compileQuery(request);
+        return result->getExecutableQueryPlan();
+    }
+
     SchemaPtr testSchema;
     SchemaPtr windowSchema;
     Runtime::NodeEnginePtr nodeEngine;
     Optimizer::DistributeWindowRulePtr distributeWindowRule;
+    Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    Optimizer::OriginIdInferenceRulePtr originIdInferenceRule;
 };
 
 /**
@@ -381,7 +399,6 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
-
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -578,14 +595,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    queryPlan = distributeWindowRule->apply(queryPlan);
-    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
+    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
 
     ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
@@ -645,15 +655,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    queryPlan = distributeWindowRule->apply(queryPlan);
-    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
+    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
 
     ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
@@ -737,15 +739,8 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    queryPlan = distributeWindowRule->apply(queryPlan);
-    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
 
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
     ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
     ASSERT_TRUE(nodeEngine->startQuery(plan->getQueryId()));
 
@@ -823,15 +818,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    queryPlan = distributeWindowRule->apply(queryPlan);
-    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    //    std::cout << " plan=" << queryPlan->toString() << std::endl;
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
+    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
     ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
@@ -896,15 +883,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    queryPlan = distributeWindowRule->apply(queryPlan);
-    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << " plan=" << queryPlan->toString() << std::endl;
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
+    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
     ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
@@ -982,15 +961,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    queryPlan = distributeWindowRule->apply(queryPlan);
-    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << " plan=" << queryPlan->toString() << std::endl;
-    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-    auto queryCompiler = TestUtils::createTestQueryCompiler();
-    auto result = queryCompiler->compileQuery(request);
-    auto plan = result->getExecutableQueryPlan();
+    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
     ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
@@ -1048,8 +1019,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-    auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
+    auto plan = prepareExecutableQueryPlan(mergedQuery.getQueryPlan());
     // auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 

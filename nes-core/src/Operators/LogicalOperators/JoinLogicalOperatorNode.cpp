@@ -134,6 +134,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
 OperatorNodePtr JoinLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createJoinOperator(joinDefinition, id);
+    copy->setInputOriginIds(inputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);

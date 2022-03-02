@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
@@ -108,7 +109,9 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         insertMultiplexOperatorsAfter(operatorNode);
     }
 
-    NES_ASSERT(operatorNode->getParents().size() <= 1, "A unary operator should only have at most one parent.");
+    if (operatorNode->getParents().size() > 1) {
+        throw QueryCompilationException("A unary operator should only have at most one parent.");
+    }
 
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         auto logicalSourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
@@ -143,19 +146,18 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         lowerCEPIterationOperator(queryPlan, operatorNode);
     } else {
-        NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
+        throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
 }
 
 void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& queryPlan,
                                                           const LogicalOperatorNodePtr& operatorNode) {
-
     if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         lowerUnionOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         lowerJoinOperator(queryPlan, operatorNode);
     } else {
-        NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
+        throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
 }
 
@@ -163,10 +165,11 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const QueryPlanPtr&, co
 
     auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
     // this assumes that we applies the ProjectBeforeUnionRule and the input across all children is the same.
-    NES_ASSERT(unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema()),
-               "The children of a union operator should have the same schema. Left:"
-                   << unionOperator->getLeftInputSchema()->toString() << " but right "
-                   << unionOperator->getRightInputSchema()->toString());
+    if (!unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema())) {
+        throw QueryCompilationException("The children of a union operator should have the same schema. Left:"
+                                        + unionOperator->getLeftInputSchema()->toString() + " but right "
+                                        + unionOperator->getRightInputSchema()->toString());
+    }
     auto physicalMultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(unionOperator->getLeftInputSchema());
     operatorNode->replace(physicalMultiplexOperator);
 }
@@ -200,7 +203,10 @@ void DefaultPhysicalOperatorProvider::lowerCEPIterationOperator(const QueryPlanP
 OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
                                                                            SchemaPtr outputSchema,
                                                                            std::vector<OperatorNodePtr> children) {
-    NES_ASSERT(!children.empty(), "Their should be children for operator " << joinOperator->toString());
+    if (children.empty()) {
+        throw QueryCompilationException("Their should be at least one child for the join operator " + joinOperator->toString());
+    }
+
     if (children.size() > 1) {
         auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(std::move(outputSchema));
         demultiplexOperator->setOutputSchema(joinOperator->getOutputSchema());
@@ -259,6 +265,9 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
+    if (windowOperator->getInputOriginIds().empty()) {
+        throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
+    }
     // TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
@@ -269,7 +278,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
             NES_DEBUG("Create Thread local window aggregation");
 
             if (!windowDefinition->isKeyed()) {
-                NES_ERROR("Currently the THEAD_LOCAL window implementations only supports keyed sources");
+                throw QueryCompilationException("Currently the THEAD_LOCAL window implementations only supports keyed sources");
             }
 
             auto windowHandler = std::make_shared<Windowing::Experimental::KeyedEventTimeWindowHandler>(windowDefinition);
@@ -341,7 +350,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
             PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->replace(sliceSink);
     } else {
-        NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
+        throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
 }
 
