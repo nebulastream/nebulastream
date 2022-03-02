@@ -184,40 +184,32 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     }
 
-    void setupComplexTopologyAndStreamCatalog2() {
+    void topologyGenerator() {
         topology = Topology::create();
 
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 10);
-        rootNode->addNodeProperty("tf_installed", false);
-        topology->setAsRoot(rootNode);
+        std::vector<int> parents = {-1, 0, 0, 0, 1, 2, 3, 3, 4, 5, 5, 6, 7};
+        std::vector<int> resources = {20, 20, 20, 20, 21, 22, 23, 23, 24, 25, 25, 26, 27};
 
-        TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 10);
-        sourceNode1->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
+        std::vector<int> tf_enabled_nodes = {1, 2, 3, 4, 5, 6, 7, 8, 11, 12};
+        std::vector<int> low_throughput_sources = {11};
+        std::vector<int> ml_hardwares = {};
 
-        TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 10);
-        sourceNode2->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
+        std::vector<int> sources {8, 9, 10, 11, 12};
 
-        TopologyNodePtr sourceNode11 = TopologyNode::create(4, "localhost", 123, 124, 4);
-        sourceNode11->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode11);
-
-        TopologyNodePtr sourceNode12 = TopologyNode::create(5, "localhost", 123, 124, 4);
-        sourceNode12->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode12);
-
-        TopologyNodePtr sourceNode21 = TopologyNode::create(6, "localhost", 123, 124, 10);
-        sourceNode21->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode21);
-
-        TopologyNodePtr sourceNode22 = TopologyNode::create(7, "localhost", 123, 124, 4);
-        sourceNode22->addNodeProperty("tf_installed", false);
-        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode22);
-
-        TopologyNodePtr sourceNode121 = TopologyNode::create(8, "localhost", 123, 124, 1);
-        sourceNode121->addNodeProperty("tf_installed", true);
-        topology->addNewTopologyNodeAsChild(sourceNode12, sourceNode121);
+        std::vector<TopologyNodePtr> nodes;
+        for (int i = 0; i < (int) resources.size(); i++) {
+            nodes.push_back(TopologyNode::create(i, "localhost", 123, 124, resources[i]));
+            if(i == 0)
+                topology->setAsRoot(nodes[i]);
+            else
+                topology->addNewTopologyNodeAsChild(nodes[parents[i]], nodes[i]);
+            if(std::count(tf_enabled_nodes.begin(), tf_enabled_nodes.end(), i))
+                nodes[i]->addNodeProperty("tf_installed", true);
+            if(std::count(low_throughput_sources.begin(), low_throughput_sources.end(), i))
+                nodes[i]->addNodeProperty("low_throughput_source", true);
+            if(std::count(ml_hardwares.begin(), ml_hardwares.end(), i))
+                nodes[i]->addNodeProperty("ml_hardware", true);
+        }
 
         std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
                            ->addField(createField("SepalLengthCm", FLOAT32))
@@ -231,20 +223,18 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         streamCatalog->addLogicalStream(streamName, schema);
         auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
 
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setSourceFrequency(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
-        MQTTSourceTypePtr mqttSourceType = MQTTSourceType::create();
-        auto physicalSource = PhysicalSource::create(streamName, "test2", mqttSourceType);
+        for (int source : sources) {
+            SourceCatalogEntryPtr streamCatalogEntry = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, nodes[source]);
+            streamCatalog->addPhysicalSource(streamName, streamCatalogEntry);
+        }
 
-
-        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode11);
-        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode22);
-        SourceCatalogEntryPtr streamCatalogEntry3 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode121);
-        SourceCatalogEntryPtr streamCatalogEntry4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode21);
-
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry3);
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry4);
+        globalExecutionPlan = GlobalExecutionPlan::create();
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -322,7 +312,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 /* Test query placement with Ml heuristic strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
-    setupComplexTopologyAndStreamCatalog({100, 100, 100});
+    topologyGenerator();
     Query query = Query::from("iris")
                       .inferModel("models/iris.tflite",
                                   {Attribute("SepalLengthCm"), Attribute("SepalWidthCm"), Attribute("PetalLengthCm"), Attribute("PetalWidthCm")},

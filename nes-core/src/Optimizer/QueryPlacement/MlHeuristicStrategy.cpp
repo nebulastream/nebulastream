@@ -69,39 +69,46 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
         // 3. add network source and sink operators
         addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
-        bool enable_redundancy_elimination = true;
+        if(DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION) {
+            performOperatorRedundancyElimination(queryId, faultToleranceType, lineageType);
+        }
 
-        if(enable_redundancy_elimination) {
-            auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-            auto context = std::make_shared<z3::context>();
-            auto signatureInferencePhase =
-                Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+        // 4. Perform type inference on all updated query plans
+        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+    } catch (log4cxx::helpers::Exception& ex) {
+        throw QueryPlacementException(queryId, ex.what());
+    }
+}
 
-            for (auto ex_node : executionNodes) {
-                auto querysubplans = ex_node->getQuerySubPlans(queryId);
+void MlHeuristicStrategy::performOperatorRedundancyElimination(QueryId queryId,
+                                                               FaultToleranceType faultToleranceType,
+                                                               LineageType lineageType){
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto context = std::make_shared<z3::context>();
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
-                SignatureEqualityUtilPtr signatureEqualityUtil = SignatureEqualityUtil::create(context);
+    for (auto ex_node : executionNodes) {
+        auto querysubplans = ex_node->getQuerySubPlans(queryId);
 
-                if (querysubplans.size() >= 2) {
-                    auto a = querysubplans[0];
-                    auto b = querysubplans[1];
+        SignatureEqualityUtilPtr signatureEqualityUtil = SignatureEqualityUtil::create(context);
 
-                    runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+        if (querysubplans.size() >= 2) {
+            runTypeInferencePhase(queryId, faultToleranceType, lineageType);
+            std::vector<QuerySignaturePtr> signatures;
+            std::vector<int> querysubplansToRemove;
 
-                    signatureInferencePhase->execute(a);
-                    signatureInferencePhase->execute(b);
-
-                    auto targetSinkOperator = a->getSinkOperators().at(0);
-                    auto hostSinkOperator = b->getSinkOperators().at(0);;
-
-                    auto targetRootOperator = a->getSourceOperators().at(0)->getParents().at(0);
-                    auto hostRootOperator = b->getSourceOperators().at(0)->getParents().at(0);
-
-                    auto a_sign = targetSinkOperator->as<LogicalUnaryOperatorNode>()->getZ3Signature();
-                    auto b_sign = hostSinkOperator->as<LogicalUnaryOperatorNode>()->getZ3Signature();
-
-                    if (signatureEqualityUtil->checkEquality(a_sign, b_sign)) {
-                        auto targetRootChildren = targetRootOperator->getChildren();
+            for (auto qsp : querysubplans){
+                signatureInferencePhase->execute(qsp);
+                auto sinkOperator = qsp->getSinkOperators().at(0);
+                signatures.push_back(sinkOperator->as<LogicalUnaryOperatorNode>()->getZ3Signature());
+            }
+            for (int i = 0; i < (int)querysubplans.size()-1; ++i) {
+                for (int j = i+1; j < (int)querysubplans.size(); ++j) {
+                    if (!std::count(querysubplansToRemove.begin(), querysubplansToRemove.end(), j)
+                        && signatureEqualityUtil->checkEquality(signatures[i], signatures[j])) {
+                        auto targetRootOperator = querysubplans[i]->getSourceOperators().at(0)->getParents().at(0);
+                        auto hostRootOperator = querysubplans[j]->getSourceOperators().at(0)->getParents().at(0);
                         auto hostRootChildren = hostRootOperator->getChildren();
 
                         for (auto& hostChild : hostRootChildren) {
@@ -110,20 +117,17 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                 NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                             }
                         }
+                        querysubplansToRemove.push_back(j);
                     }
-
-                    querysubplans.pop_back();
                 }
-                ex_node->updateQuerySubPlans(queryId, querysubplans);
             }
-            NES_DEBUG("MlHeuristicStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+            for (int i = (int)querysubplansToRemove.size()-1; i >= 0; i--){
+                querysubplans.erase(querysubplans.begin() + querysubplansToRemove[i]);
+            }
         }
-
-        // 4. Perform type inference on all updated query plans
-        return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (log4cxx::helpers::Exception& ex) {
-        throw QueryPlacementException(queryId, ex.what());
+        ex_node->updateQuerySubPlans(queryId, querysubplans);
     }
+    NES_DEBUG("MlHeuristicStrategy: Updated Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 }
 
 void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
@@ -157,6 +161,27 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
         }
     }
     NES_DEBUG("MlHeuristicStrategy: Finished placing query operators into the global execution plan");
+}
+
+bool MlHeuristicStrategy::pushUpBasedOnFilterSelectivity(const OperatorNodePtr& operatorNode) {
+    auto infModl = operatorNode->as<InferModelLogicalOperatorNode>();
+    float f0 = infModl->getInputSchema()->getSize();
+
+    auto ancestors = operatorNode->getAndFlattenAllAncestors();
+    auto sink = ancestors.at(ancestors.size()-1);
+    float f_new = sink->as<UnaryOperatorNode>()->getOutputSchema()->getSize();
+
+    float s = 1.0;
+
+    for (auto ancestor : ancestors) {
+        if(ancestor->instanceOf<FilterLogicalOperatorNode>()){
+            auto fltr = ancestor->as<FilterLogicalOperatorNode>();
+            s*=fltr->getSelectivity();
+        }
+    }
+    float fields_measure = f_new / f0;
+    float selectivity_measure = 1/s;
+    return fields_measure > selectivity_measure;
 }
 
 bool MlHeuristicStrategy::placeOperator(QueryId queryId,
@@ -221,7 +246,6 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
             }
         }
 
-        bool cpu_saver_mode = true;
         bool should_push_up = false;
         bool can_be_placed_here = true;
 
@@ -238,29 +262,36 @@ bool MlHeuristicStrategy::placeOperator(QueryId queryId,
         }
 
         if(operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
-            if(candidateTopologyNode->getAvailableResources() < 5 && cpu_saver_mode){
-                should_push_up = true;
+
+            bool ENABLE_CPU_SAVER_MODE = DEFAULT_ENABLE_CPU_SAVER_MODE;
+            int MIN_RESOURCE_LIMIT = DEFAULT_MIN_RESOURCE_LIMIT;
+            bool LOW_THROUGHPUT_SOURCE = DEFAULT_LOW_THROUGHPUT_SOURCE;
+            bool ML_HARDWARE = DEFAULT_ML_HARDWARE;
+
+            if (candidateTopologyNode->hasNodeProperty("enable_cpu_saver_mode")) {
+                ENABLE_CPU_SAVER_MODE = std::any_cast<bool>(candidateTopologyNode->getNodeProperty("enable_cpu_saver_mode"));
+            }
+            if (candidateTopologyNode->hasNodeProperty("min_resource_limit")) {
+                MIN_RESOURCE_LIMIT = std::any_cast<int>(candidateTopologyNode->getNodeProperty("min_resource_limit"));
+            }
+            if (candidateTopologyNode->hasNodeProperty("low_throughput_source")) {
+                LOW_THROUGHPUT_SOURCE = std::any_cast<bool>(candidateTopologyNode->getNodeProperty("low_throughput_source"));
+            }
+            if (candidateTopologyNode->hasNodeProperty("ml_hardware")) {
+                ML_HARDWARE = std::any_cast<bool>(candidateTopologyNode->getNodeProperty("ml_hardware"));
             }
 
-            auto infModl = operatorNode->as<InferModelLogicalOperatorNode>();
-            float f0 = infModl->getInputSchema()->getSize();
-
-            auto ancestors = operatorNode->getAndFlattenAllAncestors();
-            auto sink = ancestors.at(ancestors.size()-1);
-            float f_new = sink->as<UnaryOperatorNode>()->getOutputSchema()->getSize();
-
-            float s = 1.0;
-
-            for (auto ancestor : ancestors) {
-                if(ancestor->instanceOf<FilterLogicalOperatorNode>()){
-                    auto fltr = ancestor->as<FilterLogicalOperatorNode>();
-                    s*=fltr->getSelectivity();
-                }
-            }
-            float fields_measure = f_new / f0;
-            float selectivity_measure = 1/s;
-            if (fields_measure > selectivity_measure) {
+            if(candidateTopologyNode->getAvailableResources() < MIN_RESOURCE_LIMIT && ENABLE_CPU_SAVER_MODE){
                 should_push_up = true;
+            }
+            if(pushUpBasedOnFilterSelectivity(operatorNode)) {
+                should_push_up = true;
+            }
+            if(LOW_THROUGHPUT_SOURCE) {
+                should_push_up = true;
+            }
+            if(ML_HARDWARE){
+                should_push_up = false;
             }
         }
 
