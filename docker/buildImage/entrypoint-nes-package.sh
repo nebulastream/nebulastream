@@ -23,7 +23,7 @@ echo "Architecture=$arch"
 # Build NES
 mkdir -p /nebulastream/build
 cd /nebulastream/build
-cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
+cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_ENABLES_TESTS=0 ..
 make -j8
 cpack
 mv *.deb "NebulaStream-$system-$arch-$version.deb"
