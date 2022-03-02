@@ -16,6 +16,9 @@
 set -e
 
 [[ ! -f /nebulastream/CMakeLists.txt ]] && echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]" && exit 1
+echo "Version=$version"
+echo "System=$system"
+echo "Architecture=$arch"
 
 # Build NES
 mkdir -p /nebulastream/build
@@ -23,3 +26,4 @@ cd /nebulastream/build
 cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
 make -j8
 cpack
+mv *.deb "NebulaStream-$system-$arch-$version.deb"

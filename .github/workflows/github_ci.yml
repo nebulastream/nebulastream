@@ -268,7 +268,7 @@ jobs:
 
   package:
     runs-on: [ self-hosted, linux, X64, Build ]
-    needs: [ build-x64-linux ]
+#needs: [release]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
@@ -297,7 +297,23 @@ jobs:
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Package Cmake
         run: |
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_build_${{ matrix.osversion }}
+          nes_version="$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
+          echo "Package NebulaStream with version: $nes_version for: ${{ matrix.osversion }}"
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eversion="${{ matrix.osversion }}" -esystem="${{ matrix.osversion }}" -earch="${{ matrix.osversion }}" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_build_${{ matrix.osversion }}
+      - name: Release
+          uses: softprops/action-gh-release@v1
+          id: createrelease
+          with:
+            tag_name: "v0.1.61"
+            files: |
+              $GITHUB_WORKSPACE/build/NebulaStream-${{ matrix.osversion }}-${{ matrix.osversion }}-${{ matrix.osversion }}.deb
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        if: failure()
+        id: uploadlogs
+        with:
+          name: vcpkg-logs-${{ env.VCPKG_DEP_LIST }}
+          path: ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
       - name: docker cleanup
         if: ${{ always() }}
         run: |
