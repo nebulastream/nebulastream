@@ -358,7 +358,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
         //Check if the path contains the query id
         auto param = parameters.find("queryId");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query Id for the GET execution-plan request");
+            NES_ERROR("QueryController: Unable to find query Id for the stop-query request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);

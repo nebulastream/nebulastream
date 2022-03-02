@@ -56,9 +56,9 @@ class RemoteClient {
     /**
      * @brief stop the query with the given query id
      * @param uint64_t query id
-     * @return stop was successfully
+     * @return stop was successfully, if not why
      */
-    bool stopQuery(uint64_t queryId);
+    std::string stopQuery(uint64_t queryId);
 
     /**
      * @brief get a queries query plan

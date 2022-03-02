@@ -307,4 +307,42 @@ TEST_F(RemoteClientTest, StopAInvalidQueryId) {
     EXPECT_FALSE(stopQuery(queryId + 1));
 }
 
+
+/**
+ * @brief Test getting queries by status works properly
+ */
+TEST_F(RemoteClientTest, GetQueriesWithStatusTest2) {
+    Query query = Query::from("default_");
+    int64_t queryId = client->submitQuery(query);
+
+    std::string queries = client->getQueries(Registered);
+    std::string expect = "[{\"queryId\":";
+    EXPECT_TRUE(queries.compare(0, expect.size() - 1, expect));
+    stopQuery(queryId);
+}
+
+/**
+  * @brief Test if retrieving the execution plan works properly
+  * @result execution plan is as expected
+  */
+TEST_F(RemoteClientTest, StopAStoppedQuery) {
+    Query query = Query::from("default_logical");
+    int64_t queryId = client->submitQuery(query);
+
+    EXPECT_TRUE(stopQuery(queryId));
+    sleep(3);
+    EXPECT_TRUE(stopQuery(queryId));
+}
+
+/**
+  * @brief Test if retrieving the execution plan works properly
+  * @result execution plan is as expected
+  */
+TEST_F(RemoteClientTest, StopAInvalidQueryId) {
+    Query query = Query::from("default_logical");
+    int64_t queryId = client->submitQuery(query);
+    sleep(2);
+    EXPECT_FALSE(stopQuery(queryId + 1));
+}
+
 }// namespace NES
