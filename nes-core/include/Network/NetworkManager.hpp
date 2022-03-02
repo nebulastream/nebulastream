@@ -83,14 +83,14 @@ class NetworkManager {
     /**
      * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
      * @param nesPartition the id of the logical channel between sender and receiver
-     * @return true if the partition was registered fully, false otherwise
+     * @return true if the partition was unregistered fully, false otherwise
      */
     bool unregisterSubpartitionConsumer(const NesPartition& nesPartition) const;
 
     /**
-     * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
+     * @brief This method is called on the sender side to remove a SubpartitionProducer.
      * @param nesPartition the id of the logical channel between sender and receiver
-     * @return true if the partition was registered fully, false otherwise
+     * @return true if the partition was unregistered fully, false otherwise
      */
     bool unregisterSubpartitionProducer(const NesPartition& nesPartition) const;
 
