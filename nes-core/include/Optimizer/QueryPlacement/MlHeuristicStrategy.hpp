@@ -36,7 +36,12 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
   public:
     ~MlHeuristicStrategy() override = default;
 
-//    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
+    static const bool DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION = true;
+    static const bool DEFAULT_ENABLE_CPU_SAVER_MODE = true;
+    static const int DEFAULT_MIN_RESOURCE_LIMIT = 5;
+    static const bool DEFAULT_LOW_THROUGHPUT_SOURCE = false;
+    static const bool DEFAULT_ML_HARDWARE = false;
+
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
@@ -95,6 +100,8 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      */
     static QueryPlanPtr
     getCandidateQueryPlan(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
+    bool pushUpBasedOnFilterSelectivity(const OperatorNodePtr& operatorNode);
+    void performOperatorRedundancyElimination(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
 };
 }// namespace NES::Optimizer
 
