@@ -134,10 +134,6 @@ bool DataSource::start() {
             std::cout << "source " << operatorId << " does not use affinity" << std::endl;
         }
 #endif
-//
-//#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-//        taskQueueId = numa_node_of_cpu(cpu);
-//#endif
         std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
 
         prom.set_value(true);

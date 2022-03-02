@@ -173,7 +173,6 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
                     }
                 }
             }
-            //pipelineContext = PipelineExecutionContextPtr();
             break;
         }
         default: {

@@ -48,7 +48,6 @@ ForLoopStatement::ForLoopStatement(ExpressionStatementPtr condition,
     }
 }
 
-
 StatementPtr ForLoopStatement::createCopy() const { return std::make_shared<ForLoopStatement>(*this); }
 
 CompoundStatementPtr ForLoopStatement::getCompoundStatement() { return body; }

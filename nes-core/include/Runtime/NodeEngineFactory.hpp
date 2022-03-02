@@ -14,27 +14,27 @@ limitations under the License.
 
 #ifndef NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Components/NesWorker.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <vector>
 
 namespace NES {
 
-        class PhysicalSource;
-        using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-        namespace Configurations{
-        class QueryCompilerConfiguration;
-        }
+namespace Configurations {
+class QueryCompilerConfiguration;
+}
 
-        namespace Runtime {
-        enum class NumaAwarenessFlag { ENABLED, DISABLED };
-        /**
+namespace Runtime {
+enum class NumaAwarenessFlag { ENABLED, DISABLED };
+/**
 * @brief A general factory to create a node engine given some configuration.
 */
-        class NodeEngineFactory {
-          public:
-            /**
+class NodeEngineFactory {
+  public:
+    /**
  * @brief this creates a new Runtime with some default parameters
  * @param hostname the ip address for the network manager
  * @param port the port for the network manager
@@ -42,10 +42,12 @@ namespace NES {
  * @param nesWorker weak pointer to the nes worker where the node engine is created
  * @return
  */
-            static NodeEnginePtr
-            createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources, std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>());
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname,
+                                                 uint16_t port,
+                                                 std::vector<PhysicalSourcePtr> physicalSources,
+                                                 std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>());
 
-            /**
+    /**
 * @brief this creates a new Runtime
 * @param hostname the ip address for the network manager
 * @param port the port for the network manager
@@ -55,37 +57,37 @@ namespace NES {
 * @param nesWorker weak pointer to the nes worker where the node engine is created
 * @return
 */
-            static NodeEnginePtr createNodeEngine(const std::string& hostname,
-                                                  uint16_t port,
-                                                  std::vector<PhysicalSourcePtr> physicalSources,
-                                                  uint16_t numThreads,
-                                                  uint64_t bufferSize,
-                                                  uint64_t numberOfBuffersInGlobalBufferManager,
-                                                  uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                                  uint64_t numberOfBuffersPerWorker,
-                                                  const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
-                                                  std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>(),
-                                                  NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
-                                                  const std::string& workerToCodeMapping = "",
-                                                  const std::string& queryCompilerCompilationStrategy = "DEBUG",
-                                                  const std::string& queryCompilerPipeliningStrategy = "OPERATOR_FUSION",
-                                                  const std::string& queryCompilerOutputBufferOptimizationLevel = "ALL",
-                                                  const std::string& windowingStrategy = "DEFAULT",
-                                                  uint64_t numberOfQueues = 1,
-                                                  uint64_t numberOfThreadsPerQueue = 0,
-                                                  const std::string& queryManagerMode = "Dynamic");
+    static NodeEnginePtr createNodeEngine(const std::string& hostname,
+                                          uint16_t port,
+                                          std::vector<PhysicalSourcePtr> physicalSources,
+                                          uint16_t numThreads,
+                                          uint64_t bufferSize,
+                                          uint64_t numberOfBuffersInGlobalBufferManager,
+                                          uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                          uint64_t numberOfBuffersPerWorker,
+                                          const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
+                                          std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>(),
+                                          NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
+                                          const std::string& workerToCodeMapping = "",
+                                          const std::string& queryCompilerCompilationStrategy = "DEBUG",
+                                          const std::string& queryCompilerPipeliningStrategy = "OPERATOR_FUSION",
+                                          const std::string& queryCompilerOutputBufferOptimizationLevel = "ALL",
+                                          const std::string& windowingStrategy = "DEFAULT",
+                                          uint64_t numberOfQueues = 1,
+                                          uint64_t numberOfThreadsPerQueue = 0,
+                                          const std::string& queryManagerMode = "Dynamic");
 
-          private:
-            static QueryCompilation::QueryCompilerOptionsPtr
-            createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration queryCompilerConfiguration);
+  private:
+    static QueryCompilation::QueryCompilerOptionsPtr
+    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration queryCompilerConfiguration);
 
-            /**
+    /**
  * @brief Returns the next free node id
  * @return node id
  */
-            static uint64_t getNextNodeEngineId();
-        };
+    static uint64_t getNextNodeEngineId();
+};
 
-        }// namespace Runtime
-    }// namespace NES
+}// namespace Runtime
+}// namespace NES
 #endif// NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_

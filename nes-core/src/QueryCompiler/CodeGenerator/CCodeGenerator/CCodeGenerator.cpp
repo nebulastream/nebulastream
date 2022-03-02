@@ -1480,7 +1480,6 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(
     return false;
 }
 
-
 /**
  * Code Generation for the window operator
  * @param window windowdefinition

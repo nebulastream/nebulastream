@@ -22,7 +22,6 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
-#include <Network/NetworkManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
@@ -58,13 +57,15 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
       numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
-      queryManagerMode(workerConfig->queryManagerMode.getValue()) {
+      queryManagerMode(workerConfig->queryManagerMode.getValue()),
+      enableMonitoring(workerConfig->enableMonitoring.getValue()) {
     log4cxx::MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
 }
 
-NesWorker::~NesWorker() { stop(true); }
+NesWorker::~NesWorker() {
+    stop(true); }
 
 bool NesWorker::setWithParent(uint32_t parentId) {
     withParent = true;
@@ -113,7 +114,8 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }
 
-uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
+uint64_t NesWorker::getWorkerId() {
+    return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking "
@@ -212,9 +214,11 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     return true;
 }
 
-Runtime::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
+Runtime::NodeEnginePtr NesWorker::getNodeEngine() {
+    return nodeEngine; }
 
-bool NesWorker::isWorkerRunning() const noexcept { return isRunning; }
+bool NesWorker::isWorkerRunning() const noexcept {
+    return isRunning; }
 
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
@@ -290,7 +294,8 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
     return success;
 }
 
-const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const { return workerConfig; }
+const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const {
+    return workerConfig; }
 
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     NES_ASSERT(!physicalSources.empty(), "invalid physical sources");
@@ -378,9 +383,11 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     return success;
 }
 
-TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
+TopologyNodeId NesWorker::getTopologyNodeId() const {
+    return topologyNodeId; }
 
-bool NesWorker::hasLocation() { return locationCoordinates.has_value(); }
+bool NesWorker::hasLocation() {
+    return locationCoordinates.has_value(); }
 
 bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
     locationCoordinates = geoLoc;
@@ -389,7 +396,8 @@ bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
 
 //TODO #2475 check first if the node is mobile and if it is, then return a value from the gps/csv interface once the interface is implemented
 //TODO #2475 also add another function that will only return a position if the node is a mobile node
-std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() { return locationCoordinates; }
+std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() {
+    return locationCoordinates; }
 
 //std::optional<std::tuple<double, double>> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
 std::optional<GeographicalLocation> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {

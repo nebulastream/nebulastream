@@ -117,7 +117,6 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                      fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
             return createBinaryNESFileSink(schema,
-
                                            querySubPlan->getQuerySubPlanId(),
                                            nodeEngine,
                                            fileSinkDescriptor->getFileName(),
@@ -137,7 +136,6 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema,
                                  networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
-
                                  querySubPlan->getQuerySubPlanId(),
                                  networkSinkDescriptor->getNodeLocation(),
                                  networkSinkDescriptor->getNesPartition(),
