@@ -35,7 +35,12 @@ class NetworkSink;
 
 namespace NES::Runtime::Execution {
 
-enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
+enum class ExecutableQueryPlanResult : uint8_t {
+    /// query was completed successfully
+    Ok,
+    /// query failed
+    Fail
+};
 
 /**
  * @brief Represents an executable plan of an particular query.
@@ -186,6 +191,18 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @param event
      */
     void onEvent(BaseEvent& event) override;
+
+  private:
+
+    /**
+     * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
+     * @tparam Derived the class type that we want to cast the shared ptr
+     * @return this instance casted to the desired shared_ptr<Derived> type
+     */
+    template<typename Derived>
+    std::shared_ptr<Derived> shared_from_base() {
+        return std::static_pointer_cast<Derived>(Reconfigurable::shared_from_this());
+    }
 
   private:
     const QueryId queryId;

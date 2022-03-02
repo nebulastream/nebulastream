@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#define NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
@@ -176,7 +176,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     * @param qep of the query to fail
     * @return bool indicating success
     */
-    static bool failQuery(const Execution::ExecutableQueryPlanPtr& qep);
+    bool failQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and finish up
@@ -237,15 +237,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     addReconfigurationMessage(QueryId queryId, QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
 
   public:
+
+
     /**
-     * @brief introduces end of stream to all QEPs connected to this source
-     * @param source the actual source
-     * @param graceful hard or soft termination
-     * @return true if it went through
+     * @brief
+     * @param qep
+     * @param newStatus
      */
-    bool addEndOfStream(const DataSourcePtr& source, bool graceful = true) {
-        return addEndOfStream(source->getOperatorId(), graceful);
-    }
+    void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus newStatus);
 
     /**
     * @brief maps querySubId to query id
@@ -255,11 +254,11 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source
-     * @param operatorId the id of the source
+     * @param source the source
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(OperatorId sourceId, bool graceful = true);
+    bool addEndOfStream(DataSourcePtr source, bool graceful = true);
 
     /**
      * @return true if thread pool is running
@@ -311,9 +310,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     ExecutionResult terminateLoop(WorkerContext&);
 
-    bool addSoftEndOfStream(OperatorId sourceId);
+    bool addSoftEndOfStream(DataSourcePtr source);
 
-    bool addHardEndOfStream(OperatorId sourceId);
+    bool addHardEndOfStream(DataSourcePtr source);
 
     /**
      * @brief Returns the next free task id
@@ -326,21 +325,18 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;
     ThreadPoolPtr threadPool{nullptr};
-    uint16_t numThreads;
-    //    std::map<uint64_t,uint64_t> numaRegionToThreadMap;
-    QueryMangerMode queryMangerMode;
-    uint64_t numberOfQueues;
-    uint64_t numberOfThreadsPerQueue;
-    HardwareManagerPtr hardwareManager;
-    // TODO remove these unnecessary structures
-    std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
-    std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
-    std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
-    std::map<QueryId, uint64_t> queryToTaskQueueIdMap;
+    uint16_t numThreads;
+    QueryMangerMode queryMangerMode;
+    uint16_t numberOfQueues;
+    uint16_t numberOfThreadsPerQueue;
+    HardwareManagerPtr hardwareManager;
+
+    std::unordered_map<QuerySubPlanId, uint64_t> queryToTaskQueueIdMap;
     uint64_t currentTaskQueueId = 0;
 
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
+    std::unordered_map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceToQEPMapping;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
@@ -364,4 +360,4 @@ using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 }// namespace Runtime
 }// namespace NES
-#endif// NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
+#endif// NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_

@@ -31,7 +31,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                          BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created), numOfActiveSources(this->sources.size()),
+      qepStatus(Execution::ExecutableQueryPlanStatus::Created), numOfActiveSources(this->sources.size()),
       qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
     // nop
 }
@@ -62,7 +62,9 @@ QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubP
 
 ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
-    NES_ASSERT(qepStatus.load() == Created || qepStatus.load() == Stopped || qepStatus.load() == ErrorState,
+    NES_ASSERT(qepStatus.load() == Execution::ExecutableQueryPlanStatus::Created
+                   || qepStatus.load() == Execution::ExecutableQueryPlanStatus::Stopped
+                   || qepStatus.load() == Execution::ExecutableQueryPlanStatus::ErrorState,
                "QueryPlan is created but not executing " << queryId);
     destroy();
 }
@@ -73,8 +75,8 @@ std::shared_future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminatio
 
 bool ExecutableQueryPlan::fail() {
     bool ret = true;
-    auto expected = Running;
-    if (qepStatus.compare_exchange_strong(expected, ErrorState)) {
+    auto expected = Execution::ExecutableQueryPlanStatus::Running;
+    if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::ErrorState)) {
         NES_DEBUG("QueryExecutionPlan: fail " << queryId << " " << querySubPlanId);
         for (auto& stage : pipelines) {
             if (!stage->stop()) {
@@ -85,7 +87,7 @@ bool ExecutableQueryPlan::fail() {
     }
 
     if (!ret) {
-        qepStatus.store(ErrorState);
+        qepStatus.store(Execution::ExecutableQueryPlanStatus::ErrorState);
     }
     return ret;
 }
@@ -94,8 +96,8 @@ ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.lo
 
 bool ExecutableQueryPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup " << queryId << " " << querySubPlanId);
-    auto expected = Created;
-    if (qepStatus.compare_exchange_strong(expected, Deployed)) {
+    auto expected = Execution::ExecutableQueryPlanStatus::Created;
+    if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Deployed)) {
         for (auto& stage : pipelines) {
             if (!stage->setup(queryManager, bufferManager)) {
                 NES_ERROR("QueryExecutionPlan: setup failed!" << queryId << " " << querySubPlanId);
@@ -111,8 +113,8 @@ bool ExecutableQueryPlan::setup() {
 
 bool ExecutableQueryPlan::start(const StateManagerPtr& stateManager) {
     NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
-    auto expected = Deployed;
-    if (qepStatus.compare_exchange_strong(expected, Running)) {
+    auto expected = Execution::ExecutableQueryPlanStatus::Deployed;
+    if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Running)) {
         for (auto& stage : pipelines) {
             NES_DEBUG("ExecutableQueryPlan::start qep=" << stage->getQuerySubPlanId() << " pipe=" << stage->getPipelineId());
             if (!stage->start(stateManager)) {
@@ -141,13 +143,13 @@ void ExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContex
 
 bool ExecutableQueryPlan::stop() {
     bool allStagesStopped = true;
-    auto expected = Running;
+    auto expected = Execution::ExecutableQueryPlanStatus::Running;
     NES_DEBUG("QueryExecutionPlan: stop queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
     if (numOfActiveSources.fetch_sub(1) != 1) {
         NES_WARNING("QueryExecutionPlan: cannot stop queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
         return true;
     }
-    if (qepStatus.compare_exchange_strong(expected, Stopped)) {
+    if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
         for (auto& stage : pipelines) {
             if (!stage->stop()) {
@@ -163,21 +165,21 @@ bool ExecutableQueryPlan::stop() {
             return true;// correct stop
         }
 
-        qepStatus.store(ErrorState);
-        qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
+        qepStatus.store(Execution::ExecutableQueryPlanStatus::ErrorState);
+        qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
 
         return false;// one stage failed to stop
     }
 
-    if (expected == Stopped) {
+    if (expected == Execution::ExecutableQueryPlanStatus::Stopped) {
         return true;// we have tried to stop the same QEP twice..
     }
     // if we get there it mean the CAS failed and expected is the current value
-    while (!qepStatus.compare_exchange_strong(expected, ErrorState)) {
+    while (!qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::ErrorState)) {
         // try to install ErrorState
     }
 
-    qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
+    qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
 
     bufferManager.reset();
     return false;
@@ -194,11 +196,12 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
         case SoftEndOfStream: {
             NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan "
                                                                                        << querySubPlanId);
-            auto expected = Running;
-            if (qepStatus.compare_exchange_strong(expected, Stopped)) {
+            auto expected = Execution::ExecutableQueryPlanStatus::Running;
+            if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
                 NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
                                                             << " is marked as stopped now");
                 qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+                queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(), Execution::ExecutableQueryPlanStatus::Stopped);
                 return;
             }
             break;
@@ -210,6 +213,13 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
 }
 
 void ExecutableQueryPlan::destroy() {
+    // sanity checks: ensure we can destroy stopped instances
+    for (const auto& source : sources) {
+        NES_ASSERT(source->isRunning(), "Source " << source->getOperatorId() << " is still running");
+    }
+    for (const auto& pipeline : pipelines) {
+        NES_ASSERT(pipeline->isRunning(), "Pipeline " << pipeline->getPipelineId() << " is still running");
+    }
     sources.clear();
     pipelines.clear();
     sinks.clear();

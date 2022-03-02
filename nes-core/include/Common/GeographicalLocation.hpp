@@ -13,6 +13,7 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
 #define NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
+
 #include <string>
 
 class Coordinates;
@@ -112,6 +113,6 @@ class GeographicalLocation {
     double longitude;
 };
 
-}
+}// namespace NES
 
 #endif//NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
