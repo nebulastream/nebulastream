@@ -13,272 +13,23 @@ on:
     branches:
       - '*'
 jobs:
-#  build-x64-linux:
-#    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-#    runs-on: [self-hosted, linux, X64, Build]
-#    timeout-minutes: 90
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        include:
-#          - osversion: ubuntu-18_04
-#            require_build: "false"
-#            require_test: "false"
-#          - osversion: ubuntu-20_04
-#            require_build: "true"
-#            require_test: "true"
-#          - osversion: ubuntu-21_10
-#            require_build: "true"
-#            require_test: "true"
-#    steps:
-#      - uses: AutoModality/action-clean@v1
-#      - uses: actions/checkout@v2
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#          ssh-strict: 'false'
-#          fetch-depth: '0'
-#      - name: Cancel Previous Runs
-#        uses: styfle/cancel-workflow-action@0.7.0
-#        with:
-#          access_token: ${{ github.token }}
-#      - name: Build Docker
-#        id: builddocker
-#        continue-on-error: true
-#        working-directory: ${{ github.workspace }}/docker/buildImage
-#        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-#      - name: Run tests
-#        run: |
-#          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
-#      - name: docker cleanup
-#        if: ${{ always() }}
-#        run: |
-#          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
-#      - name: Notify Slack
-#        uses: 8398a7/action-slack@v2
-#        with:
-#          status: ${{ job.status }}
-#          author_name: ${{ github.actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        if: always()
-#
-#  build-x64-linux-parallel:
-#    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-#    runs-on: [ self-hosted, linux, X64, Build ]
-#    timeout-minutes: 120
-#    continue-on-error: true
-#    steps:
-#      - uses: AutoModality/action-clean@v1
-#      - uses: actions/checkout@v2
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#          ssh-strict: 'false'
-#          fetch-depth: '0'
-#      - name: Cancel Previous Runs
-#        uses: styfle/cancel-workflow-action@0.7.0
-#        with:
-#          access_token: ${{ github.token }}
-#      #TODO: 2268 remove the environment variable to allow test execution on arm server
-#      - name: Run build and test
-#        run: |
-#          docker run --name ${{ github.run_id }}_build_parallel -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" -eNesTestParallelism="8" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-#      - name: docker cleanup build
-#        if: ${{ always() }}
-#        run: |
-#          docker rm -f ${{ github.run_id }}_build_parallel
-#      - name: docker cleanup test
-#        if: ${{ always() }}
-#        run: |
-#          docker rm -f ${{ github.run_id }}_test_parallel
-#      - name: Notify Slack
-#        uses: 8398a7/action-slack@v2
-#        with:
-#          status: ${{ job.status }}
-#          author_name: ${{ github.actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        if: always()
-#
-#  build-arm64-linux:
-#    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-#    runs-on: [self-hosted, linux, arm64, Build]
-#    timeout-minutes: 120
-#    continue-on-error: true
-#    steps:
-#      - uses: AutoModality/action-clean@v1
-#      - uses: actions/checkout@v2
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#          ssh-strict: 'false'
-#          fetch-depth: '0'
-#      - name: Cancel Previous Runs
-#        uses: styfle/cancel-workflow-action@0.7.0
-#        with:
-#          access_token: ${{ github.token }}
-#      #TODO: 2268 remove the environment variable to allow test execution on arm server
-#      - name: Run build and test
-#        run: |
-#          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-#      - name: docker cleanup build
-#        if: ${{ always() }}
-#        run: |
-#          docker rm -f ${{ github.run_id }}_build
-#      - name: docker cleanup test
-#        if: ${{ always() }}
-#        run: |
-#          docker rm -f ${{ github.run_id }}_test
-#      - name: Notify Slack
-#        uses: 8398a7/action-slack@v2
-#        with:
-#          status: ${{ job.status }}
-#          author_name: ${{ github.actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        if: always()
-#
-#  build-x64-macos:
-#    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-#    runs-on: [self-hosted, macos, X64 ]
-#    timeout-minutes: 120
-#    continue-on-error: true
-#    steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#          ssh-strict: 'false'
-#          fetch-depth: '0'
-#      - name: Cancel Previous Runs
-#        uses: styfle/cancel-workflow-action@0.7.0
-#        with:
-#          access_token: ${{ github.token }}
-#      #TODO: 2268 remove the environment variable to allow test execution on arm server
-#      - name: Run build
-#        run: |
-#          bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh
-#      - name: Notify Slack
-#        uses: 8398a7/action-slack@v2
-#        with:
-#          status: ${{ job.status }}
-#          author_name: ${{ github.actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        if: always()
-#
-#  release:
-#    runs-on: [self-hosted, linux, X64, Build]
-#    if: github.ref == 'refs/heads/master'
-#    needs: [build-x64-linux, build-arm64-linux, build-x64-macos, build-x64-linux-parallel]
-#    env:
-#      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-#      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-#    steps:
-#      - uses: AutoModality/action-clean@v1
-#      - uses: actions/checkout@v2
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#          ssh-strict: 'false'
-#          fetch-depth: '0'
-#      - name: Set up QEMU
-#        uses: docker/setup-qemu-action@v1
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v1
-#      - id: file_changes
-#        uses: trilom/file-changes-action@v1.2.4
-#      - name: Build and Release NES Build Image
-#        run: |
-#          echo '${{ steps.file_changes.outputs.files_modified }}'
-#          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-#              echo "Found changes done to buildImage"
-#              cd docker/buildImage
-#              #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
-#              #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
-#              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-#              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
-#              echo "Pushed the build image"
-#              docker logout
-#          else
-#              echo "No changes done in buildImage. Skipping the build and release phase."
-#          fi
-#      - name: Build and Release NES Dev Image
-#        run: |
-#          echo '${{ steps.file_changes.outputs.files_modified }}'
-#          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
-#              echo "Found changes done to devImage"
-#              cd docker/devImage/
-#              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-#              docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --push
-#              echo "Pushed the dev image"
-#              docker logout
-#          else
-#              echo "No changes done to devImage. Skipping the build and release phase."
-#          fi
-#      - name: Build and Release NES Executable Image
-#        run: |
-#          nes_version="$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
-#          cd $GITHUB_WORKSPACE
-#          echo "Preparing and Releasing new executable image with version $nes_version and latest"
-#          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-#          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --push
-#          echo "Pushed the execution image"
-#          docker logout
-#      - name: Release new version
-#        env:
-#          CI_SECRET: ${{ secrets.CI_SECRET }}
-#        run: |
-#          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-#          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
-#      #Find the PR associated with this push, if there is one.
-#      - uses: jwalton/gh-find-current-pr@v1
-#        id: findPr
-#        with:
-#          github-token: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Repository Dispatch
-#        uses: peter-evans/repository-dispatch@v1
-#        with:
-#          token: ${{ secrets.CI_PERSONAL_TOKEN }}
-#          repository: nebulastream/nebulastream-java-client
-#          event-type: nes-executable-image-update
-#          client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}"}'
-##      - name: Invoke Benchmark Workflow
-##        uses: benc-uk/workflow-dispatch@v1
-##        with:
-##          workflow: NES Benchmark
-##          token: ${{ secrets.CI_PERSONAL_TOKEN }}
-##          inputs: '{ "trigger-value": "trigger benchmark"}'
-#      - name: Push Docs to pages
-#        uses: peaceiris/actions-gh-pages@v3
-#        with:
-#          personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
-#          publish_dir: ./build/cmake/docs/html
-#          external_repository: nebulastream/nebulastream-docs
-#          publish_branch: master
-#      - name: Notify Slack
-#        uses: 8398a7/action-slack@v2
-#        with:
-#          status: ${{ job.status }}
-#          author_name: ${{ github.actor }}
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        if: always()
-
-  package:
-    runs-on: [ self-hosted, linux, X64, Build ]
-#needs: [release]
-    env:
-      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+  build-x64-linux:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
         include:
+          - osversion: ubuntu-18_04
+            require_build: "false"
+            require_test: "false"
           - osversion: ubuntu-20_04
+            require_build: "true"
+            require_test: "true"
           - osversion: ubuntu-21_10
+            require_build: "true"
+            require_test: "true"
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
@@ -295,28 +46,222 @@ jobs:
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-      - name: Package Cmake
+      - name: Run tests
         run: |
-          nes_version="$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
-          echo "Package NebulaStream with version: $nes_version for: ${{ matrix.osversion }}"
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eversion="${{ matrix.osversion }}" -esystem="${{ matrix.osversion }}" -earch="${{ matrix.osversion }}" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_build_${{ matrix.osversion }}
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        id: createrelease
-        with:
-         tag_name: "v0.1.61"
-         files: |
-           /build/NebulaStream-${{ matrix.osversion }}-${{ matrix.osversion }}-${{ matrix.osversion }}.deb
-      - name: Upload
-        uses: actions/upload-artifact@v2
-        if: failure()
-        id: uploadlogs
-        with:
-          name: vcpkg-logs-${{ env.VCPKG_DEP_LIST }}
-          path: ${{ github.workspace }}/vcpkg/buildtrees/**/*.log
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
 
+  build-x64-linux-parallel:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    runs-on: [ self-hosted, linux, X64, Build ]
+    timeout-minutes: 120
+    continue-on-error: true
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.7.0
+        with:
+          access_token: ${{ github.token }}
+      #TODO: 2268 remove the environment variable to allow test execution on arm server
+      - name: Run build and test
+        run: |
+          docker run --name ${{ github.run_id }}_build_parallel -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" -eNesTestParallelism="8" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: docker cleanup build
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_build_parallel
+      - name: docker cleanup test
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_test_parallel
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
 
+  build-arm64-linux:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    runs-on: [self-hosted, linux, arm64, Build]
+    timeout-minutes: 120
+    continue-on-error: true
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.7.0
+        with:
+          access_token: ${{ github.token }}
+      #TODO: 2268 remove the environment variable to allow test execution on arm server
+      - name: Run build and test
+        run: |
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: docker cleanup build
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_build
+      - name: docker cleanup test
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_test
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+
+  build-x64-macos:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    runs-on: [self-hosted, macos, X64 ]
+    timeout-minutes: 120
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.7.0
+        with:
+          access_token: ${{ github.token }}
+      #TODO: 2268 remove the environment variable to allow test execution on arm server
+      - name: Run build
+        run: |
+          bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+
+  release:
+    runs-on: [self-hosted, linux, X64, Build]
+    if: github.ref == 'refs/heads/master'
+    needs: [build-x64-linux, build-arm64-linux, build-x64-macos, build-x64-linux-parallel]
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.4
+      - name: Build and Release NES Build Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified }}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
+              echo "Found changes done to buildImage"
+              cd docker/buildImage
+              #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
+              #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
+              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
+              echo "Pushed the build image"
+              docker logout
+          else
+              echo "No changes done in buildImage. Skipping the build and release phase."
+          fi
+      - name: Build and Release NES Dev Image
+        run: |
+          echo '${{ steps.file_changes.outputs.files_modified }}'
+          if [[ " ${{ steps.file_changes.outputs.files_modified }} " =~ "devImage" || " ${{ steps.file_changes.outputs.files_modified }} " =~ "buildImage" ]]; then
+              echo "Found changes done to devImage"
+              cd docker/devImage/
+              echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+              docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --push
+              echo "Pushed the dev image"
+              docker logout
+          else
+              echo "No changes done to devImage. Skipping the build and release phase."
+          fi
+      - name: Build and Release NES Executable Image
+        run: |
+          nes_version="$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
+          cd $GITHUB_WORKSPACE
+          echo "Preparing and Releasing new executable image with version $nes_version and latest"
+          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --push
+          echo "Pushed the execution image"
+          docker logout
+      - name: Release new version
+        env:
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        run: |
+          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+      #Find the PR associated with this push, if there is one.
+      - uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          repository: nebulastream/nebulastream-java-client
+          event-type: nes-executable-image-update
+          client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}"}'
+#      - name: Invoke Benchmark Workflow
+#        uses: benc-uk/workflow-dispatch@v1
+#        with:
+#          workflow: NES Benchmark
+#          token: ${{ secrets.CI_PERSONAL_TOKEN }}
+#          inputs: '{ "trigger-value": "trigger benchmark"}'
+      - name: Push Docs to pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          publish_dir: ./build/cmake/docs/html
+          external_repository: nebulastream/nebulastream-docs
+          publish_branch: master
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
