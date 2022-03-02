@@ -55,12 +55,12 @@ GeographicalLocation GeographicalLocation::fromString(const std::string& coordin
     stringStream >> lng;
 
     return {lat, lng};
-
 }
 
-GeographicalLocation::operator std::tuple<double, double>() {return std::make_tuple(latitude, longitude);};
+GeographicalLocation::operator std::tuple<double, double>() { return std::make_tuple(latitude, longitude); };
 
-GeographicalLocation::GeographicalLocation(std::tuple<double, double> coordTuple) : GeographicalLocation(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
+GeographicalLocation::GeographicalLocation(std::tuple<double, double> coordTuple)
+    : GeographicalLocation(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
 
 GeographicalLocation::operator Coordinates() const {
     Coordinates coordinates;
@@ -95,5 +95,4 @@ bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double lo
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
 
-}
-
+}// namespace NES

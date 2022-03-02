@@ -687,10 +687,15 @@ add_executable(upstream-backup-test "Integration/UpstreamBackupTest.cpp")
 target_link_libraries(upstream-backup-test nes-tests)
 add_test(NAME upstream-backup-test COMMAND upstream-backup-test)
 
-# gRPC Tests
+### gRPC Tests
 add_executable(grpc-test "UnitTests/gRPC/grpcTests.cpp")
 target_link_libraries(grpc-test nes-tests)
 add_test(NAME grpc-test COMMAND grpc-test)
+
+### Query Failure Test
+add_executable(query-failure-test "Integration/QueryFailureTest.cpp")
+target_link_libraries(query-failure-test nes-tests)
+add_test(NAME query-failure-test COMMAND query-failure-test)
 
 ### GoeLocationTest ###
 if (USE_S2)

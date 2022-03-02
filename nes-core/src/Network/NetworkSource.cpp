@@ -161,5 +161,10 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
 void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
+void NetworkSource::onEndOfStream(bool isGraceful) {
+    // propagate EOS to the locally running QEPs that use the network source
+    NES_DEBUG("Going to inject eos for " << nesPartition);
+    queryManager->addEndOfStream(shared_from_base<DataSource>(), isGraceful);
+}
 
 }// namespace NES::Network

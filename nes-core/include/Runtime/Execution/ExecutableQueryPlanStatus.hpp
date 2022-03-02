@@ -18,7 +18,7 @@ namespace NES::Runtime::Execution {
 /**
  * @brief Represents the query status.
  */
-enum ExecutableQueryPlanStatus {
+enum class ExecutableQueryPlanStatus : uint8_t {
     Created,
     Deployed,// Created->Deployed when calling setup()
     Running, // Deployed->Running when calling start()

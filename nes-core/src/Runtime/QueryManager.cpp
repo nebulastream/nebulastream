@@ -266,7 +266,6 @@ void QueryManager::destroy() {
                                                                         << " task queue size=" << taskQueues[i].size());
             }
 
-            sourceIdToExecutableQueryPlanMap.clear();
             queryToStatisticsMap.clear();
             runningQEPs.clear();
         }
@@ -385,66 +384,13 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, Stat
 }
 
 bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep) {
-    NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query" << qep);
-
+    NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query" << qep->getQueryId());
     std::unique_lock lock(queryMutex);
-    bool succeed = true;
-    auto sources = qep->getSources();
-
-    for (const auto& source : sources) {
-        NES_DEBUG("QueryManager: stop source " << source->toString());
-        // remove source from map
-        sourceIdToExecutableQueryPlanMap.erase(source->getOperatorId());
+    for (auto const& source : qep->getSources()) {
+        sourceToQEPMapping.erase(source->getOperatorId());
     }
     qep->destroy();
-    return succeed;
-}
-
-bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr&) {
-    NES_NOT_IMPLEMENTED();
-#if 0
-NES_DEBUG("QueryManager::failQuery: query" << qep);
-bool ret = true;
-{
-    std::unique_lock lock(queryMutex);
-
-    auto sources = qep->getSources();
-    for (const auto& source : sources) {
-        NES_DEBUG("QueryManager: stop source " << source->toString());
-        // TODO what if two qeps use the same source
-
-        if (operatorIdToQueryMap[source->getOperatorId()].size() != 1) {
-            NES_WARNING("QueryManager: could not stop source " << source->toString() << " because other qeps are using it n="
-                                                               << operatorIdToQueryMap[source->getOperatorId()].size());
-        } else {
-            NES_DEBUG("QueryManager: failQuery source " << source->toString() << " because only " << qep << " is using it");
-            bool success = source->stop();
-            if (!success) {
-                NES_ERROR("QueryManager: failQuery: could not stop source " << source->toString());
-                ret = false;
-            } else {
-                NES_DEBUG("QueryManager: failQuery: source " << source->toString() << " successfully stopped");
-            }
-        }
-    }
-    NES_DEBUG("QueryManager::stopQuery: query finished " << qep);
-}
-if (!qep->fail()) {
-    NES_FATAL_ERROR("QueryManager: QEP could not be failed");
-    ret = false;
-}
-
-auto sinks = qep->getSinks();
-for (const auto& sink : sinks) {
-    NES_DEBUG("QueryManager: stop sink " << sink->toString());
-    // TODO: do we also have to prevent to shutdown sink that is still used by another qep
-    sink->shutdown();
-}
-if (ret) {
-    addReconfigurationMessage(qep->getQuerySubPlanId(), ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, this), true);
-}
-return ret;
-#endif
+    return true;
 }
 
 namespace detail {
@@ -494,22 +440,66 @@ void QueryManager::poisonWorkers() {
     }
 }
 
+bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep) {
+    bool ret = true;
+    NES_DEBUG("QueryManager::failQuery: query" << qep->getQueryId());
+    switch (qep->getStatus()) {
+        case Execution::ExecutableQueryPlanStatus::ErrorState:
+        case Execution::ExecutableQueryPlanStatus::Finished:
+        case Execution::ExecutableQueryPlanStatus::Stopped: {
+            return true;
+        }
+        case Execution::ExecutableQueryPlanStatus::Invalid: {
+            NES_ASSERT2_FMT(false, "not supported yet " << qep->getQuerySubPlanId());
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    for (const auto& source : qep->getSources()) {
+        NES_ASSERT2_FMT(source->fail(),
+                        "Cannot fail source " << source->getOperatorId() << " beloning to " << qep->getQuerySubPlanId());
+    }
+
+    auto terminationFuture = qep->getTerminationFuture();
+    auto terminationStatus = terminationFuture.wait_for(std::chrono::minutes(10));
+    switch (terminationStatus) {
+        case std::future_status::ready: {
+            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Fail) {
+                NES_FATAL_ERROR("QueryManager: QEP " << qep->getQuerySubPlanId() << " could not be failed");
+                ret = false;
+            }
+            break;
+        }
+        case std::future_status::timeout:
+        case std::future_status::deferred: {
+            // TODO we need to fail the query now as it could not be stopped?
+            NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getQuerySubPlanId());
+            break;
+        }
+    }
+    if (ret) {
+        addReconfigurationMessage(qep->getQuerySubPlanId(),
+                                  ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
+                                  true);
+    }
+    NES_DEBUG("QueryManager::failQuery: query " << qep->getQuerySubPlanId() << " was "
+                                                << (ret ? "successful" : " not successful"));
+    return true;
+}
+
 bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful) {
     NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
-
-    auto sources = qep->getSources();
-    auto sinks = qep->getSinks();
-    auto copiedSources = std::vector(sources.begin(), sources.end());
-    auto copiedSinks = std::vector(sinks.begin(), sinks.end());
-
     switch (qep->getStatus()) {
-        case Execution::Finished:
-        case Execution::Stopped: {
+        case Execution::ExecutableQueryPlanStatus::ErrorState:
+        case Execution::ExecutableQueryPlanStatus::Finished:
+        case Execution::ExecutableQueryPlanStatus::Stopped: {
+            NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " is already stopped");
             return true;
         }
-        case Execution::ErrorState:
-        case Execution::Invalid: {
+        case Execution::ExecutableQueryPlanStatus::Invalid: {
             NES_ASSERT2_FMT(false, "not supported yet " << qep->getQuerySubPlanId());
             break;
         }
@@ -518,16 +508,16 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
         }
     }
 
-    for (const auto& source : copiedSources) {
-        if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
-            source->stop(graceful);// net sources always terminate via eos
+    for (const auto& source : qep->getSources()) {
+        if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {// TODO consider graceful vs. forceful
+            // net sources always terminate via eos
+            NES_ASSERT2_FMT(source->stop(graceful), "Cannot terminate source " << source->getOperatorId());
         }
     }
     for (uint32_t i = 0; i < taskQueues.size(); i++) {
         NES_DEBUG("QueryManager: stopQuery queue sizeses are "
                   << " id=" << i << " task queue size=" << taskQueues[i].size());
     }
-
     // TODO evaluate if we need to have this a wait instead of a get
     // TODO for instance we could wait N seconds and if the stopped is not succesful by then
     // TODO we need to trigger a hard local kill of a QEP
@@ -543,6 +533,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
         }
         case std::future_status::timeout:
         case std::future_status::deferred: {
+            // TODO we need to fail the query now as it could not be stopped?
             NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getQuerySubPlanId());
             break;
         }
@@ -629,9 +620,10 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
     return true;
 }
 
-bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
-    auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
-    auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
+bool QueryManager::addSoftEndOfStream(DataSourcePtr source) {
+    auto sourceId = source->getOperatorId();
+    auto executableQueryPlan = sourceToQEPMapping[sourceId];
+    auto pipelineSuccessors = source->getExecutableSuccessors();
     // send EOS to NetworkSources
     for (auto& source : executableQueryPlan->getSources()) {// TODO change source vector to source map to avoid for loops..
         if (source->getOperatorId() == sourceId) {
@@ -690,10 +682,11 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
     return true;
 }
 
-bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
-    auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
+bool QueryManager::addHardEndOfStream(DataSourcePtr source) {
+    auto sourceId = source->getOperatorId();
+    auto executableQueryPlan = sourceToQEPMapping[sourceId];
+    auto pipelineSuccessors = source->getExecutableSuccessors();
 
-    auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
     // send EOS to NetworkSources
     for (auto& source : executableQueryPlan->getSources()) {// TODO change source vector to source map to avoid for loops..
         if (source->getOperatorId() == sourceId) {
@@ -753,20 +746,20 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     return true;
 }
 
-bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
+bool QueryManager::addEndOfStream(DataSourcePtr source, bool graceful) {
     std::unique_lock queryLock(queryMutex);
-
     bool isSourcePipeline = sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end();
     NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful << " end "
                                                                                 << isSourcePipeline);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
-    NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
-    NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
-                    "Operator id to query map for operator is empty");
+    NES_ASSERT2_FMT(sourceToQEPMapping.find(source->getOperatorId()) != sourceToQEPMapping.end(),
+                    "invalid source " << source->getOperatorId());
+
+    bool success = false;
     if (graceful) {
-        addSoftEndOfStream(sourceId);
+        success = addSoftEndOfStream(source);
     } else {
-        addHardEndOfStream(sourceId);
+        success = addHardEndOfStream(source);
     }
     return true;
 }
@@ -775,8 +768,6 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
     NES_TRACE("QueryManager: QueryManager::getWork wait get lock");
     Task task;
     if (running) {
-        //TODO: consider making this a wait loop with potential exit
-        //        while (!taskQueue.read(task)) { _mm_pause(); }
         taskQueues[workerContext.getQueueId()].blockingRead(task);
 
 #ifdef ENABLE_PAPI_PROFILER
@@ -944,38 +935,10 @@ Execution::ExecutableQueryPlanPtr QueryManager::getQueryExecutionPlan(QuerySubPl
     return nullptr;
 }
 
-std::string QueryManager::getQueryManagerStatistics() {
-    std::unique_lock lock(statisticsMutex);
-    std::stringstream ss;
-    ss << "QueryManager Statistics:";
-    //    for (auto& [qepId, qep] : runningQEPs) {
-    //        auto stats = queryToStatisticsMap.find(qep->getQuerySubPlanId());
-    //        ss << "Query=" << qepId;
-    //        ss << "\t processedTasks =" << stats->getProcessedTasks();
-    //        ss << "\t processedTuple =" << stats->getProcessedTuple();
-    //        ss << "\t processedBuffers =" << stats->getProcessedBuffers();
-    //        ss << "\t processedWatermarks =" << stats->getProcessedWatermarks();
-    //
-    //        ss << "Source Statistics:";
-    //        for (const auto& source : qep->getSources()) {
-    //            ss << "Source:" << source;
-    //            ss << "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers();
-    //            ss << "\t Generated Tuples=" << source->getNumberOfGeneratedTuples();
-    //        }
-    //        for (const auto& sink : qep->getSinks()) {
-    //            ss << "Sink:" << sink;
-    //            ss << "\t Written Buffers=" << sink->getNumberOfWrittenOutBuffers();
-    //            ss << "\t Written Tuples=" << sink->getNumberOfWrittenOutTuples();
-    //        }
-    //    }
-    return ss.str();
-}
-
 QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
     return queryToStatisticsMap.find(qepId);
-    //    return queryToStatisticsMap[qepId];
 }
 
 void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
@@ -996,13 +959,13 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
         case Destroy: {
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
-            if (status == Execution::Invalid) {
+            if (status == Execution::ExecutableQueryPlanStatus::Invalid) {
                 NES_WARNING("Query" << qepId << "was already removed or never deployed");
                 return;
             }
             NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
                            || status == Execution::ExecutableQueryPlanStatus::ErrorState,
-                       "query plan " << qepId << " is not in valid state " << status);
+                       "query plan " << qepId << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
             NES_DEBUG("QueryManager: removed running QEP " << qepId);
@@ -1019,6 +982,9 @@ uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 
 uint64_t QueryManager::getNextTaskId() { return ++taskIdCounter; }
+
 uint64_t QueryManager::getNumberOfWorkerThreads() { return numThreads; }
+
+void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr&, Execution::ExecutableQueryPlanStatus) {}
 
 }// namespace NES::Runtime

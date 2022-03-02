@@ -306,7 +306,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;
-    std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
     HardwareManagerPtr hardwareManager;
