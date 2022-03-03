@@ -61,11 +61,11 @@ void WorkerContext::storeNetworkChannel(Network::OperatorId id, Network::Network
     dataChannels[id] = std::move(channel);
 }
 
-bool WorkerContext::releaseNetworkChannel(Network::OperatorId id) {
+bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, bool withMessagePropagation) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
-            channel->close();
+            channel->close(withMessagePropagation);
         }
         dataChannels.erase(it);
         return true;

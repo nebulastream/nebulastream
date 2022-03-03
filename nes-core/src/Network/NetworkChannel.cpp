@@ -158,7 +158,7 @@ NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
 
 NetworkChannel::~NetworkChannel() { close(); }
 
-void NetworkChannel::close() { inherited::close(canSendEvent && !canSendData); }
+void NetworkChannel::close(bool withMessagePropagation) { inherited::close(canSendEvent && !canSendData, withMessagePropagation); }
 
 NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
                                          std::string&& socketAddr,

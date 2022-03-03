@@ -58,8 +58,9 @@ class BaseNetworkChannel {
     /**
      * Close the channel and send EndOfStream message to consumer
      * @param isEventOnly whether the channel is for events only
+     * @param withMessagePropagation determines if EoS message sent by this function should be propagated to downstream nodes.
      */
-    void close(bool isEventOnly);
+    void close(bool isEventOnly, bool withMessagePropagation = true);
 
     void setBuffering(bool status);
 

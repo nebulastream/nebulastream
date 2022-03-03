@@ -96,18 +96,26 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::BufferData: {
             workerContext.getNetworkChannel(nesPartition.getOperatorId())->setBuffering(true);
             //trigger clean up of connections to downstream node
-            //clean up ZMQ connection?
+            //clean up ZMQ connection
             break;
         }
         case Runtime::UpdateNetworkSink: {
+            //remove NetworkChannel pointing to node marked for maintenance
+            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), false),
+                            "Cannot remove network channel " << nesPartition.toString());
+            NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
+                                                                        << Runtime::NesThread::getId());
             auto updatedReceiverLocation = task.getUserData<Network::NodeLocation>();
             //TODO: manage suppartition counter. Unregistering needs alteration ?
+            //create updateSubpartitionProducer in NetworkManager(calls updateNetworkManager in pM which just changes NodeLocation) and partitionManager
             auto channel =
                 networkManager->registerSubpartitionProducer(updatedReceiverLocation, nesPartition, bufferManager, waitTime, retryTimes, workerContext.getNetworkChannel(nesPartition.getOperatorId())->stealBuffer());
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
-
+            NES_DEBUG("NetworkSink: emptying buffer to new receiverLocation");
+            workerContext.getNetworkChannel(nesPartition.getOperatorId())->emptyBuffer();
+            break;
         }
         default: {
             break;
@@ -123,12 +131,14 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
         case Runtime::HardEndOfStream:
         case Runtime::SoftEndOfStream: {
             networkManager->unregisterSubpartitionProducer(nesPartition);
+
             break;
         }
         case Runtime::UpdateNetworkSink: {
             NodeLocation updatedReceiverLocation = task.getUserData<Network::NodeLocation>();
             receiverLocation = updatedReceiverLocation; //TODO: does anything else break if I set receiverLocation to non const?
         }
+            //Similar to Soft EoS except it doesnt propagate the EoS message!
         default: {
             break;
         }

@@ -63,8 +63,9 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
 
     /**
      * @brief Closes the underlying network connection
+     * @param withMessagePropagation : determines if EoS message sent by this function should be propagated to downstream nodes.
      */
-    void close();
+    void close(bool withMessagePropagation = true);
 
     /**
      * @brief Creates a network channel instance with the given parameters

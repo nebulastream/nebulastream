@@ -110,8 +110,9 @@ class WorkerContext {
     /**
      * @brief removes a registered network channel
      * @param id of the operator that we want to store the output channel
+     * @param withMessagePropagation : determines if EoS message gets propagated to downstream Nodes
      */
-    bool releaseNetworkChannel(Network::OperatorId id);
+    bool releaseNetworkChannel(Network::OperatorId id, bool withMessagePropagation = true);
 
     /**
      * @brief This stores a network channel for an operator
