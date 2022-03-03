@@ -175,7 +175,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     auto sink = createCSVFileSink(schema, 0, this->nodeEngine, "qep1.txt", false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, queryId, context, executableStage, 1, {sink});
+    auto pipeline = ExecutablePipeline::create(0, queryId, queryId, context, executableStage, 1, {sink});
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(this->path_to_file);

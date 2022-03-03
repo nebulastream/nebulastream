@@ -1426,9 +1426,9 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         auto executionContext =
             std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
 
-        auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
+        auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, 0, executionContext, stage2, 1, {});
 
-        auto firstPipeline = Runtime::Execution::ExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
+        auto firstPipeline = Runtime::Execution::ExecutablePipeline::create(1, 0, 0, executionContext, stage1, 1, {nextPipeline});
 
         ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
         ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
@@ -1511,8 +1511,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
 
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), windowOperatorHandler);
 
-    auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
-    auto firstPipeline = Runtime::Execution::ExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
+    auto nextPipeline = Runtime::Execution::ExecutablePipeline::create(2, 0, 0, executionContext, stage2, 1, {});
+    auto firstPipeline = Runtime::Execution::ExecutablePipeline::create(1, 0, 0, executionContext, stage1, 1, {nextPipeline});
 
     ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
     ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));

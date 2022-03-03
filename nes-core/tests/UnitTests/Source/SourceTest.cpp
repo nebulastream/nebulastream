@@ -504,7 +504,7 @@ class SourceTest : public Testing::NESBaseTest {
     std::shared_ptr<Runtime::Execution::ExecutablePipeline>
     createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage, std::shared_ptr<SinkMedium> sink) {
         auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
-        return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, context, executableStage, 1, {sink});
+        return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, this->queryId, context, executableStage, 1, {sink});
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};

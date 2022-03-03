@@ -801,7 +801,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 std::mt19937 rnd;
                 std::uniform_int_distribution gen(50'000, 100'000);
@@ -815,7 +815,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                     usleep(gen(rnd));
                     networkSink->writeData(buffer, workerContext);
                 }
-                auto rtEnd = Runtime::ReconfigurationMessage(0, Runtime::HardEndOfStream, networkSink);
+                auto rtEnd = Runtime::ReconfigurationMessage(0, 0, Runtime::HardEndOfStream, networkSink);
                 networkSink->reconfigure(rtEnd, workerContext);
             });
             sendingThreads.emplace_back(std::move(sendingThread));
