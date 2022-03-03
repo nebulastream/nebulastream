@@ -73,8 +73,6 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
                                                 Initialize,
                                                 shared_from_this(),
                                                 std::make_any<uint32_t>(activeProducers.load()));
-        NES_DEBUG("QuerySup Plan Id ....................... " << querySubPlanId << " Operator Handler size ..................."
-                                                              << pipelineContext->getOperatorHandlers().size());
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->start(pipelineContext, stateManager, localStateVariableId);
             localStateVariableId++;
