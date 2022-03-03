@@ -345,7 +345,6 @@ void DataSource::runningRoutineWithGatheringInterval() {
             } else {
                 if (!wasGracefullyStopped) {
                     NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
-                    running = false;
                 }
                 NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
                                         << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
