@@ -167,6 +167,17 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto leftLock = std::unique_lock(leftStore->mutex());
         auto listLeft = leftStore->getAppendList();
         auto slicesLeft = leftStore->getSliceMetadata();
+
+        auto rightLock = std::unique_lock(leftStore->mutex());
+        auto slicesRight = rightStore->getSliceMetadata();
+        auto listRight = rightStore->getAppendList();
+
+        if (leftStore->empty() || rightStore->empty()) {
+            NES_WARNING("Found left store empty: " << leftStore->empty() << " and right store empty: " << rightStore->empty());
+            NES_WARNING("Skipping join as left or right slices should not be empty");
+            return 0;
+        }
+
         NES_TRACE("content left side for key=" << key);
         size_t id = 0;
         for (auto& left : slicesLeft) {
@@ -181,11 +192,6 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                << " end=" << slicesLeft[sliceId].getEndTs());
         }
 
-        uint64_t slideSize = joinDefinition->getWindowType()->getSize().getTime();
-
-        auto rightLock = std::unique_lock(leftStore->mutex());
-        auto slicesRight = rightStore->getSliceMetadata();
-        auto listRight = rightStore->getAppendList();
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: content right side for key=" << key);
         id = 0;
         for (auto& right : slicesRight) {
@@ -255,6 +261,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                         tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     }
                 }
+
+                uint64_t slideSize = joinDefinition->getWindowType()->getSize().getTime();
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: largestClosedWindow=" << largestClosedWindow
                                                                    << " slideSize=" << slideSize);
 
