@@ -72,5 +72,25 @@ std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getLeftOperators() { ret
 std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getRightOperators() {
     return getOperatorsBySchema(getRightInputSchema());
 }
+void LogicalBinaryOperatorNode::inferInputOrigins() {
+    // in the default case we collect all input origins from the children/upstream operators
+    std::vector<uint64_t> leftInputOriginIds;
+    for (auto child : this->getLeftOperators()) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferInputOrigins();
+        auto childInputOriginIds = childOperator->getOutputOriginIds();
+        leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+    }
+    this->leftInputOriginIds = leftInputOriginIds;
+
+    std::vector<uint64_t> rightInputOriginIds;
+    for (auto child : this->getLeftOperators()) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferInputOrigins();
+        auto childInputOriginIds = childOperator->getOutputOriginIds();
+        rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+    }
+    this->rightInputOriginIds = rightInputOriginIds;
+}
 
 }// namespace NES

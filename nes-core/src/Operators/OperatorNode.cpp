@@ -22,11 +22,7 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(OperatorId id) : id(id), properties(), inputOriginIds() { NES_INFO("Creating Operator " << id); }
-OperatorNode::OperatorNode(OperatorId id, std::vector<OriginId> inputOriginIds)
-    : id(id), properties(), inputOriginIds(inputOriginIds) {
-    NES_INFO("Creating Operator " << id);
-}
+OperatorNode::OperatorNode(OperatorId id) : id(id), properties() { NES_INFO("Creating Operator " << id); }
 
 OperatorId OperatorNode::getId() const { return id; }
 
@@ -172,11 +168,5 @@ std::any OperatorNode::getProperty(const std::string& key) { return properties[k
 bool OperatorNode::hasProperty(const std::string& key) { return properties.find(key) != properties.end(); }
 
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
-
-void OperatorNode::setInputOriginIds(std::vector<OriginId> originIds) { this->inputOriginIds = originIds; }
-
-std::vector<OriginId> OperatorNode::getInputOriginIds() { return inputOriginIds; }
-
-std::vector<OriginId> OperatorNode::getOutputOriginIds() { return inputOriginIds; }
 
 }// namespace NES

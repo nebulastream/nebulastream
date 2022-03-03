@@ -17,6 +17,7 @@
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <memory>
 #include <z3++.h>
 
@@ -25,9 +26,11 @@ namespace NES {
 /**
  * @brief Join operator, which contains an expression as a predicate.
  */
-class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
+class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginIdAssignmentOperator {
   public:
-    explicit JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
+    explicit JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition,
+                                     OperatorId id,
+                                     OriginId originId = INVALID_ORIGIN_ID);
     ~JoinLogicalOperatorNode() override = default;
 
     /**
@@ -43,8 +46,10 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
+   std::vector<OriginId> getOutputOriginIds() override;
+   void inferInputOrigins() override;
 
-  private:
+ private:
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 }// namespace NES

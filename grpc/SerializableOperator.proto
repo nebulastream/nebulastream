@@ -511,4 +511,6 @@ message SerializableOperator{
   SerializableSchema rightInputSchema = 6;
   uint64 operatorId = 7;
   repeated uint64 originIds = 8;
+  repeated uint64 leftOriginIds = 9;
+  repeated uint64 rightOriginIds = 10;
 }

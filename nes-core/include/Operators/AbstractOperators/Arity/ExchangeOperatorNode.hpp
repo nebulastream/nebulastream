@@ -66,10 +66,14 @@ class ExchangeOperatorNode : public virtual OperatorNode {
     */
 
     void setOutputSchema(SchemaPtr outputSchema) override;
+    void setInputOriginIds(std::vector<OriginId> originIds);
+
+    std::vector<OriginId> getOutputOriginIds() override;
 
   protected:
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
+    std::vector<OriginId> inputOriginIds;
 };
 
 }// namespace NES

@@ -213,8 +213,19 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     }
 
     // serialize and append origin id
-    for (const auto& originId : operatorNode->getInputOriginIds()) {
-        serializedOperator.add_originids(originId);
+    if (operatorNode->isUnaryOperator()) {
+        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
+        for (const auto& originId : binaryOperator->getLeftInputOriginIds()) {
+            serializedOperator.add_leftoriginids(originId);
+        }
+        for (const auto& originId : binaryOperator->getRightInputOriginIds()) {
+            serializedOperator.add_rightoriginids(originId);
+        }
+    } else {
+        auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
+        for (const auto& originId : unaryOperator->getInputOriginIds()) {
+            serializedOperator.add_originids(originId);
+        }
     }
 
     NES_DEBUG("OperatorSerializationUtil:: serialize " << operatorNode->toString() << " to "
@@ -346,11 +357,26 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     }
 
     // de-serialize and append origin id
-    std::vector<uint64_t> originIds;
-    for (const auto& originId : serializedOperator.originids()) {
-        originIds.push_back(originId);
+    if (operatorNode->isUnaryOperator()) {
+        auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
+        std::vector<uint64_t> leftOriginIds;
+        for (const auto& originId : serializedOperator.leftoriginids()) {
+            leftOriginIds.push_back(originId);
+        }
+        binaryOperator->setLeftInputOriginIds(leftOriginIds);
+        std::vector<uint64_t> rightOriginIds;
+        for (const auto& originId : serializedOperator.rightoriginids()) {
+            rightOriginIds.push_back(originId);
+        }
+        binaryOperator->setRightInputOriginIds(rightOriginIds);
+    } else {
+        auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
+        std::vector<uint64_t> originIds;
+        for (const auto& originId : serializedOperator.originids()) {
+            originIds.push_back(originId);
+        }
+        unaryOperator->setInputOriginIds(originIds);
     }
-    operatorNode->setInputOriginIds(originIds);
     NES_TRACE("OperatorSerializationUtil:: de-serialize " << serializedOperator.DebugString() << " to "
                                                           << operatorNode->toString());
     return operatorNode;

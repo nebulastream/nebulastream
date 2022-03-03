@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 
@@ -26,23 +27,19 @@ using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
 /**
  * @brief Window operator, which defines the window definition.
  */
-class WindowOperatorNode : public LogicalUnaryOperatorNode {
+class WindowOperatorNode : public LogicalUnaryOperatorNode, public OriginIdAssignmentOperator {
   public:
-    WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
+    WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr const& windowDefinition,
+                       OperatorId id,
+                       OriginId originId = INVALID_ORIGIN_ID);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDefinitionPtr
     */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition() const;
-
-    std::vector<uint64_t> getOutputOriginIds() override;
-
-    void setOriginId(OriginId originId);
-    OriginId getOriginId();
-
+    std::vector<OriginId> getOutputOriginIds() override;
   protected:
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;
-    uint64_t originId;
 };
 
 }// namespace NES

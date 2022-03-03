@@ -51,4 +51,18 @@ SchemaPtr BinaryOperatorNode::getRightInputSchema() const { return rightInputSch
 
 SchemaPtr BinaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
+std::vector<OriginId> BinaryOperatorNode::getLeftInputOriginIds() { return leftInputOriginIds; }
+
+void BinaryOperatorNode::setLeftInputOriginIds(std::vector<OriginId> originIds) { this->leftInputOriginIds = originIds; }
+
+std::vector<OriginId> BinaryOperatorNode::getRightInputOriginIds() { return rightInputOriginIds; }
+
+void BinaryOperatorNode::setRightInputOriginIds(std::vector<OriginId> originIds) { this->rightInputOriginIds = originIds; }
+
+std::vector<OriginId> BinaryOperatorNode::getOutputOriginIds() {
+    std::vector<uint64_t> outputOriginIds = leftInputOriginIds;
+    outputOriginIds.insert(outputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
+    return outputOriginIds;
+}
+
 }// namespace NES

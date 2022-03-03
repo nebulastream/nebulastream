@@ -52,4 +52,17 @@ bool LogicalUnaryOperatorNode::inferSchema() {
     return true;
 }
 
+void LogicalUnaryOperatorNode::inferInputOrigins() {
+    // in the default case we collect all input origins from the children/upstream operators
+    std::vector<uint64_t> inputOriginIds;
+    for (auto child : this->children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferInputOrigins();
+        auto childInputOriginIds = childOperator->getOutputOriginIds();
+        inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+    }
+    //TODO add a check to check that we don't include the same origin id multiple times as this would show an invalid query plan
+    this->inputOriginIds = inputOriginIds;
+}
+
 }// namespace NES

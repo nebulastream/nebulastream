@@ -21,12 +21,13 @@
 namespace NES {
 
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor, OperatorId id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), sourceDescriptor(sourceDescriptor) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), OriginIdAssignmentOperator(id), sourceDescriptor(sourceDescriptor) {}
 
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor,
                                                      OperatorId id,
                                                      uint64_t originId)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), sourceDescriptor(sourceDescriptor), originId(originId) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), OriginIdAssignmentOperator(id, originId),
+      sourceDescriptor(sourceDescriptor) {}
 
 bool SourceLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<SourceLogicalOperatorNode>()->getId() == id;
@@ -81,8 +82,10 @@ void SourceLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
 }
 
-void SourceLogicalOperatorNode::setOriginId(uint64_t originId) { this->originId = originId; }
+void SourceLogicalOperatorNode::inferInputOrigins() {
+    // Data sources have no input origins.
+}
 
-void SourceLogicalOperatorNode::inferInputOrigins() { this->inputOriginIds = {originId}; }
-uint64_t SourceLogicalOperatorNode::getOriginId() { return originId; }
+std::vector<OriginId> SourceLogicalOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }
+
 }// namespace NES

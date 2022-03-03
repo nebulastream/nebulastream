@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Exceptions/RuntimeException.hpp>
 
 namespace NES::Optimizer {
 
@@ -29,23 +28,20 @@ OriginIdInferenceRulePtr OriginIdInferenceRule::create() {
 }
 
 QueryPlanPtr OriginIdInferenceRule::apply(QueryPlanPtr queryPlan) {
-    uint64_t originIdCounter = 0;
-    for (auto source : queryPlan->getSourceOperators()) {
-        source->setOriginId(originIdCounter++);
+    // query local origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
+    uint64_t originIdCounter = 1;
+    // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
+    for (auto originIdAssignmentOperators : queryPlan->getOperatorByType<OriginIdAssignmentOperator>()) {
+        originIdAssignmentOperators->setOriginId(originIdCounter++);
     }
-
-    // set origin id for window operator
-    for (auto windowOperator : queryPlan->getOperatorByType<WindowOperatorNode>()) {
-        windowOperator->setOriginId(originIdCounter++);
-    }
-
-    // for (auto joinOperator :   queryPlan->getOperatorByType<JoinLogicalOperatorNode>()) {
-    //    joinOperator->getJoinDefinition().se
-    // }
 
     // propagate origin ids through the complete query plan
-    for (auto sink : queryPlan->getSinkOperators()) {
-        sink->inferInputOrigins();
+    for (auto rootOperators : queryPlan->getRootOperators()) {
+        if (auto logicalOperator = rootOperators->as_if<LogicalOperatorNode>()) {
+            logicalOperator->inferInputOrigins();
+        } else {
+            throw Exceptions::RuntimeException("During OriginIdInferenceRule all root operators have to be LogicalOperatorNodes");
+        }
     }
     return queryPlan;
 }

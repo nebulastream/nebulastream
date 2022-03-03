@@ -12,3 +12,6 @@
 # limitations under the License.
 
 add_subdirectory(Arity)
+add_source_files(nes-core
+        OriginIdAssignmentOperator.cpp
+        )
