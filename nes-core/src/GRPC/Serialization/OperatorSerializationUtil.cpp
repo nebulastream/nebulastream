@@ -213,7 +213,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     }
 
     // serialize and append origin id
-    if (operatorNode->isUnaryOperator()) {
+    if (operatorNode->isBinaryOperator()) {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         for (const auto& originId : binaryOperator->getLeftInputOriginIds()) {
             serializedOperator.add_leftoriginids(originId);
@@ -357,7 +357,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     }
 
     // de-serialize and append origin id
-    if (operatorNode->isUnaryOperator()) {
+    if (operatorNode->isBinaryOperator()) {
         auto binaryOperator = operatorNode->as<BinaryOperatorNode>();
         std::vector<uint64_t> leftOriginIds;
         for (const auto& originId : serializedOperator.leftoriginids()) {
