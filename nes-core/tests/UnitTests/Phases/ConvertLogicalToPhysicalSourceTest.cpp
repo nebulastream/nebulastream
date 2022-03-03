@@ -67,7 +67,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath("csv.log");
+    csvSourceType->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType->setGatheringInterval(1);

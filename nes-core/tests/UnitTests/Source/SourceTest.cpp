@@ -1055,14 +1055,19 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType->setGatheringInterval(this->gatheringInterval);
 
-    CSVSourceProxy csvDataSource(this->schema,
-                                 this->nodeEngine->getBufferManager(),
-                                 this->nodeEngine->getQueryManager(),
-                                 csvSourceType,
-                                 this->operatorId,
-                                 this->numSourceLocalBuffersDefault,
-                                 {});
-    ASSERT_FALSE(csvDataSource.input.is_open());
+    try {
+
+        CSVSourceProxy csvDataSource(this->schema,
+                                     this->nodeEngine->getBufferManager(),
+                                     this->nodeEngine->getQueryManager(),
+                                     csvSourceType,
+                                     this->operatorId,
+                                     this->numSourceLocalBuffersDefault,
+                                     {});
+        FAIL();
+    } catch (...) {
+        SUCCEED();
+    }
 }
 
 TEST_F(SourceTest, testCSVSourceCorrectFilePath) {

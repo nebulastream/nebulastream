@@ -291,12 +291,10 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
 
         NES_DEBUG("QueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep " << qep);
         sourceIdToExecutableQueryPlanMap[sourceOperatorId] = qep;
-        //        queryToStatisticsMap.insert(qep->getQuerySubPlanId(),std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
         queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorId);
     }
 
     NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" << qep->getQuerySubPlanId());
-    std::cout << "queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" << qep->getQuerySubPlanId() << std::endl;
 
     //TODO: THis assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
     queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
@@ -860,7 +858,7 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
         querySubPlanId = (*sink)->getParentPlanId();
         NES_DEBUG("QueryManager::completedWork: task for sink querySubPlanId=" << querySubPlanId);
-        return;
+//        return;
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if((*executablePipeline)->isReconfiguration())
         {
