@@ -275,15 +275,12 @@ TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
 TEST_F(RemoteClientTest, SubmitNonExistingLogicalStreamQueryTest) {
     Query query = Query::from("default_");
     auto queryPlan = query.getQueryPlan();
-    int64_t queryId = client->submitQuery(queryPlan);
-
-    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
-    auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
-    // Expect that the query id and query sub plan id from the deserialized query plan are valid
-    EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
-    EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
-
-    stopQuery(queryId);
+    try {
+        int64_t queryId = client->submitQuery(queryPlan);
+    } catch (const std::exception& e) {
+        std::string expect = "The logical source";
+        EXPECT_TRUE(std::string(e.what()).compare(0, expect.size() - 1, expect));
+    }
 }
 
 /**

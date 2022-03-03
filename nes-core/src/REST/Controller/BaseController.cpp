@@ -129,7 +129,10 @@ void BaseController::handleException(const web::http::http_request& message, con
         errorResponse["message"] = web::json::value::string(exceptionMsg);
         // TODO: Add possible cause of failure (source not exists, source attached to physical sources, etc)
         this->badRequestImpl(message, errorResponse);
-
+    } else if (std::string(exceptionMsg).find("The logical source") != std::string::npos) {
+        errorResponse["message"] = web::json::value::string("Logical source error");
+        errorResponse["detail"] = web::json::value::string(exceptionMsg);
+        this->badRequestImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("Unable to update logical source") != std::string::npos) {
         // handle error caused by invalid code (query or schema) submitted by the user
         errorResponse["message"] = web::json::value::string(exceptionMsg);
