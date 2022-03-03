@@ -355,6 +355,8 @@ void DataSource::runningRoutineWithGatheringInterval() {
             }
         } else {
             NES_DEBUG("DataSource " << operatorId << ": Thread terminating after graceful exit.");
+            running = false;
+            wasGracefullyStopped = true;
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
 
