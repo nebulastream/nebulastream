@@ -79,8 +79,16 @@ bool NetworkSource::start() {
                                                                     return pipeline->getQuerySubPlanId();
                                                                 }},
                                              successor);
-            auto newReconf = ReconfigurationMessage(querySubPlanId, Runtime::Initialize, shared_from_base<DataSource>());
-            queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
+            auto queryId = std::visit(detail::overloaded{[](DataSinkPtr) {
+                                                                    return NES::QueryId(0);
+                                                                },
+                                                                [](Execution::ExecutablePipelinePtr pipeline) {
+                                                                    return pipeline->getQueryId();
+                                                                }},
+                                             successor);
+
+            auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, Runtime::Initialize, shared_from_base<DataSource>());
+            queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
         }
         return true;
     }

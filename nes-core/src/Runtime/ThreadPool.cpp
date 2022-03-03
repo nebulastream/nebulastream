@@ -15,7 +15,7 @@ limitations under the License.
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include "Runtime/QueryManager/QueryManager.hpp"
+#include "Runtime/QueryManager.hpp"
 #include <Runtime/Task.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>

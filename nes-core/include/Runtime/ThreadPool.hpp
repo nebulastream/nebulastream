@@ -68,8 +68,6 @@ class ThreadPool {
 
     bool isRunning() const { return running; }
 
-  private:
-
     /**
      * @brief start the Thread pool
      * 1.) check if thread pool is already running,
