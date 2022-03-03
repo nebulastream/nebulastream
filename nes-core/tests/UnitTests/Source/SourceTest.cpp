@@ -298,6 +298,7 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFile);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileColumnLayout);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
+    FRIEND_TEST(SourceTest, testCSVSourceFillBufferTooManyBuffersInConfiguration);
 };
 
 class GeneratorSourceProxy : public GeneratorSource {
@@ -949,14 +950,19 @@ TEST_F(SourceTest, testBinarySourceGetType) {
 }
 
 TEST_F(SourceTest, testBinarySourceWrongPath) {
-    BinarySourceProxy bDataSource(this->schema,
-                                  this->nodeEngine->getBufferManager(),
-                                  this->nodeEngine->getQueryManager(),
-                                  this->wrong_filepath,
-                                  this->operatorId,
-                                  this->numSourceLocalBuffersDefault,
-                                  {});
-    ASSERT_FALSE(bDataSource.input.is_open());
+    try {
+        BinarySourceProxy bDataSource(this->schema,
+                                      this->nodeEngine->getBufferManager(),
+                                      this->nodeEngine->getQueryManager(),
+                                      this->wrong_filepath,
+                                      this->operatorId,
+                                      this->numSourceLocalBuffersDefault,
+                                      {});
+        FAIL();
+    } catch (std::exception const& err) {
+        std::string msg = err.what();
+        EXPECT_TRUE(msg.find(std::string("Binary input file is not valid")) != std::string::npos);
+    }
 }
 
 TEST_F(SourceTest, testBinarySourceCorrectPath) {
@@ -1065,8 +1071,9 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
                                      this->numSourceLocalBuffersDefault,
                                      {});
         FAIL();
-    } catch (...) {
-        SUCCEED();
+    } catch (std::exception const& err) {
+        std::string msg = err.what();
+        EXPECT_TRUE(msg.find(std::string("CSV file is not valid")) != std::string::npos);
     }
 }
 
