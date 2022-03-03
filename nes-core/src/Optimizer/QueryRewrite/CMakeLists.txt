@@ -19,5 +19,5 @@ add_source_files(nes-core
         FilterPushDownRule.cpp
         LogicalSourceExpansionRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
-        RenameStreamToProjectOperatorRule.cpp
+        RenameSourceToProjectOperatorRule.cpp
 )

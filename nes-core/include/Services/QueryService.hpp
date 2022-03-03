@@ -49,7 +49,7 @@ class QueryService {
   public:
     explicit QueryService(QueryCatalogPtr queryCatalog,
                           RequestQueuePtr queryRequestQueue,
-                          SourceCatalogPtr streamCatalog,
+                          SourceCatalogPtr sourceCatalog,
                           QueryParsingServicePtr queryParsingService,
                           Configurations::OptimizerConfiguration optimizerConfiguration);
 

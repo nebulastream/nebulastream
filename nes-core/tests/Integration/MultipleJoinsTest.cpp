@@ -43,7 +43,7 @@ class MultipleJoinsTest : public Testing::NESBaseTest {
     std::string ipAddress = "127.0.0.1";
 };
 
-TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinator) {
+TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -51,18 +51,18 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -168,7 +168,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy with one relay which also produces data by itself
+ * @brief This tests just outputs the default source for a hierarchy with one relay which also produces data by itself
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0] => Join 2
     |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0] => Join 1
@@ -176,7 +176,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDistributed) {
+TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -184,18 +184,18 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -314,7 +314,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
-TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorSequential) {
+TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinatorSequential) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -322,22 +322,22 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
+    crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -461,7 +461,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
-TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorNested) {
+TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinatorNested) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -469,22 +469,22 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
+    crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -614,7 +614,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
  *
  */
 
-TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator) {
+TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -622,18 +622,18 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
@@ -744,7 +744,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy with one relay which also produces data by itself
+ * @brief This tests just outputs the default source for a hierarchy with one relay which also produces data by itself
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0] => Join 2
     |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0] => Join 1
@@ -752,7 +752,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDistributed) {
+TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -760,18 +760,18 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -899,7 +899,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
-TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorSequential) {
+TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorSequential) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -907,22 +907,22 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
+    crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -1067,7 +1067,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
-TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorNested) {
+TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorNested) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -1075,22 +1075,22 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
+    crd->getSourceCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");

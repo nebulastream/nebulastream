@@ -62,14 +62,14 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("Win1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("Win2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("Win2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -152,14 +152,14 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -268,14 +268,14 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -402,14 +402,14 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -506,19 +506,19 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
 
     std::string window1 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV", window1);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV", window1);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window2);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", window2);
 
     std::string window3 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window3);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", window3);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 

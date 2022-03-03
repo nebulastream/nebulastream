@@ -179,8 +179,8 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
-    std::string stream =
+    //register logical source qnv
+    std::string source =
         R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
                             ->addField(createField("hospitalId", UINT64))
                             ->addField(createField("stationId", UINT64))
@@ -190,7 +190,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
                             ->addField(createField("healthStatusDuration", UINT32))
                             ->addField(createField("recovered", BOOLEAN))
                             ->addField(createField("dead", BOOLEAN));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
+    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");

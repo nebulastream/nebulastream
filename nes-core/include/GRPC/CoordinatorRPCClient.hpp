@@ -63,14 +63,14 @@ class CoordinatorRPCClient {
      * @note the logical source is not saved in the worker as it is maintained on the coordinator and all logical source can be
      * retrieved from the physical source map locally, if we later need the data we can add a map
      */
-    bool registerLogicalStream(const std::string& logicalSourceName, const std::string& filePath);
+    bool registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath);
 
     /**
      * @brief this method removes the logical source in the coordinator
      * @param logicalSourceName name of the logical source to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterLogicalStream(const std::string& logicalSourceName);
+    bool unregisterLogicalSource(const std::string& logicalSourceName);
 
     /**
      * @brief this method removes a physical source from a logical source in the coordinator
@@ -78,7 +78,7 @@ class CoordinatorRPCClient {
      * @param physicalSourceName name of the physical source to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterPhysicalStream(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    bool unregisterPhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     /**
      * @brief method to add a new parent to an existing node

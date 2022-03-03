@@ -36,7 +36,7 @@ namespace NES {
 
 QueryService::QueryService(QueryCatalogPtr queryCatalog,
                            RequestQueuePtr queryRequestQueue,
-                           SourceCatalogPtr streamCatalog,
+                           SourceCatalogPtr sourceCatalog,
                            std::shared_ptr<QueryParsingService> queryParsingService,
                            Configurations::OptimizerConfiguration optimizerConfiguration)
     : queryCatalog(std::move(queryCatalog)), queryRequestQueue(std::move(queryRequestQueue)),
@@ -44,7 +44,7 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
     semanticQueryValidation =
-        Optimizer::SemanticQueryValidation::create(streamCatalog, optimizerConfiguration.performAdvanceSemanticValidation);
+        Optimizer::SemanticQueryValidation::create(sourceCatalog, optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
 uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString,

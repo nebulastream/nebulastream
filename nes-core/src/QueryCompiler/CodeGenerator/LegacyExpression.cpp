@@ -80,7 +80,7 @@ ExpressionStatementPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHan
 
 ExpressionStatementPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
     if (attribute) {
-        //checks if the predicate field is contained in the current stream record.
+        //checks if the predicate field is contained in the current source record.
         if (recordHandler->hasAttribute(attribute->getName())) {
             return recordHandler->getAttribute(attribute->getName());
         }

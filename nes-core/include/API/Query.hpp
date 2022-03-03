@@ -258,12 +258,12 @@ class Query {
     Query& orWith(const Query& subQuery);
 
     /**
-     * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
-     * During query processing the underlying source descriptor is retrieved from the stream catalog.
-     * @param sourceStreamName name of the stream to query. This name has to be registered in the query catalog.
+     * @brief: Creates a query from a particular source source. The source source is identified by its name.
+     * During query processing the underlying source descriptor is retrieved from the source catalog.
+     * @param sourceName name of the source to query. This name has to be registered in the query catalog.
      * @return the query
      */
-    static Query from(std::string const& sourceStreamName);
+    static Query from(std::string const& sourceSourceName);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -291,10 +291,10 @@ class Query {
 
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
-     * @param new stream name
+     * @param new source name
      * @return the query
      */
-    Query& as(std::string const& newStreamName);
+    Query& as(std::string const& newSourceName);
 
     /**
      * @brief: Filter records according to the predicate.
@@ -356,8 +356,8 @@ class Query {
      * We call it only internal as a last step during the Join operation
      * @brief This methods adds the joinType to the join operator and calls the join function to add the operator to a query
      * @param subQueryRhs subQuery to be joined
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
+     * @param onLeftKey key attribute of the left source
+     * @param onLeftKey key attribute of the right source
      * @param windowType Window definition.
      * @return the query
      */
@@ -371,8 +371,8 @@ class Query {
      * We call it only internal as a last step during the AND operation
      * @brief This methods adds the joinType to the join operator and calls join function to add the operator to a query
      * @param subQueryRhs subQuery to be composed
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
+     * @param onLeftKey key attribute of the left source
+     * @param onLeftKey key attribute of the right source
      * @param windowType Window definition.
      * @return the query
      */
@@ -386,8 +386,8 @@ class Query {
      * We call it only internal as a last step during the SEQ operation
      * @brief This methods adds the joinType to the join operator and calls join function to add the operator to a query
      * @param subQueryRhs subQuery to be composed
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
+     * @param onLeftKey key attribute of the left source
+     * @param onLeftKey key attribute of the right source
      * @param windowType Window definition.
      * @return the query
      */
@@ -400,10 +400,10 @@ class Query {
      * We call it only internal as a last step during the Join/AND operation
      * @brief This methods add the join operator to a query
      * @param subQueryRhs subQuery to be joined
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
+     * @param onLeftKey key attribute of the left source
+     * @param onLeftKey key attribute of the right source
      * @param windowType Window definition.
-     * @param joinType the definition of how the composition of the streams should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
+     * @param joinType the definition of how the composition of the sources should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the query
      */
     Query& join(const Query& subQueryRhs,

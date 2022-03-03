@@ -59,7 +59,7 @@ class MonitoringAgent {
     [[nodiscard]] bool isEnabled() const;
 
     /**
-     * @brief Create monitoring sources for the provided MonitoringPlan and handle them as data streams within the NES engine.
+     * @brief Create monitoring sources for the provided MonitoringPlan and handle them as data sources within the NES engine.
      * If monitoring is disabled this method is not doing anything.
      * @param nesWorker
     */

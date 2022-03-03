@@ -33,13 +33,13 @@
 namespace NES::Optimizer {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
-                                                       const SourceCatalogPtr& streamCatalog,
+                                                       const SourceCatalogPtr& sourceCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        const Configurations::OptimizerConfiguration optimizerConfiguration)
     : queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
-    typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
     //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
     //then apply special rewrite rules for improving the match identification
     bool applyRulesImprovingSharingIdentification =
@@ -50,19 +50,19 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
 
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase =
-        TopologySpecificQueryRewritePhase::create(streamCatalog, optimizerConfiguration);
+        TopologySpecificQueryRewritePhase::create(sourceCatalog, optimizerConfiguration);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfiguration.memoryLayoutPolicy);
 }
 
 GlobalQueryPlanUpdatePhasePtr
 GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
-                                   SourceCatalogPtr streamCatalog,
+                                   SourceCatalogPtr sourceCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    const Configurations::OptimizerConfiguration optimizerConfiguration) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalog),
-                                                                                   std::move(streamCatalog),
+                                                                                   std::move(sourceCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
                                                                                    optimizerConfiguration));

@@ -39,22 +39,22 @@ using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
  * expected as result.
  *
  * For Example:
- *      For a logical stream "cars" with schema "Id, Color, Speed".
+ *      For a logical source "cars" with schema "Id, Color, Speed".
  *
  *  1.) Given a query Q1: Query::from("cars").map(attr("speed") = 100).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.Speed=100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(source="cars" and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.Speed=100); windows:())
  *
  *  2.) Given a query Q2: Query::from("cars").map(attr("speed") = attr("speed")*100).filter(attr("speed") > 100 ).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.speed*100>100 and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.speed=speed*100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(source="cars" and cars.speed*100>100 and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.speed=speed*100); windows:())
  *
  *  3.) Given a query Q3: Query::from("cars").filter(attr("speed") > 100 ).map(attr("speed") = attr("speed")*100).filter(attr("color") == 'RED').sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.speed>100 and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.speed=speed*100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(source="cars" and cars.speed>100 and cars.color=='RED'); columns:(cars.Id, cars.Color, cars.speed=speed*100); windows:())
  *
  *  4.) Given a query Q4: Query::from("cars").filter(attr("color") == 'RED').map(attr("speed") = attr("speed")*100).filter(attr("speed") +100 > 200 ).sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars" and cars.color=='RED' and (cars.speed*100)+100>200); columns:(cars.Id, cars.Color, cars.speed=cars.speed*100); windows:())
+ *      The query plan signature (QPSig) is given by : (conditions:(source="cars" and cars.color=='RED' and (cars.speed*100)+100>200); columns:(cars.Id, cars.Color, cars.speed=cars.speed*100); windows:())
  *
  *  5.) Given a query Q5: Query::from("cars").windowByKey("Color",SlidingWindow::of(EventTime("ts")),Seconds(10),Seconds(10)),Count().as("total")).sink(Print());
- *      The query plan signature (QPSig) is given by : (conditions:(stream="cars"); columns:(end, start, cars.Color, Count()); windows:("type": window-key = 'type' and
+ *      The query plan signature (QPSig) is given by : (conditions:(source="cars"); columns:(end, start, cars.Color, Count()); windows:("type": window-key = 'type' and
  *      window-time-key = 'ts' and window-time-size = 10000 and window-time-slide = 10000))
  */
 class QuerySignature {

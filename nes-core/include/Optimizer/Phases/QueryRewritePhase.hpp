@@ -31,8 +31,8 @@ using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 class FilterPushDownRule;
 using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
 
-class RenameStreamToProjectOperatorRule;
-using RenameStreamToProjectOperatorRulePtr = std::shared_ptr<RenameStreamToProjectOperatorRule>;
+class RenameSourceToProjectOperatorRule;
+using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
 
 class ProjectBeforeUnionOperatorRule;
 using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOperatorRule>;
@@ -61,7 +61,7 @@ class QueryRewritePhase {
     explicit QueryRewritePhase(bool applyRulesImprovingSharingIdentification);
     bool applyRulesImprovingSharingIdentification;
     FilterPushDownRulePtr filterPushDownRule;
-    RenameStreamToProjectOperatorRulePtr renameStreamToProjectOperatorRule;
+    RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     AttributeSortRulePtr attributeSortRule;
     BinaryOperatorSortRulePtr binaryOperatorSortRule;

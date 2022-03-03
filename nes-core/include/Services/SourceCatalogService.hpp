@@ -29,37 +29,37 @@ class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
- * @brief: This class is responsible for registering/unregistering physical and logical streams.
+ * @brief: This class is responsible for registering/unregistering physical and logical sources.
  */
-class StreamCatalogService {
+class SourceCatalogService {
 
   public:
-    StreamCatalogService(SourceCatalogPtr streamCatalog);
+    SourceCatalogService(SourceCatalogPtr sourceCatalog);
 
     /**
-     * @brief method to register a physical stream
+     * @brief method to register a physical source
      * @param topologyNode : the topology node
      * @param logicalSourceName: logical source name
      * @param physicalSourceName: physical source name
      * @return bool indicating success
      */
-    bool registerPhysicalStream(TopologyNodePtr topologyNode,
+    bool registerPhysicalSource(TopologyNodePtr topologyNode,
                                 const std::string& physicalSourceName,
                                 const std::string& logicalSourceName);
 
     /**
-     * @brief method to unregister a physical stream
+     * @brief method to unregister a physical source
      * @param topologyNode : the topology node
      * @param logicalSourceName: logical source name
      * @param physicalSourceName: physical source name
      * @return bool indicating success
      */
-    bool unregisterPhysicalStream(TopologyNodePtr topologyNode,
+    bool unregisterPhysicalSource(TopologyNodePtr topologyNode,
                                   const std::string& physicalSourceName,
                                   const std::string& logicalSourceName);
 
     /**
-     * @brief method to register a logical stream
+     * @brief method to register a logical source
      * @param logicalSourceName: name of the logical source
      * @param schemaString: schema as string
      * @return bool indicating success
@@ -67,7 +67,7 @@ class StreamCatalogService {
     bool registerLogicalSource(const std::string& logicalSourceName, const std::string& schemaString);
 
     /**
-     * @brief method to register a logical stream
+     * @brief method to register a logical source
      * @param logicalSourceName: logical source name
      * @param schema: schema object
      * @return bool indicating success
@@ -75,17 +75,17 @@ class StreamCatalogService {
     bool registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
     /**
-     * @brief method to unregister a logical stream
-     * @param logicalStreamName
+     * @brief method to unregister a logical source
+     * @param logicalSourceName
      * @return bool indicating success
      */
-    bool unregisterLogicalStream(const std::string& logicalStreamName);
+    bool unregisterLogicalSource(const std::string& logicalSourceName);
 
   private:
-    SourceCatalogPtr streamCatalog;
-    std::mutex addRemoveLogicalStream;
-    std::mutex addRemovePhysicalStream;
+    SourceCatalogPtr sourceCatalog;
+    std::mutex addRemoveLogicalSource;
+    std::mutex addRemovePhysicalSource;
 };
-using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
+using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 }// namespace NES
 #endif// NES_INCLUDE_SERVICES_STREAMCATALOGSERVICE_HPP_

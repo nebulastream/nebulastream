@@ -26,8 +26,8 @@
 
 namespace NES {
 
-class Stream;
-using StreamPtr = std::shared_ptr<Stream>;
+class Source;
+using SourcePtr = std::shared_ptr<Source>;
 
 class OperatorNode;
 using OperatorNodePtr = std::shared_ptr<OperatorNode>;

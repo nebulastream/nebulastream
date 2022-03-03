@@ -56,7 +56,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     coordinatorConfig->restPort = *restPort;
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
@@ -69,7 +69,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(4);
-    // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
+    // register physical source with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
     auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceType);
     workerConfig->physicalSources.add(physicalSource1);
@@ -137,9 +137,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     coordinatorConfig->restPort = *restPort;
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
@@ -152,8 +152,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(4);
-    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig1->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig1->physicalSources.add(windowSource);
     //Start Worker
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -163,7 +163,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     NES_INFO("AssignWatermarkTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    workerConfig2->physicalSources.add(windowStream);
+    workerConfig2->physicalSources.add(windowSource);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -172,7 +172,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     NES_INFO("AssignWatermarkTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
-    workerConfig3->physicalSources.add(windowStream);
+    workerConfig3->physicalSources.add(windowSource);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -239,7 +239,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     coordinatorConfig->restPort = *restPort;
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
@@ -253,8 +253,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(4);
-    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig->physicalSources.add(windowSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -323,7 +323,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
@@ -336,8 +336,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(4);
-    auto windowStream1 = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig1->physicalSources.add(windowStream1);
+    auto windowSource1 = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig1->physicalSources.add(windowSource1);
     //Start Worker
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -348,7 +348,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    workerConfig2->physicalSources.add(windowStream1);
+    workerConfig2->physicalSources.add(windowSource1);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -357,7 +357,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
-    workerConfig3->physicalSources.add(windowStream1);
+    workerConfig3->physicalSources.add(windowSource1);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);

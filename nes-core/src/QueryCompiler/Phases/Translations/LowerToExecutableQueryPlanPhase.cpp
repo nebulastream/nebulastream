@@ -27,7 +27,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -138,7 +138,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
+    if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>()) {
         //Fetch logical and physical source name in the descriptor
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
         auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
@@ -264,7 +264,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     auto physicalSourceName = physicalSource->getPhysicalSourceName();
     auto physicalSourceType = physicalSource->getPhysicalSourceType();
     auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG("PhysicalStreamConfig: create Actual source descriptor with physical source: " << physicalSource->toString() << " "
+    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: " << physicalSource->toString() << " "
                                                                                              << sourceType);
 
     switch (sourceType) {
@@ -341,7 +341,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                                                                  materializeView->getId());
         }
         default:
-            throw QueryCompilationException("PhysicalStreamConfig:: source type " + physicalSourceType->getSourceTypeAsString()
+            throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
                                             + " not supported");
     }
 }

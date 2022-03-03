@@ -58,10 +58,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -197,10 +197,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -531,10 +531,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -588,10 +588,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -645,10 +645,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -890,11 +890,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream1", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("stream2", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -986,11 +986,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream1", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("stream2", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");
@@ -1310,11 +1310,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream1", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("stream2", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream1", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("stream2", testSchema);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("QueryDeploymentTest: Start worker 1");

@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 #ifdef ENABLE_OPC_BUILD
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/PhysicalSourceConfig.hpp>
 #include <cstring>
 #include <future>
 #include <iostream>
@@ -51,7 +51,7 @@ class OPCSourceTest : public testing::Test {
 
         test_schema = Schema::create()->addField("var", UINT32);
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, conf);
 
         bufferManager = nodeEngine->getBufferManager();

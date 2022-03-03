@@ -126,13 +126,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::Co
     }
     auto updatedSchemaFieldToExprMaps = {fieldToZ3ExprMap};
 
-    //Create an equality expression for example: <logical stream name>.logicalSourceName == "<logical stream name>"
-    std::string streamName = sourceOperator->getSourceDescriptor()->getLogicalSourceName();
-    auto streamNameVarName = streamName + ".logicalSourceName";
-    auto streamNameVar = context->constant(context->str_symbol(streamNameVarName.c_str()), context->string_sort());
-    auto streamNameVal = context->string_val(streamName);
-    //Construct Z3 expression using stream variable name and stream variable value
-    auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, streamNameVar, streamNameVal)));
+    //Create an equality expression for example: <logical source name>.logicalSourceName == "<logical source name>"
+    std::string sourceName = sourceOperator->getSourceDescriptor()->getLogicalSourceName();
+    auto sourceNameVarName = sourceName + ".logicalSourceName";
+    auto sourceNameVar = context->constant(context->str_symbol(sourceNameVarName.c_str()), context->string_sort());
+    auto sourceNameVal = context->string_val(sourceName);
+    //Construct Z3 expression using source variable name and source variable value
+    auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, sourceNameVar, sourceNameVal)));
 
     //Compute signature
     return QuerySignature::create(std::move(conditions), std::move(columns), updatedSchemaFieldToExprMaps, {});

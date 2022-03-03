@@ -31,11 +31,11 @@
 
 namespace NES::Optimizer {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(SourceCatalogPtr streamCatalog, bool expandSourceOnly)
-    : streamCatalog(std::move(streamCatalog)), expandSourceOnly(expandSourceOnly) {}
+LogicalSourceExpansionRule::LogicalSourceExpansionRule(SourceCatalogPtr sourceCatalog, bool expandSourceOnly)
+    : sourceCatalog(std::move(sourceCatalog)), expandSourceOnly(expandSourceOnly) {}
 
-LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(SourceCatalogPtr streamCatalog, bool expandSourceOnly) {
-    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(std::move(streamCatalog), expandSourceOnly));
+LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(SourceCatalogPtr sourceCatalog, bool expandSourceOnly) {
+    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(std::move(sourceCatalog), expandSourceOnly));
 }
 
 QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
@@ -71,11 +71,11 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-        std::vector<SourceCatalogEntryPtr> sourceCatalogEntries = streamCatalog->getPhysicalSources(logicalSourceName);
+        std::vector<SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found " << sourceCatalogEntries.size()
                                                        << " physical source locations in the topology.");
         if (sourceCatalogEntries.empty()) {
-            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find physical stream locations for the logical stream "
+            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find physical source locations for the logical source "
                             + logicalSourceName);
         }
 

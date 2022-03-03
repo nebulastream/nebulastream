@@ -52,10 +52,10 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
-    // register logical stream
-    std::string stream =
+    // register logical source
+    std::string source =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
+    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
 
     NES_INFO("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
 
@@ -107,10 +107,10 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
-    //register logical stream
-    std::string stream =
+    //register logical source
+    std::string source =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
+    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
     NES_INFO("MaterializedViewTupleBufferSourceTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -118,7 +118,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     workerConfig1->coordinatorPort = port;
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
-    // materialized view physical stream
+    // materialized view physical source
     size_t viewId = 1;
     auto materializeViewSourceType = Configurations::Experimental::MaterializedView::MaterializedViewSourceType::create();
     materializeViewSourceType->setId(viewId);
@@ -161,10 +161,10 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
-    std::string stream =
+    std::string source =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
-    crd->getStreamCatalogService()->registerLogicalSource("stream2", stream);
+    crd->getSourceCatalogService()->registerLogicalSource("stream", source);
+    crd->getSourceCatalogService()->registerLogicalSource("stream2", source);
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -174,7 +174,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     workerConfig1->numberOfSlots = (12);
-    // materialized view physical stream
+    // materialized view physical source
     size_t viewId = 1;
     auto materializeViewSourceType = Configurations::Experimental::MaterializedView::MaterializedViewSourceType::create();
     auto physicalSource1 = PhysicalSource::create("stream2", "MV", materializeViewSourceType);

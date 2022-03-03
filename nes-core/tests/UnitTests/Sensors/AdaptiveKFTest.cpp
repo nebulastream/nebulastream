@@ -32,7 +32,7 @@ namespace NES {
 class AdaptiveKFTest : public testing::Test {
   public:
     SchemaPtr schema;
-    PhysicalSourcePtr streamConf;
+    PhysicalSourcePtr sourceConf;
     Runtime::NodeEnginePtr nodeEngine;
     std::vector<double> measurements;
     float defaultEstimationErrorDivider = 2.9289684;
@@ -47,11 +47,11 @@ class AdaptiveKFTest : public testing::Test {
 
     void SetUp() override {
         NES_INFO("Setup AdaptiveKFTest class.");
-        streamConf = PhysicalSource::create("x", "x1");
+        sourceConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", UINT32);
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                   31337,
-                                                                  {streamConf},
+                                                                  {sourceConf},
                                                                   1,
                                                                   4096,
                                                                   1024,

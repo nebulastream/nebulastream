@@ -19,7 +19,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
-#include <Services/StreamCatalogService.hpp>
+#include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
@@ -31,7 +31,7 @@ using namespace std;
 using namespace NES;
 using namespace Configurations;
 
-class StreamCatalogServiceTest : public Testing::NESBaseTest {
+class SourceCatalogServiceTest : public Testing::NESBaseTest {
   public:
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -39,12 +39,12 @@ class StreamCatalogServiceTest : public Testing::NESBaseTest {
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES_DEBUG("Setup NES StreamCatalogService test class."); }
+    static void SetUpTestCase() { NES_DEBUG("Setup NES SourceCatalogService test class."); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES_DEBUG("Setup NES StreamCatalogService test case.");
-        NES::setupLogging("StreamCatalogServiceTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("Setup NES SourceCatalogService test case.");
+        NES::setupLogging("SourceCatalogServiceTest.log", NES::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -64,37 +64,37 @@ class StreamCatalogServiceTest : public Testing::NESBaseTest {
     //std::string sensor_type = "default";
 };
 
-TEST_F(StreamCatalogServiceTest, testRegisterUnregisterLogicalStream) {
+TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    StreamCatalogServicePtr streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
-    std::string logicalStreamName = "testStream";
+    std::string logicalSourceName = "testStream";
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    bool successRegisterLogicalStream = streamCatalogService->registerLogicalSource(logicalStreamName, testSchema);
-    EXPECT_TRUE(successRegisterLogicalStream);
+    bool successRegisterLogicalSource = sourceCatalogService->registerLogicalSource(logicalSourceName, testSchema);
+    EXPECT_TRUE(successRegisterLogicalSource);
 
-    //test register existing stream
-    bool successRegisterExistingLogicalStream = streamCatalogService->registerLogicalSource(logicalStreamName, testSchema);
-    EXPECT_TRUE(!successRegisterExistingLogicalStream);
+    //test register existing source
+    bool successRegisterExistingLogicalSource = sourceCatalogService->registerLogicalSource(logicalSourceName, testSchema);
+    EXPECT_TRUE(!successRegisterExistingLogicalSource);
 
     //test unregister not existing node
-    bool successUnregisterNotExistingLogicalStream = streamCatalogService->unregisterLogicalStream("asdasd");
-    EXPECT_TRUE(!successUnregisterNotExistingLogicalStream);
+    bool successUnregisterNotExistingLogicalSource = sourceCatalogService->unregisterLogicalSource("asdasd");
+    EXPECT_TRUE(!successUnregisterNotExistingLogicalSource);
 
     //test unregister existing node
-    bool successUnregisterExistingLogicalStream = streamCatalogService->unregisterLogicalStream(logicalStreamName);
-    EXPECT_TRUE(successUnregisterExistingLogicalStream);
+    bool successUnregisterExistingLogicalSource = sourceCatalogService->unregisterLogicalSource(logicalSourceName);
+    EXPECT_TRUE(successUnregisterExistingLogicalSource);
 }
 
-TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
+TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
-    StreamCatalogServicePtr streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
+    SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
-    std::string physicalStreamName = "testStream";
+    std::string physicalSourceName = "testStream";
 
     auto csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath("testCSV.csv");
@@ -107,38 +107,38 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
 
     //setup test
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    bool successRegisterLogicalStream =
-        streamCatalogService->registerLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
-    EXPECT_TRUE(successRegisterLogicalStream);
+    bool successRegisterLogicalSource =
+        sourceCatalogService->registerLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
+    EXPECT_TRUE(successRegisterLogicalSource);
 
     // common case
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
-    bool successRegisterPhysicalStream = streamCatalogService->registerPhysicalStream(physicalNode,
+    bool successRegisterPhysicalSource = sourceCatalogService->registerPhysicalSource(physicalNode,
                                                                                       physicalSource->getPhysicalSourceName(),
                                                                                       physicalSource->getLogicalSourceName());
-    EXPECT_TRUE(successRegisterPhysicalStream);
+    EXPECT_TRUE(successRegisterPhysicalSource);
 
-    //test register existing stream
-    bool successRegisterExistingPhysicalStream =
-        streamCatalogService->registerPhysicalStream(physicalNode,
+    //test register existing source
+    bool successRegisterExistingPhysicalSource =
+        sourceCatalogService->registerPhysicalSource(physicalNode,
                                                      physicalSource->getPhysicalSourceName(),
                                                      physicalSource->getLogicalSourceName());
-    EXPECT_TRUE(!successRegisterExistingPhysicalStream);
+    EXPECT_TRUE(!successRegisterExistingPhysicalSource);
 
-    //test unregister not existing physical stream
-    bool successUnregisterNotExistingPhysicalStream =
-        streamCatalogService->unregisterPhysicalStream(physicalNode, "asd", physicalSource->getLogicalSourceName());
-    EXPECT_TRUE(!successUnregisterNotExistingPhysicalStream);
+    //test unregister not existing physical source
+    bool successUnregisterNotExistingPhysicalSource =
+        sourceCatalogService->unregisterPhysicalSource(physicalNode, "asd", physicalSource->getLogicalSourceName());
+    EXPECT_TRUE(!successUnregisterNotExistingPhysicalSource);
 
-    //test unregister not existing local stream
-    bool successUnregisterNotExistingLogicalStream =
-        streamCatalogService->unregisterPhysicalStream(physicalNode, physicalSource->getPhysicalSourceName(), "asd");
-    EXPECT_TRUE(!successUnregisterNotExistingLogicalStream);
+    //test unregister not existing local source
+    bool successUnregisterNotExistingLogicalSource =
+        sourceCatalogService->unregisterPhysicalSource(physicalNode, physicalSource->getPhysicalSourceName(), "asd");
+    EXPECT_TRUE(!successUnregisterNotExistingLogicalSource);
 
     //test unregister existing node
-    bool successUnregisterExistingPhysicalStream =
-        streamCatalogService->unregisterPhysicalStream(physicalNode,
+    bool successUnregisterExistingPhysicalSource =
+        sourceCatalogService->unregisterPhysicalSource(physicalNode,
                                                        physicalSource->getPhysicalSourceName(),
                                                        physicalSource->getLogicalSourceName());
-    EXPECT_TRUE(successUnregisterExistingPhysicalStream);
+    EXPECT_TRUE(successUnregisterExistingPhysicalSource);
 }

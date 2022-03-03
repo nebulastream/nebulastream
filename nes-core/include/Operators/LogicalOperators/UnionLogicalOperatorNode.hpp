@@ -21,7 +21,7 @@
 namespace NES {
 
 /**
- * @brief Union operator that Union two streams together. This operator behaves similar to the unionWith operator in RDBMS.
+ * @brief Union operator that Union two sources together. This operator behaves similar to the unionWith operator in RDBMS.
  */
 class UnionLogicalOperatorNode : public LogicalBinaryOperatorNode {
   public:

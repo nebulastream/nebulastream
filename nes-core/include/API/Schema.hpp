@@ -177,19 +177,19 @@ class Schema {
     [[nodiscard]] std::string getLayoutTypeAsString() const;
 
     /**
-     * @brief Method to return the stream name qualifier, thus everything that is before $
+     * @brief Method to return the source name qualifier, thus everything that is before $
      * @return string
      */
-    [[nodiscard]] std::string getStreamNameQualifier() const;
+    [[nodiscard]] std::string getSourceNameQualifier() const;
 
     /**
-     * @brief method to get the qualifier of the stream without $
+     * @brief method to get the qualifier of the source without $
      * @return qualifier without $
      */
     std::string getQualifierNameForSystemGeneratedFields();
 
     /**
-     * @brief method to get the qualifier of the stream with $
+     * @brief method to get the qualifier of the source with $
      * @return qualifier with
      */
     std::string getQualifierNameForSystemGeneratedFieldsWithSeparator();

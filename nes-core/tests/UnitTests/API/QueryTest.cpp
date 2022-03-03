@@ -33,7 +33,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -81,8 +81,8 @@ TEST_F(QueryTest, testQueryFilter) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -94,7 +94,7 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1U);
@@ -108,8 +108,8 @@ TEST_F(QueryTest, testQueryProjection) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -121,7 +121,7 @@ TEST_F(QueryTest, testQueryProjection) {
     EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1U);
@@ -135,8 +135,8 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -152,7 +152,7 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1U);
@@ -165,8 +165,8 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -182,7 +182,7 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
     EXPECT_EQ(sourceOperators.size(), 1U);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
 
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1U);
@@ -192,14 +192,14 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
 }
 
 /**
- * Merge two input stream: one with filter and one without filter.
+ * Merge two input source: one with filter and one without filter.
  */
 TEST_F(QueryTest, testQueryMerge) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -209,7 +209,7 @@ TEST_F(QueryTest, testQueryMerge) {
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 2U);
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1U);
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
@@ -217,13 +217,13 @@ TEST_F(QueryTest, testQueryMerge) {
 }
 
 /**
- * Join two input stream: one with filter and one without filter.
+ * Join two input source: one with filter and one without filter.
  */
 TEST_F(QueryTest, testQueryJoin) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -240,7 +240,7 @@ TEST_F(QueryTest, testQueryJoin) {
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 2U);
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalStreamSourceDescriptor>());
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
     const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1U);
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
@@ -285,8 +285,8 @@ TEST_F(QueryTest, testQueryExpression) {
 TEST_F(QueryTest, windowAggregationWithAs) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->addPhysicalSource("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     // create a query with "as" in the aggregation
@@ -298,7 +298,7 @@ TEST_F(QueryTest, windowAggregationWithAs) {
                      .sink(PrintSinkDescriptor::create());
 
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     // get the output schema of the sink

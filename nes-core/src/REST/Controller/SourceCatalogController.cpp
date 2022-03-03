@@ -14,7 +14,7 @@
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
-#include <REST/Controller/StreamCatalogController.hpp>
+#include <REST/Controller/SourceCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
@@ -23,31 +23,31 @@
 #include <utility>
 
 namespace NES {
-StreamCatalogController::StreamCatalogController(SourceCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
-    NES_DEBUG("StreamCatalogController()");
+SourceCatalogController::SourceCatalogController(SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) {
+    NES_DEBUG("SourceCatalogController()");
 }
 
-void StreamCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
+void SourceCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);
 
-    if (path[1] == "allLogicalStream") {
-        const std::map<std::string, std::string>& allLogicalStreamAsString = streamCatalog->getAllLogicalStreamAsString();
+    if (path[1] == "allLogicalSource") {
+        const std::map<std::string, std::string>& allLogicalSourceAsString = sourceCatalog->getAllLogicalSourceAsString();
 
         web::json::value result{};
-        if (allLogicalStreamAsString.empty()) {
-            NES_DEBUG("No Logical Stream Found");
+        if (allLogicalSourceAsString.empty()) {
+            NES_DEBUG("No Logical Source Found");
             resourceNotFoundImpl(request);
             return;
         }
-        for (auto const& [key, val] : allLogicalStreamAsString) {
+        for (auto const& [key, val] : allLogicalSourceAsString) {
             result[key] = web::json::value::string(val);
         }
         successMessageImpl(request, result);
         return;
 
-    } else if (path[1] == "allPhysicalStream") {
+    } else if (path[1] == "allPhysicalSource") {
         //Check if the path contains the query id
         auto param = parameters.find("logicalSourceName");
         if (param == parameters.end()) {
@@ -59,27 +59,27 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
 
         try {
             //Prepare Input query from user string
-            std::string logicalStreamName = param->second;
+            std::string logicalSourceName = param->second;
 
-            const std::vector<SourceCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalSources(logicalStreamName);
+            const std::vector<SourceCatalogEntryPtr>& allPhysicalSource = sourceCatalog->getPhysicalSources(logicalSourceName);
 
             //Prepare the response
             web::json::value result{};
-            if (allPhysicalStream.empty()) {
-                NES_DEBUG("No Physical Stream Found");
+            if (allPhysicalSource.empty()) {
+                NES_DEBUG("No Physical Source Found");
                 resourceNotFoundImpl(request);
                 return;
             }
-            std::vector<web::json::value> allStream = {};
-            for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
-                allStream.push_back(web::json::value::string(physicalStream->toString()));
+            std::vector<web::json::value> allSource = {};
+            for (auto const& physicalSource : std::as_const(allPhysicalSource)) {
+                allSource.push_back(web::json::value::string(physicalSource->toString()));
             }
-            result["Physical Streams"] = web::json::value::array(allStream);
+            result["Physical Sources"] = web::json::value::array(allSource);
             successMessageImpl(request, result);
             return;
 
         } catch (const std::exception& exc) {
-            NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the "
+            NES_ERROR("SourceCatalogController: handleGet -allPhysicalSource: Exception occurred while building the "
                       "query plan for user request:"
                       << exc.what());
             handleException(request, exc);
@@ -93,16 +93,16 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
         //Check if the path contains the query id
         auto param = parameters.find("logicalSourceName");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find logical stream name for the GET schema request");
+            NES_ERROR("QueryController: Unable to find logical source name for the GET schema request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
             badRequestImpl(request, errorResponse);
         }
         try {
             //Prepare Input query from user string
-            std::string logicalStreamName = param->second;
+            std::string logicalSourceName = param->second;
 
-            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(logicalStreamName);
+            SchemaPtr schema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
             SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
             std::string msg = serializableSchema->SerializeAsString();
             successMessageImpl(request, msg);
@@ -110,7 +110,7 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
 
         } catch (const std::exception& exc) {
             NES_ERROR(
-                "StreamCatalogController: handleGet -schema: Exception occurred while retrieving the schema for a logical stream"
+                "SourceCatalogController: handleGet -schema: Exception occurred while retrieving the schema for a logical source"
                 << exc.what());
             handleException(request, exc);
             return;
@@ -124,27 +124,27 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
     }
 }
 
-void StreamCatalogController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) {
+void SourceCatalogController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) {
 
-    if (path[1] == "addLogicalStream") {
+    if (path[1] == "addLogicalSource") {
 
-        NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: REST received request to add new Logical Stream "
+        NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: REST received request to add new Logical Source "
                   << message.to_string());
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try {
-                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Start trying to add new logical stream");
+                    NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Start trying to add new logical source");
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
-                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: userRequest: " << payload);
+                    NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: userRequest: " << payload);
                     web::json::value req = web::json::value::parse(payload);
-                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Json Parse Value: " << req);
-                    std::string streamName = req.at("logicalSourceName").as_string();
+                    NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Json Parse Value: " << req);
+                    std::string sourceName = req.at("logicalSourceName").as_string();
                     std::string schema = req.at("schema").as_string();
-                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Try to add new Logical Stream "
-                              << streamName << " and" << schema);
-                    bool added = streamCatalog->addLogicalStream(streamName, schema);
-                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Successfully added new logical Stream ?"
+                    NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Try to add new Logical Source "
+                              << sourceName << " and" << schema);
+                    bool added = sourceCatalog->addLogicalSource(sourceName, schema);
+                    NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
                               << added);
                     //Prepare the response
                     web::json::value result{};
@@ -152,8 +152,8 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR("StreamCatalogController: handlePost -addLogicalStream: Exception occurred while trying to add new "
-                              "logical stream"
+                    NES_ERROR("SourceCatalogController: handlePost -addLogicalSource: Exception occurred while trying to add new "
+                              "logical source"
                               << exc.what());
                     handleException(message, exc);
                     return;
@@ -165,9 +165,9 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
             })
             .wait();
 
-    } else if (path[1] == "addLogicalStream-ex") {
+    } else if (path[1] == "addLogicalSource-ex") {
 
-        NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: REST received request to add new Logical Stream "
+        NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: REST received request to add new Logical Source "
                   << message.to_string());
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
@@ -176,22 +176,22 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
 
                     if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
-                        NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: invalid Protobuf message");
+                        NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: invalid Protobuf message");
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("Invalid Protobuf message");
                         badRequestImpl(message, errorResponse);
                         return;
                     }
 
-                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Start trying to add new logical stream");
+                    NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Start trying to add new logical source");
                     // decode protobuf message into c++ obj repr
                     SerializableSchema* schema = protobufMessage->mutable_schema();
                     SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
-                    std::string streamName = protobufMessage->streamname();
+                    std::string sourceName = protobufMessage->sourcename();
 
-                    // try to add the user supplied stream
-                    bool added = streamCatalog->addLogicalStream(streamName, deserializedSchema);
-                    NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Successfully added new logical Stream ?"
+                    // try to add the user supplied source
+                    bool added = sourceCatalog->addLogicalSource(sourceName, deserializedSchema);
+                    NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
                               << added);
 
                     //forward return value to client
@@ -201,8 +201,8 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     return;
 
                 } catch (const std::exception& exc) {
-                    NES_ERROR("StreamCatalogController: handlePost -addLogicalStream: Exception occurred while trying to add new "
-                              "logical stream"
+                    NES_ERROR("SourceCatalogController: handlePost -addLogicalSource: Exception occurred while trying to add new "
+                              "logical source"
                               << exc.what());
                     handleException(message, exc);
                     return;
@@ -214,22 +214,22 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
             })
             .wait();
 
-    } else if (path[1] == "updateLogicalStream") {
-        NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: REST received request to update Logical Stream "
+    } else if (path[1] == "updateLogicalSource") {
+        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: REST received request to update Logical Source "
                   << message.to_string());
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                 try {
-                    NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: Start trying to update logical stream");
+                    NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Start trying to update logical source");
                     //Prepare Input query from user string
                     std::string userRequest(body.begin(), body.end());
-                    NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: userRequest: " << userRequest);
+                    NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: userRequest: " << userRequest);
                     web::json::value req = web::json::value::parse(userRequest);
 
-                    std::string streamName = req.at("logicalSourceName").as_string();
+                    std::string sourceName = req.at("logicalSourceName").as_string();
                     std::string schema = req.at("schema").as_string();
 
-                    bool updated = streamCatalog->updatedLogicalStream(streamName, schema);
+                    bool updated = sourceCatalog->updatedLogicalSource(sourceName, schema);
 
                     if (updated) {
                         //Prepare the response
@@ -237,14 +237,14 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                         result["Success"] = web::json::value::boolean(updated);
                         successMessageImpl(message, result);
                     } else {
-                        NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: unable to find stream "
-                                  + streamName);
-                        throw std::invalid_argument("Unable to update logical stream " + streamName);
+                        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: unable to find source "
+                                  + sourceName);
+                        throw std::invalid_argument("Unable to update logical source " + sourceName);
                     }
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR("StreamCatalogController: handlePost -updateLogicalStream: Exception occurred while updating "
-                              "Logical Stream."
+                    NES_ERROR("SourceCatalogController: handlePost -updateLogicalSource: Exception occurred while updating "
+                              "Logical Source."
                               << exc.what());
                     handleException(message, exc);
                     return;
@@ -260,12 +260,12 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
     }
 }
 
-void StreamCatalogController::handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) {
+void SourceCatalogController::handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);
 
-    if (path[1] == "deleteLogicalStream") {
+    if (path[1] == "deleteLogicalSource") {
         //Check if the path contains the query id
         auto param = parameters.find("logicalSourceName");
         if (param == parameters.end()) {
@@ -277,9 +277,9 @@ void StreamCatalogController::handleDelete(const std::vector<utility::string_t>&
 
         try {
             //Prepare Input query from user string
-            std::string streamName = param->second;
+            std::string sourceName = param->second;
 
-            bool added = streamCatalog->removeLogicalStream(streamName);
+            bool added = sourceCatalog->removeLogicalSource(sourceName);
 
             //Prepare the response
             web::json::value result{};
@@ -287,12 +287,12 @@ void StreamCatalogController::handleDelete(const std::vector<utility::string_t>&
                 result["Success"] = web::json::value::boolean(added);
                 successMessageImpl(request, result);
             } else {
-                throw std::invalid_argument("Could not remove logical stream " + streamName);
+                throw std::invalid_argument("Could not remove logical source " + sourceName);
             }
 
             return;
         } catch (const std::exception& exc) {
-            NES_ERROR("StreamCatalogController: handleDelete -deleteLogicalStream: Exception occurred while building the "
+            NES_ERROR("SourceCatalogController: handleDelete -deleteLogicalSource: Exception occurred while building the "
                       "query plan for user request."
                       << exc.what());
             handleException(request, exc);

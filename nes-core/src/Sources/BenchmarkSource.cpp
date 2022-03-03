@@ -150,7 +150,7 @@ void BenchmarkSource::runningRoutine() {
     }
 
     close();
-    // inject reconfiguration task containing end of stream
+    // inject reconfiguration task containing end of source
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();

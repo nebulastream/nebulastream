@@ -79,7 +79,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", inputSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("UpstreamBackupTest: Coordinator started successfully");

@@ -34,7 +34,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
         auto leftInputSchema = unionOperator->getLeftInputSchema();
         //Only apply the rule when right side and left side schema are different
         if (!rightInputSchema->equals(leftInputSchema, false)) {
-            //Construct project operator for mapping rightInputStream To leftInputStream
+            //Construct project operator for mapping rightInputSource To leftInputSource
             auto projectOperator = constructProjectOperator(rightInputSchema, leftInputSchema);
             auto childrenToUnionOperator = unionOperator->getChildren();
             for (auto& child : childrenToUnionOperator) {

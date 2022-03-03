@@ -28,7 +28,7 @@ class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
 /**
- * @brief The LogicalSource wraps the stream name and the schema.
+ * @brief The LogicalSource wraps the source name and the schema.
  */
 class LogicalSource {
   public:

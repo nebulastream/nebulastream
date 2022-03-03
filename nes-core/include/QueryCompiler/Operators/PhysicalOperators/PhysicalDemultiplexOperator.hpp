@@ -21,7 +21,7 @@ namespace PhysicalOperators {
 
 /**
  * @brief The physical demultiplex operator
- * This operator receives one data stream form its upstream operator and forwards it to multiple down-stream operators.
+ * This operator receives one data source form its upstream operator and forwards it to multiple down-stream operators.
  * Thus it has one child node and multiple parent nodes.
  * Example query plan:
  *                                             --- OperatorY --- Sink

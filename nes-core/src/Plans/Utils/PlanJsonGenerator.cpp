@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
@@ -63,7 +63,7 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
         operatorType = "UNION";
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
         operatorType = "BROADCAST";
-    } else if (operatorNode->instanceOf<RenameStreamOperatorNode>()) {
+    } else if (operatorNode->instanceOf<RenameSourceOperatorNode>()) {
         operatorType = "RENAME";
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         operatorType = "WATERMARK";

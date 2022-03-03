@@ -72,7 +72,7 @@ struct __attribute__((packed)) ysbRecord {
  * every second if that future timestamp is now stale (older).
  *
  * First we check for sub-second unit-tests on a soruce and its behavior. Then,
- * we include an E2Etest with a stream that samples at sub-second interval.
+ * we include an E2Etest with a source that samples at sub-second interval.
  */
 class MillisecondIntervalTest : public Testing::NESBaseTest {
   public:
@@ -96,8 +96,8 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         csvSourceType->setGatheringInterval(550);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
         csvSourceType->setNumberOfBuffersToProduce(3);
-        PhysicalSourcePtr streamConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
+        PhysicalSourcePtr sourceConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
 
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -261,9 +261,9 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     ASSERT_NE(port, 0u);
-    //register logical stream
+    //register logical source
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");

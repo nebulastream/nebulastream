@@ -1818,8 +1818,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     NES_ASSERT(!join->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
     NES_ASSERT(join->getLeftJoinKey()->getStamp()->isEquals(join->getRightJoinKey()->getStamp()),
                "left join key is not the same type as right join key");
-    NES_ASSERT(join->getLeftStreamType() != nullptr && !join->getLeftStreamType()->fields.empty(), "left join type is undefined");
-    NES_ASSERT(join->getRightStreamType() != nullptr && !join->getRightStreamType()->fields.empty(),
+    NES_ASSERT(join->getLeftSourceType() != nullptr && !join->getLeftSourceType()->fields.empty(), "left join type is undefined");
+    NES_ASSERT(join->getRightSourceType() != nullptr && !join->getRightSourceType()->fields.empty(),
                "right join type is undefined");
     NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
 
@@ -1932,12 +1932,12 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
     NES_ASSERT(!join->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
     NES_ASSERT(join->getLeftJoinKey()->getStamp()->isEquals(join->getRightJoinKey()->getStamp()),
                "left join key is not the same type as right join key");
-    NES_ASSERT(join->getLeftStreamType() != nullptr && !join->getLeftStreamType()->fields.empty(), "left join type is undefined");
-    NES_ASSERT(join->getRightStreamType() != nullptr && !join->getRightStreamType()->fields.empty(),
+    NES_ASSERT(join->getLeftSourceType() != nullptr && !join->getLeftSourceType()->fields.empty(), "left join type is undefined");
+    NES_ASSERT(join->getRightSourceType() != nullptr && !join->getRightSourceType()->fields.empty(),
                "right join type is undefined");
 
-    auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", join->getRightStreamType());
-    auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", join->getLeftStreamType());
+    auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", join->getRightSourceType());
+    auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", join->getLeftSourceType());
     context->code->structDeclarationInputTuples.emplace_back(leftTypeStruct);
 
     auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
@@ -2049,10 +2049,10 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto tf = getTypeFactory();
 
     if (context->arity == PipelineContext::BinaryLeft) {
-        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightStreamType());
+        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightSourceType());
         context->code->structDeclarationInputTuples.emplace_back(rightTypeStruct);
     } else {
-        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftStreamType());
+        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftSourceType());
         context->code->structDeclarationInputTuples.emplace_back(leftTypeStruct);
     }
 
@@ -2061,9 +2061,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     NES_ASSERT(!joinDef->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
     NES_ASSERT(joinDef->getLeftJoinKey()->getStamp()->isEquals(joinDef->getRightJoinKey()->getStamp()),
                "left join key is not the same type as right join key");
-    NES_ASSERT(joinDef->getLeftStreamType() != nullptr && !joinDef->getLeftStreamType()->fields.empty(),
+    NES_ASSERT(joinDef->getLeftSourceType() != nullptr && !joinDef->getLeftSourceType()->fields.empty(),
                "left join type is undefined");
-    NES_ASSERT(joinDef->getRightStreamType() != nullptr && !joinDef->getRightStreamType()->fields.empty(),
+    NES_ASSERT(joinDef->getRightSourceType() != nullptr && !joinDef->getRightSourceType()->fields.empty(),
                "right join type is undefined");
     NES_ASSERT(context->arity != PipelineContext::Unary, "unary operator detected but join codegen invoked");
 
@@ -2169,7 +2169,7 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
             //Extract the schema of the right side
-            auto rightSchema = joinDef->getRightStreamType();
+            auto rightSchema = joinDef->getRightSourceType();
             //Extract the field name without attribute name resolution
             auto trimmedWindowFieldName =
                 windowTimeStampFieldName.substr(windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR),
@@ -2264,10 +2264,10 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto tf = getTypeFactory();
 
     if (buildSide == QueryCompilation::JoinBuildSide::Left) {
-        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightStreamType());
+        auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightSourceType());
         context->code->structDeclarationInputTuples.emplace_back(rightTypeStruct);
     } else {
-        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftStreamType());
+        auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftSourceType());
         context->code->structDeclarationInputTuples.emplace_back(leftTypeStruct);
     }
 
@@ -2276,9 +2276,9 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     NES_ASSERT(!joinDef->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
     NES_ASSERT(joinDef->getLeftJoinKey()->getStamp()->isEquals(joinDef->getRightJoinKey()->getStamp()),
                "left join key is not the same type as right join key");
-    NES_ASSERT(joinDef->getLeftStreamType() != nullptr && !joinDef->getLeftStreamType()->fields.empty(),
+    NES_ASSERT(joinDef->getLeftSourceType() != nullptr && !joinDef->getLeftSourceType()->fields.empty(),
                "left join type is undefined");
-    NES_ASSERT(joinDef->getRightStreamType() != nullptr && !joinDef->getRightStreamType()->fields.empty(),
+    NES_ASSERT(joinDef->getRightSourceType() != nullptr && !joinDef->getRightSourceType()->fields.empty(),
                "right join type is undefined");
 
     auto code = context->code;
@@ -2392,7 +2392,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
             //Extract the schema of the right side
-            auto rightSchema = joinDef->getRightStreamType();
+            auto rightSchema = joinDef->getRightSourceType();
             //Extract the field name without attribute name resolution
             auto trimmedWindowFieldName =
                 windowTimeStampFieldName.substr(windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR),

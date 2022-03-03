@@ -64,8 +64,8 @@ std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(
 
 std::vector<TopologyNodePtr> ReplicationService::getPhysicalSources(SourceLogicalOperatorNodePtr logicalSource) const {
     SourceDescriptorPtr sourceDescriptor = logicalSource->getSourceDescriptor();
-    auto streamName = sourceDescriptor->getSchema()->getStreamNameQualifier();
-    return this->coordinatorPtr->getStreamCatalog()->getSourceNodesForLogicalStream(streamName);
+    auto sourceName = sourceDescriptor->getSchema()->getSourceNameQualifier();
+    return this->coordinatorPtr->getSourceCatalog()->getSourceNodesForLogicalSource(sourceName);
 }
 
 bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t queryId) const {

@@ -278,10 +278,10 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema1 =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema1);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema1);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -345,9 +345,9 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 }
 
 /**
- * Test deploying join with different streams
+ * Test deploying join with different sources
  */
-TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
+TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -356,13 +356,13 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema1 =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window1", testSchema1);
+    crd->getSourceCatalogService()->registerLogicalSource("window1", testSchema1);
     std::string testSchema2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window2", testSchema2);
+    crd->getSourceCatalogService()->registerLogicalSource("window2", testSchema2);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

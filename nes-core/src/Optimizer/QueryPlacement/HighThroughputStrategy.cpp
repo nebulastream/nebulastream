@@ -31,25 +31,25 @@ namespace NES {
 
 HighThroughputStrategy::HighThroughputStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
 
-NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery, StreamCatalogPtr streamCatalog) {
+NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inputQuery, SourceCatalogPtr sourceCatalog) {
 
     const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
     const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = queryPlan->getSourceStreamName();
+    // FIXME: current implementation assumes that we have only one source source and therefore only one source operator.
+    const string sourceName = queryPlan->getSourceName();
 
     if (!sourceOperator) {
         NES_ERROR("HighThroughput: Unable to find the source operator.");
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+    const vector<NESTopologyEntryPtr> sourceNodes = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodes.empty()) {
-        NES_ERROR("HighThroughput: Unable to find the target source: " << streamName);
-        throw std::runtime_error("No source found in the topology for stream " + streamName);
+        NES_ERROR("HighThroughput: Unable to find the target source: " << sourceName);
+        throw std::runtime_error("No source found in the topology for source " + sourceName);
     }
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();

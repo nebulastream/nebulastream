@@ -22,16 +22,16 @@ SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string ho
     return std::make_shared<ZmqSourceDescriptor>(ZmqSourceDescriptor(std::move(schema), std::move(host), port));
 }
 
-SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string host, uint16_t port) {
+SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string sourceName, std::string host, uint16_t port) {
     return std::make_shared<ZmqSourceDescriptor>(
-        ZmqSourceDescriptor(std::move(schema), std::move(streamName), std::move(host), port));
+        ZmqSourceDescriptor(std::move(schema), std::move(sourceName), std::move(host), port));
 }
 
 ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port)
     : SourceDescriptor(std::move(schema)), host(std::move(host)), port(port) {}
 
-ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string streamName, std::string host, uint16_t port)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), host(std::move(host)), port(port) {}
+ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string sourceName, std::string host, uint16_t port)
+    : SourceDescriptor(std::move(schema), std::move(sourceName)), host(std::move(host)), port(port) {}
 
 const std::string& ZmqSourceDescriptor::getHost() const { return host; }
 uint16_t ZmqSourceDescriptor::getPort() const { return port; }

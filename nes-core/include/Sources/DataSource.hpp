@@ -217,7 +217,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     bool checkSupportedLayoutTypes(SchemaPtr& schema);
 
     /**
-     * @brief method injects epoch barrier to the data stream
+     * @brief method injects epoch barrier to the data source
      * @param epochBarrier current epoch barrier
      * @param queryId currect query id
      * @return success is the message was sent

@@ -137,10 +137,10 @@ web::json::value TestUtils::startQueryViaRest(const string& queryString, const s
     return json_return;
 }
 
-bool TestUtils::addLogicalStream(const string& schemaString, const std::string& restPort) {
+bool TestUtils::addLogicalSource(const string& schemaString, const std::string& restPort) {
     web::json::value json_returnSchema;
 
-    web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/sourceCatalog/addLogicalStream");
+    web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/sourceCatalog/addLogicalSource");
     clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
         .then([](const web::http::http_response& response) {
             NES_INFO("get first then");
@@ -157,7 +157,7 @@ bool TestUtils::addLogicalStream(const string& schemaString, const std::string& 
         })
         .wait();
 
-    NES_DEBUG("addLogicalStream: status =" << json_returnSchema);
+    NES_DEBUG("addLogicalSource: status =" << json_returnSchema);
 
     return json_returnSchema.at("Success").as_bool();
 }

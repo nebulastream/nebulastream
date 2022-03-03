@@ -79,10 +79,10 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr streamConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+        PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                   6262,
-                                                                  {streamConf},
+                                                                  {sourceConf},
                                                                   1,
                                                                   4096,
                                                                   1024,

@@ -214,10 +214,10 @@ add_executable(dynamic-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/Dyna
 target_link_libraries(dynamic-memory-layout-tests nes-tests)
 add_test(NAME dynamic-memory-layout-tests COMMAND dynamic-memory-layout-tests)
 
-### Stream Catalog Tests ###
-add_executable(stream-catalog-test "UnitTests/Catalogs/StreamCatalogTest.cpp")
-target_link_libraries(stream-catalog-test nes-tests)
-add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
+### Source Catalog Tests ###
+add_executable(source-catalog-test "UnitTests/Catalogs/SourceCatalogTest.cpp")
+target_link_libraries(source-catalog-test nes-tests)
+add_test(NAME source-catalog-test COMMAND source-catalog-test)
 
 ### QueryCatalog Tests ###
 add_executable(query-catalog-tests "UnitTests/ServiceTests/QueryCatalogTest.cpp")
@@ -312,10 +312,10 @@ add_executable(serialize-operator-test "UnitTests/Serialization/SerializationUti
 target_link_libraries(serialize-operator-test nes-tests)
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
-### StreamCatalogService Tests ###
-add_executable(stream-catalog-service-tests "UnitTests/ServiceTests/StreamCatalogServiceTest.cpp")
-target_link_libraries(stream-catalog-service-tests nes-tests)
-add_test(NAME stream-catalog-service-tests COMMAND stream-catalog-service-tests)
+### SourceCatalogService Tests ###
+add_executable(source-catalog-service-tests "UnitTests/ServiceTests/SourceCatalogServiceTest.cpp")
+target_link_libraries(source-catalog-service-tests nes-tests)
+add_test(NAME source-catalog-service-tests COMMAND source-catalog-service-tests)
 
 ### TopologyManagerService Tests ###
 add_executable(topology-manager-service-tests "UnitTests/ServiceTests/TopologyManagerServiceTest.cpp")
@@ -477,10 +477,10 @@ add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/Attrib
 target_link_libraries(attribute-sort-rule-test nes-tests)
 add_test(NAME attribute-sort-rule-test COMMAND attribute-sort-rule-test)
 
-### Rename Stream To Project Operator Rule Test ###
-add_executable(rename-stream-to-project-operator-rule-test "UnitTests/Optimizer/QueryRewrite/RenameStreamToProjectOperatorRuleTest.cpp")
-target_link_libraries(rename-stream-to-project-operator-rule-test nes-tests)
-add_test(NAME rename-stream-to-project-operator-rule-test COMMAND rename-stream-to-project-operator-rule-test)
+### Rename Source To Project Operator Rule Test ###
+add_executable(rename-source-to-project-operator-rule-test "UnitTests/Optimizer/QueryRewrite/RenameSourceToProjectOperatorRuleTest.cpp")
+target_link_libraries(rename-source-to-project-operator-rule-test nes-tests)
+add_test(NAME rename-source-to-project-operator-rule-test COMMAND rename-source-to-project-operator-rule-test)
 
 ### Project Before Union Operator Rule Test ###
 add_executable(project-before-union-operator-rule-test "UnitTests/Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRuleTest.cpp")
@@ -603,9 +603,9 @@ target_link_libraries(deep-hierarchy-test nes-tests)
 add_test(NAME deep-hierarchy-test COMMAND deep-hierarchy-test)
 
 ### Catalog Remote Tests ###
-add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")
-target_link_libraries(stream-catalog-remote-test nes-tests)
-add_test(NAME stream-catalog-remote-test COMMAND stream-catalog-remote-test)
+add_executable(source-catalog-remote-test "Integration/SourceCatalogRemoteTest.cpp")
+target_link_libraries(source-catalog-remote-test nes-tests)
+add_test(NAME source-catalog-remote-test COMMAND source-catalog-remote-test)
 
 ### WorkerCoordinatorStarter Tests ###
 add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp")
@@ -683,9 +683,9 @@ target_link_libraries(string-query-test nes-tests)
 add_test(NAME string-query-test COMMAND string-query-test)
 
 ### UpstreamBackup ###
-add_executable(upstream-backup-test "Integration/UpstreamBackupTest.cpp")
-target_link_libraries(upstream-backup-test nes-tests)
-add_test(NAME upstream-backup-test COMMAND upstream-backup-test)
+add_executable(upsource-backup-test "Integration/UpstreamBackupTest.cpp")
+target_link_libraries(upsource-backup-test nes-tests)
+add_test(NAME upsource-backup-test COMMAND upsource-backup-test)
 
 # gRPC Tests
 add_executable(grpc-test "UnitTests/gRPC/grpcTests.cpp")

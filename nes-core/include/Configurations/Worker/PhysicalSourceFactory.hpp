@@ -42,9 +42,9 @@ class PhysicalSourceFactory {
                                               std::map<std::string, std::string>& inputParams);
 
     /**
-     * @brief create physical stream config with yaml file
-     * @param physicalStreamConfig yaml elements from yaml file
-     * @return physical stream config object
+     * @brief create physical source config with yaml file
+     * @param physicalSourceConfig yaml elements from yaml file
+     * @return physical source config object
      */
     static PhysicalSourcePtr createFromYaml(Yaml::Node& yamlConfig);
 

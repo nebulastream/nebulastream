@@ -115,14 +115,14 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     }
 
     // perform the assignment
-    std::map<TopologyNodePtr, std::vector<std::string>> topologyNodeToStreamName;
+    std::map<TopologyNodePtr, std::vector<std::string>> topologyNodeToSourceName;
     std::vector<OperatorId> placedOperatorIds;// bookkeeping: each operator should be placed once
-    // loop over all logical stream
+    // loop over all logical source
     // FIXME: #2486 Dwi: I think we will get this information from source operator's properties
     //    for (auto srcOp : queryPlan->getSourceOperators()) {
     //        LogicalOperatorNodePtr currentOperator = srcOp;
     //        for (auto topologyNode :
-    //             sourceCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
+    //             sourceCatalog->getSourceNodesForLogicalSource(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
     //            TopologyNodePtr currentTopologyNodePtr = topologyNode;
     //
     //            topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
@@ -130,19 +130,19 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     //
     //            // place the current source operator here if no source operator for the same logical source is placed
     //            if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), srcOp->getId()) == placedOperatorIds.end()
-    //                && std::find(topologyNodeToStreamName[topologyNode].begin(),
-    //                             topologyNodeToStreamName[topologyNode].end(),
+    //                && std::find(topologyNodeToSourceName[topologyNode].begin(),
+    //                             topologyNodeToSourceName[topologyNode].end(),
     //                             srcOp->getSourceDescriptor()->getLogicalSourceName())
-    //                    == topologyNodeToStreamName[topologyNode].end()) {
+    //                    == topologyNodeToSourceName[topologyNode].end()) {
     //                placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
     //                placedOperatorIds.push_back(currentOperator->getId());
     //
     //                // bookkeeping the assignment of source operators
-    //                if (topologyNodeToStreamName.find(topologyNode) == topologyNodeToStreamName.end()) {
-    //                    std::vector<std::string> placedLogicalStreams = {srcOp->getSourceDescriptor()->getLogicalSourceName()};
-    //                    topologyNodeToStreamName.insert(std::make_pair(topologyNode, placedLogicalStreams));
+    //                if (topologyNodeToSourceName.find(topologyNode) == topologyNodeToSourceName.end()) {
+    //                    std::vector<std::string> placedLogicalSources = {srcOp->getSourceDescriptor()->getLogicalSourceName()};
+    //                    topologyNodeToSourceName.insert(std::make_pair(topologyNode, placedLogicalSources));
     //                } else {
-    //                    topologyNodeToStreamName[topologyNode].push_back(srcOp->getSourceDescriptor()->getLogicalSourceName());
+    //                    topologyNodeToSourceName[topologyNode].push_back(srcOp->getSourceDescriptor()->getLogicalSourceName());
     //                }
     //
     //                // placing the rest of the operator except the sink

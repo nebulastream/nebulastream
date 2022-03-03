@@ -431,8 +431,8 @@ class SourceTest : public Testing::NESBaseTest {
   public:
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
+        PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
         this->path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
         this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
@@ -1677,7 +1677,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("input1", input);
+    crd->getSourceCatalogService()->registerLogicalSource("input1", input);
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
@@ -1898,8 +1898,8 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("input1", input);
-    crd->getStreamCatalogService()->registerLogicalSource("input2", input);
+    crd->getSourceCatalogService()->registerLogicalSource("input1", input);
+    crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
@@ -2092,7 +2092,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     auto port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("input", input);
+    crd->getSourceCatalogService()->registerLogicalSource("input", input);
 
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;

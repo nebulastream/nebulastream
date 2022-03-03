@@ -49,7 +49,7 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
 
   private:
     /**
-     * @brief This method takes input as a binary operator and sort the children alphabetically based on stream qualifier name
+     * @brief This method takes input as a binary operator and sort the children alphabetically based on source qualifier name
      * @param binaryOperator : the input binary operator
      */
     static void sortChildren(const BinaryOperatorNodePtr& binaryOperator);

@@ -28,13 +28,13 @@ class LogicalJoinDefinition {
 
   public:
     /**
-     * With this enum we distinguish between options to compose two streams, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
+     * With this enum we distinguish between options to compose two sources, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
      * Thus, INNER_JOIN combines two tuples in case they share a common key attribute
      * CARTESIAN_PRODUCT combines two tuples regardless if they share a common attribute.
      *
      * Example:
-     * Stream1: {(key1,2),(key2,3)}
-     * Stream2: {(key1,2),(key2,3)}
+     * Source1: {(key1,2),(key2,3)}
+     * Source2: {(key1,2),(key2,3)}
      *
      * INNER_JOIN: {(Key1,2,2), (key2,3,3)}
      * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
@@ -72,14 +72,14 @@ class LogicalJoinDefinition {
     FieldAccessExpressionNodePtr getRightJoinKey();
 
     /**
-   * @brief getter left stream type
+   * @brief getter left source type
    */
-    SchemaPtr getLeftStreamType();
+    SchemaPtr getLeftSourceType();
 
     /**
-   * @brief getter of right stream type
+   * @brief getter of right source type
    */
-    SchemaPtr getRightStreamType();
+    SchemaPtr getRightSourceType();
 
     /**
      * @brief getter/setter for window type
@@ -123,21 +123,21 @@ class LogicalJoinDefinition {
     uint64_t getNumberOfInputEdgesRight() const;
 
     /**
-     * @brief Update the left and right stream types upon type inference
-     * @param leftStreamType the type of the left stream
-     * @param rightStreamType the type of the right stream
+     * @brief Update the left and right source types upon type inference
+     * @param leftSourceType the type of the left source
+     * @param rightSourceType the type of the right source
      */
-    void updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType);
+    void updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType);
 
     /**
-     * @brief Update the output stream type upon type inference
-     * @param outputSchema the type of the output stream
+     * @brief Update the output source type upon type inference
+     * @param outputSchema the type of the output source
      */
     void updateOutputDefinition(SchemaPtr outputSchema);
 
     /**
-     * @brief Getter of the output stream schema
-     * @return the output stream schema
+     * @brief Getter of the output source schema
+     * @return the output source schema
      */
     [[nodiscard]] SchemaPtr getOutputSchema() const;
 
@@ -147,8 +147,8 @@ class LogicalJoinDefinition {
   private:
     FieldAccessExpressionNodePtr leftJoinKeyType;
     FieldAccessExpressionNodePtr rightJoinKeyType;
-    SchemaPtr leftStreamType{nullptr};
-    SchemaPtr rightStreamType{nullptr};
+    SchemaPtr leftSourceType{nullptr};
+    SchemaPtr rightSourceType{nullptr};
     SchemaPtr outputSchema{nullptr};
     Windowing::WindowTriggerPolicyPtr triggerPolicy;
     BaseJoinActionDescriptorPtr triggerAction;

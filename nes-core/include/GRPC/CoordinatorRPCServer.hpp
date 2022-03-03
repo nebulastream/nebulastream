@@ -16,7 +16,7 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
-#include <Services/StreamCatalogService.hpp>
+#include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Services/ReplicationService.hpp>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -33,8 +33,8 @@ namespace NES {
 
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
-class StreamCatalogService;
-using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
+class SourceCatalogService;
+using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
@@ -46,10 +46,10 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     /**
      * @brief Create coordinator RPC server
      * @param topologyManagerService : the instance of the topologyManagerService
-     * @param streamCatalogService : the instance of the steam catalog service
+     * @param sourceCatalogService : the instance of the steam catalog service
      * @param monitoringService: the instance of monitoring service
      */
-    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService, StreamCatalogServicePtr streamCatalogService, MonitoringManagerPtr monitoringService, ReplicationServicePtr replicationService);
+    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService, SourceCatalogServicePtr sourceCatalogService, MonitoringManagerPtr monitoringService, ReplicationServicePtr replicationService);
 
     /**
      * @brief RPC Call to register a node
@@ -70,7 +70,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status UnregisterNode(ServerContext* context, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) override;
 
     /**
-     * @brief RPC Call to register physical stream
+     * @brief RPC Call to register physical source
      * @param context: the server context
      * @param request: register physical source request
      * @param reply: register physical source response
@@ -81,7 +81,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   RegisterPhysicalSourcesReply* reply) override;
 
     /**
-     * @brief RPC Call to unregister physical stream
+     * @brief RPC Call to unregister physical source
      * @param context: the server context
      * @param request: unregister physical source request
      * @param reply: unregister physical source reply
@@ -92,7 +92,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                     UnregisterPhysicalSourceReply* reply) override;
 
     /**
-     * @brief RPC Call to register logical stream
+     * @brief RPC Call to register logical source
      * @param context: the server context
      * @param request: register logical source request
      * @param reply: register logical source response
@@ -103,7 +103,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                  RegisterLogicalSourceReply* reply) override;
 
     /**
-     * @brief RPC Call to unregister logical stream
+     * @brief RPC Call to unregister logical source
      * @param context: the server context
      * @param request: unregister logical source request
      * @param reply: unregister logical source response
@@ -174,7 +174,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
   private:
     TopologyManagerServicePtr topologyManagerService;
-    StreamCatalogServicePtr streamCatalogService;
+    SourceCatalogServicePtr sourceCatalogService;
     MonitoringManagerPtr monitoringManager;
     ReplicationServicePtr replicationService;
 };

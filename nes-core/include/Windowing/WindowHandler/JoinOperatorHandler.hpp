@@ -59,9 +59,9 @@ class JoinOperatorHandler : public Runtime::Execution::OperatorHandler {
      * @tparam KeyType
      * @return JoinHandlerType
      */
-    template<template<class, class, class> class JoinHandlerType, class KeyType, class LeftStreamType, class RightStreamType>
+    template<template<class, class, class> class JoinHandlerType, class KeyType, class LeftSourceType, class RightSourceType>
     auto getJoinHandler() {
-        return std::static_pointer_cast<JoinHandlerType<KeyType, LeftStreamType, RightStreamType>>(joinHandler);
+        return std::static_pointer_cast<JoinHandlerType<KeyType, LeftSourceType, RightSourceType>>(joinHandler);
     }
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,

@@ -19,26 +19,26 @@
 
 namespace NES::Optimizer {
 
-class RenameStreamToProjectOperatorRule;
-using RenameStreamToProjectOperatorRulePtr = std::shared_ptr<RenameStreamToProjectOperatorRule>;
+class RenameSourceToProjectOperatorRule;
+using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
 
 /**
- * @brief This rule is responsible for transforming Stream Rename operator to the projection operator
+ * @brief This rule is responsible for transforming Source Rename operator to the projection operator
  */
-class RenameStreamToProjectOperatorRule : public BaseRewriteRule {
+class RenameSourceToProjectOperatorRule : public BaseRewriteRule {
 
   public:
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
-    virtual ~RenameStreamToProjectOperatorRule() = default;
+    virtual ~RenameSourceToProjectOperatorRule() = default;
 
-    static RenameStreamToProjectOperatorRulePtr create();
+    static RenameSourceToProjectOperatorRulePtr create();
 
   private:
-    RenameStreamToProjectOperatorRule() = default;
+    RenameSourceToProjectOperatorRule() = default;
 
     /**
      * @brief Convert input operator into project operator
-     * @param operatorNode : the rename stream operator
+     * @param operatorNode : the rename source operator
      * @return pointer to the converted project operator
      */
     static OperatorNodePtr convert(const OperatorNodePtr& operatorNode);

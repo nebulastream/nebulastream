@@ -72,8 +72,8 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     workerConfig->coordinatorPort = port;
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    auto windowStream = PhysicalSource::create("exdra", "test_stream", sourceConfig);
-    workerConfig->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("exdra", "test_stream", sourceConfig);
+    workerConfig->physicalSources.add(windowSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -138,7 +138,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     EXPECT_NE(port, 0UL);
     std::string input =
         R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
-    ASSERT_TRUE(crd->getStreamCatalogService()->registerLogicalSource("ysb", input));
+    ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -443,16 +443,16 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
-    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig1->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig1->physicalSources.add(windowSource);
 
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -466,7 +466,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig2->physicalSources.add(windowStream);
+    workerConfig2->physicalSources.add(windowSource);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -833,8 +833,8 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
     sourceConfig->setNumberOfBuffersToProduce(3);
 
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig->physicalSources.add(windowSource);
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -845,7 +845,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -898,12 +898,12 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -987,19 +987,19 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     sourceConfig->setNumberOfBuffersToProduce(3);
 
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
-    workerConfig->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("windowSource", "test_stream", sourceConfig);
+    workerConfig->physicalSources.add(windowSource);
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("windowStream", window);
+    crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -1017,7 +1017,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"windowStream\").window(TumblingWindow::of(IngestionTime(), "
+    string query = "Query::from(\"windowSource\").window(TumblingWindow::of(IngestionTime(), "
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
@@ -1055,20 +1055,20 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
-    workerConfig1->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("windowSource", "test_stream", sourceConfig);
+    workerConfig1->physicalSources.add(windowSource);
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
 
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("windowStream", window);
+    crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -1094,7 +1094,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query = "Query::from(\"windowStream\").window(TumblingWindow::of(IngestionTime(), "
+    string query = "Query::from(\"windowSource\").window(TumblingWindow::of(IngestionTime(), "
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
@@ -1185,12 +1185,12 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");

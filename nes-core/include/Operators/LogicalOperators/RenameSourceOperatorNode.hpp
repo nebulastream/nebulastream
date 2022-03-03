@@ -21,12 +21,12 @@
 namespace NES {
 
 /**
- * @brief this operator renames the stream
+ * @brief this operator renames the source
  */
-class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
+class RenameSourceOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    explicit RenameStreamOperatorNode(std::string const& newStreamName, OperatorId id);
-    ~RenameStreamOperatorNode() override = default;
+    explicit RenameSourceOperatorNode(std::string const& newSourceName, OperatorId id);
+    ~RenameSourceOperatorNode() override = default;
 
     /**
      * @brief check if two operators have the same output schema
@@ -44,10 +44,10 @@ class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     void inferStringSignature() override;
-    std::string getNewStreamName();
+    std::string getNewSourceName();
 
   private:
-    const std::string newStreamName;
+    const std::string newSourceName;
 };
 
 }// namespace NES

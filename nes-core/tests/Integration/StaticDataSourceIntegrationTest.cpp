@@ -115,8 +115,8 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    auto streamCatalog = crd->getStreamCatalog();
-    streamCatalog->addLogicalStream("tpch_customer", schema_customer);
+    auto sourceCatalog = crd->getSourceCatalog();
+    sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
@@ -203,8 +203,8 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    auto streamCatalog = crd->getStreamCatalog();
-    streamCatalog->addLogicalStream("tpch_nation", schema_nation);
+    auto sourceCatalog = crd->getSourceCatalog();
+    sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
@@ -260,7 +260,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
 }
 
 // incomplete
-// this test is supposed to join two table sources relying on the streaming join operator
+// this test is supposed to join two table sources relying on the sourceing join operator
 TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -277,9 +277,9 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    auto streamCatalog = crd->getStreamCatalog();
-    streamCatalog->addLogicalStream("tpch_customer", schema_customer);
-    streamCatalog->addLogicalStream("tpch_nation", schema_nation);
+    auto sourceCatalog = crd->getSourceCatalog();
+    sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
+    sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;

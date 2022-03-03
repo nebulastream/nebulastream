@@ -18,7 +18,7 @@
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
-#include <REST/Controller/StreamCatalogController.hpp>
+#include <REST/Controller/SourceCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <REST/RestEngine.hpp>
@@ -29,7 +29,7 @@
 
 namespace NES {
 
-RestEngine::RestEngine(const SourceCatalogPtr& streamCatalog,
+RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
                        const NesCoordinatorWeakPtr& coordinator,
                        const QueryCatalogPtr& queryCatalog,
                        const TopologyPtr& topology,
@@ -40,7 +40,7 @@ RestEngine::RestEngine(const SourceCatalogPtr& streamCatalog,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
                        const Runtime::BufferManagerPtr bufferManager) {
-    streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
+    sourceCatalogController = std::make_shared<SourceCatalogController>(sourceCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
@@ -103,7 +103,7 @@ void RestEngine::handleGet(web::http::http_request request) {
             return;
         }
         if (paths[0] == "sourceCatalog") {
-            streamCatalogController->handleGet(paths, request);
+            sourceCatalogController->handleGet(paths, request);
             return;
         } else if (paths[0] == "queryCatalog") {
             queryCatalogController->handleGet(paths, request);
@@ -135,7 +135,7 @@ void RestEngine::handlePost(web::http::http_request request) {
             return;
         }
         if (paths[0] == "sourceCatalog") {
-            streamCatalogController->handlePost(paths, request);
+            sourceCatalogController->handlePost(paths, request);
             return;
         } else if (paths[0] == "monitoring") {
             monitoringController->handlePost(paths, request);
@@ -161,7 +161,7 @@ void RestEngine::handleDelete(web::http::http_request request) {
 
     if (!paths.empty()) {
         if (paths[0] == "sourceCatalog") {
-            streamCatalogController->handleDelete(paths, request);
+            sourceCatalogController->handleDelete(paths, request);
             return;
         }
         if (paths[0] == "query") {

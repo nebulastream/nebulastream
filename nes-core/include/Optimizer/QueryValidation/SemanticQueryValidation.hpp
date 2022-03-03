@@ -100,7 +100,7 @@ class SemanticQueryValidation {
      */
     static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
     bool performAdvanceChecks;
 };
 

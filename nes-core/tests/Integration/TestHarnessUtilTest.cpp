@@ -295,7 +295,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 }
 
 /**
- * Testing testHarness utility for query with a join operator on different streams
+ * Testing testHarness utility for query with a join operator on different sources
  */
 TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
@@ -537,7 +537,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
-                                  //register physical stream
+                                  //register physical source
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()
                                   .setupTopology();
@@ -589,7 +589,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
-                                  //register physical stream
+                                  //register physical source
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)//2
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3

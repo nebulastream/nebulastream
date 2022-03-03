@@ -20,14 +20,14 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining referencing a logical source stream.
+ * @brief Descriptor defining referencing a logical source.
  */
-class LogicalStreamSourceDescriptor : public SourceDescriptor {
+class LogicalSourceDescriptor : public SourceDescriptor {
 
   public:
     /**
-     * @brief Factory method to create a new logical source stream descriptor.
-     * @param logicalSourceName Name of this stream
+     * @brief Factory method to create a new logical source source descriptor.
+     * @param logicalSourceName Name of this source
      * @return SourceDescriptorPtr
      */
     static SourceDescriptorPtr create(std::string logicalSourceName);
@@ -38,10 +38,10 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
     SourceDescriptorPtr copy() override;
 
   private:
-    explicit LogicalStreamSourceDescriptor(std::string logicalSourceName);
+    explicit LogicalSourceDescriptor(std::string logicalSourceName);
 };
 
-using LogicalStreamSourceDescriptorPtr = std::shared_ptr<LogicalStreamSourceDescriptor>;
+using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;
 
 }// namespace NES
 

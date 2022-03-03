@@ -63,7 +63,7 @@ Getting the execution plan for the user query.
         "nodeType": "node_type",
         "capacity": "node_capacity",
         "remainingCapacity": "remaining_capacity",
-        "physicalSourceName": "physical_stream_name"
+        "physicalSourceName": "physical_source_name"
     }],
 "edges": [{
         "source":"source_node",    
@@ -118,7 +118,7 @@ To get the NebulaStream topology graph as JSON.
         "nodeType": "node_type",
         "capacity": "node_capacity",
         "remainingCapacity": "remaining_capacity",
-        "physicalSourceName": "physical_stream_name"
+        "physicalSourceName": "physical_source_name"
     }],
 "edges": [{
         "source":"source_node",    
@@ -187,13 +187,13 @@ To delete a user submitted query.
 {}
 ___
 
-## Stream Catalog
+## Source Catalog
 
-### Getting All Logical Stream
+### Getting All Logical Source
 
 To get all queries registered at NebulaStream.
 
-**API**: /sourceCatalog/allLogicalStream\
+**API**: /sourceCatalog/allLogicalSource\
 **Verb**: GET\
 **Response Code**: 200 OK
 
@@ -204,83 +204,83 @@ To get all queries registered at NebulaStream.
 
 **Response**:
 {[
-"logical_stream_name": "logical_stream_schema" 
+"logical_source_name": "logical_source_schema" 
 ]}
 
-### Getting All Physical Stream For a Logical Stream
+### Getting All Physical Source For a Logical Source
 
-To get all physical streams for a given logical stream.
+To get all physical sources for a given logical source.
 
-**API**: /sourceCatalog/allPhysicalStream\
+**API**: /sourceCatalog/allPhysicalSource\
 **Verb**: GET\
 **Response Code**: 200 OK
 
 **_Example_**: 
 
 **Request**:
-{"logicalSourceName": "logical_stream_name"}
+{"logicalSourceName": "logical_source_name"}
 
 **Response**:
-{"Physical Streams":  [physicl_stream_string]}
+{"Physical Sources":  [physicl_source_string]}
 
-### Add Logical Stream
-To add a logical stream.
+### Add Logical Source
+To add a logical source.
 
-**API**: /sourceCatalog/addLogicalStream\
+**API**: /sourceCatalog/addLogicalSource\
 **Verb**: POST\
 **Response Code**: 200 OK
 
 **_Example_**: 
 
 **Request**:
-{"logicalSourceName": "logical_stream_name",
+{"logicalSourceName": "logical_source_name",
 "schema": "Schema::create()->addField(\"test\",INT32);"}
 
 **Response**:
 {"Success": "true"}
 
-To add a logical stream as a protobuf Object:
+To add a logical source as a protobuf Object:
 
-**API**: /sourceCatalog/addLogicalStream-ex \
+**API**: /sourceCatalog/addLogicalSource-ex \
 **Verb**: POST\
 **Response Code**: 200 OK
 
 **_Example_**:
 
 **Request**:
-A Protobuf encoded stream name and schema.
+A Protobuf encoded source name and schema.
 
 **Response**:
 {"Success": "true"}
 
-### Update Logical Stream
-To Update a logical stream.
+### Update Logical Source
+To Update a logical source.
 
-**API**: /sourceCatalog/updateLogicalStream\
+**API**: /sourceCatalog/updateLogicalSource\
 **Verb**: POST\
 **Response Code**: 200 OK
 
 **_Example_**: 
 
 **Request**:
-{"logicalSourceName": "logical_stream_name",
+{"logicalSourceName": "logical_source_name",
 "schema": "Schema::create()->addField(\"test\",INT32);"}
 
 **Response**:
 {"Success": "true"}
 
-### Delete Logical Stream
+### Delete Logical Source
 
-To delete a logical stream.
+To delete a logical source.
 
-**API**: /sourceCatalog/deleteLogicalStream\
+**API**: /sourceCatalog/deleteLogicalSource\
 **Verb**: DELETE\
 **Response Code**: 200 OK
 
 **_Example_**: 
 
 **Request**:
-{"logicalSourceName": "logical_stream_name"}
+{"logicalSourceName": "logical_source_name"}
 
 **Response**:
 {"Success": "true"}

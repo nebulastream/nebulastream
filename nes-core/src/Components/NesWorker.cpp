@@ -176,7 +176,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(con, "cannot connect");
     }
     if (!workerConfig->physicalSources.getValues().empty()) {
-        NES_DEBUG("NesWorker: start with register stream");
+        NES_DEBUG("NesWorker: start with register source");
         bool success = registerPhysicalSources(physicalSources);
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
@@ -279,9 +279,9 @@ bool NesWorker::disconnect() {
     return false;
 }
 
-bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string physicalName) {
-    bool success = coordinatorRpcClient->unregisterPhysicalStream(std::move(logicalName), std::move(physicalName));
-    NES_DEBUG("NesWorker::unregisterPhysicalStream success=" << success);
+bool NesWorker::unregisterPhysicalSource(std::string logicalName, std::string physicalName) {
+    bool success = coordinatorRpcClient->unregisterPhysicalSource(std::move(logicalName), std::move(physicalName));
+    NES_DEBUG("NesWorker::unregisterPhysicalSource success=" << success);
     return success;
 }
 
@@ -293,7 +293,7 @@ bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& ph
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "cannot connect");
     bool success = coordinatorRpcClient->registerPhysicalSources(physicalSources);
-    NES_ASSERT(success, "failed to register stream");
+    NES_ASSERT(success, "failed to register source");
     NES_DEBUG("NesWorker::registerPhysicalSources success=" << success);
     return success;
 }

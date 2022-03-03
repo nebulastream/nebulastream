@@ -50,7 +50,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const TopologyPtr& topology,
                                                  const QueryCatalogPtr& queryCatalog,
                                                  const GlobalQueryPlanPtr& globalQueryPlan,
-                                                 const SourceCatalogPtr& streamCatalog,
+                                                 const SourceCatalogPtr& sourceCatalog,
                                                  const WorkerRPCClientPtr& workerRpcClient,
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
@@ -59,7 +59,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
-    typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
                                                                  topology,
                                                                  typeInferencePhase,
@@ -73,7 +73,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
     globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
-                                                                               streamCatalog,
+                                                                               sourceCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
                                                                                optimizerConfiguration);

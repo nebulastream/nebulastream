@@ -35,7 +35,7 @@ The serializable wrapper for a schema object and its name
  */
 message SerializableNamedSchema{
 
-  string streamName = 1;
+  string sourceName = 1;
   SerializableSchema schema = 2;
 }
 
@@ -169,7 +169,7 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 6;
     }
 
-    message SerializableLogicalStreamSourceDescriptor {
+    message SerializableLogicalSourceDescriptor {
       string logicalSourceName = 1;
       string physicalSourceName = 2;
       optional SerializableSchema sourceSchema = 3;
@@ -494,8 +494,8 @@ message SerializableOperator{
     DistributionCharacteristic distrChar = 3;
     SerializableExpression onLeftKey = 4;
     SerializableExpression onRightKey = 5;
-    SerializableExpression leftStreamType = 6;
-    SerializableExpression rightStreamType = 7;
+    SerializableExpression leftSourceType = 6;
+    SerializableExpression rightSourceType = 7;
     TriggerPolicy triggerPolicy = 8;
     TriggerAction action = 9;
     uint64 numberOfInputEdgesLeft = 10;

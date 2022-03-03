@@ -26,7 +26,7 @@
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -58,7 +58,7 @@ using namespace Configurations;
 class QueryPlacementTest : public testing::Test {
   public:
     z3::ContextPtr z3Context;
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     QueryParsingServicePtr queryParsingService;
     GlobalExecutionPlanPtr globalExecutionPlan;
@@ -82,7 +82,7 @@ class QueryPlacementTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
 
-    void setupTopologyAndStreamCatalog(std::vector<uint16_t> resources) {
+    void setupTopologyAndSourceCatalog(std::vector<uint16_t> resources) {
 
         topology = Topology::create();
 
@@ -97,27 +97,27 @@ class QueryPlacementTest : public testing::Test {
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
-        const std::string streamName = "car";
+        const std::string sourceName = "car";
 
-        streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-        streamCatalog->addLogicalStream(streamName, schema);
-        auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
 
-        SourceCatalogEntryPtr streamCatalogEntry1 =
+        SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry2 =
+        SourceCatalogEntryPtr sourceCatalogEntry2 =
             std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
 
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
         globalExecutionPlan = GlobalExecutionPlan::create();
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -141,7 +141,7 @@ class QueryPlacementTest : public testing::Test {
 /* Test query placement with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -149,7 +149,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -194,10 +194,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 /* Test query placement with top down strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -206,7 +206,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -252,9 +252,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 /* Test query placement of query with multiple sinks with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4});
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
     filterOperator->addChild(sourceOperator);
@@ -275,7 +275,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -328,9 +328,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
 /* Test query placement of query with multiple sinks and multiple source operators with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4});
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
@@ -348,7 +348,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -401,12 +401,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 /* Test query placement of query with multiple sinks with TopDown strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
     filterOperator->addChild(sourceOperator);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -423,7 +423,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -475,10 +475,10 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
 /* Test query placement of query with multiple sinks with Bottom up strategy  */
 TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4});
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     z3::ContextPtr context = std::make_shared<z3::context>();
     auto z3InferencePhase =
         Optimizer::SignatureInferencePhase::create(context,
@@ -584,13 +584,13 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
 
 TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog({10, 4, 4});
+    setupTopologyAndSourceCatalog({10, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     z3::ContextPtr context = std::make_shared<z3::context>();
     auto z3InferencePhase =
         Optimizer::SignatureInferencePhase::create(context,
@@ -685,12 +685,12 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
 /* Test query placement of query with multiple sinks and multiple source operators with Top Down strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog({4, 4, 4});
+    setupTopologyAndSourceCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
     auto sinkOperator2 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
@@ -704,7 +704,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -775,22 +775,22 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacement) {
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64);";
-    const std::string streamName = "car";
+    const std::string sourceName = "car";
 
-    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream(streamName, schema);
-    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
-    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+    SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     sinkOperator->addChild(filterOperator);
     filterOperator->addChild(sourceOperator);
@@ -800,7 +800,7 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacement) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     auto manualPlacementStrategy = Optimizer::ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 
@@ -814,7 +814,7 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacement) {
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -875,22 +875,22 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacementMultipleOperatorInANode) 
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64);";
-    const std::string streamName = "car";
+    const std::string sourceName = "car";
 
-    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream(streamName, schema);
-    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
-    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+    SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     sinkOperator->addChild(filterOperator);
     filterOperator->addChild(sourceOperator);
@@ -900,7 +900,7 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacementMultipleOperatorInANode) 
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     auto manualPlacementStrategy = Optimizer::ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 
@@ -914,7 +914,7 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacementMultipleOperatorInANode) 
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -950,7 +950,7 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacementMultipleOperatorInANode) 
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             EXPECT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// stream source
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// source source
         }
     }
 }
@@ -981,22 +981,22 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64);";
-    const std::string streamName = "car";
+    const std::string sourceName = "car";
 
-    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream(streamName, schema);
-    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
-    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+    SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     auto mapOperator = LogicalOperatorFactory::createMapOperator(Attribute("value2") = Attribute("value") * 2);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     sinkOperator->addChild(mapOperator);
     mapOperator->addChild(sourceOperator);
@@ -1006,7 +1006,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
                                                                               globalExecutionPlan,
@@ -1019,7 +1019,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -1053,7 +1053,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
                 if (child->instanceOf<MapLogicalOperatorNode>()) {
                     mapPlacementCount++;
                     for (const auto& childrenOfMapOp : child->getChildren()) {
-                        // if the current operator is a stream source, it should be placed in topology node with id=2 (source nodes)
+                        // if the current operator is a source source, it should be placed in topology node with id=2 (source nodes)
                         if (childrenOfMapOp->as<SourceLogicalOperatorNode>()->getId()
                             == testQueryPlan->getSourceOperators()[0]->getId()) {
                             isSource1PlacementValid = executionNode->getTopologyNode()->getId() == 2;
@@ -1061,7 +1061,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
                     }
                 } else {
                     EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
-                    // if the current operator is a stream source, it should be placed in topology node with id=2 (source nodes)
+                    // if the current operator is a source source, it should be placed in topology node with id=2 (source nodes)
                     if (child->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
                         isSource1PlacementValid = executionNode->getTopologyNode()->getId() == 2;
                     }
@@ -1109,24 +1109,24 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     // Prepare the source and schema
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64);";
-    const std::string streamName = "car";
+    const std::string sourceName = "car";
 
-    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream(streamName, schema);
-    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
-    SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
-    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
-    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
+    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+    SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    SourceCatalogEntryPtr sourceCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     auto mapOperator = LogicalOperatorFactory::createMapOperator(Attribute("value2") = Attribute("value") * 2);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     sinkOperator->addChild(mapOperator);
     mapOperator->addChild(sourceOperator);
@@ -1136,7 +1136,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
                                                                               globalExecutionPlan,
@@ -1149,7 +1149,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -1181,7 +1181,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
                 if (child->instanceOf<MapLogicalOperatorNode>()) {
                     mapPlacementCount++;
                     for (const auto& childrenOfMapOp : child->getChildren()) {
-                        // if the current operator is a stream source, it should be placed in topology node with id 3 or 4 (source nodes)
+                        // if the current operator is a source source, it should be placed in topology node with id 3 or 4 (source nodes)
                         if (childrenOfMapOp->as<SourceLogicalOperatorNode>()->getId()
                             == testQueryPlan->getSourceOperators()[0]->getId()) {
                             isSource1PlacementValid =
@@ -1194,7 +1194,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
                     }
                 } else {
                     EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
-                    // if the current operator is a stream source, it should be placed in topology node with id 3 or 4 (source nodes)
+                    // if the current operator is a source source, it should be placed in topology node with id 3 or 4 (source nodes)
                     if (child->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
                         isSource1PlacementValid =
                             executionNode->getTopologyNode()->getId() == 3 || executionNode->getTopologyNode()->getId() == 4;
@@ -1246,17 +1246,17 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64)"
                          "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
-    const std::string streamName = "car";
+    const std::string sourceName = "car";
 
-    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream(streamName, schema);
-    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
-    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+    SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")
                       .as("c1")
@@ -1269,7 +1269,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
@@ -1277,7 +1277,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
@@ -1359,17 +1359,17 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64)"
                          "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
-    const std::string streamName = "car";
+    const std::string sourceName = "car";
 
-    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream(streamName, schema);
-    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog->addLogicalSource(sourceName, schema);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
-    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+    SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
 
     Query query = Query::from("car")
                       .as("c1")
@@ -1382,7 +1382,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     // Prepare the placement
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
@@ -1390,7 +1390,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
 

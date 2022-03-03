@@ -185,7 +185,7 @@ const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 
-//Different Stream Types supported in NES
+//Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
 const std::string CSV_SOURCE_CONFIG = "CSVSource";
 const std::string BINARY_SOURCE_CONFIG = "BinarySource";
@@ -198,7 +198,7 @@ const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 
-//Configuration names for stream types
+//Configuration names for source types
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";

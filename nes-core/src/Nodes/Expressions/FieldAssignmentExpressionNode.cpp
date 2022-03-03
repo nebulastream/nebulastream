@@ -68,7 +68,7 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
         field->updateFieldName(existingField->getName());
         field->setStamp(existingField->getDataType());
     } else {
-        //Since this is a new field add the stream name from schema
+        //Since this is a new field add the source name from schema
         //Check if field name is already fully qualified
         if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
             field->updateFieldName(fieldName);

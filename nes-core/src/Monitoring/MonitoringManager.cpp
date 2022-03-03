@@ -140,31 +140,31 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
     }
 }
 
-bool MonitoringManager::registerMonitoringLogical(StreamCatalogPtr) {
+bool MonitoringManager::registerMonitoringLogical(SourceCatalogPtr) {
     // TODO: Will be addressed in issue 2620
-    // Check if logical stream already exists
+    // Check if logical source already exists
     /**
     if (enableMonitoring) {
-        const auto* logicalStreamName = "monitoring";
+        const auto* logicalSourceName = "monitoring";
         auto schema = getSchema(MonitoringPlan::defaultPlan());
 
-        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
-            NES_DEBUG("MonitoringManager: logical source does not exist in the stream catalog, adding a new logical stream "
-                      << logicalStreamName);
-            streamCatalog->addLogicalStream(logicalStreamName, schema);
+        if (!sourceCatalog->testIfLogicalSourceExistsInSchemaMapping(logicalSourceName)) {
+            NES_DEBUG("MonitoringManager: logical source does not exist in the source catalog, adding a new logical source "
+                      << logicalSourceName);
+            sourceCatalog->addLogicalSource(logicalSourceName, schema);
             return true;
         } else {
             // Check if it has the same schema
-            if (!streamCatalog->getSchemaForLogicalStream(logicalStreamName)->equals(schema, true)) {
-                NES_DEBUG("MonitoringManager: logical source " << logicalStreamName
-                                                               << " exists in the stream catalog with "
+            if (!sourceCatalog->getSchemaForLogicalSource(logicalSourceName)->equals(schema, true)) {
+                NES_DEBUG("MonitoringManager: logical source " << logicalSourceName
+                                                               << " exists in the source catalog with "
                                                                   "different schema, replacing it with a new schema");
-                streamCatalog->removeLogicalStream(logicalStreamName);
-                streamCatalog->addLogicalStream(logicalStreamName, schema);
+                sourceCatalog->removeLogicalSource(logicalSourceName);
+                sourceCatalog->addLogicalSource(logicalSourceName, schema);
                 return true;
             }
         }
-        NES_DEBUG("MonitoringManager: Logical stream monitoring already exists.");
+        NES_DEBUG("MonitoringManager: Logical source monitoring already exists.");
         return false;
     }
      **/
@@ -172,10 +172,10 @@ bool MonitoringManager::registerMonitoringLogical(StreamCatalogPtr) {
     return false;
 }
 
-bool MonitoringManager::setupContinuousMonitoring(StreamCatalogPtr streamCatalog) {
+bool MonitoringManager::setupContinuousMonitoring(SourceCatalogPtr sourceCatalog) {
     auto success = true;
-    //register logical stream
-    registerMonitoringLogical(streamCatalog);
+    //register logical source
+    registerMonitoringLogical(sourceCatalog);
     return success;
 }
 

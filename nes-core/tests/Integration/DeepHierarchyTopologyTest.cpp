@@ -38,7 +38,7 @@ class DeepHierarchyTopologyTest : public Testing::NESBaseTest {
 };
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy with one relay which also produces data by itself
+ * @brief This tests just outputs the default source for a hierarchy with one relay which also produces data by itself
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0]
@@ -102,7 +102,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy of two levels where each node produces data
+ * @brief This tests just outputs the default source for a hierarchy of two levels where each node produces data
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
@@ -170,7 +170,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy with one relay which does not produce data
+ * @brief This tests just outputs the default source for a hierarchy with one relay which does not produce data
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0]
@@ -234,7 +234,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy of two levels where only leaves produce data
+ * @brief This tests just outputs the default source for a hierarchy of two levels where only leaves produce data
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
@@ -302,7 +302,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy of three levels where only leaves produce data
+ * @brief This tests just outputs the default source for a hierarchy of three levels where only leaves produce data
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
@@ -626,7 +626,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy of two levels where only leaves produce data
+ * @brief This tests just outputs the default source for a hierarchy of two levels where only leaves produce data
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]

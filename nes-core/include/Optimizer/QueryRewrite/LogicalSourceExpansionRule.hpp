@@ -104,7 +104,7 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
 
   private:
     explicit LogicalSourceExpansionRule(SourceCatalogPtr, bool expandSourceOnly);
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;
 
     /**

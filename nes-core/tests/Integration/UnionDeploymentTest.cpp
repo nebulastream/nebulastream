@@ -55,10 +55,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -221,10 +221,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -387,10 +387,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -543,7 +543,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -552,10 +552,10 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
@@ -616,7 +616,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
  * Case: 2 filter operators are above a unionWith operator and will be pushed down towards both of the available sources.
  *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
  */
-TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -625,11 +625,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    crd->getStreamCatalogService()->registerLogicalSource("ruby", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("diamond", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -658,7 +658,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -733,12 +733,12 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
                                          "|16|1|2|\n"
                                          "+----------------------------------------------------+\n";
 
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): content="
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): content="
              << content);
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
              "expectedContentSubQry="
              << expectedContentSubQry);
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
              "expectedContentMainQry="
              << expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
@@ -767,7 +767,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
  * Case: 1 filter operator is above a unionWith operator and will be pushed down towards both of the available sources.
  *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
  */
-TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -776,11 +776,11 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    crd->getStreamCatalogService()->registerLogicalSource("ruby", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("diamond", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -809,7 +809,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = getTestResourceFolder() / "testOneFilterPushDownWithMergeOfTwoDifferentStreams.out";
+    std::string outputFilePath = getTestResourceFolder() / "testOneFilterPushDownWithMergeOfTwoDifferentSources.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -854,11 +854,11 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
                                          "|3|11|2|\n"
                                          "+----------------------------------------------------+\n";
 
-    NES_INFO("UnionDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+    NES_INFO("UnionDeploymentTest(testOneFilterPushDownWithMergeOfTwoDifferentSources): content=" << content);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
              "expectedContentSubQry="
              << expectedContentSubQry);
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
              "expectedContentMainQry="
              << expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));
@@ -887,7 +887,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
  * Case: 2 filter operators are already below unionWith operator and needs to be pushed down normally towards their respective source.
  *       Here the filters don't need to be pushed down over an existing unionWith operator.
  */
-TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
+TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -896,11 +896,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    crd->getStreamCatalogService()->registerLogicalSource("ruby", testSchema);
-    crd->getStreamCatalogService()->registerLogicalSource("diamond", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("ruby", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -930,7 +930,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -993,11 +993,11 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
                                          "|5|1|1|\n"
                                          "+----------------------------------------------------+\n";
 
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams): content=" << content);
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources): content=" << content);
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
              "expectedContentSubQry="
              << expectedContentSubQry);
-    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams): "
+    NES_INFO("UnionDeploymentTest(testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources): "
              "expectedContentMainQry="
              << expectedContentMainQry);
     EXPECT_TRUE(content.find(expectedContentSubQry));

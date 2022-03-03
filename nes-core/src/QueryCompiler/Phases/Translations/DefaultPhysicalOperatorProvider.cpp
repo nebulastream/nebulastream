@@ -265,7 +265,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
             NES_DEBUG("Create Thread local window aggregation");
 
             if(!windowDefinition->isKeyed()){
-                NES_ERROR("Currently the THEAD_LOCAL window implementations only supports keyed streams");
+                NES_ERROR("Currently the THEAD_LOCAL window implementations only supports keyed sources");
             }
 
             auto windowHandler = std::make_shared<Windowing::Experimental::KeyedEventTimeWindowHandler>(windowDefinition);

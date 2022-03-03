@@ -15,7 +15,7 @@
 #include <API/Query.hpp>
 #include <Catalogs/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionNode.hpp>
@@ -32,22 +32,22 @@ HighAvailabilityStrategy::HighAvailabilityStrategy(NESTopologyPlanPtr nesTopolog
 
 NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                                       NESTopologyPlanPtr nesTopologyPlan,
-                                                                      StreamCatalogPtr streamCatalog) {
+                                                                      SourceCatalogPtr sourceCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = queryPlan->getSourceStreamName();
+    // FIXME: current implementation assumes that we have only one source source and therefore only one source operator.
+    const string sourceName = queryPlan->getSourceName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR("HighAvailabilityStrategy: Unable to find the source operator.");
     }
 
-    const std::vector<NESTopologyEntryPtr> sourceNodePtrs = streamCatalog->getSourceNodesForLogicalStream(streamName);
+    const std::vector<NESTopologyEntryPtr> sourceNodePtrs = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodePtrs.empty()) {
-        NES_ERROR("HighAvailabilityStrategy: Unable to find the target source: " << streamName);
-        throw std::runtime_error("No source found in the topology for stream " + streamName);
+        NES_ERROR("HighAvailabilityStrategy: Unable to find the target source: " << sourceName);
+        throw std::runtime_error("No source found in the topology for source " + sourceName);
     }
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();

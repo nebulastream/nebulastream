@@ -48,11 +48,11 @@ class TopologySpecificQueryRewritePhase {
   public:
     /**
      * @brief Create the TopologySpecificQueryRewritePhase with a specific optimizer configuration
-     * @param streamCatalog the catalog of all registered streams
+     * @param sourceCatalog the catalog of all registered sources
      * @param configuration for the optimizer
      * @return TopologySpecificQueryRewritePhasePtr
      */
-    static TopologySpecificQueryRewritePhasePtr create(SourceCatalogPtr streamCatalog, Configurations::OptimizerConfiguration configuration);
+    static TopologySpecificQueryRewritePhasePtr create(SourceCatalogPtr sourceCatalog, Configurations::OptimizerConfiguration configuration);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -62,7 +62,7 @@ class TopologySpecificQueryRewritePhase {
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
   private:
-    explicit TopologySpecificQueryRewritePhase(SourceCatalogPtr streamCatalog,  Configurations::OptimizerConfiguration configuration);
+    explicit TopologySpecificQueryRewritePhase(SourceCatalogPtr sourceCatalog,  Configurations::OptimizerConfiguration configuration);
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     DistributeWindowRulePtr distributeWindowRule;
     DistributeJoinRulePtr distributeJoinRule;

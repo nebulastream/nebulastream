@@ -40,11 +40,11 @@ class LogicalOperatorFactory {
                                                             OperatorId id = Util::getNextOperatorId());
 
     /**
-     * @brief Create a new stream rename operator.
-     * @param new stream name
+     * @brief Create a new source rename operator.
+     * @param new source name
      * @return UnaryOperatorNodePtr
      */
-    static LogicalUnaryOperatorNodePtr createRenameStreamOperator(std::string const& newStreamName,
+    static LogicalUnaryOperatorNodePtr createRenameSourceOperator(std::string const& newSourceName,
                                                                   OperatorId id = Util::getNextOperatorId());
 
     /**

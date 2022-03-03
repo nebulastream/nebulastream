@@ -18,19 +18,19 @@ numberOfBuffersInGlobalBufferManager: 2048
 numberOfBuffersInSourceLocalBufferPool: 128
 
 physicalSources:
-  # Set logical stream name where this stream is added to
+  # Set logical source name where this source is added to
   - logicalSourceName: default
-    # Set physical stream name
+    # Set physical source name
     physicalSourceName: default_source_phy
     # Define source type, also need to specify source configurations for source type below
     type: DefaultSource
     # DefaultSource and its needed configuration params
     configuration:
-      ###### Define only the following configurations for DefaultSource stream
+      ###### Define only the following configurations for DefaultSource source
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
       numberOfBuffersToProduce: 1
   - logicalSourceName: hello
-    # Set physical stream name
+    # Set physical source name
     physicalSourceName: default_physical
     # Define source type, also need to specify source configurations for source type below
     type: MQTTSource

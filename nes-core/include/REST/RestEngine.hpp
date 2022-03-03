@@ -47,8 +47,8 @@ using QueryControllerPtr = std::shared_ptr<QueryController>;
 class QueryCatalogController;
 using QueryCatalogControllerPtr = std::shared_ptr<QueryCatalogController>;
 
-class StreamCatalogController;
-using StreamCatalogControllerPtr = std::shared_ptr<StreamCatalogController>;
+class SourceCatalogController;
+using SourceCatalogControllerPtr = std::shared_ptr<SourceCatalogController>;
 
 class ConnectivityController;
 using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
@@ -87,7 +87,7 @@ using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;
 class RestEngine {
 
   public:
-    RestEngine(const SourceCatalogPtr& streamCatalog,
+    RestEngine(const SourceCatalogPtr& sourceCatalog,
                const NesCoordinatorWeakPtr& coordinator,
                const QueryCatalogPtr& queryCatalog,
                const TopologyPtr& topology,
@@ -144,7 +144,7 @@ class RestEngine {
   private:
     QueryControllerPtr queryController;
     QueryCatalogControllerPtr queryCatalogController;
-    StreamCatalogControllerPtr streamCatalogController;
+    SourceCatalogControllerPtr sourceCatalogController;
     ConnectivityControllerPtr connectivityController;
     MonitoringControllerPtr monitoringController;
     TopologyControllerPtr topologyController;

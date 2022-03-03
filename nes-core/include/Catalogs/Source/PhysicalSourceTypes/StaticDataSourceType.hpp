@@ -25,7 +25,7 @@ class StaticDataSourceType;
 using StaticDataSourceTypePtr = std::shared_ptr<StaticDataSourceType>;
 
 /**
- * @brief A stream config for a static data source
+ * @brief A source config for a static data source
  */
 class StaticDataSourceType : public PhysicalSourceType {
 
@@ -33,8 +33,8 @@ public:
     /**
      * @brief Factory method of StaticDataSourceType
       * @param sourceType the type of the source
-     * @param physicalStreamName the name of the physical stream
-     * @param logicalStreamName the name of the logical stream
+     * @param physicalSourceName the name of the physical source
+     * @param logicalSourceName the name of the logical source
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      * @return a constructed StaticDataSourceType

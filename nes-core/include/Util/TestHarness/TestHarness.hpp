@@ -148,10 +148,10 @@ class TestHarness {
     }
 
     /**
-     * @brief check the schema size of the logical stream and if it already exists
-     * @param logical stream name
+     * @brief check the schema size of the logical source and if it already exists
+     * @param logical source name
      * @param schema schema of the source
-     * @param physical stream name
+     * @param physical source name
      */
     void checkAndAddLogicalSources() {
 
@@ -160,20 +160,20 @@ class TestHarness {
             auto logicalSourceName = logicalSource->getLogicalSourceName();
             auto schema = logicalSource->getSchema();
 
-            // Check if logical stream already exists
-            auto streamCatalog = nesCoordinator->getStreamCatalog();
-            if (!streamCatalog->containsLogicalSource(logicalSourceName)) {
-                NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
+            // Check if logical source already exists
+            auto sourceCatalog = nesCoordinator->getSourceCatalog();
+            if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
+                NES_TRACE("TestHarness: logical source does not exist in the source catalog, adding a new logical source "
                           << logicalSourceName);
-                streamCatalog->addLogicalStream(logicalSourceName, schema);
+                sourceCatalog->addLogicalSource(logicalSourceName, schema);
             } else {
                 // Check if it has the same schema
-                if (!streamCatalog->getSchemaForLogicalStream(logicalSourceName)->equals(schema, true)) {
+                if (!sourceCatalog->getSchemaForLogicalSource(logicalSourceName)->equals(schema, true)) {
                     NES_TRACE("TestHarness: logical source " << logicalSourceName
-                                                             << " exists in the stream catalog with "
+                                                             << " exists in the source catalog with "
                                                                 "different schema, replacing it with a new schema");
-                    streamCatalog->removeLogicalStream(logicalSourceName);
-                    streamCatalog->addLogicalStream(logicalSourceName, schema);
+                    sourceCatalog->removeLogicalSource(logicalSourceName);
+                    sourceCatalog->addLogicalSource(logicalSourceName, schema);
                 }
             }
         }
@@ -181,19 +181,19 @@ class TestHarness {
 
     /**
      * @brief add a memory source to be used in the test and connect to parent with specific parent id
-     * @param logical stream name
+     * @param logical source name
      * @param schema schema of the source
-     * @param physical stream name
+     * @param physical source name
      * @param parentId id of the parent to connect
      */
-    TestHarness& attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalStreamName, uint32_t parentId) {
+    TestHarness& attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalSourceName, uint32_t parentId) {
 
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->parentId=parentId;
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                                                     logicalStreamName,
+                                                                                     logicalSourceName,
                                                                                      physicalSourceName,
                                                                                      TestHarnessWorkerConfiguration::MemorySource,
                                                                                      workerId);
@@ -203,13 +203,13 @@ class TestHarness {
 
     /**
      * @brief add a memory source to be used in the test
-     * @param logical stream name
+     * @param logical source name
      * @param schema schema of the source
-     * @param physical stream name
+     * @param physical source name
      */
-    TestHarness& attachWorkerWithMemorySourceToCoordinator(const std::string& logicalStreamName) {
+    TestHarness& attachWorkerWithMemorySourceToCoordinator(const std::string& logicalSourceName) {
         //We are assuming coordinator will start with id 1
-        return attachWorkerWithMemorySourceToWorkerWithId(std::move(logicalStreamName), 1);
+        return attachWorkerWithMemorySourceToWorkerWithId(std::move(logicalSourceName), 1);
     }
 
     /**
