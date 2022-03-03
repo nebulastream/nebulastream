@@ -298,7 +298,6 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFile);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileColumnLayout);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
-    FRIEND_TEST(SourceTest, testCSVSourceFillBufferTooManyBuffersInConfiguration);
 };
 
 class GeneratorSourceProxy : public GeneratorSource {
