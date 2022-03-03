@@ -55,10 +55,11 @@ void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << querySubPlanId);
     networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, inherited1::shared_from_this());
     auto reconf = Runtime::ReconfigurationMessage(querySubPlanId,
+                                                  querySubPlanId,
                                                   Runtime::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
-    queryManager->addReconfigurationMessage(querySubPlanId, reconf, false);
+    queryManager->addReconfigurationMessage(querySubPlanId,querySubPlanId, reconf, false);
 }
 
 void NetworkSink::shutdown() {

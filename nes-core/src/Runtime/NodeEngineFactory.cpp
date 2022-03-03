@@ -64,7 +64,9 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   std::weak_ptr<NesWorker>&& nesWorker,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCodeMapping,
-                                                  const std::string& queuePinList) {
+                                                  uint64_t numberOfQueues,
+                                                  uint64_t numberOfThreadsPerQueue,
+                                                  const std::string& queryManagerMode) {
 
     try {
         auto nodeEngineId = getNextNodeEngineId();
@@ -124,13 +126,14 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         QueryManagerPtr queryManager;
         if (workerToCodeMapping != "") {
             std::vector<uint64_t> workerToCoreMapping = Util::splitWithStringDelimiter<uint64_t>(workerToCodeMapping, ",");
-            std::vector<uint64_t> queuePinListMapping = Util::splitWithStringDelimiter<uint64_t>(queuePinList, ",");
             queryManager = std::make_shared<QueryManager>(bufferManagers,
                                                           nodeEngineId,
                                                           numThreads,
                                                           hardwareManager,
                                                           workerToCoreMapping,
-                                                          queuePinListMapping);
+                                                          numberOfQueues,
+                                                          numberOfThreadsPerQueue,
+                                                          queryManagerMode);
         } else {
             queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, hardwareManager);
         }
