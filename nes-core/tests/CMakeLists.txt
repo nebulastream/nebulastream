@@ -303,9 +303,14 @@ target_link_libraries(filter-push-down-rule-test nes-tests)
 add_test(NAME filter-push-down-rule-test COMMAND filter-push-down-rule-test)
 
 # DistributeWindowRuleTest
-add_executable(window-distr-rule-test "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp")
-target_link_libraries(window-distr-rule-test nes-tests)
-add_test(NAME window-distr-rule-test COMMAND window-distr-rule-test)
+add_executable(distribute-window-rule-test "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp")
+target_link_libraries(distribute-window-rule-test nes-tests)
+add_test(NAME distribute-window-rule-test COMMAND distribute-window-rule-test)
+
+# DistributeWindowRuleTest
+add_executable(originid-inference-rule-test "UnitTests/Optimizer/QueryRewrite/OriginIdInferenceRuleTest.cpp")
+target_link_libraries(originid-inference-rule-test nes-tests)
+add_test(NAME originid-inference-rule-test COMMAND originid-inference-rule-test)
 
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Serialization/SerializationUtilTest.cpp")

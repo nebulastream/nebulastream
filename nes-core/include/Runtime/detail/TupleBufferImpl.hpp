@@ -15,6 +15,9 @@
 #ifndef NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 #define NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
+#include <API/Schema.hpp>
+#include <Operators/OriginId.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>
 
@@ -27,7 +30,6 @@
 
 namespace NES {
 using WatermarkTs = uint64_t;
-using OriginId = uint64_t;
 using SequenceNumber = uint64_t;
 
 namespace Runtime {
@@ -174,7 +176,7 @@ class BufferControlBlock {
     WatermarkTs watermark = 0;
     SequenceNumber sequenceNumber = 0;
     int64_t creationTimestamp{};
-    OriginId originId = 0;
+    OriginId originId = INVALID_ORIGIN_ID;
 
   public:
     MemorySegment* owner;

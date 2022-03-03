@@ -17,6 +17,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
+#include <Operators/OriginId.hpp>
 #include <any>
 #include <unordered_map>
 
@@ -31,7 +32,7 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 class OperatorNode : public Node {
   public:
     explicit OperatorNode(OperatorId id);
-    explicit OperatorNode(OperatorId id, std::vector<uint64_t> inputOriginIds);
+    explicit OperatorNode(OperatorId id, std::vector<OriginId> inputOriginIds);
 
     ~OperatorNode() noexcept override = default;
 
@@ -40,7 +41,7 @@ class OperatorNode : public Node {
      * Unique Identifier of the operator within a query.
      * @return uint64_t
      */
-    uint64_t getId() const;
+    OperatorId getId() const;
 
     /**
      * NOTE: this method is only called from Logical Plan Expansion Rule
@@ -48,7 +49,7 @@ class OperatorNode : public Node {
      * Unique Identifier of the operator within a query.
      * @param operator id
      */
-    void setId(uint64_t id);
+    void setId(OperatorId id);
 
     /**
      * @brief Create duplicate of this operator by copying its context information and also its parent and child operator set.
@@ -158,8 +159,9 @@ class OperatorNode : public Node {
      */
     bool hasProperty(const std::string& key);
 
-    void setInputOriginIds(std::vector<uint64_t> originIds);
-    std::vector<uint64_t> getInputOriginIds();
+    void setInputOriginIds(std::vector<OriginId> originIds);
+    virtual std::vector<OriginId> getInputOriginIds();
+    virtual std::vector<OriginId> getOutputOriginIds();
 
   protected:
     /**
@@ -179,7 +181,7 @@ class OperatorNode : public Node {
     /**
      * @brief Unique Identifier of the operator within a query.
      */
-    uint64_t id;
+    OperatorId id;
 
     /*
      * @brief Map of properties of the current node
@@ -189,7 +191,7 @@ class OperatorNode : public Node {
     /**
      * @brief List of input origin ids
      */
-    std::vector<uint64_t> inputOriginIds;
+    std::vector<OriginId> inputOriginIds;
 };
 
 }// namespace NES

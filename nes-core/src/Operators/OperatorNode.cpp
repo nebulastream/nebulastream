@@ -22,15 +22,15 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(uint64_t id) : id(id), properties(), inputOriginIds() { NES_INFO("Creating Operator " << id); }
-OperatorNode::OperatorNode(uint64_t id, std::vector<uint64_t> inputOriginIds)
+OperatorNode::OperatorNode(OperatorId id) : id(id), properties(), inputOriginIds() { NES_INFO("Creating Operator " << id); }
+OperatorNode::OperatorNode(OperatorId id, std::vector<OriginId> inputOriginIds)
     : id(id), properties(), inputOriginIds(inputOriginIds) {
     NES_INFO("Creating Operator " << id);
 }
 
-uint64_t OperatorNode::getId() const { return id; }
+OperatorId OperatorNode::getId() const { return id; }
 
-void OperatorNode::setId(uint64_t id) { OperatorNode::id = id; }
+void OperatorNode::setId(OperatorId id) { OperatorNode::id = id; }
 
 bool OperatorNode::hasMultipleChildrenOrParents() {
     //has multiple child operator
@@ -173,8 +173,10 @@ bool OperatorNode::hasProperty(const std::string& key) { return properties.find(
 
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
-void OperatorNode::setInputOriginIds(std::vector<uint64_t> originIds) { this->inputOriginIds = originIds; }
+void OperatorNode::setInputOriginIds(std::vector<OriginId> originIds) { this->inputOriginIds = originIds; }
 
-std::vector<uint64_t> OperatorNode::getInputOriginIds() { return inputOriginIds; }
+std::vector<OriginId> OperatorNode::getInputOriginIds() { return inputOriginIds; }
+
+std::vector<OriginId> OperatorNode::getOutputOriginIds() { return inputOriginIds; }
 
 }// namespace NES
