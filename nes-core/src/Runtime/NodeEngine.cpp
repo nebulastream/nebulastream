@@ -383,7 +383,7 @@ void NodeEngine::onEvent(NES::Network::NesPartition, NES::Runtime::BaseEvent&) {
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
-    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
+    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful(), msg.isWithMessagePropagation());
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {

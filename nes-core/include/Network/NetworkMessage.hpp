@@ -143,13 +143,14 @@ class ServerReadyMessage : public ExchangeMessage {
 
 /**
  * @brief This message is sent to notify end-of-stream.
+ * @param withMessagePropagation : when set to true, EoS message is propagated downstream otherwise not
  */
 class EndOfStreamMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::EndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, bool graceful = true)
-        : ExchangeMessage(channelId), channelType(channelType), graceful(graceful) {}
+    explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, bool graceful = true, bool withMessagePropagation = true)
+        : ExchangeMessage(channelId), channelType(channelType), graceful(graceful), withMessagePropagation(withMessagePropagation) {}
 
     [[nodiscard]] bool isGraceful() const { return graceful; }
 
@@ -157,9 +158,12 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] bool isEventChannel() const { return channelType == ChannelType::EventOnlyChannel; }
 
+    [[nodiscard]] bool isWithMessagePropagation() const {return withMessagePropagation;}
+
   private:
     ChannelType channelType;
     bool graceful;
+    bool withMessagePropagation;
 };
 
 /**

@@ -161,8 +161,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager);
 
     /**
-     * @brief method to start a query
-     * @param qep of the query to start
+     * @brief method to stop a query
+     * @param qep of the query to stop
      * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
@@ -242,9 +242,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @brief introduces end of stream to all QEPs connected to this source
      * @param operatorId the id of the source
      * @param graceful hard or soft termination
+     * @param withMessagePropagation if EoS message should be propagated to downstream nodes
      * @return true if it went through
      */
-    bool addEndOfStream(OperatorId sourceId, bool graceful = true);
+    bool addEndOfStream(OperatorId sourceId, bool graceful = true, bool withMessagePropagation = true);
 
     /**
      * @return true if thread pool is running
@@ -288,7 +289,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     ExecutionResult terminateLoop(WorkerContext&);
 
-    bool addSoftEndOfStream(OperatorId sourceId);
+    bool addSoftEndOfStream(OperatorId sourceId, bool withMessagePropagation);
 
     bool addHardEndOfStream(OperatorId sourceId);
 

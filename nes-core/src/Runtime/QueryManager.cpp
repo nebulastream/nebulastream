@@ -654,7 +654,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     return true;
 }
 
-bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
+bool QueryManager::addSoftEndOfStream(OperatorId sourceId, bool withMessagePropagation [[maybe_unused]]) {
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
     // send EOS to NetworkSources
@@ -784,7 +784,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     return true;
 }
 
-bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
+bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful, bool withMessagePropagation) {
     std::unique_lock queryLock(queryMutex);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #ifndef NES_USE_ONE_QUEUE_PER_NUMA_NODE
@@ -802,7 +802,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
                     "Operator id to query map for operator is empty");
     if (graceful) {
-        addSoftEndOfStream(sourceId);
+        addSoftEndOfStream(sourceId, withMessagePropagation);
     } else {
         addHardEndOfStream(sourceId);
     }
