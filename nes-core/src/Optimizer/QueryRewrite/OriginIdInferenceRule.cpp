@@ -15,8 +15,6 @@
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Exceptions/RuntimeException.hpp>
 
 namespace NES::Optimizer {
