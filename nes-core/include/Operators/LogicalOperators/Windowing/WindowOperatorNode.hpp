@@ -28,17 +28,21 @@ using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
  */
 class WindowOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id);
+    WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr const& windowDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     /**
     * @brief Gets the window definition of the window operator.
     * @return LogicalWindowDefinitionPtr
     */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition() const;
 
-    void inferInputOrigins() override;
+    std::vector<uint64_t> getOutputOriginIds() override;
+
+    void setOriginId(OriginId originId);
+    OriginId getOriginId();
 
   protected:
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;
+    uint64_t originId;
 };
 
 }// namespace NES

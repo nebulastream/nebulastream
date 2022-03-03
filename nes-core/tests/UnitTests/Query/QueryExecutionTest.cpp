@@ -88,7 +88,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
         distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-        originIdInferenceRule = Optimizer::OriginIdInferenceRule::create();
+        originIdInferenceRule = Optimizer::OriginIdInferenceRuleTest::create();
     }
 
     void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {

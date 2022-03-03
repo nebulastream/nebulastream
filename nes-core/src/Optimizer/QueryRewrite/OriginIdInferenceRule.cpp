@@ -13,8 +13,8 @@
 */
 
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -34,15 +34,16 @@ QueryPlanPtr OriginIdInferenceRule::apply(QueryPlanPtr queryPlan) {
         source->setOriginId(originIdCounter++);
     }
 
-    // window
+    // set origin id for window operator
     for (auto windowOperator : queryPlan->getOperatorByType<WindowOperatorNode>()) {
-        windowOperator->getWindowDefinition()->setOriginId(originIdCounter++);
+        windowOperator->setOriginId(originIdCounter++);
     }
 
     // for (auto joinOperator :   queryPlan->getOperatorByType<JoinLogicalOperatorNode>()) {
     //    joinOperator->getJoinDefinition().se
     // }
 
+    // propagate origin ids through the complete query plan
     for (auto sink : queryPlan->getSinkOperators()) {
         sink->inferInputOrigins();
     }
