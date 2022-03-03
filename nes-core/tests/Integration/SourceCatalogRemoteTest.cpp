@@ -31,26 +31,26 @@ namespace NES {
 
 using namespace Configurations;
 
-class StreamCatalogRemoteTest : public Testing::NESBaseTest {
+class SourceCatalogRemoteTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("StreamCatalogRemoteTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup StreamCatalogRemoteTest test class.");
+        NES::setupLogging("SourceCatalogRemoteTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup SourceCatalogRemoteTest test class.");
     }
 
 };
 
-TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
+TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -62,10 +62,10 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("default_logical");
+    cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
+    std::vector<SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 1U);
     EXPECT_EQ(phys[0]->getPhysicalSource()->getPhysicalSourceName(), "physical_test");
@@ -79,36 +79,36 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
+TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", window);
-    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    auto physicalSource1 = PhysicalSource::create("testStream", "physical_test", csvSourceType1);
+    auto physicalSource1 = PhysicalSource::create("testSource", "physical_test", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("testStream");
+    cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
+    std::vector<SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("testSource");
 
     EXPECT_EQ(phys.size(), 1U);
     EXPECT_EQ(phys[0]->getPhysicalSource()->getPhysicalSourceName(), "physical_test");
@@ -122,21 +122,21 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
+TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", window);
-    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -148,13 +148,13 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
-    bool success = wrk1->unregisterPhysicalStream("default_logical", "physical_test");
+    bool success = wrk1->unregisterPhysicalSource("default_logical", "physical_test");
     EXPECT_TRUE(success);
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("default_logical");
+    cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
+    std::vector<SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 0U);
 
@@ -167,21 +167,21 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
+TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
+    NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", window);
-    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
+    crd->getSourceCatalogService()->registerLogicalSource("testSource", window);
+    NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
-    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    NES_DEBUG("SourceCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
@@ -193,16 +193,16 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
+    NES_INFO("SourceCatalogRemoteTest: Worker1 started successfully");
 
-    bool success = wrk1->unregisterPhysicalStream("default_logical2", "default_physical");
+    bool success = wrk1->unregisterPhysicalSource("default_logical2", "default_physical");
     EXPECT_TRUE(!success);
 
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
+    SchemaPtr sPtr = crd->getSourceCatalog()->getSchemaForLogicalSource("default_logical");
     EXPECT_NE(sPtr, nullptr);
 
-    cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("default_logical");
+    cout << crd->getSourceCatalog()->getPhysicalSourceAndSchemaAsString() << endl;
+    std::vector<SourceCatalogEntryPtr> phys = crd->getSourceCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 1U);
 

@@ -24,10 +24,10 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
@@ -73,11 +73,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f1") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -85,7 +85,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto resultPlan = phase->execute(plan);
 
     // we just access the old references
@@ -116,8 +116,8 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(""));
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
@@ -134,7 +134,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = Attribute("f3") * 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -142,8 +142,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -155,8 +155,8 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     auto query = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
@@ -182,8 +182,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
@@ -210,15 +210,15 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 
     auto plan = query.getQueryPlan();
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    streamCatalog->addPhysicalSource("default_logical", sce);
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    sourceCatalog->addPhysicalSource("default_logical", sce);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -238,15 +238,15 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 
     auto plan = query.getQueryPlan();
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
     LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
-    streamCatalog->addPhysicalSource("default_logical", sce);
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    sourceCatalog->addPhysicalSource("default_logical", sce);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -259,7 +259,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("f4") = 42);
     auto sink = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create(""));
 
@@ -267,8 +267,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
     phase->execute(plan);
     NES_DEBUG("result schema is=" << maps[0]->getOutputSchema()->toString());
@@ -284,9 +284,9 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -294,7 +294,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -330,9 +330,9 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::FLOAT64);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
                      .map(Attribute("powIntInt") = POWER(Attribute("f1"), 2))
@@ -340,7 +340,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
@@ -384,9 +384,9 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -395,7 +395,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -430,16 +430,16 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
 }
 
 /**
- * @brief In this test we test the type inference for query with Stream Rename operator
+ * @brief In this test we test the type inference for query with Source Rename operator
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -448,12 +448,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
-    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
@@ -471,10 +471,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
 
-    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f1"));
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f2"));
+    SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
+    EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f1"));
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f2"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -483,16 +483,16 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
 }
 
 /**
- * @brief In this test we test the type inference for query with Stream Rename and Project operators
+ * @brief In this test we test the type inference for query with Source Rename and Project operators
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -502,13 +502,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
     auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
@@ -531,10 +531,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
 
-    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
+    SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
+    EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -550,9 +550,9 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("default_logical$f2") < 42)
@@ -560,7 +560,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -589,16 +589,16 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
 }
 
 /**
- * @brief In this test we test the type inference for query with Stream Rename and Project operators with fully qualified stream name
+ * @brief In this test we test the type inference for query with Source Rename and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNames) {
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNames) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
                      .filter(Attribute("f2") < 42)
@@ -608,13 +608,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
     auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
@@ -637,10 +637,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
 
-    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
+    SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
+    EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -649,16 +649,16 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
 }
 
 /**
- * @brief In this test we test the type inference for query with Merge, Stream Rename and Project operators with fully qualified stream name
+ * @brief In this test we test the type inference for query with Merge, Source Rename and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNamesAndMergeOperator) {
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNamesAndMergeOperator) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto subQuery = Query::from("default_logical");
 
@@ -671,14 +671,14 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto mergeOperator = plan->getOperatorByType<UnionLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
     auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
@@ -706,10 +706,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
 
-    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
+    SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
+    EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -718,14 +718,14 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
 }
 
 /**
- * @brief In this test we test the type inference for query with Join, Stream Rename and Project operators with fully qualified stream name
+ * @brief In this test we test the type inference for query with Join, Source Rename and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNamesAndJoinOperator) {
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNamesAndJoinOperator) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto subQuery = Query::from("default_logical").as("x");
@@ -742,13 +742,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
     auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
@@ -780,10 +780,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
     EXPECT_TRUE(mapOutputSchema->hasFieldName("y$default_logical$f4"));
 
-    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$x$default_logical$f3"));
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$y$default_logical$f4"));
+    SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
+    EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$x$default_logical$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$y$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -792,22 +792,22 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
 }
 
 /**
- * @brief In this test we test the type inference for query with two Joins, Stream Rename, map, and Project operators with fully qualified stream name
+ * @brief In this test we test the type inference for query with two Joins, Source Rename, map, and Project operators with fully qualified source name
  */
 TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto inputSchema2 =
         Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
-    streamCatalog->addLogicalStream("default_logical2", inputSchema2);
+    sourceCatalog->addLogicalSource("default_logical2", inputSchema2);
 
     auto inputSchema3 =
         Schema::create()->addField("f5", BasicType::INT32)->addField("f6", BasicType::INT8)->addField("ts", BasicType::INT64);
-    streamCatalog->addLogicalStream("default_logical3", inputSchema3);
+    sourceCatalog->addLogicalSource("default_logical3", inputSchema3);
 
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -829,13 +829,13 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
     auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
     auto projectOperator = plan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    auto renameStreamOperator = plan->getOperatorByType<RenameStreamOperatorNode>();
+    auto renameSourceOperator = plan->getOperatorByType<RenameSourceOperatorNode>();
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
@@ -883,11 +883,11 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
     EXPECT_TRUE(mapOutputSchema->hasFieldName("f23"));
     EXPECT_TRUE(mapOutputSchema->hasFieldName("f44"));
 
-    SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    NES_DEBUG("expected = " << renameStreamOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical2$f44"));
-    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f23"));
+    SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << renameSourceOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical2$f44"));
+    EXPECT_TRUE(renameSourceOutputSchema->hasFieldName("x$default_logical$f23"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -908,8 +908,8 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
                      .apply(Sum(Attribute("id")))
                      .sink(FileSinkDescriptor::create(""));
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     auto windows = resultPlan->getOperatorByType<WindowOperatorNode>();
@@ -945,15 +945,15 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
  * @brief In this test we infer the output and input schemas of each operator window join query
  */
 TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto inputSchema2 =
         Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
-    streamCatalog->addLogicalStream("default_logical2", inputSchema2);
+    sourceCatalog->addLogicalSource("default_logical2", inputSchema2);
 
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto subQuery = Query::from("default_logical2");
@@ -968,7 +968,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
                      .apply(Sum(Attribute("default_logical2$f3")))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
@@ -987,26 +987,26 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
 }
 
 /**
- * @brief In this test we test the type inference for query with two Joins, Stream Rename, map, and Project operators with fully qualified stream name
+ * @brief In this test we test the type inference for query with two Joins, Source Rename, map, and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
+TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto inputSchema2 =
         Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
-    streamCatalog->addLogicalStream("default_logical2", inputSchema2);
+    sourceCatalog->addLogicalSource("default_logical2", inputSchema2);
 
     auto inputSchema3 =
         Schema::create()->addField("f5", BasicType::INT32)->addField("f6", BasicType::INT8)->addField("ts", BasicType::INT64);
-    streamCatalog->addLogicalStream("default_logical3", inputSchema3);
+    sourceCatalog->addLogicalSource("default_logical3", inputSchema3);
 
     auto inputSchema4 =
         Schema::create()->addField("f7", BasicType::INT32)->addField("f8", BasicType::INT8)->addField("ts", BasicType::INT64);
-    streamCatalog->addLogicalStream("default_logical4", inputSchema4);
+    sourceCatalog->addLogicalSource("default_logical4", inputSchema4);
 
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
     auto windowType2 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -1029,7 +1029,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
 
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto joinOperators = plan->getOperatorByType<JoinLogicalOperatorNode>();

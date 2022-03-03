@@ -168,7 +168,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -218,7 +218,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -269,7 +269,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -379,7 +379,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -491,7 +491,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     std::string testSchema = "Schema::create()->addField(createField(\"val1\", UINT64))->"
                              "addField(createField(\"val2\", UINT64))->"
                              "addField(createField(\"val3\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
@@ -551,7 +551,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     std::string testSchema = "Schema::create()->addField(createField(\"val1\", UINT64))->"
                              "addField(createField(\"val2\", UINT64))->"
                              "addField(createField(\"val3\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");

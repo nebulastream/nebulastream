@@ -75,7 +75,7 @@ class RestServer {
                uint16_t port,
                const NesCoordinatorWeakPtr& coordinator,
                const QueryCatalogPtr& queryCatalog,
-               const SourceCatalogPtr& streamCatalog,
+               const SourceCatalogPtr& sourceCatalog,
                const TopologyPtr& topology,
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,

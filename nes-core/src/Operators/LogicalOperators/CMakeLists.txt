@@ -21,7 +21,7 @@ add_source_files(nes-core
         BroadcastLogicalOperatorNode.cpp
         JoinLogicalOperatorNode.cpp
         WatermarkAssignerLogicalOperatorNode.cpp
-        RenameStreamOperatorNode.cpp
+        RenameSourceOperatorNode.cpp
         LogicalBinaryOperatorNode.cpp
         LogicalUnaryOperatorNode.cpp
 )

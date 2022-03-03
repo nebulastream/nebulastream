@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
@@ -41,7 +41,7 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -58,10 +58,10 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public testing::Test {
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-        streamCatalog->addLogicalStream("car", schema);
-        streamCatalog->addLogicalStream("bike", schema);
-        streamCatalog->addLogicalStream("truck", schema);
+        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog->addLogicalSource("car", schema);
+        sourceCatalog->addLogicalSource("bike", schema);
+        sourceCatalog->addLogicalSource("truck", schema);
     }
 
     /* Will be called before a test is executed. */
@@ -101,7 +101,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -147,9 +147,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
-    auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator11 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
-    auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator21 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     auto sinkOperator11 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
@@ -161,9 +161,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator12 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
-    auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
+    auto sourceOperator22 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
 
     auto sinkOperator12 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
 
@@ -175,7 +175,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -233,7 +233,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -300,7 +300,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -364,7 +364,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -428,7 +428,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -486,7 +486,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -543,7 +543,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -601,7 +601,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -659,7 +659,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -734,7 +734,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -809,7 +809,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -884,7 +884,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -960,7 +960,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1028,7 +1028,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1097,7 +1097,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1166,7 +1166,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1234,7 +1234,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1302,7 +1302,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1371,7 +1371,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWa
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1444,7 +1444,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1516,7 +1516,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1597,7 +1597,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1671,7 +1671,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1747,7 +1747,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1820,7 +1820,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1892,7 +1892,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -1935,7 +1935,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
  */
 //NOTE: We do not support this sharing at present as Z3 takes too long if we compare columns individually.
-TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1969,7 +1969,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -2047,7 +2047,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 

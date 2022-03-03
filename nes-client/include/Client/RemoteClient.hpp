@@ -101,24 +101,24 @@ class RemoteClient {
     std::string getQueries(const QueryStatus& status);
 
     /**
-     * @brief add a logical stream
-     * @param SchemaPtr schema of the new logical stream
-     * @param string name of the new logical stream
+     * @brief add a logical source
+     * @param SchemaPtr schema of the new logical source
+     * @param string name of the new logical source
      * @return successfully added
      */
-    bool addLogicalStream(const SchemaPtr schema, const std::string& streamName);
+    bool addLogicalSource(const SchemaPtr schema, const std::string& sourceName);
 
     /**
-     * @brief get logical streams
-     * @return logical streams
+     * @brief get logical sources
+     * @return logical sources
      */
-    std::string getLogicalStreams();
+    std::string getLogicalSources();
 
     /**
-     * @brief get physical streams
-     * @return physical streams
+     * @brief get physical sources
+     * @return physical sources
      */
-    std::string getPhysicalStreams();
+    std::string getPhysicalSources();
 
   private:
     const std::string coordinatorHost;

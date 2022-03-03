@@ -94,9 +94,9 @@ void BaseController::handleException(const web::http::http_request& message, con
 
         // define required input fields based on path
         if (paths[0] == "sourceCatalog") {
-            if (paths[1] == "allPhysicalStream" || paths[1] == "deleteLogicalStream") {
+            if (paths[1] == "allPhysicalSource" || paths[1] == "deleteLogicalSource") {
                 errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
-            } else if (paths[1] == "addLogicalStream" || paths[1] == "updateLogicalStream") {
+            } else if (paths[1] == "addLogicalSource" || paths[1] == "updateLogicalSource") {
                 errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName and schema must be provided");
             }
         } else if (paths[0] == "query") {
@@ -124,16 +124,16 @@ void BaseController::handleException(const web::http::http_request& message, con
         errorResponse["detail"] = web::json::value::string(exceptionMsg);
         this->badRequestImpl(message, errorResponse);
 
-    } else if (std::string(exceptionMsg).find("Could not remove logical stream") != std::string::npos) {
-        // handle error caused by failure to remove logical stream
+    } else if (std::string(exceptionMsg).find("Could not remove logical source") != std::string::npos) {
+        // handle error caused by failure to remove logical source
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        // TODO: Add possible cause of failure (stream not exists, stream attached to physical streams, etc)
+        // TODO: Add possible cause of failure (source not exists, source attached to physical sources, etc)
         this->badRequestImpl(message, errorResponse);
 
-    } else if (std::string(exceptionMsg).find("Unable to update logical stream") != std::string::npos) {
+    } else if (std::string(exceptionMsg).find("Unable to update logical source") != std::string::npos) {
         // handle error caused by invalid code (query or schema) submitted by the user
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        // TODO: Add possible cause of failure (stream not exists, stream attached to physical streams, etc)
+        // TODO: Add possible cause of failure (source not exists, source attached to physical sources, etc)
         this->badRequestImpl(message, errorResponse);
 
     } else if (strcmp(exceptionMsg, "Compilation failed") == 0) {
@@ -142,7 +142,7 @@ void BaseController::handleException(const web::http::http_request& message, con
 
         // define what was failed to be compiled based on path
         if (paths[0] == "sourceCatalog") {
-            if (paths[1] == "addLogicalStream" || paths[1] == "updateLogicalStream") {
+            if (paths[1] == "addLogicalSource" || paths[1] == "updateLogicalSource") {
                 errorResponse["detail"] = web::json::value::string("Unable to compile the submitted schema");
             }
         } else if (paths[0] == "query") {
@@ -151,8 +151,8 @@ void BaseController::handleException(const web::http::http_request& message, con
             }
         }
         this->badRequestImpl(message, errorResponse);
-    } else if (std::string(exceptionMsg).find("Required stream does not exists") != std::string::npos) {
-        // handle error caused by invalid submitting a query on a stream that does not exist
+    } else if (std::string(exceptionMsg).find("Required source does not exists") != std::string::npos) {
+        // handle error caused by invalid submitting a query on a source that does not exist
         errorResponse["message"] = web::json::value::string(exceptionMsg);
         this->badRequestImpl(message, errorResponse);
 

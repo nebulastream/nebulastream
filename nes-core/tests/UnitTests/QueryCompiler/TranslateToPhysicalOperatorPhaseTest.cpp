@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
@@ -83,10 +83,10 @@ class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
         pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
         unionOp1 = LogicalOperatorFactory::createUnionOperator();
-        sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
-        sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
-        sourceOp3 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
-        sourceOp4 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+        sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+        sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+        sourceOp3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+        sourceOp4 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);

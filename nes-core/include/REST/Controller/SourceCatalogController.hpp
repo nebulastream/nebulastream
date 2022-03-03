@@ -22,19 +22,19 @@ namespace NES {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
-class StreamCatalogController : public BaseController {
+class SourceCatalogController : public BaseController {
 
   public:
-    explicit StreamCatalogController(SourceCatalogPtr streamCatalog);
+    explicit SourceCatalogController(SourceCatalogPtr sourceCatalog);
 
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
     void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
 
   private:
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
 };
-using StreamCatalogControllerPtr = std::shared_ptr<StreamCatalogController>;
+using SourceCatalogControllerPtr = std::shared_ptr<SourceCatalogController>;
 
 }// namespace NES
 

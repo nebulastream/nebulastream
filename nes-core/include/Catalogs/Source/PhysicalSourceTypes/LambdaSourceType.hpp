@@ -28,15 +28,15 @@ class LambdaSourceType;
 using LambdaSourceTypePtr = std::shared_ptr<LambdaSourceType>;
 
 /**
- * @brief A stream config for a lambda source
+ * @brief A source config for a lambda source
  */
 class LambdaSourceType : public PhysicalSourceType {
   public:
     /**
      * @brief Factory method of LambdaSourceType
      * @param sourceType the type of the source
-     * @param physicalStreamName the name of the physical stream
-     * @param logicalStreamName the name of the logical stream
+     * @param physicalSourceName the name of the physical source
+     * @param logicalSourceName the name of the logical source
      * @param lambda function that produces the buffer
      * @param sourceAffinity: sourceAffinity
      * @param taskQueueId: taskQueueId

@@ -140,7 +140,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     EXPECT_NE(port, 0UL);
     std::string input =
         R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
-    ASSERT_TRUE(crd->getStreamCatalogService()->registerLogicalSource("ysb", input));
+    ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
     NES_DEBUG("ConcurrentWindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("ConcurrentWindowDeploymentTest: Start worker 1");
@@ -274,10 +274,10 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -350,10 +350,10 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -426,10 +426,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    //register logical stream qnv
+    //register logical source qnv
     std::string window =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getSourceCatalogService()->registerLogicalSource("window", window);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -513,10 +513,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -608,10 +608,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -704,10 +704,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -811,10 +811,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("windowStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -889,10 +889,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -970,10 +970,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("windowStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -1068,10 +1068,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -1163,10 +1163,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -1227,10 +1227,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -1293,10 +1293,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("windowStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -1360,10 +1360,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("windowStream", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("windowStream", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -1449,10 +1449,10 @@ TEST_F(ConcurrentWindowDeploymentTest,
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -1602,10 +1602,10 @@ TEST_F(ConcurrentWindowDeploymentTest,
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -2109,7 +2109,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string input = R"(Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);)";
-    ASSERT_TRUE(crd->getStreamCatalogService()->registerLogicalSource("schema", input));
+    ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("schema", input));
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

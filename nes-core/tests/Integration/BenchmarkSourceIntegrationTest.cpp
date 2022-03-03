@@ -52,7 +52,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    auto streamCatalog = crd->getStreamCatalog();
+    auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
         uint64_t key;
@@ -65,7 +65,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
                       ->addField("timestamp", DataTypeFactory::createUInt64());
     ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
-    streamCatalog->addLogicalStream("memory_stream", schema);
+    sourceCatalog->addLogicalSource("memory_stream", schema);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -153,7 +153,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    auto streamCatalog = crd->getStreamCatalog();
+    auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
         uint64_t key;
@@ -166,7 +166,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
                       ->addField("timestamp", DataTypeFactory::createUInt64());
     ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
-    streamCatalog->addLogicalStream("memory_stream", schema);
+    sourceCatalog->addLogicalSource("memory_stream", schema);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -255,7 +255,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    auto streamCatalog = crd->getStreamCatalog();
+    auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
         uint64_t key;
@@ -268,7 +268,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
                       ->addField("timestamp", DataTypeFactory::createUInt64());
     ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
-    streamCatalog->addLogicalStream("memory_stream", schema);
+    sourceCatalog->addLogicalSource("memory_stream", schema);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();

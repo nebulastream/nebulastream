@@ -24,7 +24,7 @@ class MemorySourceType;
 using MemorySourceTypePtr = std::shared_ptr<MemorySourceType>;
 
 /**
- * @brief A stream config for a memory source
+ * @brief A source config for a memory source
  */
 class MemorySourceType : public PhysicalSourceType {
   public:

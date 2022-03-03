@@ -70,8 +70,8 @@ class GPUQueryExecutionTest : public testing::Test {
                                      ->addField("test$one", BasicType::INT64)
                                      ->addField("test$value", BasicType::INT64);
         auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
+        PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
     }
 
     /* Will be called before a test is executed. */
@@ -335,7 +335,7 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
     SchemaPtr testSchemaColumnLayout;
 };
 
-// Test the execution of an external operator using a simple GPU Kernel from a stream of simple integer
+// Test the execution of an external operator using a simple GPU Kernel from a source of simple integer
 TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -407,7 +407,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-// Test the execution of an external operator on a stream with a custom structure
+// Test the execution of an external operator on a source with a custom structure
 TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -483,7 +483,7 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-// Test the execution of an external operator on a stream with column layout
+// Test the execution of an external operator on a source with column layout
 TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(

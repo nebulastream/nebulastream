@@ -21,7 +21,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
-#include <Services/StreamCatalogService.hpp>
+#include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
@@ -64,7 +64,7 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
 };
 
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 

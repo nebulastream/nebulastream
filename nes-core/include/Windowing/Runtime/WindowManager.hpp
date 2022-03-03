@@ -114,8 +114,8 @@ class WindowManager {
      * @param key, for debugging purposes we need the key
      * @param store the window slice store
      */
-    template<class StreamType, class KeyType>
-    inline void sliceStream(const uint64_t ts, WindowedJoinSliceListStore<StreamType>* store, KeyType key) {
+    template<class SourceType, class KeyType>
+    inline void sliceStream(const uint64_t ts, WindowedJoinSliceListStore<SourceType>* store, KeyType key) {
         NES_TRACE("WindowManager list " << id << ": sliceStream for ts=" << ts << " key=" << key);
         // updates the maximal record ts
         // store->updateMaxTs(ts);

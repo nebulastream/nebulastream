@@ -53,10 +53,10 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -124,10 +124,10 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -218,10 +218,10 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -299,10 +299,10 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -399,10 +399,10 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -487,10 +487,10 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -587,10 +587,10 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -661,7 +661,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy with one relay which also produces data by itself
+ * @brief This tests just outputs the default source for a hierarchy with one relay which also produces data by itself
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0] => Join 2
     |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0] => Join 1
@@ -705,10 +705,10 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -812,7 +812,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 }
 
 /**
- * @brief This tests just outputs the default stream for a hierarchy with one relay which also produces data by itself
+ * @brief This tests just outputs the default source for a hierarchy with one relay which also produces data by itself
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0] => Join 2
     |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0] => Join 1
@@ -862,10 +862,10 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
-    //register logical stream
+    //register logical source
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

@@ -68,7 +68,7 @@ class DistributeWindowRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down DistributeWindowRuleTest test class."); }
 };
 
-void setupSensorNodeAndStreamCatalogTwoNodes(const SourceCatalogPtr& streamCatalog) {
+void setupSensorNodeAndSourceCatalogTwoNodes(const SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
@@ -79,11 +79,11 @@ void setupSensorNodeAndStreamCatalogTwoNodes(const SourceCatalogPtr& streamCatal
     SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
     SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
 
-    streamCatalog->addPhysicalSource("default_logical", sce1);
-    streamCatalog->addPhysicalSource("default_logical", sce2);
+    sourceCatalog->addPhysicalSource("default_logical", sce1);
+    sourceCatalog->addPhysicalSource("default_logical", sce2);
 }
 
-void setupSensorNodeAndStreamCatalogFiveNodes(const SourceCatalogPtr& streamCatalog) {
+void setupSensorNodeAndSourceCatalogFiveNodes(const SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyPtr topology = Topology::create();
 
@@ -104,14 +104,14 @@ void setupSensorNodeAndStreamCatalogFiveNodes(const SourceCatalogPtr& streamCata
     SourceCatalogEntryPtr sce4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
     SourceCatalogEntryPtr sce5 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
 
-    streamCatalog->addPhysicalSource("default_logical", sce1);
-    streamCatalog->addPhysicalSource("default_logical", sce2);
-    streamCatalog->addPhysicalSource("default_logical", sce3);
-    streamCatalog->addPhysicalSource("default_logical", sce4);
-    streamCatalog->addPhysicalSource("default_logical", sce5);
+    sourceCatalog->addPhysicalSource("default_logical", sce1);
+    sourceCatalog->addPhysicalSource("default_logical", sce2);
+    sourceCatalog->addPhysicalSource("default_logical", sce3);
+    sourceCatalog->addPhysicalSource("default_logical", sce4);
+    sourceCatalog->addPhysicalSource("default_logical", sce5);
 }
 
-void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
+void setupSensorNodeAndSourceCatalog(const SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
@@ -120,12 +120,12 @@ void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
     SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    streamCatalog->addPhysicalSource("default_logical", sce1);
+    sourceCatalog->addPhysicalSource("default_logical", sce1);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -148,8 +148,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalogTwoNodes(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalogTwoNodes(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -161,9 +161,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
                       .apply(API::Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = Optimizer::TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
@@ -179,8 +179,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalogFiveNodes(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalogFiveNodes(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -193,9 +193,9 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = Optimizer::TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(sourceCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 

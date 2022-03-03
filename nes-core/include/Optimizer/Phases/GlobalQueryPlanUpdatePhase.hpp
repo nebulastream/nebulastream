@@ -77,13 +77,13 @@ class GlobalQueryPlanUpdatePhase {
     /**
      * @brief Create an instance of the GlobalQueryPlanUpdatePhase
      * @param queryCatalog: the catalog of queries
-     * @param streamCatalog: the catalog of streams
+     * @param sourceCatalog: the catalog of sources
      * @param globalQueryPlan: the input global query plan
      * @param optimizerConfiguration: configuration for the optimizer
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog,
-                                                SourceCatalogPtr streamCatalog,
+                                                SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
                                                 const Configurations::OptimizerConfiguration optimizerConfiguration);
@@ -97,7 +97,7 @@ class GlobalQueryPlanUpdatePhase {
 
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
-                                        const SourceCatalogPtr& streamCatalog,
+                                        const SourceCatalogPtr& sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         const Configurations::OptimizerConfiguration optimizerConfiguration);

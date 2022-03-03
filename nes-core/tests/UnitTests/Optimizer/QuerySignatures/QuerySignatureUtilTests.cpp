@@ -23,7 +23,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
@@ -67,7 +67,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     predicate->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -100,7 +100,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -131,7 +131,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     predicate1->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -164,7 +164,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -197,7 +197,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -230,7 +230,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -263,7 +263,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     predicate2->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -292,7 +292,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     expression->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -322,7 +322,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     FieldAssignmentExpressionNodePtr expression2 = Attribute("id") = 40;
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -352,7 +352,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     FieldAssignmentExpressionNodePtr expression2 = Attribute("value") = Attribute("id") + Attribute("value");
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -388,7 +388,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     expression2->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -424,7 +424,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     expression2->inferStamp(schema);
 
     //Create Source
-    auto descriptor = LogicalStreamSourceDescriptor::create("car");
+    auto descriptor = LogicalSourceDescriptor::create("car");
     descriptor->setSchema(schema);
     LogicalOperatorNodePtr sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
 
@@ -446,11 +446,11 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
+TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
-    auto sourceDescriptor = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor = LogicalSourceDescriptor::create("Car");
     sourceDescriptor->setSchema(schema);
 
     //Create source operator
@@ -469,13 +469,13 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
+TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName) {
 
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Predicate
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Truck");
     sourceDescriptor2->setSchema(schema);
 
     //Create source
@@ -497,9 +497,9 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
@@ -528,9 +528,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Truck");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Truck");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
@@ -559,9 +559,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperators) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
@@ -589,9 +589,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperator) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
@@ -624,9 +624,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
@@ -655,9 +655,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
@@ -688,9 +688,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentLateness) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
@@ -723,9 +723,9 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentField) {
     std::shared_ptr<z3::context> context = std::make_shared<z3::context>();
     //Define Sources
-    auto sourceDescriptor1 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor1->setSchema(schema);
-    auto sourceDescriptor2 = LogicalStreamSourceDescriptor::create("Car");
+    auto sourceDescriptor2 = LogicalSourceDescriptor::create("Car");
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator

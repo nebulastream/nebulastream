@@ -268,9 +268,9 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
 }
 
 /**
- * Test deploying join with different streams
+ * Test deploying join with different sources
  */
-TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
+TEST_F(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
     struct Window {
         uint64_t value;
         uint64_t id;
@@ -350,7 +350,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
 }
 
 /**
- * Test deploying join with different streams
+ * Test deploying join with different sources
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
     struct Window {
@@ -429,9 +429,9 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
 }
 
 /**
- * Test deploying join with different streams and different Speed
+ * Test deploying join with different sources and different Speed
  */
-TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWindow) {
+TEST_F(JoinDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
     struct Window {
         int64_t win1;
         uint64_t id1;
@@ -690,9 +690,9 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
 }
 
 /**
- * Test deploying join with different streams
+ * Test deploying join with different sources
  */
-TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
+TEST_F(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
     struct Window {
         int64_t win1;
         uint64_t id1;
@@ -777,7 +777,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
 }
 
 /**
- * Test deploying join with different streams
+ * Test deploying join with different sources
  */
 TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     struct Window {

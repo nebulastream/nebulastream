@@ -73,7 +73,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
 
 QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet) {
 
-    if (queryCodeSnippet.find("Stream(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
+    if (queryCodeSnippet.find("Source(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
         NES_ERROR("QueryCatalog: queries are not allowed to specify schemas anymore.");
         throw InvalidQueryException("Queries are not allowed to define schemas anymore");
     }
@@ -85,9 +85,9 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         code << "namespace NES{" << std::endl;
         code << "Query createQuery(){" << std::endl;
 
-        std::string streamName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
-        streamName = streamName.substr(7, streamName.find(')') - 7);
-        NES_DEBUG(" Util: stream name = " << streamName);
+        std::string sourceName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
+        sourceName = sourceName.substr(7, sourceName.find(')') - 7);
+        NES_DEBUG(" Util: source name = " << sourceName);
 
         std::string newQuery = queryCodeSnippet;
         // add return statement in front of input query

@@ -52,7 +52,7 @@ class SemanticQueryValidationTest : public testing::Test {
         PrintQString(queryString);
         SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         std::string logicalSourceName = "default_logical";
-        auto logicalSource = sourceCatalog->getStreamForLogicalStream(logicalSourceName);
+        auto logicalSource = sourceCatalog->getSourceForLogicalSource(logicalSourceName);
         auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
@@ -139,7 +139,7 @@ TEST_F(SemanticQueryValidationTest, invalidLogicalSourceTest) {
 }
 
 // Test a query with invalid attributes
-TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
+TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalSourceTest) {
     NES_INFO("Invalid attributes in logical stream");
 
     std::string queryString =
@@ -170,7 +170,7 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "default_logical";
-    auto logicalSource = sourceCatalog->getStreamForLogicalStream(logicalSourceName);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
@@ -192,7 +192,7 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "default_logical";
-    auto logicalSource = sourceCatalog->getStreamForLogicalStream(logicalSourceName);
+    auto logicalSource = sourceCatalog->getSourceForLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);

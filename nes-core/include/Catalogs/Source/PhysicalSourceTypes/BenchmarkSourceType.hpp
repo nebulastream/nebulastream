@@ -24,7 +24,7 @@ class BenchmarkSourceType;
 using BenchmarkSourceTypePtr = std::shared_ptr<BenchmarkSourceType>;
 
 /**
- * @brief A stream config for a benchm source
+ * @brief A source config for a benchm source
  */
 class BenchmarkSourceType : public PhysicalSourceType {
   public:

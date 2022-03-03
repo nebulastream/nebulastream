@@ -19,7 +19,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Services/StreamCatalogService.hpp>
+#include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
@@ -77,8 +77,8 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-class StreamCatalogService;
-using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
+class SourceCatalogService;
+using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
@@ -137,7 +137,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief catalog method for debug use only
      * @return sourceCatalog
      */
-    SourceCatalogPtr getStreamCatalog() const { return streamCatalog; }
+    SourceCatalogPtr getSourceCatalog() const { return sourceCatalog; }
 
     /**
      * @brief getter of replication service
@@ -195,10 +195,10 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     bool isCoordinatorRunning();
 
     /**
-     * getter for the streamCatalogService
+     * getter for the sourceCatalogService
      * @return
      */
-    StreamCatalogServicePtr getStreamCatalogService() const;
+    SourceCatalogServicePtr getSourceCatalogService() const;
 
     /**
      * getter for the topologyManagerService
@@ -230,10 +230,10 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
     TopologyManagerServicePtr topologyManagerService;
-    StreamCatalogServicePtr streamCatalogService;
+    SourceCatalogServicePtr sourceCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;

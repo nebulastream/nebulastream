@@ -18,7 +18,7 @@
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
-#include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
+#include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
@@ -30,7 +30,7 @@ QueryRewritePhasePtr QueryRewritePhase::create(bool applyRulesImprovingSharingId
 QueryRewritePhase::QueryRewritePhase(bool applyRulesImprovingSharingIdentification)
     : applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification) {
     filterPushDownRule = FilterPushDownRule::create();
-    renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
+    renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
     projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     attributeSortRule = AttributeSortRule::create();
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
@@ -42,7 +42,7 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
         duplicateQueryPlan = attributeSortRule->apply(duplicateQueryPlan);
         duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
     }
-    duplicateQueryPlan = renameStreamToProjectOperatorRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
     return filterPushDownRule->apply(duplicateQueryPlan);
 }

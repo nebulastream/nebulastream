@@ -16,7 +16,7 @@ add_source_files(nes-core
         QueryService.cpp
         RequestProcessorService.cpp
         QueryParsingService.cpp
-        StreamCatalogService.cpp
+        SourceCatalogService.cpp
         TopologyManagerService.cpp
         MaintenanceService.cpp
         ReplicationService.cpp

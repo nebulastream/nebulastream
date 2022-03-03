@@ -116,14 +116,14 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     // get the execution plan
-    std::stringstream getExecutionPlanStringStream;
-    getExecutionPlanStringStream << "{\"queryId\" : ";
-    getExecutionPlanStringStream << queryId;
-    getExecutionPlanStringStream << "}";
-    getExecutionPlanStringStream << endl;
+    std::stringstream getExecutionPlanStringSource;
+    getExecutionPlanStringSource << "{\"queryId\" : ";
+    getExecutionPlanStringSource << queryId;
+    getExecutionPlanStringSource << "}";
+    getExecutionPlanStringSource << endl;
 
-    NES_INFO("get execution plan request body=" << getExecutionPlanStringStream.str());
-    string getExecutionPlanRequestBody = getExecutionPlanStringStream.str();
+    NES_INFO("get execution plan request body=" << getExecutionPlanStringSource.str());
+    string getExecutionPlanRequestBody = getExecutionPlanStringSource.str();
     web::json::value getExecutionPlanJsonReturn;
 
     web::uri_builder builder(("/"));
@@ -210,8 +210,8 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    auto windowStream = PhysicalSource::create("test_stream", "test2", sourceConfig);
-    auto wrk1 = createAndStartWorkerWithSourceConfig(1, windowStream);
+    auto windowSource = PhysicalSource::create("test_stream", "test2", sourceConfig);
+    auto wrk1 = createAndStartWorkerWithSourceConfig(1, windowSource);
     // Removed this and replaced it by the above. Test is disabled, cannot check correctness. Leaving this for future fixing.
     //    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     //    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
@@ -473,18 +473,18 @@ TEST_F(RESTEndpointTest, DISABLED_testConnectivityCheck) {
 }
 
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
-TEST_F(RESTEndpointTest, DISABLED_testAddLogicalStreamEx) {
+TEST_F(RESTEndpointTest, DISABLED_testAddLogicalSourceEx) {
     auto crd = createAndStartCoordinator();
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("sourceCatalog/addLogicalStream-ex");
 
-    SourceCatalogPtr streamCatalog = crd->getStreamCatalog();
+    SourceCatalogPtr sourceCatalog = crd->getSourceCatalog();
 
     //create message as Protobuf encoded object
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     SerializableNamedSchema request;
-    request.set_streamname("test");
+    request.set_sourcename("test");
     request.set_allocated_schema(serializableSchema.get());
     std::string msg = request.SerializeAsString();
     request.release_schema();
@@ -499,17 +499,17 @@ TEST_F(RESTEndpointTest, DISABLED_testAddLogicalStreamEx) {
         })
         .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
             try {
-                NES_INFO("post addLogicalStream-ex: set return");
+                NES_INFO("post addLogicalSource-ex: set return");
                 postJsonReturn = task.get();
             } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
             }
         })
         .wait();
 
     EXPECT_EQ(statusCode, 200);
     EXPECT_TRUE(postJsonReturn.has_field("Success"));
-    EXPECT_EQ(streamCatalog->getAllLogicalStreamAsString().size(), 3U);
+    EXPECT_EQ(sourceCatalog->getAllLogicalSourceAsString().size(), 3U);
 
     stopCoordinator(*crd);
 }
@@ -594,10 +594,10 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
         })
         .then([&missingIDResponse](const pplx::task<web::json::value>& task) {
             try {
-                NES_INFO("post addLogicalStream-ex: set return");
+                NES_INFO("post addLogicalSource-ex: set return");
                 missingIDResponse = task.get();
             } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
             }
         })
         .wait();
@@ -619,10 +619,10 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
         })
         .then([&missingMigrationTypeResponse](const pplx::task<web::json::value>& task) {
             try {
-                NES_INFO("post addLogicalStream-ex: set return");
+                NES_INFO("post addLogicalSource-ex: set return");
                 missingMigrationTypeResponse = task.get();
             } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
             }
         })
         .wait();
@@ -645,10 +645,10 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
         })
         .then([&validRequestResponse](const pplx::task<web::json::value>& task) {
             try {
-                NES_INFO("post addLogicalStream-ex: set return");
+                NES_INFO("post addLogicalSource-ex: set return");
                 validRequestResponse = task.get();
             } catch (const web::http::http_exception& e) {
-                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+                NES_ERROR("post addLogicalSource-ex: error while setting return" << e.what());
             }
         })
         .wait();

@@ -57,8 +57,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     auto worker = TestUtils::startWorker(
         {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalStreamName("default_logical"),
-         TestUtils::physicalStreamName("test")});
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -89,8 +89,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker(
         {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalStreamName("default_logical"),
-         TestUtils::physicalStreamName("test")});
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -148,8 +148,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker(
         {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalStreamName("default_logical"),
-         TestUtils::physicalStreamName("test")});
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -193,9 +193,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_EQ(expected, content);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhysource) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputAndRegisterPhysourceTestResult.txt";
     remove(outputFilePath.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
@@ -204,8 +204,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("DefaultSource"),
-                                          TestUtils::physicalStreamName("test_stream"),
-                                          TestUtils::logicalStreamName("default_logical"),
+                                          TestUtils::physicalSourceName("test_stream"),
+                                          TestUtils::logicalSourceName("default_logical"),
                                           TestUtils::numberOfBuffersToProduce(2),
                                           TestUtils::sourceGatheringInterval(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
@@ -267,8 +267,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv"),
-                                          TestUtils::physicalStreamName("test_stream"),
-                                          TestUtils::logicalStreamName("exdra"),
+                                          TestUtils::physicalSourceName("test_stream"),
+                                          TestUtils::logicalSourceName("exdra"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(11),
                                           TestUtils::sourceGatheringInterval(1)});
@@ -358,15 +358,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                          TestUtils::physicalStreamName("test_stream"),
-                                          TestUtils::logicalStreamName("window"),
+                                          TestUtils::physicalSourceName("test_stream"),
+                                          TestUtils::logicalSourceName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceGatheringInterval(1)});
@@ -419,15 +419,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
-                                          TestUtils::physicalStreamName("test_stream"),
-                                          TestUtils::logicalStreamName("window"),
+                                          TestUtils::physicalSourceName("test_stream"),
+                                          TestUtils::logicalSourceName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceGatheringInterval(1)});

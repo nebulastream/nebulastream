@@ -193,9 +193,9 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
                      .map(Attribute("f3") = Attribute("f1") * 42)
@@ -220,9 +220,9 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     auto inputSchema = Schema::create();
     inputSchema->addField("default_logical$f1", BasicType::INT32);
 
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalSource("default_logical");
+    sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
     auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
                      .filter(Attribute("default_logical$f1") < 10)
@@ -230,7 +230,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto typeInference = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
     plan = typeInference->execute(plan);
 
     auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_COLUMN_LAYOUT);

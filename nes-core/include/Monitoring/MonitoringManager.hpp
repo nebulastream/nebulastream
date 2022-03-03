@@ -30,8 +30,8 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 /**
 * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
@@ -102,13 +102,13 @@ class MonitoringManager {
 
     /**
      * @brief Configures a continuous monitoring source.
-     * @param streamCatalog
+     * @param sourceCatalog
      * @return Ture if success, else false
      */
-    bool setupContinuousMonitoring(StreamCatalogPtr streamCatalog);
+    bool setupContinuousMonitoring(SourceCatalogPtr sourceCatalog);
 
   private:
-    bool registerMonitoringLogical(StreamCatalogPtr streamCatalog);
+    bool registerMonitoringLogical(SourceCatalogPtr sourceCatalog);
     MetricStorePtr metricStore;
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
     WorkerRPCClientPtr workerClient;

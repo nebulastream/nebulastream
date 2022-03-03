@@ -66,9 +66,9 @@ FieldAccessExpressionNodePtr LogicalJoinDefinition::getLeftJoinKey() { return le
 
 FieldAccessExpressionNodePtr LogicalJoinDefinition::getRightJoinKey() { return rightJoinKeyType; }
 
-SchemaPtr LogicalJoinDefinition::getLeftStreamType() { return leftStreamType; }
+SchemaPtr LogicalJoinDefinition::getLeftSourceType() { return leftSourceType; }
 
-SchemaPtr LogicalJoinDefinition::getRightStreamType() { return rightStreamType; }
+SchemaPtr LogicalJoinDefinition::getRightSourceType() { return rightSourceType; }
 
 Windowing::WindowTypePtr LogicalJoinDefinition::getWindowType() { return windowType; }
 
@@ -84,9 +84,9 @@ uint64_t LogicalJoinDefinition::getNumberOfInputEdgesLeft() const { return numbe
 
 uint64_t LogicalJoinDefinition::getNumberOfInputEdgesRight() const { return numberOfInputEdgesRight; }
 
-void LogicalJoinDefinition::updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType) {
-    this->leftStreamType = std::move(leftStreamType);
-    this->rightStreamType = std::move(rightStreamType);
+void LogicalJoinDefinition::updateSourceTypes(SchemaPtr leftSourceType, SchemaPtr rightSourceType) {
+    this->leftSourceType = std::move(leftSourceType);
+    this->rightSourceType = std::move(rightSourceType);
 }
 
 void LogicalJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }

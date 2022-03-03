@@ -1283,7 +1283,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
         1,
         joinType);
 
-    joinDef->updateStreamTypes(input_schema, input_schema);
+    joinDef->updateSourceTypes(input_schema, input_schema);
 
     auto outputSchema = Schema::create()
                             ->addField(createField("window$start", UINT64))

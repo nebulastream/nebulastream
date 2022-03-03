@@ -172,7 +172,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
         physicalSourceDefinition->set_logicalsourcename(physicalSource->getLogicalSourceName());
     }
 
-    NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());
+    NES_DEBUG("RegisterPhysicalSourceRequest::RegisterLogicalSourceRequest request=" << request.DebugString());
 
     return detail::processGenericRpc<bool, RegisterPhysicalSourcesRequest, RegisterPhysicalSourcesReply>(
         request,
@@ -183,7 +183,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
         });
 }
 
-bool CoordinatorRPCClient::registerLogicalStream(const std::string& logicalSourceName, const std::string& filePath) {
+bool CoordinatorRPCClient::registerLogicalSource(const std::string& logicalSourceName, const std::string& filePath) {
     NES_DEBUG("CoordinatorRPCClient: registerLogicalSource " << logicalSourceName << " with path" << filePath);
 
     // Check if file can be found on system and read.
@@ -201,7 +201,7 @@ bool CoordinatorRPCClient::registerLogicalStream(const std::string& logicalSourc
     request.set_id(workerId);
     request.set_logicalsourcename(logicalSourceName);
     request.set_sourceschema(fileContent);
-    NES_DEBUG("CoordinatorRPCClient::RegisterLogicalStreamRequest request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::RegisterLogicalSourceRequest request=" << request.DebugString());
 
     return detail::processGenericRpc<bool, RegisterLogicalSourceRequest, RegisterLogicalSourceReply>(
         request,
@@ -212,14 +212,14 @@ bool CoordinatorRPCClient::registerLogicalStream(const std::string& logicalSourc
         });
 }
 
-bool CoordinatorRPCClient::unregisterPhysicalStream(const std::string& logicalSourceName, const std::string& physicalSourceName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalSourceName << " from logical stream ");
+bool CoordinatorRPCClient::unregisterPhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalSource physical source" << physicalSourceName << " from logical source ");
 
     UnregisterPhysicalSourceRequest request;
     request.set_id(workerId);
     request.set_physicalsourcename(physicalSourceName);
     request.set_logicalsourcename(logicalSourceName);
-    NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalStreamRequest request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalSourceRequest request=" << request.DebugString());
 
     return detail::processGenericRpc<bool, UnregisterPhysicalSourceRequest, UnregisterPhysicalSourceReply>(
         request,
@@ -230,13 +230,13 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(const std::string& logicalSo
         });
 }
 
-bool CoordinatorRPCClient::unregisterLogicalStream(const std::string& logicalSourceName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterLogicalStream stream" << logicalSourceName);
+bool CoordinatorRPCClient::unregisterLogicalSource(const std::string& logicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient: unregisterLogicalSource source" << logicalSourceName);
 
     UnregisterLogicalSourceRequest request;
     request.set_id(workerId);
     request.set_logicalsourcename(logicalSourceName);
-    NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalStreamRequest request=" << request.DebugString());
+    NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalSourceRequest request=" << request.DebugString());
 
     return detail::processGenericRpc<bool, UnregisterLogicalSourceRequest, UnregisterLogicalSourceReply>(
         request,

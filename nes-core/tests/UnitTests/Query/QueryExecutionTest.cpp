@@ -73,8 +73,8 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
         auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
+        PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
         // enable distributed window optimization
         auto optimizerConfiguration = Configurations::OptimizerConfiguration();
         optimizerConfiguration.performDistributedWindowOptimization = true;

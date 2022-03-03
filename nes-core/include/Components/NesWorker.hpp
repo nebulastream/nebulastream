@@ -91,11 +91,11 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     bool disconnect();
 
     /**
-    * @brief method to deregister physical stream with the coordinator
-    * @param logical and physical of the stream
+    * @brief method to deregister physical source with the coordinator
+    * @param logical and physical of the source
      * @return bool indicating success
     */
-    bool unregisterPhysicalStream(std::string logicalName, std::string physicalName);
+    bool unregisterPhysicalSource(std::string logicalName, std::string physicalName);
 
     /**
     * @brief method add new parent to this node
@@ -207,7 +207,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
 
   private:
     /**
-     * @brief method to register physical stream with the coordinator
+     * @brief method to register physical source with the coordinator
      * @param physicalSources: physical sources containing relevant information
      * @return bool indicating success
      */

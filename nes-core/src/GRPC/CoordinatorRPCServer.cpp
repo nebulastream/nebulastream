@@ -22,10 +22,10 @@
 using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
-                                           StreamCatalogServicePtr streamCatalogService,
+                                           SourceCatalogServicePtr sourceCatalogService,
                                            MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService)
-    : topologyManagerService(topologyManagerService), streamCatalogService(streamCatalogService),
+    : topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
       monitoringManager(monitoringManager), replicationService(replicationService){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
@@ -78,7 +78,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request =" << request);
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
     for (const auto& physicalSourceDefinition : request->physicalsources()) {
-        bool success = streamCatalogService->registerPhysicalStream(physicalNode,
+        bool success = sourceCatalogService->registerPhysicalSource(physicalNode,
                                                                     physicalSourceDefinition.physicalsourcename(),
                                                                     physicalSourceDefinition.logicalsourcename());
         if (!success) {
@@ -99,7 +99,7 @@ Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
 
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
     bool success =
-        streamCatalogService->unregisterPhysicalStream(physicalNode, request->physicalsourcename(), request->logicalsourcename());
+        sourceCatalogService->unregisterPhysicalSource(physicalNode, request->physicalsourcename(), request->logicalsourcename());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource success");
@@ -116,7 +116,7 @@ Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
                                                    RegisterLogicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request =" << request);
 
-    bool success = streamCatalogService->registerLogicalSource(request->logicalsourcename(), request->sourceschema());
+    bool success = sourceCatalogService->registerLogicalSource(request->logicalsourcename(), request->sourceschema());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource success");
@@ -133,7 +133,7 @@ Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
                                                      UnregisterLogicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource: request =" << request);
 
-    bool success = streamCatalogService->unregisterLogicalStream(request->logicalsourcename());
+    bool success = sourceCatalogService->unregisterLogicalSource(request->logicalsourcename());
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource success");
         reply->set_success(true);

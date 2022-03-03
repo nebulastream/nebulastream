@@ -45,7 +45,7 @@
 #include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/StreamCatalogService.hpp>
+#include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -88,11 +88,11 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
 
-    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
 
-    streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
+    sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
@@ -103,7 +103,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   topology,
                                                   queryCatalog,
                                                   globalQueryPlan,
-                                                  streamCatalog,
+                                                  sourceCatalog,
                                                   workerRpcClient,
                                                   queryRequestQueue,
                                                   this->coordinatorConfiguration->optimizer,
@@ -111,7 +111,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     queryService = std::make_shared<QueryService>(queryCatalog,
                                                   queryRequestQueue,
-                                                  streamCatalog,
+                                                  sourceCatalog,
                                                   queryParsingService,
                                                   this->coordinatorConfiguration->optimizer);
 
@@ -126,11 +126,11 @@ NesCoordinator::~NesCoordinator() {
 
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
-    streamCatalog->reset();
+    sourceCatalog->reset();
     queryCatalog->clearQueries();
 
     topology.reset();
-    streamCatalog.reset();
+    sourceCatalog.reset();
     globalExecutionPlan.reset();
     queryCatalog.reset();
     workerRpcClient.reset();
@@ -141,7 +141,7 @@ NesCoordinator::~NesCoordinator() {
     maintenanceService.reset();
     queryRequestProcessorThread.reset();
     worker.reset();
-    streamCatalogService.reset();
+    sourceCatalogService.reset();
     topologyManagerService.reset();
     restThread.reset();
     restServer.reset();
@@ -150,7 +150,7 @@ NesCoordinator::~NesCoordinator() {
     workerConfig.reset();
 
     NES_ASSERT(topology.use_count() == 0, "NesCoordinator topology leaked");
-    NES_ASSERT(streamCatalog.use_count() == 0, "NesCoordinator sourceCatalog leaked");
+    NES_ASSERT(sourceCatalog.use_count() == 0, "NesCoordinator sourceCatalog leaked");
     NES_ASSERT(globalExecutionPlan.use_count() == 0, "NesCoordinator globalExecutionPlan leaked");
     NES_ASSERT(queryCatalog.use_count() == 0, "NesCoordinator queryCatalog leaked");
     NES_ASSERT(workerRpcClient.use_count() == 0, "NesCoordinator workerRpcClient leaked");
@@ -163,7 +163,7 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(worker.use_count() == 0, "NesCoordinator worker leaked");
     NES_ASSERT(restServer.use_count() == 0, "NesCoordinator restServer leaked");
     NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
-    NES_ASSERT(streamCatalogService.use_count() == 0, "NesCoordinator streamCatalogService leaked");
+    NES_ASSERT(sourceCatalogService.use_count() == 0, "NesCoordinator sourceCatalogService leaked");
     NES_ASSERT(topologyManagerService.use_count() == 0, "NesCoordinator topologyManagerService leaked");
     NES_ASSERT(maintenanceService.use_count() == 0, "NesCoordinator maintenanceService leaked");
 }
@@ -205,7 +205,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator: Register Logical source");
     for (auto& logicalSource : coordinatorConfiguration->logicalSources) {
-        streamCatalogService->registerLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
+        sourceCatalogService->registerLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
     }
     NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
@@ -239,7 +239,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               restPort,
                                               this->inherited0::weak_from_this(),
                                               queryCatalog,
-                                              streamCatalog,
+                                              sourceCatalog,
                                               topology,
                                               globalExecutionPlan,
                                               queryService,
@@ -323,10 +323,10 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
 void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
-    NES_ASSERT(streamCatalogService, "null streamCatalogService");
+    NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
     this->replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
-    CoordinatorRPCServer service(topologyManagerService, streamCatalogService, monitoringService->getMonitoringManager(), this->replicationService);
+    CoordinatorRPCServer service(topologyManagerService, sourceCatalogService, monitoringService->getMonitoringManager(), this->replicationService);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
@@ -358,7 +358,7 @@ NES::Experimental::MaintenanceServicePtr NesCoordinator::getMaintenanceService()
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
-StreamCatalogServicePtr NesCoordinator::getStreamCatalogService() const { return streamCatalogService; }
+SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return sourceCatalogService; }
 TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
 
 }// namespace NES

@@ -14,7 +14,7 @@
 
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/PhysicalSourceConfig.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -53,7 +53,7 @@ class OPCSinkTest : public testing::Test {
     void SetUp() {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         test_schema = Schema::create()->addField("var", UINT32);
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, conf);
     }
 
@@ -187,7 +187,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();
 
-    auto nodeEngine1 = Runtime::create("127.0.0.1", 31338, PhysicalStreamConfig::createEmpty());
+    auto nodeEngine1 = Runtime::create("127.0.0.1", 31338, PhysicalSourceConfig::createEmpty());
     auto opcSource = createOPCSource(test_schema,
                                      nodeEngine1->getBufferManager(),
                                      nodeEngine1->getQueryManager(),

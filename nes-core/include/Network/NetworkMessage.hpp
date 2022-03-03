@@ -42,7 +42,7 @@ enum class MessageType : uint8_t {
     DataBuffer,
     /// type of a message that contains an error
     ErrorMessage,
-    /// type of a message that marks a stream subpartition as finished, i.e., no more records are expected
+    /// type of a message that marks a source subpartition as finished, i.e., no more records are expected
     EndOfStream,
     /// message type of an event buffer
     EventBuffer,

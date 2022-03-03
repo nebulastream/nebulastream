@@ -16,7 +16,7 @@
 #include <Catalogs/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionNode.hpp>
@@ -36,21 +36,21 @@ MinimumResourceConsumptionStrategy::MinimumResourceConsumptionStrategy(NESTopolo
 
 NESExecutionPlanPtr MinimumResourceConsumptionStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
                                                                                 NESTopologyPlanPtr nesTopologyPlan,
-                                                                                StreamCatalogPtr streamCatalog) {
+                                                                                SourceCatalogPtr sourceCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = queryPlan->getSourceStreamName();
+    // FIXME: current implementation assumes that we have only one source source and therefore only one source operator.
+    const string sourceName = queryPlan->getSourceName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the source operator.");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
+    const vector<NESTopologyEntryPtr> sourceNodes = sourceCatalog->getSourceNodesForLogicalSource(sourceName);
 
     if (sourceNodes.empty()) {
-        NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the target source: " + streamName);
+        NES_THROW_RUNTIME_ERROR("MinimumResourceConsumption: Unable to find the target source: " + sourceName);
     }
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();

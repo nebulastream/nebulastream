@@ -206,39 +206,39 @@ TEST_F(RemoteClientTest, GetExecutionPlanTest) {
 }
 
 /**
- * @brief Test if adding and getting logical streams properly
+ * @brief Test if adding and getting logical sources properly
  */
-TEST_F(RemoteClientTest, AddAndGetLogicalStreamTest) {
+TEST_F(RemoteClientTest, AddAndGetLogicalSourceTest) {
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32);
-    bool success = client->addLogicalStream(schema, "test");
+    bool success = client->addLogicalSource(schema, "test");
 
     EXPECT_TRUE(success);
-    std::string logical_stream = client->getLogicalStreams();
-    NES_DEBUG("AddAndGetLogicalStreamTest " + logical_stream);
+    std::string logical_source = client->getLogicalSources();
+    NES_DEBUG("AddAndGetLogicalSourceTest " + logical_source);
 }
 
 /**
- * @brief Test if retrieving the logical stream work properly
+ * @brief Test if retrieving the logical source work properly
  * @note we assume that default_logical is predefined
  */
-TEST_F(RemoteClientTest, GetLogicalStreamTest) {
-    std::string logical_stream = client->getLogicalStreams();
-    NES_DEBUG("GetLogicalStreamTest: " + logical_stream);
-    // Check only for default stream
+TEST_F(RemoteClientTest, GetLogicalSourceTest) {
+    std::string logical_source = client->getLogicalSources();
+    NES_DEBUG("GetLogicalSourceTest: " + logical_source);
+    // Check only for default source
     std::string expect = "{\"default_logical\":\"id:INTEGER value:INTEGER \"";
-    EXPECT_TRUE(logical_stream.compare(0, expect.size() - 1, expect));
+    EXPECT_TRUE(logical_source.compare(0, expect.size() - 1, expect));
 }
 
 /**
- * @brief Test if getting physical streams works properly
+ * @brief Test if getting physical sources works properly
  * @note we assume that default_logical is predefined
  */
-TEST_F(RemoteClientTest, GetPhysicalStreamTest) {
-    std::string physicaStreams = client->getPhysicalStreams();
-    NES_DEBUG("GetPhysicalStreamTest " + physicaStreams);
-    // Check only for default stream
+TEST_F(RemoteClientTest, GetPhysicalSourceTest) {
+    std::string physicaSources = client->getPhysicalSources();
+    NES_DEBUG("GetPhysicalSourceTest " + physicaSources);
+    // Check only for default source
     std::string expect = "{\"default_logical\":\"id:INTEGER value:INTEGER";
-    EXPECT_TRUE(physicaStreams.compare(0, expect.size() - 1, expect));
+    EXPECT_TRUE(physicaSources.compare(0, expect.size() - 1, expect));
 }
 
 /**

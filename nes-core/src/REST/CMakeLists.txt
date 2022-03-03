@@ -19,7 +19,7 @@ add_source_files(nes-core
         Controller/MonitoringController.cpp
         Controller/QueryCatalogController.cpp
         Controller/QueryController.cpp
-        Controller/StreamCatalogController.cpp
+        Controller/SourceCatalogController.cpp
         Controller/TopologyController.cpp
         Controller/MaintenanceController.cpp
         RestServer.cpp

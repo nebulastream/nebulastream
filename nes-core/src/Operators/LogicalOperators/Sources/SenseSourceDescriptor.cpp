@@ -20,14 +20,14 @@ namespace NES {
 SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string udfs)
     : SourceDescriptor(std::move(schema)), udfs(std::move(udfs)) {}
 
-SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string streamName, std::string udfs)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), udfs(std::move(udfs)) {}
+SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string sourceName, std::string udfs)
+    : SourceDescriptor(std::move(schema), std::move(sourceName)), udfs(std::move(udfs)) {}
 
 const std::string& SenseSourceDescriptor::getUdfs() const { return udfs; }
 
-SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string udfs) {
+SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string sourceName, std::string udfs) {
     return std::make_shared<SenseSourceDescriptor>(
-        SenseSourceDescriptor(std::move(schema), std::move(streamName), std::move(udfs)));
+        SenseSourceDescriptor(std::move(schema), std::move(sourceName), std::move(udfs)));
 }
 
 SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string udfs) {

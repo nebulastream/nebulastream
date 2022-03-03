@@ -15,39 +15,39 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-RenameStreamOperatorNode::RenameStreamOperatorNode(const std::string& newStreamName, uint64_t id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), newStreamName(newStreamName) {}
+RenameSourceOperatorNode::RenameSourceOperatorNode(const std::string& newSourceName, uint64_t id)
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), newSourceName(newSourceName) {}
 
-bool RenameStreamOperatorNode::isIdentical(NodePtr const& rhs) const {
-    return equal(rhs) && rhs->as<RenameStreamOperatorNode>()->getId() == id;
+bool RenameSourceOperatorNode::isIdentical(NodePtr const& rhs) const {
+    return equal(rhs) && rhs->as<RenameSourceOperatorNode>()->getId() == id;
 }
 
-bool RenameStreamOperatorNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<RenameStreamOperatorNode>()) {
-        auto otherRename = rhs->as<RenameStreamOperatorNode>();
-        return newStreamName == otherRename->newStreamName;
+bool RenameSourceOperatorNode::equal(NodePtr const& rhs) const {
+    if (rhs->instanceOf<RenameSourceOperatorNode>()) {
+        auto otherRename = rhs->as<RenameSourceOperatorNode>();
+        return newSourceName == otherRename->newSourceName;
     }
     return false;
 };
 
-std::string RenameStreamOperatorNode::toString() const {
+std::string RenameSourceOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "RENAME_STREAM(" << id << ", newStreamName=" << newStreamName << ")";
+    ss << "RENAME_STREAM(" << id << ", newSourceName=" << newSourceName << ")";
     return ss.str();
 }
 
-bool RenameStreamOperatorNode::inferSchema() {
+bool RenameSourceOperatorNode::inferSchema() {
     if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     //Update output schema by changing the qualifier and corresponding attribute names
-    auto newQualifierName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (auto& field : outputSchema->fields) {
         //Extract field name without qualifier
         auto fieldName = field->getName();
@@ -57,10 +57,10 @@ bool RenameStreamOperatorNode::inferSchema() {
     return true;
 }
 
-std::string RenameStreamOperatorNode::getNewStreamName() { return newStreamName; }
+std::string RenameSourceOperatorNode::getNewSourceName() { return newSourceName; }
 
-OperatorNodePtr RenameStreamOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createRenameStreamOperator(newStreamName, id);
+OperatorNodePtr RenameSourceOperatorNode::copy() {
+    auto copy = LogicalOperatorFactory::createRenameSourceOperator(newSourceName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
@@ -71,10 +71,10 @@ OperatorNodePtr RenameStreamOperatorNode::copy() {
     return copy;
 }
 
-void RenameStreamOperatorNode::inferStringSignature() {
+void RenameSourceOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("RenameStreamOperatorNode: Inferring String signature for " << operatorNode->toString());
-    NES_ASSERT(!children.empty(), "RenameStreamOperatorNode: Rename Stream should have children.");
+    NES_TRACE("RenameSourceOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_ASSERT(!children.empty(), "RenameSourceOperatorNode: Rename Source should have children.");
     //Infer query signatures for child operators
     for (auto& child : children) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
@@ -82,7 +82,7 @@ void RenameStreamOperatorNode::inferStringSignature() {
     }
     std::stringstream signatureStream;
     auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
-    signatureStream << "RENAME_STREAM(newStreamName=" << newStreamName << ")." << *childSignature.begin()->second.begin();
+    signatureStream << "RENAME_STREAM(newStreamName=" << newSourceName << ")." << *childSignature.begin()->second.begin();
 
     //Update the signature
     auto hashCode = hashGenerator(signatureStream.str());

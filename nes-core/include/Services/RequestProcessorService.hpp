@@ -80,7 +80,7 @@ class RequestProcessorService {
                                      const TopologyPtr& topology,
                                      const QueryCatalogPtr& queryCatalog,
                                      const GlobalQueryPlanPtr& globalQueryPlan,
-                                     const SourceCatalogPtr& streamCatalog,
+                                     const SourceCatalogPtr& sourceCatalog,
                                      const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
                                      const Configurations::OptimizerConfiguration optimizerConfiguration,

@@ -75,12 +75,12 @@ class TestUtils {
         return "--physicalSources." + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + "=" + std::to_string(numberOfTuplesToProducePerBuffer);
     }
 
-    [[nodiscard]] static std::string physicalStreamName(std::string physicalStreamName) {
-        return "--physicalSources." + PHYSICAL_SOURCE_NAME_CONFIG + "=" + physicalStreamName;
+    [[nodiscard]] static std::string physicalSourceName(std::string physicalSourceName) {
+        return "--physicalSources." + PHYSICAL_SOURCE_NAME_CONFIG + "=" + physicalSourceName;
     }
 
-    [[nodiscard]] static std::string logicalStreamName(std::string logicalStreamName) {
-        return "--physicalSources." + LOGICAL_SOURCE_NAME_CONFIG + "=" + logicalStreamName;
+    [[nodiscard]] static std::string logicalSourceName(std::string logicalSourceName) {
+        return "--physicalSources." + LOGICAL_SOURCE_NAME_CONFIG + "=" + logicalSourceName;
     }
 
     [[nodiscard]] static std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce) {
@@ -166,11 +166,11 @@ class TestUtils {
     static web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
 
     /**
-   * @brief This method is used adding a logical stream
+   * @brief This method is used adding a logical source
    * @param query string
    * @return
    */
-    static bool addLogicalStream(const string& schemaString, const std::string& restPort = "8081");
+    static bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081");
 
     /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs

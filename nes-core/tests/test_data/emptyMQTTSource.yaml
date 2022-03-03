@@ -1,8 +1,8 @@
 # ~~~ Configurations for the Data Source ~~~
 physicalSources:
-  # Set logical stream name where this stream is added to
+  # Set logical source name where this source is added to
   - logicalSourceName: hello
-    # Set physical stream name
+    # Set physical source name
     physicalSourceName: default_physical
     # Define source type, also need to specify source configurations for source type below
     type: MQTTSource

@@ -16,40 +16,40 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
-#include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
+#include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
+#include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 
 namespace NES::Optimizer {
 
-QueryPlanPtr RenameStreamToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
-    NES_DEBUG("RenameStreamToProjectOperatorRule: Convert all Rename Stream operator to the project operator");
-    auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
-    //Iterate over all rename stream operators and convert them to project operator
-    for (auto& renameStreamOperator : renameStreamOperators) {
-        //Convert the rename stream operator to project operator
-        auto projectOperator = convert(renameStreamOperator);
-        //Replace rename stream operator with the project operator
-        renameStreamOperator->replace(projectOperator);
+QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
+    NES_DEBUG("RenameSourceToProjectOperatorRule: Convert all Rename Source operator to the project operator");
+    auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperatorNode>();
+    //Iterate over all rename source operators and convert them to project operator
+    for (auto& renameSourceOperator : renameSourceOperators) {
+        //Convert the rename source operator to project operator
+        auto projectOperator = convert(renameSourceOperator);
+        //Replace rename source operator with the project operator
+        renameSourceOperator->replace(projectOperator);
         //Assign the project operator the id of as operator
-        projectOperator->setId(renameStreamOperator->getId());
+        projectOperator->setId(renameSourceOperator->getId());
     }
     //Return updated query plan
     return queryPlan;
 }
 
-OperatorNodePtr RenameStreamToProjectOperatorRule::convert(const OperatorNodePtr& operatorNode) {
-    //Fetch the new stream name and input schema for the as operator
-    auto renameStreamOperator = operatorNode->as<RenameStreamOperatorNode>();
-    auto newStreamName = renameStreamOperator->getNewStreamName();
-    auto inputSchema = renameStreamOperator->getInputSchema();
+OperatorNodePtr RenameSourceToProjectOperatorRule::convert(const OperatorNodePtr& operatorNode) {
+    //Fetch the new source name and input schema for the as operator
+    auto renameSourceOperator = operatorNode->as<RenameSourceOperatorNode>();
+    auto newSourceName = renameSourceOperator->getNewSourceName();
+    auto inputSchema = renameSourceOperator->getInputSchema();
 
     std::vector<ExpressionNodePtr> projectionAttributes;
     //Iterate over the input schema and add a new field rename expression
     for (const auto& field : inputSchema->fields) {
-        //compute the new name for the field by added new stream name as field qualifier
+        //compute the new name for the field by added new source name as field qualifier
         std::string fieldName = field->getName();
         //Compute new name without field qualifier
-        std::string updatedFieldName = newStreamName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
+        std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
         //Compute field access and field rename expression
         auto originalField = FieldAccessExpressionNode::create(field->getDataType(), fieldName);
         auto fieldRenameExpression =
@@ -61,8 +61,8 @@ OperatorNodePtr RenameStreamToProjectOperatorRule::convert(const OperatorNodePtr
     return projectOperator;
 }
 
-RenameStreamToProjectOperatorRulePtr RenameStreamToProjectOperatorRule::create() {
-    return std::make_shared<RenameStreamToProjectOperatorRule>(RenameStreamToProjectOperatorRule());
+RenameSourceToProjectOperatorRulePtr RenameSourceToProjectOperatorRule::create() {
+    return std::make_shared<RenameSourceToProjectOperatorRule>(RenameSourceToProjectOperatorRule());
 }
 
 }// namespace NES::Optimizer

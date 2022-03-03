@@ -60,10 +60,10 @@ class CpuMetrics {
     void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
-     * @brief Stream operator to convert the object to string
+     * @brief Source operator to convert the object to string
      * @param os
      * @param values
-     * @return the stream
+     * @return the source
      */
     friend std::ostream& operator<<(std::ostream& os, const CpuMetrics& values);
 

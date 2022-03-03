@@ -38,7 +38,7 @@ std::string PhysicalSource::toString() {
     std::stringstream ss;
     ss << "PhysicalSource Name: " << physicalSourceName;
     ss << "LogicalSource Name" << logicalSourceName;
-    ss << "Stream Type" << physicalSourceType->toString();
+    ss << "Source Type" << physicalSourceType->toString();
     return ss.str();
 }
 

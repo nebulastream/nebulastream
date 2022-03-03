@@ -73,8 +73,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
                                             ->addField(createField("timestamp", UINT64));)";
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalSource("Win1", window);
-    crd->getStreamCatalogService()->registerLogicalSource("Win2", window);
+    crd->getSourceCatalogService()->registerLogicalSource("Win1", window);
+    crd->getSourceCatalogService()->registerLogicalSource("Win2", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -86,8 +86,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     srcConf1->setFilePath("../tests/test_data/window.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(2);
-    auto windowStream = PhysicalSource::create("Win1", "test_stream1", srcConf1);
-    workerConfig1->physicalSources.add(windowStream);
+    auto windowSource = PhysicalSource::create("Win1", "test_stream1", srcConf1);
+    workerConfig1->physicalSources.add(windowSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -100,8 +100,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     srcConf1->setFilePath("../tests/test_data/window2.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(2);
-    auto windowStream2 = PhysicalSource::create("Win2", "test_stream2", srcConf1);
-    workerConfig2->physicalSources.add(windowStream2);
+    auto windowSource2 = PhysicalSource::create("Win2", "test_stream2", srcConf1);
+    workerConfig2->physicalSources.add(windowSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -155,8 +155,8 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
                                          ->addField(createField("quantity", UINT64));)";
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -168,8 +168,8 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
-    auto windowStream1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
-    workerConfig1->physicalSources.add(windowStream1);
+    auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
+    workerConfig1->physicalSources.add(windowSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -182,8 +182,8 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
     srcConf2->setNumberOfBuffersToProduce(20);
-    auto windowStream2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
-    workerConfig2->physicalSources.add(windowStream2);
+    auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
+    workerConfig2->physicalSources.add(windowSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -255,8 +255,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
                                          ->addField(createField("quantity", UINT64));)";
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -269,14 +269,14 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
-    auto windowStream1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
-    workerConfig1->physicalSources.add(windowStream1);
+    auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
+    workerConfig1->physicalSources.add(windowSource1);
     // Add source 2
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
     srcConf2->setNumberOfBuffersToProduce(20);
-    auto windowStream2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
-    workerConfig1->physicalSources.add(windowStream2);
+    auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
+    workerConfig1->physicalSources.add(windowSource2);
     // Start Worker
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -349,8 +349,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     coConf->clear();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -362,8 +362,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->setNumberOfBuffersToProduce(20);
-    auto windowStream1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
-    workerConfig1->physicalSources.add(windowStream1);
+    auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
+    workerConfig1->physicalSources.add(windowSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -376,8 +376,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
     srcConf2->setNumberOfBuffersToProduce(20);
-    auto windowStream2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
-    workerConfig2->physicalSources.add(windowStream2);
+    auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
+    workerConfig2->physicalSources.add(windowSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -449,9 +449,9 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     coConf->clear();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV", qnv);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
-    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("SimplePatternTest: Coordinator started successfully");
@@ -463,20 +463,20 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(6);
     srcConf1->setNumberOfBuffersToProduce(10);
-    auto windowStream1 = PhysicalSource::create("QnV", "test_stream_R2000070", srcConf1);
-    workerConfig1->physicalSources.add(windowStream1);
+    auto windowSource1 = PhysicalSource::create("QnV", "test_stream_R2000070", srcConf1);
+    workerConfig1->physicalSources.add(windowSource1);
     //Add Source 2
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(6);
     srcConf2->setNumberOfBuffersToProduce(10);
-    auto windowStream2 = PhysicalSource::create("QnV2", "test_stream_R20000702", srcConf2);
-    workerConfig1->physicalSources.add(windowStream2);
+    auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_R20000702", srcConf2);
+    workerConfig1->physicalSources.add(windowSource2);
     //Add Source 3
     srcConf3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf3->setNumberOfTuplesToProducePerBuffer(6);
     srcConf3->setNumberOfBuffersToProduce(10);
-    auto windowStream3 = PhysicalSource::create("QnV1", "test_stream_R2000073", srcConf3);
-    workerConfig1->physicalSources.add(windowStream3);
+    auto windowSource3 = PhysicalSource::create("QnV1", "test_stream_R2000073", srcConf3);
+    workerConfig1->physicalSources.add(windowSource3);
     //Start Worker
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

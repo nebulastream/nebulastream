@@ -309,9 +309,9 @@ std::string RemoteClient::getQueries(const QueryStatus& status) {
     return jsonReturn.serialize();
 }
 
-std::string RemoteClient::getPhysicalStreams() {
+std::string RemoteClient::getPhysicalSources() {
     auto restMethod = web::http::methods::GET;
-    auto path = "sourceCatalog/allPhysicalStream";
+    auto path = "sourceCatalog/allPhysicalSource";
     auto message = "";
 
     web::json::value jsonReturn;
@@ -336,13 +336,13 @@ std::string RemoteClient::getPhysicalStreams() {
     return jsonReturn.serialize();
 }
 
-bool RemoteClient::addLogicalStream(const SchemaPtr schema, const std::string& streamName) {
+bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& sourceName) {
     auto restMethod = web::http::methods::POST;
-    auto path = "sourceCatalog/addLogicalStream-ex";
+    auto path = "sourceCatalog/addLogicalSource-ex";
 
     auto serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     SerializableNamedSchema request;
-    request.set_streamname(streamName);
+    request.set_sourcename(sourceName);
     request.set_allocated_schema(serializableSchema.get());
     std::string msg = request.SerializeAsString();
     request.release_schema();
@@ -369,9 +369,9 @@ bool RemoteClient::addLogicalStream(const SchemaPtr schema, const std::string& s
     return jsonReturn.at("Success").as_bool();
 }
 
-std::string RemoteClient::getLogicalStreams() {
+std::string RemoteClient::getLogicalSources() {
     auto restMethod = web::http::methods::GET;
-    auto path = "sourceCatalog/allLogicalStream";
+    auto path = "sourceCatalog/allLogicalSource";
     auto message = "";
 
     web::json::value jsonReturn;

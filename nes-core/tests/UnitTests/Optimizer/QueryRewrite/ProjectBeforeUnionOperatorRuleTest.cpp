@@ -33,7 +33,7 @@ class ProjectBeforeUnionOperatorRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -50,7 +50,7 @@ class ProjectBeforeUnionOperatorRuleTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ProjectBeforeUnionOperatorRuleTest test class."); }
 
-    void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) const {
+    void setupSensorNodeAndSourceCatalog(const SourceCatalogPtr& sourceCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
         LogicalSourcePtr logicalSource1 = LogicalSource::create("x", schema);
@@ -59,18 +59,18 @@ class ProjectBeforeUnionOperatorRuleTest : public testing::Test {
         PhysicalSourcePtr physicalSource2 = PhysicalSource::create("y", "y1");
         SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
         SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
-        streamCatalog->addPhysicalSource("x", sce1);
-        streamCatalog->addPhysicalSource("y", sce2);
-        streamCatalog->addLogicalStream("x", schema);
-        streamCatalog->addLogicalStream("y", schema);
+        sourceCatalog->addPhysicalSource("x", sce1);
+        sourceCatalog->addPhysicalSource("y", sce2);
+        sourceCatalog->addLogicalSource("x", schema);
+        sourceCatalog->addLogicalSource("y", schema);
     }
 };
 
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferentSchemas) {
 
     // Prepare
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
     Query query = Query::from("y").unionWith(subQuery).sink(printSinkDescriptor);
@@ -79,7 +79,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_TRUE(projectionOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto projectBeforeUnionOperatorRule = Optimizer::ProjectBeforeUnionOperatorRule::create();
@@ -98,8 +98,8 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas) {
 
     // Prepare
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("x");
     Query query = Query::from("x").unionWith(subQuery).sink(printSinkDescriptor);
@@ -108,7 +108,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_TRUE(projectionOperators.empty());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto projectBeforeUnionOperatorRule = Optimizer::ProjectBeforeUnionOperatorRule::create();

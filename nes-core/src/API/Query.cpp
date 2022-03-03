@@ -20,7 +20,7 @@
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -82,10 +82,10 @@ namespace CEPOperatorBuilder {
 And::And(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
-    //here, we add artificial key attributes to the streams in order to reuse the join-logic later
+    //here, we add artificial key attributes to the sources in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignmentLeft();
     std::string cepRightKey = keyAssignmentRight();
-    //next: map the attributes with value 1 to the left and right stream
+    //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     //last, define the artificial attributes as key attributes
@@ -102,10 +102,10 @@ Query& And::window(const Windowing::WindowTypePtr& windowType) const {
 Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
-    //here, we add artificial key attributes to the streams in order to reuse the join-logic later
+    //here, we add artificial key attributes to the sources in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignmentLeft();
     std::string cepRightKey = keyAssignmentRight();
-    //next: map the attributes with value 1 to the left and right stream
+    //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     //last, define the artificial attributes as key attributes
@@ -116,12 +116,12 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     NES_DEBUG("Sequence enters window function");
     auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
-    std::string streamNameLeft = originalQuery.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
-    std::string streamNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
-    NES_DEBUG("ExpressionItem for Left stream " << streamNameLeft);
-    NES_DEBUG("ExpressionItem for Right stream " << streamNameRight);
+    std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
+    std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
+    NES_DEBUG("ExpressionItem for Left source " << sourceNameLeft);
+    NES_DEBUG("ExpressionItem for Right source " << sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, onLeftKey, onRightKey, windowType)
-        .filter(Attribute(streamNameLeft) < Attribute(streamNameRight));//call original seqWith() function
+        .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight));//call original seqWith() function
 }
 
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
@@ -146,11 +146,11 @@ Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 
 Query::Query(const Query& query) = default;
 
-Query Query::from(const std::string& sourceStreamName) {
-    NES_DEBUG("Query: create query for input stream " << sourceStreamName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(sourceStreamName));
+Query Query::from(const std::string& sourceSourceName) {
+    NES_DEBUG("Query: create query for input source " << sourceSourceName);
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceSourceName));
     auto queryPlan = QueryPlan::create(sourceOperator);
-    queryPlan->setSourceConsumed(sourceStreamName);
+    queryPlan->setSourceConsumed(sourceSourceName);
     return Query(queryPlan);
 }
 
@@ -160,8 +160,8 @@ Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
     return *this;
 }
 
-Query& Query::as(const std::string& newStreamName) {
-    auto renameOperator = LogicalOperatorFactory::createRenameStreamOperator(newStreamName);
+Query& Query::as(const std::string& newSourceName) {
+    auto renameOperator = LogicalOperatorFactory::createRenameSourceOperator(newSourceName);
     queryPlan->appendOperatorAsNewRoot(renameOperator);
     return *this;
 }
@@ -304,17 +304,17 @@ Query& Query::seqWith(const Query& subQueryRhs,
 }
 
 Query& Query::orWith(const Query& subQueryRhs) {
-    NES_DEBUG("Query: add map operator that add the original stream name to the left and right side streams of the OR ");
+    NES_DEBUG("Query: add map operator that add the original source name to the left and right side sources of the OR ");
     //get source names
-    auto streamNameLeft = this->getQueryPlan()->getSourceConsumed();
+    auto sourceNameLeft = this->getQueryPlan()->getSourceConsumed();
     auto subQuery = const_cast<Query&>(subQueryRhs);
-    auto streamNameRight = subQuery.getQueryPlan()->getSourceConsumed();
-    auto maxLength = std::max(streamNameRight.length(), streamNameLeft.length());
-    streamNameLeft.resize(maxLength, '_');
-    streamNameRight.resize(maxLength, '_');
-    //map the attributes with value streamNameLeft and streamNameRight to the left and right stream
-    this->map(Attribute("StreamName") = streamNameLeft);
-    subQuery.map(Attribute("StreamName") = streamNameRight);
+    auto sourceNameRight = subQuery.getQueryPlan()->getSourceConsumed();
+    auto maxLength = std::max(sourceNameRight.length(), sourceNameLeft.length());
+    sourceNameLeft.resize(maxLength, '_');
+    sourceNameRight.resize(maxLength, '_');
+    //map the attributes with value sourceNameLeft and sourceNameRight to the left and right source
+    this->map(Attribute("SourceName") = sourceNameLeft);
+    subQuery.map(Attribute("SourceName") = sourceNameRight);
     NES_DEBUG("Query: finally we translate the OR into a union OP ");
     return Query::unionWith(subQuery);
 }

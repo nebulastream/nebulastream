@@ -75,7 +75,7 @@ class ILPPlacementTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down ILPPlacementTest test class." << std::endl; }
 
-    void setupTopologyAndStreamCatalogForILP() {
+    void setupTopologyAndSourceCatalogForILP() {
 
         topologyForILP = Topology::create();
 
@@ -100,18 +100,18 @@ class ILPPlacementTest : public testing::Test {
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
-        const std::string streamName = "car";
+        const std::string sourceName = "car";
 
-        streamCatalogForILP = std::make_shared<SourceCatalog>(queryParsingService);
-        streamCatalogForILP->addLogicalStream(streamName, schema);
-        auto logicalSource = streamCatalogForILP->getStreamForLogicalStream(streamName);
+        sourceCatalogForILP = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalogForILP->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalogForILP->getSourceForLogicalSource(sourceName);
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
-        SourceCatalogEntryPtr streamCatalogEntry1 =
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+        SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
-        streamCatalogForILP->addPhysicalSource(streamName, streamCatalogEntry1);
+        sourceCatalogForILP->addPhysicalSource(sourceName, sourceCatalogEntry1);
     }
 
     void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode) {
@@ -152,7 +152,7 @@ class ILPPlacementTest : public testing::Test {
         operatorNode->addProperty("cost", cost);
     }
 
-    SourceCatalogPtr streamCatalogForILP;
+    SourceCatalogPtr sourceCatalogForILP;
     TopologyPtr topologyForILP;
 };
 
@@ -239,10 +239,10 @@ TEST_F(ILPPlacementTest, Z3Test) {
 /* Test query placement with ILP strategy - simple filter query */
 //TODO: enable this test after fixing #2485
 TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
-    setupTopologyAndStreamCatalogForILP();
+    setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
@@ -259,7 +259,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -297,10 +297,10 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
 //TODO: enable this test after fixing #2485
 TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
 
-    setupTopologyAndStreamCatalogForILP();
+    setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
@@ -320,7 +320,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -359,10 +359,10 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
 //TODO: enable this test after fixing #2485
 TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
 
-    setupTopologyAndStreamCatalogForILP();
+    setupTopologyAndSourceCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalogForILP);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
@@ -382,7 +382,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 

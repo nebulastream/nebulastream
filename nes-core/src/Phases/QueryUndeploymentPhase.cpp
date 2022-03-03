@@ -94,7 +94,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, const std::vector<Execut
         NES_DEBUG("QueryUndeploymentPhase::stopQuery at execution node with id=" << executionNode->getId()
                                                                                  << " and IP=" << rpcAddress);
         bool success = workerRPCClient->stopQuery(rpcAddress, queryId);
-        //stop is currently sync because we need the end of stream message
+        //stop is currently sync because we need the end of source message
         //bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, *queue);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::stopQuery " << queryId << " to " << rpcAddress << " successful");

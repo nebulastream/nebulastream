@@ -17,7 +17,7 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -32,7 +32,7 @@
 namespace NES::Optimizer {
 
 SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks)
-    : streamCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks) {}
+    : sourceCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks) {
     return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks);
@@ -43,12 +43,12 @@ void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
     auto queryPlan = inputQuery->getQueryPlan();
 
     // Checking if the logical source can be found in the source catalog
-    logicalSourceValidityCheck(queryPlan, streamCatalog);
+    logicalSourceValidityCheck(queryPlan, sourceCatalog);
     // Checking if the physical source can be found in the source catalog
-    physicalSourceValidityCheck(queryPlan, streamCatalog);
+    physicalSourceValidityCheck(queryPlan, sourceCatalog);
 
     try {
-        auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+        auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
         typeInferencePhase->execute(queryPlan);
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
@@ -112,10 +112,10 @@ void SemanticQueryValidation::createExceptionForPredicate(std::string& predicate
     findAndReplaceAll(predicateString, "&&", " && ");
     findAndReplaceAll(predicateString, "||", " || ");
 
-    // Removing logical stream names for better readability
-    //    auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
-    //    for (const auto& logicalStream : allLogicalStreams) {
-    //        eraseAllSubStr(predicateString, logicalStream.first);
+    // Removing logical source names for better readability
+    //    auto allLogicalSources = sourceCatalog->getAllLogicalSourceAsString();
+    //    for (const auto& logicalSource : allLogicalSources) {
+    //        eraseAllSubStr(predicateString, logicalSource.first);
     //    }
 
     throw InvalidQueryException("Unsatisfiable Query due to filter condition:\n" + predicateString + "\n");
@@ -145,13 +145,13 @@ void SemanticQueryValidation::logicalSourceValidityCheck(const NES::QueryPlanPtr
     for (const auto& source : sourceOperators) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
-        // Filtering for logical stream sources
-        if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-            auto streamName = sourceDescriptor->getLogicalSourceName();
+        // Filtering for logical source sources
+        if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>()) {
+            auto sourceName = sourceDescriptor->getLogicalSourceName();
 
-            // Making sure that all logical stream sources are present in the stream catalog
-            if (!sourceCatalog->containsLogicalSource(streamName)) {
-                throw InvalidQueryException("The logical source '" + streamName + "' can not be found in the SourceCatalog\n");
+            // Making sure that all logical source sources are present in the source catalog
+            if (!sourceCatalog->containsLogicalSource(sourceName)) {
+                throw InvalidQueryException("The logical source '" + sourceName + "' can not be found in the SourceCatalog\n");
             }
         }
     }

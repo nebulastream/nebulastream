@@ -45,9 +45,9 @@ class SourceCatalogEntry {
 
   public:
     /**
-     * @brief Create the shared pointer for the stream catalog entry
-     * @param physicalSource: physical stream name
-     * @param logicalSource: the logical stream name
+     * @brief Create the shared pointer for the source catalog entry
+     * @param physicalSource: physical source name
+     * @param logicalSource: the logical source name
      * @param topologyNode: the topology topologyNode
      * @return shared pointer to Source catalog entry
      */
@@ -75,8 +75,8 @@ class SourceCatalogEntry {
     const TopologyNodePtr& getNode() const;
 
     /**
-     * @brief Get the string rep of the stream catalog entry
-     * @return string rep of the stream catalog entry
+     * @brief Get the string rep of the source catalog entry
+     * @return string rep of the source catalog entry
      */
     std::string toString();
 

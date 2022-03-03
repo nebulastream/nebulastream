@@ -24,7 +24,7 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -56,7 +56,7 @@ class LogicalSourceExpansionRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down LogicalSourceExpansionRuleTest test class."); }
 };
 
-void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
+void setupSensorNodeAndSourceCatalog(const SourceCatalogPtr& sourceCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
@@ -67,26 +67,26 @@ void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
     SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
 
-    streamCatalog->addPhysicalSource("default_logical", sce1);
-    streamCatalog->addPhysicalSource("default_logical", sce2);
+    sourceCatalog->addPhysicalSource("default_logical", sce1);
+    sourceCatalog->addPhysicalSource("default_logical", sce2);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    const std::string logicalStreamName = "default_logical";
-    Query query = Query::from(logicalStreamName).sink(printSinkDescriptor);
+    const std::string logicalSourceName = "default_logical";
+    Query query = Query::from(logicalSourceName).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
+    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1u);
@@ -94,12 +94,12 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
-    const std::string logicalStreamName = "default_logical";
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+    const std::string logicalSourceName = "default_logical";
 
     // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(logicalSourceName));
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     auto sinkOperator1 = LogicalOperatorFactory::createSinkOperator(printSinkDescriptor);
@@ -116,11 +116,11 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     queryPlan->setQueryId(queryId);
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
+    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 2U);
@@ -128,12 +128,12 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
-    const std::string logicalStreamName = "default_logical";
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
+    const std::string logicalSourceName = "default_logical";
 
     // Prepare
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create(logicalStreamName));
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(logicalSourceName));
 
     auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
     filterOperator->addChild(sourceOperator);
@@ -153,11 +153,11 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     queryPlan->setQueryId(queryId);
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
+    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 2U);
@@ -165,22 +165,22 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    const std::string logicalStreamName = "default_logical";
+    const std::string logicalSourceName = "default_logical";
     Query query =
-        Query::from(logicalStreamName).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+        Query::from(logicalSourceName).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
+    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size());
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);
@@ -188,15 +188,15 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMergeOperator) {
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    setupSensorNodeAndStreamCatalog(streamCatalog);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    const std::string logicalStreamName = "default_logical";
-    Query subQuery = Query::from(logicalStreamName).map(Attribute("value") = 50);
+    const std::string logicalSourceName = "default_logical";
+    Query subQuery = Query::from(logicalSourceName).map(Attribute("value") = 50);
 
-    Query query = Query::from(logicalStreamName)
+    Query query = Query::from(logicalSourceName)
                       .map(Attribute("value") = 40)
                       .unionWith(subQuery)
                       .filter(Attribute("id") < 45)
@@ -204,11 +204,11 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
-    std::vector<TopologyNodePtr> sourceTopologyNodes = streamCatalog->getSourceNodesForLogicalStream(logicalStreamName);
+    std::vector<TopologyNodePtr> sourceTopologyNodes = sourceCatalog->getSourceNodesForLogicalSource(logicalSourceName);
     EXPECT_EQ(updatedPlan->getSourceOperators().size(), sourceTopologyNodes.size() * 2);
     std::vector<OperatorNodePtr> rootOperators = updatedPlan->getRootOperators();
     EXPECT_EQ(rootOperators.size(), 1U);

@@ -157,9 +157,9 @@ std::string Schema::toString() const {
     return ss.str();
 }
 
-std::string Schema::getStreamNameQualifier() const {
+std::string Schema::getSourceNameQualifier() const {
     if (fields.empty()) {
-        return "Unnamed Stream";
+        return "Unnamed Source";
     }
     return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
 }

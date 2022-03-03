@@ -20,7 +20,7 @@
 namespace NES {
 
 /**
- * @brief Logical unary operator. It hat at most one input data stream.
+ * @brief Logical unary operator. It hat at most one input data source.
  */
 class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperatorNode {
 

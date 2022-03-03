@@ -49,7 +49,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -66,40 +66,40 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-        streamCatalog->addLogicalStream("car", schema);
-        streamCatalog->addLogicalStream("bike", schema);
-        streamCatalog->addLogicalStream("truck", schema);
+        sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+        sourceCatalog->addLogicalSource("car", schema);
+        sourceCatalog->addLogicalSource("bike", schema);
+        sourceCatalog->addLogicalSource("truck", schema);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
 
-        auto logicalSourceCar = streamCatalog->getStreamForLogicalStream("car");
+        auto logicalSourceCar = sourceCatalog->getSourceForLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
-        SourceCatalogEntryPtr streamCatalogEntry1 =
+        SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry2 =
+        SourceCatalogEntryPtr sourceCatalogEntry2 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
-        streamCatalog->addPhysicalSource("car", streamCatalogEntry1);
-        streamCatalog->addPhysicalSource("car", streamCatalogEntry2);
+        sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
+        sourceCatalog->addPhysicalSource("car", sourceCatalogEntry2);
 
-        auto logicalSourceBike = streamCatalog->getStreamForLogicalStream("bike");
+        auto logicalSourceBike = sourceCatalog->getSourceForLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
-        SourceCatalogEntryPtr streamCatalogEntry3 =
+        SourceCatalogEntryPtr sourceCatalogEntry3 =
             std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry4 =
+        SourceCatalogEntryPtr sourceCatalogEntry4 =
             std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode2);
-        streamCatalog->addPhysicalSource("bike", streamCatalogEntry3);
-        streamCatalog->addPhysicalSource("bike", streamCatalogEntry4);
+        sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry3);
+        sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry4);
 
-        auto logicalSourceTruck = streamCatalog->getStreamForLogicalStream("truck");
+        auto logicalSourceTruck = sourceCatalog->getSourceForLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
-        SourceCatalogEntryPtr streamCatalogEntry5 =
+        SourceCatalogEntryPtr sourceCatalogEntry5 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry6 =
+        SourceCatalogEntryPtr sourceCatalogEntry6 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
-        streamCatalog->addPhysicalSource("truck", streamCatalogEntry5);
-        streamCatalog->addPhysicalSource("truck", streamCatalogEntry6);
+        sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry5);
+        sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry6);
     }
 
     /* Will be called before a test is executed. */
@@ -114,7 +114,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog,Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog,Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -142,7 +142,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -192,7 +192,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -223,7 +223,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -277,7 +277,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
 
     // Prepare
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -295,7 +295,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -336,7 +336,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesMoreThanTwoQueries) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -362,7 +362,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
     queryPlan3 = topologySpecificReWrite->execute(queryPlan3);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
     typeInferencePhase->execute(queryPlan3);
@@ -425,7 +425,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStopChangeLog) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -444,7 +444,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -505,7 +505,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -536,7 +536,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     queryPlan1 = topologySpecificReWrite->execute(queryPlan1);
     queryPlan2 = topologySpecificReWrite->execute(queryPlan2);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 

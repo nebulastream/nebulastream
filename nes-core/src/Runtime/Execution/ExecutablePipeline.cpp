@@ -189,7 +189,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
         case HardEndOfStream:
         case SoftEndOfStream: {
             auto targetQep = task.getUserData<std::weak_ptr<ExecutableQueryPlan>>();
-            //we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
+            //we mantain a set of producers, and we will only trigger the end of source once all producers have sent the EOS, for this we decrement the counter
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1) {//all producers sent EOS
                 NES_TRACE("Requested reconfiguration of pipeline belonging to subplanId: " << querySubPlanId << " stage id: "

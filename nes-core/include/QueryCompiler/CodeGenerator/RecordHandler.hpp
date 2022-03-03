@@ -21,7 +21,7 @@ namespace QueryCompilation {
 
 /**
  * @brief The record handler allows a generatable
- * operator to access and modify attributes of the current stream record.
+ * operator to access and modify attributes of the current source record.
  * Furthermore, it guarantees that modifications to record attributes are correctly tracked.
  */
 class RecordHandler {

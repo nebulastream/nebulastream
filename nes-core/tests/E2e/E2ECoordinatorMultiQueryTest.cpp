@@ -70,8 +70,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::numberOfSlots(8),
                                           TestUtils::sourceType("DefaultSource"),
-                                          TestUtils::logicalStreamName("default_logical"),
-                                          TestUtils::physicalStreamName("test")});
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -153,8 +153,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     auto worker = TestUtils::startWorker(
         {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
             TestUtils::sourceType("DefaultSource"),
-            TestUtils::logicalStreamName("default_logical"),
-            TestUtils::physicalStreamName("test")});
+            TestUtils::logicalSourceName("default_logical"),
+            TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -251,18 +251,18 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::logicalStreamName("QnV"),
+                                          TestUtils::logicalSourceName("QnV"),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
                                           TestUtils::sourceGatheringInterval(1000),
-                                          TestUtils::physicalStreamName("test_stream")});
+                                          TestUtils::physicalSourceName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -354,18 +354,18 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::logicalStreamName("window"),
+                                          TestUtils::logicalSourceName("window"),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceGatheringInterval(1000),
-                                          TestUtils::physicalStreamName("test_stream")});
+                                          TestUtils::physicalSourceName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -456,18 +456,18 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::logicalStreamName("window"),
+                                          TestUtils::logicalSourceName("window"),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::sourceGatheringInterval(1000),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::physicalStreamName("test_stream")});
+                                          TestUtils::physicalSourceName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;

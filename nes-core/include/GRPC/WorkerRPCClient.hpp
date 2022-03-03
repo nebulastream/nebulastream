@@ -147,7 +147,7 @@ class WorkerRPCClient {
     /**
      * @brief Requests remote worker to start buffering data on a single NetworkSink identified by
      * a query sub plan Id and a global sinkId.
-     * Once buffering starts, the Network Sink no longer sends data downstream
+     * Once buffering starts, the Network Sink no longer sends data downsource
      * @param ipAddress
      * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
@@ -156,7 +156,7 @@ class WorkerRPCClient {
     static bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
 
     /**
-     * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
+     * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downsource node)
      * @param ipAddress
      * @param newNodeId : the id of the node that the Network Sink will send data to after reconfiguration
      * @param newHostname : the hostname of the node that the NetworkSink should send data to

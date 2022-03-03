@@ -54,10 +54,10 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
                             + pinnedOperator->toString());
         }
         auto nodeId = std::any_cast<uint64_t>(value);
-        auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
+        auto nodeWithPhysicalSource = topology->findNodeWithId(nodeId);
         //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
-        // two physical streams located on same physical node)
-        topologyNodesWithUpStreamPinnedOperators.insert(nodeWithPhysicalStream);
+        // two physical sources located on same physical node)
+        topologyNodesWithUpStreamPinnedOperators.insert(nodeWithPhysicalSource);
     }
 
     //2. Find the topology nodes that will host downstream operators
@@ -70,8 +70,8 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
                             + pinnedOperator->toString());
         }
         auto nodeId = std::any_cast<uint64_t>(value);
-        auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
-        topologyNodesWithDownStreamPinnedOperators.insert(nodeWithPhysicalStream);
+        auto nodeWithPhysicalSource = topology->findNodeWithId(nodeId);
+        topologyNodesWithDownStreamPinnedOperators.insert(nodeWithPhysicalSource);
     }
 
     //3. Performs path selection
