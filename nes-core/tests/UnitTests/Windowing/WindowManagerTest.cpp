@@ -185,6 +185,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
                                                                 trigger,
                                                                 triggerAction,
                                                                 0);
+    windowDef->setNumberOfInputEdges(1);
 
     auto* windowManager = new WindowManager(windowDef->getWindowType(), 0, 1);
     uint64_t ts = 10;
@@ -243,6 +244,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
                                                    trigger,
                                                    triggerAction,
                                                    0);
+    windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -338,6 +340,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
                                                    trigger,
                                                    triggerAction,
                                                    0);
+    windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -435,6 +438,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
                                                    trigger,
                                                    triggerAction,
                                                    0);
+    windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -522,6 +526,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
                                                    trigger,
                                                    triggerAction,
                                                    0);
+    windowDef->setNumberOfInputEdges(1);
 
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -605,6 +610,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
                                                      trigger,
                                                      triggerAction,
                                                      0);
+    windowDef->setNumberOfInputEdges(1);
     auto exec = ExecutableSumAggregation<int64_t>::create();
 
     auto windowInputSchema = Schema::create();
@@ -696,6 +702,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
                                                    triggerAction,
                                                    0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
+    windowDef->setNumberOfInputEdges(1);
 
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -784,6 +791,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
                                                    trigger,
                                                    triggerAction,
                                                    0);
+    windowDef->setNumberOfInputEdges(1);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))

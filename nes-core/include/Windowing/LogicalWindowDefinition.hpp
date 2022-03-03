@@ -209,7 +209,7 @@ class LogicalWindowDefinition {
     WindowTypePtr windowType;
     std::vector<FieldAccessExpressionNodePtr> onKey;
     DistributionCharacteristicPtr distributionType;
-    uint64_t numberOfInputEdges;
+    uint64_t numberOfInputEdges = 0;
     uint64_t originId{};
     uint64_t allowedLateness;
 };

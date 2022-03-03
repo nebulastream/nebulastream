@@ -40,6 +40,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
           id(id), partialAggregateInitialValue(partialAggregateInitialValue) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
+        NES_ASSERT(this->windowDefinition->getNumberOfInputEdges() >= 0,
+                   "A window handler should always have at least one input edge");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
         handlerType = this->windowDefinition->getDistributionType()->toString();
