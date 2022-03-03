@@ -77,7 +77,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
         for (int i = 0; i < 5; i++) {
             sleep(2);
             client->stopQuery(queryId);
-            if (!crd->getQueryCatalog()->isQueryRunning(queryId)) {
+            if (crd->getQueryCatalog()->queryExists(queryId) && !crd->getQueryCatalog()->isQueryRunning(queryId)) {
                 return true;
             }
         }

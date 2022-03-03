@@ -362,6 +362,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
+            return;
         }
 
         try {
