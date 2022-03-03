@@ -46,7 +46,8 @@ bool SliceMergingOperator::isIdentical(NodePtr const& rhs) const {
 bool SliceMergingOperator::equal(NodePtr const& rhs) const { return rhs->instanceOf<SliceMergingOperator>(); }
 
 OperatorNodePtr SliceMergingOperator::copy() {
-    auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition, id);
+    auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition, id)->as<SliceMergingOperator>();
+    copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
