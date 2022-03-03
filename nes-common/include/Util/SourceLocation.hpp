@@ -22,9 +22,8 @@
 namespace std {
 using source_location = std::experimental::source_location;
 }
-
 #else
-
+#include <stdint.h>
 namespace std {
 struct source_location {
     static constexpr source_location

@@ -62,6 +62,7 @@ RuntimePathConfig loadRuntimePathConfig() {
 #if defined(__APPLE__)
     runtimePathConfig.libs.push_back("-lnes");
     runtimePathConfig.libs.push_back("-lnes-common");
+    runtimePathConfig.libs.push_back("-lc++");
 #endif
 
     if (isInUNIXInstallDir()) {

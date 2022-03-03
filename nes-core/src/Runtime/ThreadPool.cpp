@@ -27,6 +27,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <Exceptions/TaskExecutionException.hpp>
 
 #ifdef __linux__
 #include <Runtime/HardwareManager.hpp>
@@ -38,61 +39,65 @@
 #endif
 namespace NES::Runtime {
 
-        ThreadPool::ThreadPool(uint64_t nodeId,
-                               QueryManagerPtr queryManager,
-                               uint32_t numThreads,
-                               std::vector<BufferManagerPtr> bufferManagers,
-                               uint64_t numberOfBuffersPerWorker,
-                               HardwareManagerPtr hardwareManager,
-                               std::vector<uint64_t> workerPinningPositionList,
-                               std::vector<uint64_t> threadToQueueMapping)
-            : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
-              numberOfBuffersPerWorker(numberOfBuffersPerWorker), workerPinningPositionList(workerPinningPositionList),
-              threadToQueueMapping(threadToQueueMapping), hardwareManager(hardwareManager) {}
+ThreadPool::ThreadPool(uint64_t nodeId,
+                       QueryManagerPtr queryManager,
+                       uint32_t numThreads,
+                       std::vector<BufferManagerPtr> bufferManagers,
+                       uint64_t numberOfBuffersPerWorker,
+                       HardwareManagerPtr hardwareManager,
+                       std::vector<uint64_t> workerPinningPositionList,
+                       std::vector<uint64_t> threadToQueueMapping)
+    : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker), workerPinningPositionList(workerPinningPositionList),
+      threadToQueueMapping(threadToQueueMapping), hardwareManager(hardwareManager) {}
 
-        ThreadPool::~ThreadPool() {
-            NES_DEBUG("Threadpool: Destroying Thread Pool");
-            stop();
-            NES_DEBUG("QueryManager: Destroy threads Queue");
-            threads.clear();
-        }
+ThreadPool::~ThreadPool() {
+    NES_DEBUG("Threadpool: Destroying Thread Pool");
+    stop();
+    NES_DEBUG("QueryManager: Destroy threads Queue");
+    threads.clear();
+}
 
-        void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
-            while (running) {
-                try {
-                    switch (queryManager->processNextTask(running, workerContext)) {
-                        case ExecutionResult::Finished:
-                        case ExecutionResult::Ok: {
-                            break;
-                        }
-                        case ExecutionResult::AllFinished: {
-                            running = false;
-                            break;
-                        }
-                        case ExecutionResult::Error: {
-                            // TODO add here error handling (see issues 524 and 463)
-                            NES_ERROR("Threadpool: finished task with error");
-                            running = false;
-                            break;
-                        }
-                        default: {
-                            NES_THROW_RUNTIME_ERROR("unsupported");
-                        }
-                    }
-                } catch (std::exception const& error) {
-                    NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
-                    NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
+void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
+    while (running) {
+        try {
+            switch (queryManager->processNextTask(running, workerContext)) {
+                case ExecutionResult::Finished:
+                case ExecutionResult::Ok: {
+                    break;
+                }
+                case ExecutionResult::AllFinished: {
+                    NES_DEBUG("Threadpool got poison pill - shutting down...");
+                    running = false;
+                    break;
+                }
+                case ExecutionResult::Error: {
+                    // TODO add here error handling (see issues 524 and 463)
+                    NES_ERROR("Threadpool: finished task with error");
+                    running = false;
+                    break;
+                }
+                default: {
+                    NES_ASSERT(false, "unsupported");
                 }
             }
-            // to drain the queue for pending reconfigurations
-            try {
-                queryManager->processNextTask(running, workerContext);
-            } catch (std::exception const& error) {
-                NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
-                NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
-            }
-            NES_DEBUG("Threadpool: end runningRoutine");
+        } catch (TaskExecutionException const& taskException) {
+            NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << taskException.what());
+            queryManager->notifyTaskFailure(taskException.getExecutable(), taskException.what());
+        } catch (std::exception const& error) {
+            NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
+            NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
         }
+    }
+    // to drain the queue for pending reconfigurations
+    try {
+        queryManager->processNextTask(running, workerContext);
+    } catch (std::exception const& error) {
+        NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
+        NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
+    }
+    NES_DEBUG("Threadpool: end runningRoutine");
+}
 
         bool ThreadPool::start() {
             auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
@@ -126,7 +131,6 @@ namespace NES::Runtime {
                             NES_ERROR("Error calling pthread_setaffinity_np: " << rc);
                         } else {
                             NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
-                            std::cout << "worker " << i << " pins to core=" << workerPinningPositionList[i] << " and queue=" << queueIdx << std::endl;
                         }
                     }
 #endif
