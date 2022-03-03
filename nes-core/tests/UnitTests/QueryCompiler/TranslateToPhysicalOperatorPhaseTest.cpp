@@ -122,7 +122,6 @@ class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
         auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))},
                                                                 windowType,
                                                                 Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                                1,
                                                                 triggerPolicy,
                                                                 triggerAction,
                                                                 0);

@@ -41,7 +41,6 @@ class LogicalWindowDefinition {
                                      std::vector<WindowAggregationPtr> windowAggregations,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
-                                     uint64_t numberOfInputEdges,
                                      WindowTriggerPolicyPtr triggerPolicy,
                                      WindowActionDescriptorPtr triggerAction,
                                      uint64_t allowedLateness);
@@ -59,7 +58,6 @@ class LogicalWindowDefinition {
     static LogicalWindowDefinitionPtr create(std::vector<WindowAggregationPtr> windowAggregations,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
-                                             uint64_t numberOfInputEdges,
                                              const WindowTriggerPolicyPtr& triggerPolicy,
                                              const WindowActionDescriptorPtr& triggerAction,
                                              uint64_t allowedLateness);
@@ -78,7 +76,6 @@ class LogicalWindowDefinition {
                                              std::vector<WindowAggregationPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
-                                             uint64_t numberOfInputEdges,
                                              const WindowTriggerPolicyPtr& triggerPolicy,
                                              const WindowActionDescriptorPtr& triggerAction,
                                              uint64_t allowedLateness);

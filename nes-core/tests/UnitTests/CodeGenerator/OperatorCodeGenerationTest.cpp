@@ -159,7 +159,9 @@ class SelectionDataGenSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1, 0, 12,
+                          1,
+                          0,
+                          12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 
@@ -210,7 +212,9 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1, 0, 12,
+                          1,
+                          0,
+                          12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 
@@ -278,7 +282,9 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1, 0, 12,
+                          1,
+                          0,
+                          12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 
@@ -323,7 +329,9 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                           std::move(bPtr),
                           std::move(dPtr),
                           pNum_buffers_to_process,
-                          1, 0, 12,
+                          1,
+                          0,
+                          12,
                           GatheringMode::INTERVAL_MODE,
                           {}) {}
 
@@ -563,7 +571,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
         {sum},
         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
-        1,
         trigger,
         triggerAction,
         0);
@@ -608,7 +615,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
         {sum},
         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
-        1,
         trigger,
         triggerAction,
         0);
@@ -692,7 +698,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
                                         {sum},
                                         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
                                         DistributionCharacteristic::createCompleteWindowType(),
-                                        1,
                                         trigger,
                                         triggerAction,
                                         0);
@@ -843,7 +848,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
                                         {sum},
                                         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
                                         DistributionCharacteristic::createCompleteWindowType(),
-                                        1,
                                         trigger,
                                         triggerAction,
                                         0);
@@ -1454,7 +1458,6 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
             {sum},
             TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
             DistributionCharacteristic::createCompleteWindowType(),
-            1,
             trigger,
             triggerAction,
             0);
@@ -1545,7 +1548,6 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
         {sum},
         TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value")), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
-        1,
         trigger,
         triggerAction,
         0);
@@ -1628,7 +1630,6 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
         {sum},
         TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value"), Seconds()), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
-        1,
         trigger,
         triggerAction,
         0);
