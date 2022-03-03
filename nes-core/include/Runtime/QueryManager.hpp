@@ -1,19 +1,19 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
+#define NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
 
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
@@ -48,304 +48,293 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
-#endif
 
 namespace NES {
-namespace Runtime {
+        namespace Runtime {
 
-class ThreadPool;
-using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this atomic in c++20
+        class ThreadPool;
+        using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this atomic in c++20
 
-/**
- * @brief the query manager is the central class to process queries.
- * It is source-driven. Each incoming buffer will add a task to the queue.
- * The query manager maintains three structures:
- * 1.) a data_source map to map one data source to N queries
- * 2.) a window map to map one window to N queries TODO:maybe should be removed later
- * 3.) a data_sink to map one data sink to N queries
- * @Limitations:
- *    - statistics do not cover intermediate buffers
+        /**
+* @brief the query manager is the central class to process queries.
+* It is source-driven. Each incoming buffer will add a task to the queue.
+* The query manager maintains three structures:
+* 1.) a data_source map to map one data source to N queries
+* 2.) a window map to map one window to N queries TODO:maybe should be removed later
+* 3.) a data_sink to map one data sink to N queries
+* @Limitations:
+*    - statistics do not cover intermediate buffers
+*/
+        class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable {
+            using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager, false>;
+            using inherited1 = Reconfigurable;
+
+            enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
+            enum QueryMangerMode : uint8_t { Dynamic, Static, NumaAware, Invalid };
+
+          public:
+            QueryManager() = delete;
+            QueryManager(const QueryManager&) = delete;
+            QueryManager& operator=(const QueryManager&) = delete;
+
+            /**
+ * @brief
+ * @param bufferManager
  */
-class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable {
-    using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager, false>;
-    using inherited1 = Reconfigurable;
+            explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers,
+                                  uint64_t nodeEngineId,
+                                  uint16_t numThreads,
+                                  HardwareManagerPtr hardwareManager,
+                                  std::vector<uint64_t> workerToCoreMapping = {},
+                                  uint64_t numberOfQueues = 1,
+                                  uint64_t numberOfThreadsPerQueue = 0,
+                                  const std::string& queryManagerMode = "Dynamic");
 
-    enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
+            ~QueryManager() NES_NOEXCEPT(false) override;
 
-  public:
-    QueryManager() = delete;
-    QueryManager(const QueryManager&) = delete;
-    QueryManager& operator=(const QueryManager&) = delete;
+            /**
+ * @brief register a query by extracting sources, windows and sink and add them to
+ * respective map
+ * @param QueryExecutionPlan to be deployed
+ */
+            bool registerQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    /**
-     * @brief
-     * @param bufferManager
-     */
-    explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers,
-                          uint64_t nodeEngineId,
-                          uint16_t numThreads,
-                          HardwareManagerPtr hardwareManager,
-                          std::vector<uint64_t> workerToCoreMapping = {},
-                          std::vector<uint64_t> queuePinList = {});
+            /**
+ * @brief deregister a query by extracting sources, windows and sink and remove them
+ * from respective map
+ * @param QueryExecutionPlan to be deployed
+ * @return bool indicating if register was successful
+ */
+            bool deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    ~QueryManager() NES_NOEXCEPT(false) override;
+            /**
+ * @brief process task from task queue
+ * @param bool indicating if the thread pool is still running
+ * @param worker context
+ * @return an execution result
+ *
+ */
+            ExecutionResult processNextTask(bool running, WorkerContext& workerContext);
 
-    /**
-     * @brief register a query by extracting sources, windows and sink and add them to
-     * respective map
-     * @param QueryExecutionPlan to be deployed
-     */
-    bool registerQuery(const Execution::ExecutableQueryPlanPtr& qep);
+            /**
+ * @brief add work to the query manager, this methods is source-driven and is called
+ * for each buffer generated by the window trigger
+ * @param Pointer to the tuple buffer containing the data
+ * @param Pointer to the pipeline stage that will be executed next
+ * @param id of the queue where to put the task (only necessary if multiple queues are used)
+ */
+            void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0);
 
-    /**
-     * @brief deregister a query by extracting sources, windows and sink and remove them
-     * from respective map
-     * @param QueryExecutionPlan to be deployed
-     * @return bool indicating if register was successful
-     */
-    bool deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep);
+            void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    /**
-     * @brief process task from task queue
-     * @param bool indicating if the thread pool is still running
-     * @param worker context
-     * @return an execution result
-     *
-     */
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
-    ExecutionResult processNextTask(bool running, WorkerContext& workerContext);
-#else
-    ExecutionResult processNextTask(std::atomic<bool>& running, WorkerContext& workerContext);
-#endif
+            void reconfigure(ReconfigurationMessage&, WorkerContext& context) override;
 
-    /**
-     * @brief add work to the query manager, this methods is source-driven and is called
-     * for each buffer generated by the window trigger
-     * @param Pointer to the tuple buffer containing the data
-     * @param Pointer to the pipeline stage that will be executed next
-     * @param id of the queue where to put the task (only necessary if multiple queues are used)
-     */
-    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0);
+            /**
+ * @brief retrieve the execution status of a given local query sub plan id.
+ * @param id : the query sub plan id
+ * @return status of the query sub plan
+ */
+            Execution::ExecutableQueryPlanStatus getQepStatus(QuerySubPlanId id);
 
-    void postReconfigurationCallback(ReconfigurationMessage& task) override;
+            /**
+ * @brief get general statistics of QueryManager and Buffer Manager
+ */
+            std::string getQueryManagerStatistics();
 
-    void reconfigure(ReconfigurationMessage&, WorkerContext& context) override;
+            /**
+ * @brief Provides the QEP object for an id
+ * @param id the plan to lookup
+ * @return the QEP or null, if not found
+ */
+            Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QuerySubPlanId id) const;
 
-    /**
-     * @brief retrieve the execution status of a given local query sub plan id.
-     * @param id : the query sub plan id
-     * @return status of the query sub plan
-     */
-    Execution::ExecutableQueryPlanStatus getQepStatus(QuerySubPlanId id);
+            /**
+ * @brief method to start a query
+ * @param qep of the query to start
+ * @return bool indicating success
+ */
+            bool startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager);
 
-    /**
-     * @brief get general statistics of QueryManager and Buffer Manager
-     */
-    std::string getQueryManagerStatistics();
+            /**
+ * @brief method to start a query
+ * @param qep of the query to start
+ * @param graceful stop the query gracefully or not
+ * @return bool indicating success
+ */
+            [[nodiscard]] bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful = false);
 
-    /**
-     * @brief Provides the QEP object for an id
-     * @param id the plan to lookup
-     * @return the QEP or null, if not found
-     */
-    Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QuerySubPlanId id) const;
+            /**
+* @brief method to fail a query
+* @param qep of the query to fail
+* @return bool indicating success
+*/
+            static bool failQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    /**
-     * @brief method to start a query
-     * @param qep of the query to start
-     * @return bool indicating success
-     */
-    bool startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager);
+            /**
+ * @brief notify all waiting threads in getWork() to wake up and finish up
+ */
+            void poisonWorkers();
 
-    /**
-     * @brief method to start a query
-     * @param qep of the query to start
-     * @param graceful stop the query gracefully or not
-     * @return bool indicating success
-     */
-    [[nodiscard]] bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful = false);
+            /**
+ * @brief reset query manager to intial state
+ */
+            void destroy();
 
-    /**
-    * @brief method to fail a query
-    * @param qep of the query to fail
-    * @return bool indicating success
-    */
-    static bool failQuery(const Execution::ExecutableQueryPlanPtr& qep);
+            /**
+ * @brief method to return the query statistics
+ * @param qep of the particular query
+ * @return
+ */
+            QueryStatisticsPtr getQueryStatistics(QuerySubPlanId qepId);
 
-    /**
-     * @brief notify all waiting threads in getWork() to wake up and finish up
-     */
-    void poisonWorkers();
+            uint64_t getNodeId() const;
 
-    /**
-     * @brief reset query manager to intial state
-     */
-    void destroy();
+            /**
+ * @brief this methods adds a reconfiguration task on the worker queue
+ * @return true if the reconfiguration task was added correctly on the worker queue
+ * N.B.: this does not not mean that the reconfiguration took place but it means that it
+ * was scheduled to be executed!
+ * @param queryId: the local QEP to reconfigure
+ * @param queryExecutionPlanId: the local sub QEP to reconfigure
+ * @param reconfigurationDescriptor: what to do
+ * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
+ */
+            bool addReconfigurationMessage(QueryId queryId, QuerySubPlanId queryExecutionPlanId,
+                                           const ReconfigurationMessage& reconfigurationMessage,
+                                           bool blocking = false);
 
-    /**
-     * @brief method to return the query statistics
-     * @param qep of the particular query
-     * @return
-     */
-    QueryStatisticsPtr getQueryStatistics(QuerySubPlanId qepId);
+            BufferManagerPtr getBufferManager() { return bufferManagers[0]; }
 
-    uint64_t getNodeId() const;
+          private:
+            /**
+ * @brief this methods adds a reconfiguration task on the worker queue
+ * @return true if the reconfiguration task was added correctly on the worker queue
+ * N.B.: this does not not mean that the reconfiguration took place but it means that it
+ * was scheduled to be executed!
+ * @param queryId: the local QEP to reconfigure
+ * @param queryExecutionPlanId: the local szb QEP to reconfigure
+ * @param buffer: a tuple buffer storing the reconfiguration message
+ * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
+ */
+            bool addReconfigurationMessage(QueryId queryId, QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
 
-    /**
-     * @brief this methods adds a reconfiguration task on the worker queue
-     * @return true if the reconfiguration task was added correctly on the worker queue
-     * N.B.: this does not not mean that the reconfiguration took place but it means that it
-     * was scheduled to be executed!
-     * @param queryExecutionPlanId: the local QEP to reconfigure
-     * @param reconfigurationDescriptor: what to do
-     * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
-     */
-    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId,
-                                   const ReconfigurationMessage& reconfigurationMessage,
-                                   bool blocking = false);
+          public:
+            /**
+ * @brief introduces end of stream to all QEPs connected to this source
+ * @param source the actual source
+ * @param graceful hard or soft termination
+ * @return true if it went through
+ */
+            bool addEndOfStream(const DataSourcePtr& source, bool graceful = true) {
+                return addEndOfStream(source->getOperatorId(), graceful);
+            }
 
-    /**
-     * @brief Outputs the first buffer manager of the query manager
-     * @return BufferManagerPtr
-     */
-    BufferManagerPtr getBufferManager(){
-        return bufferManagers[0];
-    }
+            /**
+* @brief maps querySubId to query id
+* @return query id
+*/
+            uint64_t getQueryId(uint64_t querySubPlanId) const;
 
-  private:
-    /**
-     * @brief this methods adds a reconfiguration task on the worker queue
-     * @return true if the reconfiguration task was added correctly on the worker queue
-     * N.B.: this does not not mean that the reconfiguration took place but it means that it
-     * was scheduled to be executed!
-     * @param queryExecutionPlanId: the local QEP to reconfigure
-     * @param buffer: a tuple buffer storing the reconfiguration message
-     * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
-     */
-    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
+            /**
+ * @brief introduces end of stream to all QEPs connected to this source
+ * @param operatorId the id of the source
+ * @param graceful hard or soft termination
+ * @return true if it went through
+ */
+            bool addEndOfStream(OperatorId sourceId, bool graceful = true);
 
-  public:
-    /**
-     * @brief introduces end of stream to all QEPs connected to this source
-     * @param source the actual source
-     * @param graceful hard or soft termination
-     * @return true if it went through
-     */
-    bool addEndOfStream(const DataSourcePtr& source, bool graceful = true) {
-        return addEndOfStream(source->getOperatorId(), graceful);
-    }
+            /**
+ * @return true if thread pool is running
+ */
+            bool isThreadPoolRunning() const;
 
-    /**
-     * @brief introduces end of stream to all QEPs connected to this source
-     * @param operatorId the id of the source
-     * @param graceful hard or soft termination
-     * @return true if it went through
-     */
-    bool addEndOfStream(OperatorId sourceId, bool graceful = true);
+            /**
+ * @brief get number of tasks in the queue
+ * @return task count
+ */
+            uint64_t getNumberOfTasksInWorkerQueue() const;
 
-    /**
-     * @return true if thread pool is running
-     */
-    bool isThreadPoolRunning() const;
+            size_t getCurrentTaskSum();
+            uint64_t getNumberOfWorkerThreads();
 
-    /**
-     * @brief get number of tasks in the queue
-     * @return task count
-     */
-    uint64_t getNumberOfTasksInWorkerQueue() const;
+          private:
+            friend class ThreadPool;
+            friend class NodeEngine;
+            /**
+* @brief method to start the thread pool
+* @param nodeEngineId the id of the owning node engine
+ * @param numberOfBuffersPerWorker
+* @return bool indicating success
+*/
+            bool startThreadPool(uint64_t numberOfBuffersPerWorker);
 
-    /**
-    * @brief maps querySubId to query id
-    * @return query id
-    */
-    uint64_t getQueryId(uint64_t querySubPlanId) const;
+            /**
+ * @brief finalize task execution by:
+ * 1.) update statistics (number of processed tuples and tasks)
+ * 2.) release input buffer (give back to the buffer manager)
+ * @param reference to processed task
+ * @oaram reference to worker context
+ */
+            void completedWork(Task& task, WorkerContext& workerContext);
 
-    size_t getCurrentTaskSum();
-    uint64_t getNumberOfWorkerThreads();
+            ExecutionResult terminateLoop(WorkerContext&);
 
-  private:
-    friend class ThreadPool;
-    friend class NodeEngine;
-    /**
-    * @brief method to start the thread pool
-    * @param nodeEngineId the id of the owning node engine
-     * @param numberOfBuffersPerWorker
-    * @return bool indicating success
-    */
-    bool startThreadPool(uint64_t numberOfBuffersPerWorker);
+            bool addSoftEndOfStream(OperatorId sourceId);
 
-    /**
-     * @brief finalize task execution by:
-     * 1.) update statistics (number of processed tuples and tasks)
-     * 2.) release input buffer (give back to the buffer manager)
-     * @param reference to processed task
-     * @oaram reference to worker context
-     */
-    void completedWork(Task& task, WorkerContext& workerContext);
+            bool addHardEndOfStream(OperatorId sourceId);
 
-    ExecutionResult terminateLoop(WorkerContext&);
+            /**
+ * @brief Returns the next free task id
+ * @return next task id
+ */
+            uint64_t getNextTaskId();
 
-    bool addSoftEndOfStream(OperatorId sourceId);
+          private:
+            uint64_t nodeEngineId;
+            std::atomic_uint64_t taskIdCounter = 0;
+            std::vector<BufferManagerPtr> bufferManagers;
+            ThreadPoolPtr threadPool{nullptr};
+            uint16_t numThreads;
+            //    std::map<uint64_t,uint64_t> numaRegionToThreadMap;
+            QueryMangerMode mode;
+            uint64_t numberOfQueues;
+            uint64_t numberOfThreadsPerQueue;
+            HardwareManagerPtr hardwareManager;
+            // TODO remove these unnecessary structures
+            std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
+            std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
+            std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
-    bool addHardEndOfStream(OperatorId sourceId);
+            std::map<QueryId, uint64_t> queryToTaskQueueIdMap;
+            uint64_t currentTaskQueueId = 0;
 
-    /**
-     * @brief Returns the next free task id
-     * @return next task id
-     */
-    uint64_t getNextTaskId();
+            std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
-  private:
-    uint64_t nodeEngineId;
-    std::atomic_uint64_t taskIdCounter = 0;
+            //TODO:check if it would be better to put it in the thread context
+            mutable std::mutex statisticsMutex;
+            mutable std::mutex addReconfigurationMessageMutex;
+            cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
+            //    std::map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
-    ThreadPoolPtr threadPool{nullptr};
+            Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 
-    // TODO remove these unnecessary structures
-    std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
-    std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
-    std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
+            std::vector<uint64_t> workerToCoreMapping;
+            mutable std::recursive_mutex queryMutex;
 
-    std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
-
-    //TODO:check if it would be better to put it in the thread context
-    mutable std::mutex statisticsMutex;
-    cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
-
-    std::vector<BufferManagerPtr> bufferManagers;
-    Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
-
-    uint16_t numThreads;
-    std::vector<uint64_t> workerToCoreMapping;
-    mutable std::recursive_mutex queryMutex;
-    HardwareManagerPtr hardwareManager;
-    uint64_t numberOfQueues;
-    std::vector<uint64_t> queuePinListMapping;
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    folly::MPMCQueue<Task> taskQueue;
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
-    std::vector<folly::MPMCQueue<Task>> taskQueues;
-    std::map<size_t, size_t> numaRegionToThreadMap;
-#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
-
-    std::vector<folly::MPMCQueue<Task>> taskQueues;
-#else
-    std::deque<Task> taskQueue;
-    mutable std::mutex workMutex;
-    std::condition_variable cv;
-#endif
-    std::atomic<QueryManagerStatus> queryManagerStatus{Created};
-    std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
+            std::vector<folly::MPMCQueue<Task>> taskQueues;
+            std::atomic<QueryManagerStatus> queryManagerStatus{Created};
+            std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
 #ifdef ENABLE_PAPI_PROFILER
-    std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
+            std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
-};
+            QueryMangerMode getModeFromString(const std::string mode);
 
-using QueryManagerPtr = std::shared_ptr<QueryManager>;
+        };
 
-}// namespace Runtime
-}// namespace NES
-#endif  // NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+        using QueryManagerPtr = std::shared_ptr<QueryManager>;
+
+        }// namespace Runtime
+    }// namespace NES
+#endif// NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_

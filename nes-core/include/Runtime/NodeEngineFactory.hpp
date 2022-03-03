@@ -52,6 +52,12 @@ class NodeEngineFactory {
     * @param bufferSize the buffer size for the buffer manager
     * @param numBuffers the number of buffers for the buffer manager
     * @param nesWorker weak pointer to the nes worker where the node engine is created
+    * @param queryCompilerConfiguration
+    * @param enableNumaAwareness
+    * @param workerToCodeMapping
+    * @param numberOfQueues
+    * @param numberOfThreadsPerQueue
+    * @param queryManagerMode
     * @return
     */
     static NodeEnginePtr createNodeEngine(const std::string& hostname,
@@ -66,7 +72,9 @@ class NodeEngineFactory {
                                           std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>(),
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCodeMapping = "",
-                                          const std::string& queuePinList = "");
+                                          uint64_t numberOfQueues = 1,
+                                          uint64_t numberOfThreadsPerQueue = 0,
+                                          const std::string& queryManagerMode = "Dynamic");
 
   private:
     static QueryCompilation::QueryCompilerOptionsPtr

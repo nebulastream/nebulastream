@@ -47,6 +47,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @return ExecutablePipelinePtr
      */
     explicit ExecutablePipeline(uint64_t pipelineId,
+                                QueryId queryId,
                                 QuerySubPlanId qepId,
                                 PipelineExecutionContextPtr pipelineExecutionContext,
                                 ExecutablePipelineStagePtr executablePipelineStage,
@@ -66,6 +67,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @return ExecutablePipelinePtr
      */
     static ExecutablePipelinePtr create(uint64_t pipelineId,
+                                        QueryId queryId,
                                         QuerySubPlanId querySubPlanId,
                                         const PipelineExecutionContextPtr& pipelineExecutionContext,
                                         const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -142,6 +144,12 @@ class ExecutablePipeline : public Reconfigurable {
     void incrementProducerCount();
 
     /**
+     * @brief Get query plan id.
+     * @return QuerySubPlanId.
+     */
+    QueryId getQueryId() const;
+
+    /**
      * @brief Gets the successor pipelines
      * @return SuccessorPipelines
      */
@@ -149,6 +157,7 @@ class ExecutablePipeline : public Reconfigurable {
 
   private:
     const uint64_t pipelineId;
+    const QueryId queryId;
     const QuerySubPlanId querySubPlanId;
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;

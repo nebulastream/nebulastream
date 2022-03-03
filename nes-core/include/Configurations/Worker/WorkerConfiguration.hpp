@@ -169,6 +169,24 @@ class WorkerConfiguration : public BaseConfiguration {
 
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
+    /**
+     * @brief Configuration numberOfQueues.
+     * Set the number of processing queues in the system
+     */
+    UIntOption numberOfQueues = {NUMBER_OF_QUEUES, 0, "Number of processing queues."};
+
+    /**
+     * @brief Configuration numberOfThreadsPerQueue.
+     * Set the number of threads per processing queue in the system
+     */
+    UIntOption numberOfThreadsPerQueue = {NUMBER_OF_THREAD_PER_QUEUE, 0, "Number of threads per processing queue."};
+
+    /**
+     * @brief Configuration queryManagerMode
+     * The modus in which the query manager is running
+     */
+    StringOption queryManagerMode = {QUERY_MANAGER_MODE, "Dynamic", "Which mode the query manager is running in."};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&localWorkerIp,
@@ -192,6 +210,9 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queryCompiler,
                 &physicalSources,
                 &locationCoordinates,
+                &numberOfQueues,
+                &numberOfThreadsPerQueue,
+                &queryManagerMode,
                 &configPath};
     }
 };
