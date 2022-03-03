@@ -45,7 +45,8 @@ bool WindowLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
 bool WindowLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<WindowLogicalOperatorNode>(); }
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id);
+    auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id)->as<WindowLogicalOperatorNode>();
+    copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

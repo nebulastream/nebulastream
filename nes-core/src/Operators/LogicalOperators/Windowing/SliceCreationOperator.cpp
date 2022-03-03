@@ -33,7 +33,6 @@ SliceCreationOperator::SliceCreationOperator(const Windowing::LogicalWindowDefin
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
     this->windowDefinition->setWindowType(windowDefinition->getWindowType());
     this->windowDefinition->setOnKey(windowDefinition->getKeys());
-    // this->windowDefinition->setOriginId(id);
 }
 
 std::string SliceCreationOperator::toString() const {
@@ -49,7 +48,8 @@ bool SliceCreationOperator::isIdentical(NodePtr const& rhs) const {
 bool SliceCreationOperator::equal(NodePtr const& rhs) const { return rhs->instanceOf<SliceCreationOperator>(); }
 
 OperatorNodePtr SliceCreationOperator::copy() {
-    auto copy = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition, id);
+    auto copy = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition, id)->as<SliceCreationOperator>();
+    copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
