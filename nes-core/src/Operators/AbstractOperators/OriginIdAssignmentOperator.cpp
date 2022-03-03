@@ -28,9 +28,6 @@ std::vector<OriginId> OriginIdAssignmentOperator::getOutputOriginIds() {
 }
 
 void OriginIdAssignmentOperator::setOriginId(OriginId originId) {
-    if (originId == INVALID_ORIGIN_ID) {
-        throw Exceptions::RuntimeException("The provided origin id is invalid");
-    }
     this->originId = originId;
 }
 
