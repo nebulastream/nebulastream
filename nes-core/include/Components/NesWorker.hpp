@@ -262,10 +262,14 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     uint32_t numberOfBuffersPerWorker;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
+
     std::optional<GeographicalLocation> locationCoordinates;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;
+    uint64_t numberOfQueues;
+    uint64_t numberOfThreadsPerQueue;
+    std::string queryManagerMode;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
 };

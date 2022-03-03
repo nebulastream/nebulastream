@@ -248,6 +248,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                        executableOperator->getOperatorHandlers());
 
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
+                                                                             pipelineQueryPlan->getQueryId(),
                                                                              pipelineQueryPlan->getQuerySubPlanId(),
                                                                              executionContext,
                                                                              executableOperator->getExecutablePipelineStage(),

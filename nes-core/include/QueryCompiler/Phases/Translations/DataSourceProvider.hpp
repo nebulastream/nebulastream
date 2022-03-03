@@ -43,6 +43,7 @@ class DataSourceProvider {
 
   protected:
     QueryCompilerOptionsPtr compilerOptions;
+    std::map<std::string,DataSourcePtr> physicalStreamNameToSourceMap;
 };
 }// namespace QueryCompilation
 }// namespace NES

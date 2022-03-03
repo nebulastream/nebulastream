@@ -1965,6 +1965,104 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     std::cout << "E2EBase: Test finished" << std::endl;
 }
 
+TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
+    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
+
+    std::cout << "E2EBase: Start coordinator" << std::endl;
+    auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    std::string input =
+        R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalSource("input1", input);
+    crd->getStreamCatalogService()->registerLogicalSource("input2", input);
+
+    std::cout << "E2EBase: Start worker 1" << std::endl;
+    NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
+
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
+
+        auto* records = buffer.getBuffer<Record>();
+        auto ts = time(nullptr);
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].id = u;
+            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+            records[u].value = u % 10;
+            records[u].timestamp = ts;
+        }
+    };
+
+    auto func2 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
+
+        auto* records = buffer.getBuffer<Record>();
+        auto ts = time(nullptr);
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].id = u;
+            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+            records[u].value = u % 10;
+            records[u].timestamp = ts;
+        }
+    };
+
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 3, 10, "ingestionrate");
+    auto physicalSource1 = PhysicalSource::create("input1", "test_stream", lambdaSourceType1);
+    auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, "ingestionrate");
+    auto physicalSource2 = PhysicalSource::create("input2", "test_stream", lambdaSourceType2);
+    wrkConf->physicalSources.add(physicalSource1);
+    wrkConf->physicalSources.add(physicalSource2);
+    auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    NES_ASSERT(retStart1, "retStart1");
+
+    string query1 = R"(Query::from("input1").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
+
+    string query2 = R"(Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
+
+    NES::QueryServicePtr queryService = crd->getQueryService();
+    auto queryCatalog = crd->getQueryCatalog();
+    auto queryId1 =
+        queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId1, queryCatalog), "failed start wait");
+
+    auto queryId2 =
+        queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId2, queryCatalog), "failed start wait");
+
+    queryCatalog->printQueries();
+
+    sleep(2);
+    std::cout << "E2EBase: Remove query" << std::endl;
+    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId1), "no vaild stop quest");
+    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId2), "no vaild stop quest");
+    std::cout << "E2EBase: wait for stop" << std::endl;
+    bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
+    if (!ret) {
+        NES_ERROR("query 1 was not stopped within 30 sec");
+    }
+    bool ret2 = NES::TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog);
+    if (!ret2) {
+        NES_ERROR("query 2 was not stopped within 30 sec");
+    }
+
+    std::cout << "E2EBase: Stop worker 1" << std::endl;
+    bool retStopWrk1 = wrk1->stop(true);
+    NES_ASSERT(retStopWrk1, "retStopWrk1");
+
+    std::cout << "E2EBase: Stop Coordinator" << std::endl;
+    bool retStopCord = crd->stopCoordinator(true);
+    NES_ASSERT(retStopCord, "retStopCord");
+    std::cout << "E2EBase: Test finished" << std::endl;
+}
+
 TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

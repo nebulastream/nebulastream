@@ -231,6 +231,11 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 
+//Runtine configuration
+const std::string NUMBER_OF_QUEUES = "numberOfQueues";
+const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
+const std::string QUERY_MANAGER_MODE = "queryManagerMode";
+
 }// namespace Configurations
 }// namespace NES
 

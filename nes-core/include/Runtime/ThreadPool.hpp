@@ -36,7 +36,8 @@ class ThreadPool {
      * @param nodeId the id of this node
      * @param queryManager
      * @param number of threads to use
-     * @param sourcePinningPositionList, a list of where to pin the sources
+     * @param sourcePinningPositionList, a list of where to pin the
+     * @param threadToQueueMapping
      */
     explicit ThreadPool(uint64_t nodeId,
                         QueryManagerPtr queryManager,
@@ -45,7 +46,7 @@ class ThreadPool {
                         uint64_t numberOfBuffersPerWorker,
                         HardwareManagerPtr hardwareManager,
                         std::vector<uint64_t> workerPinningPositionList,
-                        std::vector<uint64_t> queuePinListMapping);
+                        std::vector<uint64_t> threadToQueueMapping);
 
     /**
      * @brief default destructor
@@ -108,7 +109,7 @@ class ThreadPool {
     uint64_t numberOfBuffersPerWorker;
     //this is a list of slots where we pin the worker, one after the other
     std::vector<uint64_t> workerPinningPositionList;
-    std::vector<uint64_t> queuePinListMapping;
+    std::vector<uint64_t> threadToQueueMapping;
 
     HardwareManagerPtr hardwareManager;
 };

@@ -23,7 +23,7 @@
 #include <any>
 #include <atomic>
 #include <memory>
-
+#include <Plans/Query/QueryId.hpp>
 namespace NES::Runtime {
 
 class Reconfigurable;
@@ -44,11 +44,12 @@ class ReconfigurationMessage {
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
-    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId,
+    explicit ReconfigurationMessage(const QueryId queryId,
+                                    const QuerySubPlanId parentPlanId,
                                     ReconfigurationType type,
                                     ReconfigurablePtr instance = nullptr,
                                     std::any&& userdata = nullptr)
-        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), parentPlanId(parentPlanId),
+        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), queryId(queryId), parentPlanId(parentPlanId),
           userdata(std::move(userdata)) {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
@@ -62,13 +63,14 @@ class ReconfigurationMessage {
      * @param userdata extra information to use in this reconfiguration
      * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId,
+    explicit ReconfigurationMessage(const QueryId queryId,
+                                    const QuerySubPlanId parentPlanId,
                                     ReconfigurationType type,
                                     uint64_t numThreads,
                                     ReconfigurablePtr instance,
                                     std::any&& userdata = nullptr,
                                     bool blocking = false)
-        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), parentPlanId(parentPlanId),
+        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), queryId(queryId),parentPlanId(parentPlanId),
           userdata(std::move(userdata)) {
         NES_ASSERT(this->instance, "invalid instance");
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
@@ -101,7 +103,7 @@ class ReconfigurationMessage {
      */
     ReconfigurationMessage(const ReconfigurationMessage& that)
         : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr),
-          parentPlanId(that.parentPlanId), userdata(that.userdata) {
+          queryId(that.queryId), parentPlanId(that.parentPlanId), userdata(that.userdata) {
         // nop
     }
 
@@ -115,6 +117,12 @@ class ReconfigurationMessage {
      * @return the reconfiguration type
      */
     [[nodiscard]] ReconfigurationType getType() const { return type; }
+
+    /**
+     * @brief get the target plan id
+     * @return the query id
+     */
+    [[nodiscard]] QueryId getQueryId() const { return queryId; }
 
     /**
      * @brief get the target plan id
@@ -176,10 +184,13 @@ class ReconfigurationMessage {
     std::atomic<uint32_t> refCnt{};
 
     /// owning plan id
+    const QueryId queryId;
+
+    /// owning plan id
     const QuerySubPlanId parentPlanId;
 
     /// custom data
     std::any userdata;
 };
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
+#endif// NES_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
