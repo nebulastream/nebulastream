@@ -215,10 +215,10 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
 void ExecutableQueryPlan::destroy() {
     // sanity checks: ensure we can destroy stopped instances
     for (const auto& source : sources) {
-        NES_ASSERT(source->isRunning(), "Source " << source->getOperatorId() << " is still running");
+        NES_ASSERT(!source->isRunning(), "Source " << source->getOperatorId() << " is still running");
     }
     for (const auto& pipeline : pipelines) {
-        NES_ASSERT(pipeline->isRunning(), "Pipeline " << pipeline->getPipelineId() << " is still running");
+        NES_ASSERT(!pipeline->isRunning(), "Pipeline " << pipeline->getPipelineId() << " is still running");
     }
     sources.clear();
     pipelines.clear();

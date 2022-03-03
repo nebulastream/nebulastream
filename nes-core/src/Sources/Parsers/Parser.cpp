@@ -45,7 +45,10 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
     auto dataType = fields[schemaFieldIndex]->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
-    NES_ASSERT2_FMT(!inputString.empty(), "Field cannot be empty if basic type");
+    if (inputString.empty()) {
+        throw Exceptions::RuntimeException("Input string for parsing is empty");
+    }
+    // TODO replace with csv parsing library
     if (physicalType->isBasicType()) {
         auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicPhysicalType->nativeType) {

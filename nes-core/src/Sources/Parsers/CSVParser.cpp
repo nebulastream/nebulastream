@@ -34,6 +34,9 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
 
     std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
 
+    if (values.size() != numberOfSchemaFields) {
+        throw Exceptions::RuntimeException("Read a smaller line than expected for schema " + schema->toString());
+    }
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];

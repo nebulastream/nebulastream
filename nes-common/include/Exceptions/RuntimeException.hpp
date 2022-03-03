@@ -15,10 +15,11 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 
+#include <Util/SourceLocation.hpp>
+#include <Util/StacktraceLoader.hpp>
 #include <exception>
 #include <stdexcept>
 #include <string>
-#include <Util/SourceLocation.hpp>
 namespace NES::Exceptions {
 
 /**
@@ -35,8 +36,9 @@ class RuntimeException : virtual public std::exception {
      *  @param msg The error message
      *  @param stacktrace Error stacktrace
      */
-    explicit RuntimeException(std::string msg, std::string&& stacktrace,
-                                 std::source_location location = std::source_location::current());
+    explicit RuntimeException(std::string msg,
+                              std::string&& stacktrace = collectAndPrintStacktrace(),
+                              std::source_location location = std::source_location::current());
 
     /** Constructor
     *  @param msg The error message
@@ -57,6 +59,6 @@ class RuntimeException : virtual public std::exception {
     [[nodiscard]] const char* what() const noexcept override;
 };
 
-}// namespace NES
+}// namespace NES::Exceptions
 
-#endif  // NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_

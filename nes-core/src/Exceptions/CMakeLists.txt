@@ -17,6 +17,7 @@ add_source_files(nes-core
         RequestTypeNotHandledException.cpp
         GlobalQueryPlanUpdateException.cpp
         InvalidArgumentException.cpp
+        TaskExecutionException.cpp
         InvalidFieldException.cpp
         InvalidQueryException.cpp
         InvalidQueryStatusException.cpp

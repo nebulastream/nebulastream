@@ -389,7 +389,7 @@ bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep)
     for (auto const& source : qep->getSources()) {
         sourceToQEPMapping.erase(source->getOperatorId());
     }
-    qep->destroy();
+
     return true;
 }
 
@@ -509,8 +509,12 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
     }
 
     for (const auto& source : qep->getSources()) {
-        if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {// TODO consider graceful vs. forceful
-            // net sources always terminate via eos
+        if (graceful) {
+            // graceful shutdown :: only leaf sources
+            if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+                NES_ASSERT2_FMT(source->stop(graceful), "Cannot terminate source " << source->getOperatorId());
+            }
+        } else {
             NES_ASSERT2_FMT(source->stop(graceful), "Cannot terminate source " << source->getOperatorId());
         }
     }
@@ -967,7 +971,11 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
                            || status == Execution::ExecutableQueryPlanStatus::ErrorState,
                        "query plan " << qepId << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);
-            runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
+            if (auto it = runningQEPs.find(qepId); it != runningQEPs.end()) { // note that this will release all shared pointers stored in a QEP object
+                it->second->destroy();
+                runningQEPs.erase(it);
+            }
+
             NES_DEBUG("QueryManager: removed running QEP " << qepId);
             break;
         }
@@ -985,6 +993,26 @@ uint64_t QueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t QueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
-void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr&, Execution::ExecutableQueryPlanStatus) {}
+void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
+                                           Execution::ExecutableQueryPlanStatus status) {
+    NES_ASSERT(qep, "Invalid query plan object");
+    if (status == Execution::ExecutableQueryPlanStatus::Stopped) {
+        // if we got here it means the query gracefully stopped
+        // we need to go to each source and terminate their threads
+        // alternatively, we need to detach source threads
+        for (const auto& source : qep->getSources()) {
+            NES_ASSERT(source->stop(true), "Cannot cleanup source"); // just a clean-up op
+        }
+        addReconfigurationMessage(qep->getQuerySubPlanId(),
+                                  ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
+                                  false);
+    }
+}
+void QueryManager::notifyOperatorFailure(DataSourcePtr, const std::string errorMessage) {
+    NES_ASSERT(false, errorMessage);
+}
+void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline, const std::string& errorMessage) {
+    NES_ASSERT(false, errorMessage);
+}
 
 }// namespace NES::Runtime

@@ -220,6 +220,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
                 case Execution::ExecutableQueryPlanStatus::Created:
                 case Execution::ExecutableQueryPlanStatus::Deployed:
                 case Execution::ExecutableQueryPlanStatus::Running: {
+                    NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " is not Stopped... stopping now");
                     isStopped = queryManager->stopQuery(qep, false);
                     break;
                 }
@@ -228,6 +229,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
                     break;
                 };
             }
+            NES_DEBUG("Runtime: unregister of query " << querySubPlanId << ": current status is stopped=" << isStopped);
             if (isStopped && queryManager->deregisterQuery(qep)) {
                 deployedQEPs.erase(querySubPlanId);
                 NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " succeeded");

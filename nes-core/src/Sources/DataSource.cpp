@@ -164,14 +164,13 @@ bool DataSource::stop(bool graceful) {
             thread->join();
             lock.lock();
             thread.reset();
+            return true; // it's ok to return true because the source is stopped
         }
         NES_DEBUG("DataSource " << operatorId << " is not running");
-        return true; // it's ok to return true because the source is stopped
+        return false; // something weird is going on, thread not existing -> source not started
     } else {
         // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
         // TODO in general this highlights how our source model has some issues
-        bool ret = false;
-
         try {
             NES_ASSERT2_FMT(!!thread, "Thread for source " << operatorId << " is not existing");
             {
@@ -187,11 +186,15 @@ bool DataSource::stop(bool graceful) {
                     thread->join();
                     lock.lock();
                     NES_DEBUG("DataSource: Thread joined");
-                    ret = true;
                     thread.reset();
+                    NES_WARNING("Stopped Source " << operatorId << " = "
+                                                  << (wasGracefullyStopped ? "wasGracefullyStopped" : "notGracefullyStopped"));
+                    return true;
                 } else {
                     NES_ERROR("DataSource " << operatorId << ": Thread is not joinable");
                     wasGracefullyStopped = false;
+                    NES_WARNING("Stopped Source " << operatorId << " = "
+                                                  << (wasGracefullyStopped ? "wasGracefullyStopped" : "notGracefullyStopped"));
                     return false;
                 }
             }
@@ -207,10 +210,8 @@ bool DataSource::stop(bool graceful) {
                 NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
             }
         }
-        NES_WARNING("Stopped Source " << operatorId << " = "
-                                      << (wasGracefullyStopped ? "wasGracefullyStopped" : "notGracefullyStopped"));
-        return ret;
     }
+    return false;
 }
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
@@ -223,12 +224,16 @@ void DataSource::close() {
 void DataSource::runningRoutine() {
     //TDOD startup delay
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
-    if (gatheringMode == GatheringMode::INTERVAL_MODE) {
-        runningRoutineWithGatheringInterval();
-    } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
-        runningRoutineWithIngestionRate();
-    } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
-        runningRoutineAdaptiveGatheringInterval();
+    try {
+        if (gatheringMode == GatheringMode::INTERVAL_MODE) {
+            runningRoutineWithGatheringInterval();
+        } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
+            runningRoutineWithIngestionRate();
+        } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
+            runningRoutineAdaptiveGatheringInterval();
+        }
+    } catch (std::exception const& exception) {
+        queryManager->notifyOperatorFailure(shared_from_base<DataSource>(), exception.what());
     }
 }
 
@@ -354,7 +359,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
                 emitWorkFromSource(buf);
                 ++cnt;
             } else {
-                NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
+                NES_DEBUG("DataSource " << operatorId << ": stopping cause of invalid buffer");
                 running = false;
                 NES_DEBUG("DataSource " << operatorId << ": Thread going to terminating with graceful exit.");
             }
