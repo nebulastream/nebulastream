@@ -58,16 +58,13 @@ CSVSource::CSVSource(SchemaPtr schema,
 
     }
     input.open(path);
-    if(!(input.is_open() && input.good()))
-    {
-        NES_THROW_RUNTIME_ERROR("Could not open CSV file: " << path);
+    if(!(input.is_open() && input.good())) {
+        throw Exceptions::RuntimeException("Cannot open file: " + std::string(path));
     }
     NES_DEBUG("CSVSource: Opening path " << path);
-
-    NES_DEBUG("CSVSource::CSVSource: read buffer");
     input.seekg(0, std::ifstream::end);
     if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1) {
-        NES_ERROR("CSVSource::CSVSource File " + filePath + " is corrupted");
+        throw Exceptions::RuntimeException("CSVSource::CSVSource File " + filePath + " is corrupted");
     } else {
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }

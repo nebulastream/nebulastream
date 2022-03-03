@@ -64,12 +64,19 @@ TEST_F(QueryFailureTest, failQueryUponSubmission) {
         Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
 
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
+    CSVSourceTypePtr cfg;
+    cfg = CSVSourceType::create();
+    cfg->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/malformed_csv_test.csv");
+    cfg->setGatheringInterval(1);
+    cfg->setNumberOfTuplesToProducePerBuffer(2);
+    cfg->setNumberOfBuffersToProduce(6);
+    cfg->setSkipHeader(false);
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("test");
+                                  .attachWorkerWithCSVSourceToCoordinator("test", cfg);
 
-    testHarness = testHarness.pushElement<Test>({1, 1}, 2);
+//    testHarness = testHarness.pushElement<Test>({1, 1}, 2);
 
     try {
         testHarness.validate().setupTopology();

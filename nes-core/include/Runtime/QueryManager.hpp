@@ -237,7 +237,19 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     addReconfigurationMessage(QueryId queryId, QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
 
   public:
+    /**
+     * @brief
+     * @param pipeline
+     * @param message
+     */
+    void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
 
+    /**
+     * @brief
+     * @param source
+     * @param errorMessage
+     */
+    void notifyOperatorFailure(DataSourcePtr source, const std::string errorMessage);
 
     /**
      * @brief
