@@ -23,6 +23,7 @@ namespace std {
 using source_location = std::experimental::source_location;
 }
 #else
+#include <cstdint>
 #include <stdint.h>
 namespace std {
 struct source_location {
