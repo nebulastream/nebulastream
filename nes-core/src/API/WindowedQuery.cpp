@@ -102,7 +102,6 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Win
         Windowing::LogicalWindowDefinition::create(aggregation,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                   1,
                                                    triggerPolicy,
                                                    triggerAction,
                                                    allowedLateness);
@@ -167,7 +166,6 @@ Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
                                                    aggregation,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                   1,
                                                    triggerPolicy,
                                                    triggerAction,
                                                    allowedLateness);

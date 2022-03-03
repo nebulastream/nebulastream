@@ -77,7 +77,6 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
 void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodePtr& windowOp) {
     NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " "
                                                                                                << windowOp->toString());
-    windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
@@ -109,20 +108,12 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
     auto windowComputationAggregation = windowAggregation[0]->copy();
     //    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
-    //TODO: @Ankit we have to change this depending on how you do the placement
-    uint64_t numberOfEdgesForFinalComputation = logicalWindowOperator->getChildren().size();
-    if (logicalWindowOperator->getChildren().size() >= windowDistributionCombinerThreshold) {
-        numberOfEdgesForFinalComputation = 1;
-    }
-    uint64_t numberOfEdgesForMerger = logicalWindowOperator->getChildren().size();
-
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
         windowDef = Windowing::LogicalWindowDefinition::create(keyField,
                                                                {windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               numberOfEdgesForFinalComputation,
                                                                triggerPolicy,
                                                                triggerActionComplete,
                                                                allowedLateness);
@@ -131,7 +122,6 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
         windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
-                                                               numberOfEdgesForFinalComputation,
                                                                triggerPolicy,
                                                                triggerActionComplete,
                                                                allowedLateness);
@@ -139,7 +129,6 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
     NES_DEBUG("DistributeWindowRule::apply: created logical window definition for computation operator" << windowDef->toString());
 
     auto windowComputationOperator = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDef);
-    windowDef->setOriginId(windowComputationOperator->getId());
 
     //replace logical window op with window computation operator
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << windowComputationOperator->toString()
@@ -165,7 +154,6 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                                                            {sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           numberOfEdgesForMerger,
                                                            triggerPolicy,
                                                            Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
@@ -175,7 +163,6 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                 Windowing::LogicalWindowDefinition::create({sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
-                                                           numberOfEdgesForMerger,
                                                            triggerPolicy,
                                                            Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
@@ -183,7 +170,6 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"
                   << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDef);
-        windowDef->setOriginId(sliceOp->getId());
         finalComputationAssigner->insertBetweenThisAndChildNodes(sliceOp);
 
         mergerAssigner = sliceOp;
@@ -204,7 +190,6 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                                                            {sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
-                                                           1,
                                                            triggerPolicy,
                                                            triggerActionSlicing,
                                                            allowedLateness);
@@ -213,14 +198,12 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                 Windowing::LogicalWindowDefinition::create({sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
-                                                           1,
                                                            triggerPolicy,
                                                            triggerActionSlicing,
                                                            allowedLateness);
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice operator" << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);
-        windowDef->setOriginId(sliceOp->getId());
         child->insertBetweenThisAndParentNodes(sliceOp);
     }
 }

@@ -424,11 +424,10 @@ message SerializableOperator{
     repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
     repeated SerializableExpression keys = 4;
-    uint64 numberOfInputEdges = 5;
-    TriggerPolicy triggerPolicy = 6;
-    TriggerAction action = 7;
-    uint64 allowedLateness = 8;
-    uint64 origin = 9;
+    TriggerPolicy triggerPolicy = 5;
+    TriggerAction action = 6;
+    uint64 allowedLateness = 7;
+    uint64 origin = 8;
   }
 
   /**

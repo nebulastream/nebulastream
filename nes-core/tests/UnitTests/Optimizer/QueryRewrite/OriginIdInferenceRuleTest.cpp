@@ -186,7 +186,6 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndWindow) {
     auto dummyWindowDefinition = LogicalWindowDefinition::create({},
                                     WindowTypePtr(),
                                     DistributionCharacteristicPtr(),
-                                    0,
                                     WindowTriggerPolicyPtr(),
                                     WindowActionDescriptorPtr(),
                                     0);

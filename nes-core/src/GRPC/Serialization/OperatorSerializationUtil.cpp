@@ -301,7 +301,9 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
         auto serializedWindowOperator = SerializableOperator_WindowDetails();
         details.UnpackTo(&serializedWindowOperator);
-        operatorNode = deserializeWindowOperator(&serializedWindowOperator, Util::getNextOperatorId());
+        auto windowOperator = deserializeWindowOperator(&serializedWindowOperator, Util::getNextOperatorId());
+        windowOperator->setOriginId(serializedWindowOperator.origin());
+        operatorNode = windowOperator;
     } else if (details.Is<SerializableOperator_JoinDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to JoinLogicalOperator");
@@ -365,8 +367,7 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
             ExpressionSerializationUtil::serializeExpression(key, expression);
         }
     }
-    windowDetails.set_origin(windowDefinition->getOriginId());
-    windowDetails.set_numberofinputedges(windowDefinition->getNumberOfInputEdges());
+    windowDetails.set_origin(windowOperator->getOriginId());
     windowDetails.set_allowedlateness(windowDefinition->getAllowedLateness());
     auto windowType = windowDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
@@ -716,7 +717,6 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    1,
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
@@ -727,7 +727,6 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    windowDetails->numberofinputedges(),
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
@@ -739,7 +738,6 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    windowDetails->numberofinputedges(),
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
@@ -750,7 +748,6 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    1,
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
