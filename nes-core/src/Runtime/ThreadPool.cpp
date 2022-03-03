@@ -28,6 +28,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <Exceptions/TaskExecutionException.hpp>
 
 #ifdef __linux__
 #include <Runtime/HardwareManager.hpp>
