@@ -70,12 +70,18 @@ class UnaryOperatorNode : public virtual OperatorNode {
      * @brief set the result schema of this operator
      * @param outputSchema
     */
-
     void setOutputSchema(SchemaPtr outputSchema) override;
+
+    void setInputOriginIds(std::vector<OriginId> originIds);
+
+    std::vector<OriginId> getInputOriginIds();
+
+    virtual std::vector<OriginId> getOutputOriginIds() override;
 
   protected:
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
+    std::vector<OriginId> inputOriginIds;
 };
 
 }// namespace NES

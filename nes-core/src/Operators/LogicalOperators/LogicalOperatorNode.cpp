@@ -43,19 +43,6 @@ void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature)
 
 std::map<size_t, std::set<std::string>> LogicalOperatorNode::getHashBasedSignature() { return hashBasedSignature; }
 
-void LogicalOperatorNode::inferInputOrigins() {
-    // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> inputOriginIds;
-    for (auto child : this->children) {
-        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
-        childOperator->inferInputOrigins();
-        auto childInputOriginIds = childOperator->getOutputOriginIds();
-        inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
-    }
-    //TODO add a check to check that we don't include the same origin id multiple times as this would show an invalid query plan
-    this->inputOriginIds = inputOriginIds;
-}
-
 void LogicalOperatorNode::setHashBasedSignature(std::map<size_t, std::set<std::string>> signature) {
     this->hashBasedSignature = std::move(signature);
 }

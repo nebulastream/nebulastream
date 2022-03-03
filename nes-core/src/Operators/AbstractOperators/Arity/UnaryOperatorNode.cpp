@@ -42,4 +42,9 @@ SchemaPtr UnaryOperatorNode::getInputSchema() const { return inputSchema; }
 
 SchemaPtr UnaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
+void UnaryOperatorNode::setInputOriginIds(std::vector<OriginId> originIds) { this->inputOriginIds = originIds; }
+
+std::vector<OriginId> UnaryOperatorNode::getInputOriginIds() { return inputOriginIds; }
+std::vector<OriginId> UnaryOperatorNode::getOutputOriginIds() { return inputOriginIds; }
+
 }// namespace NES

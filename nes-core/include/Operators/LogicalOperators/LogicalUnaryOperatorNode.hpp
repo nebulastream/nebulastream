@@ -33,6 +33,8 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
     * @return true if schema was correctly inferred
     */
     bool inferSchema() override;
+
+    void inferInputOrigins() override;
 };
 }// namespace NES
 

@@ -80,11 +80,21 @@ class BinaryOperatorNode : public virtual OperatorNode {
     */
     void setOutputSchema(SchemaPtr outputSchema) override;
 
+    void setLeftInputOriginIds(std::vector<OriginId> originIds);
+    virtual std::vector<OriginId> getLeftInputOriginIds();
+
+    void setRightInputOriginIds(std::vector<OriginId> originIds);
+    virtual std::vector<OriginId> getRightInputOriginIds();
+
+    std::vector<OriginId> getOutputOriginIds() override;
+
   protected:
     SchemaPtr leftInputSchema;
     SchemaPtr rightInputSchema;
     SchemaPtr outputSchema;
     std::vector<SchemaPtr> distinctSchemas;
+    std::vector<OriginId> leftInputOriginIds;
+    std::vector<OriginId> rightInputOriginIds;
 };
 
 }// namespace NES

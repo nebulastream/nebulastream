@@ -58,7 +58,7 @@ class LogicalOperatorNode : public virtual OperatorNode {
      * If this operator dose not assign new origin ids, e.g., windowing,
      * this function collects the origin ids from all upstream operators.
      */
-    virtual void inferInputOrigins();
+    virtual void inferInputOrigins() = 0;
 
     /**
      * @brief Get the String based signature for the operator

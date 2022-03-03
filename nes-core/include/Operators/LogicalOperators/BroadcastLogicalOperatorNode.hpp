@@ -34,6 +34,8 @@ class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public Logical
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
     void inferStringSignature() override;
+
+    void inferInputOrigins() override;
 };
 }// namespace NES
 

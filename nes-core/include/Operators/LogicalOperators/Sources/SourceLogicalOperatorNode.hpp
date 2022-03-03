@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATORNODE_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATORNODE_HPP_
 
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 
 namespace NES {
@@ -22,7 +23,7 @@ namespace NES {
 /**
  * @brief Node representing logical source operator
  */
-class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
+class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public OriginIdAssignmentOperator {
   public:
     explicit SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor, OperatorId id);
     explicit SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, uint64_t originId);
@@ -52,15 +53,12 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
     void inferStringSignature() override;
     OperatorNodePtr copy() override;
     void setProjectSchema(SchemaPtr schema);
-    void setOriginId(uint64_t originId);
-    uint64_t getOriginId();
-
     void inferInputOrigins() override;
+    std::vector<OriginId> getOutputOriginIds() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;
     SchemaPtr projectSchema;
-    uint64_t originId;
 };
 
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;

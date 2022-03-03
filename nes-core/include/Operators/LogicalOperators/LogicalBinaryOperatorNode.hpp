@@ -32,6 +32,8 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
     */
     bool inferSchema() override;
 
+    void inferInputOrigins() override;
+
     /**
      * @brief Get all left input operators.
      * @return std::vector<OperatorNodePtr>

@@ -26,8 +26,9 @@
 
 namespace NES {
 
-JoinLogicalOperatorNode::JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
-    : OperatorNode(id), LogicalBinaryOperatorNode(id), joinDefinition(std::move(joinDefinition)) {}
+JoinLogicalOperatorNode::JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id, OriginId originId)
+    : OperatorNode(id), LogicalBinaryOperatorNode(id), OriginIdAssignmentOperator(id, originId),
+      joinDefinition(std::move(joinDefinition)) {}
 
 bool JoinLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && rhs->as<JoinLogicalOperatorNode>()->getId() == id;
@@ -134,7 +135,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
 OperatorNodePtr JoinLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createJoinOperator(joinDefinition, id);
-    copy->setInputOriginIds(inputOriginIds);
+    copy->setLeftInputOriginIds(leftInputOriginIds);
+    copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
@@ -171,4 +173,9 @@ void JoinLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
+std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }
+
+void JoinLogicalOperatorNode::inferInputOrigins() {}
+
 }// namespace NES
