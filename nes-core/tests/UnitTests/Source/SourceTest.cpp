@@ -2039,11 +2039,11 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto queryCatalog = crd->getQueryCatalog();
     auto queryId1 =
         queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId1, queryCatalog), "failed start wait");
 
     auto queryId2 =
         queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId2, queryCatalog), "failed start wait");
 
     queryCatalog->printQueries();
 

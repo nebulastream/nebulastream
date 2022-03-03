@@ -25,10 +25,9 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include "Runtime/QueryManager/QueryManager.hpp"
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-#include <Windowing/Experimental/SliceStore.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -103,49 +102,6 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 
     std::vector<TupleBuffer> buffers;
 };
-
-TEST_F(WindowManagerTest, sliceStoreTest) {
-    auto sliceStore = Experimental::SliceStore<robin_hood::unordered_map<uint64_t, uint64_t>>(1);
-    for (uint64_t i = 0; i < 99; ++i) {
-        auto& slice = sliceStore.findSliceByTs(i);
-        ASSERT_EQ(slice->start, i);
-    }
-    sliceStore.eraseFirst(20);
-    for (uint64_t i = 0; i < 20; ++i) {
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-    }
-    for (uint64_t i = 0; i < 20; ++i) {
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-    }
-}
-
-TEST_F(WindowManagerTest, PartitionedHashMap) {
-    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto partitionedHashMap = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
-    for (uint64_t i = 0; i < 1000; ++i) {
-        auto* entry = partitionedHashMap.getEntry(i);
-        entry->value = 42;
-    }
-
-    for (uint64_t i = 0; i < 1000; ++i) {
-        auto* entry = partitionedHashMap.getEntry(i);
-        ASSERT_EQ(entry->value, 42ULL);
-    }
-
-    partitionedHashMap.clear();
-
-    for (uint64_t i = 0; i < 1000; ++i) {
-        auto* entry = partitionedHashMap.getEntry(i);
-        entry->value = 5;
-    }
-
-    for (uint64_t i = 0; i < 1000; ++i) {
-        auto* entry = partitionedHashMap.getEntry(i);
-        ASSERT_EQ(entry->value, 5ULL);
-    }
-}
 
 TEST_F(WindowManagerTest, testSumAggregation) {
     auto aggregation = ExecutableSumAggregation<int64_t>::create();

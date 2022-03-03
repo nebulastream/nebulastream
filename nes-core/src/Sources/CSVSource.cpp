@@ -55,6 +55,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     char* path = realpath(filePath.c_str(), nullptr);
     NES_DEBUG("CSVSource: Opening path " << path);
     input.open(path);
+    NES_ASSERT(input.is_open(), "csv input file could not be opened");
 
     NES_DEBUG("CSVSource::CSVSource: read buffer");
     input.seekg(0, std::ifstream::end);
