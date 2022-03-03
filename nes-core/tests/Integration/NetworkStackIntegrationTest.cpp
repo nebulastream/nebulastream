@@ -356,7 +356,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                       PartitionRegistrationStatus::Registered);
             completed.get_future().get();
             EXPECT_TRUE(source->stop());
-            auto rt = Runtime::ReconfigurationMessage(-1, Runtime::Destroy, source);
+            auto rt = Runtime::ReconfigurationMessage(-1, 0, Runtime::Destroy, source);
             source->postReconfigurationCallback(rt);
             EXPECT_EQ(nodeEngine1->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
                       PartitionRegistrationStatus::Deleted);
@@ -380,7 +380,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine2->getBufferManager(), 64);
-                auto rt = Runtime::ReconfigurationMessage(0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = nodeEngine2->getBufferManager()->getBufferBlocking();
