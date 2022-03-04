@@ -33,6 +33,12 @@ void LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
     }
 
+    if (yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].IsSequence()) {
+        // TODO: add vector of fields
+    } else {
+        NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source schema fields.");
+    }
+
     return;
 }
 
