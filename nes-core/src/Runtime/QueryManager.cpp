@@ -307,9 +307,11 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     queryToStatisticsMap.insert(qep->getQuerySubPlanId(),
                                 std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
 
-    NES_ASSERT2_FMT(queryToStatisticsMap.size() <= numberOfQueues,
-                    "QueryManager::registerQuery: not enough queues are free for numberOfQueues="
-                        << numberOfQueues << " query cnt=" << queryToStatisticsMap.size());
+    if (queryMangerMode == Static) {
+        NES_ASSERT2_FMT(queryToStatisticsMap.size() <= numberOfQueues,
+                        "QueryManager::registerQuery: not enough queues are free for numberOfQueues="
+                            << numberOfQueues << " query cnt=" << queryToStatisticsMap.size());
+    }
 
     //currently we asume all queues have same number of threads so we can do this.
     queryToTaskQueueIdMap[qep->getQueryId()] = currentTaskQueueId++;
