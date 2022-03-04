@@ -206,7 +206,7 @@ class Logger {
             {                                                                                                                    \
                 auto __stacktrace = NES::collectAndPrintStacktrace();                                                            \
                 std::stringbuf __buffer;                                                                                         \
-                std::ostream __os(infformation&__buffer);                                                                                    \
+                std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << __VA_ARGS__;                                                                       \
                 NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
