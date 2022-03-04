@@ -17,20 +17,17 @@
 
 #include <Runtime/AbstractBufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <mutex>
 #include <optional>
 #include <queue>
 #include <unordered_map>
-
 namespace NES::Runtime {
 
 struct BufferSorter : public std::greater<TupleBuffer> {
-    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) {
-        return lhs.getWatermark() > rhs.getWatermark();
-    }
+    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
 };
 
-using TupleBufferPriorityQueue =
-    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>;
+using TupleBufferPriorityQueue = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>;
 
 /**
  * @brief The Buffer Storage Unit class encapsulates a nesPartitionId and a sorted queue of TupleBuffers
@@ -144,4 +141,4 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 }// namespace NES::Runtime
 
-#endif  // NES_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_
+#endif// NES_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_
