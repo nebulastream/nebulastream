@@ -72,10 +72,10 @@ bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
     return false;
 }
 
-void SinkMedium::reconfigure(Runtime::ReconfigurationMessage & message, Runtime::WorkerContext & context) {
+void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
-void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage & message) {
+void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
     switch (message.getType()) {
         case Runtime::SoftEndOfStream:
