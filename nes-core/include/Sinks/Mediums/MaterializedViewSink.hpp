@@ -32,7 +32,7 @@ class MaterializedViewSink : public SinkMedium {
 
   public:
     /// @brief constructor
-    MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, Runtime::NodeEnginePtr nodeEngine, QuerySubPlanId parentPlanId);
+    MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, Runtime::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId parentPlanId);
 
     /**
      * @brief setup method for materialized view sink

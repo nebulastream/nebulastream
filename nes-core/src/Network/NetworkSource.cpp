@@ -79,8 +79,8 @@ bool NetworkSource::start() {
                                                                     return pipeline->getQuerySubPlanId();
                                                                 }},
                                              successor);
-            auto queryId = std::visit(detail::overloaded{[](DataSinkPtr) {
-                                                                    return NES::QueryId(0);
+            auto queryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
+                                                             return sink->getQueryId();
                                                                 },
                                                                 [](Execution::ExecutablePipelinePtr pipeline) {
                                                                     return pipeline->getQueryId();

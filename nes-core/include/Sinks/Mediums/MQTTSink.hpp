@@ -45,6 +45,7 @@ class MQTTSink : public SinkMedium {
     // TODO change MSGS to Messages
     explicit MQTTSink(SinkFormatPtr sinkFormat,
                       Runtime::NodeEnginePtr nodeEngine,
+                      QueryId queryId,
                       QuerySubPlanId querySubPlanId,
                       std::string const& address,
                       std::string const& clientId,

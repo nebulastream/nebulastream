@@ -172,7 +172,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     uint64_t numberOfBuffers = 1;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    auto sink = createCSVFileSink(schema, 0, this->nodeEngine, "qep1.txt", false);
+    auto sink = createCSVFileSink(schema, 0, 0, this->nodeEngine, "qep1.txt", false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, queryId, context, executableStage, 1, {sink});

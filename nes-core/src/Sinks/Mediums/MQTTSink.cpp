@@ -36,6 +36,7 @@ SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    Runtime::NodeEnginePtr nodeEngine,
+                   QueryId queryId,
                    QuerySubPlanId querySubPlanId,
                    const std::string& address,
                    const std::string& clientId,
@@ -46,7 +47,7 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient)
-    : SinkMedium(std::move(sinkFormat), nodeEngine, querySubPlanId), address(address), clientId(clientId), topic(topic),
+    : SinkMedium(std::move(sinkFormat), nodeEngine, queryId, querySubPlanId), address(address), clientId(clientId), topic(topic),
       user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay),
       qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 

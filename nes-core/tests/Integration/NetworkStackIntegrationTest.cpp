@@ -103,7 +103,7 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     TestSink(const SchemaPtr& schema, Runtime::NodeEnginePtr nodeEngine, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0) {
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0, 0) {
         // nop
     }
 
@@ -198,6 +198,7 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
                                                      *dataPort1,
+                                                     0,
                                                      0,
                                                      nodeLocation,
                                                      nesPartition,
@@ -368,6 +369,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
             Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort2, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
+                                                         0,
                                                          0,
                                                          0,
                                                          nodeLocation,
@@ -548,6 +550,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
             });
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
+                                                     i,
                                                      i,
                                                      subPlanId,
                                                      nodeLocationReceiver,
@@ -757,7 +760,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
         explicit TestSinkEvent(const SchemaPtr& schema,
                                Runtime::NodeEnginePtr nodeEngine,
                                const Runtime::BufferManagerPtr& bufferManager)
-            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0) {
+            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0, 0) {
             // nop
         }
 
@@ -826,6 +829,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
 
     auto networkSink = std::make_shared<TestNetworkSink>(schema,
                                                          0,
+                                                         1,
                                                          1,
                                                          nodeLocationReceiver,
                                                          nesPartition,

@@ -26,8 +26,9 @@ namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
+                       QueryId queryId,
                        QuerySubPlanId querySubPlanId)
-    : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), querySubPlanId(querySubPlanId) {
+    : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), queryId(queryId), querySubPlanId(querySubPlanId) {
     //TODO: issue #2543
     watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(1);
     NES_DEBUG("SinkMedium:Init Data Sink!");
@@ -49,6 +50,8 @@ std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 bool SinkMedium::getAppendAsBool() const { return append; }
 
 QuerySubPlanId SinkMedium::getParentPlanId() const { return querySubPlanId; }
+
+QueryId SinkMedium::getQueryId() const { return queryId; }
 
 std::string SinkMedium::getAppendAsString() const {
     if (append) {

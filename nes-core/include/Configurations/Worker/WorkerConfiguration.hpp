@@ -175,7 +175,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configuration numberOfQueues.
      * Set the number of processing queues in the system
      */
-    UIntOption numberOfQueues = {NUMBER_OF_QUEUES, 0, "Number of processing queues."};
+    UIntOption numberOfQueues = {NUMBER_OF_QUEUES, 1, "Number of processing queues."};
 
     /**
      * @brief Configuration numberOfThreadsPerQueue.

@@ -88,7 +88,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
                           HardwareManagerPtr hardwareManager,
                           std::vector<uint64_t> workerToCoreMapping = {},
                           uint64_t numberOfQueues = 1,
-                          uint64_t numberOfThreadsPerQueue = 0,
+                          uint64_t numberOfThreadsPerQueue = 1,
                           QueryMangerMode = Dynamic);
 
     ~QueryManager() NES_NOEXCEPT(false) override;

@@ -45,7 +45,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**FF
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief virtual method to setup sink
@@ -68,7 +68,14 @@ class SinkMedium : public Runtime::Reconfigurable {
 
     /**
      * @brief get the id of the owning plan
-     * @return the id
+     * @return queryId
+     */
+    QueryId getQueryId() const;
+
+
+    /**
+     * @brief get the suzbplan id of the owning plan
+     * @return QuerySubPlanId
      */
     QuerySubPlanId getParentPlanId() const;
 
@@ -148,6 +155,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::atomic_bool schemaWritten{false};// TODO same here
 
     Runtime::NodeEnginePtr nodeEngine;
+    QueryId queryId;
     QuerySubPlanId querySubPlanId;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
 

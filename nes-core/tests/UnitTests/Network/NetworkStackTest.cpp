@@ -98,7 +98,7 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     TestSink(const SchemaPtr& schema, Runtime::NodeEnginePtr nodeEngine, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0){};
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0, 0){};
 
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);
@@ -789,6 +789,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
+                                                         0,
                                                          0,
                                                          0,
                                                          nodeLocation,
