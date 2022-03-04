@@ -16,7 +16,7 @@
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Views/MaterializedView.hpp>
 #include <Views/TupleView.hpp>
-
+#include <mutex>
 namespace NES::Experimental::MaterializedView {
 
 TupleViewPtr TupleView::createTupleView(uint64_t id){

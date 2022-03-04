@@ -14,7 +14,7 @@
 
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
-
+#include <mutex>
 namespace NES::Runtime {
 
 void BufferStorage::insertBuffer(QueryId queryId, Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {

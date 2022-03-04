@@ -16,7 +16,7 @@
 #include <Views/TupleView.hpp>
 #include <Views/MaterializedView.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
-
+#include <mutex>
 namespace NES::Experimental::MaterializedView {
 
 bool MaterializedViewManager::containsView(uint64_t viewId) {
