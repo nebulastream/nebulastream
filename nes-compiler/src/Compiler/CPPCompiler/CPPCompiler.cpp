@@ -75,40 +75,22 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-shared");
 
     // add header
-    for(auto libPaths : runtimePathConfig.libPaths){
+    for (auto libPaths : runtimePathConfig.libPaths) {
         compilationFlags.addFlag(std::string("-L") + libPaths);
     }
     // add libs
-    for(auto libs : runtimePathConfig.libs){
+    for (auto libs : runtimePathConfig.libs) {
         compilationFlags.addFlag(libs);
     }
     // add header
-    for(auto includePath : runtimePathConfig.includePaths){
+    for (auto includePath : runtimePathConfig.includePaths) {
         compilationFlags.addFlag("-I" + includePath);
     }
     compilationFlags.addFlag("-o" + libraryFileName);
 
-#ifdef NES_LOGGING_TRACE_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_NO_LEVEL=1");
-#endif
-#ifdef NES_LOGGING_DEBUG_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_DEBUG_LEVEL=1");
-#endif
-#ifdef NES_LOGGING_INFO_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_INFO_LEVEL=1");
-#endif
-#ifdef NES_LOGGING_WARNING_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_WARNING_LEVEL=1");
-#endif
-#ifdef NES_LOGGING_ERROR_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_ERROR_LEVEL=1");
-#endif
-#ifdef NES_LOGGING_NO_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_NO_LEVEL=1");
-#endif
-#ifdef NES_LOGGING_FATAL_ERROR_LEVEL
-    compilationFlags.addFlag("-DNES_LOGGING_FATAL_ERROR_LEVEL=1");
-#endif
+    // the log level of the compiled code is the same as the currently selected log level of the runtime.
+    auto logLevel = getLogLevel(Logger::getInstance()->getCurrentLogLevel());
+    compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
     compilationFlags.addFlag(sourceFileName);
 
