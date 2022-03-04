@@ -86,8 +86,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
 
-void QueryManager::initQueryManagerMode()
-{
+void QueryManager::initQueryManagerMode() {
     if (queryMangerMode == NumaAware) {
         NES_NOT_IMPLEMENTED();
         //        //the goal of the code below is to make sure that we have a even distribution of task among numa nodes
@@ -178,12 +177,12 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            QueryMangerMode queryManagerMode)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
       queryMangerMode(queryManagerMode), numberOfQueues(numberOfQueues), numberOfThreadsPerQueue(numberOfThreadsPerQueue),
-          hardwareManager(hardwareManager), workerToCoreMapping(workerToCoreMapping) {
+      hardwareManager(hardwareManager), workerToCoreMapping(workerToCoreMapping) {
 
-        initQueryManagerMode();
-        tempCounterTasksCompleted.resize(numThreads);
-        reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
-    }
+    initQueryManagerMode();
+    tempCounterTasksCompleted.resize(numThreads);
+    reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
+}
 
 uint64_t QueryManager::getCurrentTaskSum() {
     size_t sum = 0;
@@ -309,7 +308,8 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
                                 std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
 
     NES_ASSERT2_FMT(queryToStatisticsMap.size() < numberOfQueues,
-                "QueryManager::registerQuery: not enough queues are free for numberOfQueues=" << numberOfQueues << " query cnt=" << queryToStatisticsMap.size());
+                    "QueryManager::registerQuery: not enough queues are free for numberOfQueues="
+                        << numberOfQueues << " query cnt=" << queryToStatisticsMap.size());
 
     //currently we asume all queues have same number of threads so we can do this.
     queryToTaskQueueIdMap[qep->getQueryId()] = currentTaskQueueId++;
@@ -1018,6 +1018,5 @@ bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 
 uint64_t QueryManager::getNextTaskId() { return ++taskIdCounter; }
 uint64_t QueryManager::getNumberOfWorkerThreads() { return numThreads; }
-
 
 }// namespace NES::Runtime
