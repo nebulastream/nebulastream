@@ -16,8 +16,9 @@
 
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
 #include <vector>
-#include "TypedBaseOption.hpp"
+
 namespace NES::Configurations {
 
 /**
