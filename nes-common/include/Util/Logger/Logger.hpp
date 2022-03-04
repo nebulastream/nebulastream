@@ -197,7 +197,7 @@ class Logger {
                 NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
             }                                                                                                                    \
         }                                                                                                                        \
-    } while (0)infformation
+    } while (0)
 
 #define NES_ASSERT2_FMT(CONDITION, ...)                                                                                          \
     do {                                                                                                                         \

@@ -19,7 +19,7 @@
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <string>
-
+#include <chrono>
 namespace NES {
 namespace Network {
 
