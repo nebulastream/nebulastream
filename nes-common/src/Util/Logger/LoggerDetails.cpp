@@ -8,6 +8,10 @@
 
 namespace NES {
 
+/**
+ * @brief The custom pattern layout is used to
+ * manipulate the output format of log messages and to indicate the color for log messages.
+ */
 class CustomPatternLayout : public log4cxx::PatternLayout {
   public:
     CustomPatternLayout() : log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n") {}
@@ -60,7 +64,6 @@ void LoggerDetails::setupLogging(const std::string& logFileName) {
     std::cout << "Logger: Setting up logger" << std::endl;
     // create PatternLayout
     log4cxx::LayoutPtr layoutPtr(new CustomPatternLayout());
-
     // create FileAppender
     LOG4CXX_DECODE_CHAR(fileName, logFileName);
     log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
