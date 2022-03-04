@@ -107,7 +107,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                             // for an event-only channel it's ok to get this message
                             // it means the producer is already done so it wont be able
                             // to receive any event. We should figure out if this case must be
-                            // handled somewhere else. For instance, what does this mean for FT and upsource backup?
+                            // handled somewhere else. For instance, what does this mean for FT and upstream backup?
                             NES_ERROR("EventOnlyNetworkChannel: Received partition deleted error from server " << socketAddr);
                             return nullptr;
                         }

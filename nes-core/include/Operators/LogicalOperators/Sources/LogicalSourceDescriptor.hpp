@@ -26,7 +26,7 @@ class LogicalSourceDescriptor : public SourceDescriptor {
 
   public:
     /**
-     * @brief Factory method to create a new logical source source descriptor.
+     * @brief Factory method to create a new logical source descriptor.
      * @param logicalSourceName Name of this source
      * @return SourceDescriptorPtr
      */

@@ -145,11 +145,11 @@ void SemanticQueryValidation::logicalSourceValidityCheck(const NES::QueryPlanPtr
     for (const auto& source : sourceOperators) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
-        // Filtering for logical source sources
+        // Filtering for logical sources
         if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>()) {
             auto sourceName = sourceDescriptor->getLogicalSourceName();
 
-            // Making sure that all logical source sources are present in the source catalog
+            // Making sure that all logical sources are present in the source catalog
             if (!sourceCatalog->containsLogicalSource(sourceName)) {
                 throw InvalidQueryException("The logical source '" + sourceName + "' can not be found in the SourceCatalog\n");
             }

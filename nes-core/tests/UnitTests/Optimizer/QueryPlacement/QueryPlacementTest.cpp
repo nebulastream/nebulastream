@@ -950,7 +950,7 @@ TEST_F(QueryPlacementTest, DISABLED_testManualPlacementMultipleOperatorInANode) 
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             EXPECT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// source source
+            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// source
         }
     }
 }
@@ -1053,7 +1053,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
                 if (child->instanceOf<MapLogicalOperatorNode>()) {
                     mapPlacementCount++;
                     for (const auto& childrenOfMapOp : child->getChildren()) {
-                        // if the current operator is a source source, it should be placed in topology node with id=2 (source nodes)
+                        // if the current operator is a source, it should be placed in topology node with id=2 (source nodes)
                         if (childrenOfMapOp->as<SourceLogicalOperatorNode>()->getId()
                             == testQueryPlan->getSourceOperators()[0]->getId()) {
                             isSource1PlacementValid = executionNode->getTopologyNode()->getId() == 2;
@@ -1061,7 +1061,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
                     }
                 } else {
                     EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
-                    // if the current operator is a source source, it should be placed in topology node with id=2 (source nodes)
+                    // if the current operator is a source, it should be placed in topology node with id=2 (source nodes)
                     if (child->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
                         isSource1PlacementValid = executionNode->getTopologyNode()->getId() == 2;
                     }
@@ -1181,7 +1181,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
                 if (child->instanceOf<MapLogicalOperatorNode>()) {
                     mapPlacementCount++;
                     for (const auto& childrenOfMapOp : child->getChildren()) {
-                        // if the current operator is a source source, it should be placed in topology node with id 3 or 4 (source nodes)
+                        // if the current operator is a source, it should be placed in topology node with id 3 or 4 (source nodes)
                         if (childrenOfMapOp->as<SourceLogicalOperatorNode>()->getId()
                             == testQueryPlan->getSourceOperators()[0]->getId()) {
                             isSource1PlacementValid =
@@ -1194,7 +1194,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
                     }
                 } else {
                     EXPECT_TRUE(child->instanceOf<SourceLogicalOperatorNode>());
-                    // if the current operator is a source source, it should be placed in topology node with id 3 or 4 (source nodes)
+                    // if the current operator is a source, it should be placed in topology node with id 3 or 4 (source nodes)
                     if (child->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
                         isSource1PlacementValid =
                             executionNode->getTopologyNode()->getId() == 3 || executionNode->getTopologyNode()->getId() == 4;

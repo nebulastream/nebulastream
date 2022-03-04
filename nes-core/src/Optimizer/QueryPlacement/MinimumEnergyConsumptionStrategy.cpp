@@ -37,7 +37,7 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(Qu
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
-    // FIXME: current implementation assumes that we have only one source source and therefore only one source operator.
+    // FIXME: current implementation assumes that we have only one source and therefore only one source operator.
     const string sourceName = queryPlan->getSourceName();
 
     if (!sourceOperator) {
