@@ -55,8 +55,8 @@ CSVSource::CSVSource(SchemaPtr schema,
     char* path = realpath(filePath.c_str(), nullptr);
     if (path == nullptr) {
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
-
     }
+    NES_DEBUG("CSVSource: Opening path " << filePath << " real path " << path);
     input.open(path);
     if(!(input.is_open() && input.good())) {
         throw Exceptions::RuntimeException("Cannot open file: " + std::string(path));
@@ -84,6 +84,9 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
+    if (path) {
+        std::free(path);
+    }
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {

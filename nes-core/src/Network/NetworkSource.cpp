@@ -90,13 +90,29 @@ bool NetworkSource::start() {
             auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, Runtime::Initialize, shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
         }
+        running = true;
         return true;
     }
     return false;
 }
 
 bool NetworkSource::stop(bool) {
-    NES_DEBUG("NetworkSource: stop called on " << nesPartition << " is ignored");
+    using namespace Runtime;
+    NES_DEBUG("NetworkSource: stop called on " << nesPartition);
+    bool expected = true;
+    if (running.compare_exchange_strong(expected, false)) {
+        for (const auto& successor : executableSuccessors) {
+            auto querySubPlanId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
+                                                                    return sink->getParentPlanId();
+                                                                },
+                                                                [](Execution::ExecutablePipelinePtr pipeline) {
+                                                                    return pipeline->getQuerySubPlanId();
+                                                                }},
+                                             successor);
+            auto newReconf = ReconfigurationMessage(querySubPlanId, Runtime::HardEndOfStream, shared_from_base<DataSource>());
+            queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
+        }
+    }
     return true;
 }
 
@@ -150,6 +166,10 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
             NES_DEBUG("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer "
                       << nesPartition.toString());
             networkManager->unregisterSubpartitionConsumer(nesPartition);
+            bool expected = true;
+            if (running.compare_exchange_strong(expected, false)) {
+                NES_DEBUG("NetworkSource is stopped with id " << nesPartition.toString());
+            }
             return;
         }
         default: {
@@ -163,8 +183,12 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
 }
 void NetworkSource::onEndOfStream(bool isGraceful) {
     // propagate EOS to the locally running QEPs that use the network source
-    NES_DEBUG("Going to inject eos for " << nesPartition);
-    queryManager->addEndOfStream(shared_from_base<DataSource>(), isGraceful);
+    NES_DEBUG("Going to inject eos for " << nesPartition << " isGraceful=" << (isGraceful ? "Yes" : "No"));
+    if (isGraceful) {
+        queryManager->addEndOfStream(shared_from_base<DataSource>(), isGraceful);
+    } else {
+        NES_WARNING("Ignoring forceful EoS on " << nesPartition);
+    }
 }
 
 }// namespace NES::Network

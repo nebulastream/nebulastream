@@ -21,15 +21,12 @@
 
 namespace NES {
 
-
 class GeographicalLocationTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GeographicalLocation test class.");
     }
-
-    void SetUp() override {}
 
     static void TearDownTestCase() { NES_INFO("Tear down GeographilcalLocationUnitTest test class."); }
 };
