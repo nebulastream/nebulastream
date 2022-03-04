@@ -27,7 +27,7 @@
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -62,7 +62,7 @@ using Runtime::TupleBuffer;
 class WindowManagerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("WindowManagerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
     }
 

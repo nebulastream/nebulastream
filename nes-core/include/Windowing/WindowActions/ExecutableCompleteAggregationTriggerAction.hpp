@@ -23,7 +23,7 @@
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>

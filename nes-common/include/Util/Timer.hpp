@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_UTIL_TIMER_HPP_
 #define NES_INCLUDE_UTIL_TIMER_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <chrono>
 #include <string>

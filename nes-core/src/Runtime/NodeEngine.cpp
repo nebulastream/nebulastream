@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/PartitionManager.hpp>
@@ -29,13 +30,13 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Exceptions/ErrorListener.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <log4cxx/helpers/exception.h>
 #include <string>
 #include <utility>
 
@@ -56,13 +57,14 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
-      queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
-      queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
+    : physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
+      bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
+      queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
+      stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)),
+      materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerWorker(numberOfBuffersPerWorker){
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
 
     NES_TRACE("Runtime() id=" << nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared
@@ -328,7 +330,7 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     return bufferManagers[bufferManagerIndex];
 }
 
-void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const{
+void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const {
     std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
     for (auto& subQueryPlanId : subQueryPlanIds) {
         NES_DEBUG("NodeEngine:: Find sources for subQueryPlanId " << subQueryPlanId);

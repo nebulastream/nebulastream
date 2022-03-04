@@ -28,9 +28,11 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/ThreadNaming.hpp>
 #include <csignal>
 #include <future>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 
 using namespace std;
@@ -58,7 +60,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       enableMonitoring(workerConfig->enableMonitoring.getValue()), numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
       queryManagerMode(workerConfig->queryManagerMode.getValue()) {
-    log4cxx::MDC::put("threadName", "NesWorker");
+    setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
 }

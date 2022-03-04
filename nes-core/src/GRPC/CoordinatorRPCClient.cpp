@@ -12,18 +12,19 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Common/GeographicalLocation.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
 #include <optional>
 #include <string>
-#include <Common/GeographicalLocation.hpp>
+#include <log4cxx/helpers/exception.h>
 
 namespace NES {
 
@@ -424,7 +425,6 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                     return false;// partial failure not ok to continue
                 }
             }
-
         }
         bool onFailure() override { return false; }
     };
@@ -475,7 +475,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
 }
 
 std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(GeographicalLocation coord,
-                                                                                          double radius) {
+                                                                                               double radius) {
     GetNodesInRangeRequest request;
     request.set_allocated_coord(coord);
     request.set_radius(radius);

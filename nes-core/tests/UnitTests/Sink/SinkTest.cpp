@@ -23,7 +23,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <ostream>
@@ -49,7 +49,7 @@ class SinkTest : public Testing::NESBaseTest {
     std::string path_to_osfile_file;
 
     static void SetUpTestCase() {
-        NES::setupLogging("SinkTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SinkTest class.");
     }
 

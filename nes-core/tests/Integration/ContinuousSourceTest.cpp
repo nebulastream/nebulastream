@@ -30,7 +30,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
@@ -49,7 +49,7 @@ using namespace Configurations;
 class ContinuousSourceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ContinuousSourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
 

@@ -13,7 +13,7 @@
 */
 
 #include <Phases/MigrationType.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Experimental {

@@ -17,7 +17,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

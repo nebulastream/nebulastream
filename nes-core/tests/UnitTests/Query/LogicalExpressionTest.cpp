@@ -15,7 +15,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -31,7 +31,7 @@ class LogicalExpressionTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     static void SetUpTestCase() {
-        NES::setupLogging("LogicalExpressionTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("LogicalExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("LogicalExpressionTest: Setup QueryCatalogTest test class.");
     }
 

@@ -127,7 +127,7 @@ class BenchmarkUtils {
                                         csvHeaderString,                                                                         \
                                         customCSVOutputs)                                                                        \
     {                                                                                                                            \
-        NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);                               \
+        NES::Logger::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);                               \
         std::random_device rd;                                                                                                   \
         std::mt19937 gen(rd());                                                                                                  \
         std::uniform_int_distribution<> distr(12345, 23456);                                                                     \

@@ -17,7 +17,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 namespace Runtime {

@@ -19,7 +19,7 @@
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
 #include <folly/MPMCQueue.h>

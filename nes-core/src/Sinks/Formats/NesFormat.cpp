@@ -18,7 +18,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <utility>
 namespace NES {

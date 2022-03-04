@@ -20,6 +20,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <map>
 
 namespace NES::Runtime {
 

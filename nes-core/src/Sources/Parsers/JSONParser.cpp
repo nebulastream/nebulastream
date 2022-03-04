@@ -14,7 +14,7 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 #include <string>

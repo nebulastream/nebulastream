@@ -26,7 +26,7 @@
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
 #include <random>
@@ -57,7 +57,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("MQTTTSinkTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MQTTTSinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup MQTTTSinkTest test class.");
     }
 

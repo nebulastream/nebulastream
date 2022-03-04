@@ -15,7 +15,7 @@
 #ifndef NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
 #define NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
 #include <Util/Experimental/Hash.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Experimental {
 

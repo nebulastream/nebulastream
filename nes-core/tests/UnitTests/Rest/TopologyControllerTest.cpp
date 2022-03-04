@@ -18,7 +18,7 @@
 #define _TURN_OFF_PLATFORM_STRING // undef U from cpprest
 #include <REST/Controller/TopologyController.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <memory>
@@ -28,7 +28,7 @@ namespace NES {
 class TopologyControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("TopologyControllerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("TopologyControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TopologyControllerTest test class.");
     }
 

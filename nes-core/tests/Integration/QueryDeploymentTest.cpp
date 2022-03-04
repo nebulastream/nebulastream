@@ -25,7 +25,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
@@ -41,7 +41,7 @@ using namespace Configurations;
 class QueryDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryDeploymentTest.log", NES::LOG_TRACE);
+        NES::Logger::setupLogging("QueryDeploymentTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup QueryDeploymentTest test class.");
     }
 };

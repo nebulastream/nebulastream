@@ -22,7 +22,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
@@ -37,7 +37,7 @@ using namespace Configurations;
 
 class RemoteClientTest : public Testing::NESBaseTest {
   protected:
-    static void SetUpTestCase() { NES::setupLogging("RemoteClientTest.log", NES::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("RemoteClientTest.log", NES::LogLevel::LOG_DEBUG); }
     static void TearDownTestCase() { NES_INFO("Tear down RemoteClientTest test class."); }
 
     void SetUp() override {

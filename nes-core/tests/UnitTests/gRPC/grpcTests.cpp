@@ -23,7 +23,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -41,7 +41,7 @@ using namespace Configurations;
 class grpcTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("grpcTests.log", NES::LOG_TRACE);
+        NES::Logger::setupLogging("grpcTests.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup grpc test class.");
     }
 };

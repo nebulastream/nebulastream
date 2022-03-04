@@ -14,7 +14,7 @@
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Plans/Query/QueryId.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_client.h>
@@ -42,7 +42,7 @@ uint16_t timeout = 5;
 class E2ECoordinatorSingleWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
 

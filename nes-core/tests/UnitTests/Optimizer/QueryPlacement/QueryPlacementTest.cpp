@@ -47,7 +47,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
 
@@ -68,7 +68,7 @@ class QueryPlacementTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("QueryPlacementTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryPlacementTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup QueryPlacementTest test case." << std::endl;
         z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();

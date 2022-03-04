@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 
 namespace NES {

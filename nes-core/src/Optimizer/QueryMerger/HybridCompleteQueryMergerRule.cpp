@@ -21,7 +21,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {
 

@@ -36,7 +36,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <future>
 #include <iostream>
@@ -57,7 +57,7 @@ using Runtime::TupleBuffer;
 class ProjectionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("ProjectionTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ProjectionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("ProjectionTest: Setup QueryCatalogTest test class.");
     }
     /* Will be called before a test is executed. */

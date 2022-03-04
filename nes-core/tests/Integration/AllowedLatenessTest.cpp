@@ -19,7 +19,7 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
 
@@ -38,7 +38,7 @@ class AllowedLatenessTest : public Testing::NESBaseTest {
     SchemaPtr inputSchema;
 
     static void SetUpTestCase() {
-        NES::setupLogging("AllowedLatenessTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("AllowedLatenessTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AllowedLatenessTest test class.");
     }
 

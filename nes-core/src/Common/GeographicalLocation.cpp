@@ -13,7 +13,7 @@
 */
 
 #include <Common/GeographicalLocation.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <exception>
 
 namespace NES {

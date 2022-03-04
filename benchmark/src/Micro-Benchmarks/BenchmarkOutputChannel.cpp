@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
     if (!std::filesystem::create_directory(benchmarkFolderName))
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
-    NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);
+    NES::Logger::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);
 
     // Writing header to csv file
     std::ofstream benchmarkFile;

@@ -20,7 +20,7 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
@@ -40,7 +40,7 @@ class QueryCatalogTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("QueryCatalogTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryCatalogTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         std::cout << "Setup QueryCatalogTest test case." << std::endl;
         auto cppCompiler = Compiler::CPPCompiler::create();

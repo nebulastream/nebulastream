@@ -27,7 +27,7 @@
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/NESTopologyPlan.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

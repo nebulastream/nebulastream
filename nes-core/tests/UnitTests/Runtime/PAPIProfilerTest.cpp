@@ -13,7 +13,7 @@
 */
 
 #include <Runtime/Profiler/PAPIProfiler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <strstream>
@@ -25,7 +25,7 @@ class PapiProfilerTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("PapiProfilerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("PapiProfilerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SetUpTestCase PapiProfilerTest test case.");
     }
 

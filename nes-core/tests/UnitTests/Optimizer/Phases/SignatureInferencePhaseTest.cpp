@@ -27,7 +27,7 @@
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -37,7 +37,7 @@ class SignatureInferencePhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("SignatureInferencePhaseTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SignatureInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SignatureInferencePhaseTest test case.");
     }
 

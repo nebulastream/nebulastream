@@ -13,7 +13,7 @@
 */
 #include <Compiler/Exceptions/CompilerException.hpp>
 #include <Compiler/Util/SharedLibrary.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <dlfcn.h>
 #include <filesystem>
 

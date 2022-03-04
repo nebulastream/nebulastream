@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWEDJOINSLICELISTSTORE_HPP_
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWEDJOINSLICELISTSTORE_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 #include <mutex>
 #include <vector>

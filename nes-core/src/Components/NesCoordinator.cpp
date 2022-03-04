@@ -29,7 +29,7 @@
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
 #include <memory>
@@ -41,17 +41,16 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
-#include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <log4cxx/helpers/exception.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -78,7 +77,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
       enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
-    log4cxx::MDC::put("threadName", "NesCoordinator");
+    setThreadName("NesCoordinator");
     topology = Topology::create();
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, enableMonitoring);
@@ -326,7 +325,10 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
     this->replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
-    CoordinatorRPCServer service(topologyManagerService, sourceCatalogService, monitoringService->getMonitoringManager(), this->replicationService);
+    CoordinatorRPCServer service(topologyManagerService,
+                                 sourceCatalogService,
+                                 monitoringService->getMonitoringManager(),
+                                 this->replicationService);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());

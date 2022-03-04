@@ -18,7 +18,7 @@
 #include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
 
@@ -29,7 +29,7 @@ namespace NES {
 class ComplexSequenceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("ComplexSequenceTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ComplexSequenceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ComplexSequenceTest test class.");
     }
 };

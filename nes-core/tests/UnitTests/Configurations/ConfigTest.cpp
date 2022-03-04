@@ -18,7 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <string>
@@ -30,7 +30,7 @@ using namespace Configurations;
 class ConfigTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("Config.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Configuration test class.");
     }
 

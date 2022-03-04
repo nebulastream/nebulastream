@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Runtime/InMemoryLineageManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 #include <thread>
@@ -28,7 +28,7 @@ class LineageManagerTest : public testing::Test {
 
   protected:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES::setupLogging("LineageManagerTest.log", NES::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("LineageManagerTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
 /**

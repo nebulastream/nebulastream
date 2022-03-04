@@ -23,7 +23,7 @@
 #include <Sources/KafkaSink.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 
 constexpr char* KAFKA_BROKER = "localhost:9092";
@@ -34,7 +34,7 @@ createDefaultDataSourceWithSchemaForOneBuffer namespace NES {
         BufferManagerPtr bufferManager;
         QueryManagerPtr queryManager;
         void SetUp() {
-            NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
+            NES::Logger::setupLogging("KafkaTest.log", NES::LogLevel::LOG_DEBUG);
 
             schema = Schema::create()
                          ->addField("user_id", 16)

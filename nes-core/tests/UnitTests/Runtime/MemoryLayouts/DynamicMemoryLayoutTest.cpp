@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
@@ -24,11 +25,8 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-
 #include <cstdlib>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
 
@@ -36,17 +34,12 @@ namespace NES::Runtime::MemoryLayouts {
 class DynamicMemoryLayoutTest : public Testing::NESBaseTest {
   public:
     BufferManagerPtr bufferManager;
-
-    void SetUp() override {
-        NESLogger::getInstance()->removeAllAppenders();
-        NES::setupLogging("DynamicMemoryLayoutTest.log", NES::LOG_DEBUG);
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
-    static void TearDownTestCase() {
-        std::cout << "Tear down DynamicMemoryLayoutTest class." << std::endl;
-        NESLogger::getInstance()->removeAllAppenders();
-    }
+    void SetUp() override { bufferManager = std::make_shared<BufferManager>(4096, 10); }
+    static void TearDownTestCase() {}
 };
 
 TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {

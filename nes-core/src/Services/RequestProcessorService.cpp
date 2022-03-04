@@ -37,10 +37,11 @@
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <exception>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 #include <z3++.h>
 

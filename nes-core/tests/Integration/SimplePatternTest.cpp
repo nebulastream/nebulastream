@@ -19,7 +19,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <filesystem>
@@ -39,7 +39,7 @@ class SimplePatternTest : public Testing::NESBaseTest {
   public:
     CoordinatorConfigurationPtr coConf;
     static void SetUpTestCase() {
-        NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SimplePatternTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SimplePatternTest test class.");
     }
 

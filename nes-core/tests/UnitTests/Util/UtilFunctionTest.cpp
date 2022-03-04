@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@ namespace NES {
 class UtilFunctionTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("UtilFunctionTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);
 
         NES_INFO("UtilFunctionTest test class SetUpTestCase.");
     }

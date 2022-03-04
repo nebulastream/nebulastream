@@ -30,7 +30,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

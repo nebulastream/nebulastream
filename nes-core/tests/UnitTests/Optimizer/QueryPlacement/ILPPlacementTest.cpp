@@ -37,7 +37,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -56,7 +56,7 @@ class ILPPlacementTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("ILPPlacementTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ILPPlacementTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup ILPPlacementTest test case." << std::endl;
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

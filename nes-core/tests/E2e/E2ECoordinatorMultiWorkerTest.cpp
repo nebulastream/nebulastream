@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/filestream.h>
@@ -42,7 +42,7 @@ uint16_t timeout = 5u;
 class E2ECoordinatorMultiWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("E2ECoordinatorWorkerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("E2ECoordinatorWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
 

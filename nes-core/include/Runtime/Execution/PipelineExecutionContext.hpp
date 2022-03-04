@@ -16,7 +16,7 @@
 #define NES_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <functional>

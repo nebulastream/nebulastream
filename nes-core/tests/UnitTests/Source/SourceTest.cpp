@@ -25,7 +25,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/GatheringMode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/SourceMode.hpp>
 
 #include "../../../tests/util/MetricValidator.hpp"
@@ -475,7 +475,7 @@ class SourceTest : public Testing::NESBaseTest {
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
 
     static void SetUpTestCase() {
-        NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SourceTest test class.");
     }
 

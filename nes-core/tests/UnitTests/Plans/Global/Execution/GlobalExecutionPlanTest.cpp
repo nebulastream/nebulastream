@@ -19,7 +19,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
@@ -30,7 +30,7 @@ class GlobalExecutionPlanTest : public testing::Test {
   public:
     /* Will be called before a test is executed. */
     void SetUp() override {
-        setupLogging("GlobalExecutionPlanTest.log", NES::LOG_DEBUG);
+        Logger::setupLogging("GlobalExecutionPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalExecutionPlanTest test case.");
     }
 

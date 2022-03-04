@@ -27,9 +27,10 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <stack>
 #include <utility>
+#include <log4cxx/helpers/exception.h>
 
 namespace NES::Optimizer {
 
@@ -50,8 +51,9 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
-            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
-                            + pinnedOperator->toString());
+            throw log4cxx::helpers::Exception(
+                "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
+                + pinnedOperator->toString());
         }
         auto nodeId = std::any_cast<uint64_t>(value);
         auto nodeWithPhysicalSource = topology->findNodeWithId(nodeId);
@@ -66,8 +68,9 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     for (const auto& pinnedOperator : downStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
-            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
-                            + pinnedOperator->toString());
+            throw log4cxx::helpers::Exception(
+                "LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
+                + pinnedOperator->toString());
         }
         auto nodeId = std::any_cast<uint64_t>(value);
         auto nodeWithPhysicalSource = topology->findNodeWithId(nodeId);
@@ -121,12 +124,13 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
     if (found == nodeIdToTopologyNodeMap.end()) {
         NES_ERROR("BasePlacementStrategy: Topology node with id " << nodeId << " not considered for the placement.");
         throw log4cxx::helpers::Exception("BasePlacementStrategy: Topology node with id " + std::to_string(nodeId)
-                        + " not considered for the placement.");
+                                          + " not considered for the placement.");
     }
 
     if (found->second->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(nodeId)) {
         NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
-        throw log4cxx::helpers::Exception("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
+        throw log4cxx::helpers::Exception(
+            "BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
     }
     return found->second;
 }
@@ -288,8 +292,9 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     if (!found) {
                         NES_ERROR("BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for the "
                                   "child operator");
-                        throw log4cxx::helpers::Exception("BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for "
-                                        "the child operator");
+                        throw log4cxx::helpers::Exception(
+                            "BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for "
+                            "the child operator");
                     }
                 } else if (i == nodesBetween.size() - 1) {
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Find the query plan with parent operator.");
@@ -314,8 +319,9 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     if (!found) {
                         NES_WARNING("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator for "
                                     "the parent operator");
-                        throw log4cxx::helpers::Exception("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator "
-                                        "for the parent operator");
+                        throw log4cxx::helpers::Exception(
+                            "BasePlacementStrategy::placeNetworkOperator: unable to place network source operator "
+                            "for the parent operator");
                     }
                 } else {
 
@@ -395,7 +401,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                                                   return downStreamQuerySubPlanId == querySubPlan->getQuerySubPlanId();
                                               });
                     if (found == querySubPlans.end()) {
-                        throw log4cxx::helpers::Exception("BasePlacementStrategy::placeNetworkOperator: Parent plan not found in execution node.");
+                        throw log4cxx::helpers::Exception(
+                            "BasePlacementStrategy::placeNetworkOperator: Parent plan not found in execution node.");
                     }
                     querySubPlans.erase(found);
                     downStreamExecutionNode->updateQuerySubPlans(queryId, querySubPlans);

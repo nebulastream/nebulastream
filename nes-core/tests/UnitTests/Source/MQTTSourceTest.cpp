@@ -20,7 +20,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 #include <iostream>
@@ -58,7 +58,7 @@ class MQTTSourceTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("MQTTSourceTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MQTTSourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("MQTTSOURCETEST::SetUpTestCase()");
     }
 

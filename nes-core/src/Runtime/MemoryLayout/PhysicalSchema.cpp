@@ -18,7 +18,7 @@
 #include <Runtime/MemoryLayout/PhysicalField.hpp>
 #include <Runtime/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <Runtime/MemoryLayout/PhysicalSchema.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cassert>
 #include <utility>
 

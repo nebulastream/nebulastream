@@ -42,7 +42,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <utility>
@@ -58,7 +58,7 @@ using Runtime::TupleBuffer;
 class QueryExecutionTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
     }
     /* Will be called before a test is executed. */

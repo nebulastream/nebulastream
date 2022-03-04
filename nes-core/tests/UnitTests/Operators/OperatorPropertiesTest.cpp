@@ -15,7 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
@@ -33,7 +33,7 @@ class OperatorPropertiesTest : public Testing::NESBaseTest {
 
   protected:
     static void setupLogging() {
-        NES::setupLogging("OperatorPropertiesTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("OperatorPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup OperatorPropertiesTest test class.");
     }
 };

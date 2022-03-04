@@ -14,7 +14,7 @@
 
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/DumpHandler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <iomanip>
 #include <sstream>

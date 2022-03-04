@@ -13,7 +13,7 @@
 */
 #include <Compiler/Exceptions/CompilerException.hpp>
 #include <Compiler/Util/ClangFormat.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Compiler {
 
 ClangFormat::ClangFormat(const std::string language) : language(language) {}

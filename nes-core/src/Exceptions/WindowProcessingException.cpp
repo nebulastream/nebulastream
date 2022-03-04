@@ -13,7 +13,7 @@
 */
 
 #include <Exceptions/WindowProcessingException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 WindowProcessingException::WindowProcessingException(const std::string& message)

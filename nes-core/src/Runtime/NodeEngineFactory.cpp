@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <Exceptions/SignalHandling.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Exceptions/SignalHandling.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -29,15 +29,17 @@
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <log4cxx/helpers/exception.h>
 #include <memory>
 
 namespace NES::Runtime {
 
 NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
                                                          uint16_t port,
-                                                         std::vector<PhysicalSourcePtr> physicalSources, std::weak_ptr<NesWorker>&& nesWorker) {
+                                                         std::vector<PhysicalSourcePtr> physicalSources,
+                                                         std::weak_ptr<NesWorker>&& nesWorker) {
     return createNodeEngine(hostname,
                             port,
                             std::move(physicalSources),

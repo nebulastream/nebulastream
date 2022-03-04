@@ -40,7 +40,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -83,7 +83,7 @@ class OperatorCodeGenerationTest : public testing::Test {
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("OperatorOperatorCodeGenerationTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("OperatorOperatorCodeGenerationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test class.");
     }
 

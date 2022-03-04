@@ -18,7 +18,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include "../util/NesBaseTest.hpp"
@@ -32,7 +32,7 @@ using namespace Configurations;
 class DeepHierarchyTopologyTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("DeepTopologyHierarchyTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DeepTopologyHierarchyTest test class.");
     }
 };

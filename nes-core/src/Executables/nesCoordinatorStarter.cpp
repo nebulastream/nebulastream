@@ -15,7 +15,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
 #include <map>
@@ -41,7 +41,7 @@ int main(int argc, const char* argv[]) {
     try {
         std::cout << logo << std::endl;
         std::cout << coordinator << " v" << NES_VERSION << std::endl;
-        NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+        NES::Logger::setupLogging("nesCoordinatorStarter.log", NES::LogLevel::LOG_DEBUG);
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
 
         map<string, string> commandLineParams;
@@ -59,7 +59,7 @@ int main(int argc, const char* argv[]) {
         if (argc > 1) {
             coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         }
-        NES::setLogLevel(coordinatorConfig->logLevel.getValue());
+        NES::Logger::getInstance()->setLogLevel(coordinatorConfig->logLevel.getValue());
 
         NES_INFO("start coordinator with " << coordinatorConfig->toString());
 

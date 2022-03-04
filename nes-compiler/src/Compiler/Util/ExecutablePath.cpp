@@ -13,7 +13,7 @@
 */
 #include <Compiler/Exceptions/CompilerException.hpp>
 #include <Compiler/Util/ExecutablePath.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <vector>
 

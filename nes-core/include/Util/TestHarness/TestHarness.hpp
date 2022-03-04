@@ -16,16 +16,17 @@
 #define NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
+#include <filesystem>
+#include <log4cxx/helpers/exception.h>
 #include <type_traits>
 #include <utility>
-#include <filesystem>
 
 /**
  * @brief This test harness wrap query deployment test in our test framework.
@@ -84,7 +85,8 @@ class TestHarness {
                          uint64_t memSrcNumBuffToProcess = 1)
         : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
           memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
-          physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
+          physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
+          testHarnessResourcePath(testHarnessResourcePath) {}
 
     /**
          * @brief push a single element/tuple to specific source
@@ -189,7 +191,7 @@ class TestHarness {
     TestHarness& attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalSourceName, uint32_t parentId) {
 
         auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->parentId=parentId;
+        workerConfiguration->parentId = parentId;
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
@@ -225,7 +227,7 @@ class TestHarness {
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
         workerConfiguration->physicalSources.add(physicalSource);
-        workerConfiguration->parentId=parentId;
+        workerConfiguration->parentId = parentId;
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
                                                                                      logicalSourceName,
@@ -255,7 +257,7 @@ class TestHarness {
     TestHarness& attachWorkerToWorkerWithId(uint32_t parentId) {
 
         auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->parentId=parentId;
+        workerConfiguration->parentId = parentId;
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
         testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
@@ -275,7 +277,8 @@ class TestHarness {
     TestHarness& validate() {
         validationDone = true;
         if (this->logicalSources.empty()) {
-            throw log4cxx::helpers::Exception("No Logical source defined. Please make sure you add logical source while defining up test harness.");
+            throw log4cxx::helpers::Exception(
+                "No Logical source defined. Please make sure you add logical source while defining up test harness.");
         }
 
         if (testHarnessWorkerConfigurations.empty()) {
@@ -286,8 +289,9 @@ class TestHarness {
         for (const auto& workerConf : testHarnessWorkerConfigurations) {
             if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::MemorySource && workerConf->getRecords().empty()) {
                 throw log4cxx::helpers::Exception("TestHarness: No Record defined for Memory Source with logical source Name: "
-                                + workerConf->getLogicalSourceName() + " and Physical source name : "
-                                + workerConf->getPhysicalSourceName() + ". Please add data to the test harness.");
+                                                  + workerConf->getLogicalSourceName()
+                                                  + " and Physical source name : " + workerConf->getPhysicalSourceName()
+                                                  + ". Please add data to the test harness.");
             }
 
             if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::CSVSource
@@ -317,7 +321,7 @@ class TestHarness {
 
         if (!schema) {
             throw log4cxx::helpers::Exception("Unable to find logical source with name " + logicalSourceName
-                            + ". Make sure you are adding a logical source with the name to the test harness.");
+                                              + ". Make sure you are adding a logical source with the name to the test harness.");
         }
 
         auto tupleSize = schema->getSchemaSizeInBytes();
@@ -347,9 +351,9 @@ class TestHarness {
 
         //Start Coordinator
         auto coordinatorConfiguration = CoordinatorConfiguration::create();
-        coordinatorConfiguration->coordinatorIp=coordinatorIPAddress;
-        coordinatorConfiguration->restPort=restPort;
-        coordinatorConfiguration->rpcPort=rpcPort;
+        coordinatorConfiguration->coordinatorIp = coordinatorIPAddress;
+        coordinatorConfiguration->restPort = restPort;
+        coordinatorConfiguration->rpcPort = rpcPort;
         nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
         auto coordinatorRPCPort = nesCoordinator->startCoordinator(/**blocking**/ false);
         //Add all logical sources
@@ -361,8 +365,8 @@ class TestHarness {
             auto workerConfiguration = workerConf->getWorkerConfiguration();
 
             //Set ports at runtime
-            workerConfiguration->coordinatorPort=coordinatorRPCPort;
-            workerConfiguration->coordinatorIp=coordinatorIPAddress;
+            workerConfiguration->coordinatorPort = coordinatorRPCPort;
+            workerConfiguration->coordinatorIp = coordinatorIPAddress;
 
             switch (workerConf->getSourceType()) {
                 case TestHarnessWorkerConfiguration::MemorySource: {
@@ -382,7 +386,6 @@ class TestHarness {
             //Add Nes Worker to the configuration.
             //Note: this is required to stop the NesWorker at the end of the test
             workerConf->setNesWorker(nesWorker);
-
         }
 
         topologySetupDone = true;
@@ -531,4 +534,4 @@ class TestHarness {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
+#endif// NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_

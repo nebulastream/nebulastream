@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Compiler/Util/File.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>

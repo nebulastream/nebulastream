@@ -43,7 +43,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
@@ -69,7 +69,7 @@ class QueryCompilerTest : public Testing::NESBaseTest {
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     static void SetUpTestCase() {
-        NES::setupLogging("QueryCompilerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryCompilerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryCompilerTest test class.");
     }
 

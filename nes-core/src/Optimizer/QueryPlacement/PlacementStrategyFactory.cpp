@@ -18,7 +18,7 @@
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
-
+#include <log4cxx/helpers/exception.h>
 namespace NES::Optimizer {
 
 BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,
@@ -27,20 +27,19 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
                                                                const TypeInferencePhasePtr& typeInferencePhase,
                                                                const z3::ContextPtr& /*z3Context*/) {
     switch (placementStrategy) {
-// #2485        case PlacementStrategy::ILP:
-//            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
-        case PlacementStrategy::BottomUp:
-            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+            // #2485        case PlacementStrategy::ILP:
+            //            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
+        case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::TopDown:
             return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-// #2486        case PlacementStrategy::IFCOP:
-//            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        // FIXME: enable them with issue #755
-        //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
-        //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
-        //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
-        //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
-        //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
+            // #2486        case PlacementStrategy::IFCOP:
+            //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+            // FIXME: enable them with issue #755
+            //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
+            //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
+            //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
+            //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
+            //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
         default: throw log4cxx::helpers::Exception("Unknown placement strategy type " + std::to_string(placementStrategy));
     }
 }

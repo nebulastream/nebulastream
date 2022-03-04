@@ -20,7 +20,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -34,7 +34,7 @@ using namespace Configurations;
 class GeoLocationTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("GeoLocationTests.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("GeoLocationTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GeoLocationTests test class.");
     }
 

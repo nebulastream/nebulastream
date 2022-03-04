@@ -19,7 +19,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
-
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 namespace NES {
 

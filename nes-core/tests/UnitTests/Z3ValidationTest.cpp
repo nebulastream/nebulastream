@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 #include <z3++.h>
@@ -22,7 +22,7 @@ namespace NES {
 class Z3ValidationTest : public testing::Test {
   public:
     void SetUp() override {
-        NES::setupLogging("Z3ValidationTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("Z3ValidationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Z3ValidationTest test class.");
     }
 

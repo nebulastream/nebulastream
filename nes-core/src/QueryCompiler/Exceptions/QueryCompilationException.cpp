@@ -13,7 +13,7 @@
 */
 #include <Exceptions/RuntimeException.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::QueryCompilation {
 
 QueryCompilationException::QueryCompilationException(const std::string& message)

@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>
@@ -31,7 +31,7 @@ class WatermarkManagerTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("WatermarkManagerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("WatermarkManagerTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup WatermarkManagerTest test case." << std::endl;
     }
 

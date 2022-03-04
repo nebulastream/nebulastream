@@ -18,7 +18,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>

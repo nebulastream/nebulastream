@@ -23,7 +23,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -33,7 +33,7 @@ class BinaryOperatorSortRuleTest : public testing::Test {
   public:
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("BinaryOperatorSortRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("BinaryOperatorSortRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
     }
 

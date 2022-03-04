@@ -18,7 +18,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-
+#include <log4cxx/helpers/exception.h>
 namespace NES {
 
 GlobalQueryPlan::GlobalQueryPlan() = default;
@@ -32,7 +32,8 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     }
 
     if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
-        throw log4cxx::helpers::Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId) + " already present.");
+        throw log4cxx::helpers::Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId)
+                                          + " already present.");
     }
 
     queryPlansToAdd.emplace_back(queryPlan);
@@ -48,7 +49,7 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
         SharedQueryPlanPtr sharedQueryPlan = sharedQueryIdToPlanMap[sharedQueryId];
         if (!sharedQueryPlan->removeQuery(queryId)) {
             throw log4cxx::helpers::Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
-                            + " from shared query plan with id " + std::to_string(sharedQueryId));
+                                              + " from shared query plan with id " + std::to_string(sharedQueryId));
         }
         //Remove from the queryId to shared query id map
         queryIdToSharedQueryIdMap.erase(queryId);

@@ -27,7 +27,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <iostream>
@@ -41,7 +41,7 @@ using namespace Configurations;
 class RESTEndpointTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() {
-        NES::setupLogging("RESTEndpointTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("RESTEndpointTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RESTEndpointTest test class.");
     }
 

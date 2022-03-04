@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSLICESTORE_HPP_
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSLICESTORE_HPP_
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 namespace NES::Windowing {
 

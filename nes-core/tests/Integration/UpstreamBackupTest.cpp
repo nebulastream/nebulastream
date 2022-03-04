@@ -24,7 +24,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <NesBaseTest.hpp>
@@ -47,7 +47,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     SchemaPtr inputSchema;
 
     static void SetUpTestCase() {
-        NES::setupLogging("UpstreamBackupTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("UpstreamBackupTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup UpstreamBackupTest test class.");
     }
 

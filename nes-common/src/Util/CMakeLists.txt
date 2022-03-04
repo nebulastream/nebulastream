@@ -13,11 +13,11 @@
 # limitations under the License.
 
 add_source_files(nes-common
-        Logger.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
         FileMutex.cpp
 )
 add_subdirectory(yaml)
+add_subdirectory(Logger)
 add_subdirectory(Subprocess)
 

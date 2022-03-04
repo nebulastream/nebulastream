@@ -13,7 +13,7 @@
 */
 
 #include <Plans/Query/QueryId.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include "../util/NesBaseTest.hpp"
 #include <string>
@@ -42,7 +42,7 @@ uint16_t timeout = 5;
 class E2ECoordinatorMultiQueryTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
 

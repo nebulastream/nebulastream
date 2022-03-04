@@ -19,7 +19,7 @@
 #include <Runtime/internal/rte_memory.h>
 #endif
 #include <Sources/MemorySource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cmath>
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE

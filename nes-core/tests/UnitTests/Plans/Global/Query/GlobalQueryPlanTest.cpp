@@ -21,8 +21,9 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <log4cxx/helpers/exception.h>
 
 using namespace NES;
 
@@ -30,7 +31,7 @@ class GlobalQueryPlanTest : public testing::Test {
 
   public:
     static void SetUpTestCase() {
-        setupLogging("GlobalQueryPlanTest.log", NES::LOG_DEBUG);
+        Logger::setupLogging("GlobalQueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalQueryPlanTest test case.");
     }
 

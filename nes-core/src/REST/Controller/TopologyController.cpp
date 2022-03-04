@@ -19,6 +19,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/http_msg.h>
 #include <cpprest/json.h>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 #include <vector>
 
@@ -57,19 +58,20 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     NES_DEBUG("TopologyController::handlePost:addParent: childId=" << childId << " parentId=" << parentId);
 
                     if (parentId == childId) {
-                        throw log4cxx::helpers::Exception("Could not add parent for node in topology: childId and parentId must be different.");
+                        throw log4cxx::helpers::Exception(
+                            "Could not add parent for node in topology: childId and parentId must be different.");
                     }
 
                     TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
                     if (!childPhysicalNode) {
-                        throw log4cxx::helpers::Exception("Could not add parent for node in topology: Node with childId=" + std::to_string(childId)
-                                        + " not found.");
+                        throw log4cxx::helpers::Exception("Could not add parent for node in topology: Node with childId="
+                                                          + std::to_string(childId) + " not found.");
                     }
 
                     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
                     if (!parentPhysicalNode) {
                         throw log4cxx::helpers::Exception("Could not add parent for node in topology: Node with parentId="
-                                        + std::to_string(parentId) + " not found.");
+                                                          + std::to_string(parentId) + " not found.");
                     }
 
                     bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
@@ -118,20 +120,21 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     NES_DEBUG("TopologyController::handlePost:removeParent: childId=" << childId << " parentId=" << parentId);
 
                     if (parentId == childId) {
-                        throw log4cxx::helpers::Exception("Could not remove parent for node in topology: childId and parentId must be different.");
+                        throw log4cxx::helpers::Exception(
+                            "Could not remove parent for node in topology: childId and parentId must be different.");
                     }
 
                     TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
                     if (!childPhysicalNode) {
                         throw log4cxx::helpers::Exception("Could not remove parent for node in topology: Node with childId="
-                                        + std::to_string(childId) + " not found.");
+                                                          + std::to_string(childId) + " not found.");
                     }
                     NES_DEBUG("TopologyController::handlePost:removeParent: childId: " << childId << " exists");
 
                     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
                     if (!parentPhysicalNode) {
                         throw log4cxx::helpers::Exception("Could not remove parent for node in topology: Node with parentId="
-                                        + std::to_string(parentId) + " not found.");
+                                                          + std::to_string(parentId) + " not found.");
                     }
                     NES_DEBUG("TopologyController::handlePost:removeParent: parent node: " << parentId << " exists");
 

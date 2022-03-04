@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>//
 
@@ -42,7 +42,7 @@ namespace NES {
 class LogicalOperatorNodeTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("LogicalOperatorNodeTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("LogicalOperatorNodeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LogicalOperatorNodeTest test class.");
     }
 
@@ -101,25 +101,6 @@ class LogicalOperatorNodeTest : public Testing::NESBaseTest {
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};
-
-    static void setupLogging() {
-        // create PatternLayout
-        log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-        // create FileAppender
-        LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-        log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-        // create ConsoleAppender
-        log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-        // set log level
-        NESLogger::getInstance()->setLevel(log4cxx::Level::getDebug());
-
-        // add appenders and other will inherit the settings
-        NESLogger::getInstance()->addAppender(file);
-        NESLogger::getInstance()->addAppender(console);
-    }
 };
 
 TEST_F(LogicalOperatorNodeTest, getSuccessors) {

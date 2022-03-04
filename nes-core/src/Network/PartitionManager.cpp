@@ -15,7 +15,7 @@
 #include <Network/PartitionManager.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 // Note that we updated the PartitionManager's logic:
 // currently, we do not delete partitions even if their counter is set to 0

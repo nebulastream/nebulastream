@@ -13,7 +13,7 @@
 */
 
 #include <Exceptions/BufferAccessException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 BufferAccessException::BufferAccessException(const std::string& message)

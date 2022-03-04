@@ -13,7 +13,7 @@
 */
 
 #include <Sensors/I2CBus.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <fcntl.h>
 #ifdef __linux__

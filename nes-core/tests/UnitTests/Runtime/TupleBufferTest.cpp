@@ -19,7 +19,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
@@ -34,7 +34,7 @@ class TupleBufferTest : public Testing::NESBaseTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("TupleBufferTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("TupleBufferTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SetUpTestCase TupleBufferTest test case.");
     }
 

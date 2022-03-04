@@ -14,7 +14,7 @@
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES {

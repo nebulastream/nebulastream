@@ -13,7 +13,7 @@
 */
 
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <assert.h>
 #include <atomic>

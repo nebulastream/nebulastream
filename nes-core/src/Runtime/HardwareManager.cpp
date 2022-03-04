@@ -14,6 +14,7 @@
 
 #include <Runtime/HardwareManager.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <map>
 
 #ifdef __APPLE__
 #include <sys/sysctl.h>

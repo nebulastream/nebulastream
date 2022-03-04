@@ -19,7 +19,7 @@
 #include <REST/RestEngine.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/usr_interrupt_handler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 #include <Components/NesCoordinator.hpp>

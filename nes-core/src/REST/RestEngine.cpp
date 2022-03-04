@@ -22,7 +22,7 @@
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <REST/RestEngine.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
 #include <iostream>

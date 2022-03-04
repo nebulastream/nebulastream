@@ -15,4 +15,5 @@
 add_source_files(nes-common
         SignalHandling.cpp
         RuntimeException.cpp
+        NotImplementedException.cpp
 )

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -24,7 +24,7 @@ namespace NES {
 class TimerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("TimerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("TimerTest.log", NES::LogLevel::LOG_DEBUG);
 
         NES_INFO("TimerTest test class SetUpTestCase.");
     }

@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <any>
 #include <sstream>
 #include <string>

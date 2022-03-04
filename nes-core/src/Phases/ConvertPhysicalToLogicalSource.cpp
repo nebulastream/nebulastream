@@ -36,7 +36,7 @@
 #include <Sources/SenseSource.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

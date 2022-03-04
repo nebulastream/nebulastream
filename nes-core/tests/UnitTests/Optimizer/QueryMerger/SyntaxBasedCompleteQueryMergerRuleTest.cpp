@@ -32,7 +32,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -46,7 +46,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("SyntaxBasedEqualQueryMergerRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SyntaxBasedEqualQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SyntaxBasedEqualQueryMergerRuleTest test case.");
     }
 

@@ -14,7 +14,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 namespace NES {
 

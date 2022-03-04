@@ -20,7 +20,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/File.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -48,7 +48,7 @@ class JITCompilerTest : public testing::Test {
     uint64_t waitForCompilation = 10;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("JITCompilerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("JITCompilerTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup JITCompilerTest test class." << std::endl;
     }
 

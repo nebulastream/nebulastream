@@ -21,7 +21,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
 #include "../util/NesBaseTest.hpp"
@@ -34,7 +34,7 @@ using namespace Configurations;
 class SourceCatalogRemoteTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("SourceCatalogRemoteTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SourceCatalogRemoteTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SourceCatalogRemoteTest test class.");
     }
 

@@ -20,7 +20,7 @@
 #include <string>
 
 #include <Runtime/QueryManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 #include <open62541/client_config_default.h>

@@ -13,7 +13,7 @@
 */
 #include <GRPC/CallData.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
@@ -28,8 +28,7 @@ namespace NES {
 class ThreadNamingTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("ThreadNamingTest.log", NES::LOG_DEBUG);
-
+        NES::Logger::setupLogging("ThreadNamingTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ThreadNamingTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO("ThreadNamingTest test class TearDownTestCase."); }

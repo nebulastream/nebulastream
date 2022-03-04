@@ -16,7 +16,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/DataSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <utility>
 

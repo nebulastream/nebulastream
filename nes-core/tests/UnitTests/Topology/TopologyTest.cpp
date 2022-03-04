@@ -16,7 +16,7 @@
 #include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstddef>
 #include <iostream>
 
@@ -30,7 +30,7 @@ class TopologyTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         std::cout << "Setup NesTopologyManager test case." << std::endl;
-        NES::setupLogging("NesTopologyManager.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("NesTopologyManager.log", NES::LogLevel::LOG_DEBUG);
     }
 
     /* Will be called before a test is executed. */

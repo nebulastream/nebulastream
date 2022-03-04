@@ -26,7 +26,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -39,7 +39,7 @@ class RenameSourceToProjectOperatorRuleTest : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("RenameSourceToProjectOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RenameSourceToProjectOperatorRuleTest test case.");
     }
 

@@ -18,7 +18,7 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <NesBaseTest.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <limits>
 
@@ -29,7 +29,7 @@ namespace NES {
 class DataTypeFactoryTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("DataTypeFactory.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("DataTypeFactory.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DataTypeFactory test class.");
     }
 

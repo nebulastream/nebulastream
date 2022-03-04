@@ -17,7 +17,7 @@
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <utility>

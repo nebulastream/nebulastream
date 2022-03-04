@@ -15,14 +15,14 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <cstring>
+#include <log4cxx/helpers/exception.h>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <zmq.hpp>
-
 namespace NES {
 
 ZmqSource::ZmqSource(SchemaPtr schema,

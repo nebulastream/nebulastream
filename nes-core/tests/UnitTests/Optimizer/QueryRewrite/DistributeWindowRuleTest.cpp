@@ -31,7 +31,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
@@ -50,7 +50,7 @@ class DistributeWindowRuleTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("DistributeWindowRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("DistributeWindowRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DistributeWindowRuleTest test case.");
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
         // enable distributed window optimization

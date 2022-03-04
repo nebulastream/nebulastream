@@ -13,14 +13,14 @@
 */
 
 #include <Exceptions/RuntimeException.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
-#include <Util/Logger.hpp>
 
 namespace NES::Exceptions {
 
-RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location) : errorMessage(std::move(msg)) {
-    auto spiLocation = log4cxx::spi::LocationInfo(location.file_name(), location.function_name(), location.line());
-    NESLogger::getInstance()->error(errorMessage, spiLocation);
+RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location)
+    : errorMessage(std::move(msg)) {
+    Logger::getInstance()->log(LogLevel::LOG_ERROR, msg, location);
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);
 }
@@ -32,4 +32,4 @@ RuntimeException::RuntimeException(std::string msg, const std::string& stacktrac
 
 const char* RuntimeException::what() const noexcept { return errorMessage.c_str(); }
 
-}// namespace NES
+}// namespace NES::Exceptions

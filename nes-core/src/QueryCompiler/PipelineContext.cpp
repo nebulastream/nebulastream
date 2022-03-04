@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 
 namespace NES::QueryCompilation {

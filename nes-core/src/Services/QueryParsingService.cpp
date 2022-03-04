@@ -20,10 +20,11 @@
 #include <Compiler/SourceCode.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <sstream>
+#include <log4cxx/helpers/exception.h>
 
 namespace NES {
 

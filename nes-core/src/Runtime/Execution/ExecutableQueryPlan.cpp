@@ -16,7 +16,7 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <utility>
 

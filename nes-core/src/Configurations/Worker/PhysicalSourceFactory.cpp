@@ -23,7 +23,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

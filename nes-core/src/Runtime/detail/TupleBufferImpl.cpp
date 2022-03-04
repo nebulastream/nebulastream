@@ -14,7 +14,7 @@
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <bitset>
 #include <exception>
 #include <iostream>

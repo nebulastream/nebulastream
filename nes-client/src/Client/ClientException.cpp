@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Client/ClientException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Client {
 
 ClientException::ClientException(const std::string& message)

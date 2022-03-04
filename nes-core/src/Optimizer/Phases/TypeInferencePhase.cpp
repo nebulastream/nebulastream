@@ -19,8 +19,8 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
-
 namespace NES::Optimizer {
 
 TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) {

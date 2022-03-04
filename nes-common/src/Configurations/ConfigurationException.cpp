@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Configurations/ConfigurationException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Configurations {
 
 ConfigurationException::ConfigurationException(const std::string& message, std::string&& stacktrace, std::source_location location)

@@ -15,7 +15,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {

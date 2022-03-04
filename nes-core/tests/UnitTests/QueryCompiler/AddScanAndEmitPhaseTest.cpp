@@ -29,7 +29,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <Sources/DefaultSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 #include <iostream>
@@ -44,7 +44,7 @@ using namespace NES::QueryCompilation::PhysicalOperators;
 class AddScanAndEmitPhaseTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("AddScanAndEmitPhase.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("AddScanAndEmitPhase.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AddScanAndEmitPhase test class.");
     }
 

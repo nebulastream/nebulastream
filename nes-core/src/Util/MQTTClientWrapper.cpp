@@ -13,7 +13,7 @@
 */
 
 #ifdef ENABLE_MQTT_BUILD
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/MQTTClientWrapper.hpp>
 #include <utility>
 

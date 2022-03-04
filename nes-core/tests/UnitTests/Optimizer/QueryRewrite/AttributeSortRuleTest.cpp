@@ -23,7 +23,7 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -35,7 +35,7 @@ class AttributeSortRuleTest : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("AttributeSortRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("AttributeSortRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AttributeSortRuleTest test case.");
     }
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Compiler/SourceCode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::Compiler {

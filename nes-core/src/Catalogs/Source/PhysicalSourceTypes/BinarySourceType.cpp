@@ -14,7 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/BinarySourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 #include <utility>
 
