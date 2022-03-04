@@ -65,7 +65,6 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     }
 
     if (coordinates.isValid()) {
-        //auto geoLoc = coordinates.value();
         NES_DEBUG("added node with geographical location: " << coordinates.getLatitude() << ", " << coordinates.getLongitude());
         topology->setPhysicalNodePosition(newTopologyNode, coordinates, true);
     } else {

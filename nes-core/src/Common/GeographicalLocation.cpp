@@ -42,17 +42,17 @@ GeographicalLocation GeographicalLocation::fromString(const std::string& coordin
     if (coordinates.empty()) {
         throw InvalidCoordinateFormatException();
     }
-    std::stringstream ss(coordinates);
+    std::stringstream stringStream(coordinates);
     double lat;
-    ss >> lat;
-    char seperator = 0;
-    ss >> seperator;
-    if (seperator!= ',') {
+    stringStream >> lat;
+    char separator = 0;
+    stringStream >> separator;
+    if (separator != ',') {
         NES_WARNING("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
         throw InvalidCoordinateFormatException();
     }
     double lng;
-    ss >> lng;
+    stringStream >> lng;
 
     return {lat, lng};
 

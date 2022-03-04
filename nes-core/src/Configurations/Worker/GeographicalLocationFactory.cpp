@@ -38,8 +38,7 @@ GeographicalLocation GeographicalLocationFactory::createFromString(std::string,
 
 
 GeographicalLocation GeographicalLocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
-    //todo: check this again if all cases are handled correctlyt
-    auto configString = yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>();
+    auto configString = yamlConfig[LOCATION_COORDINATES_CONFIG].As<std::string>();
     if (!configString.empty() && configString != "\n") {
         return GeographicalLocation::fromString(configString);
     }
