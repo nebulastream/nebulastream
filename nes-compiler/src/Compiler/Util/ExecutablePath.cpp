@@ -40,7 +40,7 @@ bool isInLocalInstallDir() {
         && std::filesystem::exists(executablePath.append("include"));
 }
 
-std::ostream& ExecutablePath::operator<<(std::ostream& os, const ExecutablePath::RuntimePathConfig& config) {
+std::ostream& operator<<(std::ostream& os, const RuntimePathConfig& config) {
     os << "\nclangBinaryPath: " << config.clangBinaryPath << "\n";
     os << "includePaths: \n";
     for (auto includeDir : config.includePaths) {
@@ -55,7 +55,7 @@ std::ostream& ExecutablePath::operator<<(std::ostream& os, const ExecutablePath:
 
 RuntimePathConfig loadRuntimePathConfig() {
     auto runtimePathConfig = RuntimePathConfig();
-#ifdef defined(__APPLE__)
+#if defined(__APPLE__)
     runtimePathConfig.libs.push_back("-lnes");
     runtimePathConfig.libs.push_back("-lnes-common");
 #endif
