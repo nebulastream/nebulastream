@@ -13,7 +13,7 @@
 */
 
 #include <Runtime/BufferStorage.hpp>
-#include <mutex>
+
 namespace NES::Runtime {
 void BufferStorageUnit::insert(Network::PartitionId nesPartitionId, TupleBuffer buffer) {
     std::unique_lock<std::mutex> lock(mutex);
