@@ -611,7 +611,6 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-    auto queryId = updatedSharedQMToDeploy[0]->getSharedQueryId();
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, true);
     queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, updatedSharedQMToDeploy[0]);
@@ -1296,7 +1295,6 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     // check if map is placed two times
-    uint32_t mapPlacementCount = 0;
 
     bool isSinkPlacementValid = false;
     bool isSource1PlacementValid = false;
