@@ -31,10 +31,10 @@ namespace NES {
 class NullOutputSink : public SinkMedium {
   public:
     /**
-     * @brief Default constructor
+     * @brief Default getSliceIndexByTs for could not find a slice,
      * @Note the default output will be written to cout
      */
-    explicit NullOutputSink(Runtime::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId);
+    explicit NullOutputSink(Runtime::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief destructor

@@ -37,6 +37,7 @@ class PrintSink : public SinkMedium {
     PrintSink(SinkFormatPtr format,
               Runtime::NodeEnginePtr nodeEngine,
               QuerySubPlanId querySubPlanId,
+              QueryId queryId,
               std::ostream& pOutputStream = std::cout);
 
     /**

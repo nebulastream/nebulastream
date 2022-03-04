@@ -28,8 +28,9 @@ FileSink::FileSink(SinkFormatPtr format,
                    Runtime::NodeEnginePtr nodeEngine,
                    const std::string& filePath,
                    bool append,
+                   QueryId queryId,
                    QuerySubPlanId querySubPlanId)
-    : SinkMedium(std::move(format), std::move(nodeEngine), querySubPlanId) {
+    : SinkMedium(std::move(format), std::move(nodeEngine), queryId, querySubPlanId) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {

@@ -126,6 +126,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         QueryManagerPtr queryManager;
         if (workerToCoreMapping != "") {
             std::vector<uint64_t> workerToCoreMappingVec = Util::splitWithStringDelimiter<uint64_t>(workerToCoreMapping, ",");
+            NES_ASSERT(workerToCoreMappingVec.size() == numThreads, " we need one position for each thread in mapping");
             queryManager = std::make_shared<QueryManager>(bufferManagers,
                                                           nodeEngineId,
                                                           numThreads,

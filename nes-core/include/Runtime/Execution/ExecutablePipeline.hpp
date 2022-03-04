@@ -145,7 +145,7 @@ class ExecutablePipeline : public Reconfigurable {
 
     /**
      * @brief Get query plan id.
-     * @return QuerySubPlanId.
+     * @return QueryId.
      */
     QueryId getQueryId() const;
 

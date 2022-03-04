@@ -73,7 +73,7 @@ class NodeEngineFactory {
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCoreMapping = "",
                                           uint64_t numberOfQueues = 1,
-                                          uint64_t numberOfThreadsPerQueue = 0,
+                                          uint64_t numberOfThreadsPerQueue = 1,
                                           QueryManager::QueryMangerMode = QueryManager::QueryMangerMode::Dynamic);
 
   private:

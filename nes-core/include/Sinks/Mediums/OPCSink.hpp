@@ -46,6 +46,7 @@ class OPCSink : public SinkMedium {
                      UA_NodeId nodeId,
                      std::string user,
                      std::string password,
+                     QueryId queryId,
                      QuerySubPlanId querySubPlanId);
 
     /**

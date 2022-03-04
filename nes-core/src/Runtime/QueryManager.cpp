@@ -274,6 +274,7 @@ void QueryManager::destroy() {
         if (threadPool) {
             threadPool->stop();
             threadPool.reset();
+            taskQueues.clear();
         }
         NES_DEBUG("QueryManager::resetQueryManager finished");
     } else {
@@ -303,7 +304,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId()
                                               << " subplanId=" << qep->getQuerySubPlanId());
 
-    //TODO: THis assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
+    //TODO: Tiis assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
     queryToStatisticsMap.insert(qep->getQuerySubPlanId(),
                                 std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
 
@@ -613,8 +614,6 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
         }
     } else if (queryMangerMode == Static) {
         for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
-            //            std::cout << "add reconf for query " << queryId << " uses queue=" << queryToTaskQueueIdMap[queryId] << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue << " type=" << (int)(task->getType())
-            //                      << " queryExecutionPlanId=" << queryExecutionPlanId << " blocking=" << blocking << std::endl;
             taskQueues[queryToTaskQueueIdMap[queryId]].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     }
@@ -857,9 +856,6 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     tempCounterTasksCompleted[wtx.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
 
 #ifndef LIGHT_WEIGHT_STATISTICS
-#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
-    std::unique_lock lock(workMutex);
-#endif
     // todo also support data sinks
     uint64_t querySubPlanId = -1;
     uint64_t queryId = -1;

@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -23,7 +24,6 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -43,15 +43,16 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     NES_ASSERT(querySubPlan, "Invalid query sub-plan");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
-        return createTextPrintSink(schema, querySubPlan->getQuerySubPlanId(), nodeEngine, std::cout);
+        return createTextPrintSink(schema, querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine, std::cout);
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
-        return createNullOutputSink(querySubPlan->getQuerySubPlanId(), nodeEngine);
+        return createNullOutputSink(querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         return createBinaryZmqSink(schema,
+                                   querySubPlan->getQueryId(),
                                    querySubPlan->getQuerySubPlanId(),
                                    nodeEngine,
                                    zmqSinkDescriptor->getHost(),
@@ -74,6 +75,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         return createOPCSink(schema,
+                             querySubPlan->getQueryId(),
                              querySubPlan->getQuerySubPlanId(),
                              nodeEngine,
                              opcSinkDescriptor->getUrl(),
@@ -91,6 +93,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         std::string clientId =
             (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(operatorId);
         return createMQTTSink(schema,
+                              querySubPlan->getQueryId(),
                               querySubPlan->getQuerySubPlanId(),
                               nodeEngine,
                               mqttSinkDescriptor->getAddress(),
@@ -110,18 +113,21 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             "ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
             return createCSVFileSink(schema,
+                                     querySubPlan->getQueryId(),
                                      querySubPlan->getQuerySubPlanId(),
                                      nodeEngine,
                                      fileSinkDescriptor->getFileName(),
                                      fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
             return createBinaryNESFileSink(schema,
+                                           querySubPlan->getQueryId(),
                                            querySubPlan->getQuerySubPlanId(),
                                            nodeEngine,
                                            fileSinkDescriptor->getFileName(),
                                            fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
             return createTextFileSink(schema,
+                                      querySubPlan->getQueryId(),
                                       querySubPlan->getQuerySubPlanId(),
                                       nodeEngine,
                                       fileSinkDescriptor->getFileName(),
@@ -135,6 +141,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema,
                                  networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
+                                 querySubPlan->getQueryId(),
                                  querySubPlan->getQuerySubPlanId(),
                                  networkSinkDescriptor->getNodeLocation(),
                                  networkSinkDescriptor->getNesPartition(),
@@ -144,11 +151,13 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getRetryTimes());
     } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating materialized view sink");
-        auto materializedViewSinkDescriptor = sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
+        auto materializedViewSinkDescriptor =
+            sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         return Experimental::MaterializedView::createMaterializedViewSink(schema,
-                                          nodeEngine,
-                                          querySubPlan->getQuerySubPlanId(),
-                                          materializedViewSinkDescriptor->getViewId());
+                                                                          nodeEngine,
+                                                                          querySubPlan->getQueryId(),
+                                                                          querySubPlan->getQuerySubPlanId(),
+                                                                          materializedViewSinkDescriptor->getViewId());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");
