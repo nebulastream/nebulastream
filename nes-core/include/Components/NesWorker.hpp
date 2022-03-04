@@ -192,6 +192,13 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      * @return true if Notification was successful, false otherwise
      */
     bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
+
+    /**
+     * @brief Method to let the Coordinator know of errors and exceptions
+     * @param workerId of the worker that handled the failed query
+     * @param errorMsg to describe the reason of the failure
+     * @return true if Notification was successful, false otherwise
+     */
     bool notifyErrors(uint64_t workerId, std::string errorMsg);
 
     uint64_t getWorkerId();
@@ -206,7 +213,20 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
       */
     bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId);
 
+    /**
+      * @brief method that enables the worker to send errors to the Coordinator. Calls the notifyError method
+      * @param signalNumber
+      * @param string with exception
+      * @return bool indicating success
+      */
     void onFatalError(int signalNumber, std::string string) override;
+
+    /**
+      * @brief method that enables the worker to send exceptions to the Coordinator. Calls the notifyError method
+      * @param ptr exception pointer
+      * @param string with exception
+      * @return bool indicating success
+      */
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
   private:
