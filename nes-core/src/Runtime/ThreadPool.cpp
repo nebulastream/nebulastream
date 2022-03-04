@@ -111,6 +111,7 @@ namespace NES::Runtime {
                     setThreadName("Wrk-%d-%d", nodeId, i);
                     BufferManagerPtr localBufferManager;
                     uint64_t queueIdx = threadToQueueMapping[i];
+#if defined(__linux__)
                     if (workerPinningPositionList.size() != 0) {
                         NES_ASSERT(numThreads <= workerPinningPositionList.size(),
                                    "Not enough worker positions for pinning are provided");
@@ -129,8 +130,7 @@ namespace NES::Runtime {
                             std::cout << "worker " << i << " pins to core=" << workerPinningPositionList[i] << " and queue=" << queueIdx << std::endl;
                         }
                     }
-                    //          std::cout << "worker " << i << " uses queue=" << queueIdx << std::endl;
-
+#endif
                     localBufferManager = bufferManagers[queueIdx];
 
                     barrier->wait();
