@@ -116,6 +116,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
                                                           nullptr,
                                                           0,
+                                                          0,
                                                           LOCAL_ADDRESS,
                                                           CLIENT_ID,
                                                           TOPIC,
@@ -156,6 +157,7 @@ TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
     bool asynchronousClient = true;
     auto mqttSink = createMQTTSink(testSchema,
                                    0,
+                                   0,
                                    nodeEngine,
                                    LOCAL_ADDRESS,
                                    CLIENT_ID,
@@ -180,6 +182,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
     MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format,
                                                       nullptr,
+                                                      0,
                                                       0,
                                                       LOCAL_ADDRESS,
                                                       CLIENT_ID,
@@ -265,6 +268,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
     bool asynchronousClient = false;
     auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto mqttSink = createMQTTSink(testSchema,
+                                   0,
                                    0,
                                    nodeEngine,
                                    LOCAL_ADDRESS,
