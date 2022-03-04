@@ -1407,7 +1407,6 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     // check if map is placed two times
-    uint32_t mapPlacementCount = 0;
 
     bool isSinkPlacementValid = false;
     bool isSource1PlacementValid = false;

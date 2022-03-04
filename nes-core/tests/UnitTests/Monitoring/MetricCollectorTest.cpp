@@ -53,7 +53,6 @@ class MetricCollectorTest : public Testing::NESBaseTest {
     void SetUp() override {
         std::cout << "MetricCollectorTest: Setup MetricCollectorTest test case." << std::endl;
 
-        unsigned int numCPU = std::thread::hardware_concurrency();
         auto bufferSize = 4096;
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
     }

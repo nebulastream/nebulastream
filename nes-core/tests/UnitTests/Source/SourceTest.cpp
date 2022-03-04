@@ -1990,6 +1990,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
+    wrkConf->coordinatorPort = port;
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
