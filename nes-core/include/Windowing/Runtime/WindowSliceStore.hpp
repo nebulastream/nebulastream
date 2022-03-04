@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSLICESTORE_HPP_
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
+#include <mutex>
 namespace NES::Windowing {
 
 /**
