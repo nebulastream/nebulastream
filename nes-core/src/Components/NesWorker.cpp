@@ -54,7 +54,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationCoordinates(getGeoLocOptionFromString(workerConfig->locationCoordinates.getValue())),
+      locationCoordinates(workerConfig->locationCoordinates.getValue()),
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
       enableMonitoring(workerConfig->enableMonitoring.getValue()), numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
@@ -417,7 +417,8 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-bool NesWorker::hasLocation() { return locationCoordinates.has_value(); }
+bool NesWorker::hasLocation() { return locationCoordinates.isValid(); }
+
 
 bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
     locationCoordinates = geoLoc;
@@ -428,18 +429,7 @@ bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
 //TODO #2475 also add another function that will only return a position if the node is a mobile node
 std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() { return locationCoordinates; }
 
-//std::optional<std::tuple<double, double>> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
-std::optional<GeographicalLocation> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
-    try {
-        return GeographicalLocation::fromString(coordinates);
-    } catch (std::exception& e) {
-        NES_WARNING("could not retrieve location from string: " << e.what());
-        NES_WARNING("empty optional will be returned as location");
-        return {};
-    }
-}
-
-std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius) {
+std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius){
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 

@@ -31,7 +31,7 @@ TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(
 }
 
 uint64_t
-TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> coordinates) {
+TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, GeographicalLocation coordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -64,10 +64,10 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (coordinates.has_value()) {
-        auto geoLoc = coordinates.value();
-        NES_DEBUG("added node with geographical location: " << geoLoc.getLatitude() << ", " << geoLoc.getLongitude());
-        topology->setPhysicalNodePosition(newTopologyNode, geoLoc, true);
+    if (coordinates.isValid()) {
+        //auto geoLoc = coordinates.value();
+        NES_DEBUG("added node with geographical location: " << coordinates.getLatitude() << ", " << coordinates.getLongitude());
+        topology->setPhysicalNodePosition(newTopologyNode, coordinates, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }

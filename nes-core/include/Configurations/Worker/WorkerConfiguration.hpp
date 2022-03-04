@@ -20,9 +20,11 @@
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Runtime/QueryManager.hpp>
-
+#include <Configurations/Worker/GeographicalLocationFactory.hpp>
 #include <map>
 #include <string>
+//TODO: chekc if we can remove this
+#include <Common/GeographicalLocation.hpp>
 
 namespace NES {
 
@@ -161,7 +163,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    StringOption locationCoordinates = {LOCATION_COORDINATES_CONFIG, "", "the physical location of the worker"};
+    WrapOption<GeographicalLocation, GeographicalLocationFactory> locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
      * @brief Configuration yaml path.

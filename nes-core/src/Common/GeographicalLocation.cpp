@@ -17,11 +17,18 @@
 #include <Util/Logger/Logger.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
+#include <Exceptions/AccessingInvalidCoordinatesException.hpp>
 
 namespace NES {
 
+GeographicalLocation::GeographicalLocation() {
+    latitude = 200;
+    longitude = 200;
+}
+
 GeographicalLocation::GeographicalLocation(double latitude, double longitude) {
-    if (!checkValidityOfCoordinates(latitude, longitude)) {
+    //coordinates <200, 200> lead to the creation of an object which symbolizes an invalid location
+    if (!(latitude == 200 && longitude == 200) && !checkValidityOfCoordinates(latitude, longitude)) {
         NES_WARNING("Trying to create node with an invalid location");
         throw CoordinatesOutOfRangeException();
     }
@@ -67,11 +74,21 @@ bool GeographicalLocation::operator==(const GeographicalLocation& other) const {
 };
 
 double GeographicalLocation::getLatitude() const {
+    if (!isValid()) {
+        throw AccessingInvalidCoordinatesException();
+    }
     return latitude;
 }
 
 double GeographicalLocation::getLongitude() const {
+    if (!isValid()) {
+        throw AccessingInvalidCoordinatesException();
+    }
     return longitude;
+}
+
+bool GeographicalLocation::isValid() const{
+    return checkValidityOfCoordinates(latitude, longitude);
 }
 
 bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double longitude) {

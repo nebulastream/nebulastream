@@ -152,16 +152,6 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     std::optional<GeographicalLocation> getCurrentOrPermanentGeoLoc();
 
     /**
-     * @brief convert a geo-coordinate string to an optional containing a GeographicalLocation or nullopt_t if the input
-     * is malformated or does not contain valid coordinates
-     * @param coordinates: string of the format "<latitude>, <longitude>"
-     * @return std::optional containing a GeographicalLocation object or std::nullopt_t
-     * if the supplied string is not a valid coordinate pair
-     */
-    static std::optional<GeographicalLocation> getGeoLocOptionFromString(const std::string& coordinates);
-
-
-    /**
      * @brief Method to get all field nodes within a certain range around a geographical point
      * @param coord: GeographicalLocation representing the center of the query area
      * @param radius: radius in km to define query area
@@ -282,7 +272,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
 
-    std::optional<GeographicalLocation> locationCoordinates;
+    GeographicalLocation locationCoordinates;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;

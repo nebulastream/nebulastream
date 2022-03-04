@@ -120,7 +120,7 @@ class CoordinatorRPCClient {
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       const RegistrationMetrics& registrationMetrics,
-                      std::optional<GeographicalLocation> coordinates);
+                      GeographicalLocation coordinates);
 
     /**
    * @brief method to unregister a node after the connection is established
