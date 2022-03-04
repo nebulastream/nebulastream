@@ -276,7 +276,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * Return the current occupation of the task queue
      * @return number of tasks in the queue
      */
-    size_t getCurrentTaskSum();
+    uint64_t getCurrentTaskSum();
 
     /**
      * Returns the current number of worker threads
