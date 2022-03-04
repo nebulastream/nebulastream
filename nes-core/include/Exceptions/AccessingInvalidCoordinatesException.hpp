@@ -17,8 +17,8 @@
 #include <exception>
 namespace NES {
 /**
- * @brief this exceaption is thrown when the latitude or longitude of a GegraphicalLocation object representing an invalid location
- * is accessed
+ * @brief this exception is thrown in case of an attempt to access the coordinates of a GeographicalLocation object which does
+ * not represent a valid location
  */
 class AccessingInvalidCoordinatesException : public std::exception{
     const char* what () const noexcept;

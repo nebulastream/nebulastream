@@ -26,7 +26,11 @@ namespace NES {
 class GeographicalLocation {
 
   public:
+    /**
+     * @brief the default constructor which constructs an object with lat=200 and lng=200 which represents an invalid location
+     */
     GeographicalLocation();
+
     /**
      * @brief constructs a Geographical location from latitude and longitude in degrees
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair

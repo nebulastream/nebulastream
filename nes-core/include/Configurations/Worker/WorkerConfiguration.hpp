@@ -23,7 +23,6 @@
 #include <Configurations/Worker/GeographicalLocationFactory.hpp>
 #include <map>
 #include <string>
-//TODO: chekc if we can remove this
 #include <Common/GeographicalLocation.hpp>
 
 namespace NES {
