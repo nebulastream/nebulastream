@@ -48,7 +48,7 @@ class TopologyManagerService {
      * @param coordinates: an optional containing either the node location in as a GeographicalLocation object if the node is a field node, or nullopt_t for non field nodes
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> geoLoc = std::optional<GeographicalLocation>());
+    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, GeographicalLocation geoLoc = GeographicalLocation());
 
     /**
     * @brief unregister an existing node

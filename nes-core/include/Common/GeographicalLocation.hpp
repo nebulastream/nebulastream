@@ -26,6 +26,7 @@ namespace NES {
 class GeographicalLocation {
 
   public:
+    GeographicalLocation();
     /**
      * @brief constructs a Geographical location from latitude and longitude in degrees
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
@@ -79,6 +80,11 @@ class GeographicalLocation {
      */
     [[nodiscard]] double getLongitude() const;
 
+    /**
+     * @brief checks if this objects represents valid coordinates or
+     * invalid coordinates represented by the coordinates 200, 200
+     */
+    bool isValid() const;
 
     /**
      * @brief Constructs a GeographicalLocation form a string.

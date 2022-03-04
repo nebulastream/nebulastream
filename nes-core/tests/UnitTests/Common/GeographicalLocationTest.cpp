@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
+#include <Exceptions/AccessingInvalidCoordinatesException.hpp>
 
 namespace NES {
 
@@ -40,6 +41,13 @@ TEST_F(GeographicalLocationTest, testExceptionHandling) {
 
     auto geoLoc = GeographicalLocation::fromString("23, 110");
     EXPECT_EQ(geoLoc.getLatitude(), 23);
+    EXPECT_TRUE(geoLoc.isValid());
+    geoLoc = GeographicalLocation(200, 200);
+    EXPECT_FALSE(geoLoc.isValid());
+    double l;
+    EXPECT_THROW(l = geoLoc.getLatitude(), NES::AccessingInvalidCoordinatesException);
+    EXPECT_THROW(l = geoLoc.getLongitude(), NES::AccessingInvalidCoordinatesException);
+
 
 }
 }// namespace NES
