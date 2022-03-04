@@ -52,12 +52,12 @@ class NodeEngineFactory {
     * @param bufferSize the buffer size for the buffer manager
     * @param numBuffers the number of buffers for the buffer manager
     * @param nesWorker weak pointer to the nes worker where the node engine is created
-    * @param queryCompilerConfiguration
-    * @param enableNumaAwareness
-    * @param workerToCodeMapping
-    * @param numberOfQueues
-    * @param numberOfThreadsPerQueue
-    * @param queryManagerMode
+    * @param queryCompilerConfiguration options for the query compiler
+    * @param enableNumaAwareness if numa is used if existent
+    * @param workerToCoreMapping a comma separated list of positions where the threads are sequentially pined to
+    * @param numberOfQueues specify the number of queues to use, currently one queue per query is required for Static mode, in Dynamic this parameter is ignored
+    * @param numberOfThreadsPerQueue specify the number of threads per query, in Dynamic this parameter is ignored
+    * @param queryManagerMode the mode in which the query manager runs
     * @return
     */
     static NodeEnginePtr createNodeEngine(const std::string& hostname,
@@ -71,10 +71,10 @@ class NodeEngineFactory {
                                           const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                           std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>(),
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
-                                          const std::string& workerToCodeMapping = "",
+                                          const std::string& workerToCoreMapping = "",
                                           uint64_t numberOfQueues = 1,
                                           uint64_t numberOfThreadsPerQueue = 0,
-                                          const std::string& queryManagerMode = "Dynamic");
+                                          QueryManager::QueryMangerMode = QueryManager::QueryMangerMode::Dynamic);
 
   private:
     static QueryCompilation::QueryCompilerOptionsPtr

@@ -269,7 +269,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     bool enableMonitoring;
     uint64_t numberOfQueues;
     uint64_t numberOfThreadsPerQueue;
-    std::string queryManagerMode;
+    Runtime::QueryManager::QueryMangerMode queryManagerMode;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
 };

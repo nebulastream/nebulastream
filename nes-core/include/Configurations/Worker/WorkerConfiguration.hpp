@@ -19,6 +19,8 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Runtime/QueryManager.hpp>
+
 #include <map>
 #include <string>
 
@@ -184,8 +186,13 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Configuration queryManagerMode
      * The modus in which the query manager is running
+     *      - Dynamic: only one queue overall
+     *      - Static: use queue per query and a specified number of threads per queue
      */
-    StringOption queryManagerMode = {QUERY_MANAGER_MODE, "Dynamic", "Which mode the query manager is running in."};
+    EnumOption<Runtime::QueryManager::QueryMangerMode> queryManagerMode = {QUERY_MANAGER_MODE,
+                                                                           Runtime::QueryManager::QueryMangerMode::Dynamic,
+                                                                   "Which mode the query manager is running in. (Dynamic, Static, NumaAware, Invalid)"};
+
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
