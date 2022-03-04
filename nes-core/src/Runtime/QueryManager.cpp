@@ -628,21 +628,16 @@ bool QueryManager::addSoftEndOfStream(DataSourcePtr source) {
     auto sourceId = source->getOperatorId();
     auto executableQueryPlan = sourceToQEPMapping[sourceId];
     auto pipelineSuccessors = source->getExecutableSuccessors();
-    // send EOS to NetworkSources
-    for (auto& source : executableQueryPlan->getSources()) {// TODO change source vector to source map to avoid for loops..
-        if (source->getOperatorId() == sourceId) {
-            if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
-                auto reconfMessage = ReconfigurationMessage(executableQueryPlan->getQueryId(),
-                                                            executableQueryPlan->getQuerySubPlanId(),
-                                                            SoftEndOfStream,
-                                                            netSource);
-                addReconfigurationMessage(executableQueryPlan->getQueryId(),
-                                          executableQueryPlan->getQuerySubPlanId(),
-                                          reconfMessage,
-                                          false);
-            }
-        }
+
+    // send EOS to `source` itself, iff a network source
+    if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
+        auto reconfMessage = ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(), SoftEndOfStream, netSource);
+        addReconfigurationMessage(executableQueryPlan->getQueryId(),
+                                  executableQueryPlan->getQuerySubPlanId(),
+                                  reconfMessage,
+                                  false);
     }
+
     for (auto successor : pipelineSuccessors) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
@@ -691,21 +686,6 @@ bool QueryManager::addHardEndOfStream(DataSourcePtr source) {
     auto executableQueryPlan = sourceToQEPMapping[sourceId];
     auto pipelineSuccessors = source->getExecutableSuccessors();
 
-    // send EOS to NetworkSources
-    for (auto& source : executableQueryPlan->getSources()) {// TODO change source vector to source map to avoid for loops..
-        if (source->getOperatorId() == sourceId) {
-            if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
-                auto reconfMessage = ReconfigurationMessage(executableQueryPlan->getQueryId(),
-                                                            executableQueryPlan->getQuerySubPlanId(),
-                                                            HardEndOfStream,
-                                                            netSource);
-                addReconfigurationMessage(executableQueryPlan->getQueryId(),
-                                          executableQueryPlan->getQuerySubPlanId(),
-                                          reconfMessage,
-                                          false);
-            }
-        }
-    }
     for (auto successor : pipelineSuccessors) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
@@ -752,9 +732,8 @@ bool QueryManager::addHardEndOfStream(DataSourcePtr source) {
 
 bool QueryManager::addEndOfStream(DataSourcePtr source, bool graceful) {
     std::unique_lock queryLock(queryMutex);
-    bool isSourcePipeline = sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end();
-    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful << " end "
-                                                                                << isSourcePipeline);
+    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << source->getOperatorId()
+                                                                                << " graceful=" << graceful);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
     NES_ASSERT2_FMT(sourceToQEPMapping.find(source->getOperatorId()) != sourceToQEPMapping.end(),
                     "invalid source " << source->getOperatorId());
@@ -971,7 +950,8 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
                            || status == Execution::ExecutableQueryPlanStatus::ErrorState,
                        "query plan " << qepId << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);
-            if (auto it = runningQEPs.find(qepId); it != runningQEPs.end()) { // note that this will release all shared pointers stored in a QEP object
+            if (auto it = runningQEPs.find(qepId);
+                it != runningQEPs.end()) {// note that this will release all shared pointers stored in a QEP object
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
@@ -1001,15 +981,16 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
         // we need to go to each source and terminate their threads
         // alternatively, we need to detach source threads
         for (const auto& source : qep->getSources()) {
-            NES_ASSERT(source->stop(true), "Cannot cleanup source"); // just a clean-up op
+            NES_ASSERT2_FMT(source->stop(true), "Cannot cleanup source " << source->getOperatorId());// just a clean-up op
         }
         addReconfigurationMessage(qep->getQuerySubPlanId(),
                                   ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
                                   false);
     }
 }
-void QueryManager::notifyOperatorFailure(DataSourcePtr, const std::string errorMessage) {
-    NES_ASSERT(false, errorMessage);
+void QueryManager::notifyOperatorFailure(DataSourcePtr failedSource, const std::string) {
+    auto qepToFail = sourceToQEPMapping[failedSource->getOperatorId()];
+    failQuery(qepToFail);
 }
 void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline, const std::string& errorMessage) {
     NES_ASSERT(false, errorMessage);

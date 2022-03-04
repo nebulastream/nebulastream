@@ -17,11 +17,11 @@ if (NES_BUILD_BENCHMARKS)
     include(ExternalProject)
     ExternalProject_Add(
             gbenchmark
-            URL https://github.com/google/benchmark/archive/v1.5.1.zip
+            URL https://github.com/google/benchmark/archive/v1.6.1.zip
             PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gbenchmark
             # Disable install step
             INSTALL_COMMAND ""
-            URL_HASH SHA256=3e266b49f73ee08625837ea5b1fabc4056b7f5e809b29c49670527326f4f4379
+            URL_HASH SHA256=367e963b8620080aff8c831e24751852cffd1f74ea40f25d9cc1b667a9dd5e45
             #Line below is only necessary if someone wants to run the provided tests by gtests
             #CMAKE_ARGS -DBENCHMARK_DOWNLOAD_DEPENDENCIES=ON -DCMAKE_BUILD_TYPE=Release
             CMAKE_ARGS -DBENCHMARK_ENABLE_GTEST_TESTS=OFF -DCMAKE_BUILD_TYPE=Release

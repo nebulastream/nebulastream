@@ -53,7 +53,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     char* path = realpath(filePath.c_str(), nullptr);
-    NES_DEBUG("CSVSource: Opening path " << path);
+    NES_DEBUG("CSVSource: Opening path " << filePath << " real path " << path);
     input.open(path);
     if(!(input.is_open() && input.good())) {
         throw Exceptions::RuntimeException("Cannot open file: " + std::string(path));
@@ -81,6 +81,9 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
+    if (path) {
+        std::free(path);
+    }
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {

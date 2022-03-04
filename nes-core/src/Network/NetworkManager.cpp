@@ -127,7 +127,7 @@ bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeL
                                                        Runtime::RuntimeEventListenerPtr eventListener) {
     // note that this increases the subpartition producer counter by one
     // we want to do so to keep the partition alive until all outbound network channel + the inbound event channel are in-use
-    NES_INFO("NetworkManager: Registering SubpartitionEvent Consumer: " << nesPartition.toString());
+    NES_INFO("NetworkManager: Registering Subpartition Event Consumer: " << nesPartition.toString());
     return partitionManager->addSubpartitionEventListener(nesPartition, nodeLocation, eventListener);
 }
 

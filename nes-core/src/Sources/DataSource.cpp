@@ -57,6 +57,10 @@ DataSource::DataSource(SchemaPtr pSchema,
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
+    // TODO enable this exception -- currently many UTs are designed to assume empty executableSuccessors
+//    if (this->executableSuccessors.empty()) {
+//        throw Exceptions::RuntimeException("empty executable successors");
+//    }
     if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, localBufferManager->getBufferSize());
     } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
@@ -140,7 +144,7 @@ bool DataSource::start() {
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
             taskQueueId = numa_node_of_cpu(cpu);
 #endif
-//            std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
+            //            std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
 
             prom.set_value(true);
             runningRoutine();
@@ -149,12 +153,10 @@ bool DataSource::start() {
     return prom.get_future().get();
 }
 
-bool DataSource::fail() {
-    return true;
-}
+bool DataSource::fail() { return true; }
 
 bool DataSource::stop(bool graceful) {
-    std::unique_lock lock(startStopMutex); // this mutex guards the thread variable
+    std::unique_lock lock(startStopMutex);// this mutex guards the thread variable
     bool expected = true;
     NES_DEBUG("DataSource " << operatorId << ": Stop called and source is " << (running ? "running" : "not running"));
     wasGracefullyStopped = graceful;
@@ -164,10 +166,9 @@ bool DataSource::stop(bool graceful) {
             thread->join();
             lock.lock();
             thread.reset();
-            return true; // it's ok to return true because the source is stopped
         }
         NES_DEBUG("DataSource " << operatorId << " is not running");
-        return false; // something weird is going on, thread not existing -> source not started
+        return true;// it's ok to return true because the source is stopped
     } else {
         // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
         // TODO in general this highlights how our source model has some issues
@@ -185,7 +186,7 @@ bool DataSource::stop(bool graceful) {
                     lock.unlock();
                     thread->join();
                     lock.lock();
-                    NES_DEBUG("DataSource: Thread joined");
+                    NES_DEBUG("Stopped Source " << operatorId << ": Thread joined");
                     thread.reset();
                     NES_WARNING("Stopped Source " << operatorId << " = "
                                                   << (wasGracefullyStopped ? "wasGracefullyStopped" : "notGracefullyStopped"));
@@ -218,8 +219,7 @@ void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this
 
 void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
 
-void DataSource::close() {
-}
+void DataSource::close() {}
 
 void DataSource::runningRoutine() {
     //TDOD startup delay
@@ -296,8 +296,8 @@ void DataSource::runningRoutineWithIngestionRate() {
         if (nextPeriodStartTime < endPeriod) {
             NES_ERROR("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
                       << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod);
-//            std::cout << "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
-//                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod << std::endl;
+            //            std::cout << "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
+            //                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod << std::endl;
         }
 
         uint64_t sleepCnt = 0;
