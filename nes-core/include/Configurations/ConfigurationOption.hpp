@@ -146,6 +146,7 @@ const std::string REST_IP_CONFIG = "restIp";
 const std::string COORDINATOR_IP_CONFIG = "coordinatorIp";
 const std::string NUMBER_OF_SLOTS_CONFIG = "numberOfSlots";
 const std::string LOG_LEVEL_CONFIG = "logLevel";
+const std::string LOGICAL_SOURCES = "logicalSources";
 const std::string NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG = "numberOfBuffersInGlobalBufferManager";
 const std::string NUMBER_OF_BUFFERS_PER_WORKER_CONFIG = "numberOfBuffersPerWorker";
 const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "numberOfBuffersInSourceLocalBufferPool";
@@ -235,6 +236,13 @@ const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
 const std::string QUERY_MANAGER_MODE = "queryManagerMode";
+
+// Logical source configurations
+const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";
+const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
+const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
+const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NES_TYPE = "subtype";
+const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 
 }// namespace Configurations
 }// namespace NES
