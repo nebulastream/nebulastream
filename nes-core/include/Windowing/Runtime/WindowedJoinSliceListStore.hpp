@@ -77,9 +77,8 @@ class WindowedJoinSliceListStore {
                 return i;
             }
         }
-        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp << " " << ts);
-        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen " << timestamp << " "
-                                                                                                        << ts);
+        NES_WARNING("getSliceIndexByTs for could not find a slice, this should not happen ts" << timestamp << " " << ts);
+        return UINT64_MAX;
     }
 
     /**
@@ -144,10 +143,12 @@ class WindowedJoinSliceListStore {
      * @param index of the slice
      * @param value to append
      */
-    inline void append(int64_t index, ValueType&& value) {
+    inline void append(uint64_t index, ValueType&& value) {
         std::lock_guard lock(internalMutex);
-        NES_VERIFY(content.size() > index, "invalid index");
-        content[index].emplace_back(std::move(value));
+        if (index != UINT64_MAX) {
+            NES_VERIFY(content.size() > index, "invalid index");
+            content[index].emplace_back(std::move(value));
+        }
     }
 
     /**
@@ -155,10 +156,12 @@ class WindowedJoinSliceListStore {
     * @param index of the slice
     * @param value to append
     */
-    inline void append(int64_t index, ValueType& value) {
+    inline void append(uint64_t index, ValueType& value) {
         std::lock_guard lock(internalMutex);
-        NES_VERIFY(content.size() > index, "invalid index for content size" << content.size() << " idx=" << index);
-        content[index].emplace_back(value);
+        if (index != UINT64_MAX) {
+            NES_VERIFY(content.size() > index, "invalid index for content size" << content.size() << " idx=" << index);
+            content[index].emplace_back(value);
+        }
     }
 
     std::atomic<uint64_t> nextEdge{};
@@ -177,4 +180,4 @@ class WindowedJoinSliceListStore {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_RUNTIME_WINDOWEDJOINSLICELISTSTORE_HPP_
+#endif// NES_INCLUDE_WINDOWING_RUNTIME_WINDOWEDJOINSLICELISTSTORE_HPP_

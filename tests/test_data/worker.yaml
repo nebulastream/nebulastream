@@ -24,13 +24,13 @@ numberOfSlots: 65535
 numWorkerThreads: 1
 
 # Number buffers in global buffer pool
-numberOfBuffersInGlobalBufferManager: 200000
+numberOfBuffersInGlobalBufferManager: 2000
 
 # Number buffers in task local buffer pool
 numberOfBuffersPerWorker: 1024
 
 # Number buffers in source local buffer pool
-numberOfBuffersInSourceLocalBufferPool: 1024
+numberOfBuffersInSourceLocalBufferPool: 100
 
 # Size of buffer to pass data through the system
 bufferSizeInBytes: 131072
@@ -50,18 +50,6 @@ queryCompilerPipeliningStrategy: OPERATOR_FUSION
 # Indicates the OutputBufferAllocationStrategy [ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
 # |REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]
 queryCompilerOutputBufferOptimizationLevel: ALL
-
-# Comma separated list of where to map the sources
-sourcePinList: 0,1,2,3
-
-# Comma separated list of where to map the worker
-workerPinList: 4,6,7,8
-
-# Enable Numa-Aware execution
-numaAwareness: false
-
-# Enable monitoring
-enableMonitoring: false
 
 # ~~~ Physical Stream Configurations ~~~
 
