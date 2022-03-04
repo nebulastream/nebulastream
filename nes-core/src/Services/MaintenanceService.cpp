@@ -18,7 +18,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>

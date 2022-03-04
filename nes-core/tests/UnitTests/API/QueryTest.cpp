@@ -38,7 +38,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -58,7 +58,7 @@ class QueryTest : public Testing::NESBaseTest {
     LogicalSourcePtr logicalSource;
 
     static void SetUpTestCase() {
-        NES::setupLogging("QueryTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryTest test class.");
     }
 

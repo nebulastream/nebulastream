@@ -18,7 +18,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <map>
 #include <string>
@@ -69,9 +69,9 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief The current log level. Controls the detail of log messages.
      */
-    EnumOption<DebugLevel> logLevel = {LOG_LEVEL_CONFIG,
-                                       LOG_DEBUG,
-                                       "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
+    EnumOption<LogLevel> logLevel = {LOG_LEVEL_CONFIG,
+                                     LogLevel::LOG_DEBUG,
+                                     "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     /**
      * @brief Number of Slots define the amount of computing resources that are usable at the coordinator.

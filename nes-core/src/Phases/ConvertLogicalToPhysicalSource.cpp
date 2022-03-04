@@ -30,7 +30,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>

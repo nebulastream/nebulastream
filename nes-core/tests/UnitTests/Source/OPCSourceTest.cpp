@@ -28,7 +28,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <thread>
 
 const std::string& url = "opc.tcp://localhost:4840";
@@ -42,7 +42,7 @@ class OPCSourceTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("OPCSourceTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("OPCSourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("OPCSOURCETEST::SetUpTestCase()");
     }
 

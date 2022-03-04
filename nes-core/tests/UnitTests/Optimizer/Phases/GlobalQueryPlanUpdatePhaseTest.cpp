@@ -27,7 +27,7 @@
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <gtest/gtest.h>
@@ -42,7 +42,7 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("GlobalQueryPlanUpdatePhaseTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("GlobalQueryPlanUpdatePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalQueryPlanUpdatePhaseTest test case.");
     }
 

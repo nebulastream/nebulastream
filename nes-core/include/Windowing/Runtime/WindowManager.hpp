@@ -14,7 +14,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
 #define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>

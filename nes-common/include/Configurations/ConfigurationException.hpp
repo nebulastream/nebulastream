@@ -16,7 +16,7 @@
 #define NES_INCLUDE_EXCEPTIONS_CONFIGURATIONEXCEPTION_HPP_
 
 #include <Exceptions/RuntimeException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 namespace NES::Configurations {
 

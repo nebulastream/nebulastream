@@ -13,7 +13,7 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>

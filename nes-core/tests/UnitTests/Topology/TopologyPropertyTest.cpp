@@ -14,7 +14,7 @@
 
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 
@@ -30,7 +30,7 @@ class TopologyPropertiesTest : public Testing::NESBaseTest {
 
   protected:
     static void setupLogging() {
-        NES::setupLogging("TopologyPropertiesTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("TopologyPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup TopologyPropertiesTest test class.");
     }
 };

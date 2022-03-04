@@ -30,17 +30,12 @@ namespace NES::Runtime::MemoryLayouts {
 class RowMemoryLayoutTest : public Testing::NESBaseTest {
   public:
     BufferManagerPtr bufferManager;
-
-    void SetUp() override {
-        NESLogger::getInstance()->removeAllAppenders();
-        NES::setupLogging("RowMemoryLayoutTest.log", NES::LOG_DEBUG);
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("RowMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RowMemoryLayoutTest test class.");
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
-    static void TearDownTestCase() {
-        std::cout << "Tear down RowMemoryLayoutTest class." << std::endl;
-        NESLogger::getInstance()->removeAllAppenders();
-    }
+    void SetUp() override { bufferManager = std::make_shared<BufferManager>(4096, 10); }
+    static void TearDownTestCase() {}
 };
 
 TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest) {

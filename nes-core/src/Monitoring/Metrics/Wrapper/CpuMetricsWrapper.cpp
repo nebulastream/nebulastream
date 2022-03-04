@@ -16,7 +16,7 @@
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 #include <cpprest/json.h>

@@ -22,7 +22,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 
 using namespace std;
@@ -35,7 +35,7 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
     WorkerConfigurationPtr wrkConf;
 
     static void SetUpTestCase() {
-        NES::setupLogging("MQTTSinkDeploymentTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MQTTSinkDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MQTTSinkDeploymentTest test class.");
     }
 

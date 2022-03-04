@@ -15,7 +15,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 #include <z3++.h>
 

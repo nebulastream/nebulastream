@@ -26,7 +26,7 @@
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 using namespace Configurations;
@@ -37,7 +37,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     Runtime::NodeEnginePtr engine;
 
     static void SetUpTestCase() {
-        NES::setupLogging("ConvertLogicalToPhysicalSourceTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ConvertLogicalToPhysicalSourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test class.");
     }
 

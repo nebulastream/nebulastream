@@ -17,7 +17,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/KafkaSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <cstring>
 #include <sstream>

@@ -19,7 +19,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
@@ -46,7 +46,7 @@ class OPCSinkTest : public testing::Test {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("OPCSinkTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("OPCSinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("OPCSINKTEST::SetUpTestCase()");
     }
 

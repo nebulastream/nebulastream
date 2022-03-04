@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -29,7 +29,7 @@ class QueryPlanTest : public testing::Test {
   public:
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("QueryPlanTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryPlanTest test case.");
     }
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <algorithm>
 #include <cstdarg>
@@ -21,7 +21,6 @@
 #include <unistd.h>
 #ifdef _POSIX_THREADS
 #define HAS_POSIX_THREAD
-#include <Util/Logger.hpp>
 #include <pthread.h>
 #include <string>
 #else
@@ -42,7 +41,7 @@ void setThreadName(const char* threadNameFmt, ...) {
     resized_buffer[sz] = 0;
     std::string thName(resized_buffer);
     //this will add the thread name in the log
-    log4cxx::MDC::put("threadName", thName);
+    Logger::getInstance()->setThreadName(thName);
 
 #ifdef HAS_POSIX_THREAD
 #ifdef __linux__

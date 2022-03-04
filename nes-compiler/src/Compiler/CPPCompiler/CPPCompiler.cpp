@@ -20,7 +20,7 @@
 #include <Compiler/Util/ExecutablePath.hpp>
 #include <Compiler/Util/File.hpp>
 #include <Compiler/Util/SharedLibrary.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>
 #include <filesystem>

@@ -25,7 +25,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -37,7 +37,7 @@ class SyntaxBasedPartialQueryMergerRuleTest : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("SyntaxBasedPartialQueryMergerRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SyntaxBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SyntaxBasedPartialQueryMergerRuleTest test case.");
     }
 

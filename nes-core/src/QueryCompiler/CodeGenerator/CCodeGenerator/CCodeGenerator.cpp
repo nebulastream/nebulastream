@@ -60,7 +60,7 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -3122,7 +3122,7 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
                 case PipelineContext::Unary: return Unary;
                 case PipelineContext::BinaryLeft: return BinaryLeft;
                 case PipelineContext::BinaryRight: return BinaryRight;
-                default: NES_FATAL_ERROR(catString("Unknown PipelineContext", ari, ". Terminate."));
+                default: NES_FATAL_ERROR("Unknown PipelineContext. Terminate.");
             }
         }();
         return CompiledExecutablePipelineStage::create(compiledCode, arity, src);

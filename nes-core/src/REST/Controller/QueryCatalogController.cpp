@@ -19,7 +19,7 @@
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Runtime/QueryStatistics.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpprest/json.h>
 #include <utility>
 

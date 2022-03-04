@@ -16,7 +16,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/SenseSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <string>
 #include <utility>

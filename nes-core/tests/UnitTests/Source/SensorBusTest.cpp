@@ -13,7 +13,7 @@
 */
 
 #include <Sensors/I2CBus.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <chrono>
 
@@ -50,7 +50,7 @@ class SensorBusTest : public testing::Test {
     GenericBusPtr sensorBus;
 
     static void SetUpTestCase() {
-        NES::setupLogging("SensorBusTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SensorBusTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SourceBusTest test class.");
     }
 

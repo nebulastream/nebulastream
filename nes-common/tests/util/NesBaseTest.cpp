@@ -14,7 +14,7 @@
 
 #include <NesBaseTest.hpp>
 #include <Util/FileMutex.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <fcntl.h>
 #include <filesystem>
 #include <mutex>

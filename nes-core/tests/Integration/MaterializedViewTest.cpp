@@ -25,7 +25,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -38,7 +38,7 @@
 class MaterializedViewTest : public Testing::NESBaseTest {
 public:
     static void SetUpTestCase() {
-        NES::setupLogging("MaterializedViewTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MaterializedViewTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MaterializedViewTest test class.");
     }
 };

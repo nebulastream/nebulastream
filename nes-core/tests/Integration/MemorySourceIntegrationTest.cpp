@@ -21,7 +21,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include "../util/NesBaseTest.hpp"
@@ -32,7 +32,7 @@ namespace NES {
 class MemorySourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("MemorySourceIntegrationTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MemorySourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MemorySourceIntegrationTest test class.");
     }
 };

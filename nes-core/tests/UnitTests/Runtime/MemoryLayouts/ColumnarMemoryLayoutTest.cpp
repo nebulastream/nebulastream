@@ -13,37 +13,31 @@
 */
 
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-
 #include <cstdlib>
+#include <gtest/gtest.h>
 #include <iostream>
+#include <log4cxx/helpers/exception.h>
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
 class ColumnarMemoryLayoutTest : public Testing::NESBaseTest {
   public:
     BufferManagerPtr bufferManager;
-
-    void SetUp() override {
-        NESLogger::getInstance()->removeAllAppenders();
-        NES::setupLogging("ColumnarMemoryLayoutTest.log", NES::LOG_DEBUG);
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("ColumnarMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ColumnarMemoryLayoutTest test class.");
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
-    static void TearDownTestCase() {
-        std::cout << "Tear down ColumnarMemoryLayoutTest class." << std::endl;
-        NESLogger::getInstance()->removeAllAppenders();
-    }
+
+    void SetUp() override { bufferManager = std::make_shared<BufferManager>(4096, 10); }
+    static void TearDownTestCase() { std::cout << "Tear down ColumnarMemoryLayoutTest class." << std::endl; }
 };
 
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest) {

@@ -17,7 +17,7 @@
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <benchmark/benchmark.h>
 #include <random>
 
@@ -774,7 +774,7 @@ BENCHMARK(BM_ReadFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->Re
 
 int main(int argc, char** argv) {
     NESLogger::getInstance()->removeAllAppenders();
-    NES::setupLogging("TupleBufferBenchmark.log", LOG_WARNING);
+    NES::Logger::setupLogging("TupleBufferBenchmark.log", LOG_WARNING);
 
     benchmark::Initialize(&argc, argv);
     benchmark::RunSpecifiedBenchmarks();

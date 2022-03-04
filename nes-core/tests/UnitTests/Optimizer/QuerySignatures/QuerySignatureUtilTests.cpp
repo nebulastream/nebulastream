@@ -29,7 +29,7 @@
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <z3++.h>
@@ -43,7 +43,7 @@ class QuerySignatureUtilTests : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("QuerySignatureUtilTests.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QuerySignatureUtilTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QuerySignatureUtilTests test case.");
     }
 

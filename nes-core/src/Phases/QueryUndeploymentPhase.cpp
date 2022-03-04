@@ -19,7 +19,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <utility>
 
@@ -46,7 +46,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     if (executionNodes.empty()) {
-        NES_ERROR(catString("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query ", queryId, " is deployed"));
+        NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query " << queryId << " is deployed");
         return false;
     }
 
@@ -57,7 +57,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw QueryUndeploymentException(catString("Failed to stop the query ", queryId, '.'));
+        throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query");
@@ -67,7 +67,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw QueryUndeploymentException(catString("Failed to stop the query ", queryId, '.'));
+        throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId + '.'));
     }
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);

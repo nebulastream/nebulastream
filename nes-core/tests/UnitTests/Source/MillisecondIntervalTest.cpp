@@ -81,7 +81,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
     CSVSourceTypePtr csvSourceType;
 
     static void SetUpTestCase() {
-        NES::setupLogging("MillisecondIntervalTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MillisecondIntervalTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MillisecondIntervalTest test class.");
     }
 

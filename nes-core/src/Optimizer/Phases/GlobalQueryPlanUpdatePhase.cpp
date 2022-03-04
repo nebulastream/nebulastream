@@ -25,9 +25,10 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -49,8 +50,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
         || optimizerConfiguration.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
 
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
-    topologySpecificQueryRewritePhase =
-        TopologySpecificQueryRewritePhase::create(sourceCatalog, optimizerConfiguration);
+    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(sourceCatalog, optimizerConfiguration);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfiguration.memoryLayoutPolicy);
 }
@@ -103,7 +103,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
                 if (!queryPlan) {
                     throw log4cxx::helpers::Exception("QueryProcessingService: Failed during query rewrite phase for query: "
-                                    + std::to_string(queryId));
+                                                      + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Query Rewrite Phase", queryPlan);
 
@@ -117,22 +117,24 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
                 if (!queryPlan) {
-                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during query topology specific rewrite phase for query: "
-                                    + std::to_string(queryId));
+                    throw log4cxx::helpers::Exception(
+                        "QueryProcessingService: Failed during query topology specific rewrite phase for query: "
+                        + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Topology Specific Query Rewrite Phase", queryPlan);
 
                 queryPlan = typeInferencePhase->execute(queryPlan);
                 if (!queryPlan) {
                     throw log4cxx::helpers::Exception("QueryProcessingService: Failed during Type inference phase for query: "
-                                    + std::to_string(queryId));
+                                                      + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Type Inference Phase 3", queryPlan);
 
                 queryPlan = setMemoryLayoutPhase->execute(queryPlan);
                 if (!queryPlan) {
-                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during Memory Layout Selection phase for query: "
-                                    + std::to_string(queryId));
+                    throw log4cxx::helpers::Exception(
+                        "QueryProcessingService: Failed during Memory Layout Selection phase for query: "
+                        + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Set Memory Layout Phase 2", queryPlan);
 

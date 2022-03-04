@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>//
 
 #include "../util/NesBaseTest.hpp"
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 
 #pragma clang diagnostic push
@@ -31,7 +31,7 @@ using namespace Configurations;
 class TestHarnessUtilTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("TestHarnessUtilTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("TestHarnessUtilTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TestHarnessUtilTest test class.");
     }
 

@@ -13,7 +13,7 @@
 */
 
 #include "gtest/gtest.h"
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Topology/Topology.hpp>
@@ -40,7 +40,7 @@ class MaintenanceServiceTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("MaintenanceService.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MaintenanceService.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup MaintenanceService test case." << std::endl;
         topology = Topology::create();
         queryCatalog = std::make_shared<QueryCatalog>();

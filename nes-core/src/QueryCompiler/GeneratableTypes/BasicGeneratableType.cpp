@@ -15,7 +15,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 #include <sstream>
 #include <utility>

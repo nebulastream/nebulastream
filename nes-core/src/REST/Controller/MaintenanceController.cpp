@@ -14,7 +14,7 @@
 #include <REST/Controller/MaintenanceController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Phases/MigrationType.hpp>
 
 namespace NES::Experimental{

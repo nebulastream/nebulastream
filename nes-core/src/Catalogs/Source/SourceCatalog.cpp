@@ -18,8 +18,9 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 
 namespace NES {

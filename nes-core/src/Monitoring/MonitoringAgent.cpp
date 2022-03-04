@@ -24,7 +24,7 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpprest/json.h>
 
 namespace NES {

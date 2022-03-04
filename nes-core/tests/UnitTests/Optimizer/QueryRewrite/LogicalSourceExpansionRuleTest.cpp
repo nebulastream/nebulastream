@@ -31,7 +31,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -44,7 +44,7 @@ class LogicalSourceExpansionRuleTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }

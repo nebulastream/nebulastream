@@ -207,8 +207,8 @@ GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperator
         };
         default:
             throw QueryCompilationException(
-                catString("TranslateToGeneratableOperatorPhase: No transformation implemented for this window aggregation type: ",
-                          windowAggregationDescriptor->getType()));
+                "TranslateToGeneratableOperatorPhase: No transformation implemented for this window aggregation type: "
+                + windowAggregationDescriptor->toString());
     }
 }
 

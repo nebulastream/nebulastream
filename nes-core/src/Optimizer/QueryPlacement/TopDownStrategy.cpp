@@ -25,25 +25,23 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
+#include <log4cxx/helpers/exception.h>
 
 namespace NES::Optimizer {
 
 BasePlacementStrategyPtr TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                  TopologyPtr topology,
                                                  TypeInferencePhasePtr typeInferencePhase) {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy(std::move(globalExecutionPlan),
-                                                             std::move(topology),
-                                                             std::move(typeInferencePhase)));
+    return std::make_unique<TopDownStrategy>(
+        TopDownStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
 }
 
 TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase)
-    : BasePlacementStrategy(std::move(globalExecutionPlan),
-                            std::move(topology),
-                            std::move(typeInferencePhase)) {}
+    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                 FaultToleranceType faultToleranceType,
@@ -133,8 +131,9 @@ void TopDownStrategy::placeOperator(QueryId queryId,
             if (!candidateTopologyNode) {
                 NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                           << operatorNode->toString());
-                throw log4cxx::helpers::Exception("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
-                                + operatorNode->toString());
+                throw log4cxx::helpers::Exception(
+                    "TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
+                    + operatorNode->toString());
             }
 
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
@@ -147,13 +146,15 @@ void TopDownStrategy::placeOperator(QueryId queryId,
                 } else {
                     NES_ERROR("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be "
                               "placed.");
-                    throw log4cxx::helpers::Exception("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
-                                    "to be placed.");
+                    throw log4cxx::helpers::Exception(
+                        "TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
+                        "to be placed.");
                 }
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
-                    throw log4cxx::helpers::Exception("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
+                    throw log4cxx::helpers::Exception(
+                        "TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
                 }
             }
         }
@@ -193,7 +194,7 @@ void TopDownStrategy::placeOperator(QueryId queryId,
         if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
             NES_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
             throw log4cxx::helpers::Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
-                            + std::to_string(queryId));
+                                              + std::to_string(queryId));
         }
         NES_TRACE("TopDownStrategy: Update the global execution plan with candidate execution node");
         globalExecutionPlan->addExecutionNode(candidateExecutionNode);

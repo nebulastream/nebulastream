@@ -25,13 +25,13 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 class ConvertLogicalToPhysicalSinkTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ConvertLogicalToPhysicalSinkTest test class.");
     }
 

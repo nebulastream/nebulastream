@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
 
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <vector>
 
 namespace NES::Windowing {
 

@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_NODES_NODE_HPP_
 #define NES_INCLUDE_NODES_NODE_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <memory>
 #include <vector>

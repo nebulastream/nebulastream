@@ -23,7 +23,7 @@
 
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -37,7 +37,7 @@ class ResourcesReaderTest : public Testing::NESBaseTest {
     AbstractSystemResourcesReaderPtr resourcesReader;
 
     static void SetUpTestCase() {
-        NES::setupLogging("ResourcesReaderTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ResourcesReaderTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ResourcesReaderTest: Setup ResourcesReaderTest test class.");
     }
 

@@ -74,7 +74,7 @@ static void BM_SetInsert(benchmark::State& state) {
      * @brief dummy benchmark, that times a simple query compilation filter push down
      */
 static void BM_FilterPushDown(benchmark::State& state) {
-    //NES::setupLogging("FilterPushDownTest.log", NES::LOG_DEBUG);
+    //NES::Logger::setupLogging("FilterPushDownTest.log", NES::LogLevel::LOG_DEBUG);
     for (auto singleState : state) {
         TopologyManagerPtr topologyManager = std::make_shared<TopologyManager>();
         StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();

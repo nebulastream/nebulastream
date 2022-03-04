@@ -35,7 +35,7 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
@@ -51,7 +51,7 @@ using namespace NES::QueryCompilation::PhysicalOperators;
 class PipeliningPhaseTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("PipeliningPhaseTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("PipeliningPhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PipeliningPhaseTest test class.");
     }
 

@@ -23,7 +23,7 @@
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <algorithm>
 #include <cassert>

@@ -31,6 +31,7 @@
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <utility>
+#include <log4cxx/helpers/exception.h>
 
 namespace NES {
 

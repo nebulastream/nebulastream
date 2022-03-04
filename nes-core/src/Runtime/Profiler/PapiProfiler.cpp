@@ -14,7 +14,7 @@
 
 #ifdef ENABLE_PAPI_PROFILER
 #include <Runtime/Profiler/PAPIProfiler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <papi.h>
 
 #define KB(x) (to_kb(x))

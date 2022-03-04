@@ -25,7 +25,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
 
@@ -38,7 +38,7 @@ using namespace Configurations;
 class UnionDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("UnionDeploymentTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("UnionDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup UnionDeploymentTest test class.");
     }
 };

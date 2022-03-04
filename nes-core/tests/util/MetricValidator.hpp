@@ -26,7 +26,7 @@
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpprest/json.h>
 
 namespace NES {

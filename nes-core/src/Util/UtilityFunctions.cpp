@@ -25,7 +25,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <iomanip>

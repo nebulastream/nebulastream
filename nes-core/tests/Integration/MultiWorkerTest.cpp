@@ -20,7 +20,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include "../util/NesBaseTest.hpp"
 
@@ -32,7 +32,7 @@ using namespace Configurations;
 class MultiWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("MultiWorkerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MultiWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MultiWorkerTest test class.");
     }
 

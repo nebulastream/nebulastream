@@ -14,7 +14,7 @@
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/LanguageCompiler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Compiler {
 
 JITCompilerBuilder&

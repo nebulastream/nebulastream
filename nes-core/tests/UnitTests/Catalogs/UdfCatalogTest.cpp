@@ -19,13 +19,13 @@ using namespace std::string_literals;
 
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Exceptions/UdfException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Catalogs {
 
 class UdfCatalogTest : public Testing::NESBaseTest {
   protected:
-    static void SetUpTestCase() { NES::setupLogging("UdfTest.log", NES::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
 
     static JavaUdfDescriptorPtr createDescriptor() {
         auto className = "some_package.my_udf"s;

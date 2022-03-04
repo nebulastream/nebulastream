@@ -22,7 +22,7 @@
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -34,7 +34,7 @@ class SemanticQueryValidationTest : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("SemanticQueryValidationTest.log", NES::LOG_INFO);
+        NES::Logger::setupLogging("SemanticQueryValidationTest.log", NES::LogLevel::LOG_INFO);
         NES_INFO("Setup SemanticQueryValidationTest class.");
     }
 

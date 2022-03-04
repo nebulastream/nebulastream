@@ -19,7 +19,7 @@
 #include <Runtime/internal/rte_memory.h>
 #endif
 #include <Sources/BenchmarkSource.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cmath>

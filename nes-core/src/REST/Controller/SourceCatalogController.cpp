@@ -17,7 +17,7 @@
 #include <REST/Controller/SourceCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <SerializableOperator.pb.h>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
 #include <utility>

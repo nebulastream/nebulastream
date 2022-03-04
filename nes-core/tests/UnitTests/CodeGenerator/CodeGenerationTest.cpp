@@ -47,7 +47,7 @@
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <cassert>
@@ -71,7 +71,7 @@ class CodeGenerationTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("CodeGenerationTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("CodeGenerationTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test class." << std::endl;
     }
 

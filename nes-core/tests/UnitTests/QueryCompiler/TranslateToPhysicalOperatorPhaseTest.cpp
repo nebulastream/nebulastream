@@ -24,7 +24,7 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
@@ -68,7 +68,7 @@ namespace NES {
 class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TranslateToPhysicalOperatorPhaseTest test class.");
     }
 

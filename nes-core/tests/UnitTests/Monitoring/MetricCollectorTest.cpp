@@ -19,7 +19,7 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
@@ -43,7 +43,7 @@ class MetricCollectorTest : public Testing::NESBaseTest {
     Runtime::BufferManagerPtr bufferManager;
 
     static void SetUpTestCase() {
-        NES::setupLogging("MetricCollectorTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MetricCollectorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ResourcesReaderTest: Setup MetricCollectorTest test class.");
     }
 

@@ -24,7 +24,7 @@
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 #include <iostream>
@@ -43,7 +43,7 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
 
   protected:
     static void setupLogging() {
-        NES::setupLogging("ExpressionNodeTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup ExpressionNodeTest test class.");
     }
 };

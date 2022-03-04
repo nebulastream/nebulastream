@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 #include <utility>
 

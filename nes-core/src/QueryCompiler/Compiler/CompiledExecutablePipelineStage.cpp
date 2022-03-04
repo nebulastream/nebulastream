@@ -14,7 +14,7 @@
 
 #include <Compiler/DynamicObject.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 namespace NES {
 

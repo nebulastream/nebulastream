@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/OPCSourceType.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 #include <utility>
 

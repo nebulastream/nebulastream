@@ -36,7 +36,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <cstring>
 #include <iostream>
@@ -53,7 +53,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("Z3SignatureBasedPartialQueryMergerRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("Z3SignatureBasedPartialQueryMergerRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case.");
     }
 

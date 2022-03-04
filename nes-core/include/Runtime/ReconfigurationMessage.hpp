@@ -18,7 +18,7 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationType.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <any>
 #include <atomic>

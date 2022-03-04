@@ -15,7 +15,7 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstdint>
 #include <memory>

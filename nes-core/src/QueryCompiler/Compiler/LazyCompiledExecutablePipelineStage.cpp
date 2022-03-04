@@ -13,7 +13,7 @@
 */
 
 #include <QueryCompiler/Compiler/LazyCompiledExecutablePipelineStage.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 NES::LazyCompiledExecutablePipelineStage::LazyCompiledExecutablePipelineStage(
     std::shared_future<Runtime::Execution::ExecutablePipelineStagePtr> futurePipelineStage)

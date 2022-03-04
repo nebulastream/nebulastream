@@ -16,7 +16,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Network {
 

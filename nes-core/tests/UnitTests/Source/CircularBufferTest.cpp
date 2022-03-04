@@ -16,7 +16,7 @@
 #include <NesBaseTest.hpp>
 
 #include <Util/CircularBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -27,7 +27,7 @@ class CircularBufferTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("CircularBufferTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("CircularBufferTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup CircularBufferTest test case." << std::endl;
     }
 

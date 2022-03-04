@@ -25,7 +25,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -47,7 +47,7 @@ namespace NES {
 class JoinHandlerTest : public testing::Test {
   public:
     void SetUp() override {
-        NES::setupLogging("JoinHandlerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("JoinHandlerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup JoinHandlerTest test class.");
     }
 

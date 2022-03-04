@@ -19,7 +19,7 @@
 #include <Sources/MonitoringSource.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>

@@ -37,7 +37,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <csignal>
 #include <future>
@@ -218,7 +218,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
 class NodeEngineTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("EngineTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("EngineTest.log", NES::LogLevel::LOG_DEBUG);
 
         NES_INFO("Setup EngineTest test class.");
     }

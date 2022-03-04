@@ -23,7 +23,7 @@
 #include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <sstream>
 #include <string>
 #include <utility>

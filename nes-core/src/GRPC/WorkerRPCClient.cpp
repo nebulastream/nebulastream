@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <log4cxx/helpers/exception.h>
 
 namespace NES {
 
@@ -410,7 +410,7 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
     } else {
         NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
                   "error="
-                      << status.error_code() << ": " << status.error_message());
+                  << status.error_code() << ": " << status.error_message());
         throw log4cxx::helpers::Exception("Error while WorkerRPCClient::updateNetworkSinks");
     }
 }

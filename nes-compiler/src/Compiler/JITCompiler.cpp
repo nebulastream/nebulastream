@@ -17,7 +17,7 @@
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <future>
 #include <utility>
 

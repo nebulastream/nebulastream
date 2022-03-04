@@ -12,7 +12,14 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <log4cxx/consoleappender.h>
+#include <log4cxx/fileappender.h>
+#include <log4cxx/logger.h>
+#include <log4cxx/patternlayout.h>
+
+#include <Util/Logger/LoggerMacros.hpp>
+#include "Util/Logger/Logger.hpp"
 
 namespace NES {
 
@@ -20,7 +27,8 @@ log4cxx::LoggerPtr& NESLogger::getInstance() {
     static log4cxx::LoggerPtr instance = log4cxx::Logger::getLogger("NES");
     return instance;
 }
-NESLogger::NESLogger(){};
+NESLogger::NESLogger(){}
+
 
 static std::string getDebugLevelAsString(DebugLevel level) {
     switch (level) {
@@ -99,6 +107,13 @@ void setLogLevel(DebugLevel level) {
 #endif
 }
 
+class X : public log4cxx::spi::Filter {
+  public:
+    FilterDecision decide(const log4cxx::spi::LoggingEventPtr& event) const override {
+        event->getLocationInformation().getClassName();
+        return DENY; }
+};
+
 void setupLogging(const std::string& logFileName, DebugLevel level) {
     std::cout << "Logger: Setting up logger" << std::endl;
     // create PatternLayout
@@ -112,6 +127,7 @@ void setupLogging(const std::string& logFileName, DebugLevel level) {
     // create ConsoleAppender
     log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
     setLogLevel(level);
+    console->addFilter(new X());
     NESLogger::getInstance()->addAppender(file);
     NESLogger::getInstance()->addAppender(console);
 }

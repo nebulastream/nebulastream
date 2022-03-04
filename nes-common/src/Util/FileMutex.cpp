@@ -13,7 +13,7 @@
 */
 
 #include <Util/FileMutex.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <errno.h>
 #include <cstring>
 #include <unistd.h>

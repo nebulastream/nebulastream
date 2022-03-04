@@ -21,7 +21,7 @@
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <SerializableDataType.pb.h>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <vector>
 namespace NES {
 

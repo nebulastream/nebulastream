@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 #include <log4cxx/appender.h>
@@ -26,7 +26,7 @@ using Runtime::StateVariable;
 class StateTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("StateTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("StateTest.log", NES::LogLevel::LOG_DEBUG);
 
         NES_INFO("Setup StateTest test class.");
     }

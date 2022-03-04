@@ -13,7 +13,7 @@
 */
 
 #include <Common/ExecutableType/Array.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 #include <type_traits>
@@ -23,7 +23,7 @@ namespace NES {
 class ArrayTypeTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("ArrayTypeTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ArrayTypeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ArrayType test class.");
     }
 

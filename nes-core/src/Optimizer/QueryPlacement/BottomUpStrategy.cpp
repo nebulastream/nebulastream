@@ -23,7 +23,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -31,9 +32,8 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                                 TopologyPtr topology,
                                                                 TypeInferencePhasePtr typeInferencePhase) {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy(std::move(globalExecutionPlan),
-                                                               std::move(topology),
-                                                               std::move(typeInferencePhase)));
+    return std::make_unique<BottomUpStrategy>(
+        BottomUpStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)));
 }
 
 BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -133,7 +133,8 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
                     "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator, operatorId: "
                     << operatorNode->getId());
                 topology->print();
-                throw log4cxx::helpers::Exception("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
+                throw log4cxx::helpers::Exception(
+                    "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
             }
 
             if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
@@ -154,7 +155,8 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
-                    throw log4cxx::helpers::Exception("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+                    throw log4cxx::helpers::Exception(
+                        "BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
                 }
             }
         }

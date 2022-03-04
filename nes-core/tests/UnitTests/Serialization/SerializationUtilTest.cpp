@@ -65,7 +65,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
@@ -99,7 +99,7 @@ class SerializationUtilTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("SerializationUtilTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SerializationUtilTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SerializationUtilTest test case.");
     }
 

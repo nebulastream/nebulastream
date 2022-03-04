@@ -40,6 +40,8 @@ option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
+set(NES_LOG_LEVEL "DEBUG" CACHE STRING "LogLevel")
+
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
 endif ()
@@ -147,13 +149,14 @@ if (CMAKE_NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
 
-# Set NES_LOGGING_LEVEL Flag
-if (NES_LOGGING_LEVEL)
-    get_nes_log_level_value(NES_LOGGING_VALUE)
-else (NES_LOGGING_LEVEL)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_LOGGING_DEBUG_LEVEL=1")
-    message("---Debug log level is the default. Use NES_SPECIFIC_FLAGS to change log level")
-endif (NES_LOGGING_LEVEL)
+# Infers the log level based on the provided "NES_LOG_LEVEL" flag.
+# Currently we support the following log levels:
+# TRACE, DEBUG, INFO, WARN, ERROR, FATAL_ERROR, and NONE.
+# Notice that these is a compilation time provided value.
+# Consequently, it is not possible to activate at runtime a log level,
+# which is lower then the log level that is provided here.
+get_nes_log_level_value(NES_LOGGING_VALUE)
+
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")

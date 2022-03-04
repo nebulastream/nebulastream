@@ -14,7 +14,7 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferStorage.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <NesBaseTest.hpp>
 #include <thread>
 
@@ -35,7 +35,7 @@ class BufferStorageTest : public Testing::NESBaseTest {
         bufferStorage = std::make_shared<Runtime::BufferStorage>();
     }
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES::setupLogging("BufferStorageTest.log", NES::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("BufferStorageTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
 /**

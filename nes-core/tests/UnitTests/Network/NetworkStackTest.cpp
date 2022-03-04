@@ -32,7 +32,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -71,7 +71,7 @@ namespace Network {
 class NetworkStackTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("NetworkStackTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("NetworkStackTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SetUpTestCase NetworkStackTest");
     }
 

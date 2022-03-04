@@ -17,7 +17,7 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
@@ -28,7 +28,7 @@ class SyntacticQueryValidationTest : public testing::Test {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     void SetUp() override {
-        NES::setupLogging("SyntacticQueryValidationTest.log", NES::LOG_NONE);
+        NES::Logger::setupLogging("SyntacticQueryValidationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SyntacticQueryValidationTest class.");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

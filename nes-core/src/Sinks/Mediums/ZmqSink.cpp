@@ -12,19 +12,16 @@
     limitations under the License.
 */
 
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
-
-#include <cassert>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
-#include <cstring>
+#include <log4cxx/helpers/exception.h>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <zmq.hpp>
-
-#include <Runtime/QueryManager.hpp>
-#include <Util/Logger.hpp>
 
 namespace NES {
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 
 #include <API/Schema.hpp>
@@ -90,7 +90,7 @@ class StringQueryTest : public Testing::NESBaseTest {
     };
 
     static void SetUpTestCase() noexcept {
-        NES::setupLogging("StringQueryTest.log", NES::LOG_WARNING);
+        NES::Logger::setupLogging("StringQueryTest.log", NES::LogLevel::LOG_WARNING);
         NES_INFO("Setup StringQuery test class.");
     }
 

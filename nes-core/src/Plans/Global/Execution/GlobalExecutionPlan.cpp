@@ -17,7 +17,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 GlobalExecutionPlan::GlobalExecutionPlan() { NES_DEBUG("GlobalExecutionPlan()"); }

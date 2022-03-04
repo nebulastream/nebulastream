@@ -20,12 +20,12 @@
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
-
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <chrono>
 #include <fstream>
 #include <iterator>
+#include <log4cxx/helpers/exception.h>
 #include <string>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>

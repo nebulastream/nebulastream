@@ -13,7 +13,7 @@
 */
 
 #include <Monitoring/MonitoringManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <API/Schema.hpp>
 #include <GRPC/WorkerRPCClient.hpp>

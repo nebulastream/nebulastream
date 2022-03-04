@@ -26,7 +26,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 #include <Components/NesCoordinator.hpp>
@@ -45,7 +45,7 @@ class MonitoringIntegrationTest : public Testing::NESBaseTest {
     Runtime::BufferManagerPtr bufferManager;
 
     static void SetUpTestCase() {
-        NES::setupLogging("MonitoringIntegrationTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MonitoringIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MonitoringIntegrationTest test class.");
     }
 

@@ -19,7 +19,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include "../util/NesBaseTest.hpp"
 
@@ -35,7 +35,7 @@ class UpdateTopologyRemoteTest : public Testing::NESBaseTest {
     uint16_t workerNumberOfSlots = 6;
 
     static void SetUpTestCase() {
-        NES::setupLogging("UpdateTopologyRemoteTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("UpdateTopologyRemoteTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
 

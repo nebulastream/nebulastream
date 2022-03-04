@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
 #define NES_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
 #include <Util/BufferSequenceNumber.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstddef>
 
 namespace NES::Runtime {

@@ -17,7 +17,7 @@
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 using namespace NES;
 

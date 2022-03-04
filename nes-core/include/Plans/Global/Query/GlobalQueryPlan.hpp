@@ -18,7 +18,7 @@
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <iostream>
 #include <map>

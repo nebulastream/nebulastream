@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <string>
@@ -23,7 +23,7 @@ namespace NES {
 class GeographicalLocationTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("GeoLoc.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GeographicalLocation test class.");
     }
 

@@ -20,7 +20,7 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
@@ -38,7 +38,7 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
     uint64_t bufferSize = 0;
 
     static void SetUpTestCase() {
-        NES::setupLogging("UserDefinedMonitoringTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("UserDefinedMonitoringTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
     }
 

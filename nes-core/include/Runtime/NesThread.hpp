@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_NESTHREAD_HPP_
 #define NES_INCLUDE_RUNTIME_NESTHREAD_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <cassert>
 #include <cstddef>

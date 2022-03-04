@@ -22,7 +22,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
 
@@ -38,7 +38,7 @@ uint64_t numberOfCoordinatorThreads = 2;
 class MultiThreadedTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("MultiWorkerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MultiWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MultiWorkerTest test class.");
     }
 

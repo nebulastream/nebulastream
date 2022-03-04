@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <algorithm>
 #include <csignal>

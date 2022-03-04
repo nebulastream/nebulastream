@@ -19,7 +19,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>//for timing execution
 #include <gtest/gtest.h>
@@ -40,7 +40,7 @@ class AndOperatorTest : public Testing::NESBaseTest {
 
 
     static void SetUpTestCase() {
-        NES::setupLogging("AndOperatorTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("AndOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AndOperatorTest test class.");
     }
 

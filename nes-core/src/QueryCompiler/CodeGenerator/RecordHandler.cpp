@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {

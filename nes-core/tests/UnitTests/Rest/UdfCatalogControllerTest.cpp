@@ -19,7 +19,7 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <UdfCatalogService.pb.h>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpprest/http_client.h>
 #include <string>
 
@@ -31,7 +31,7 @@ namespace NES {
 class UdfCatalogControllerTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() {
-        NES::setupLogging("UdfTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG);
         GOOGLE_PROTOBUF_VERIFY_VERSION;
     }
 

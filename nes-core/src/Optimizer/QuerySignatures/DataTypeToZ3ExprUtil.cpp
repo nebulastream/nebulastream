@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstring>
 #include <z3++.h>
 

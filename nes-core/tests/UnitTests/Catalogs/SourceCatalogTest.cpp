@@ -27,7 +27,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 using namespace std;
 using namespace NES;
@@ -43,7 +43,7 @@ class SourceCatalogTest : public Testing::NESBaseTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("SourceCatalogTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("SourceCatalogTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SourceCatalogTest test class.");
     }
 

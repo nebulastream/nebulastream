@@ -44,7 +44,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <iostream>
@@ -57,7 +57,7 @@ using Runtime::TupleBuffer;
 
 class GPUQueryExecutionTest : public testing::Test {
   public:
-    static void SetUpTestCase() { NES::setupLogging("GPUQueryExecutionTest.log", NES::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("GPUQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
     /* Will be called before a test is executed. */
     void SetUp() override {
         testSchemaSimple = Schema::create()->addField("test$value", BasicType::INT32);

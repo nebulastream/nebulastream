@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Experimental/Hash.hpp>
@@ -30,7 +30,7 @@ namespace NES {
 class HashMapTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("HashMapTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("HashMapTest.log", NES::LogLevel::LOG_DEBUG);
 
         NES_INFO("HashMapTest test class SetUpTestCase.");
     }

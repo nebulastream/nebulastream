@@ -36,7 +36,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <z3++.h>
 
@@ -51,7 +51,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public testing::Test 
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("Z3SignatureBasedPartialQueryMergerBottomUpRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("Z3SignatureBasedPartialQueryMergerBottomUpRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup Z3SignatureBasedPartialQueryMergerBottomUpRuleTest test case.");
     }
 

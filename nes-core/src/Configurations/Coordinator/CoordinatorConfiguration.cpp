@@ -14,7 +14,7 @@
 
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>

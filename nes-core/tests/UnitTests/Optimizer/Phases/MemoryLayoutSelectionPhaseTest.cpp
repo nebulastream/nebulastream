@@ -37,7 +37,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -49,7 +49,7 @@ class MemoryLayoutSelectionPhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("MemoryLayoutSelectionPhase.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("MemoryLayoutSelectionPhase.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
     }
 

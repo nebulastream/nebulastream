@@ -20,7 +20,7 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 NetworkCollector::NetworkCollector()

@@ -20,7 +20,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>//for timing execution
@@ -40,7 +40,7 @@ class OrOperatorTest : public Testing::NESBaseTest {
     CoordinatorConfigurationPtr coordinatorConfiguration;
 
     static void SetUpTestCase() {
-        NES::setupLogging("OrOperatorTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("OrOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup OrOperatorTest test class.");
     }
 

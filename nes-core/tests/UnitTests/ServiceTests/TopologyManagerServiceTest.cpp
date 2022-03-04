@@ -24,7 +24,7 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 
 using namespace std;
@@ -43,7 +43,7 @@ class TopologyManagerServiceTest : public Testing::NESBaseTest {
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_DEBUG("Setup NES TopologyManagerService test case.");
-        NES::setupLogging("TopologyManager.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("TopologyManager.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

@@ -16,7 +16,7 @@
 #include <Network/ZmqUtils.hpp>
 #include <Network/detail/BaseNetworkChannel.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Network::detail {
 BaseNetworkChannel::BaseNetworkChannel(zmq::socket_t&& zmqSocket,

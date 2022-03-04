@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Version/version.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/SignalHandling.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Version/version.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -33,7 +33,7 @@ const string logo = "\n"
                     "██║╚████║██╔══╝░░██╔══██╗██║░░░██║██║░░░░░██╔══██║░╚═══██╗░░░██║░░░██╔══██╗██╔══╝░░██╔══██║██║╚██╔╝██║\n"
                     "██║░╚███║███████╗██████╦╝╚██████╔╝███████╗██║░░██║██████╔╝░░░██║░░░██║░░██║███████╗██║░░██║██║░╚═╝░██║\n"
                     "╚═╝░░╚══╝╚══════╝╚═════╝░░╚═════╝░╚══════╝╚═╝░░╚═╝╚═════╝░░░░╚═╝░░░╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝╚═╝░░░░░╚═╝";
-
+#include <log4cxx/helpers/exception.h>
 const string worker = "\n"
                       "▒█░░▒█ █▀▀█ █▀▀█ █░█ █▀▀ █▀▀█ \n"
                       "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     try {
         std::cout << logo << std::endl;
         std::cout << worker << "v" << NES_VERSION << std::endl;
-        NES::setupLogging("nesWorkerStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+        NES::Logger::setupLogging("nesWorkerStarter.log", NES::LogLevel::LOG_DEBUG);
         WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
         std::map<string, string> commandLineParams;
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
             workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
         }
 
-        NES::setLogLevel(workerConfiguration->logLevel.getValue());
+        NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
 
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));

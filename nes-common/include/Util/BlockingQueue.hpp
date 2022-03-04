@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
 #define NES_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <condition_variable>
 #include <iostream>

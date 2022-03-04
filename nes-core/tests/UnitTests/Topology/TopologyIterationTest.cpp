@@ -16,7 +16,7 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
 
@@ -41,7 +41,7 @@ class TopologyIteratorTest : public Testing::NESBaseTest {
 
   protected:
     static void setupLogging() {
-        NES::setupLogging("OperatorPropertiesTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("OperatorPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup OperatorPropertiesTest test class.");
     }
 

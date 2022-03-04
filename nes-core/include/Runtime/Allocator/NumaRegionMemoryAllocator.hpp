@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
 #define NES_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
 #ifdef NES_ENABLE_NUMA_SUPPORT
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 #ifdef __linux__
 #include <memory_resource>

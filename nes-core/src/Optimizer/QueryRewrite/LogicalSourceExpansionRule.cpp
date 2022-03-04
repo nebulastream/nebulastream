@@ -27,6 +27,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -75,8 +76,9 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         NES_TRACE("LogicalSourceExpansionRule: Found " << sourceCatalogEntries.size()
                                                        << " physical source locations in the topology.");
         if (sourceCatalogEntries.empty()) {
-            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find physical source locations for the logical source "
-                            + logicalSourceName);
+            throw log4cxx::helpers::Exception(
+                "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source "
+                + logicalSourceName);
         }
 
         if (!expandSourceOnly) {
@@ -120,8 +122,9 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                     for (auto blockingParentId : listOfConnectedBlockingParents) {
                         auto blockingOperator = blockingOperators[blockingParentId];
                         if (!blockingOperator) {
-                            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find blocking operator with id "
-                                            + std::to_string(blockingParentId));
+                            throw log4cxx::helpers::Exception(
+                                "LogicalSourceExpansionRule: Unable to find blocking operator with id "
+                                + std::to_string(blockingParentId));
                         }
                         blockingOperator->addChild(operatorNode);
                     }
@@ -159,7 +162,8 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const Operator
 void LogicalSourceExpansionRule::removeAndAddBlockingUpstreamOperator(const OperatorNodePtr& operatorNode,
                                                                       const OperatorNodePtr& upstreamOperator) {
     if (!operatorNode->removeParent(upstreamOperator)) {
-        throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to remove non-blocking child operator from the blocking operator");
+        throw log4cxx::helpers::Exception(
+            "LogicalSourceExpansionRule: Unable to remove non-blocking child operator from the blocking operator");
     }
 
     //extract the list of connected blocking parents and add the current parent to the list

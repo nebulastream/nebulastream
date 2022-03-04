@@ -209,7 +209,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
  */
 int main(int argc, const char* argv[]) {
 
-    NES::setupLogging("BenchmarkQueryMerger.log", NES::LOG_INFO);
+    NES::Logger::setupLogging("BenchmarkQueryMerger.log", NES::LOG_INFO);
     std::cout << "Setup BenchmarkQueryMerger test class." << std::endl;
     std::stringstream benchmarkOutput;
     benchmarkOutput << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,Num_Of_SharedQueryPlans,ActualOperator,"
@@ -236,7 +236,7 @@ int main(int argc, const char* argv[]) {
         return -1;
     }
 
-    NES::setupLogging("BM.log", loglevel);
+    NES::Logger::setupLogging("BM.log", loglevel);
 
     //Load individual query set from the query set location and run the benchmark
     for (const auto& file : directory_iterator(querySetLocation)) {

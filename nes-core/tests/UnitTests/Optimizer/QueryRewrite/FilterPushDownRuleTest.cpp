@@ -28,7 +28,7 @@
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -40,7 +40,7 @@ class FilterPushDownRuleTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("FilterPushDownTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("FilterPushDownTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup FilterPushDownTest test case.");
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }

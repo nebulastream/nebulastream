@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_STATE_STATEVARIABLE_HPP_
 #define NES_INCLUDE_STATE_STATEVARIABLE_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 #include <type_traits>
 #include <unordered_map>

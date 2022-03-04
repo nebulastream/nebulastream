@@ -25,10 +25,10 @@
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cpprest/http_msg.h>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
-
 namespace NES {
 
 const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
@@ -96,8 +96,8 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             NES_DEBUG("UtilityFunctions: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
                 web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("Query Controller: Unable to find query with id " + std::to_string(queryId)
-                                                             + " in query catalog.");
+                errorResponse["detail"] = web::json::value::string("Query Controller: Unable to find query with id "
+                                                                   + std::to_string(queryId) + " in query catalog.");
                 badRequestImpl(request, errorResponse);
                 return;
             }

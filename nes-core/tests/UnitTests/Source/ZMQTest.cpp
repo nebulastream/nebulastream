@@ -24,7 +24,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -41,7 +41,7 @@ class ZMQTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("ZMQTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("ZMQTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup ZMQTest test class.");
     }
 

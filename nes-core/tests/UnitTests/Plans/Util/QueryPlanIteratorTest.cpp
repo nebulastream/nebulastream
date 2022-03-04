@@ -29,7 +29,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
@@ -43,7 +43,7 @@ namespace NES {
 class QueryPlanIteratorTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryPlanIteratorTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryPlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryPlanIteratorTest test class.");
     }
 

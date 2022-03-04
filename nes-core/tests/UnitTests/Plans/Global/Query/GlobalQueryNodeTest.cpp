@@ -16,7 +16,7 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
 using namespace NES;
@@ -26,7 +26,7 @@ class GlobalQueryNodeTest : public testing::Test {
   public:
     /* Will be called before a test is executed. */
     void SetUp() override {
-        setupLogging("GlobalQueryNodeTest.log", NES::LOG_DEBUG);
+        Logger::setupLogging("GlobalQueryNodeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup GlobalQueryNodeTest test case.");
     }
 

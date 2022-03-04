@@ -25,7 +25,7 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <string>

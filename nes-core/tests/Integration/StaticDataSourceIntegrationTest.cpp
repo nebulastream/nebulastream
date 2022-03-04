@@ -21,7 +21,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
@@ -52,7 +52,7 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES_INFO("Setup StaticDataSourceIntegrationTest test class.");
-        NES::setupLogging("StaticDataSourceIntegrationTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("StaticDataSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
     }
 
     SchemaPtr schema_customer;

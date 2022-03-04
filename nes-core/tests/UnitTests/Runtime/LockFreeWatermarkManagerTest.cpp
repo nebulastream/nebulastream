@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -32,7 +32,7 @@ class LockFreeWatermarkManagerTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("LockFreeWatermarkManagerTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("LockFreeWatermarkManagerTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup LockFreeWatermarkManagerTest test case." << std::endl;
     }
 

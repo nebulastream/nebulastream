@@ -16,7 +16,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Util/KalmanFilter.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Eigen/Dense>
@@ -39,7 +39,7 @@ class AdaptiveKFTest : public testing::Test {
     std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> now_ms;
 
     static void SetUpTestCase() {
-        NES::setupLogging("AdaptiveKFTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("AdaptiveKFTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AdaptiveKFTest test class.");
     }
 

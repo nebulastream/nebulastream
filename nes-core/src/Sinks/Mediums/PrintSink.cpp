@@ -14,7 +14,7 @@
 
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <sstream>
 #include <string>
