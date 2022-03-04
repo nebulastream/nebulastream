@@ -383,30 +383,36 @@ bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
     return success;
 }
 
-void NesWorker::onFatalError(int signalNumber, std::string string){
-    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << string);
+void NesWorker::onFatalError(int signalNumber, std::string callstack){
+    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::string errorMsg;
-    std::cerr << "Query failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+    std::cerr << "QNesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
-    std::cerr << "Callstack:\n " << string << std::endl;
+    std::cerr << "Callstack:\n " << callstack << std::endl;
     // save errors in errorMsg
-    errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + string;
+    errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + callstack;
     //send it to Coordinator
     this->notifyErrors(this->getWorkerId(), errorMsg);
+#ifdef ENABLE_CORE_DUMPER
+    detail::createCoreDump();
+#endif
 }
 
-void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string string) {
-    NES_ERROR("onFatalException: exception=[" << ptr->what() << "] callstack=\n" << string);
+void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string callstack) {
+    NES_ERROR("onFatalException: exception=[" << ptr->what() << "] callstack=\n" << callstack);
     std::string errorMsg;
-    std::cerr << "Query failed fatally" << std::endl;
+    std::cerr << "NesWorker failed fatally" << std::endl;
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Exception: " << ptr->what() << std::endl;
-    std::cerr << "Callstack:\n " << string << std::endl;
+    std::cerr << "Callstack:\n " << callstack << std::endl;
     // save errors in errorMsg
-    errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + string;
+    errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + callstack;
     //send it to Coordinator
     this->notifyErrors(this->getWorkerId(), errorMsg);
+#ifdef ENABLE_CORE_DUMPER
+    detail::createCoreDump();
+#endif
 }
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
@@ -444,28 +450,6 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRa
     }
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};
-}
-
-void NesWorker::onFatalError(int signalNumber, std::string callstack) {
-    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
-    std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
-    std::cerr << "Error: " << strerror(errno) << std::endl;
-    std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
-    std::cerr << "Callstack:\n " << callstack << std::endl;
-#ifdef ENABLE_CORE_DUMPER
-    detail::createCoreDump();
-#endif
-}
-
-void NesWorker::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
-    std::cerr << "NesWorker failed fatally" << std::endl;
-    std::cerr << "Error: " << strerror(errno) << std::endl;
-    std::cerr << "Exception: " << exception->what() << std::endl;
-    std::cerr << "Callstack:\n " << callstack << std::endl;
-#ifdef ENABLE_CORE_DUMPER
-    detail::createCoreDump();
-#endif
 }
 
 }// namespace NES
