@@ -19,7 +19,7 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
+//#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 
 #include <Runtime/BufferManager.hpp>

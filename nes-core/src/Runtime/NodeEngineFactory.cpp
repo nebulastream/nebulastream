@@ -63,10 +63,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                                   std::weak_ptr<NesWorker>&& nesWorker,
                                                   NumaAwarenessFlag enableNumaAwareness,
-                                                  const std::string& workerToCodeMapping,
+                                                  const std::string& workerToCoreMapping,
                                                   uint64_t numberOfQueues,
                                                   uint64_t numberOfThreadsPerQueue,
-                                                  const std::string& queryManagerMode) {
+                                                  QueryManager::QueryMangerMode queryManagerMode) {
 
     try {
         auto nodeEngineId = getNextNodeEngineId();
@@ -124,13 +124,13 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         }
 
         QueryManagerPtr queryManager;
-        if (workerToCodeMapping != "") {
-            std::vector<uint64_t> workerToCoreMapping = Util::splitWithStringDelimiter<uint64_t>(workerToCodeMapping, ",");
+        if (workerToCoreMapping != "") {
+            std::vector<uint64_t> workerToCoreMappingVec = Util::splitWithStringDelimiter<uint64_t>(workerToCoreMapping, ",");
             queryManager = std::make_shared<QueryManager>(bufferManagers,
                                                           nodeEngineId,
                                                           numThreads,
                                                           hardwareManager,
-                                                          workerToCoreMapping,
+                                                          workerToCoreMappingVec,
                                                           numberOfQueues,
                                                           numberOfThreadsPerQueue,
                                                           queryManagerMode);
