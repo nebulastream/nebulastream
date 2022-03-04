@@ -15,8 +15,10 @@
 #ifndef NES_INCLUDE_VIEWS_TUPLEVIEW_HPP_
 #define NES_INCLUDE_VIEWS_TUPLEVIEW_HPP_
 
-#include <queue>
 #include <Views/MaterializedView.hpp>
+#include <mutex>
+#include <queue>
+#include <vector>
 
 namespace NES::Experimental::MaterializedView {
 
@@ -33,12 +35,12 @@ class TupleView : public MaterializedView {
     friend class MaterializedViewManager;
 
     /// @brief constructor
-    TupleView(uint64_t id) : MaterializedView(id) {};
+    TupleView(uint64_t id) : MaterializedView(id){};
 
     /// @brief create shared ptr
     static TupleViewPtr createTupleView(uint64_t id);
 
-public:
+  public:
     /// @brief standard deconstructor
     ~TupleView() = default;
 
@@ -51,12 +53,12 @@ public:
     /// @brief clear all stored buffer
     void clear();
 
-private:
+  private:
     mutable std::mutex mutex;
     std::vector<Runtime::TupleBuffer> vector;
     // current position to receive data from. It is currently shared between all consumers
     uint64_t consumePosition = 0;
 
-}; // class TupleView
-} // namespace NES::Experimental::MaterializedView
-#endif  // NES_INCLUDE_VIEWS_TUPLEVIEW_HPP_
+};// class TupleView
+}// namespace NES::Experimental::MaterializedView
+#endif// NES_INCLUDE_VIEWS_TUPLEVIEW_HPP_
