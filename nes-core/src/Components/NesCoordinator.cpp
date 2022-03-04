@@ -18,6 +18,7 @@
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
@@ -65,9 +66,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, Wo
     : NesCoordinator(std::move(coordinatorConfig)) {
     workerConfig = std::move(workerConfiguration);
 }
-namespace Exceptions {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-}
+
+extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),

@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
@@ -39,9 +40,8 @@ const string worker = "\n"
                       "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
                       "▒█▄▀▄█ ▀▀▀▀ ▀░▀▀ ▀░▀ ▀▀▀ ▀░▀▀";
 
-namespace NES::Exceptions {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-}
+
+extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 int main(int argc, char** argv) {
     try {
@@ -86,8 +86,6 @@ int main(int argc, char** argv) {
         nesWorker->stop(/**force*/ true);
     } catch (std::exception& exp) {
         NES_ERROR("Problem with worker: " << exp.what());
-        std::shared_ptr<std::exception> e = std::make_shared<std::exception>(exp);
-        //   nesWorker->onFatalException(e, "Problem with worker");
         return 1;
     } catch (...) {
         NES_ERROR("Unknown exception was thrown");
