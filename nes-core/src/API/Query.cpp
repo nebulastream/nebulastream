@@ -146,11 +146,11 @@ Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 
 Query::Query(const Query& query) = default;
 
-Query Query::from(const std::string& sourceSourceName) {
-    NES_DEBUG("Query: create query for input source " << sourceSourceName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceSourceName));
+Query Query::from(const std::string& sourceName) {
+    NES_DEBUG("Query: create query for input source " << sourceName);
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName));
     auto queryPlan = QueryPlan::create(sourceOperator);
-    queryPlan->setSourceConsumed(sourceSourceName);
+    queryPlan->setSourceConsumed(sourceName);
     return Query(queryPlan);
 }
 

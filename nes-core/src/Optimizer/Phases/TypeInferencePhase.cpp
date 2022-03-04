@@ -43,7 +43,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         for (const auto& source : sources) {
             auto sourceDescriptor = source->getSourceDescriptor();
 
-            // if the source descriptor has no schema set and is only a logical source source we replace it with the correct
+            // if the source descriptor has no schema set and is only a logical source we replace it with the correct
             // source descriptor form the catalog.
             if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>() && sourceDescriptor->getSchema()->empty()) {
                 auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
