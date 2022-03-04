@@ -659,9 +659,9 @@ target_link_libraries(user-defined-monitoring-test nes-tests)
 add_test(NAME user-defined-monitoring-test COMMAND user-defined-monitoring-test)
 
 # MonitoringIntegrationTest
-add_executable(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp")
-target_link_libraries(monitoring-integration-test nes-tests)
-add_test(NAME monitoring-integration-test COMMAND monitoring-integration-test)
+#add_executable(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp")
+#target_link_libraries(monitoring-integration-test nes-tests)
+#add_test(NAME monitoring-integration-test COMMAND monitoring-integration-test)
 
 ### MemorySourceIntegrationTest ###
 add_executable(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp")
