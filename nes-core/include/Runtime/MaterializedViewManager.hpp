@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 #define NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 
+#include <mutex>
 #include <unordered_map>
 
 namespace NES::Experimental::MaterializedView {
