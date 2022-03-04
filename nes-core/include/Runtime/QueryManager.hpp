@@ -348,7 +348,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint64_t currentTaskQueueId = 0;
 
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
-    std::unordered_map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceToQEPMapping;
+
+    std::unordered_map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceToQEPMapping; // assume source sharing disabled
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;

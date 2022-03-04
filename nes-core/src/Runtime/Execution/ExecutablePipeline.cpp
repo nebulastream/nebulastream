@@ -135,7 +135,7 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
 }
 
 void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
-    NES_TRACE("Going to reconfigure pipeline " << pipelineId << " belonging to query id: " << querySubPlanId
+    NES_DEBUG("Going to reconfigure pipeline " << pipelineId << " belonging to query id: " << querySubPlanId
                                                << " stage id: " << pipelineId);
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
@@ -182,7 +182,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
 }
 
 void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& task) {
-    NES_TRACE("Going to execute postReconfigurationCallback on pipeline belonging to subplanId: " << querySubPlanId
+    NES_DEBUG("Going to execute postReconfigurationCallback on pipeline belonging to subplanId: " << querySubPlanId
                                                                                                   << " stage id: " << pipelineId);
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
