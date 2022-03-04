@@ -70,7 +70,7 @@ GeographicalLocation::operator Coordinates() const {
 }
 
 bool GeographicalLocation::operator==(const GeographicalLocation& other) const {
-    return this->getLatitude() == other.getLatitude() && this->getLongitude() == other.getLongitude();
+    return this->latitude == other.latitude && this->longitude == other.longitude;
 };
 
 double GeographicalLocation::getLatitude() const {

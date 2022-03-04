@@ -193,7 +193,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
         "--physicalSources.rowLayout=false",
         "--physicalSources.physicalSourceName=x",
         "--physicalSources.logicalSourceName=default",
-        "--locationCoordinates='23.88,-3.4'"
+        "--locationCoordinates=23.88,-3.4"
     };
     int argc = 14;
 
