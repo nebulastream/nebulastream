@@ -244,14 +244,14 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("QueryController: " + faultToleranceString);
                         badRequestImpl(message, errorResponse);
-                        return;
+                        throw log4cxx::helpers::Exception("QueryController: " + faultToleranceString);
                     }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     if (lineageMode == LineageType::INVALID) {
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("QueryController: " + lineageString);
                         badRequestImpl(message, errorResponse);
-                        return;
+                        throw log4cxx::helpers::Exception("QueryController: " + lineageString);
                     }
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
@@ -289,7 +289,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("QueryController: Invalid Protobuf message");
                         badRequestImpl(message, errorResponse);
-                        return;
+                        throw log4cxx::helpers::Exception("QueryController: Invalid Protobuf message");
                     }
                     // decode protobuf message into c++ obj repr
                     SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
@@ -299,9 +299,9 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     auto* context = protobufMessage->mutable_context();
                     if (!context->contains("placement")) {
                         web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: No placement strategy found.");
+                        errorResponse["detail"] = web::json::value::string("QueryController: No placement strategy found in query string");
                         badRequestImpl(message, errorResponse);
-                        return;
+                        throw log4cxx::helpers::Exception("QueryController: No placement strategy found in query string");
                     }
                     std::string placementStrategy = context->at("placement").value();
                     std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
@@ -317,14 +317,14 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("QueryController: " + faultToleranceString);
                         badRequestImpl(message, errorResponse);
-                        return;
+                        throw log4cxx::helpers::Exception("QueryController: " + faultToleranceString);
                     }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     if (lineageMode == LineageType::INVALID) {
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("QueryController: " + lineageString);
                         badRequestImpl(message, errorResponse);
-                        return;
+                        throw log4cxx::helpers::Exception("QueryController: " + lineageString);
                     }
 
                     QueryId queryId = queryService->addQueryRequest(*queryString,
