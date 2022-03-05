@@ -86,13 +86,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
 
     /**
-     * @brief deploy registers and starts a query
-     * @param new query plan
-     * @return true if succeeded, else false
-     */
-    [[nodiscard]] bool deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
-
-    /**
      * @brief undeploy stops and undeploy a query
      * @param queryId to undeploy
      * @return true if succeeded, else false
