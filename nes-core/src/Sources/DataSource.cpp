@@ -205,8 +205,6 @@ void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBuf
 void DataSource::close() {}
 
 void DataSource::runningRoutine() {
-    //TDOD startup delay
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
     try {
         if (gatheringMode == GatheringMode::INTERVAL_MODE) {
             runningRoutineWithGatheringInterval();
@@ -214,6 +212,14 @@ void DataSource::runningRoutine() {
             runningRoutineWithIngestionRate();
         } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
             runningRoutineAdaptiveGatheringInterval();
+        }
+        {
+            // inject reconfiguration task containing end of stream
+            std::unique_lock lock(startStopMutex);
+            NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
+            queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
+            bufferManager->destroy();
+            queryManager->notifySourceCompletion(shared_from_base<DataSource>());
         }
     } catch (std::exception const& exception) {
         queryManager->notifyOperatorFailure(shared_from_base<DataSource>(), exception.what());
@@ -300,11 +306,6 @@ void DataSource::runningRoutineWithIngestionRate() {
                                                   << " nextPeriodStartTime=" << nextPeriodStartTime << " curTime=" << curTime);
     }//end of while
     close();
-    // inject reconfiguration task containing end of stream
-    std::unique_lock lock(startStopMutex);
-    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
-    bufferManager->destroy();
-    queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
@@ -359,12 +360,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
         }
     }
     close();
-    // inject reconfiguration task containing end of stream
-    std::unique_lock lock(startStopMutex);
-    NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
-    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
-    bufferManager->destroy();
-    queryManager.reset();
+
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
@@ -432,12 +428,6 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     }
 
     close();
-    // inject reconfiguration task containing end of stream
-    NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
-    std::unique_lock lock(startStopMutex);
-    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
-    bufferManager->destroy();
-    queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 

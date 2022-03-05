@@ -32,13 +32,18 @@ class MaterializedViewSink : public SinkMedium {
 
   public:
     /// @brief constructor
-    MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, Runtime::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId parentPlanId);
+    MaterializedViewSink(MaterializedViewPtr view,
+                         SinkFormatPtr format,
+                         Runtime::NodeEnginePtr nodeEngine,
+                         uint32_t numOfProducers,
+                         QueryId queryId,
+                         QuerySubPlanId parentPlanId);
 
     /**
      * @brief setup method for materialized view sink
      * @Note required by sinkmedium but does nothing
      */
-    void setup() override {};
+    void setup() override{};
 
     /**
      * @brief shutdown method for materialized view sink
@@ -75,7 +80,7 @@ class MaterializedViewSink : public SinkMedium {
   private:
     MaterializedViewPtr view;
 
-}; // class MaterializedViewSink
-} // namespace NES::Experimental::MaterializedView
+};// class MaterializedViewSink
+}// namespace NES::Experimental::MaterializedView
 
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_

@@ -51,6 +51,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               QueryId queryId,
                               QuerySubPlanId querySubPlanId,
                               const Runtime::NodeEnginePtr& nodeEngine,
+                              uint32_t activeProducers,
                               const std::string& filePath,
                               bool append);
 
@@ -66,6 +67,7 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
+                               uint32_t numOfProducers,
                                const std::string& filePath,
                                bool append);
 
@@ -81,6 +83,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     QueryId queryId,
                                     QuerySubPlanId querySubPlanId,
                                     const Runtime::NodeEnginePtr& nodeEngine,
+                                    uint32_t numOfProducers,
                                     const std::string& filePath,
                                     bool append);
 
@@ -96,6 +99,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
+                               uint32_t numOfProducers,
                                const std::string& filePath,
                                bool append);
 
@@ -160,6 +164,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 QueryId queryId,
                                 QuerySubPlanId querySubPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
+                                uint32_t activeProducers,
                                 const std::string& host,
                                 uint16_t port,
                                 bool internal);
@@ -175,13 +180,15 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 QueryId queryId,
                                 QuerySubPlanId querySubPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
+                                uint32_t activeProducers,
                                 std::ostream& out);
 
 /**
  * @brief create a print that does not output something
  * @return a data sink pointer
  */
-DataSinkPtr createNullOutputSink(QueryId queryId, QuerySubPlanId querySubPlanId, const Runtime::NodeEnginePtr& nodeEngine);
+DataSinkPtr
+createNullOutputSink(QueryId queryId, QuerySubPlanId querySubPlanId, const Runtime::NodeEnginePtr& nodeEngine, uint32_t activeProducers);
 
 /**
  * @brief create a print test sink with a schema
@@ -195,6 +202,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                QueryId queryId,
                                QuerySubPlanId querySubPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
+                               uint32_t activeProducers,
                                std::ostream& out);
 
 /**
@@ -230,7 +238,6 @@ namespace Experimental::MaterializedView {
  */
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        const Runtime::NodeEnginePtr& nodeEngine,
-                                       QueryId queryId,
                                        QuerySubPlanId parentPlanId,
                                        uint64_t viewId);
 

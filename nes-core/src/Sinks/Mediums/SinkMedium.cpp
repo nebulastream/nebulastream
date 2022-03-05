@@ -26,12 +26,14 @@ namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
+                       uint32_t numOfProducers,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId)
-    : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), queryId(queryId), querySubPlanId(querySubPlanId) {
+    : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
+      querySubPlanId(querySubPlanId) {
     //TODO: issue #2543
     watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(1);
-    NES_DEBUG("SinkMedium:Init Data Sink!");
+    NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers");
 }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
@@ -80,7 +82,14 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
     switch (message.getType()) {
         case Runtime::SoftEndOfStream:
         case Runtime::HardEndOfStream: {
-            shutdown();
+            NES_DEBUG("Got EoS on Sink " << toString());
+            if (activeProducers.fetch_sub(1) == 1) {
+                shutdown();
+                nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
+                                                                    shared_from_this<SinkMedium>(),
+                                                                    message.getType() == Runtime::SoftEndOfStream);
+                NES_DEBUG("Sink " << toString() << " is terminated");
+            }
             break;
         }
         default: {

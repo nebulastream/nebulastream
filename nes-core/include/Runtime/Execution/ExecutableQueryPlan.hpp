@@ -90,9 +90,22 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     ~ExecutableQueryPlan() override;
 
     /**
-     * @brief Increment the number of producers for this qep
+     * @brief
+     * @param source
      */
-    void incrementProducerCount();
+    void notifySourceCompletion(DataSourcePtr source);
+
+    /**
+     * @brief
+     * @param pipeline
+     */
+    void notifyPipelineCompletion(ExecutablePipelinePtr pipeline);
+
+    /**
+     * @brief
+     * @param sink
+     */
+    void notifySinkCompletion(DataSinkPtr sink, bool isGraceful);
 
     /**
      * @brief Setup the query plan, e.g., instantiate state variables.
@@ -214,7 +227,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     BufferManagerPtr bufferManager;
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
     /// number of producers that provide data to this qep
-    std::atomic<uint32_t> numOfActiveSources;
+    std::atomic<uint32_t> numOfTerminationTokens;
     /// promise that indicates how a qep terminates
     std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
     /// future that indicates how a qep terminates
