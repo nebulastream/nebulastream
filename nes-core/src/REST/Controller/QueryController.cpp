@@ -241,11 +241,17 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     }
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
                     if (faultToleranceMode == FaultToleranceType::INVALID) {
-                        throw "QueryController: Enable to find given fault tolerance type";
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("QueryController: " + faultToleranceString);
+                        badRequestImpl(message, errorResponse);
+                        return;
                     }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     if (lineageMode == LineageType::INVALID) {
-                        throw "QueryController: Enable to find given lineage type";
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("QueryController: " + lineageString);
+                        badRequestImpl(message, errorResponse);
+                        return;
                     }
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
@@ -309,14 +315,14 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
                     if (faultToleranceMode == FaultToleranceType::INVALID) {
                         web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: unable to find given fault tolerance type");
+                        errorResponse["detail"] = web::json::value::string("QueryController: " + faultToleranceString);
                         badRequestImpl(message, errorResponse);
                         return;
                     }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     if (lineageMode == LineageType::INVALID) {
                         web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: unable to find given lineage type");
+                        errorResponse["detail"] = web::json::value::string("QueryController: " + lineageString);
                         badRequestImpl(message, errorResponse);
                         return;
                     }
