@@ -23,7 +23,6 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/GatheringMode.hpp>
-#include <Util/KalmanFilter.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -31,6 +30,7 @@
 #include <thread>
 
 namespace NES {
+class KalmanFilter;
 
 /**
 * @brief Base class for all data sources in NES
@@ -277,7 +277,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @brief the KF associated with a source.
      * We use default values for initialization.
      */
-    KalmanFilter kFilter;
+    std::unique_ptr<KalmanFilter> kFilter;
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;
