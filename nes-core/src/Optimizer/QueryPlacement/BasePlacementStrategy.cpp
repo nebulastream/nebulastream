@@ -108,7 +108,8 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
         candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateTopologyNode->getId());
     } else {
         NES_TRACE("BasePlacementStrategy: create new execution node with id: " << candidateTopologyNode->getId());
-        candidateExecutionNode = ExecutionNode::createExecutionNode(candidateTopologyNode);
+        auto topologyNode = topology->findNodeWithId(candidateTopologyNode->getId());
+        candidateExecutionNode = ExecutionNode::createExecutionNode(topologyNode);
     }
     return candidateExecutionNode;
 }

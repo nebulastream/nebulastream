@@ -123,13 +123,15 @@ void TopDownStrategy::placeOperator(QueryId queryId,
                 } else {
                     NES_ERROR("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be "
                               "placed.");
-                    throw log4cxx::helpers::Exception("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
-                                    "to be placed.");
+                    throw log4cxx::helpers::Exception(
+                        "TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
+                        "to be placed.");
                 }
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
-                    throw log4cxx::helpers::Exception("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
+                    throw log4cxx::helpers::Exception(
+                        "TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
                 }
             } else {
                 NES_TRACE("TopDownStrategy: Received an NAry operator for placement.");
@@ -149,8 +151,9 @@ void TopDownStrategy::placeOperator(QueryId queryId,
                 if (!candidateTopologyNode) {
                     NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                               << operatorNode->toString());
-                    throw log4cxx::helpers::Exception("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
-                                    + operatorNode->toString());
+                    throw log4cxx::helpers::Exception(
+                        "TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
+                        + operatorNode->toString());
                 }
             }
         }
@@ -190,7 +193,7 @@ void TopDownStrategy::placeOperator(QueryId queryId,
         if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
             NES_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
             throw log4cxx::helpers::Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
-                            + std::to_string(queryId));
+                                              + std::to_string(queryId));
         }
         NES_TRACE("TopDownStrategy: Update the global execution plan with candidate execution node");
         globalExecutionPlan->addExecutionNode(candidateExecutionNode);
@@ -304,13 +307,19 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators
     std::vector<NodePtr> parents = candidateOperator->getParents();
     //iterate over parent operators and get the physical location where operator is placed
     for (auto& parent : parents) {
-        const auto& found = operatorToExecutionNodeMap.find(parent->as<OperatorNode>()->getId());
-        if (found == operatorToExecutionNodeMap.end()) {
-            NES_WARNING("TopDownStrategy: unable to find topology for parent operator.");
+        auto parentOperator = parent->as<OperatorNode>();
+        if (parentOperator->hasProperty(PLACED) && std::any_cast<bool>(parentOperator->getProperty(PLACED))
+            && parentOperator->hasProperty(PINNED_NODE_ID)) {
+            uint64_t pinnedNodeId = std::any_cast<uint64_t>(parentOperator->getProperty(PINNED_NODE_ID));
+            if(nodeIdToTopologyNodeMap.find(pinnedNodeId) == nodeIdToTopologyNodeMap.end()){
+                NES_ERROR("TopDownStrategy: Found operator to find topology for parent operator.");
+                return {};
+            }
+            parentTopologyNodes.push_back(nodeIdToTopologyNodeMap[pinnedNodeId]);
+        } else {
+            NES_ERROR("TopDownStrategy: Found operator to find topology for parent operator.");
             return {};
         }
-        TopologyNodePtr parentTopologyNode = found->second->getTopologyNode();
-        parentTopologyNodes.push_back(parentTopologyNode);
     }
     NES_DEBUG("TopDownStrategy: returning list of topology nodes where parent operators are placed");
     return parentTopologyNodes;
