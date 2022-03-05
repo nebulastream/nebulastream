@@ -88,26 +88,6 @@ NodeEngine::~NodeEngine() {
     NES_ASSERT(stop(), "Cannot stop node engine");
 }
 
-bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
-    std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: deployQueryInNodeEngine query using qep " << queryExecutionPlan);
-    bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
-    if (!successRegister) {
-        NES_ERROR("Runtime::deployQueryInNodeEngine: failed to register query");
-        return false;
-    }
-    NES_DEBUG("Runtime::deployQueryInNodeEngine: successfully register query");
-
-    bool successStart = startQuery(queryExecutionPlan->getQueryId());
-    if (!successStart) {
-        NES_ERROR("Runtime::deployQueryInNodeEngine: failed to start query");
-        return false;
-    }
-    NES_DEBUG("Runtime::deployQueryInNodeEngine: successfully start query");
-
-    return true;
-}
-
 bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QueryId querySubPlanId = queryPlan->getQuerySubPlanId();

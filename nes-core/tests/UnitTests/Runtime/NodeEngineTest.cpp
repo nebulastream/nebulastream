@@ -307,7 +307,8 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->startQuery(testQueryId));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
     EXPECT_TRUE(engine->stop());
@@ -321,7 +322,8 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->startQuery(testQueryId));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
     EXPECT_TRUE(engine->undeployQuery(testQueryId));
@@ -588,7 +590,8 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->startQuery(testQueryId));
     pipeline->completedPromise.get_future().get();
 
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
