@@ -25,6 +25,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <../util/NesBaseTest.hpp>
+#include <Common/GeographicalLocation.hpp>
 
 using namespace std;
 namespace NES {
@@ -65,7 +66,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort=(port);
-    wrkConf2->locationCoordinates = location2;
+    wrkConf2->locationCoordinates.setValue(GeographicalLocation::fromString(location2));
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
@@ -73,7 +74,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     cout << "start worker 3" << endl;
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->coordinatorPort=(port);
-    wrkConf3->locationCoordinates = location3;
+    wrkConf3->locationCoordinates.setValue(GeographicalLocation::fromString(location3));
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
@@ -81,7 +82,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     cout << "start worker 4" << endl;
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
     wrkConf4->coordinatorPort=(port);
-    wrkConf4->locationCoordinates = location4;
+    wrkConf4->locationCoordinates.setValue(GeographicalLocation::fromString(location4));
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart4);
@@ -168,6 +169,12 @@ TEST_F(GeoLocationTests, testFieldNodes) {
 
     bool retStopWrk4 = wrk4->stop(false);
     EXPECT_TRUE(retStopWrk4);
+}
+
+TEST_F(GeoLocationTests, testLocationFromConfig) {
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyFieldNode.yaml");
+    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), GeographicalLocation(45, -30));
 }
 
 }// namespace NES
