@@ -1985,8 +1985,8 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("input1", input);
-    crd->getStreamCatalogService()->registerLogicalSource("input2", input);
+    crd->getSourceCatalogService()->registerLogicalSource("input1", input);
+    crd->getSourceCatalogService()->registerLogicalSource("input2", input);
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
