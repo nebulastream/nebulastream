@@ -56,14 +56,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             return;
         }
         try {
-            // check if query Id is int
-            if (!isdigit(std::stoi(queryParameter->second))){
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("QueryController: Provided QueryId is invalid: " + queryParameter->second);
-                badRequestImpl(request, errorResponse);
-                throw log4cxx::helpers::Exception("QueryController: Provided QueryId is invalid: " + queryParameter->second);
-            }
-            // get the queryId from user input
+             // get the queryId from user input
             QueryId queryId = std::stoi(queryParameter->second);
             NES_DEBUG("Query Controller: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
@@ -96,13 +89,6 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         }
 
         try {
-            // check if query Id is int
-            if (!isdigit(std::stoi(param->second))){
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("QueryController: Provided QueryId is invalid: " + param->second);
-                badRequestImpl(request, errorResponse);
-                throw log4cxx::helpers::Exception("QueryController: Provided QueryId is invalid: " + param->second);
-            }
             // get the queryId from user input
             QueryId queryId = std::stoi(param->second);
 
@@ -146,14 +132,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         }
 
         try {
-            // check if query Id is int
-            if (!isdigit(std::stoi(param->second))){
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("QueryController: Provided QueryId is invalid: " + param->second);
-                badRequestImpl(request, errorResponse);
-                throw log4cxx::helpers::Exception("QueryController: Provided QueryId is invalid: " + param->second);
-            }
-            // get the queryId from user input
+             // get the queryId from user input
             QueryId queryId = std::stoi(param->second);
             NES_DEBUG("Query Controller: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
@@ -199,13 +178,6 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             return;
         }
         try {
-            // check if query Id is int
-            if (!isdigit(std::stoi(queryParameter->second))){
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("QueryController: Provided QueryId is invalid: " + queryParameter->second);
-                badRequestImpl(request, errorResponse);
-                throw log4cxx::helpers::Exception("QueryController: Provided QueryId is invalid: " + queryParameter->second);
-            }
             // get the queryId from user input
             QueryId queryId = std::stoi(queryParameter->second);
             //Call the service
@@ -382,15 +354,8 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
         }
 
         try {
-            // check if query Id is int
-            if (!isdigit(std::stoi(param->second))){
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("QueryController: Provided QueryId is invalid: " + param->second);
-                badRequestImpl(request, errorResponse);
-                throw log4cxx::helpers::Exception("QueryController: Provided QueryId is invalid: " + param->second);
-            }
-            //Prepare Input query from user string
-            QueryId queryId = std::stoi(param->second);
+             QueryId queryId = std::stoi(param->second);
+            NES_DEBUG("QueryController: Prepare Input query from user string: " << std::to_string(queryId));
 
             bool success = queryService->validateAndQueueStopRequest(queryId);
             //Prepare the response
