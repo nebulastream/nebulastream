@@ -295,6 +295,24 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     uint64_t getNumberOfWorkerThreads();
 
+    /**
+     * @brief
+     * @param source
+     */
+    void notifySourceCompletion(DataSourcePtr source);
+
+    /**
+     * @brief
+     * @param pipeline
+     */
+    void notifyPipelineCompletion(QuerySubPlanId subPlanId, Execution::ExecutablePipelinePtr pipeline);
+
+    /**
+     * @brief
+     * @param pipeline
+     */
+    void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr pipeline, bool isGraceful);
+
   private:
     /**
      * This method initializes the query manager mode
@@ -353,8 +371,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
-    mutable std::mutex addReconfigurationMessageMutex;
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
+
+    mutable std::mutex reconfigurationMutex;
 
     Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 

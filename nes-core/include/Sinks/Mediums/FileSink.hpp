@@ -36,6 +36,7 @@ class FileSink : public SinkMedium {
      */
     explicit FileSink(SinkFormatPtr format,
                       Runtime::NodeEnginePtr nodeEngine,
+                      uint32_t numOfProducers,
                       const std::string& filePath,
                       bool append,
                       QueryId queryId,

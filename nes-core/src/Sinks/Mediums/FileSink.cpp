@@ -26,11 +26,12 @@ SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
 
 FileSink::FileSink(SinkFormatPtr format,
                    Runtime::NodeEnginePtr nodeEngine,
+                   uint32_t numOfProducers,
                    const std::string& filePath,
                    bool append,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId)
-    : SinkMedium(std::move(format), std::move(nodeEngine), queryId, querySubPlanId) {
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {

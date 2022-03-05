@@ -98,7 +98,6 @@ bool NetworkSource::start() {
 
 bool NetworkSource::stop(bool) {
     using namespace Runtime;
-    NES_DEBUG("NetworkSource: stop called on " << nesPartition);
     bool expected = true;
     if (running.compare_exchange_strong(expected, false)) {
         for (const auto& successor : executableSuccessors) {
@@ -112,6 +111,10 @@ bool NetworkSource::stop(bool) {
             auto newReconf = ReconfigurationMessage(querySubPlanId, Runtime::HardEndOfStream, shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
         }
+        queryManager->notifySourceCompletion(shared_from_base<DataSource>());
+        NES_DEBUG("NetworkSource: stop called on " << nesPartition << " sent hard eos");
+    } else {
+        NES_DEBUG("NetworkSource: stop called on " << nesPartition << " but was already stopped");
     }
     return true;
 }
@@ -168,7 +171,8 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
             networkManager->unregisterSubpartitionConsumer(nesPartition);
             bool expected = true;
             if (running.compare_exchange_strong(expected, false)) {
-                NES_DEBUG("NetworkSource is stopped with id " << nesPartition.toString());
+                NES_DEBUG("NetworkSource is stopped on reconf task with id " << nesPartition.toString());
+                queryManager->notifySourceCompletion(shared_from_base<DataSource>());
             }
             return;
         }

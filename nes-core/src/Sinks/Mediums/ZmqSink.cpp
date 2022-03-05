@@ -29,12 +29,13 @@ SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
 ZmqSink::ZmqSink(SinkFormatPtr format,
                  Runtime::NodeEnginePtr nodeEngine,
+                 uint32_t numOfProducers,
                  const std::string& host,
                  uint16_t port,
                  bool internal,
                  QueryId queryId,
                  QuerySubPlanId querySubPlanId)
-    : SinkMedium(std::move(format), std::move(nodeEngine), queryId, querySubPlanId), host(host.substr(0, host.find(':'))), port(port),
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId), host(host.substr(0, host.find(':'))), port(port),
       internal(internal), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }

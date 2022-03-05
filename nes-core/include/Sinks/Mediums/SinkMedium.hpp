@@ -16,6 +16,7 @@
 #define NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
 #include <API/Schema.hpp>
+#include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
@@ -42,10 +43,14 @@ enum SinkMediumTypes {
 class SinkMedium : public Runtime::Reconfigurable {
 
   public:
-    /**FF
+    /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId querySubPlanId);
+    explicit SinkMedium(SinkFormatPtr sinkFormat,
+                        Runtime::NodeEnginePtr nodeEngine,
+                        uint32_t numOfProducers,
+                        QueryId queryId,
+                        QuerySubPlanId querySubPlanId);
 
     /**
      * @brief virtual method to setup sink
@@ -71,7 +76,6 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @return queryId
      */
     QueryId getQueryId() const;
-
 
     /**
      * @brief get the suzbplan id of the owning plan
@@ -148,6 +152,12 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
+    /**
+     * @brief
+     * @return
+     */
+    OperatorId getOperatorId() const { return 0; }
+
   protected:
     SinkFormatPtr sinkFormat;
     bool append{
@@ -155,6 +165,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::atomic_bool schemaWritten{false};// TODO same here
 
     Runtime::NodeEnginePtr nodeEngine;
+    /// termination machinery
+    std::atomic<uint32_t> activeProducers;
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
@@ -168,4 +180,4 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_

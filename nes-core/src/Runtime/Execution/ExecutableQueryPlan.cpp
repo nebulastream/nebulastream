@@ -14,11 +14,10 @@
 
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
-#include <utility>
 
 namespace NES::Runtime::Execution {
 
@@ -31,9 +30,9 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                          BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Execution::ExecutableQueryPlanStatus::Created), numOfActiveSources(this->sources.size()),
+      qepStatus(Execution::ExecutableQueryPlanStatus::Created),
       qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
-    // nop
+    numOfTerminationTokens.store(1 + this->sources.size() + this->pipelines.size() + this->sinks.size());
 }
 
 ExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
@@ -51,8 +50,6 @@ ExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
                                                  std::move(queryManager),
                                                  std::move(bufferManager));
 }
-
-void ExecutableQueryPlan::incrementProducerCount() { numOfActiveSources++; }
 
 QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }
 
@@ -145,10 +142,6 @@ bool ExecutableQueryPlan::stop() {
     bool allStagesStopped = true;
     auto expected = Execution::ExecutableQueryPlanStatus::Running;
     NES_DEBUG("QueryExecutionPlan: stop queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
-    if (numOfActiveSources.fetch_sub(1) != 1) {
-        NES_WARNING("QueryExecutionPlan: cannot stop queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
-        return true;
-    }
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
         for (auto& stage : pipelines) {
@@ -194,16 +187,22 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             break;
         }
         case SoftEndOfStream: {
-            NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan "
-                                                                                       << querySubPlanId);
-            auto expected = Execution::ExecutableQueryPlanStatus::Running;
-            if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
-                // if CAS fails - it means the query was already stopped or failed
+            NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan "
+                      << queryId << " sub plan " << querySubPlanId << " left tokens = " << numOfTerminationTokens);
+            if (numOfTerminationTokens.fetch_sub(1) == 1) {
+                auto expected = Execution::ExecutableQueryPlanStatus::Running;
+                if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
+                    // if CAS fails - it means the query was already stopped or failed
+                    NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
+                                                                << " is marked as stopped now");
+                    qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+                    queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
+                                                          Execution::ExecutableQueryPlanStatus::Stopped);
+                    return;
+                }
+            } else {
                 NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
-                                                            << " is marked as stopped now");
-                qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
-                queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(), Execution::ExecutableQueryPlanStatus::Stopped);
-                return;
+                                                            << " was already marked as stopped now");
             }
             break;
         }
@@ -215,6 +214,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
 
 void ExecutableQueryPlan::destroy() {
     // sanity checks: ensure we can destroy stopped instances
+    NES_ASSERT2_FMT(numOfTerminationTokens == 0, "Destroying still active query plan");
     for (const auto& source : sources) {
         NES_ASSERT(!source->isRunning(), "Source " << source->getOperatorId() << " is still running");
     }
@@ -229,6 +229,38 @@ void ExecutableQueryPlan::destroy() {
 
 void ExecutableQueryPlan::onEvent(BaseEvent&) {
     // nop :: left on purpose -> fill this in when you want to support events
+}
+void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source) {
+    auto it = std::find(sources.begin(), sources.end(), source);
+    NES_ASSERT2_FMT(it != sources.end(),
+                    "Cannot find source " << source->getOperatorId() << " in sub query plan " << querySubPlanId);
+    uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
+    NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << querySubPlanId);
+    NES_DEBUG("QEP " << querySubPlanId << " Source " << source->getOperatorId()
+                     << " is terminated; tokens left = " << (tokensLeft - 1));
+}
+
+void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipeline) {
+    auto it = std::find(pipelines.begin(), pipelines.end(), pipeline);
+    NES_ASSERT2_FMT(it != pipelines.end(),
+                    "Cannot find pipeline " << pipeline->getPipelineId() << " in sub query plan " << querySubPlanId);
+    uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
+    NES_ASSERT2_FMT(tokensLeft >= 1, "Pipeline was last termination token for " << querySubPlanId);
+    NES_DEBUG("QEP " << querySubPlanId << " Pipeline " << pipeline->getPipelineId()
+                     << " is terminated; tokens left = " << (tokensLeft - 1));
+}
+
+void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, bool isGraceful) {
+    auto it = std::find(sinks.begin(), sinks.end(), sink);
+    NES_ASSERT2_FMT(it != sinks.end(), "Cannot find sink " << sink->toString() << " in sub query plan " << querySubPlanId);
+    uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
+    NES_ASSERT2_FMT(tokensLeft >= 1, "Sink was last termination token for " << querySubPlanId);
+    NES_DEBUG("QEP " << querySubPlanId << " Sink " << sink->toString() << " is terminated; tokens left = " << (tokensLeft - 1));
+    // sinks also require to spawn a reconfig task for the qep
+    auto reconfMessageQEP = ReconfigurationMessage(getQuerySubPlanId(),
+                                                   isGraceful ? SoftEndOfStream : HardEndOfStream,
+                                                   Reconfigurable::shared_from_this<ExecutableQueryPlan>());
+    queryManager->addReconfigurationMessage(getQuerySubPlanId(), reconfMessageQEP, false);
 }
 
 }// namespace NES::Runtime::Execution
