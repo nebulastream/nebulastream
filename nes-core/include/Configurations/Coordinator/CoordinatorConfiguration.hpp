@@ -17,6 +17,7 @@
 
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Coordinator/LogicalSourceFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
@@ -131,7 +132,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Allows the configuration of logical sources at the coordinator.
      * @deprecated This is currently only used for testing and will be removed.
      */
-    std::vector<LogicalSourcePtr> logicalSources;
+    SequenceOption<WrapOption<LogicalSourcePtr, LogicalSourceFactory>> logicalSources = {LOGICAL_SOURCES, "Logical Sources"};
 
     /**
      * @brief Configuration yaml path.
@@ -160,6 +161,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
             &enableMonitoring,
             &configPath,
             &optimizer,
+            &logicalSources,
         };
     }
 };
