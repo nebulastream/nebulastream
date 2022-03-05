@@ -34,7 +34,10 @@ class NullOutputSink : public SinkMedium {
      * @brief Default getSliceIndexByTs for could not find a slice,
      * @Note the default output will be written to cout
      */
-    explicit NullOutputSink(Runtime::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId querySubPlanId);
+    explicit NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
+                            uint32_t numOfProducers,
+                            QueryId queryId,
+                            QuerySubPlanId querySubPlanId);
 
     /**
      * @brief destructor
@@ -79,4 +82,4 @@ class NullOutputSink : public SinkMedium {
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_

@@ -250,6 +250,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                                              pipelineQueryPlan->getQueryId(),
                                                                              pipelineQueryPlan->getQuerySubPlanId(),
+                                                                             nodeEngine->getQueryManager(),
                                                                              executionContext,
                                                                              executableOperator->getExecutablePipelineStage(),
                                                                              pipeline->getPredecessors().size(),

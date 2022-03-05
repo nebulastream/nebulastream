@@ -14,9 +14,9 @@
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -32,8 +32,14 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes)
-    : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nodeEngine, queryId, querySubPlanId),
-      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()), queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
+    : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
+                 nodeEngine,
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId),
+      networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
+      queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
@@ -60,11 +66,13 @@ void NetworkSink::setup() {
                                                   Runtime::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
-    queryManager->addReconfigurationMessage(queryId,querySubPlanId, reconf, false);
+    queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, false);
 }
 
 void NetworkSink::shutdown() {
-    NES_DEBUG("NetworkSink: shutdown() called " << nesPartition.toString() << " queryId " << queryId << " qepsubplan " << querySubPlanId);
+    NES_DEBUG("NetworkSink: shutdown() called " << nesPartition.toString() << " queryId " << queryId << " qepsubplan "
+                                                << querySubPlanId);
+    networkManager->unregisterSubpartitionProducer(nesPartition);
 }
 
 std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
@@ -108,7 +116,6 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
     switch (task.getType()) {
         case Runtime::HardEndOfStream:
         case Runtime::SoftEndOfStream: {
-            networkManager->unregisterSubpartitionProducer(nesPartition);
             break;
         }
         default: {

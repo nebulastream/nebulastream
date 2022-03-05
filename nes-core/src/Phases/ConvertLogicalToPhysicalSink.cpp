@@ -43,11 +43,16 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     NES_ASSERT(querySubPlan, "Invalid query sub-plan");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
-        return createTextPrintSink(schema, querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine, std::cout);
+        return createTextPrintSink(schema,
+                                   querySubPlan->getQueryId(),
+                                   querySubPlan->getQuerySubPlanId(),
+                                   nodeEngine,
+                                   numOfProducers,
+                                   std::cout);
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
-        return createNullOutputSink(querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine);
+        return createNullOutputSink(querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine, numOfProducers);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
@@ -55,6 +60,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    querySubPlan->getQueryId(),
                                    querySubPlan->getQuerySubPlanId(),
                                    nodeEngine,
+                                   numOfProducers,
                                    zmqSinkDescriptor->getHost(),
                                    zmqSinkDescriptor->getPort(),
                                    zmqSinkDescriptor->isInternal());
@@ -116,6 +122,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                      querySubPlan->getQueryId(),
                                      querySubPlan->getQuerySubPlanId(),
                                      nodeEngine,
+                                     numOfProducers,
                                      fileSinkDescriptor->getFileName(),
                                      fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
@@ -123,6 +130,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                            querySubPlan->getQueryId(),
                                            querySubPlan->getQuerySubPlanId(),
                                            nodeEngine,
+                                           numOfProducers,
                                            fileSinkDescriptor->getFileName(),
                                            fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
@@ -130,6 +138,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                       querySubPlan->getQueryId(),
                                       querySubPlan->getQuerySubPlanId(),
                                       nodeEngine,
+                                      numOfProducers,
                                       fileSinkDescriptor->getFileName(),
                                       fileSinkDescriptor->getAppend());
         } else {
@@ -155,6 +164,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         return Experimental::MaterializedView::createMaterializedViewSink(schema,
                                                                           nodeEngine,
+                                                                          numOfProducers,
                                                                           querySubPlan->getQueryId(),
                                                                           querySubPlan->getQuerySubPlanId(),
                                                                           materializedViewSinkDescriptor->getViewId());
