@@ -22,9 +22,31 @@ namespace NES {
 
 namespace Configurations {
 
-void LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
+// TODO: parse the schema properly
+LogicalSourcePtr LogicalSourceFactory::createFromString(std::string ,
+                                            std::map<std::string, std::string>& commandLineParams) {
+    std::string logicalSourceName, fieldNodeName,
+        fieldNodeType, fieldNodeNesType, fieldNodeLength;
+    for (auto parameter : commandLineParams) {
+        if (parameter.first == LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG && !parameter.second.empty()) {
+            logicalSourceName = parameter.second;
+        }
+    }
+
+    if (logicalSourceName.empty()) {
+        NES_WARNING("No logical source name is supplied for creating the logical source. Please supply "
+                    "logical source name using --"
+                    << LOGICAL_SOURCE_NAME_CONFIG);
+        return nullptr;
+    }
+
+    return LogicalSource::create(logicalSourceName, Schema::create());
+}
+
+LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
     std::vector<LogicalSourcePtr> logicalSources;
     std::string logicalSourceName;
+    SchemaPtr schema;
 
     if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
         && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n") {
@@ -33,13 +55,41 @@ void LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
     }
 
+    // TODO: maybe move to a separate schema parser/factory?
+    // TODO: why do begin/end/++ iterator APIs of Yaml::Node not work (or why do they work as they are)?
     if (yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].IsSequence()) {
-        // TODO: add vector of fields
+        auto sequenceSize = yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].Size();
+        for (uint64_t index = 0; index < sequenceSize; ++index) {
+            auto currentFieldNode = yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG][index];
+
+            auto fieldNodeName = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG].As<std::string>();
+            if (fieldNodeName.empty() || fieldNodeName == "\n") {
+                NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Name.");
+            }
+
+            auto fieldNodeType = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG].As<std::string>();
+            if (fieldNodeType.empty() || fieldNodeType == "\n") {
+                NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Type.");
+            }
+
+            auto fieldNodeNesType = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_NES_TYPE].As<std::string>();
+            if (fieldNodeNesType.empty() || fieldNodeNesType == "\n") {
+                NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Subtype.");
+            }
+
+            auto fieldNodeLength = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH].As<std::string>();
+            if (fieldNodeLength.empty() || fieldNodeLength == "\n") {
+                NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length.");
+            }
+        }
+
+        // TODO: create schema
+        return LogicalSource::create(logicalSourceName, Schema::create());
     } else {
-        NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source schema fields.");
+        NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Schema Fields.");
     }
 
-    return;
+    return LogicalSource::create(logicalSourceName, Schema::create());
 }
 
 }// namespace Configurations
