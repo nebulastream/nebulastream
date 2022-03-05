@@ -45,7 +45,7 @@ struct source_location {
         : _M_file("unknown"), _M_func(_M_file), _M_line(0), _M_col(0)
     { }
     // 14.1.3, source_location field access
-    constexpr uint_least32_t line() const noexcept { return _M_file; }
+    constexpr uint_least32_t line() const noexcept { return _M_line; }
     constexpr uint_least32_t column() const noexcept { return _M_col; }
     constexpr const char* file_name() const noexcept { return _M_file; }
     constexpr const char* function_name() const noexcept { return _M_func; }
