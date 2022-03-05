@@ -14,7 +14,7 @@
 
 #include <Catalogs/Query/QueryStatus.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <string>
 namespace NES {
 
