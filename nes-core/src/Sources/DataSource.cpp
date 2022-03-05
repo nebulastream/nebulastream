@@ -12,23 +12,21 @@
     limitations under the License.
 */
 
-#include <chrono>
-#include <functional>
-#include <iostream>
-#include <thread>
-
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <future>
-
-#include <Sources/ZmqSource.hpp>
-
 #include <Sources/DataSource.hpp>
+#include <Sources/ZmqSource.hpp>
+#include <Util/KalmanFilter.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <chrono>
+#include <functional>
+#include <future>
+#include <iostream>
+#include <thread>
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <numa.h>
@@ -50,13 +48,12 @@ DataSource::DataSource(SchemaPtr pSchema,
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
-                       uint64_t taskQueueId
-                       )
+                       uint64_t taskQueueId)
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
-      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId)
-      {
-    this->kFilter.setDefaultValues();
+      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity),
+      taskQueueId(taskQueueId), kFilter(std::make_unique<KalmanFilter>()) {
+    this->kFilter->setDefaultValues();
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -71,9 +68,9 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // set the origin id for this source
     buffer.setOriginId(operatorId);
     // set the creation timestamp
-//    buffer.setCreationTimestamp(
-//        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-//            .count());
+    //    buffer.setCreationTimestamp(
+    //        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+    //            .count());
     // Set the sequence number of this buffer.
     // A data source generates a monotonic increasing sequence number
     maxSequenceNumber++;
@@ -114,8 +111,9 @@ bool DataSource::start() {
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
     // only CPU i as set.
 #ifdef __linux__
-        if (sourceAffinity  != std::numeric_limits<uint64_t>::max()) {
-            NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(), "pinning position is out of cpu range maxPosition=" << sourceAffinity);
+        if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
+            NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(),
+                       "pinning position is out of cpu range maxPosition=" << sourceAffinity);
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
             CPU_SET(sourceAffinity, &cpuset);
@@ -129,7 +127,8 @@ bool DataSource::start() {
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
-                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity;// << " on numaNode=" << numaNode << " ";
+                std::cout << "source " << operatorId
+                          << " pins to core=" << sourceAffinity;// << " on numaNode=" << numaNode << " ";
                 printf("setted affinity after assignment: %08lx\n", cur_mask);
             }
         } else {
@@ -388,8 +387,8 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
 
-    this->kFilter.setGatheringInterval(this->gatheringInterval);
-    this->kFilter.setGatheringIntervalRange(std::chrono::milliseconds{8000});
+    this->kFilter->setGatheringInterval(this->gatheringInterval);
+    this->kFilter->setGatheringIntervalRange(std::chrono::milliseconds{8000});
 
     open();
     uint64_t cnt = 0;
@@ -406,8 +405,8 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
 
                 if (this->gatheringInterval.count() != 0) {
                     NES_TRACE("DataSource old sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
-                    this->kFilter.updateFromTupleBuffer(buf);
-                    this->gatheringInterval = this->kFilter.getNewGatheringInterval();
+                    this->kFilter->updateFromTupleBuffer(buf);
+                    this->gatheringInterval = this->kFilter->getNewGatheringInterval();
                     NES_TRACE("DataSource new sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
                 }
 
