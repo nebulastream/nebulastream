@@ -164,7 +164,7 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
     int64_t nonExistingQueryId = queryId + 1;
     std::string response = client->getQueryPlan(nonExistingQueryId);
 
-    std::string expect = "{\"detail\":\"QueryService: Unable to find query with id " + to_string(nonExistingQueryId) + " in query catalog.\"}";
+    std::string expect = "{\"detail\":\"Query Controller: Unable to find query with id " + to_string(nonExistingQueryId) + " in query catalog.\"}";
     EXPECT_EQ(response,expect);
 
     stopQuery(queryId);
