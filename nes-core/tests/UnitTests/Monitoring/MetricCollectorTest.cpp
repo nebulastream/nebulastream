@@ -167,7 +167,7 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     EXPECT_EQ(typedMetric, parsedMetric);
 }
 
-TEST_F(MetricCollectorTest, testMemoryCollector) {
+TEST_F(MetricCollectorTest, DISABLED_testMemoryCollector) {
     auto memoryCollector = MemoryCollector();
     Metric memoryMetric = memoryCollector.readMetric();
     MemoryMetrics typedMetric = memoryMetric.getValue<MemoryMetrics>();
