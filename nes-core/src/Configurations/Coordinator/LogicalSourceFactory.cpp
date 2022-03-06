@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/LogicalSourceFactory.hpp>
 #include <Util/Logger.hpp>
@@ -46,7 +47,7 @@ LogicalSourcePtr LogicalSourceFactory::createFromString(std::string ,
 LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
     std::vector<LogicalSourcePtr> logicalSources;
     std::string logicalSourceName;
-    SchemaPtr schema;
+    SchemaPtr schema = Schema::create();
 
     if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
         && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n") {
@@ -55,7 +56,6 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
     }
 
-    // TODO: maybe move to a separate schema parser/factory?
     // TODO: why do begin/end/++ iterator APIs of Yaml::Node not work (or why do they work as they are)?
     if (yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].IsSequence()) {
         auto sequenceSize = yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].Size();
@@ -72,24 +72,30 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
                 NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Type.");
             }
 
-            auto fieldNodeNesType = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_NES_TYPE].As<std::string>();
-            if (fieldNodeNesType.empty() || fieldNodeNesType == "\n") {
-                NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Subtype.");
-            }
-
             auto fieldNodeLength = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH].As<std::string>();
-            if (fieldNodeLength.empty() || fieldNodeLength == "\n") {
-                NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length.");
-            }
-        }
 
-        // TODO: create schema
-        return LogicalSource::create(logicalSourceName, Schema::create());
+            schema->addField(fieldNodeName, stringToFieldType(fieldNodeType, fieldNodeLength));
+        }
     } else {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Schema Fields.");
     }
 
-    return LogicalSource::create(logicalSourceName, Schema::create());
+    return LogicalSource::create(logicalSourceName, schema);
+}
+
+DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType,
+                                                    std::string fieldNodeLength) {
+    if (fieldNodeType == "string") {
+        if (fieldNodeLength.empty() || fieldNodeLength == "\n") {
+            NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Type.");
+        }
+        return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
+    }
+
+    // TODO: map types to strings, this way below is wrong
+    if (fieldNodeType.starts_with("int") || fieldNodeType.starts_with("uint")) {
+    }
+    return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
 }
 
 }// namespace Configurations

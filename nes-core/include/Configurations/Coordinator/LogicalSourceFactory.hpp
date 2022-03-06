@@ -15,7 +15,6 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCEFACTORY_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCEFACTORY_HPP_
 
-// TODO: check why yaml is not needed in equivalent physical file structure
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <memory>
@@ -26,6 +25,12 @@ namespace NES {
 
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+
+class DataType;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 namespace Configurations {
 
@@ -48,13 +53,7 @@ class LogicalSourceFactory {
     static LogicalSourcePtr createFromYaml(Yaml::Node& yamlConfig);
 
   private:
-    /**
-     * @brief Compute Physical Source Type based on the yaml configuration
-     * @param sourceType : the string representing the physical source type
-     * @param yamlConfig : the yaml configuration
-     * @return PhysicalSourceType shared pointer
-     */
-    static LogicalSourcePtr createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig);
+    static DataTypePtr stringToFieldType(std::string fieldType, std::string fieldLength);
 };
 }// namespace Configurations
 }// namespace NES

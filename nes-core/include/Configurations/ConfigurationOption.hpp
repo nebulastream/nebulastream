@@ -241,7 +241,6 @@ const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
-const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NES_TYPE = "subtype";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 
 }// namespace Configurations

@@ -12,16 +12,13 @@ logicalSources:
   - logicalSourceName: "lsn1"
     fields:
       - name: "csv_id"
-        type: "array"
-        subtype: "string"
+        type: "string"
         length: 5
       - name: "csv_id_2"
-        type: "array"
-        subtype: "string"
+        type: "string"
         length: 2
   - logicalSourceName: "lsn2"
     fields:
       - name: "csv_id_3"
-        type: "array"
-        subtype: "string"
+        type: "string"
         length: 25
