@@ -74,7 +74,6 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), "0.0.0.0");
     EXPECT_FALSE(coordinatorConfigPtr->logicalSources.empty());
     EXPECT_EQ(coordinatorConfigPtr->logicalSources.size(), 2);
-    // TODO: add rest of tests
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {

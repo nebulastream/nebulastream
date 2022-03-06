@@ -71,8 +71,7 @@ logicalSources:
   - logicalSourceName:
     fields:
       - name: "csv_id"
-        type: "array"
-        subtype: "string"
+        type: "string"
         length: 5
       - name: "test_id"
         type: "uint64"
