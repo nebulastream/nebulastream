@@ -15,9 +15,7 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES::Compiler {
 
-Compiler::CompilerException::CompilerException(const std::string& message)
-    : RuntimeException(message, NES::collectAndPrintStacktrace()) {
-    NES_ERROR(message);
-}
+Compiler::CompilerException::CompilerException(const std::string& message, std::source_location location)
+    : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
 
 }// namespace NES::Compiler

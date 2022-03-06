@@ -124,15 +124,27 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
 void DefaultGeneratableOperatorProvider::lowerSink(const QueryPlanPtr&,
                                                    const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     // a sink operator should be in a pipeline on its own.
-    NES_ASSERT(operatorNode->getChildren().size(), "A sink node should have no children");
-    NES_ASSERT(operatorNode->getParents().size(), "A sink node should have no parents");
+    if (!operatorNode->getChildren().empty()) {
+        throw QueryCompilationException("A sink node should have no children but had "
+                                        + std::to_string(operatorNode->getChildren().size()));
+    }
+    if (!operatorNode->getParents().empty()) {
+        throw QueryCompilationException("A sink node should have no parents but had"
+                                        + std::to_string(operatorNode->getParents().size()));
+    }
 }
 
 void DefaultGeneratableOperatorProvider::lowerSource(const QueryPlanPtr&,
                                                      const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     // a source operator should be in a pipeline on its own.
-    NES_ASSERT(operatorNode->getChildren().size(), "A source operator should have no children");
-    NES_ASSERT(operatorNode->getParents().size(), "A source operator should have no parents");
+    if (!operatorNode->getChildren().empty()) {
+        throw QueryCompilationException("A source node should have no children but had "
+                                        + std::to_string(operatorNode->getChildren().size()));
+    }
+    if (!operatorNode->getParents().empty()) {
+        throw QueryCompilationException("A source node should have no parents but had"
+                                        + std::to_string(operatorNode->getParents().size()));
+    }
 }
 
 void DefaultGeneratableOperatorProvider::lowerScan(const QueryPlanPtr& queryPlan,

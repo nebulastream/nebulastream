@@ -56,11 +56,18 @@ Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
     });
 }
 
-Subprocess::~Subprocess() {
-    NES_INFO("Killing process->PID: " << pid);
-    ::kill(pid, SIGKILL);
-    stopped = true;
+void Subprocess::wait() {
     logThread.join();
+    stopped = true;
+}
+
+Subprocess::~Subprocess() {
+    if (!stopped) {
+        NES_INFO("Killing process->PID: " << pid);
+        ::kill(pid, SIGKILL);
+        stopped = true;
+        logThread.join();
+    }
 }
 
 void Subprocess::executeCommandInChildProcess(const std::vector<std::string>& argv) {

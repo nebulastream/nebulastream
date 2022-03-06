@@ -51,7 +51,10 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     NES_DEBUG("Generate code for pipeline " << pipeline->getPipelineId());
     auto context = PipelineContext::create();
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
-    NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
+    if (pipelineRoots.size() != 1) {
+        throw QueryCompilationException("A pipelined query plan should have at most one root pipeline. But was: "
+                                        + std::to_string(pipelineRoots.size()));
+    }
     auto rootOperator = pipelineRoots[0];
 
     // if this pipeline contains an external operator we skip compilation

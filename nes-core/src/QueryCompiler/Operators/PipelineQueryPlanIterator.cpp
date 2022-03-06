@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
@@ -59,7 +60,9 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
         for (int64_t i = children.size() - 1; i >= 0; i--) {
 
             auto child = children[i];
-            NES_ASSERT(!child->getPredecessors().empty(), "A child node should have a parent");
+            if (child->getPredecessors().empty()) {
+                throw QueryCompilation::QueryCompilationException("A child node should have a parent");
+            }
 
             // check if current node is last parent of child.
             if (child->getSuccessors().back() == current) {

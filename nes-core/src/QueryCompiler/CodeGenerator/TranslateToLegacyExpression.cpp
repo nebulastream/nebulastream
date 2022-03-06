@@ -44,6 +44,7 @@
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <utility>
 namespace NES::QueryCompilation {
 TranslateToLegacyExpressionPtr TranslateToLegacyExpression::create() { return std::make_shared<TranslateToLegacyExpression>(); }
@@ -75,9 +76,7 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(const Expre
         NES_DEBUG("TranslateToLegacyPhase: Translate FieldAccessExpressionNode: " << expression->toString());
         return Field(AttributeField::create(fieldName, stamp)).copy();
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression->toString());
-    NES_NOT_IMPLEMENTED();
-    ;
+    throw QueryCompilationException("No transformation implemented for this expression node: " + expression->toString());
 }
 
 LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpressions(const ExpressionNodePtr& expression) {
@@ -159,9 +158,8 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto legacyChild = transformExpression(sqrtExpressionNode->child());
         return UnaryPredicate(UnaryOperatorType::SQRT_OP, legacyChild).copy();
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
-                    << expression->toString());
-    NES_NOT_IMPLEMENTED();
+    throw QueryCompilationException("No transformation implemented for this arithmetical expression node: "
+                                    + expression->toString());
 }
 
 LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(const ExpressionNodePtr& expression) {
@@ -211,15 +209,12 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(con
     } else if (expression->instanceOf<NegateExpressionNode>()) {
         auto const negateExpressionNode = expression->as<NegateExpressionNode>();
         (void) negateExpressionNode;
-        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expressions not supported in "
-                        "legacy expressions: "
-                        << expression->toString());
-        NES_NOT_IMPLEMENTED();
+        throw QueryCompilationException("Unary expressions not supported in "
+                                        "legacy expressions: "
+                                        + expression->toString());
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this "
-                    "logical expression node: "
-                    << expression->toString());
-    NES_NOT_IMPLEMENTED();
-    ;
+    throw QueryCompilationException("No transformation implemented for this "
+                                    "logical expression node: "
+                                    + expression->toString());
 }
 }// namespace NES::QueryCompilation
