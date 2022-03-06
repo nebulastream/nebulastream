@@ -20,6 +20,7 @@
 #include <Operators/OperatorId.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/GatheringMode.hpp>
@@ -87,7 +88,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * 1.) check if bool running is false, if false return, if not stop source
      * 2.) stop thread by join
      */
-    [[nodiscard]] virtual bool stop(bool graceful);
+    [[nodiscard]] virtual bool stop(Runtime::QueryTerminationType graceful);
 
     /**
      * @brief running routine while source is active
@@ -224,7 +225,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const;
 
-
     [[nodiscard]] virtual bool fail();
 
   protected:
@@ -242,7 +242,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode::Value gatheringMode;
     SourceType type;
-    bool wasGracefullyStopped{true};
+    Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful};// protected by mutex
     std::atomic_bool running{false};
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
@@ -256,7 +256,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
 
   private:
-    mutable std::mutex startStopMutex;
+    mutable std::recursive_mutex startStopMutex;
     std::shared_ptr<std::thread> thread{nullptr};
     uint64_t maxSequenceNumber = 0;
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
@@ -280,7 +280,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @brief the KF associated with a source.
      * We use default values for initialization.
      */
-    std::unique_ptr<KalmanFilter> kFilter;
+    std::unique_ptr<KalmanFilter> kFilter;// TODO(Dimitrios) is this the right place to have it?
+
+    bool endOfStreamSent{false};// protected by startStopMutex
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

@@ -110,7 +110,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                         "Received EOS on data channel for consumer " << endOfStreamMessage.getChannelId().toString());
         if (partitionManager->unregisterSubpartitionConsumer(endOfStreamMessage.getChannelId().getNesPartition())) {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
-                ->onEndOfStream(endOfStreamMessage.isGraceful());
+                ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
             protocolListener->onEndOfStream(endOfStreamMessage);
         } else {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from "

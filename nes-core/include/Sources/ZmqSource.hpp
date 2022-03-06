@@ -80,6 +80,11 @@ class ZmqSource : public DataSource {
      */
     SourceType getType() const override;
 
+    bool stop(Runtime::QueryTerminationType graceful) override {
+        disconnect();
+        return DataSource::stop(graceful);
+    }
+
   private:
     /**
      * @brief default constructor required for boost serialization

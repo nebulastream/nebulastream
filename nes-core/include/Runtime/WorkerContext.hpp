@@ -106,10 +106,11 @@ class WorkerContext {
     void storeNetworkChannel(Network::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
-     * @brief removes a registered network channel
+     * @brief removes a registered network channel with a termination type
      * @param id of the operator that we want to store the output channel
+     * @param type the termination type
      */
-    bool releaseNetworkChannel(Network::OperatorId id);
+    bool releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType type);
 
     /**
      * @brief This stores a network channel for an operator
@@ -121,8 +122,9 @@ class WorkerContext {
     /**
      * @brief removes a registered network channel
      * @param id of the operator that we want to store the output channel
+     * @param terminationType the termination type
      */
-    bool releaseEventOnlyChannel(Network::OperatorId id);
+    bool releaseEventOnlyChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief retrieve a registered output channel
@@ -139,4 +141,4 @@ class WorkerContext {
     Network::EventOnlyNetworkChannel* getEventOnlyNetworkChannel(Network::OperatorId ownerId);
 };
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
+#endif// NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_

@@ -32,6 +32,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Execution::ExecutableQueryPlanStatus::Created),
       qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
+    // the +1 is the termination token for the query plan itself
     numOfTerminationTokens.store(1 + this->sources.size() + this->pipelines.size() + this->sinks.size());
 }
 

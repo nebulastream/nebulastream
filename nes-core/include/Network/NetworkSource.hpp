@@ -29,7 +29,6 @@ namespace NES::Network {
 class NetworkSource : public DataSource {
 
   public:
-    void onEndOfStream(bool isGraceful) override;
     NetworkSource(SchemaPtr schema,
                   Runtime::BufferManagerPtr bufferManager,
                   Runtime::QueryManagerPtr queryManager,
@@ -71,7 +70,7 @@ class NetworkSource : public DataSource {
      * It de-registers the source on the NetworkManager
      * @return true if deregistration on the network stack is successful
      */
-    bool stop(bool = false) final;
+    bool stop(Runtime::QueryTerminationType = Runtime::QueryTerminationType::Graceful) final;
 
     /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
@@ -92,6 +91,12 @@ class NetworkSource : public DataSource {
      * @param message the reconfiguration message
      */
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+
+    /**
+     * @brief
+     * @param terminationType
+     */
+    void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
 
   private:
     NetworkManagerPtr networkManager;

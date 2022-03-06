@@ -56,6 +56,9 @@ namespace Runtime {
 class ThreadPool;
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this atomic in c++20
 
+class AsyncTaskExecutor;
+using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
+
 /**
 * @brief the query manager is the central class to process queries.
 * It is source-driven. Each incoming buffer will add a task to the queue.
@@ -169,7 +172,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    [[nodiscard]] bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful = false);
+    [[nodiscard]] bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep,
+                                 Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
     * @brief method to fail a query
@@ -270,7 +274,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(DataSourcePtr source, bool graceful = true);
+    bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
     /**
      * @return true if thread pool is running
@@ -344,6 +348,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     bool addHardEndOfStream(DataSourcePtr source);
 
+    bool addFailureEndOfStream(DataSourcePtr source);
+
     /**
      * @brief Returns the next free task id
      * @return next task id
@@ -354,7 +360,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint64_t nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;
-    ThreadPoolPtr threadPool{nullptr};
 
     uint16_t numThreads;
     QueryMangerMode queryMangerMode;
@@ -365,9 +370,15 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::unordered_map<QuerySubPlanId, uint64_t> queryToTaskQueueIdMap;
     uint64_t currentTaskQueueId = 0;
 
+    /// worker threads running compute tasks
+    ThreadPoolPtr threadPool{nullptr};
+
+    /// worker thread for async maintenance task, e.g., fail queries
+    AsyncTaskExecutorPtr asyncTaskThread;
+
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
-    std::unordered_map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceToQEPMapping; // assume source sharing disabled
+    std::unordered_map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceToQEPMapping;// source sharing disabled
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
