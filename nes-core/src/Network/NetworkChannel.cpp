@@ -151,12 +151,13 @@ NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
                                std::string&& address,
                                Runtime::BufferManagerPtr bufferManager)
     : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {
-    NES_DEBUG("Initializing NetworkChannel " << channelId);
 }
 
-NetworkChannel::~NetworkChannel() { close(); }
+NetworkChannel::~NetworkChannel() {
+    NES_ASSERT2_FMT(this->isClosed, "Destroying non-closed NetworkChannel " << channelId);
+}
 
-void NetworkChannel::close() { inherited::close(canSendEvent && !canSendData); }
+void NetworkChannel::close(Runtime::QueryTerminationType terminationType) { inherited::close(canSendEvent && !canSendData, terminationType); }
 
 NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
                                          std::string&& socketAddr,
@@ -182,9 +183,11 @@ EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
     NES_DEBUG("Initializing EventOnlyNetworkChannel " << channelId);
 }
 
-EventOnlyNetworkChannel::~EventOnlyNetworkChannel() { close(); }
+EventOnlyNetworkChannel::~EventOnlyNetworkChannel() {
+    NES_ASSERT2_FMT(this->isClosed, "Event Channel not closed " << channelId);
+}
 
-void EventOnlyNetworkChannel::close() { inherited::close(canSendEvent && !canSendData); }
+void EventOnlyNetworkChannel::close(Runtime::QueryTerminationType terminationType) { inherited::close(canSendEvent && !canSendData, terminationType); }
 
 EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
                                                            std::string&& socketAddr,

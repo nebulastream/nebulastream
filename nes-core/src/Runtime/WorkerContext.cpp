@@ -61,11 +61,11 @@ void WorkerContext::storeNetworkChannel(Network::OperatorId id, Network::Network
     dataChannels[id] = std::move(channel);
 }
 
-bool WorkerContext::releaseNetworkChannel(Network::OperatorId id) {
+bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
-            channel->close();
+            channel->close(terminationType);
         }
         dataChannels.erase(it);
         return true;
@@ -78,11 +78,11 @@ void WorkerContext::storeEventOnlyChannel(Network::OperatorId id, Network::Event
     reverseEventChannels[id] = std::move(channel);
 }
 
-bool WorkerContext::releaseEventOnlyChannel(Network::OperatorId id) {
+bool WorkerContext::releaseEventOnlyChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = reverseEventChannels.find(id); it != reverseEventChannels.end()) {
         if (auto& channel = it->second; channel) {
-            channel->close();
+            channel->close(terminationType);
         }
         reverseEventChannels.erase(it);
         return true;

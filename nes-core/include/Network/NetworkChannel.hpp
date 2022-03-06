@@ -60,9 +60,9 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     NetworkChannel& operator=(const NetworkChannel&) = delete;
 
     /**
-     * @brief Closes the underlying network connection
+     * @brief Closes the underlying network connection with a termination type
      */
-    void close();
+    void close(Runtime::QueryTerminationType);
 
     /**
      * @brief Creates a network channel instance with the given parameters
@@ -115,9 +115,9 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
     EventOnlyNetworkChannel& operator=(const NetworkChannel&) = delete;
 
     /**
-     * @brief Closes the underlying network connection
+     * @brief Closes the underlying network connection with a termination type
      */
-    void close();
+    void close(Runtime::QueryTerminationType);
 
     /**
      * @brief Creates a networkf channel instance for event transmission with the given parameters

@@ -19,14 +19,16 @@
 
 namespace NES::Runtime {
 enum ReconfigurationType : uint8_t {
-    // use Initialize for reconfiguration tasks that initialize a reconfigurable instance
+    /// use Initialize for reconfiguration tasks that initialize a reconfigurable instance
     Initialize,
-    // use Destroy for reconfiguration tasks that cleans up a reconfigurable instance
+    /// use Destroy for reconfiguration tasks that cleans up a reconfigurable instance
     Destroy,
-    // use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
+    /// graceful stop of a query
     SoftEndOfStream,
-    // use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
+    /// forceful stop of a query without a failure
     HardEndOfStream,
+    /// forceful stop of a query with a failure
+    FailEndOfStream
 };
 }
 

@@ -54,7 +54,6 @@ LambdaSource::LambdaSource(
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
     numberOfTuplesToProduce = this->localBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
-    wasGracefullyStopped = true;
     this->sourceAffinity = sourceAffinity;
     this->taskQueueId = taskQueueId;
 }
@@ -80,9 +79,6 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
     NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
                                                                      << " outOrgID=" << buffer.getOriginId());
-    //    NES_ERROR("bufferContent before write=" << Util::prettyPrintTupleBuffer(buffer
-    //                                                                                        , schema) << '\n');
-
     if (buffer.getNumberOfTuples() == 0) {
         NES_ASSERT(false, "this should not happen");
         return std::nullopt;
@@ -91,8 +87,6 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 }
 
 std::string LambdaSource::toString() const { return "LambdaSource"; }
-
-bool LambdaSource::stop(bool) { return this->DataSource::stop(false); }
 
 SourceType LambdaSource::getType() const { return LAMBDA_SOURCE; }
 }// namespace NES

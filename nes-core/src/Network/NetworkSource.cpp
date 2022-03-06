@@ -96,9 +96,10 @@ bool NetworkSource::start() {
     return false;
 }
 
-bool NetworkSource::stop(bool) {
+bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     using namespace Runtime;
     bool expected = true;
+    NES_ASSERT2_FMT(type == Runtime::QueryTerminationType::HardStop, "NetworkSource::stop only supports HardStop :: partition " << nesPartition);
     if (running.compare_exchange_strong(expected, false)) {
         for (const auto& successor : executableSuccessors) {
             auto querySubPlanId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
@@ -122,6 +123,8 @@ bool NetworkSource::stop(bool) {
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSource: reconfigure() called " << nesPartition.toString());
     NES::DataSource::reconfigure(task, workerContext);
+    bool isTermination = false;
+    Runtime::QueryTerminationType terminationType;
     switch (task.getType()) {
         case Runtime::Initialize: {
             // we need to check again because between the invocations of
@@ -145,17 +148,30 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                            << Runtime::NesThread::getId());
             break;
         }
-        case Runtime::Destroy:
-        case Runtime::HardEndOfStream:
+        case Runtime::Destroy: {
+            // necessary as event channel are lazily created so in the case of an immediate stop
+            // they might not be established yet
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            isTermination = true;
+            break;
+        }
+        case Runtime::HardEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::HardStop;
+            isTermination = true;
+        }
         case Runtime::SoftEndOfStream: {
-            workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId());
-            NES_DEBUG("NetworkSource: reconfigure() released channel on " << nesPartition.toString() << " Thread "
-                                                                          << Runtime::NesThread::getId());
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            isTermination = true;
             break;
         }
         default: {
             break;
         }
+    }
+    if (isTermination) {
+        workerContext.releaseEventOnlyChannel(nesPartition.getOperatorId(), terminationType);
+        NES_DEBUG("NetworkSource: reconfigure() released channel on " << nesPartition.toString() << " Thread "
+                                                                      << Runtime::NesThread::getId());
     }
 }
 
@@ -185,11 +201,11 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
 void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
-void NetworkSource::onEndOfStream(bool isGraceful) {
+void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType) {
     // propagate EOS to the locally running QEPs that use the network source
-    NES_DEBUG("Going to inject eos for " << nesPartition << " isGraceful=" << (isGraceful ? "Yes" : "No"));
-    if (isGraceful) {
-        queryManager->addEndOfStream(shared_from_base<DataSource>(), isGraceful);
+    NES_DEBUG("Going to inject eos for " << nesPartition << " terminationType=" << terminationType);
+    if (Runtime::QueryTerminationType::Graceful == terminationType) {
+        queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Graceful);
     } else {
         NES_WARNING("Ignoring forceful EoS on " << nesPartition);
     }

@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
+#include <Runtime/QueryTerminationType.hpp>
 
 namespace NES {
 namespace Network {
@@ -148,10 +149,10 @@ class EndOfStreamMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::EndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, bool graceful = true)
-        : ExchangeMessage(channelId), channelType(channelType), graceful(graceful) {}
+    explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, Runtime::QueryTerminationType terminationType)
+        : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType) {}
 
-    [[nodiscard]] bool isGraceful() const { return graceful; }
+    [[nodiscard]] Runtime::QueryTerminationType getQueryTerminationType() const { return terminationType; }
 
     [[nodiscard]] bool isDataChannel() const { return channelType == ChannelType::DataChannel; }
 
@@ -159,7 +160,7 @@ class EndOfStreamMessage : public ExchangeMessage {
 
   private:
     ChannelType channelType;
-    bool graceful;
+    Runtime::QueryTerminationType terminationType;
 };
 
 /**

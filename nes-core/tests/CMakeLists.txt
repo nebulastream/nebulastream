@@ -522,6 +522,12 @@ add_executable(geographical-location-unit-tests "UnitTests/Common/GeographicalLo
 target_link_libraries(geographical-location-unit-tests nes-tests)
 add_test(NAME geographical-location-unit-tests COMMAND geographical-location-unit-tests)
 
+
+### Async Task Executor ###
+add_executable(async-task-executor-ut "UnitTests/Runtime/AsyncTaskExecutorTest.cpp")
+target_link_libraries(async-task-executor-ut nes-tests)
+add_test(NAME async-task-executor-ut COMMAND async-task-executor-ut)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

@@ -14,6 +14,7 @@
 add_source_files(nes-core
         apex_memmove.cpp
         NodeEngine.cpp
+        AsyncTaskExecutor.cpp
         QueryManager.cpp
         ReconfigurationMessage.cpp
         BufferStorage.cpp
@@ -32,11 +33,11 @@ add_source_files(nes-core
         MaterializedViewManager.cpp
         Allocator/NumaRegionMemoryAllocator.cpp
         Allocator/NesDefaultMemoryAllocator.cpp
-)
+        )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)
 add_subdirectory(detail)
 add_subdirectory(Profiler)
 if (UNIX AND NOT APPLE)
-#add_subdirectory(CoreDumper)
-endif()
+    #add_subdirectory(CoreDumper)
+endif ()

@@ -57,12 +57,6 @@ class LambdaSource : public GeneratorSource {
     * @return The string representation of the source
     */
     std::string toString() const override;
-    /**
-     * @brief method to stop the source.
-     * 1.) check if bool running is false, if false return, if not stop source
-     * 2.) stop thread by join
-     */
-    bool stop(bool graceful) override;
 
   protected:
     uint64_t numberOfTuplesToProduce;

@@ -80,6 +80,8 @@ std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartitio
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << querySubPlanId);
     inherited0::reconfigure(task, workerContext);
+    bool isTermination = false;
+    Runtime::QueryTerminationType terminationType;
     switch (task.getType()) {
         case Runtime::Initialize: {
             auto channel =
@@ -92,19 +94,27 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                       << task.getUserData<uint32_t>());
             break;
         }
-        case Runtime::HardEndOfStream:
+        case Runtime::HardEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::HardStop;
+            isTermination = true;
+            break;
+        }
         case Runtime::SoftEndOfStream: {
-            if (workerContext.decreaseObjectRefCnt(this) == 1) {
-                networkManager->unregisterSubpartitionProducer(nesPartition);
-                NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId()),
-                                "Cannot remove network channel " << nesPartition.toString());
-                NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
-                                                                            << Runtime::NesThread::getId());
-            }
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            isTermination = true;
             break;
         }
         default: {
             break;
+        }
+    }
+    if (isTermination) {
+        if (workerContext.decreaseObjectRefCnt(this) == 1) {
+            networkManager->unregisterSubpartitionProducer(nesPartition);
+            NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),
+                            "Cannot remove network channel " << nesPartition.toString());
+            NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
+                                                                        << Runtime::NesThread::getId());
         }
     }
 }
