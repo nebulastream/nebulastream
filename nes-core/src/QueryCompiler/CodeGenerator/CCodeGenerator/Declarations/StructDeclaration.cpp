@@ -14,6 +14,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
@@ -101,9 +102,8 @@ StructDeclaration::StructDeclaration(std::string type_name, std::string variable
 VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const {
     DeclarationPtr decl = getField(field_name);
     if (!decl) {
-        NES_ERROR("Error during Code Generation: Field '" << field_name << "' does not exist in struct '" << getTypeName()
-                                                          << "'");
-        NES_THROW_RUNTIME_ERROR("Error during Code Generation");
+        throw QueryCompilationException("Error during Code Generation: Field '" + field_name + "' does not exist in struct '"
+                                        + getTypeName() + "'");
     }
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 }

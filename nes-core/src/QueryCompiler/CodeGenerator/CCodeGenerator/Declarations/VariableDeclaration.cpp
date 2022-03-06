@@ -15,6 +15,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
@@ -59,7 +60,7 @@ VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
 VariableDeclaration
 VariableDeclaration::create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value) {
     if (!type) {
-        NES_ERROR("DataTypePtr type is nullptr!");
+        throw QueryCompilationException("DataTypePtr type is nullptr!");
     }
     return VariableDeclaration(type, identifier, std::move(value));
 }

@@ -21,9 +21,9 @@ namespace NES::Compiler {
  */
 class CompilerException : public Exceptions::RuntimeException {
   public:
-    explicit CompilerException(const std::string& message, const std::source_location location = std::source_location::current());
+    explicit CompilerException(const std::string& message, std::source_location location = std::source_location::current());
 };
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
+#endif  // NES_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_

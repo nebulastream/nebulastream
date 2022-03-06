@@ -21,7 +21,9 @@ namespace NES::Compiler {
 
 SharedLibrary::SharedLibrary(void* shareLib, std::string soAbsolutePath)
     : DynamicObject(), shareLib(shareLib), soAbsolutePath(soAbsolutePath) {
-    NES_ASSERT(shareLib != nullptr, "Shared lib is null");
+    if (!shareLib) {
+        throw CompilerException("The provided shared lib from path: " + soAbsolutePath + "is null");
+    }
 }
 
 SharedLibrary::~SharedLibrary() {
@@ -36,25 +38,22 @@ SharedLibraryPtr SharedLibrary::load(const std::string& absoluteFilePath) {
     auto* shareLib = dlopen(absoluteFilePath.c_str(), RTLD_NOW);
     auto* error = dlerror();
     if (error) {
-        NES_ERROR("Could not load shared library: " << absoluteFilePath << " Error:" << error);
         throw CompilerException("Could not load shared library: " + absoluteFilePath + " Error:" + error);
     }
     if (!shareLib) {
-        NES_ERROR("Could not load shared library: " << absoluteFilePath << "Error unknown!");
         throw CompilerException("Could not load shared library: " + absoluteFilePath);
     }
-
     return std::make_shared<SharedLibrary>(shareLib, absoluteFilePath);
 }
 void* SharedLibrary::getInvocableFunctionPtr(const std::string& mangeldSymbolName) {
+    if (mangeldSymbolName.empty()) {
+        throw CompilerException("The mangeldSymbolName is empty");
+    }
     auto* symbol = dlsym(shareLib, mangeldSymbolName.c_str());
     auto* error = dlerror();
-
     if (error) {
-        NES_ERROR("Could not load symbol: " << mangeldSymbolName << " Error:" << error);
         throw CompilerException("Could not load symbol: " + mangeldSymbolName + " Error:" + error);
     }
-
     return symbol;
 }
 

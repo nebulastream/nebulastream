@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BlockScopeStatement.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
@@ -59,8 +60,7 @@ uint64_t PipelineContext::getHandlerIndex(const Runtime::Execution::OperatorHand
             return i;
         }
     }
-    NES_FATAL_ERROR("Handler is not registered");
-    return 0;
+    throw QueryCompilationException("Operator handler is not registered");
 }
 
 bool PipelineContext::getTuplePassesFiltersIsDeclared() { return this->tuplePassesFiltersIsDeclared; }

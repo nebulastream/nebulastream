@@ -14,6 +14,7 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
@@ -42,9 +43,10 @@ CodeExpressionPtr BasicGeneratableType::getCode() const {
         case BasicPhysicalType::DOUBLE: return std::make_shared<CodeExpression>("double");
         case BasicPhysicalType::BOOLEAN: return std::make_shared<CodeExpression>("bool");
         case BasicPhysicalType::CHAR: return std::make_shared<CodeExpression>("char");
+        default:
+            throw QueryCompilation::QueryCompilationException("It was not possible to generate code for this type: "
+                                                              + type->toString());
     }
-    NES_THROW_RUNTIME_ERROR("BasicGeneratableType: it was not possible to generate code for this type: " + type->toString());
-    return nullptr;
 }
 
 CodeExpressionPtr BasicGeneratableType::getDeclarationCode(std::string identifier) const {

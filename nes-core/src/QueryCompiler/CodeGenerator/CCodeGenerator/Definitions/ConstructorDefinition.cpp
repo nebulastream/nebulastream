@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
@@ -54,8 +55,9 @@ DeclarationPtr ConstructorDefinition::getDeclaration() {
         }
     }
     function << ")";
-
-    NES_ASSERT(initializerStatements.size() == fieldNameInitializers.size(), "wrong ctor config");
+    if (initializerStatements.size() != fieldNameInitializers.size()) {
+        throw QueryCompilationException("wrong ctor config");
+    }
     if (initializerStatements.empty()) {
         function << " {";
     } else {

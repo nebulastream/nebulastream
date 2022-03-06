@@ -36,6 +36,7 @@ class Subprocess {
      */
     Subprocess(std::string cmd, std::vector<std::string> argv);
     ~Subprocess();
+    void wait();
 
     /**
      * Method to kill a process
