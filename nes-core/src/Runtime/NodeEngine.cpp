@@ -221,7 +221,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
                 case Execution::ExecutableQueryPlanStatus::Deployed:
                 case Execution::ExecutableQueryPlanStatus::Running: {
                     NES_DEBUG("Runtime: unregister of query " << querySubPlanId << " is not Stopped... stopping now");
-                    isStopped = queryManager->stopQuery(qep, false);
+                    isStopped = queryManager->stopQuery(qep, Runtime::QueryTerminationType::HardStop);
                     break;
                 }
                 default: {
@@ -246,9 +246,9 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
     return false;
 }
 
-bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
+bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType terminationType) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime:stopQuery for qep" << queryId);
+    NES_DEBUG("Runtime:stopQuery for qep" << queryId << " termination=" << terminationType);
     auto it = queryIdToQuerySubPlanIds.find(queryId);
     if (it != queryIdToQuerySubPlanIds.end()) {
         std::vector<QuerySubPlanId> querySubPlanIds = it->second;
@@ -258,7 +258,7 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->stopQuery(deployedQEPs[querySubPlanId], graceful)) {
+            if (queryManager->stopQuery(deployedQEPs[querySubPlanId], terminationType)) {
                 NES_DEBUG("Runtime: stop of QEP " << querySubPlanId << " succeeded");
             } else {
                 NES_ERROR("Runtime: stop of QEP " << querySubPlanId << " failed");

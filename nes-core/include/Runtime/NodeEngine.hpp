@@ -153,7 +153,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
-    [[nodiscard]] bool stopQuery(QueryId queryId, bool graceful = false);
+    [[nodiscard]] bool stopQuery(QueryId queryId, Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id

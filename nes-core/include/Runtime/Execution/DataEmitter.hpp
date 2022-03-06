@@ -14,7 +14,9 @@
 
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+
 #include <Runtime/Events.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES {
@@ -35,11 +37,15 @@ class DataEmitter : public Runtime::RuntimeEventListener {
 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 
-    virtual void onEndOfStream(bool isGraceful) {
-        ((void) isGraceful);
-    }
+    /**
+     * @brief
+     */
+    virtual void onEndOfStream(Runtime::QueryTerminationType) {}
 
+    /**
+     * @brief
+     */
     virtual void onEvent(Runtime::BaseEvent&) override {}
 };
 }// namespace NES
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
