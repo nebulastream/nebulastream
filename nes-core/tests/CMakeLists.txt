@@ -75,7 +75,7 @@ target_link_libraries(code-generation-tests nes-tests)
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 ### Translate Physical Operator Tests ###
-add_executable(translate-physical-operator-tests "UnitTests/QueryCompiler/TranslateToPhysicalOperatorPhaseTest.cpp")
+add_executable(translate-physical-operator-tests "UnitTests/QueryCompiler/LowerLogicalToPhysicalOperatorsTest.cpp")
 target_link_libraries(translate-physical-operator-tests nes-tests)
 add_test(NAME translate-physical-operator-tests COMMAND translate-physical-operator-tests)
 

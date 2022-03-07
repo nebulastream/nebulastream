@@ -221,6 +221,11 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         for (const auto& originId : binaryOperator->getRightInputOriginIds()) {
             serializedOperator.add_rightoriginids(originId);
         }
+    } else if (operatorNode->isExchangeOperator()) {
+        auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
+        for (const auto& originId : exchangeOperator->getOutputOriginIds()) {
+            serializedOperator.add_originids(originId);
+        }
     } else {
         auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
         for (const auto& originId : unaryOperator->getInputOriginIds()) {
@@ -369,6 +374,13 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             rightOriginIds.push_back(originId);
         }
         binaryOperator->setRightInputOriginIds(rightOriginIds);
+    } else if (operatorNode->isExchangeOperator()) {
+        auto exchangeOperator = operatorNode->as<ExchangeOperatorNode>();
+        std::vector<uint64_t> originIds;
+        for (const auto& originId : serializedOperator.originids()) {
+            originIds.push_back(originId);
+        }
+        exchangeOperator->setInputOriginIds(originIds);
     } else {
         auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
         std::vector<uint64_t> originIds;

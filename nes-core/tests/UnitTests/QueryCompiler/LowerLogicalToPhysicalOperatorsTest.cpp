@@ -66,7 +66,7 @@ using namespace std;
 
 namespace NES {
 
-class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
+class LowerLogicalToPhysicalOperatorsTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LogLevel::LOG_DEBUG);
@@ -165,7 +165,7 @@ class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
  * --- Physical Sink 1 --- Physical Filter -- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -202,7 +202,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterQuery) {
  * --- Physical Sink 2
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexBroadcastQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexBroadcastQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     auto broadcastOperator = LogicalOperatorFactory::createBroadcastOperator();
     queryPlan->appendOperatorAsNewRoot(broadcastOperator);
@@ -245,7 +245,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexBroadcastQuery)
  * --- Physical Sink 2
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexFilterQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateDemultiplexFilterQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -287,7 +287,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexFilterQuery) {
  *                                                                        --- Physical Source 2
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterMultiplexQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterMultiplexQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(unionOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -328,7 +328,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterMultiplexQuery) {
  *                                                                            --- Physical Source 2
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterImplicitMultiplexQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateFilterImplicitMultiplexQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -368,7 +368,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterImplicitMultiplexQue
  *                                             --- Physical Join Build --- Physical Source 2
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSimpleJoinQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleJoinQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
 
     auto leftSchema = Schema::create()->addField("left$f1", DataTypeFactory::createInt64());
@@ -421,7 +421,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSimpleJoinQuery) {
  *                                                                                                      \
  *                                                                                                       --- Physical Source 2
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateJoinQueryWithMultiplex) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateJoinQueryWithMultiplex) {
     auto queryPlan = QueryPlan::create(sourceOp1);
 
     auto leftSchema = Schema::create()->addField("left$f1", DataTypeFactory::createInt64());
@@ -484,7 +484,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateJoinQueryWithMultiplex) {
  *                                                                                                      \
  *                                                                                                       --- Physical Source 4
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateJoinQueryWithMultiplex4Edges) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateJoinQueryWithMultiplex4Edges) {
     auto queryPlan = QueryPlan::create(sourceOp1);
 
     auto leftSchema = Schema::create()->addField("left$f1", DataTypeFactory::createInt64());
@@ -542,7 +542,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateJoinQueryWithMultiplex4Edg
  * --- Physical Sink 1 --- Physical Watermark Assigner -- Physical Window Pre Aggregation Operator --- Physical Window Sink --- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateWindowQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateWindowQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(watermarkAssigner1);
     queryPlan->appendOperatorAsNewRoot(centralWindowOperator);
@@ -578,7 +578,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateWindowQuery) {
  * --- Physical Sink 1 --- Physical Slice Pre Aggregation Operator --- Physical Slice Sink --- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceCreationQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSliceCreationQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(watermarkAssigner1);
     queryPlan->appendOperatorAsNewRoot(sliceCreationOperator);
@@ -614,7 +614,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceCreationQuery) {
  * --- Physical Sink 1 --- Physical Slice Merging Operator --- Physical Slice Sink --- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceMergingQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSliceMergingQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(sliceMerging);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -647,7 +647,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceMergingQuery) {
  * --- Physical Sink 1 --- Physical Map Operator --- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateMapQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateMapQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(mapOp);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -678,7 +678,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateMapQuery) {
  * --- Physical Sink 1 --- Physical Project Operator --- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateProjectQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateProjectQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(projectPp);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -710,7 +710,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateProjectQuery) {
  * --- Physical Sink 1 --- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateTwoSourceQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateTwoSourceQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
     sinkOp1->addChild(sourceOp2);
@@ -743,7 +743,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateTwoSourceQuery) {
  * --- Physical Sink 1 --- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSinkSourceQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSinkSourceQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
@@ -771,7 +771,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSinkSourceQuery) {
  * --- Physical Sink 1 --- Physical CEPIteration -- Physical Source 1
  *
  */
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateCEPiteration) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateCEPiteration) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(iterationCEPOp);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);

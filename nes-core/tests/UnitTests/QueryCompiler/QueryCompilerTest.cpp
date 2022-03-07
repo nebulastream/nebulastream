@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
@@ -237,7 +238,8 @@ TEST_F(QueryCompilerTest, windowQuery) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
-
+    auto inferOriginPhase = Optimizer::OriginIdInferenceRule::create();
+    queryPlan = inferOriginPhase->apply(queryPlan);
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
@@ -288,6 +290,8 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
+    auto inferOriginPhase = Optimizer::OriginIdInferenceRule::create();
+    queryPlan = inferOriginPhase->apply(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();

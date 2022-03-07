@@ -46,6 +46,7 @@
 #include <utility>
 
 #include "../../util/TestQueryCompiler.hpp"
+#include "Optimizer/QueryRewrite/OriginIdInferenceRule.hpp"
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 
@@ -592,6 +593,8 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
         Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration());
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto originIdInferenceRule = Optimizer::OriginIdInferenceRule::create();
+    queryPlan = originIdInferenceRule->apply(queryPlan);
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
