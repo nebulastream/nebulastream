@@ -32,20 +32,18 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId()
                                                                           << " plan=" << queryPlan->toString());
-    bool success = 0;
-    try {
-        success = nodeEngine->registerQueryInNodeEngine(queryPlan);
-    } catch (std::exception& error) {
-        NES_ERROR("Register query crashed: " << error.what());
-        success = false;
-    }
-    if (success) {
+
+    auto success = nodeEngine->registerQuery(queryPlan);
+
+    if (success.isSuccessful()) {
         NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
     NES_ERROR("WorkerRPCServer::RegisterQuery: failed");
     reply->set_success(false);
+    reply->mutable_error()->set_message(success.getMessage());
+    reply->mutable_error()->set_stacktrace(success.getStacktrace());
     return Status::CANCELLED;
 }
 

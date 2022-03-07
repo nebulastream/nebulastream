@@ -600,7 +600,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced

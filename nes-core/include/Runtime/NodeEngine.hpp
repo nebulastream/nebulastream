@@ -16,15 +16,15 @@
 #define NES_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
 #include <Common/ForwardDeclaration.hpp>
-#include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/BufferStorage.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Exceptions/Status.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <pthread.h>
@@ -60,12 +60,30 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     using inherited1 = virtual_enable_shared_from_this<NodeEngine>;
     using inherited2 = ErrorListener;
 
-    friend class NodeEngineBuilder;
-
   public:
     enum NodeEngineQueryStatus { started, stopped, registered };
 
-    virtual ~NodeEngine() override;
+    /**
+     * @brief Create a node engine and gather node information
+     * and initialize QueryManager, BufferManager and ThreadPool
+     */
+    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+                        HardwareManagerPtr&&,
+                        std::vector<BufferManagerPtr>&&,
+                        QueryManagerPtr&&,
+                        BufferStoragePtr&&,
+                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+                        Network::PartitionManagerPtr&&,
+                        QueryCompilation::QueryCompilerPtr&&,
+                        StateManagerPtr&&,
+                        std::weak_ptr<NesWorker>&&,
+                        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
+                        uint64_t nodeEngineId,
+                        uint64_t numberOfBuffersInGlobalBufferManager,
+                        uint64_t numberOfBuffersInSourceLocalBufferPool,
+                        uint64_t numberOfBuffersPerWorker);
+
+    ~NodeEngine() override;
 
     NodeEngine() = delete;
     NodeEngine(const NodeEngine&) = delete;
@@ -93,20 +111,19 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[nodiscard]] bool undeployQuery(QueryId queryId);
 
     /**
+     * @brief Registers a logical query in the NodeEngine and prepares it for execution.
+     * This step involves the translation of logical to physical operators and the final code generation.
+     * @param queryPlan the query plan consisting of logical operators.
+     * @return status, that contains an error if the registration fails.
+     */
+    Exceptions::Status registerQuery(const QueryPlanPtr& queryPlan) noexcept;
+
+    /**
      * @brief registers a query
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
-
-    /**
-     * @brief registers a query
-     * @param queryId: id of the query sub plan to be registered
-     * @param queryExecutionId: query execution plan id
-     * @param operatorTree: query sub plan to register
-     * @return true if succeeded, else false
-     */
-    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
+    void registerExecutableQuery(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
      * @brief ungregisters a query
@@ -129,8 +146,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
-    [[nodiscard]] bool stopQuery(QueryId queryId,
-                                 Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
+    [[nodiscard]] bool stopQuery(QueryId queryId, Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id
@@ -149,11 +165,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink to reconfigure.
      * @return bool indicating success
      */
-    bool updateNetworkSink(uint64_t newNodeId,
-                           const std::string& newHostname,
-                           uint32_t newPort,
-                           QuerySubPlanId querySubPlanId,
-                           uint64_t uniqueNetworkSinkDescriptorId);
+    bool updateNetworkSink(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort, QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief release all resource of the node engine
@@ -198,10 +210,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::NetworkManagerPtr getNetworkManager();
 
     /**
-     * @brief getter of query status listener
-     * @return return the query status listener
+     * @brief getter of nes worker
+     * @return NesWorker
      */
-    AbstractQueryStatusListenerPtr getQueryStatusListener();
+    std::weak_ptr<NesWorker> getNesWorker();
 
     /**
      * @return return the status of a query
@@ -285,34 +297,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(uint64_t querySubPlanId) const;
 
-    /**
-     * @brief finds sub query ids for a given query id
-     * @param queryId query id
-     * @return vector of subQueryIds
-     */
-    std::vector<QuerySubPlanId> getSubQueryIds(uint64_t queryId);
-
-  public:
-    /**
-     * @brief Create a node engine and gather node information
-     * and initialize QueryManager, BufferManager and ThreadPool
-     */
-    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
-                        HardwareManagerPtr&&,
-                        std::vector<BufferManagerPtr>&&,
-                        QueryManagerPtr&&,
-                        BufferStoragePtr&&,
-                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
-                        Network::PartitionManagerPtr&&,
-                        QueryCompilation::QueryCompilerPtr&&,
-                        StateManagerPtr&&,
-                        std::weak_ptr<AbstractQueryStatusListener>&&,
-                        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
-                        uint64_t nodeEngineId,
-                        uint64_t numberOfBuffersInGlobalBufferManager,
-                        uint64_t numberOfBuffersInSourceLocalBufferPool,
-                        uint64_t numberOfBuffersPerWorker);
-
   private:
     std::vector<PhysicalSourcePtr> physicalSources;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
@@ -324,7 +308,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
-    AbstractQueryStatusListenerPtr nesWorker;
+    std::weak_ptr<NesWorker> nesWorker;
     Network::NetworkManagerPtr networkManager;
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::atomic<bool> isRunning{};
@@ -339,4 +323,4 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 }// namespace Runtime
 }// namespace NES
-#endif// NES_INCLUDE_RUNTIME_NODEENGINE_HPP_
+#endif  // NES_INCLUDE_RUNTIME_NODEENGINE_HPP_

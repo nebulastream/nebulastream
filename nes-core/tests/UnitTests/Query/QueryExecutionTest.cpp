@@ -24,47 +24,42 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
-#ifdef PYTHON_UDF_ENABLED
-#include "Python.h"
-#endif
+
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
+class QueryExecutionTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogServiceTest test class.");
+        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -79,20 +74,13 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
                          ->addField("test$value", BasicType::INT64);
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->physicalSources.add(sourceConf);
-
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
-                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                         .build();
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
         // enable distributed window optimization
         auto optimizerConfiguration = Configurations::OptimizerConfiguration();
         optimizerConfiguration.performDistributedWindowOptimization = true;
         optimizerConfiguration.distributedWindowChildThreshold = 2;
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
         distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-        originIdInferenceRule = Optimizer::OriginIdInferenceRule::create();
     }
 
     void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
@@ -105,12 +93,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
             plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
         });
-
-        auto task =
-            Runtime::ReconfigurationMessage(plan->getQueryId(), plan->getQuerySubPlanId(), NES::Runtime::SoftEndOfStream, plan);
-        plan->postReconfigurationCallback(task);
-
-        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
+        ASSERT_TRUE(plan->stop());
     }
 
     /* Will be called before a test is executed. */
@@ -122,25 +105,10 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
-    Runtime::Execution::ExecutableQueryPlanPtr prepareExecutableQueryPlan(
-        QueryPlanPtr queryPlan,
-        QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
-        queryPlan = typeInferencePhase->execute(queryPlan);
-        queryPlan = distributeWindowRule->apply(queryPlan);
-        queryPlan = originIdInferenceRule->apply(queryPlan);
-        queryPlan = typeInferencePhase->execute(queryPlan);
-        auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
-        auto queryCompiler = TestUtils::createTestQueryCompiler(options);
-        auto result = queryCompiler->compileQuery(request);
-        return result->getExecutableQueryPlan();
-    }
-
     SchemaPtr testSchema;
     SchemaPtr windowSchema;
     Runtime::NodeEnginePtr nodeEngine;
     Optimizer::DistributeWindowRulePtr distributeWindowRule;
-    Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::OriginIdInferenceRulePtr originIdInferenceRule;
 };
 
 /**
@@ -170,7 +138,6 @@ class WindowSource : public NES::DefaultSource {
                         numbersOfBufferToProduce,
                         frequency,
                         1,
-                        0,
                         12,
                         std::move(successors)),
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
@@ -291,7 +258,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -365,6 +331,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
                 }
 
+
             } else {
                 FAIL();
             }
@@ -393,7 +360,6 @@ TEST_F(QueryExecutionTest, projectionQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -403,6 +369,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
+
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -460,7 +427,6 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -541,10 +507,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
         auto resultBuffer = testSink->get(0);
 
-        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(outputSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_DEBUG("QueryExecutionTest: buffer=" << buffer);
-        EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(outputSchema));
+        EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, outputSchema));
     }
     cleanUpPlan(plan);
     testSink->cleanupBuffers();
@@ -602,9 +565,16 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
 
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -662,9 +632,17 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -673,10 +651,8 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // get result buffer, which should contain two results.
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
-        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_DEBUG("QueryExecutionTest: buffer=" << dynamicTupleBuffer);
 
+        NES_DEBUG("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
         //TODO 1 Tuple im result buffer in 312 2 results?
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
@@ -748,9 +724,16 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(plan->getQueryId()));
 
     // wait till all buffers have been produced
@@ -760,11 +743,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
     {
         auto resultBuffer = testSink->get(0);
-
-        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_DEBUG("QueryExecutionTest: buffer=" << dynamicTupleBuffer);
-
+        NES_DEBUG("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
         //TODO 1 Tuple im result buffer in 312 2 results?
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
         auto resultLayout =
@@ -831,8 +810,16 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    //    std::cout << " plan=" << queryPlan->toString() << std::endl;
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -844,16 +831,14 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
 
         NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
-        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBuffer);
+        NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
         std::string expectedContent = "+----------------------------------------------------+\n"
                                       "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                       "+----------------------------------------------------+\n"
                                       "|0|10|1|10|\n"
                                       "|5|15|1|10|\n"
                                       "+----------------------------------------------------+";
-        EXPECT_EQ(expectedContent, dynamicTupleBuffer.toString(windowResultSchema));
+        EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     }
     testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
@@ -898,8 +883,16 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    std::cout << " plan=" << queryPlan->toString() << std::endl;
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -909,29 +902,25 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
 
     {
         auto resultBuffer = testSink->get(0);
-        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
         NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBufferActual);
+        NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
         std::string expectedContent = "+----------------------------------------------------+\n"
                                       "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                       "+----------------------------------------------------+\n"
                                       "|0|15|1|10|\n"
                                       "+----------------------------------------------------+";
-        EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(windowResultSchema));
+        EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
 
         auto resultBuffer2 = testSink->get(1);
-        auto rowLayoutActual2 = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBufferActual2 = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual2, resultBuffer2);
         NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer2.getNumberOfTuples() << " tuples.");
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBufferActual2);
+        NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
         std::string expectedContent2 = "+----------------------------------------------------+\n"
                                        "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                        "+----------------------------------------------------+\n"
                                        "|5|20|1|20|\n"
                                        "|10|25|1|10|\n"
                                        "+----------------------------------------------------+";
-        EXPECT_EQ(expectedContent2, dynamicTupleBufferActual2.toString(windowResultSchema));
+        EXPECT_EQ(expectedContent2, Util::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
     }
 
     testSink->cleanupBuffers();
@@ -980,8 +969,16 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-    auto plan = prepareExecutableQueryPlan(query.getQueryPlan());
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    std::cout << " plan=" << queryPlan->toString() << std::endl;
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -994,16 +991,14 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 
         NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2UL);
-        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, resultBuffer);
-        NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBufferActual);
+        NES_INFO("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
         std::string expectedContent = "+----------------------------------------------------+\n"
                                       "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                       "+----------------------------------------------------+\n"
                                       "|2|6|1|10|\n"
                                       "|4|8|1|10|\n"
                                       "+----------------------------------------------------+";
-        EXPECT_EQ(expectedContent, dynamicTupleBufferActual.toString(windowResultSchema));
+        EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     }
     testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
@@ -1040,7 +1035,8 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine);
 
-    auto plan = prepareExecutableQueryPlan(mergedQuery.getQueryPlan());
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
     // auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
@@ -1090,12 +1086,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-/**
- * The ExternalOperatorQuery test and PythonUdfPipelineStage class
- * invoke the Python interpreter and will fail if Python UDF are not enabled
- */
-#ifdef PYTHON_UDF_ENABLED
-class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
+class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
   public:
     struct InputRecord {
         int64_t test$id;
@@ -1106,64 +1097,9 @@ class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStag
                             Runtime::Execution::PipelineExecutionContext& ctx,
                             Runtime::WorkerContext& wc) override {
         auto record = buffer.getBuffer<InputRecord>();
-
-        // Access Python script located in nes-core/tests/test_data
-        const char pyUdfName[] = "PythonUdf";
-        const char pyUdfLocation[] = "test_data/";
-        const char pyFuncName[] = "add42";
-        PyObject *pyName, *pyModule, *pyFunc, *pyArgs, *pyValue, *pyLocation;
-
-        Py_Initialize();
-        pyLocation = PyUnicode_FromString(pyUdfLocation);
-        PyList_Insert(PySys_GetObject("path"), 0, PyUnicode_FromString(pyUdfLocation));
-        pyName = PyUnicode_FromString(pyUdfName);
-        pyModule = PyImport_Import(pyName);
-        // When a PyObject is no longer needed, we need to decrease the reference counter
-        // so that the Python garbage collector knows when to free an object.
-        // Initializing a PyObject sets the reference counter to 1, so no Py_INCREF() is needed.
-        Py_DECREF(pyName);
-        Py_DECREF(pyLocation);
-        if (pyModule != nullptr) {
-            pyFunc = PyObject_GetAttrString(pyModule, pyFuncName);
-            if (pyFunc && PyCallable_Check(pyFunc)) {
-                // Iterate over tuples and add 42 to test$value via Python Udf
-                for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-                    pyArgs = PyTuple_New(1);
-                    pyValue = PyLong_FromLong(record[i].test$value);
-                    if (!pyValue) {
-                        Py_Finalize();// Frees all memory allocated
-                        NES_ERROR("Unable to convert value");
-                        return ExecutionResult::Error;
-                    }
-                    PyTuple_SetItem(pyArgs, 0, pyValue);
-                    // The python function call happens here
-                    pyValue = PyObject_CallObject(pyFunc, pyArgs);
-                    Py_DECREF(pyArgs);
-                    if (pyValue != nullptr) {
-                        record[i].test$value = PyLong_AsLong(pyValue);
-                        Py_DECREF(pyValue);
-                    } else {
-                        Py_Finalize();
-                        NES_ERROR("Function call failed");
-                        return ExecutionResult::Error;
-                    }
-                }
-            } else {
-                if (PyErr_Occurred()) {
-                    PyErr_Print();
-                }
-                Py_Finalize();
-                NES_ERROR("Cannot find function " << pyFuncName);
-                return ExecutionResult::Error;
-            }
-        } else {
-            PyErr_Print();
-            Py_Finalize();
-            NES_ERROR("Failed to load " << pyUdfName);
-            return ExecutionResult::Error;
-        }
-        if (Py_FinalizeEx() < 0) {
-            return ExecutionResult::Error;
+        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
+            record[i].test$value = record[i].test$value + 42;
+            // call into python
         }
         ctx.emitBuffer(buffer, wc);
         return ExecutionResult::Ok;
@@ -1183,7 +1119,6 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0,
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -1200,7 +1135,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
 
-    auto customPipelineStage = std::make_shared<PythonUdfPipelineStage>();
+    auto customPipelineStage = std::make_shared<CustomPipelineStageOne>();
     auto externalOperator =
         NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
@@ -1245,4 +1180,3 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
     testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
-#endif
