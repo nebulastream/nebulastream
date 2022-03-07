@@ -2,18 +2,33 @@ FROM alpine:3.15
 
 RUN apk add --no-cache --no-progress -q cmake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community \
 && apk add --no-cache --no-progress -q \
+    gcc \
     g++ \
-    gcc-objc \
-    libstdc++6 \
-    libgcc \
-    libc6-compat \
-    musl \
-    musl-dev \
-    libnuma-dev \
+    make \
+    libdwarf \
+    libdwarf-dev \
     binutils \
     binutils-dev \
     libunwind-dev \
-    libdw-dev \
-    libdwarf \
-    libdwarf-dev \
-    elfutils-dev
+    libgcc \
+    gcc-objc \
+    musl \
+    musl-dev \
+    libstdc++ \
+    elfutils-dev \
+    openssl-dev \
+    clang-extra-tools \
+    libexecinfo-dev \
+    numactl-dev \
+    numactl-tools \
+    mbedtls-dev \
+    git \
+    wget \
+    python3 \
+    py3-pip \
+    libsodium-dev \
+    tar \
+    p7zip \
+    libbsd-dev \
+    doxygen \
+    graphviz
