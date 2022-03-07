@@ -1,4 +1,4 @@
-FROM nebulastream/nes-dev-image:alpine AS buildimg
+FROM nebulastream/nes-build-image:alpine AS buildimg
 
 COPY ./ /nebulastream
 
@@ -6,4 +6,4 @@ RUN mkdir -p /nebulastream/build && \
     cd /nebulastream/build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
     make version && make -j4 && cpack && mv *.deb /nes.deb && \
-    rm -rf /nebulastream/build/nes-dependencies-v14-x64-linux-nes.7z
+    rm -rf /nebulastream/build/nes-dependencies-v15-x64-linux-nes.7z
