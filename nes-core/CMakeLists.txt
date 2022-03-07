@@ -76,7 +76,7 @@ endforeach ()
 
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
-#TODO select the headers to copy more fine-grained
+# Select fine-grained headers
 register_public_headers(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
 register_public_headers(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/DataTypes Common/DataTypes)
 register_public_headers(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Windowing Windowing)
