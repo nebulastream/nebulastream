@@ -123,8 +123,10 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
     return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, querySubPlanId, queryId, out);
 }
 
-DataSinkPtr
-createNullOutputSink(QuerySubPlanId querySubPlanId, const Runtime::NodeEnginePtr& nodeEngine, uint32_t activeProducers) {
+DataSinkPtr createNullOutputSink(QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 const Runtime::NodeEnginePtr& nodeEngine,
+                                 uint32_t activeProducers) {
     return std::make_shared<NullOutputSink>(nodeEngine, activeProducers, queryId, querySubPlanId);
 }
 

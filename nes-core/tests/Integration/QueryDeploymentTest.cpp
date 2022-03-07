@@ -1341,7 +1341,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
 
     workerConfig1->sourcePinList = "0,1";
     workerConfig1->numWorkerThreads = 2;
-    workerConfig1->queryManagerMode = Runtime::QueryManager::QueryMangerMode::Static;
+    workerConfig1->queryManagerMode = Runtime::QueryExecutionMode::Dynamic;
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

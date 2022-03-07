@@ -19,7 +19,7 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryExecutionMode.hpp>
 #include <Configurations/Worker/GeographicalLocationFactory.hpp>
 #include <map>
 #include <string>
@@ -190,10 +190,10 @@ class WorkerConfiguration : public BaseConfiguration {
      *      - Dynamic: only one queue overall
      *      - Static: use queue per query and a specified number of threads per queue
      */
-    EnumOption<Runtime::QueryManager::QueryMangerMode> queryManagerMode = {QUERY_MANAGER_MODE,
-                                                                           Runtime::QueryManager::QueryMangerMode::Dynamic,
-                                                                   "Which mode the query manager is running in. (Dynamic, Static, NumaAware, Invalid)"};
-
+    EnumOption<Runtime::QueryExecutionMode> queryManagerMode = {
+        QUERY_MANAGER_MODE,
+        Runtime::QueryExecutionMode::Dynamic,
+        "Which mode the query manager is running in. (Dynamic, Static, NumaAware, Invalid)"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
