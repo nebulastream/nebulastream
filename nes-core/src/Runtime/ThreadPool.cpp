@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Runtime/QueryManager.hpp"
+#include <Exceptions/TaskExecutionException.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include "Runtime/QueryManager.hpp"
 #include <Runtime/Task.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -27,7 +28,6 @@
 #include <string>
 #include <thread>
 #include <utility>
-#include <Exceptions/TaskExecutionException.hpp>
 
 #ifdef __linux__
 #include <Runtime/HardwareManager.hpp>
@@ -46,11 +46,10 @@ ThreadPool::ThreadPool(uint64_t nodeId,
                        std::vector<BufferManagerPtr> bufferManagers,
                        uint64_t numberOfBuffersPerWorker,
                        HardwareManagerPtr hardwareManager,
-                       std::vector<uint64_t> workerPinningPositionList,
-                       std::vector<uint64_t> threadToQueueMapping)
+                       std::vector<uint64_t> workerPinningPositionList)
     : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), workerPinningPositionList(workerPinningPositionList),
-      threadToQueueMapping(threadToQueueMapping), hardwareManager(hardwareManager) {}
+      hardwareManager(hardwareManager) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -100,91 +99,89 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     NES_DEBUG("Threadpool: end runningRoutine");
 }
 
-        bool ThreadPool::start() {
-            auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
-            std::unique_lock lock(reconfigLock);
-            if (running) {
-                NES_DEBUG("Threadpool:start already running, return false");
-                return false;
-            }
-            running = true;
+bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
+    auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
+    std::unique_lock lock(reconfigLock);
+    if (running) {
+        NES_DEBUG("Threadpool:start already running, return false");
+        return false;
+    }
+    running = true;
 
-            /* spawn threads */
-            NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
-            for (uint64_t i = 0; i < numThreads; ++i) {
-                threads.emplace_back([this, i, barrier]() {
-                    setThreadName("Wrk-%d-%d", nodeId, i);
-                    BufferManagerPtr localBufferManager;
-                    uint64_t queueIdx = threadToQueueMapping[i];
+    /* spawn threads */
+    NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
+    for (uint64_t i = 0; i < numThreads; ++i) {
+        threads.emplace_back([this, i, barrier, &threadToQueueMapping]() {
+            setThreadName("Wrk-%d-%d", nodeId, i);
+            BufferManagerPtr localBufferManager;
+            uint64_t queueIdx = threadToQueueMapping.size() ? threadToQueueMapping[i] : 0;
 #if defined(__linux__)
-                    if (workerPinningPositionList.size() != 0) {
-                        NES_ASSERT(numThreads <= workerPinningPositionList.size(),
-                                   "Not enough worker positions for pinning are provided");
-                        uint64_t
-                            maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
-                        NES_ASSERT(maxPosition < std::thread::hardware_concurrency(), "pinning position thread is out of cpu range maxPosition=" << maxPosition);
-                        //pin core
-                        cpu_set_t cpuset;
-                        CPU_ZERO(&cpuset);
-                        CPU_SET(workerPinningPositionList[i], &cpuset);
-                        int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-                        if (rc != 0) {
-                            NES_ERROR("Error calling pthread_setaffinity_np: " << rc);
-                        } else {
-                            NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
-                        }
-                    }
-#endif
-                    localBufferManager = bufferManagers[queueIdx];
-
-                    barrier->wait();
-                    NES_ASSERT(localBufferManager != NULL, "localBufferManager is null");
-#ifdef ENABLE_PAPI_PROFILER
-                    auto path = std::filesystem::path("worker_" + std::to_string(NesThread::getId()) + ".csv");
-                    auto profiler = std::make_shared<Profiler::PapiCpuProfiler>(Profiler::PapiCpuProfiler::Presets::CachePresets,
-                                                                                std::ofstream(path, std::ofstream::out),
-                                                                                NesThread::getId(),
-                                                                                NesThread::getId());
-                    queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
-#endif
-                    // TODO (2310) properly initialize the profiler with a file, thread, and core id
-
-                    runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker, queueIdx));
-
-                });
-            }
-            barrier->wait();
-            NES_DEBUG("Threadpool: start return from start");
-            return true;
-        }
-
-        bool ThreadPool::stop() {
-            std::unique_lock lock(reconfigLock);
-            NES_DEBUG(
-                "ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads
-                                                      << " threads");
-            auto expected = true;
-            if (!running.compare_exchange_strong(expected, false)) {
-                return false;
-            }
-            /* wake up all threads in the query manager,
- * so they notice the change in the run variable */
-            NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
-            queryManager->poisonWorkers();
-            /* join all threads if possible */
-            for (auto& thread: threads) {
-                if (thread.joinable()) {
-                    thread.join();
+            if (workerPinningPositionList.size() != 0) {
+                NES_ASSERT(numThreads <= workerPinningPositionList.size(),
+                           "Not enough worker positions for pinning are provided");
+                uint64_t maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
+                NES_ASSERT(maxPosition < std::thread::hardware_concurrency(),
+                           "pinning position thread is out of cpu range maxPosition=" << maxPosition);
+                //pin core
+                cpu_set_t cpuset;
+                CPU_ZERO(&cpuset);
+                CPU_SET(workerPinningPositionList[i], &cpuset);
+                int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+                if (rc != 0) {
+                    NES_ERROR("Error calling pthread_setaffinity_np: " << rc);
+                } else {
+                    NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
                 }
             }
-            threads.clear();
-            NES_DEBUG("Threadpool: stop finished");
-            return true;
-        }
+#endif
+            localBufferManager = bufferManagers[queueIdx];
 
-        uint32_t ThreadPool::getNumberOfThreads() const {
-            std::unique_lock lock(reconfigLock);
-            return numThreads;
-        }
+            barrier->wait();
+            NES_ASSERT(localBufferManager, "localBufferManager is null");
+#ifdef ENABLE_PAPI_PROFILER
+            auto path = std::filesystem::path("worker_" + std::to_string(NesThread::getId()) + ".csv");
+            auto profiler = std::make_shared<Profiler::PapiCpuProfiler>(Profiler::PapiCpuProfiler::Presets::CachePresets,
+                                                                        std::ofstream(path, std::ofstream::out),
+                                                                        NesThread::getId(),
+                                                                        NesThread::getId());
+            queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
+#endif
+            // TODO (2310) properly initialize the profiler with a file, thread, and core id
 
-    }// namespace NES::Runtime
+            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker, queueIdx));
+        });
+    }
+    barrier->wait();
+    NES_DEBUG("Threadpool: start return from start");
+    return true;
+}
+
+bool ThreadPool::stop() {
+    std::unique_lock lock(reconfigLock);
+    NES_DEBUG("ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads
+                                                    << " threads");
+    auto expected = true;
+    if (!running.compare_exchange_strong(expected, false)) {
+        return false;
+    }
+    /* wake up all threads in the query manager,
+ * so they notice the change in the run variable */
+    NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
+    queryManager->poisonWorkers();
+    /* join all threads if possible */
+    for (auto& thread : threads) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+    threads.clear();
+    NES_DEBUG("Threadpool: stop finished");
+    return true;
+}
+
+uint32_t ThreadPool::getNumberOfThreads() const {
+    std::unique_lock lock(reconfigLock);
+    return numThreads;
+}
+
+}// namespace NES::Runtime

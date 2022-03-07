@@ -31,12 +31,16 @@ using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, 0, 0), expectedBuffer(expectedBuffer){};
+    TestSink(uint64_t expectedBuffer,
+             const SchemaPtr& schema,
+             const Runtime::BufferManagerPtr& bufferManager,
+             uint32_t numOfProducers = 1)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, numOfProducers, 0, 0),
+          expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
+    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager, uint32_t numOfProducers = 1) {
+        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager, numOfProducers);
     }
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {

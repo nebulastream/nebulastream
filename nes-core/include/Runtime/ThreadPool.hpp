@@ -37,7 +37,6 @@ class ThreadPool {
      * @param queryManager
      * @param number of threads to use
      * @param sourcePinningPositionList, a list of where to pin the
-     * @param threadToQueueMapping
      */
     explicit ThreadPool(uint64_t nodeId,
                         QueryManagerPtr queryManager,
@@ -45,8 +44,7 @@ class ThreadPool {
                         std::vector<BufferManagerPtr> bufferManagers,
                         uint64_t numberOfBuffersPerWorker,
                         HardwareManagerPtr hardwareManager,
-                        std::vector<uint64_t> workerPinningPositionList,
-                        std::vector<uint64_t> threadToQueueMapping);
+                        std::vector<uint64_t> workerPinningPositionList);
 
     /**
      * @brief default destructor
@@ -73,10 +71,10 @@ class ThreadPool {
      * 1.) check if thread pool is already running,
      *    - if yes, return false
      *    - if not set to running to true
-     * 2.) spawn n threads and bind them to the running routine (routine that probes queue for runable tasks)
+     * 2.) spawn n threads and bind them to the running routine (routine that probes queue for runnable tasks)
      * @return indicate if start succeed
      */
-    bool start();
+    bool start(const std::vector<uint64_t> threadToQueueMapping = {});
 
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
@@ -101,13 +99,12 @@ class ThreadPool {
     const uint32_t numThreads;
     std::vector<std::thread> threads{};
     mutable std::recursive_mutex reconfigLock;
-    std::shared_ptr<QueryManager> queryManager;
+    QueryManagerPtr queryManager;
     std::vector<BufferManagerPtr> bufferManagers;
 
     uint64_t numberOfBuffersPerWorker;
-    //this is a list of slots where we pin the worker, one after the other
+    /// this is a list of slots where we pin the worker, one after the other
     std::vector<uint64_t> workerPinningPositionList;
-    std::vector<uint64_t> threadToQueueMapping;
 
     HardwareManagerPtr hardwareManager;
 };

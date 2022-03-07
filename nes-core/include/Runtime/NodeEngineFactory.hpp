@@ -14,8 +14,8 @@
 
 #ifndef NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Components/NesWorker.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <vector>
 
 namespace NES {
@@ -23,7 +23,7 @@ namespace NES {
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-namespace Configurations{
+namespace Configurations {
 class QueryCompilerConfiguration;
 }
 
@@ -42,7 +42,10 @@ class NodeEngineFactory {
      * @param nesWorker weak pointer to the nes worker where the node engine is created
      * @return
      */
-    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources, std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>());
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname,
+                                                 uint16_t port,
+                                                 std::vector<PhysicalSourcePtr> physicalSources,
+                                                 std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>());
 
     /**
     * @brief this creates a new Runtime
@@ -70,11 +73,10 @@ class NodeEngineFactory {
                                           uint64_t numberOfBuffersPerWorker,
                                           const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                           std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>(),
-                                          NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCoreMapping = "",
                                           uint64_t numberOfQueues = 1,
                                           uint64_t numberOfThreadsPerQueue = 1,
-                                          QueryManager::QueryMangerMode = QueryManager::QueryMangerMode::Dynamic);
+                                          Runtime::QueryExecutionMode = Runtime::QueryExecutionMode::Dynamic);
 
   private:
     static QueryCompilation::QueryCompilerOptionsPtr
@@ -89,4 +91,4 @@ class NodeEngineFactory {
 
 }// namespace Runtime
 }// namespace NES
-#endif  // NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
+#endif// NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_

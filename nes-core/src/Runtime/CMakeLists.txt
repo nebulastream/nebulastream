@@ -16,6 +16,9 @@ add_source_files(nes-core
         NodeEngine.cpp
         AsyncTaskExecutor.cpp
         QueryManager.cpp
+        QueryManagerLifecycle.cpp
+        QueryManagerTaskScheduler.cpp
+        QueryManagerStatusListener.cpp
         ReconfigurationMessage.cpp
         BufferStorage.cpp
         BufferManager.cpp

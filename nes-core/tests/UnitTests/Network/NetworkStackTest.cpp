@@ -98,7 +98,7 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     TestSink(const SchemaPtr& schema, Runtime::NodeEnginePtr nodeEngine, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0, 0){};
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 1, 0, 0){};
 
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);
@@ -120,7 +120,7 @@ class TestSink : public SinkMedium {
     void shutdown() override{};
 
     ~TestSink() override = default;
-    ;
+
 
     std::mutex m;
     std::promise<uint64_t> completed;
@@ -234,7 +234,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
         auto senderChannel =
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 3);
-        senderChannel->close();
+        senderChannel->close(Runtime::QueryTerminationType::Graceful);
         senderChannel.reset();
         netManager->unregisterSubpartitionProducer(nesPartition);
 
@@ -322,7 +322,7 @@ TEST_F(NetworkStackTest, startCloseMaxChannel) {
         int i = 0;
         for (auto&& senderChannel : channels) {
             auto nesPartition = NesPartition(i++, 0, 0, 0);
-            senderChannel->close();
+            senderChannel->close(Runtime::QueryTerminationType::Graceful);
             netManagerSender->unregisterSubpartitionProducer(nesPartition);
         }
         connectionsReady.set_value(true);

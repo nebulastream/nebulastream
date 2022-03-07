@@ -21,6 +21,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -50,10 +52,8 @@
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 
 using namespace std;
 using namespace std;
@@ -154,7 +154,6 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
                                                                    12,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    std::weak_ptr<NesWorker>(),
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED,
                                                                    "");
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();

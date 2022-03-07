@@ -531,7 +531,7 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getOperatorId(), this->operatorId);
 }
 
@@ -557,7 +557,7 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getSchema(), this->schema);
 }
 
@@ -568,7 +568,7 @@ TEST_F(SourceTest, testDataSourceRunningImmediately) {
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
                                                  GatheringMode::INTERVAL_MODE,
-                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(mDataSource.isRunning());
 }
 
@@ -579,11 +579,11 @@ TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
                                                  GatheringMode::INTERVAL_MODE,
-                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());// the publicly visible side-effect
-    EXPECT_TRUE(mDataSource.stop(false));
+    EXPECT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
 }
 
 TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
@@ -593,12 +593,12 @@ TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
                                                  GatheringMode::INTERVAL_MODE,
-                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_FALSE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());// the publicly visible side-effect
-    EXPECT_TRUE(mDataSource.stop(false));
+    EXPECT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
 }
 
 TEST_F(SourceTest, testDataSourceStopImmediately) {
@@ -608,8 +608,8 @@ TEST_F(SourceTest, testDataSourceStopImmediately) {
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
                                                  GatheringMode::INTERVAL_MODE,
-                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
-    ASSERT_TRUE(mDataSource.stop(false));
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    ASSERT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
 }
 
 TEST_F(SourceTest, testDataSourceStopSideEffect) {
@@ -619,11 +619,11 @@ TEST_F(SourceTest, testDataSourceStopSideEffect) {
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
                                                  GatheringMode::INTERVAL_MODE,
-                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
-    EXPECT_TRUE(mDataSource.stop(false));
+    EXPECT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
     EXPECT_FALSE(mDataSource.isRunning());// the publicly visible side-effect
 }
 
@@ -634,14 +634,14 @@ TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
                                                  GatheringMode::INTERVAL_MODE,
-                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
-    EXPECT_TRUE(mDataSource.wasGracefullyStopped);
-    EXPECT_TRUE(mDataSource.stop(true));
+    EXPECT_EQ(mDataSource.wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
+    EXPECT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::Graceful));
     EXPECT_FALSE(mDataSource.isRunning());
-    EXPECT_TRUE(mDataSource.wasGracefullyStopped);// private side-effect, use FRIEND_TEST
+    EXPECT_EQ(mDataSource.wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);// private side-effect, use FRIEND_TEST
 }
 
 TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
@@ -651,14 +651,14 @@ TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
                                                  GatheringMode::INTERVAL_MODE,
-                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
     EXPECT_TRUE(mDataSource.isRunning());
-    EXPECT_TRUE(mDataSource.wasGracefullyStopped);
-    EXPECT_TRUE(mDataSource.stop(false));
+    EXPECT_EQ(mDataSource.wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
+    EXPECT_TRUE(mDataSource.stop(Runtime::QueryTerminationType::HardStop));
     EXPECT_FALSE(mDataSource.isRunning());
-    EXPECT_FALSE(mDataSource.wasGracefullyStopped);// private side-effect, use FRIEND_TEST
+    EXPECT_EQ(mDataSource.wasGracefullyStopped, Runtime::QueryTerminationType::HardStop);// private side-effect, use FRIEND_TEST
 }
 
 TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
@@ -669,7 +669,7 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->numSourceLocalBuffersDefault,
-                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::INTERVAL_MODE);
     ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(GatheringMode::getFromString("clearly_an_erroneous_string"));
@@ -682,7 +682,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::INTERVAL_MODE,
-                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, runningRoutineWithGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithGatheringInterval()).Times(Exactly(1));
     mDataSource.runningRoutine();
@@ -695,7 +695,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::INGESTION_RATE_MODE,
-                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, runningRoutineWithIngestionRate()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithIngestionRate()).Times(Exactly(1));
     mDataSource.runningRoutine();
@@ -708,7 +708,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
                                GatheringMode::ADAPTIVE_MODE,
-                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ON_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineAdaptiveGatheringInterval()).Times(Exactly(1));
     mDataSource.runningRoutine();
@@ -718,7 +718,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-freq-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-freq-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -731,7 +731,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = true;
+    mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::CSV_SOURCE));
@@ -751,7 +751,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1));
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
-    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
@@ -759,7 +759,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0,0 , this->nodeEngine, "source-test-ingest-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0,0 , this->nodeEngine, 1, "source-test-ingest-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -772,7 +772,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = true;
+    mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 11;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
@@ -796,7 +796,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     }));
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
-    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
@@ -804,7 +804,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -817,7 +817,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = true;
+    mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->gatheringIngestionRate = 1;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
@@ -841,7 +841,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     }));
     mDataSource->runningRoutine();
     EXPECT_FALSE(mDataSource->running);
-    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
@@ -849,7 +849,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -862,7 +862,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = true;
+    mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
@@ -888,7 +888,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     EXPECT_EQ(oldInterval.count(), mDataSource->gatheringInterval.count());
     EXPECT_EQ(oldInterval.count(), 0);
     EXPECT_FALSE(mDataSource->running);
-    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
@@ -896,7 +896,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -909,7 +909,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
-    mDataSource->wasGracefullyStopped = true;
+    mDataSource->wasGracefullyStopped = Runtime::QueryTerminationType::Graceful;
     mDataSource->setGatheringInterval(std::chrono::milliseconds{1000});
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
@@ -935,7 +935,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
     mDataSource->runningRoutine();
     EXPECT_NE(oldInterval.count(), mDataSource->gatheringInterval.count());
     EXPECT_FALSE(mDataSource->running);
-    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+        EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
@@ -946,7 +946,7 @@ TEST_F(SourceTest, testDataSourceOpen) {
                                 this->operatorId,
                                 this->numSourceLocalBuffersDefault,
                                 GatheringMode::INGESTION_RATE_MODE,
-                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     // EXPECT_ANY_THROW(mDataSource.bufferManager->getAvailableBuffers()); currently not possible w/ Error: success :)
     mDataSource.open();
     auto size = mDataSource.bufferManager->getAvailableBuffers();
@@ -960,7 +960,7 @@ TEST_F(SourceTest, testBinarySourceGetType) {
                                   this->path_to_bin_file,
                                   this->operatorId,
                                   this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(bDataSource.getType(), NES::SourceType::BINARY_SOURCE);
 }
 
@@ -971,7 +971,7 @@ TEST_F(SourceTest, testBinarySourceWrongPath) {
                                   this->wrong_filepath,
                                   this->operatorId,
                                   this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(bDataSource.input.is_open());
 }
 
@@ -982,7 +982,7 @@ TEST_F(SourceTest, testBinarySourceCorrectPath) {
                                   this->path_to_bin_file,
                                   this->operatorId,
                                   this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_TRUE(bDataSource.input.is_open());
 }
 
@@ -993,7 +993,7 @@ TEST_F(SourceTest, testBinarySourceFillBuffer) {
                                   this->path_to_bin_file,
                                   this->operatorId,
                                   this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
     uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;// increased by 1 every fillBuffer()
@@ -1014,7 +1014,7 @@ TEST_F(SourceTest, testBinarySourceFillBufferRandomTimes) {
                                   this->path_to_bin_file,
                                   this->operatorId,
                                   this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     uint64_t tuple_size = this->schema->getSchemaSizeInBytes();
     uint64_t buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
     uint64_t numberOfBuffers = 1;// increased by 1 every fillBuffer()
@@ -1039,7 +1039,7 @@ TEST_F(SourceTest, testBinarySourceFillBufferContents) {
                                   this->path_to_bin_file,
                                   this->operatorId,
                                   this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     auto buf = this->GetEmptyBuffer();
     bDataSource.fillBuffer(*buf);
     auto content = buf->getBuffer<ysbRecord>();
@@ -1061,7 +1061,7 @@ TEST_F(SourceTest, testCSVSourceGetType) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(csvDataSource.getType(), NES::SourceType::CSV_SOURCE);
 }
 
@@ -1079,7 +1079,7 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
                                      csvSourceType,
                                      this->operatorId,
                                      this->numSourceLocalBuffersDefault,
-                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
         ASSERT_FALSE(csvDataSource.input.is_open());
     } catch (Exceptions::RuntimeException const& ex) {
         auto str = std::string(ex.what());
@@ -1101,7 +1101,7 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
                                  csvSourceType,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_TRUE(csvDataSource.input.is_open());
 }
 
@@ -1118,7 +1118,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
                                  csvSourceType,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     csvDataSource.fileEnded = true;
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1142,7 +1142,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
@@ -1168,7 +1168,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
@@ -1194,7 +1194,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     auto buf = this->GetEmptyBuffer();
     try {
         Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1226,7 +1226,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     auto buf = this->GetEmptyBuffer();
     try {
         Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1258,7 +1258,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1284,7 +1284,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
         Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
@@ -1312,7 +1312,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
@@ -1352,7 +1352,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
@@ -1394,7 +1394,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_TRUE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
@@ -1434,7 +1434,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
     std::cout << int_schema->toString() << std::endl;
     auto buf = this->GetEmptyBuffer();
@@ -1494,7 +1494,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
                                  sourceConfig,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1533,7 +1533,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
                                  csvSourceType,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
-                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
     auto buf = this->GetEmptyBuffer();
     Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
@@ -1555,7 +1555,7 @@ TEST_F(SourceTest, testGeneratorSourceGetType) {
                                        this->operatorId,
                                        this->numSourceLocalBuffersDefault,
                                        GatheringMode::INGESTION_RATE_MODE,
-                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
 }
 
@@ -1567,7 +1567,7 @@ TEST_F(SourceTest, testDefaultSourceGetType) {
                                      1000,
                                      this->operatorId,
                                      this->numSourceLocalBuffersDefault,
-                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(defDataSource.getType(), SourceType::DEFAULT_SOURCE);
 }
 
@@ -1581,7 +1581,7 @@ TEST_F(SourceTest, testDefaultSourceReceiveData) {
                                      1000,
                                      this->operatorId,
                                      this->numSourceLocalBuffersDefault,
-                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     // open starts the bufferManager, otherwise receiveData will fail
     defDataSource.open();
     auto buf = defDataSource.receiveData();
@@ -1616,7 +1616,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeInterval) {
                                        this->operatorId,
                                        12,
                                        GatheringMode::INTERVAL_MODE,
-                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
     ASSERT_EQ(lambdaDataSource.numberOfTuplesToProduce, 52u);
@@ -1665,7 +1665,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
                                        this->operatorId,
                                        12,
                                        GatheringMode::INGESTION_RATE_MODE,
-                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                       {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.gatheringIngestionRate, 1u);
     lambdaDataSource.open();
@@ -1841,7 +1841,7 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
                                                1,
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
-                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(monitoringDataSource.getType(), SourceType::MONITORING_SOURCE);
 }
 
@@ -1859,7 +1859,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
                                                1,
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
-                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
@@ -1888,7 +1888,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
                                                1,
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
-                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
 
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();

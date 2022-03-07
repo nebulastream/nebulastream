@@ -103,7 +103,7 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     TestSink(const SchemaPtr& schema, Runtime::NodeEnginePtr nodeEngine, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0, 0) {
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 1, 0, 0) {
         // nop
     }
 
@@ -228,7 +228,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
             std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
-        auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManagers, 0, 1, nullptr);
+        auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(bufferManagers, 0, 1, nullptr);
         auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(0,
@@ -760,7 +760,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
         explicit TestSinkEvent(const SchemaPtr& schema,
                                Runtime::NodeEnginePtr nodeEngine,
                                const Runtime::BufferManagerPtr& bufferManager)
-            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0, 0) {
+            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 1, 0, 0) {
             // nop
         }
 

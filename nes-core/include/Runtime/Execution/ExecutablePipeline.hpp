@@ -49,7 +49,6 @@ class ExecutablePipeline : public Reconfigurable {
     explicit ExecutablePipeline(uint64_t pipelineId,
                                 QueryId queryId,
                                 QuerySubPlanId qepId,
-                                QueryManagerPtr queryManager,
                                 PipelineExecutionContextPtr pipelineExecutionContext,
                                 ExecutablePipelineStagePtr executablePipelineStage,
                                 uint32_t numOfProducingPipelines,
@@ -70,7 +69,6 @@ class ExecutablePipeline : public Reconfigurable {
     static ExecutablePipelinePtr create(uint64_t pipelineId,
                                         QueryId queryId,
                                         QuerySubPlanId querySubPlanId,
-                                        QueryManagerPtr queryManager,
                                         const PipelineExecutionContextPtr& pipelineExecutionContext,
                                         const ExecutablePipelineStagePtr& executablePipelineStage,
                                         uint32_t numOfProducingPipelines,
@@ -172,4 +170,4 @@ class ExecutablePipeline : public Reconfigurable {
 
 }// namespace NES::Runtime::Execution
 
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

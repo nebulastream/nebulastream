@@ -141,8 +141,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   numberOfBuffersPerWorker,
                                                                   queryCompilerConfiguration,
                                                                   this->inherited0::shared_from_this(),
-                                                                  enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
-                                                                                      : Runtime::NumaAwarenessFlag::DISABLED,
                                                                   workerToCoreMapping,
                                                                   numberOfQueues,
                                                                   numberOfThreadsPerQueue,

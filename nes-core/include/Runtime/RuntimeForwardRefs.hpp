@@ -82,8 +82,8 @@ using WorkerContextRef = WorkerContext&;
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-class QueryManager;
-using QueryManagerPtr = std::shared_ptr<QueryManager>;
+class AbstractQueryManager;
+using QueryManagerPtr = std::shared_ptr<AbstractQueryManager>;
 
 class StateManager;
 using StateManagerPtr = std::shared_ptr<StateManager>;

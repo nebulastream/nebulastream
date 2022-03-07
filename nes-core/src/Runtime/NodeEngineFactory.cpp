@@ -50,7 +50,6 @@ NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& host
                             12,
                             Configurations::QueryCompilerConfiguration(),
                             std::move(nesWorker),
-                            NumaAwarenessFlag::DISABLED,
                             "");
 }
 
@@ -64,11 +63,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersPerWorker,
                                                   const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                                   std::weak_ptr<NesWorker>&& nesWorker,
-                                                  NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCoreMapping,
                                                   uint64_t numberOfQueues,
                                                   uint64_t numberOfThreadsPerQueue,
-                                                  QueryManager::QueryMangerMode queryManagerMode) {
+                                                  Runtime::QueryExecutionMode queryManagerMode) {
 
     try {
         auto nodeEngineId = getNextNodeEngineId();
@@ -114,7 +112,6 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             }
         }
 #else
-        NES_WARNING("Numa flags " << int(enableNumaAwareness) << " are ignored");
         bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
 
                                                                  numberOfBuffersInGlobalBufferManager,
@@ -122,23 +119,39 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
 #endif
         if (bufferManagers.empty()) {
             NES_ERROR("Runtime: error while creating buffer manager");
-            throw log4cxx::helpers::Exception("Error while creating buffer manager");
+            throw Exceptions::RuntimeException("Error while creating buffer manager");
         }
 
+        std::vector<uint64_t> workerToCoreMappingVec;
         QueryManagerPtr queryManager;
         if (workerToCoreMapping != "") {
-            std::vector<uint64_t> workerToCoreMappingVec = Util::splitWithStringDelimiter<uint64_t>(workerToCoreMapping, ",");
+            workerToCoreMappingVec = Util::splitWithStringDelimiter<uint64_t>(workerToCoreMapping, ",");
             NES_ASSERT(workerToCoreMappingVec.size() == numThreads, " we need one position for each thread in mapping");
-            queryManager = std::make_shared<QueryManager>(bufferManagers,
-                                                          nodeEngineId,
-                                                          numThreads,
-                                                          hardwareManager,
-                                                          workerToCoreMappingVec,
-                                                          numberOfQueues,
-                                                          numberOfThreadsPerQueue,
-                                                          queryManagerMode);
-        } else {
-            queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, hardwareManager);
+        }
+
+        switch (queryManagerMode) {
+            case QueryExecutionMode::Dynamic: {
+                queryManager = std::make_shared<DynamicQueryManager>(bufferManagers,
+                                                              nodeEngineId,
+                                                              numThreads,
+                                                              hardwareManager,
+                                                              workerToCoreMappingVec);
+                break;
+            }
+            case QueryExecutionMode::Static: {
+                queryManager = std::make_shared<MultiQueueQueryManager>(bufferManagers,
+                                                              nodeEngineId,
+                                                              numThreads,
+                                                              hardwareManager,
+                                                              workerToCoreMappingVec,
+                                                              numberOfQueues,
+                                                              numberOfThreadsPerQueue);
+                break;
+            }
+            default: {
+                queryManager = nullptr;
+                break;
+            }
         }
 
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);
