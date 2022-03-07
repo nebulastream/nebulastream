@@ -7,3 +7,21 @@ RUN mkdir -p /nebulastream/build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
     make version && make -j4 && cpack && mv *.deb /nes.deb && \
     rm -rf /nebulastream/build/nes-dependencies-v15-x64-linux-nes.7z
+
+FROM alpine:3.15 AS execimg
+RUN apk add --no-cache --no-progress -q \
+    g++ \
+    gcc-objc \
+    libstdc++6 \
+    libgcc \
+    libc6-compat \
+    musl \
+    musl-dev \
+    libnuma-dev \
+    binutils \
+    binutils-dev \
+    libunwind-dev \
+    libdw-dev \
+    libdwarf \
+    libdwarf-dev \
+    elfutils-dev

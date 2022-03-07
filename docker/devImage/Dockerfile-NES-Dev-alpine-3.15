@@ -1,5 +1,5 @@
 FROM nebulastream/nes-build-image:alpine
 
 RUN apk install --no-cache \
-   gdb
+   gdb \
 && pip3 install ninja
