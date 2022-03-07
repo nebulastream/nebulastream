@@ -202,9 +202,10 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");
 
-    NES_DEBUG("NesCoordinator: Register Logical source");
-    for (auto& logicalSource : coordinatorConfiguration->logicalSources) {
-        sourceCatalogService->registerLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
+    NES_DEBUG("NesCoordinator: Register Logical sources");
+    for (auto logicalSource : coordinatorConfiguration->logicalSources.getValues()) {
+        sourceCatalogService->registerLogicalSource(logicalSource.getValue()->getLogicalSourceName(),
+                                                    logicalSource.getValue()->getSchema());
     }
     NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
