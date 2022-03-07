@@ -16,13 +16,14 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
