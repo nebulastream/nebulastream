@@ -1,36 +1,5 @@
-FROM alpine:3.15
+FROM nebulastream/nes-build-image:alpine
 
-RUN apk add --no-cache --no-progress -q cmake --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community \
-&& apk add --no-cache --no-progress -q \
-    gcc \
-    g++ \
-    make \
-    libdwarf \
-    libdwarf-dev \
-    binutils \
-    binutils-dev \
-    libunwind-dev \
-    libgcc \
-    gcc-objc \
-    musl \
-    musl-dev \
-    libstdc++ \
-    elfutils-dev \
-    openssl-dev \
-    clang-extra-tools \
-    libexecinfo-dev \
-    numactl-dev \
-    numactl-tools \
-    mbedtls-dev \
-    git \
-    wget \
-    python3 \
-    py3-pip \
-    libsodium-dev \
-    tar \
-    p7zip \
-    libbsd-dev \
-    gdb \
-    doxygen \
-    graphviz \
+RUN apk install --no-cache \
+   gdb
 && pip3 install ninja
