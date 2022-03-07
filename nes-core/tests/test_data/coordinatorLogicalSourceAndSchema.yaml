@@ -17,8 +17,11 @@ logicalSources:
       - name: "csv_id_2"
         type: "string"
         length: 2
+      - name: "csv_id_3"
+        type: "uint64"
+        length: 2
   - logicalSourceName: "lsn2"
     fields:
-      - name: "csv_id_3"
+      - name: "csv_id_4"
         type: "string"
         length: 25
