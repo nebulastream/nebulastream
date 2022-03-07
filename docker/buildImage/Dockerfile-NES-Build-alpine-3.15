@@ -31,7 +31,7 @@ RUN apk add --no-cache --no-progress -q cmake --repository=http://dl-cdn.alpinel
     p7zip \
     libbsd-dev \
     doxygen \
-    graphviz \
+    graphviz
 
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
