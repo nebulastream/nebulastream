@@ -116,6 +116,7 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               QueryId queryId,
                               QuerySubPlanId querySubPlanId,
                               const Runtime::NodeEnginePtr& nodeEngine,
+                              uint32_t numOfProducers,
                               const std::string& host,
                               uint16_t port);
 #ifdef ENABLE_OPC_BUILD
@@ -149,6 +150,7 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              QueryId queryId,
                              QuerySubPlanId querySubPlanId,
                              const Runtime::NodeEnginePtr& nodeEngine,
+                             uint32_t numOfProducers,
                              const std::string& host,
                              uint16_t port);
 
@@ -238,6 +240,8 @@ namespace Experimental::MaterializedView {
  */
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        const Runtime::NodeEnginePtr& nodeEngine,
+                                       uint32_t numOfProducers,
+                                       QueryId queryId,
                                        QuerySubPlanId parentPlanId,
                                        uint64_t viewId);
 

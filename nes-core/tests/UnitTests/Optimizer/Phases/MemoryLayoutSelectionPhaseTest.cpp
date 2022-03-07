@@ -74,13 +74,17 @@ class MemoryLayoutSelectionPhaseTest : public testing::Test {
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, 0, 0), expectedBuffer(expectedBuffer){};
+    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager, uint32_t numOfProducers = 1)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, numOfProducers, 0, 0), expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink>
     create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
+        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager, 1u);
     }
+
+    void setup() override {}
+
+    void shutdown() override {}
 
     bool writeData(TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
@@ -106,11 +110,7 @@ class TestSink : public SinkMedium {
         return resultBuffers[index];
     }
 
-    void setup() override{};
-
     std::string toString() const override { return "Test_Sink"; }
-
-    void shutdown() override {}
 
     ~TestSink() override {
         NES_DEBUG("~TestSink()");

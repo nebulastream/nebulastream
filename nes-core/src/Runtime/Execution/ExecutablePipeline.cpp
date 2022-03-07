@@ -113,7 +113,6 @@ bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
                                                  QueryId queryId,
                                                  QuerySubPlanId querySubPlanId,
-                                                 QueryManagerPtr queryManager,
                                                  const PipelineExecutionContextPtr& pipelineExecutionContext,
                                                  const ExecutablePipelineStagePtr& executablePipelineStage,
                                                  uint32_t numOfProducingPipelines,
@@ -128,7 +127,6 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
     return std::make_shared<ExecutablePipeline>(pipelineId,
                                                 queryId,
                                                 querySubPlanId,
-                                                queryManager,
                                                 pipelineExecutionContext,
                                                 executablePipelineStage,
                                                 numOfProducingPipelines,
@@ -203,7 +201,8 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 queryManager->notifyPipelineCompletion(querySubPlanId, shared_from_this<ExecutablePipeline>());
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-                        auto newReconf = ReconfigurationMessage(queryId, querySubPlanId,
+                        auto newReconf = ReconfigurationMessage(queryId,
+                                                                querySubPlanId,
                                                                 task.getType(),
                                                                 *pipe,
                                                                 std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));

@@ -76,7 +76,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     }));
     if (!this->queryManager->startThreadPool(numberOfBuffersPerWorker)) {
         NES_ERROR("Runtime: error while start thread pool");
-        throw log4cxx::helpers::Exception("Error while start thread pool");
+        throw Exceptions::RuntimeException("Error while starting thread pool");
     }
     NES_DEBUG("NodeEngine(): thread pool successfully started");
 
@@ -446,7 +446,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     auto foundQuerySubPlanIds = queryIdToQuerySubPlanIds.find(queryId);
     NES_TRACE("Found members = " << foundQuerySubPlanIds->second.size());
     if (foundQuerySubPlanIds == queryIdToQuerySubPlanIds.end()) {
-        NES_ERROR("QueryManager::getQueryStatistics: query does not exists " << queryId);
+        NES_ERROR("AbstractQueryManager::getQueryStatistics: query does not exists " << queryId);
         return queryStatistics;
     }
 

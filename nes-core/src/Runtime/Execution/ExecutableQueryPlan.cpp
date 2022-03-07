@@ -258,10 +258,11 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, bool isGraceful
     NES_ASSERT2_FMT(tokensLeft >= 1, "Sink was last termination token for " << querySubPlanId);
     NES_DEBUG("QEP " << querySubPlanId << " Sink " << sink->toString() << " is terminated; tokens left = " << (tokensLeft - 1));
     // sinks also require to spawn a reconfig task for the qep
-    auto reconfMessageQEP = ReconfigurationMessage(getQuerySubPlanId(),
+    auto reconfMessageQEP = ReconfigurationMessage(getQueryId(),
+                                                   getQuerySubPlanId(),
                                                    isGraceful ? SoftEndOfStream : HardEndOfStream,
                                                    Reconfigurable::shared_from_this<ExecutableQueryPlan>());
-    queryManager->addReconfigurationMessage(getQuerySubPlanId(), reconfMessageQEP, false);
+    queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
 }
 
 }// namespace NES::Runtime::Execution
