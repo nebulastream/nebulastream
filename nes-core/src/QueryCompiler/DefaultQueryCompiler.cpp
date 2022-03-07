@@ -66,7 +66,6 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         if (request->isDumpEnabled()) {
             dumpContext->registerDumpHandler(VizDumpHandler::create());
         }
-
         timer.start();
         NES_DEBUG("compile query with id: " << queryId << " subPlanId: " << subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
@@ -105,7 +104,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
 
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
-    } catch (const QueryCompilationException& exception) {
+    } catch (const Exceptions::RuntimeException& exception) {
         auto currentException = std::current_exception();
         return QueryCompilationResult::create(currentException);
     }

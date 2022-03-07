@@ -15,57 +15,97 @@
 syntax = "proto3";
 import "SerializableQueryPlan.proto";
 
+/*
+The WorkerRPCService provides the fundamental communication interface for the worker process.
+For example, the coordinator uses this service to register, start, and stop queries.
+*/
 service WorkerRPCService {
-  rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
-  rpc UndeployQuery (UndeployQueryRequest) returns (UndeployQueryReply) {}
 
+  /*
+  * RegisterQueries registers a new query at a worker. This process involves local optimization and query compilation.
+  * It can fail if the provided query if an error occurs.
+  */
   rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
+
+  /*
+  * Removes a already registered query.
+  */
   rpc UnregisterQuery (UnregisterQueryRequest) returns (UnregisterQueryReply) {}
 
+  /*
+  * Starts the execution of an query.
+  */
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
+
+  /*
+  * Stops the execution of an query.
+  */
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
 
+  /*
+  * Registers a monitoring plan.
+  */
   rpc RegisterMonitoringPlan (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
+
+  /*
+  * Retrieves monitoring data from the worker.
+  */
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
 
+  /*
+  * Injects a new epoch barrier.
+  */
   rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
 
+  /*
+  * Starts the buffering of a specific query.
+  */
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
+  /*
+  * Updates the network sink.
+  */
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 }
 
-message DeployQueryRequest {
-  NES.SerializableQueryPlan queryPlan = 3;
+message Error {
+  string message = 1;
+  string stacktrace = 2;
 }
 
-message DeployQueryReply {
-  bool success = 1;
-}
-
-message UndeployQueryRequest {
-  uint64 queryId = 1;
-}
-
-message UndeployQueryReply {
-  bool success = 1;
-}
-
+/*
+Request to register a new query at a worker.
+Contains the serialized logical query plan.
+*/
 message RegisterQueryRequest {
-  NES.SerializableQueryPlan queryPlan = 3;
-
+  NES.SerializableQueryPlan queryPlan = 1;
 }
 
+/**
+Reply for the register query.
+*/
 message RegisterQueryReply {
+  // identifies if the registration was successful.
   bool success = 1;
+  // error message is set if success is false.
+  optional Error error = 2;
 }
-
+/**
+Request to unregister a query.
+ */
 message UnregisterQueryRequest {
+  // id of the query, that has to be unregistered
   uint64 queryId = 1;
 }
 
+/**
+Reply for the unregister query request.
+*/
 message UnregisterQueryReply {
+  // identifies if the registration was successful.
   bool success = 1;
+  // error message is set if success is false.
+  optional Error error = 2;
 }
 
 message StartQueryRequest {
@@ -92,7 +132,7 @@ message MonitoringRegistrationReply {
 }
 
 message MonitoringDataRequest {
-    repeated uint32 metricTypes = 1;
+  repeated uint32 metricTypes = 1;
 }
 
 message MonitoringDataReply {

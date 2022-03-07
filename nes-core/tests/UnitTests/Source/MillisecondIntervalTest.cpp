@@ -198,7 +198,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                      {pipeline},
                                                      this->nodeEngine->getQueryManager(),
                                                      this->nodeEngine->getBufferManager());
-    EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_NO_THROW(this->nodeEngine->registerExecutableQuery(executionPlan));
     EXPECT_TRUE(this->nodeEngine->startQuery(1));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(1), ExecutableQueryPlanStatus::Running);
     executableStage->completedPromise.get_future().get();

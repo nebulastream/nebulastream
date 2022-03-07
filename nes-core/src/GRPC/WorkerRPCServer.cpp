@@ -32,20 +32,18 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
     auto queryPlan = QueryPlanSerializationUtil::deserializeQueryPlan((SerializableQueryPlan*) &request->queryplan());
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got request for queryId: " << queryPlan->getQueryId()
                                                                           << " plan=" << queryPlan->toString());
-    bool success = 0;
-    try {
-        success = nodeEngine->registerQueryInNodeEngine(queryPlan);
-    } catch (std::exception& error) {
-        NES_ERROR("Register query crashed: " << error.what());
-        success = false;
-    }
-    if (success) {
+
+    auto success = nodeEngine->registerQuery(queryPlan);
+
+    if (success.isSuccessful()) {
         NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
         return Status::OK;
     }
     NES_ERROR("WorkerRPCServer::RegisterQuery: failed");
     reply->set_success(false);
+    reply->mutable_error()->set_message(success.getMessage());
+    reply->mutable_error()->set_stacktrace(success.getStacktrace());
     return Status::CANCELLED;
 }
 
@@ -119,12 +117,10 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::InjectEpochBarrier(ServerContext*,
-                                           const EpochBarrierNotification* request,
-                                           EpochBarrierReply* reply) {
+Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
     try {
         NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
-          << request->timestamp() << " and a queryId " << request->queryid());
+                  << request->timestamp() << " and a queryId " << request->queryid());
         reply->set_success(true);
         nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
         return Status::OK;

@@ -23,6 +23,7 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Exceptions/Status.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -110,20 +111,19 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[nodiscard]] bool undeployQuery(QueryId queryId);
 
     /**
+     * @brief Registers a logical query in the NodeEngine and prepares it for execution.
+     * This step involves the translation of logical to physical operators and the final code generation.
+     * @param queryPlan the query plan consisting of logical operators.
+     * @return status, that contains an error if the registration fails.
+     */
+    Exceptions::Status registerQuery(const QueryPlanPtr& queryPlan) noexcept;
+
+    /**
      * @brief registers a query
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
-
-    /**
-     * @brief registers a query
-     * @param queryId: id of the query sub plan to be registered
-     * @param queryExecutionId: query execution plan id
-     * @param operatorTree: query sub plan to register
-     * @return true if succeeded, else false
-     */
-    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
+    void registerExecutableQuery(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
      * @brief ungregisters a query

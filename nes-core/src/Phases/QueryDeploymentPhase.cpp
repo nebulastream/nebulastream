@@ -69,7 +69,7 @@ bool QueryDeploymentPhase::deployQuery(QueryId queryId, const std::vector<Execut
     NES_DEBUG("QueryDeploymentPhase::deployQuery queryId=" << queryId);
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
-        NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
+        NES_DEBUG("QueryDeploymentPhase::registerExecutableQuery serialize id=" << executionNode->getId());
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
         if (querySubPlans.empty()) {
             NES_WARNING("QueryDeploymentPhase : unable to find query sub plan with id " << queryId);

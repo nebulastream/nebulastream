@@ -761,7 +761,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_NO_THROW(this->nodeEngine->registerExecutableQuery(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -803,7 +803,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_NO_THROW(this->nodeEngine->registerExecutableQuery(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -848,7 +848,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_NO_THROW(this->nodeEngine->registerExecutableQuery(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -892,7 +892,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_NO_THROW(this->nodeEngine->registerExecutableQuery(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     auto oldInterval = mDataSource->gatheringInterval;
@@ -940,7 +940,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
                                                                          {pipeline},
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
-    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_NO_THROW(this->nodeEngine->registerExecutableQuery(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     auto oldInterval = mDataSource->gatheringInterval;

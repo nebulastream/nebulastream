@@ -574,7 +574,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
 
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -642,7 +642,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
 
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -733,7 +733,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(plan->getQueryId()));
 
     // wait till all buffers have been produced
@@ -819,7 +819,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -892,7 +892,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
@@ -978,7 +978,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
-    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_NO_THROW(nodeEngine->registerExecutableQuery(plan));
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced

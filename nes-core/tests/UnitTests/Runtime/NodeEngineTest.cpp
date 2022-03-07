@@ -307,7 +307,7 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(qep));
     EXPECT_TRUE(engine->startQuery(testQueryId));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
@@ -322,7 +322,7 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(qep));
     EXPECT_TRUE(engine->startQuery(testQueryId));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
@@ -338,7 +338,7 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(qep));
     EXPECT_TRUE(engine->startQuery(testQueryId));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
@@ -379,8 +379,8 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
 
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan2));
 
     EXPECT_TRUE(engine->startQuery(1));
     EXPECT_TRUE(engine->startQuery(2));
@@ -433,8 +433,8 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
 
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan2));
 
     EXPECT_TRUE(engine->startQuery(1));
     EXPECT_TRUE(engine->startQuery(2));
@@ -486,8 +486,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) { // shared sinks are not 
                                                       engine->getQueryManager(),
                                                       engine->getBufferManager());
 
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan2));
 
     EXPECT_TRUE(engine->startQuery(1));
     EXPECT_TRUE(engine->startQuery(2));
@@ -565,8 +565,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     // auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source1->getSchema(), sch2);
     // builder2.addPipeline(pipeline2);
 
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan2));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(executionPlan2));
 
     EXPECT_TRUE(engine->startQuery(1));
     EXPECT_TRUE(engine->startQuery(2));
@@ -590,7 +590,7 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    ASSERT_NO_THROW(engine->registerExecutableQuery(qep));
     EXPECT_TRUE(engine->startQuery(testQueryId));
     pipeline->completedPromise.get_future().get();
 
