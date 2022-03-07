@@ -53,7 +53,7 @@ target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-register_public_header(nes-grpc ${CMAKE_BINARY_DIR}/nes-grpc/)
+#register_public_header(nes-grpc ${CMAKE_BINARY_DIR}/nes-grpc/)
 install(TARGETS nes-grpc
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
