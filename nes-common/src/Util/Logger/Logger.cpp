@@ -23,7 +23,7 @@ Logger* Logger::getInstance() {
     return &instance;
 }
 
-Logger::Logger() : details(std::make_unique<LoggerDetails>()) {}
+Logger::Logger() : details(std::make_unique<detail::LoggerDetails>()) {}
 
 LogLevel& Logger::getCurrentLogLevel() { return currentLogLevel; }
 
@@ -38,17 +38,7 @@ void Logger::setLogLevel(const LogLevel logLevel) {
 };
 
 void Logger::log(const LogLevel& logLevel, const std::string& message, const std::source_location location) {
-    auto spiLocation = log4cxx::spi::LocationInfo(location.file_name(), location.function_name(), location.line());
-    auto logger = details->loggerPtr;
-    switch (logLevel) {
-        case LogLevel::LOG_NONE: break;
-        case LogLevel::LOG_FATAL_ERROR: logger->fatal(message, spiLocation); break;
-        case LogLevel::LOG_ERROR: logger->error(message, spiLocation); break;
-        case LogLevel::LOG_WARNING: logger->warn(message, spiLocation); break;
-        case LogLevel::LOG_DEBUG: logger->debug(message, spiLocation); break;
-        case LogLevel::LOG_INFO: logger->info(message, spiLocation); break;
-        case LogLevel::LOG_TRACE: logger->trace(message, spiLocation); break;
-    }
+    details->log(logLevel, message, location);
 }
 
 void Logger::setupLogging(const std::string& logFileName, LogLevel level) {
