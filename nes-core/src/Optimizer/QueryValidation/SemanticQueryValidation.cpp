@@ -24,6 +24,7 @@
 #include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <cstring>
 #include <iterator>
 #include <utility>

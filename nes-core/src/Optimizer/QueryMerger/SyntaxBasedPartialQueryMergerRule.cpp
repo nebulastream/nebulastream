@@ -18,6 +18,7 @@
 #include <Optimizer/QueryMerger/SyntaxBasedPartialQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
 

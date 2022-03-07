@@ -16,6 +16,7 @@
 #define NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>

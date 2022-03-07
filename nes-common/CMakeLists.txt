@@ -28,12 +28,9 @@ set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
         $<BUILD_INTERFACE:${LIBRARIES}>
         $<INSTALL_INTERFACE:>)
 
-#TODO select the headers to copy more fine-grained
-register_public_header(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
-# Add headers from dependencies
-#TODO select dependency headers more fine-grained
-register_public_header(nes-common ${PATH_TO_DEB_SOURCE_CODE}/include/)
+register_public_headers(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
+register_public_headers(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

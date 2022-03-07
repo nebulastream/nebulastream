@@ -23,6 +23,7 @@
 
 namespace NES {
 namespace Runtime {
+
 /**
  * This class is the entry point for stateful operators that require state
  * This class is used as a singleton and creates StateVariable<K, V>, i.e., mutable data set of key-value pairs.
@@ -128,4 +129,4 @@ class StateManager {
 };
 }// namespace Runtime
 }// namespace NES
-#endif  // NES_INCLUDE_STATE_STATEMANAGER_HPP_
+#endif// NES_INCLUDE_STATE_STATEMANAGER_HPP_

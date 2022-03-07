@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
@@ -35,8 +36,7 @@
 
 namespace NES {
 
-uint64_t Util::numberOfUniqueValues(std::vector<uint64_t>& values)
-{
+uint64_t Util::numberOfUniqueValues(std::vector<uint64_t>& values) {
     std::sort(values.begin(), values.end());
     return std::unique(values.begin(), values.end()) - values.begin();
 }
