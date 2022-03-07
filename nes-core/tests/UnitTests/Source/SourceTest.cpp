@@ -25,12 +25,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/GatheringMode.hpp>
-<<<<<<< HEAD
 #include <Util/Logger/Logger.hpp>
-#include <Util/SourceMode.hpp>
-=======
-#include <Util/Logger.hpp>
->>>>>>> [#2645] Add stringToFieldType method for schema inference
 
 #include "../../../tests/util/MetricValidator.hpp"
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>

@@ -17,7 +17,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/LogicalSourceFactory.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
