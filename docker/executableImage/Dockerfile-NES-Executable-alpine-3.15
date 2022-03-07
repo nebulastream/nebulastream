@@ -17,11 +17,10 @@ RUN apk add --no-cache --no-progress -q \
     libc6-compat \
     musl \
     musl-dev \
-    libnuma-dev \
+    numactl-dev \
     binutils \
     binutils-dev \
     libunwind-dev \
-    libdw-dev \
     libdwarf \
     libdwarf-dev \
     elfutils-dev
