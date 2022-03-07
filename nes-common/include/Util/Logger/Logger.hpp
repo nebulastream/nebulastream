@@ -70,9 +70,10 @@ enum class LogLevel : uint8_t {
  * @return integer between 1 and 7 to identify the log level.
  */
 constexpr uint64_t getLogLevel(const LogLevel value) { return magic_enum::enum_integer(value); }
-
+namespace detail {
 class LoggerDetails;
 using LoggerDetailsPtr = std::unique_ptr<LoggerDetails>;
+}// namespace detail
 
 /**
  * @brief Central logger, which allows to output different log messages to the console and files.
@@ -131,7 +132,7 @@ class Logger {
      */
     Logger();
     LogLevel currentLogLevel;
-    LoggerDetailsPtr details;
+    detail::LoggerDetailsPtr details;
 };
 
 #define NES_LOG(LEVEL, message)                                                                                                  \

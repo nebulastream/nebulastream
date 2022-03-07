@@ -17,7 +17,7 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <log4cxx/logger.h>
-namespace NES {
+namespace NES::detail {
 
 /**
  * @brief Logger Details maintains a reference to the log4cxx logger.
@@ -43,9 +43,19 @@ class LoggerDetails {
      * @param threadName
      */
     void setThreadName(const std::string threadName);
+
+    /**
+    * @brief Outputs a log message with a specific log level and location.
+    * @param logLevel LogLevel
+    * @param message log message
+    * @param location source code location
+    */
+    void log(const LogLevel& logLevel, const std::string& message, const std::source_location location);
+
+  private:
     log4cxx::LoggerPtr loggerPtr;
 };
 
-}// namespace NES
+}// namespace NES::detail
 
 #endif//NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGERDETAILS_HPP_

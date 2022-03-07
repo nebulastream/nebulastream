@@ -19,7 +19,7 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/patternlayout.h>
 
-namespace NES {
+namespace NES::detail {
 
 /**
  * @brief The custom pattern layout is used to
@@ -35,7 +35,7 @@ class CustomPatternLayout : public log4cxx::PatternLayout {
         log4cxx::LevelPtr lvl = event->getLevel();
         switch (lvl->toInt()) {
             case log4cxx::Level::FATAL_INT:
-                output.append("\u001b[0;41m");//red BG
+                output.append("\u001b[0;31m");// red FG
                 break;
             case log4cxx::Level::ERROR_INT:
                 output.append("\u001b[0;31m");// red FG
@@ -85,5 +85,19 @@ void LoggerDetails::setupLogging(const std::string& logFileName) {
     loggerPtr->addAppender(file);
     loggerPtr->addAppender(console);
 }
+
+void LoggerDetails::log(const LogLevel& logLevel, const std::string& message, const std::source_location location) {
+    auto spiLocation = log4cxx::spi::LocationInfo(location.file_name(), location.function_name(), location.line());
+    switch (logLevel) {
+        case LogLevel::LOG_NONE: break;
+        case LogLevel::LOG_FATAL_ERROR: loggerPtr->fatal(message, spiLocation); break;
+        case LogLevel::LOG_ERROR: loggerPtr->error(message, spiLocation); break;
+        case LogLevel::LOG_WARNING: loggerPtr->warn(message, spiLocation); break;
+        case LogLevel::LOG_DEBUG: loggerPtr->debug(message, spiLocation); break;
+        case LogLevel::LOG_INFO: loggerPtr->info(message, spiLocation); break;
+        case LogLevel::LOG_TRACE: loggerPtr->trace(message, spiLocation); break;
+    }
+}
+
 void LoggerDetails::setThreadName(const std::string threadName) { log4cxx::MDC::put("threadName", threadName); }
-}// namespace NES
+}// namespace NES::detail
