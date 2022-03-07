@@ -70,8 +70,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "coordinatorLogicalSourceAndSchema.yaml");
-    EXPECT_EQ(coordinatorConfigPtr->restIp.getValue(), "0.0.0.0");
-    EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), "0.0.0.0");
     EXPECT_FALSE(coordinatorConfigPtr->logicalSources.empty());
     EXPECT_EQ(coordinatorConfigPtr->logicalSources.size(), 2);
 }

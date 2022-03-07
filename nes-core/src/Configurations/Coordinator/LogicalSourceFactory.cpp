@@ -92,10 +92,51 @@ DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType,
         return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
     }
 
-    // TODO: map types to strings, this way below is wrong
-    if (fieldNodeType.starts_with("int") || fieldNodeType.starts_with("uint")) {
+    if (fieldNodeType == "boolean") {
+        return DataTypeFactory::createBoolean();
     }
-    return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
+
+    if (fieldNodeType == "int8") {
+        return DataTypeFactory::createInt8();
+    }
+
+    if (fieldNodeType == "uint8") {
+        return DataTypeFactory::createUInt8();
+    }
+
+    if (fieldNodeType == "int16") {
+        return DataTypeFactory::createInt16();
+    }
+
+    if (fieldNodeType == "uint16") {
+        return DataTypeFactory::createUInt16();
+    }
+
+    if (fieldNodeType == "int32") {
+        return DataTypeFactory::createInt32();
+    }
+
+    if (fieldNodeType == "uint32") {
+        return DataTypeFactory::createUInt32();
+    }
+
+    if (fieldNodeType == "int64") {
+        return DataTypeFactory::createInt64();
+    }
+
+    if (fieldNodeType == "uint64") {
+        return DataTypeFactory::createUInt64();
+    }
+
+    if (fieldNodeType == "float") {
+        return DataTypeFactory::createFloat();
+    }
+
+    if (fieldNodeType == "double") {
+        return DataTypeFactory::createDouble();
+    }
+
+    NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. " << fieldNodeType << " is not a proper Schema Field Type.");
 }
 
 }// namespace Configurations
