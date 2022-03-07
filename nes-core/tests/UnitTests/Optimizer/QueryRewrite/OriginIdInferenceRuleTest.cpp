@@ -21,7 +21,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -70,7 +70,7 @@ class OriginIdInferenceRuleTest : public testing::Test {
  */
 TEST_F(OriginIdInferenceRuleTest, testRuleForSingleSource) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                       ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
@@ -97,13 +97,13 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSingleSource) {
  */
 TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSources) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source1);
-    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source2);
-    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source3);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
@@ -132,13 +132,13 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSources) {
  */
 TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndIntermediateUnaryOperators) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source1);
-    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source2);
-    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source3);
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("x") == Attribute("y"));
@@ -174,13 +174,13 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndIntermediateUnary
  */
 TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndWindow) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source1);
-    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source2);
-    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"))
+    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source3);
     auto dummyWindowDefinition = LogicalWindowDefinition::create({},

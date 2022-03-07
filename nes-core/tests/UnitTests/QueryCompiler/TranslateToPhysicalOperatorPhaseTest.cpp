@@ -21,6 +21,7 @@
 #include <Nodes/Util/DumpContext.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -129,9 +130,13 @@ class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
         watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
             Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
         centralWindowOperator = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
+        centralWindowOperator->as<WindowOperatorNode>()->setInputOriginIds({0});
         sliceCreationOperator = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition);
+        sliceCreationOperator->as<WindowOperatorNode>()->setInputOriginIds({0});
         windowComputation = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition);
+        windowComputation->as<WindowOperatorNode>()->setInputOriginIds({0});
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
+        sliceMerging->as<WindowOperatorNode>()->setInputOriginIds({0});
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
     }
 
