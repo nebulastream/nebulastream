@@ -15,9 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 #define NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
-#include <Network/NesPartition.hpp>
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/NesThread.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdint>
 #include <memory>

@@ -45,6 +45,20 @@ macro(register_public_header TARGET HEADER_FILE_DIR)
             ${HEADER_FILE_DIR} ${CMAKE_BINARY_DIR}/include/nebulastream)
 endmacro()
 
+macro(register_public_headers TARGET HEADER_FILE_DIR TARGET_DIR)
+    add_custom_command(TARGET ${TARGET} POST_BUILD
+            COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${HEADER_FILE_DIR} ${CMAKE_BINARY_DIR}/include/nebulastream/${TARGET_DIR})
+endmacro()
+
+macro(register_public_header_file TARGET HEADER_FILE_DIR TARGET_DIR)
+    add_custom_command(TARGET ${TARGET} POST_BUILD
+            COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${HEADER_FILE_DIR} ${CMAKE_BINARY_DIR}/include/nebulastream/${TARGET_DIR})
+endmacro()
+
 macro(get_header_nes_client HEADER_FILES)
     file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
 endmacro()

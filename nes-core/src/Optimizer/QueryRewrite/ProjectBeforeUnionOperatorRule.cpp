@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
 

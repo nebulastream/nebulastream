@@ -16,6 +16,7 @@
 #define NES_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Network/PartitionRegistrationStatus.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
@@ -237,4 +238,4 @@ class PartitionManager {
 using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
 }// namespace NES::Network
 
-#endif  // NES_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_
+#endif// NES_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_

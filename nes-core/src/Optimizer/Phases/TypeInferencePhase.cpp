@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 namespace NES::Optimizer {

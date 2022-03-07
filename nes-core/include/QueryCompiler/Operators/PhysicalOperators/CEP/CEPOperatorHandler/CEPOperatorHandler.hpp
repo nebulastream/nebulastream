@@ -14,7 +14,6 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_CEPOPERATORHANDLER_CEPOPERATORHANDLER_HPP_
 
-#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>

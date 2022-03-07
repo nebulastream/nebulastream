@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Optimizer {
 

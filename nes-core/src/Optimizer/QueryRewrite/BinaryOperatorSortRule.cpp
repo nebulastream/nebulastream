@@ -15,6 +15,7 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {

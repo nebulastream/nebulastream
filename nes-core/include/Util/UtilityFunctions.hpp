@@ -17,10 +17,11 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <functional>
 #include <map>
+#include <any>
+#include <set>
 #include <string>
 
 /**
@@ -33,6 +34,9 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Query;
 using QueryPtr = std::shared_ptr<Query>;

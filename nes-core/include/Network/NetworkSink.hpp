@@ -16,6 +16,7 @@
 #define NES_INCLUDE_NETWORK_NETWORKSINK_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
+#include <Network/NodeLocation.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -117,4 +118,4 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#endif// NES_INCLUDE_NETWORK_NETWORKSINK_HPP_
