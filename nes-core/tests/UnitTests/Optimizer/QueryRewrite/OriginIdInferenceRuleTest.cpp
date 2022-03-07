@@ -34,7 +34,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
@@ -53,7 +53,7 @@ class OriginIdInferenceRuleTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::setupLogging("OriginIdInferenceRuleTest.log", NES::LOG_DEBUG);
+        NES::Logger::setupLogging("OriginIdInferenceRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup OriginIdInferenceRuleTest test case.");
         originIdIferenceRule = Optimizer::OriginIdInferenceRule::create();
     }
