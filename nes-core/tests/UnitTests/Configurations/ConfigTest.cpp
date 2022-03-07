@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
@@ -72,6 +73,17 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "coordinatorLogicalSourceAndSchema.yaml");
     EXPECT_FALSE(coordinatorConfigPtr->logicalSources.empty());
     EXPECT_EQ(coordinatorConfigPtr->logicalSources.size(), 2);
+    auto logicalSources = coordinatorConfigPtr->logicalSources.getValues();
+    EXPECT_EQ(logicalSources[0].getValue()->getLogicalSourceName(), "lsn1");
+    EXPECT_EQ(logicalSources[1].getValue()->getLogicalSourceName(), "lsn2");
+    auto firstSourceSchema = logicalSources[0].getValue()->getSchema();
+    auto secondSourceSchema = logicalSources[1].getValue()->getSchema();
+    EXPECT_EQ(firstSourceSchema->getSize(), 3);
+    EXPECT_EQ(secondSourceSchema->getSize(), 1);
+    EXPECT_TRUE(firstSourceSchema->contains("csv_id"));
+    EXPECT_TRUE(firstSourceSchema->contains("csv_id_2"));
+    EXPECT_TRUE(firstSourceSchema->contains("csv_id_3"));
+    EXPECT_TRUE(secondSourceSchema->contains("csv_id_4"));
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
