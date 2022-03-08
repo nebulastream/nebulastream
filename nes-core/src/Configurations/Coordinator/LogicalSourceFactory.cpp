@@ -131,11 +131,11 @@ DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType,
         return DataTypeFactory::createUInt64();
     }
 
-    if (fieldNodeType == "FLOAT" || fieldNodeType == "FLOAT32") {
+    if (fieldNodeType == "FLOAT32") {
         return DataTypeFactory::createFloat();
     }
 
-    if (fieldNodeType == "DOUBLE" || fieldNodeType == "FLOAT64") {
+    if (fieldNodeType == "FLOAT64") {
         return DataTypeFactory::createDouble();
     }
 
