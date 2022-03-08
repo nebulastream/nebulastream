@@ -30,8 +30,9 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <utility>
+#include <log4cxx/helpers/exception.h>
 #include <z3++.h>
 #include <API/Schema.hpp>
 
