@@ -429,7 +429,7 @@ bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
 //TODO #2475 also add another function that will only return a position if the node is a mobile node
 std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() { return locationCoordinates; }
 
-std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius){
+std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 
