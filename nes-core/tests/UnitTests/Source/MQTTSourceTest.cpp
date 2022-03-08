@@ -263,7 +263,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigTFLite) {
                                    ->addField(createField("PetalWidthCm", FLOAT32))
                                    ->addField(createField("SpeciesCode", UINT64))
                                    ->addField(createField("CreationTime", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalSource("iris", stream);
+    crd->getSourceCatalogService()->registerLogicalSource("iris", stream);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
