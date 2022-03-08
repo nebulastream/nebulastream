@@ -23,7 +23,6 @@ namespace NES {
 
 namespace Configurations {
 
-// TODO: parse the schema properly
 LogicalSourcePtr LogicalSourceFactory::createFromString(std::string ,
                                             std::map<std::string, std::string>& commandLineParams) {
     std::string logicalSourceName, fieldNodeName,
@@ -31,6 +30,10 @@ LogicalSourcePtr LogicalSourceFactory::createFromString(std::string ,
     for (auto parameter : commandLineParams) {
         if (parameter.first == LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG && !parameter.second.empty()) {
             logicalSourceName = parameter.second;
+        }
+
+        if (parameter.first == LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG && !parameter.second.empty()) {
+            // TODO: add issue for CLI parsing of array of values, currently we support only yaml
         }
     }
 
@@ -83,6 +86,7 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
     return LogicalSource::create(logicalSourceName, schema);
 }
 
+// TODO: ask in review if this can be moved elsewhere
 DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType,
                                                     std::string fieldNodeLength) {
     if (fieldNodeType == "string") {
