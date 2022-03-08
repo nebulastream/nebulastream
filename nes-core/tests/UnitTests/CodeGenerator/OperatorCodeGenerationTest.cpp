@@ -922,7 +922,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
         queryContext.reset();
     }
 }
-
+#ifdef TFDEF
 /**
  * @brief This test generates an infer model operator
  */
@@ -1013,7 +1013,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
 
     EXPECT_TRUE(true);
 }
-
+#endif
 /**
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
