@@ -170,6 +170,7 @@ if (NOT APPLE)
     endif ()
     # as per backward.h
     add_link_options("-ldw")
+    add_link_options("-lunwind")
 endif ()
 
 include(cmake/Sanitizers.cmake)
