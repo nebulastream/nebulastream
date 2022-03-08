@@ -15,7 +15,6 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include "Exceptions/InvalidQueryException.hpp"
-//#include "tensorflow/lite/interpreter.h"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
