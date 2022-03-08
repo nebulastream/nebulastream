@@ -59,8 +59,6 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
     }
 
-    // TODO: why do begin/end/++ iterator APIs of Yaml::Node not work (or why do they work as they are)?
-    // currently we can't do `for(auto sequenceMember : sequence){}` due to begin/end/++ being named differently
     if (yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].IsSequence()) {
         auto sequenceSize = yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].Size();
         for (uint64_t index = 0; index < sequenceSize; ++index) {
