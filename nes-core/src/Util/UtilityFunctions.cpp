@@ -104,10 +104,10 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
             }
             offset += fieldSize;
         }
-        auto ts = std::chrono::system_clock::now();
-        auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                 ts.time_since_epoch()).count();
-        ss << "," << std::to_string(expulsionTime);
+//        auto ts = std::chrono::system_clock::now();
+//        auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
+//                                 ts.time_since_epoch()).count();
+//        ss << "," << std::to_string(expulsionTime);
 
         ss << std::endl;
     }
