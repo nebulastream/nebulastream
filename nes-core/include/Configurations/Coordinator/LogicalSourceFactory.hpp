@@ -53,6 +53,14 @@ class LogicalSourceFactory {
     static LogicalSourcePtr createFromYaml(Yaml::Node& yamlConfig);
 
   private:
+    /**
+     * Return the appropriate NES type from yaml string configuration. Ignores
+     * fieldLength if it doesn't make sense, errors length is missing and type
+     * is string.
+     * @param fieldType the type of the schema field from yaml
+     * @param fieldLength the length of the field from yaml
+     * @return the appropriate DataTypePtr
+     */
     static DataTypePtr stringToFieldType(std::string fieldType, std::string fieldLength);
 };
 }// namespace Configurations
