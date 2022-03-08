@@ -66,3 +66,11 @@ optimizer:
 
   # Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
   #performOnlySourceOperatorExpansion: false
+# Set a single logical source with a single field in the schema
+logicalSources:
+  - logicalSourceName: "default_logical"
+    fields:
+      - name: "id"
+        type: "UINT32"
+      - name: "value"
+        type: "UINT64"
