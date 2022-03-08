@@ -2,11 +2,21 @@ FROM ubuntu:20.04 AS execimg
 ARG TARGETARCH
 COPY ./nes-$TARGETARCH.deb nes.deb
 
-RUN apt-get install -y wget && \
-    cd /tmp && \
-    wget https://github.com/sumegim/libternsorflowlite_c/raw/master/libtensorflowlite-c.tar.gz && \
-    tar -C /usr/local -xzf libtensorflowlite-c.tar.gz && \
-    ldconfig \
+# install tensorflow lite c library
+RUN git clone https://github.com/tensorflow/tensorflow.git tensorflow_src && \
+    cd tensorflow_src && \
+    git checkout v2.6.0 && \
+    cd .. && \
+    mkdir tflite_build && \
+    cd tflite_build && \
+    cmake ../tensorflow_src/tensorflow/lite/c && \
+    cmake --build . -j4 && \
+    make install && \
+    cd .. && \
+    mkdir -p /usr/local/include/tensorflow/lite && \
+    cp -R tensorflow_src/tensorflow/lite/* /usr/local/include/tensorflow/lite && \
+    cp tflite_build/libtensorflowlite_c.so /usr/local/lib/libtensorflowlite_c.so && \
+    ldconfig
 
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  \
     libstdc++-9-dev \

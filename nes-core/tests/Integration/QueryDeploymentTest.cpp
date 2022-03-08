@@ -846,6 +846,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
+#ifdef TFDEF
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
     struct Test {
         uint32_t id;
@@ -893,6 +894,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
     }
 //    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
 }
+#endif
+
 //TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
 //    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
 //    coordinatorConfig->setRpcPort(rpcPort);

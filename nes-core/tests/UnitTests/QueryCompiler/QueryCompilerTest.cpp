@@ -155,6 +155,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     cleanUpPlan(result->getExecutableQueryPlan());
 }
 
+#ifdef TFDEF
 /**
  * @brief Input Query Plan:
  *
@@ -205,6 +206,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
 
     ASSERT_FALSE(result->hasError());
 }
+#endif
 
 /**
  * @brief Input Query Plan:
@@ -235,9 +237,15 @@ TEST_F(QueryCompilerTest, mapQuery) {
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from(logicalSourceName)
-                     .map(Attribute("F2") = Attribute("F1") + 2.0)
+                     .map(Attribute("F1") = Attribute("F1") + 2.0)
                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);

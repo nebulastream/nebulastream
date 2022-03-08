@@ -11,11 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include "QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp"
+#ifdef TFDEF
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/c_api_experimental.h>
 #include <tensorflow/lite/c/common.h>
+#endif
+#include "QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp"
 #include <fstream>
 #include <iostream>
 #include <stdarg.h>
@@ -35,11 +36,14 @@ void NES::TensorflowAdapter::initializeModel(std::string model){
     input.close();
     std::cout << "MODEL SIZE: " << bytes.size() << std::endl;
 
+    #ifdef TFDEF
     printf("Hello from TensorFlow C library version %s\n", TfLiteVersion());
-
     TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
     interpreter = TfLiteInterpreterCreate(TfLiteModelCreateFromFile(model.c_str()), options);
     TfLiteInterpreterAllocateTensors(interpreter);
+    #else
+    printf("Tensoflow Disabled, use -DUSE_TF cmake option\n");
+    #endif
 
 }
 
@@ -48,10 +52,16 @@ void NES::TensorflowAdapter::initializeModel(std::string model){
 }
 
 float NES::TensorflowAdapter::getResultAt(int i) {
+    #ifdef TFDEF
     return output[i];
+    #else
+    if(i);
+    return 0.0;
+    #endif
 }
 
 void NES::TensorflowAdapter::infer(int n, ...){
+#ifdef TFDEF
     va_list vl;
     va_start(vl, n);
 
@@ -73,4 +83,8 @@ void NES::TensorflowAdapter::infer(int n, ...){
 
     output = o;
     free(input);
+#else
+    if(n);
+    if(output);
+#endif
 }

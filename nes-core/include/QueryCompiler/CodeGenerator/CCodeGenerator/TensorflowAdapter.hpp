@@ -17,10 +17,11 @@
 
 #include <memory>
 #include <vector>
+#ifdef TFDEF
 #include <tensorflow/lite/c/c_api.h>
 #include <tensorflow/lite/c/c_api_experimental.h>
 #include <tensorflow/lite/c/common.h>
-
+#endif
 
 namespace NES {
 
@@ -36,7 +37,9 @@ class TensorflowAdapter {
     void initializeModel(std::string model);
     void pass() {}
   private:
+    #ifdef TFDEF
     TfLiteInterpreter* interpreter;
+    #endif
     float* output{};
 };
 
