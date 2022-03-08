@@ -88,54 +88,54 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
 // TODO: ask in review if this can be moved elsewhere
 DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType,
                                                     std::string fieldNodeLength) {
-    if (fieldNodeType == "string") {
-        if (fieldNodeLength.empty() || fieldNodeLength == "\n") {
-            NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Type.");
+    if (fieldNodeType == "CHAR") {
+        if (fieldNodeLength.empty() || fieldNodeLength == "\n" || fieldNodeLength == "0") {
+            NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length properly.");
         }
         return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
     }
 
-    if (fieldNodeType == "boolean") {
+    if (fieldNodeType == "BOOLEAN") {
         return DataTypeFactory::createBoolean();
     }
 
-    if (fieldNodeType == "int8") {
+    if (fieldNodeType == "INT8") {
         return DataTypeFactory::createInt8();
     }
 
-    if (fieldNodeType == "uint8") {
+    if (fieldNodeType == "UINT8") {
         return DataTypeFactory::createUInt8();
     }
 
-    if (fieldNodeType == "int16") {
+    if (fieldNodeType == "INT16") {
         return DataTypeFactory::createInt16();
     }
 
-    if (fieldNodeType == "uint16") {
+    if (fieldNodeType == "UINT16") {
         return DataTypeFactory::createUInt16();
     }
 
-    if (fieldNodeType == "int32") {
+    if (fieldNodeType == "INT32") {
         return DataTypeFactory::createInt32();
     }
 
-    if (fieldNodeType == "uint32") {
+    if (fieldNodeType == "UINT32") {
         return DataTypeFactory::createUInt32();
     }
 
-    if (fieldNodeType == "int64") {
+    if (fieldNodeType == "INT64") {
         return DataTypeFactory::createInt64();
     }
 
-    if (fieldNodeType == "uint64") {
+    if (fieldNodeType == "UINT64") {
         return DataTypeFactory::createUInt64();
     }
 
-    if (fieldNodeType == "float") {
+    if (fieldNodeType == "FLOAT" || fieldNodeType == "FLOAT32") {
         return DataTypeFactory::createFloat();
     }
 
-    if (fieldNodeType == "double") {
+    if (fieldNodeType == "DOUBLE" || fieldNodeType == "FLOAT64") {
         return DataTypeFactory::createDouble();
     }
 
