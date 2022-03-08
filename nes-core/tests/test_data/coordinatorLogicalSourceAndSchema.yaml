@@ -12,16 +12,16 @@ logicalSources:
   - logicalSourceName: "lsn1"
     fields:
       - name: "csv_id"
-        type: "string"
+        type: "CHAR"
         length: 5
       - name: "csv_id_2"
-        type: "string"
+        type: "CHAR"
         length: 2
       - name: "csv_id_3"
-        type: "uint64"
+        type: "UINT64"
         length: 2
   - logicalSourceName: "lsn2"
     fields:
       - name: "csv_id_4"
-        type: "string"
+        type: "CHAR"
         length: 25
