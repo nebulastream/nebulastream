@@ -36,7 +36,7 @@ GeographicalLocation GeographicalLocationFactory::createFromString(std::string,
     return GeographicalLocation::fromString(coordStr);
 }
 
-
+//TODO make this function work. it currently returns the standard value even if another value is supplied via yaml
 GeographicalLocation GeographicalLocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
     auto configString = yamlConfig[LOCATION_COORDINATES_CONFIG].As<std::string>();
     if (!configString.empty() && configString != "\n") {

@@ -36,6 +36,12 @@ class GeographicalLocationFactory {
 
     static GeographicalLocation createFromString(std::string , std::map<std::string, std::string>& commandLineParams);
 
+    /**
+     * @brief obtains a Geographical location objects from yaml config
+     * @param yamlConfig: a yaml config otained from a file containing "locationCoordinates: <lat, lng>"
+     * @return A geographical location with the coordinates from the config entry, or <200, 200> (representing invalid coordinates)
+     * if the string was empty
+     */
     static GeographicalLocation createFromYaml(Yaml::Node& yamlConfig);
 };
 }

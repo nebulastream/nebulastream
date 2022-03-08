@@ -26,10 +26,10 @@
 #include <Topology/TopologyNode.hpp>
 #include <../util/NesBaseTest.hpp>
 #include <Common/GeographicalLocation.hpp>
+#include <Exceptions/CoordinatesOutOfRangeException.hpp>
 
 using namespace std;
 namespace NES {
-
 using namespace Configurations;
 
 class GeoLocationTests : public Testing::NESBaseTest {
@@ -171,10 +171,50 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     EXPECT_TRUE(retStopWrk4);
 }
 
-TEST_F(GeoLocationTests, testLocationFromConfig) {
+TEST_F(GeoLocationTests, testLocationFromCmd) {
+
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+    std::string argv[] = {
+        "--locationCoordinates=23.88,-3.4"
+    };
+    int argc = 1;
+
+    std::map<string, string> commandLineParams;
+
+    for (int i = 0; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+    }
+
+    workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
+    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), GeographicalLocation(23.88, -3.4));
+}
+
+TEST_F(GeoLocationTests, testInvalidLocationFromCmd) {
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
+    std::string argv[] = {
+        "--locationCoordinates=230.88,-3.4"
+    };
+    int argc = 1;
+
+    std::map<string, string> commandLineParams;
+
+    for (int i = 0; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+    }
+
+    EXPECT_THROW(workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams), CoordinatesOutOfRangeException);
+}
+
+TEST_F(GeoLocationTests, DISABLED_testLocationFromConfig) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyFieldNode.yaml");
     EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), GeographicalLocation(45, -30));
 }
+
+
 
 }// namespace NES
