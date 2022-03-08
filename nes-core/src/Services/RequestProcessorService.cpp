@@ -107,7 +107,7 @@ void RequestProcessorService::start() {
                     }
                 }
 
-                if (readyForPlacementAndDeployment) {
+                if (true) {
                     auto sharedQueryPlanToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
                     for (const auto& sharedQueryPlan : sharedQueryPlanToDeploy) {
                         SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
