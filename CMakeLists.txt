@@ -168,15 +168,9 @@ if (NOT APPLE)
         message(STATUS "we use LLD for linking")
         add_link_options("-fuse-ld=lld")
     endif ()
-endif ()
-
-# as per backwards.h
-if(is_host_musl)
-    message(STATUS "We link against DW, on musl")
+    # as per backward.h
     add_link_options("-ldw")
-else()
-    message(STATUS "We do not link against DW")
-endif()
+endif ()
 
 include(cmake/Sanitizers.cmake)
 
