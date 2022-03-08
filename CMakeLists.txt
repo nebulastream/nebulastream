@@ -171,7 +171,12 @@ if (NOT APPLE)
 endif ()
 
 # as per backwards.h
-add_link_options("-ldw")
+if(is_host_musl)
+    message(STATUS "We link against DW, on musl")
+    add_link_options("-ldw")
+else()
+    message(STATUS "We do not link against DW")
+endif()
 
 include(cmake/Sanitizers.cmake)
 
