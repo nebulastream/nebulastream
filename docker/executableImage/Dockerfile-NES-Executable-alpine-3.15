@@ -1,12 +1,13 @@
-FROM nebulastream/nes-build-image:alpine AS buildimg
+# CPACK will work but we can't install this on alpine itself, disabled for now
+# FROM nebulastream/nes-build-image:alpine AS buildimg
 
-COPY ./ /nebulastream
+# COPY ./ /nebulastream
 
-RUN mkdir -p /nebulastream/build && \
-    cd /nebulastream/build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
-    make version && make -j4 && cpack && mv *.deb /nes.deb && \
-    rm -rf /nebulastream/build/nes-dependencies-v15-x64-linux-nes.7z
+# RUN mkdir -p /nebulastream/build && \
+#   cd /nebulastream/build && \
+#    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
+#    make version && make -j4 && cpack && mv *.deb /nes.deb && \
+#    rm -rf /nebulastream/build/nes-dependencies-v15-x64-linux-nes.7z
 
 FROM alpine:3.15 AS execimg
 RUN apk add --no-cache --no-progress -q \
