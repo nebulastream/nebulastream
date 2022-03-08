@@ -161,27 +161,27 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
                            ->addField(createField("PetalLengthCm", FLOAT32))
                            ->addField(createField("PetalWidthCm", FLOAT32))
                            ->addField(createField("SpeciesCode", UINT64));)";
-        const std::string streamName = "iris";
+        const std::string sourceName = "iris";
 
-        streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-        streamCatalog->addLogicalStream(streamName, schema);
-        auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
 
-        SourceCatalogEntryPtr streamCatalogEntry1 =
-            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode3);
-        SourceCatalogEntryPtr streamCatalogEntry2 =
-            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode4);
+        SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+        SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
 
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
-        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry2);
 
         globalExecutionPlan = GlobalExecutionPlan::create();
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     }
 
     void topologyGenerator() {
@@ -219,9 +219,9 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
                            ->addField(createField("SpeciesCode", UINT64));)";
         const std::string streamName = "iris";
 
-        streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-        streamCatalog->addLogicalStream(streamName, schema);
-        auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog->addLogicalSource(streamName, schema);
+        auto logicalSource = sourceCatalog->getSourceForLogicalSource(streamName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
@@ -230,11 +230,11 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         for (int source : sources) {
             SourceCatalogEntryPtr streamCatalogEntry = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, nodes[source]);
-            streamCatalog->addPhysicalSource(streamName, streamCatalogEntry);
+            sourceCatalog->addPhysicalSource(streamName, streamCatalogEntry);
         }
 
         globalExecutionPlan = GlobalExecutionPlan::create();
-        typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -327,7 +327,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
