@@ -20,6 +20,7 @@
 #include <any>
 #include <optional>
 #include <Common/GeographicalLocation.hpp>
+#include <map>
 
 namespace NES {
 class TopologyNode;
