@@ -66,7 +66,11 @@ optimizer:
 
   # Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
   #performOnlySourceOperatorExpansion: false
+
 # Set a single logical source with a single field in the schema
+# Valid types are: INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, FLOAT32, UINT64, FLOAT64, BOOLEAN, CHAR
+# CHARS require the length key
+# FLOAT32 is float, FLOAT64 is double
 logicalSources:
   - logicalSourceName: "default_logical"
     fields:
