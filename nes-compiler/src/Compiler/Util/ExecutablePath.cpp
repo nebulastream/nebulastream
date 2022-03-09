@@ -103,7 +103,7 @@ RuntimePathConfig loadRuntimePathConfig() {
         }
     }
 
-    NES_INFO("RuntimePathConfig: " << runtimePathConfig);
+    NES_DEBUG("RuntimePathConfig: " << runtimePathConfig);
 
     return runtimePathConfig;
 }
