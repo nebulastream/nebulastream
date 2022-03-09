@@ -29,8 +29,8 @@ set_property(TARGET nes-common PROPERTY INTERFACE_LINK_LIBRARIES
         $<INSTALL_INTERFACE:>)
 
 
-register_public_headers(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
-register_public_headers(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
+register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
