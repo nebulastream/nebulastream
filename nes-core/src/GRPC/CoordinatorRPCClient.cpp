@@ -25,7 +25,7 @@
 #include <optional>
 #include <string>
 #include <log4cxx/helpers/exception.h>
-
+#include "health.grpc.pb.h"
 namespace NES {
 
 namespace detail {
@@ -485,6 +485,29 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::get
     }
     return nodesInRange;
 }
+
+
+bool CoordinatorRPCClient::checkCoordinatorHealth()
+{
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<grpc::health::v1::Health::Stub> workerStub = grpc::health::v1::Health::NewStub(chan);
+
+    grpc::health::v1::HealthCheckRequest request;
+    request.set_service("healthy_service");
+    grpc::health::v1::HealthCheckResponse response;
+    ClientContext context;
+    Status status = workerStub->Check(&context, request, &response);
+
+    if (status.ok()) {
+        NES_DEBUG("CoordinatorRPCClient::checkHealth: status ok return success=" << response.status());
+        return response.status();
+    } else {
+        NES_ERROR(" CoordinatorRPCClient::checkHealth error=" << status.error_code() << ": " << status.error_message());
+        return response.status();
+    }
+}
+
+
 bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
     EpochBarrierPropagationNotification request;
     request.set_timestamp(timestamp);

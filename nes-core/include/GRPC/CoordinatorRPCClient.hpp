@@ -123,6 +123,13 @@ class CoordinatorRPCClient {
                       GeographicalLocation coordinates);
 
     /**
+     * @brief method to check if the coordinator is alive
+     * @return bool indicating success
+     */
+    bool checkCoordinatorHealth();
+
+
+    /**
    * @brief method to unregister a node after the connection is established
    * @return bool indicating success
    */

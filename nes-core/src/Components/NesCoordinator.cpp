@@ -269,8 +269,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     healthThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
 
-        while (isRunning) {
-            NES_DEBUG("NesCoordinator: start health checking");
+      NES_DEBUG("NesCoordinator: start health checking");
+      while (isRunning) {
             auto root = topologyManagerService->getRootNode();
             auto topologyIterator = NES::DepthFirstNodeIterator(root).begin();
             while (topologyIterator != NES::DepthFirstNodeIterator::end()) {
@@ -305,7 +305,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
             uint64_t waitCnt = 0;
             while(waitCnt != 1 && isRunning)//change back to 60 later
             {
-                NES_TRACE("NesCoordinator: waitCnt=" << waitCnt);
+                NES_TRACE("NesCoordinator::healthCheck: waitCnt=" << waitCnt);
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 waitCnt++;
             }
@@ -369,7 +369,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
         else
         {
             NES_ERROR("NesCoordinator: health thread not joinable");
-            throw log4cxx::helpers::Exception("Error while stopping health->join");
+            NES_THROW_RUNTIME_ERROR("Error while stopping health->join in worker");
         }
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
