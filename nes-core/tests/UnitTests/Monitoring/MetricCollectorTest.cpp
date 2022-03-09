@@ -14,6 +14,7 @@
 
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
+#include "../../../tests/util/MetricValidator.hpp"
 
 #include <Monitoring/MonitoringCatalog.hpp>
 
@@ -93,7 +94,7 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
         NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
         auto bufferSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-        totalMetrics.writeToBuffer(tupleBuffer, 0);
+        writeToBuffer(totalMetrics, tupleBuffer, 0);
         EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
         NetworkMetrics parsedMetric{};
@@ -113,7 +114,7 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
     CpuMetricsWrapper wrappedMetric = cpuMetric.getValue<CpuMetricsWrapper>();
     auto bufferSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    wrappedMetric.writeToBuffer(tupleBuffer, 0);
+    writeToBuffer(wrappedMetric, tupleBuffer, 0);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
 
     CpuMetricsWrapper parsedMetric{};
@@ -137,7 +138,7 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
         CpuMetrics totalMetrics = wrappedMetric.getValue(0);
         auto bufferSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes();
         auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-        totalMetrics.writeToBuffer(tupleBuffer, 0);
+        writeToBuffer(totalMetrics, tupleBuffer, 0);
         EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
         CpuMetrics parsedMetric;
@@ -156,10 +157,10 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     EXPECT_EQ(diskMetric.getMetricType(), MetricType::DiskMetric);
     auto bufferSize = DiskMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    auto success = diskCollector.fillBuffer(tupleBuffer);
+    writeToBuffer(typedMetric, tupleBuffer, 0);
 
-    EXPECT_TRUE(success);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+    EXPECT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
 
     DiskMetrics parsedMetric{};
     readFromBuffer(parsedMetric, tupleBuffer, 0);
@@ -174,10 +175,10 @@ TEST_F(MetricCollectorTest, DISABLED_testMemoryCollector) {
     EXPECT_EQ(memoryMetric.getMetricType(), MetricType::MemoryMetric);
     auto bufferSize = MemoryMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    auto success = memoryCollector.fillBuffer(tupleBuffer);
+    writeToBuffer(typedMetric, tupleBuffer, 0);
 
-    EXPECT_TRUE(success);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+    EXPECT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
 
     MemoryMetrics parsedMetric{};
     readFromBuffer(parsedMetric, tupleBuffer, 0);
