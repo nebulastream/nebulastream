@@ -111,24 +111,20 @@ macro(project_enable_release)
                 COMMAND ${GIT_EXECUTABLE} push origin v${${PROJECT_NAME}_VERSION}
                 COMMENT "Released and pushed new tag to the repository")
     else ()
-        add_custom_target(patch_release COMMAND echo "Releasing NES ${${PROJECT_NAME}_VERSION}")
-        add_custom_command(TARGET patch_release
-                COMMAND echo "GIT-CI: Updating NES version to ${${PROJECT_NAME}_VERSION}"
-                COMMAND ${PROJECT_NAME}_VERSION_MINOR=${${${PROJECT_NAME}_VERSION_MINOR}+1}
-                COMMAND echo "MINOR VERSION ${${PROJECT_NAME}_VERSION_MINOR}"
-                COMMAND echo "src dir ${CMAKE_CURRENT_SOURCE_DIR}"
-                COMMAND ${CMAKE_COMMAND} -DMAJOR_VERSION="${${PROJECT_NAME}_VERSION_MAJOR}"
-                                         -DMINOR_VERSION="${${PROJECT_NAME}_VERSION_MINOR}"
-                                         -DPATCH_VERSION="${${PROJECT_NAME}_VERSION_PATCH}"
-                                         -DRELEASE="PATCH" -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UpdateVersion.cmake
-                COMMAND echo "GIT-CI: Updating NES version to ${${PROJECT_NAME}_VERSION}")
-#        add_custom_command(TARGET patch_release COMMAND cp -f ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-#                COMMAND sed -i 's/@NES_VERSION_MAJOR@/${${PROJECT_NAME}_VERSION_MAJOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-#                COMMAND sed -i 's/@NES_VERSION_MINOR@/${${PROJECT_NAME}_VERSION_MINOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-#                COMMAND sed -i 's/@NES_VERSION_PATCH@/${${PROJECT_NAME}_VERSION_PATCH}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp
-#                COMMAND sed -i 's/@NES_VERSION_POST_FIX@/${${PROJECT_NAME}_NES_VERSION_POST_FIX}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp)
+        add_custom_target(release COMMAND echo "Releasing NebulaStream")
+        add_custom_command(TARGET release
+                COMMAND echo "GIT-CI: Updating NES version"
+                COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
+                COMMAND echo "GIT-CI: Performing post release steps."
+                COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake)
 
-        add_custom_target(minor_release COMMAND echo "Releasing NES ${${PROJECT_NAME}_VERSION}")
+        add_custom_command(TARGET release
+                COMMAND ${GIT_EXECUTABLE} tag v${${PROJECT_NAME}_VERSION} -m "GIT-CI: Releasing New Tag v${${PROJECT_NAME}_VERSION}"
+                COMMAND ${GIT_EXECUTABLE} push origin v${${PROJECT_NAME}_VERSION}
+                COMMENT "Released and pushed new tag to the repository")
+
+
+        add_custom_target(minor_release COMMAND echo "Releasing NebulaStream")
         #add_executable(version)
         add_custom_command(TARGET minor_release
                 COMMAND echo "GIT-CI: Updating NES version to ${${PROJECT_NAME}_VERSION}"

@@ -68,7 +68,7 @@ set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
 # Find project version
-include(cmake/GetSemanticVersion.cmake)
+include(cmake/semver/GetSemanticVersion.cmake)
 
 # Custom CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
