@@ -618,7 +618,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
         trigger,
         triggerAction,
         0);
-
+    windowDefinition->setNumberOfInputEdges(1);
     auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1, 0);
 
@@ -701,7 +701,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
                                         trigger,
                                         triggerAction,
                                         0);
-
+    windowDefinition->setNumberOfInputEdges(1);
     auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1, 0);
 
@@ -851,7 +851,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
                                         trigger,
                                         triggerAction,
                                         0);
-
+    windowDefinition->setNumberOfInputEdges(1);
     auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1, 0);
     std::string codeString = codeGenerator->generateCode(context1);

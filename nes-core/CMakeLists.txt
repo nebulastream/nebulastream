@@ -122,6 +122,7 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/W
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayout.hpp Runtime/MemoryLayout/MemoryLayout.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/FaultToleranceType.hpp Util/FaultToleranceType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/LineageType.hpp Util/LineageType.hpp)
+register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/OriginId.hpp Operators/OriginId.hpp)
 
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
