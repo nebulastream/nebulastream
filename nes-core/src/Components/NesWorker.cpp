@@ -29,12 +29,14 @@
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/ThreadNaming.hpp>
 #include <csignal>
 #include <future>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <utility>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -110,7 +112,9 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
     const std::string kHealthyService("healthy_service");
-    healthCheckServiceImpl.SetStatus(kHealthyService, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
+    healthCheckServiceImpl.SetStatus(
+        kHealthyService,
+        grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
 
     rpcServer = builder.BuildAndStart();
@@ -118,6 +122,7 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress << ":" << actualRpcPort);
     //this call is already blocking
     handleRpcs(service);
+
     rpcServer->Wait();
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }
@@ -198,6 +203,31 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
+    healthThread = std::make_shared<std::thread>(([this]() {
+        setThreadName("nesHealth");
+
+        NES_DEBUG("NesWorker: start health checking");
+        while (isRunning) {
+            NES_DEBUG("NesWorker::healthCheck for worker id= " << coordinatorRpcClient->getId());
+
+            bool isAlive = coordinatorRpcClient->checkCoordinatorHealth();
+            if (isAlive) {
+                NES_DEBUG("NesWorker::healthCheck: for worker id=" << coordinatorRpcClient->getId() << " is alive");
+            } else {
+                NES_ERROR("NesWorker::healthCheck: for worker id=" << coordinatorRpcClient->getId() << " coordinator went down so shutting down the worker");
+                std::exit(-1);
+            }
+            uint64_t waitCnt = 0;
+            while (waitCnt != 1 && isRunning)//change back to 60 later
+            {
+                NES_TRACE("NesWorker::healthCheck: waitCnt=" << waitCnt);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                waitCnt++;
+            }
+        }
+        NES_DEBUG("NesCoordinator: stop health checking");
+    }));
+
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
         signal(SIGINT, termFunc);
@@ -228,11 +258,22 @@ bool NesWorker::stop(bool) {
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
-            throw log4cxx::helpers::Exception("NesWorker::stop  error while stopping node engine");
+            NES_THROW_RUNTIME_ERROR("NesWorker::stop  error while stopping node engine");
         }
         NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
-
         nodeEngine.reset();
+
+        //stop health check:
+        if (healthThread->joinable()) {
+            healthThread->join();
+            healthThread.reset();
+        }
+        else
+        {
+            NES_ERROR("NesWorker: health thread not joinable");
+            NES_THROW_RUNTIME_ERROR("Error while stopping health->join");
+        }
+
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
         //shut down the async queue
