@@ -185,7 +185,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from(logicalSourceName)
-                     .inferModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_95acc.tflite",
+                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
                                  {Attribute("F1"), Attribute("F1"), Attribute("F1"), Attribute("F1")},
                                  {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                      .sink(NullOutputSinkDescriptor::create());
