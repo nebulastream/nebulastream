@@ -63,6 +63,14 @@ Subprocess::~Subprocess() {
     logThread.join();
 }
 
+bool Subprocess::kill()
+{
+    NES_DEBUG("Killling pid=" << pid);
+    auto res = ::kill(pid, SIGKILL);
+    NES_DEBUG("Kill with ret=" << res);
+    return res;
+}
+
 void Subprocess::executeCommandInChildProcess(const std::vector<std::string>& argv) {
     if (dup2(outPipe[WRITE], STDOUT_FILENO) == -1) {
         std::perror("subprocess: dup2() failed");

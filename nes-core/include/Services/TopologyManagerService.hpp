@@ -98,6 +98,19 @@ class TopologyManagerService {
      */
     std::vector<std::pair<uint64_t , GeographicalLocation>> getNodesIdsInRange(GeographicalLocation center, double radius);
 
+    /**
+     * Method to return the root node
+     * @return root node
+     */
+    TopologyNodePtr getRootNode();
+
+    /**
+     * @brief This method will remove a given physical node
+     * @param nodeToRemove : the node to be removed
+     * @return true if successful
+     */
+    bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;

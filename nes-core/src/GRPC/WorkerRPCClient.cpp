@@ -14,6 +14,7 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
+#include "health.grpc.pb.h"
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
@@ -410,8 +411,28 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
     } else {
         NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
                   "error="
-                      << status.error_code() << ": " << status.error_message());
+                  << status.error_code() << ": " << status.error_message());
         throw log4cxx::helpers::Exception("Error while WorkerRPCClient::updateNetworkSinks");
     }
 }
+
+bool WorkerRPCClient::checkHealth(const std::string& address) {
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<grpc::health::v1::Health::Stub> workerStub = grpc::health::v1::Health::NewStub(chan);
+
+    grpc::health::v1::HealthCheckRequest request;
+    request.set_service("healthy_service");
+    grpc::health::v1::HealthCheckResponse response;
+    ClientContext context;
+    Status status = workerStub->Check(&context, request, &response);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::checkHealth: status ok return success=" << response.status());
+        return response.status();
+    } else {
+        NES_ERROR(" WorkerRPCClient::checkHealth error=" << status.error_code() << ": " << status.error_message());
+        return response.status();
+    }
+}
+
 }// namespace NES
