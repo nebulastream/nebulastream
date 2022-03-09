@@ -281,6 +281,8 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     Runtime::QueryManager::QueryMangerMode queryManagerMode;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
+    grpc::testing::HealthCheckServiceImpl healthCheckServiceImpl;
+    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

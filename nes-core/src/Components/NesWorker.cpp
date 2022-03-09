@@ -33,7 +33,8 @@
 #include <future>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-
+#include <grpcpp/ext/health_check_service_server_builder_option.h>
+#include <grpcpp/health_check_service_interface.h>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -104,6 +105,14 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials(), &actualRpcPort);
     builder.RegisterService(&service);
     completionQueue = builder.AddCompletionQueue();
+
+    std::unique_ptr<grpc::ServerBuilderOption> option(
+        new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
+    builder.SetOption(std::move(option));
+    const std::string kHealthyService("healthy_service");
+    healthCheckServiceImpl.SetStatus(kHealthyService, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
+    builder.RegisterService(&healthCheckServiceImpl);
+
     rpcServer = builder.BuildAndStart();
     portPromise->set_value(actualRpcPort);
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress << ":" << actualRpcPort);

@@ -47,7 +47,15 @@
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
+
+#include "health.grpc.pb.h"
+#include "health.pb.h"
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
+#include <Util/ThreadNaming.hpp>
+#include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <Topology/TopologyNode.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -78,7 +86,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       numberOfBuffersPerWorker(this->coordinatorConfiguration->numberOfBuffersPerWorker),
       numberOfBuffersInSourceLocalBufferPool(this->coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool),
       bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
-      enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
+      enableMonitoring(this->coordinatorConfiguration->enableMonitoring), health_check_service_disabled_(false) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -96,7 +104,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
-    workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
@@ -202,7 +209,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer: end listening");
     }));
     promRPC->get_future().get();
-
     NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");
 
     NES_DEBUG("NesCoordinator: Register Logical sources");
@@ -260,6 +266,54 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     }));
     NES_DEBUG("NESWorker::startCoordinatorRESTServer: ready");
 
+    healthThread = std::make_shared<std::thread>(([this]() {
+        setThreadName("nesHealth");
+
+        while (isRunning) {
+            NES_DEBUG("NesCoordinator: start health checking");
+            auto root = topologyManagerService->getRootNode();
+            auto topologyIterator = NES::DepthFirstNodeIterator(root).begin();
+            while (topologyIterator != NES::DepthFirstNodeIterator::end()) {
+                //get node
+                auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+
+                //get Address
+                auto nodeIp = currentTopologyNode->getIpAddress();
+                auto nodeGrpcPort = currentTopologyNode->getGrpcPort();
+                std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+
+                //check health
+                NES_DEBUG("NesCoordinator::healthCheck: checking node=" << destAddress);
+                auto res = workerRpcClient->checkHealth(destAddress);
+                if (res) {
+                    NES_DEBUG("NesCoordinator::healthCheck: node=" << destAddress << " is alive");
+                } else {
+                    NES_ERROR("NesCoordinator::healthCheck: node=" << destAddress << " went dead so we remove it");
+                    auto ret = topologyManagerService->removePhysicalNode(currentTopologyNode);
+                    if(ret)
+                    {
+                        NES_DEBUG("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
+                    }
+                    else
+                    {
+                        NES_THROW_RUNTIME_ERROR("Node wen offline but could not wie be removed");
+                    }
+                }
+                ++topologyIterator;
+            }
+
+            uint64_t waitCnt = 0;
+            while(waitCnt != 1 && isRunning)//change back to 60 later
+            {
+                NES_TRACE("NesCoordinator: waitCnt=" << waitCnt);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                waitCnt++;
+            }
+        }
+
+        NES_DEBUG("NesCoordinator: stop health checking");
+    }));
+
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread->join();
@@ -307,6 +361,17 @@ bool NesCoordinator::stopCoordinator(bool force) {
         }
         NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
 
+        //stop health check:
+        if (healthThread->joinable()) {
+            healthThread->join();
+            healthThread.reset();
+        }
+        else
+        {
+            NES_ERROR("NesCoordinator: health thread not joinable");
+            throw log4cxx::helpers::Exception("Error while stopping health->join");
+        }
+
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
 
@@ -316,6 +381,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
             rpcThread.reset();
+
         } else {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             throw log4cxx::helpers::Exception("Error while stopping thread->join");
@@ -339,6 +405,14 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
+
+    std::unique_ptr<grpc::ServerBuilderOption> option(
+        new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
+    builder.SetOption(std::move(option));
+    const std::string kHealthyService("healthy_service");
+    healthCheckServiceImpl.SetStatus(kHealthyService, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
+    builder.RegisterService(&healthCheckServiceImpl);
+
     rpcServer = builder.BuildAndStart();
     prom->set_value(true);
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
