@@ -13,7 +13,6 @@
 */
 #ifdef TFDEF
 #include <tensorflow/lite/c/c_api.h>
-#include <tensorflow/lite/c/c_api_experimental.h>
 #include <tensorflow/lite/c/common.h>
 #endif
 #include "QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp"
@@ -66,23 +65,27 @@ void NES::TensorflowAdapter::infer(int n, ...){
     va_start(vl, n);
 
     TfLiteTensor* input_tensor = TfLiteInterpreterGetInputTensor(interpreter, 0);
+    int input_size = (int) (TfLiteTensorByteSize(input_tensor));
 
-    float* input = (float*) malloc(4 * sizeof(float));
-    float* o = (float*) malloc(3 * sizeof(float));
+    float* input = (float*) malloc(input_size);
 
     for (int i = 0; i < n; ++i) {
         input[i] = (float) va_arg(vl, double);
     }
     va_end(vl);
 
-    TfLiteTensorCopyFromBuffer(input_tensor, input, 4 * sizeof(float));
+    TfLiteTensorCopyFromBuffer(input_tensor, input, input_size);
     TfLiteInterpreterInvoke(interpreter);
     const TfLiteTensor* output_tensor = TfLiteInterpreterGetOutputTensor(interpreter, 0);
 
-    TfLiteTensorCopyToBuffer(output_tensor, o, 3 * sizeof(float));
-
-    output = o;
     free(input);
+    if(output != nullptr){
+        free(output);
+    }
+
+    int output_size = (int) (TfLiteTensorByteSize(output_tensor));
+    output = (float*) malloc(output_size);
+    TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
 #else
     if(n);
     if(output);
