@@ -198,4 +198,12 @@ std::vector<std::pair<uint64_t , GeographicalLocation>> TopologyManagerService::
     return nodeIDsInRange;
 }
 
+TopologyNodePtr TopologyManagerService::getRootNode()
+{
+    return topology->getRoot();
+}
+
+bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
+    return topology->removePhysicalNode(nodeToRemove);
+}
 }// namespace NES

@@ -99,7 +99,7 @@ class TestUtils {
    * @return coordinator process, which terminates if it leaves the scope
    */
     [[nodiscard]] static Util::Subprocess startCoordinator(std::initializer_list<std::string> list) {
-        NES_INFO("Start coordinator");
+        NES_DEBUG("Start coordinator");
         return {std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesCoordinator", list};
     }
 

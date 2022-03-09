@@ -37,6 +37,10 @@ class Subprocess {
     Subprocess(std::string cmd, std::vector<std::string> argv);
     ~Subprocess();
 
+    bool kill();
+
+    uint64_t getPid(){return pid;};
+
   private:
     /**
      * @brief read a _IO_FILE and pipe the content to an output stream

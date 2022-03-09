@@ -184,6 +184,14 @@ class WorkerRPCClient {
      */
     bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address);
 
+    /**
+     * @brief method to check the health of the worker
+     * @param address: ip address of the source
+     * @return bool indicating success
+     */
+    bool checkHealth(const std::string& address);
+
+
   private:
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
