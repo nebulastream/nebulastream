@@ -19,6 +19,7 @@
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <GRPC/HealthCheckRPCImpl.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
@@ -29,14 +30,13 @@
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <csignal>
 #include <future>
-#include <log4cxx/helpers/exception.h>
-#include <utility>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <log4cxx/helpers/exception.h>
 #include <utility>
+
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -108,10 +108,12 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     builder.RegisterService(&service);
     completionQueue = builder.AddCompletionQueue();
 
+    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
     std::unique_ptr<grpc::ServerBuilderOption> option(
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
     const std::string kHealthyService("healthy_service");
+    HealthCheckRPCImpl healthCheckServiceImpl;
     healthCheckServiceImpl.SetStatus(
         kHealthyService,
         grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
@@ -183,7 +185,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort.load());
     NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":"
                                                                                           << localWorkerRpcPort.load());
-
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
         bool con = connect();
@@ -202,31 +203,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
-
-    healthThread = std::make_shared<std::thread>(([this]() {
-        setThreadName("nesHealth");
-
-        NES_DEBUG("NesWorker: start health checking");
-        while (isRunning) {
-            NES_DEBUG("NesWorker::healthCheck for worker id= " << coordinatorRpcClient->getId());
-
-            bool isAlive = coordinatorRpcClient->checkCoordinatorHealth();
-            if (isAlive) {
-                NES_DEBUG("NesWorker::healthCheck: for worker id=" << coordinatorRpcClient->getId() << " is alive");
-            } else {
-                NES_ERROR("NesWorker::healthCheck: for worker id=" << coordinatorRpcClient->getId() << " coordinator went down so shutting down the worker");
-                std::exit(-1);
-            }
-            uint64_t waitCnt = 0;
-            while (waitCnt != 1 && isRunning)//change back to 60 later
-            {
-                NES_TRACE("NesWorker::healthCheck: waitCnt=" << waitCnt);
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                waitCnt++;
-            }
-        }
-        NES_DEBUG("NesCoordinator: stop health checking");
-    }));
 
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
@@ -253,8 +229,16 @@ bool NesWorker::isWorkerRunning() const noexcept { return isRunning; }
 
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
+
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
+        NES_DEBUG("NesWorker::stop health check");
+        if (connected && healthCheckService) {
+            healthCheckService->stopHealthCheck();
+        } else {
+            NES_WARNING("No health check service was created");
+        }
+
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
@@ -262,17 +246,6 @@ bool NesWorker::stop(bool) {
         }
         NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
         nodeEngine.reset();
-
-        //stop health check:
-        if (healthThread->joinable()) {
-            healthThread->join();
-            healthThread.reset();
-        }
-        else
-        {
-            NES_ERROR("NesWorker: health thread not joinable");
-            NES_THROW_RUNTIME_ERROR("Error while stopping health->join");
-        }
 
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
@@ -312,6 +285,9 @@ bool NesWorker::connect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
+        healthCheckService = std::make_shared<HealthCheckService>(coordinatorRpcClient);
+        NES_DEBUG("NesWorker start health check");
+        healthCheckService->startHealthCheck();
         return true;
     }
     NES_DEBUG("NesWorker::registerNode rpc register failed");
@@ -324,6 +300,9 @@ bool NesWorker::disconnect() {
     bool successPRCRegister = coordinatorRpcClient->unregisterNode();
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc unregister success");
+        connected = false;
+        NES_DEBUG("NesWorker::stop health check");
+        healthCheckService->stopHealthCheck();
         return true;
     }
     NES_DEBUG("NesWorker::registerNode rpc unregister failed");
@@ -433,7 +412,7 @@ bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
     return success;
 }
 
-void NesWorker::onFatalError(int signalNumber, std::string callstack){
+void NesWorker::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::string errorMsg;
     std::cerr << "QNesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
@@ -441,7 +420,8 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack){
     std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
     // save errors in errorMsg
-    errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + callstack;
+    errorMsg =
+        "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + callstack;
     //send it to Coordinator
     this->notifyErrors(this->getWorkerId(), errorMsg);
 #ifdef ENABLE_CORE_DUMPER

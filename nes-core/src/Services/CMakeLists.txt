@@ -20,4 +20,5 @@ add_source_files(nes-core
         TopologyManagerService.cpp
         MaintenanceService.cpp
         ReplicationService.cpp
+        HealthCheckService.cpp
 )

@@ -21,6 +21,7 @@
 #include <vector>
 #include <optional>
 #include <Common/GeographicalLocation.hpp>
+#include <Topology/TopologyNode.hpp>
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif

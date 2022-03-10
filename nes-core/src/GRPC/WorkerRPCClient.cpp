@@ -14,7 +14,7 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
-#include "health.grpc.pb.h"
+#include <health.grpc.pb.h>
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
