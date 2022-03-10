@@ -37,8 +37,16 @@ class Subprocess {
     Subprocess(std::string cmd, std::vector<std::string> argv);
     ~Subprocess();
 
+    /**
+     * Method to kill a process
+     * @return success code
+     */
     bool kill();
 
+    /**
+     * Method to get the pid of a process
+     * @retun pid
+     */
     uint64_t getPid(){return pid;};
 
   private:

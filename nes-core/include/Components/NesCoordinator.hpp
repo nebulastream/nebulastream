@@ -29,7 +29,8 @@
 #include <vector>
 #include <Services/TopologyManagerService.hpp>
 #include <grpcpp/health_check_service_interface.h>
-#include <GRPC/HealthCheckService.hpp>
+#include <Services/HealthCheckService.hpp>
+
 namespace grpc {
 class Server;
 }
@@ -231,11 +232,11 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     uint64_t bufferSizeInBytes;
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
-    std::shared_ptr<std::thread> healthThread;
     std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
+    HealthCheckServicePtr healthCheckService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     SourceCatalogPtr sourceCatalog;
@@ -254,10 +255,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     WorkerConfigurationPtr workerConfig;
     Catalogs::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
-    grpc::testing::HealthCheckServiceImpl healthCheckServiceImpl;
-    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
-
-    bool health_check_service_disabled_;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 

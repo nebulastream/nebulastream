@@ -48,18 +48,14 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 
-#include "health.grpc.pb.h"
-#include "health.pb.h"
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <health.pb.h>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Util/ThreadNaming.hpp>
-#include <grpcpp/ext/health_check_service_server_builder_option.h>
-#include <Topology/TopologyNode.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
-#include <log4cxx/helpers/exception.h>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <GRPC/HealthCheckRPCImpl.hpp>
+#include <grpcpp/ext/health_check_service_server_builder_option.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -86,7 +82,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       numberOfBuffersPerWorker(this->coordinatorConfiguration->numberOfBuffersPerWorker),
       numberOfBuffersInSourceLocalBufferPool(this->coordinatorConfiguration->numberOfBuffersInSourceLocalBufferPool),
       bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
-      enableMonitoring(this->coordinatorConfiguration->enableMonitoring), health_check_service_disabled_(false) {
+      enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -264,55 +260,12 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         restServer->start();//this call is blocking
         NES_DEBUG("NesCoordinator: startRestServer thread terminates");
     }));
-    NES_DEBUG("NESWorker::startCoordinatorRESTServer: ready");
 
-    healthThread = std::make_shared<std::thread>(([this]() {
-        setThreadName("nesHealth");
+    NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-      NES_DEBUG("NesCoordinator: start health checking");
-      while (isRunning) {
-            auto root = topologyManagerService->getRootNode();
-            auto topologyIterator = NES::DepthFirstNodeIterator(root).begin();
-            while (topologyIterator != NES::DepthFirstNodeIterator::end()) {
-                //get node
-                auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-
-                //get Address
-                auto nodeIp = currentTopologyNode->getIpAddress();
-                auto nodeGrpcPort = currentTopologyNode->getGrpcPort();
-                std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
-
-                //check health
-                NES_DEBUG("NesCoordinator::healthCheck: checking node=" << destAddress);
-                auto res = workerRpcClient->checkHealth(destAddress);
-                if (res) {
-                    NES_DEBUG("NesCoordinator::healthCheck: node=" << destAddress << " is alive");
-                } else {
-                    NES_ERROR("NesCoordinator::healthCheck: node=" << destAddress << " went dead so we remove it");
-                    auto ret = topologyManagerService->removePhysicalNode(currentTopologyNode);
-                    if(ret)
-                    {
-                        NES_DEBUG("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
-                    }
-                    else
-                    {
-                        NES_THROW_RUNTIME_ERROR("Node wen offline but could not wie be removed");
-                    }
-                }
-                ++topologyIterator;
-            }
-
-            uint64_t waitCnt = 0;
-            while(waitCnt != 1 && isRunning)//change back to 60 later
-            {
-                NES_TRACE("NesCoordinator::healthCheck: waitCnt=" << waitCnt);
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                waitCnt++;
-            }
-        }
-
-        NES_DEBUG("NesCoordinator: stop health checking");
-    }));
+    healthCheckService = std::make_shared<HealthCheckService>(topologyManagerService, workerRpcClient);
+    NES_DEBUG("NesCoordinator start health check");
+    healthCheckService->startHealthCheck();
 
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
@@ -333,7 +286,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
             NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
-            throw log4cxx::helpers::Exception("Error while stopping NesCoordinator");
+            NES_THROW_RUNTIME_ERROR("Error while stopping NesCoordinator");
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
 
@@ -342,7 +295,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             restThread->join();
         } else {
             NES_ERROR("NesCoordinator: rest thread not joinable");
-            throw log4cxx::helpers::Exception("Error while stopping thread->join");
+            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
         queryRequestProcessorService->shutDown();
@@ -351,26 +304,18 @@ bool NesCoordinator::stopCoordinator(bool force) {
             queryRequestProcessorThread->join();
         } else {
             NES_ERROR("NesCoordinator: query processor thread not joinable");
-            throw log4cxx::helpers::Exception("Error while stopping thread->join");
+            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
             NES_ERROR("NesCoordinator::stop node engine stop not successful");
-            throw log4cxx::helpers::Exception("NesCoordinator::stop error while stopping node engine");
+            NES_THROW_RUNTIME_ERROR("NesCoordinator::stop error while stopping node engine");
         }
         NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
 
-        //stop health check:
-        if (healthThread->joinable()) {
-            healthThread->join();
-            healthThread.reset();
-        }
-        else
-        {
-            NES_ERROR("NesCoordinator: health thread not joinable");
-            NES_THROW_RUNTIME_ERROR("Error while stopping health->join in worker");
-        }
+        NES_DEBUG("NesCoordinator::stop health check");
+        healthCheckService->stopHealthCheck();
 
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
@@ -384,7 +329,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
         } else {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
-            throw log4cxx::helpers::Exception("Error while stopping thread->join");
+            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
         return true;
     }
@@ -406,10 +351,12 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
 
+    std::unique_ptr<grpc::HealthCheckServiceInterface> healthCheckServiceInterface;
     std::unique_ptr<grpc::ServerBuilderOption> option(
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
     const std::string kHealthyService("healthy_service");
+    HealthCheckRPCImpl healthCheckServiceImpl;
     healthCheckServiceImpl.SetStatus(kHealthyService, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
 

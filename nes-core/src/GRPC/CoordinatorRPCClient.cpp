@@ -25,7 +25,7 @@
 #include <optional>
 #include <string>
 #include <log4cxx/helpers/exception.h>
-#include "health.grpc.pb.h"
+#include <health.grpc.pb.h>
 namespace NES {
 
 namespace detail {
