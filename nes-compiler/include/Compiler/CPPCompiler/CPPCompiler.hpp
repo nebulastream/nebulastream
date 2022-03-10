@@ -31,6 +31,7 @@ class ClangFormat;
 class CPPCompiler : public LanguageCompiler {
   public:
     CPPCompiler();
+    ~CPPCompiler();
 
     /**
      * @brief Creates a new instance of the cpp compiler.
@@ -48,8 +49,6 @@ class CPPCompiler : public LanguageCompiler {
     * @return language
     */
     [[nodiscard]] std::string getLanguage() const override;
-
-    ~CPPCompiler() override = default;
 
   private:
     /**

@@ -40,8 +40,14 @@ CompilationResult JITCompiler::handleRequest(std::shared_ptr<const CompilationRe
 }
 
 std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
-    auto asyncResult = std::async(std::launch::async, [this, request]() {
-        return this->handleRequest(request);
+    auto asyncResult = std::async(std::launch::deferred, [this, request]() {
+        try {
+            return this->handleRequest(request);
+        }catch (...){
+            NES_DEBUG("REQUEST HANDLER");
+            return CompilationResult(nullptr, Timer(""));
+        }
+
     });
     return asyncResult;
 }
