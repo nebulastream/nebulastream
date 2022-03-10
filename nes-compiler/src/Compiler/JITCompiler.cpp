@@ -46,4 +46,8 @@ std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const Compil
     return asyncResult;
 }
 
+JITCompiler::~JITCompiler() {
+    NES_DEBUG("~JITCompiler")
+}
+
 }// namespace NES::Compiler
