@@ -286,6 +286,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;
+    bool tfInstalled{false};
     uint64_t numberOfQueues;
     uint64_t numberOfThreadsPerQueue;
     Runtime::QueryManager::QueryMangerMode queryManagerMode;

@@ -33,6 +33,7 @@ service WorkerRPCService {
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
+
 }
 
 message DeployQueryRequest {

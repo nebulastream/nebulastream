@@ -24,6 +24,7 @@
 #include <Compiler/SourceCode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+//#include <Nodes/Expressions/ExpressionItem.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
@@ -45,6 +46,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -71,8 +73,10 @@
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <API/Expressions/Expressions.hpp>
 
 namespace NES::QueryCompilation {
 CCodeGenerator::CCodeGenerator() {}
@@ -371,6 +375,71 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
     context->code->currentCodeInsertionPoint->addStatement(predicatedFilter.createCopy());
     context->setTrueTuplePassesFiltersIsDeclared();
     context->code->currentCodeInsertionPoint = predicatedFilter.getCompoundStatement();
+    return true;
+}
+
+/**
+ * @brief Code generation for an infer model operator
+ * @return flag if the generation was successful.
+ */
+bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) {
+
+    for (auto f : inputFields){
+        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
+    }
+
+    auto code = context->code;
+    auto tf = getTypeFactory();
+    auto recordHandler = context->getRecordHandler();
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+    int64_t inferModelOperatorHandlerIndex = 0;
+
+    code->variableInitStmts.push_back(call("TfLiteVersion"));
+
+    auto inferModelOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inferModelOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Join::InferModelOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(inferModelOperatorHandlerIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement =
+        VarDeclStatement(inferModelOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    auto tensorflowDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tensorflowAdapter");
+    auto tensorflowDeclStatement = VarDeclStatement(tensorflowDeclaration).assign(call("inferModelOperatorHandler->getTensorflowAdapter"));
+    code->variableInitStmts.push_back(tensorflowDeclStatement.copy());
+
+    auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
+    generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
+
+    for (auto f : inputFields){
+        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
+        auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
+        generateTensorFlowInferCall->addParameter(
+            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]
+                .accessRef(VarRef(variableDeclaration)));
+    }
+
+    code->currentCodeInsertionPoint->addStatement(generateTensorFlowInferCall);
+
+    for (unsigned long i = 0; i < outputFields.size(); ++i) {
+        auto field = outputFields.at(i)->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
+
+        auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
+        auto attributeVariable = VarDeclStatement(variableDeclaration);
+
+        auto getResultCall = call("tensorflowAdapter->getResultAt");
+        getResultCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) i))));
+        auto assignedMap = attributeVariable.assign(getResultCall).copy();
+
+        recordHandler->registerAttribute(attrField->getName(), VarRef(variableDeclaration).copy());
+        code->currentCodeInsertionPoint->addStatement(assignedMap);
+    }
+
     return true;
 }
 
@@ -2837,6 +2906,12 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
     setupWindowHandler->addParameter(VarRef(hashMapFactory));
     setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
+    return 0;
+}
+
+uint64_t CCodeGenerator::generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler){
+
+    context->registerOperatorHandler(operatorHandler);
     return 0;
 }
 

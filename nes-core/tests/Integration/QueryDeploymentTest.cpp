@@ -483,6 +483,51 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
+#ifdef TFDEF
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
+    struct Test {
+        uint32_t id;
+        uint32_t value;
+    };
+
+    auto defaultLogicalSchema =
+        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+
+    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
+
+    string query = R"(Query::from("test").inferModel(")" + std::string(TEST_DATA_DIRECTORY) + R"(iris_95acc.tflite",
+                        {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
+                        {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
+                        .filter(Attribute("iris0") > 0))";
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("test", defaultLogicalSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("test") //2
+                                  .attachWorkerWithMemorySourceToCoordinator("test");//3
+
+    for (int i = 0; i < 10; ++i) {
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
+    }
+    testHarness.validate().setupTopology();
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
+    struct Output {
+        uint32_t id;
+        uint32_t value;
+        float_t iris0;
+        float_t iris1;
+        float_t iris2;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
+    };
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "BottomUp", "NONE", "IN_MEMORY");
+//    for (auto record : actualOutput){
+//        std::cout << record.id << ", " << record.value << ", " << record.iris0 << ", " << record.iris1 << ", " << record.iris2 << std::endl;
+//    }
+    EXPECT_EQ(actualOutput.size(), 20);
+}
+#endif
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     struct Test {
@@ -629,6 +674,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
+//    bool retStopWrk2 = wrk2->stop(true);
+//    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

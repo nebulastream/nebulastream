@@ -14,10 +14,10 @@
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include "Exceptions/InvalidQueryException.hpp"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -222,6 +222,20 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
                      .project(Attribute("id").as("new_id"), Attribute("value"))
                      .sink(FileSinkDescriptor::create(""));
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)), InvalidQueryException);
+}
+
+TEST_F(SemanticQueryValidationTest, validInferModelTest) {
+    NES_INFO("Valid inferModel test");
+
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
+
+    auto query = Query::from("default_logical")
+        .inferModel("models/iris.tflite",
+                    {Attribute("value"), Attribute("id")},
+                    {Attribute("prediction")})
+        .filter(Attribute("prediction") > 42)
+        .sink(FileSinkDescriptor::create(""));
 }
 
 }// namespace NES

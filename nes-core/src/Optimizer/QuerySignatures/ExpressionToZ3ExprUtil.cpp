@@ -156,6 +156,10 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
 
+        if(left->getExpr()->is_fpa() || right->getExpr()->is_fpa()){
+            auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_lt(*context, *left->getExpr(), *right->getExpr())));
+            return Z3ExprAndFieldMap::create(expr, leftFieldMap);
+        }
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_lt(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
     } else if (expression->instanceOf<LessEqualsExpressionNode>()) {
@@ -166,7 +170,10 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         //Merge the right field map into left field map
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
-
+        if(left->getExpr()->is_fpa() || right->getExpr()->is_fpa()){
+            auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_leq(*context, *left->getExpr(), *right->getExpr())));
+            return Z3ExprAndFieldMap::create(expr, leftFieldMap);
+        }
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_le(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
     } else if (expression->instanceOf<GreaterExpressionNode>()) {
@@ -177,7 +184,10 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         //Merge the right field map into left field map
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
-
+        if(left->getExpr()->is_fpa() || right->getExpr()->is_fpa()){
+            auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_gt(*context, *left->getExpr(), *right->getExpr())));
+            return Z3ExprAndFieldMap::create(expr, leftFieldMap);
+        }
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_gt(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
     } else if (expression->instanceOf<GreaterEqualsExpressionNode>()) {
@@ -188,7 +198,10 @@ Z3ExprAndFieldMapPtr ExpressionToZ3ExprUtil::createForLogicalExpressions(const E
         //Merge the right field map into left field map
         auto leftFieldMap = left->getFieldMap();
         leftFieldMap.merge(right->getFieldMap());
-
+        if(left->getExpr()->is_fpa() || right->getExpr()->is_fpa()){
+            auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_fpa_geq(*context, *left->getExpr(), *right->getExpr())));
+            return Z3ExprAndFieldMap::create(expr, leftFieldMap);
+        }
         auto expr = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_ge(*context, *left->getExpr(), *right->getExpr())));
         return Z3ExprAndFieldMap::create(expr, leftFieldMap);
     } else if (expression->instanceOf<EqualsExpressionNode>()) {

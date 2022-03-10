@@ -124,6 +124,9 @@ class QuerySignatureUtil {
      */
     static QuerySignaturePtr createQuerySignatureForUnion(const z3::ContextPtr& context,
                                                           const UnionLogicalOperatorNodePtr& unionOperator);
+
+    static QuerySignaturePtr createQuerySignatureForInferModel(const z3::ContextPtr& context,
+                                                        const InferModelLogicalOperatorNodePtr& inferModelOperator);
 };
 }// namespace NES::Optimizer
 

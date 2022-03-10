@@ -169,6 +169,8 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
+    BoolOption tfInstalled = {TF_INSTALLED_CONFIG, false, "TF lite installed"};
+
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
     /**
@@ -220,7 +222,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &queryManagerMode,
-                &configPath};
+                &configPath,
+                &tfInstalled};
     }
 };
 }// namespace Configurations

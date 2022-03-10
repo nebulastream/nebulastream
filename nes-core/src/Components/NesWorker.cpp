@@ -56,7 +56,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
       locationCoordinates(getGeoLocOptionFromString(workerConfig->locationCoordinates.getValue())),
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
-      enableMonitoring(workerConfig->enableMonitoring.getValue()), numberOfQueues(workerConfig->numberOfQueues.getValue()),
+      enableMonitoring(workerConfig->enableMonitoring.getValue()), tfInstalled(workerConfig->tfInstalled.getValue()), numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
       queryManagerMode(workerConfig->queryManagerMode.getValue()) {
     setThreadName("NesWorker");
@@ -256,7 +256,8 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  numberOfSlots,
                                                                  registrationMetrics,
-                                                                 locationCoordinates);
+                                                                 locationCoordinates,
+                                                                 tfInstalled);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {

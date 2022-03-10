@@ -36,12 +36,14 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                            request->grpcport(),
                                                            request->dataport(),
                                                            request->numberofslots(),
+                                                           request->tfinstalled(),
                                                            request->coordinates());
     } else {
         id = topologyManagerService->registerNode(request->address(),
                                                            request->grpcport(),
                                                            request->dataport(),
-                                                           request->numberofslots());
+                                                           request->numberofslots(),
+                                                           request->tfinstalled());
     }
 
     auto registrationMetrics = std::make_shared<Metric>(RegistrationMetrics(request->registrationmetrics()), MetricType::RegistrationMetric);

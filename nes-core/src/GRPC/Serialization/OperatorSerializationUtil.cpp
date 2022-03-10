@@ -21,6 +21,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -88,6 +89,7 @@
 #endif
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <fstream>
 #endif
 
 namespace NES {
@@ -141,7 +143,35 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator.mutable_details()->PackFrom(mapDetails);
-    } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        // serialize infer model operator
+        auto inferModelDetails = SerializableOperator_InferModelDetails();
+        auto inferModelOperator = operatorNode->as<InferModelLogicalOperatorNode>();
+
+        for (auto& exp : inferModelOperator->getInputFieldsAsPtr()) {
+            auto* mutableInputFields = inferModelDetails.mutable_inputfields()->Add();
+            ExpressionSerializationUtil::serializeExpression(exp->getExpressionNode(), mutableInputFields);
+        }
+        for (auto& exp : inferModelOperator->getOutputFieldsAsPtr()) {
+            auto* mutableOutputFields = inferModelDetails.mutable_outputfields()->Add();
+            ExpressionSerializationUtil::serializeExpression(exp->getExpressionNode(), mutableOutputFields);
+        }
+        inferModelDetails.set_mlfilename(inferModelOperator->getDeployedModelPath());
+
+        std::ifstream input(inferModelOperator->getModel(), std::ios::binary);
+
+        std::string bytes(
+            (std::istreambuf_iterator<char>(input)),
+            (std::istreambuf_iterator<char>()));
+
+        input.close();
+
+        inferModelDetails.set_mlfilecontent(bytes);
+
+        serializedOperator.mutable_details()->PackFrom(inferModelDetails);
+
+    }
+    else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
         // serialize CEPIteration operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CEPIterationLogicalOperatorNode");
         auto iterationDetails = SerializableOperator_CEPIterationDetails();
@@ -244,7 +274,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedFilterOperator);
         // de-serialize filter expression
         auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
-        operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression);
+        auto selectivity = serializedFilterOperator.selectivity();
+        operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression, selectivity);
     } else if (details.Is<SerializableOperator_ProjectionDetails>()) {
         // de-serialize projection operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to ProjectionLogicalOperator");
@@ -289,6 +320,31 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto fieldAssignmentExpression =
             ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
         operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>());
+    } else if (details.Is<SerializableOperator_InferModelDetails>()) {
+        // de-serialize infer model operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to InferModelLogicalOperator");
+        auto serializedInferModelOperator = SerializableOperator_InferModelDetails();
+        details.UnpackTo(&serializedInferModelOperator);
+
+        std::vector<ExpressionItemPtr> inputFields;
+        std::vector<ExpressionItemPtr> outputFields;
+
+        for (auto mutableInputField : *serializedInferModelOperator.mutable_inputfields()) {
+            auto inputField = ExpressionSerializationUtil::deserializeExpression(&mutableInputField);
+            inputFields.push_back(std::make_shared<ExpressionItem>(inputField));
+        }
+        for (auto mutableOutputField : *serializedInferModelOperator.mutable_outputfields()) {
+            auto outputField = ExpressionSerializationUtil::deserializeExpression(&mutableOutputField);
+            outputFields.push_back(std::make_shared<ExpressionItem>(outputField));
+        }
+
+        auto content = serializedInferModelOperator.mlfilecontent();
+        std::ofstream output(serializedInferModelOperator.mlfilename(), std::ios::binary);
+        output << content;
+        output.close();
+
+        operatorNode = LogicalOperatorFactory::createInferModelOperator(serializedInferModelOperator.mlfilename(), inputFields, outputFields);
+
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");

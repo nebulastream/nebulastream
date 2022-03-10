@@ -23,6 +23,8 @@ PlacementStrategy::Value PlacementStrategy::getFromString(const std::string plac
         return PlacementStrategy::BottomUp;
     } else if (placementStrategy == "TopDown") {
         return PlacementStrategy::TopDown;
+    } else if (placementStrategy == "MlHeuristic") {
+        return PlacementStrategy::MlHeuristic;
 //    } else if (placementStrategy == "IFCOP") {
 //        return PlacementStrategy::IFCOP;
 //    } else if (placementStrategy == "ILP") {
@@ -38,6 +40,7 @@ std::string PlacementStrategy::toString(const Value placementStrategy) {
         case PlacementStrategy::BottomUp: return "BottomUp";
         case PlacementStrategy::IFCOP: return "IFCOP";
         case PlacementStrategy::ILP: return "ILP";
+        case PlacementStrategy::MlHeuristic: return "MlHeuristic";
     }
 }
 

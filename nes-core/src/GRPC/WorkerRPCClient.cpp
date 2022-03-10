@@ -22,6 +22,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <log4cxx/helpers/exception.h>
 
+#include <fstream>
+#include <iterator>
+#include <vector>
+
 namespace NES {
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {

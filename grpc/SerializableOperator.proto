@@ -348,6 +348,17 @@ message SerializableOperator{
    */
   message FilterDetails {
     SerializableExpression predicate = 1;
+    float selectivity = 2;
+  }
+
+  /**
+ InferModelDetails contains the model file for the inference
+ */
+  message InferModelDetails {
+    repeated SerializableExpression inputFields = 1;
+    repeated SerializableExpression outputFields = 2;
+    string mlFileName = 3;
+    bytes mlFileContent = 4;
   }
 
   /**

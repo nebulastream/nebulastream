@@ -70,8 +70,11 @@
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 
 using std::cout;
 using std::endl;
@@ -876,7 +879,76 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
         queryContext.reset();
     }
 }
+#ifdef TFDEF
+/**
+ * @brief This test generates an infer model operator
+ */
+TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
+    /* prepare objects for test */
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = QueryCompilation::CCodeGenerator::create();
+    auto context = QueryCompilation::PipelineContext::create();
+    context->pipelineName = "1";
+    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite");
+    context->registerOperatorHandler(inferModelOperatorHandler);
+
+    auto inputSchema = source->getSchema();
+    auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
+    auto iris0 = AttributeField::create("iris0", DataTypeFactory::createFloat());
+    auto iris1 = AttributeField::create("iris1", DataTypeFactory::createFloat());
+    auto iris2 = AttributeField::create("iris2", DataTypeFactory::createFloat());
+
+    /* generate code for writing result tuples to output buffer */
+    auto outputSchema = Schema::create()
+        ->addField("id", DataTypeFactory::createInt32())
+        ->addField("valueSmall", DataTypeFactory::createInt16())
+        ->addField("valueFloat", DataTypeFactory::createFloat())
+        ->addField("valueDouble", DataTypeFactory::createDouble())
+        ->addField(iris0)
+        ->addField(iris1)
+        ->addField(iris2)
+        ->addField("valueChar", DataTypeFactory::createChar())
+        ->addField("text", DataTypeFactory::createFixedChar(12));
+
+    auto valF = std::make_shared<ExpressionItem>(Attribute("valueFloat"));
+    auto i0 = std::make_shared<ExpressionItem>(Attribute("iris0"));
+    auto i1 = std::make_shared<ExpressionItem>(Attribute("iris1"));
+    auto i2 = std::make_shared<ExpressionItem>(Attribute("iris2"));
+    auto op = LogicalOperatorFactory::createInferModelOperator(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.tflite",
+                                                     {valF, valF, valF, valF},
+                                                     {i0, i1, i2});
+    auto imop = op->as<InferModelLogicalOperatorNode>();
+
+    codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
+//    codeGenerator->generateInferModelSetup(context);
+    codeGenerator->generateCodeForInferModel(context, imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
+
+    /* generate code for writing result tuples to output buffer */
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, QueryCompilation::FIELD_COPY, context);
+
+    /* compile code to pipeline stage */
+    auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::DEBUG);
+
+    /* prepare input tuple buffer */
+    source->open();
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 46};
+
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                       inferModelOperatorHandler);
+
+    stage->setup(*queryContext.get());
+    stage->start(*queryContext.get());
+    context->getOperatorHandlers()[0]->start(queryContext, nodeEngine->getStateManager(), 0);
+    stage->execute(inputBuffer, *queryContext.get(), wctx);
+}
+#endif
 /**
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */

@@ -17,6 +17,7 @@
 
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -37,6 +38,8 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createFilterOperator(ExpressionNodePtr const& predicate,
+                                                            OperatorId id = Util::getNextOperatorId());
+    static LogicalUnaryOperatorNodePtr createFilterOperator(ExpressionNodePtr const& predicate, float selectivity,
                                                             OperatorId id = Util::getNextOperatorId());
 
     /**
@@ -74,6 +77,16 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression,
                                                          OperatorId id = Util::getNextOperatorId());
 
+    /**
+     * @brief a
+     * @param b
+     * @param c
+     * @return UnaryOperatorNodePtr
+     */
+    static LogicalUnaryOperatorNodePtr createInferModelOperator(std::string model,
+                                                                std::vector<ExpressionItemPtr> inputFields,
+                                                                std::vector<ExpressionItemPtr> outputFields,
+                                                                OperatorId id = Util::getNextOperatorId());
     /**
      * @brief Create a new source operator with source descriptor.
      * @param sourceDescriptor the SourceDescriptorPtr.

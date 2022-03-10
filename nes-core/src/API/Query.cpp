@@ -329,6 +329,13 @@ Query& Query::filter(const ExpressionNodePtr& filterExpression) {
     return *this;
 }
 
+Query& Query::filter(const ExpressionNodePtr& filterExpression, float selectivity) {
+    NES_DEBUG("Query: add filter operator to query");
+    OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression, selectivity);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     NES_DEBUG("Query: add map operator to query");
     if (!mapExpression->getNodesByType<FieldRenameExpressionNode>().empty()) {
@@ -342,6 +349,27 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
 Query& Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences) {
     NES_DEBUG("Pattern: enter iteration function with (min, max)" << minOccurrences << "," << maxOccurrences);
     OperatorNodePtr op = LogicalOperatorFactory::createCEPIterationOperator(minOccurrences, maxOccurrences);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
+Query& Query::inferModel(const std::string model, const std::initializer_list<ExpressionItem> inputFields, const std::initializer_list<ExpressionItem> outputFields) {
+    NES_DEBUG("Query: add map inferModel to query");
+    auto inputFieldVector = std::vector(inputFields);
+    auto outputFieldVector = std::vector(outputFields);
+    std::vector<ExpressionItemPtr> inputFieldsPtr;
+    std::vector<ExpressionItemPtr> outputFieldsPtr;
+    for(auto f : inputFieldVector){
+        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+        inputFieldsPtr.push_back(fp);
+    }
+    for(auto f : outputFieldVector){
+        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+        outputFieldsPtr.push_back(fp);
+    }
+
+    OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
+    std::cout << op->toString() << std::endl;
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }

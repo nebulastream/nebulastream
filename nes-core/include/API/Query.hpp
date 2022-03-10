@@ -303,6 +303,7 @@ class Query {
      * @return the query
      */
     Query& filter(ExpressionNodePtr const& filterExpression);
+    Query& filter(ExpressionNodePtr const& filterExpression, float selectivity);
 
     /**
      * @brief: Create watermark assginer operator.
@@ -329,6 +330,14 @@ class Query {
      * @return the pattern
      */
     Query& times(uint64_t minOccurrences, uint64_t maxOccurrences);
+
+    /**
+     * @brief: inferModel
+     * @example example
+     * @param param
+     * @return query
+     */
+    Query& inferModel(std::string model, std::initializer_list<ExpressionItem> inputFields, std::initializer_list<ExpressionItem> outputFields);
 
     /**
      * @brief Add sink operator for the query.

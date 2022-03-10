@@ -65,8 +65,10 @@ target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
-
-
+if(USE_TF)
+    add_compile_definitions(TFDEF)
+    target_link_libraries(nes PUBLIC libtensorflowlite_c.so)
+endif()
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach (dir ${LIBA_INCLUDES})
     string(APPEND INCLUDE_COMPILER_STRING "/I${dir} ")
@@ -125,10 +127,14 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/Lineage
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
-
+if(USE_TF)
+    target_link_libraries(nesCoordinator PUBLIC libtensorflowlite_c.so)
+endif()
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC nes)
-
+if(USE_TF)
+    target_link_libraries(nesWorker PUBLIC libtensorflowlite_c.so)
+endif()
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)

@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
@@ -47,6 +48,9 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createSinkOperator(const Sin
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr& predicate, OperatorId id) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate, id);
 }
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr& predicate, float selectivity, OperatorId id) {
+    return std::make_shared<FilterLogicalOperatorNode>(predicate, selectivity, id);
+}
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createRenameSourceOperator(const std::string& newSourceName, OperatorId id) {
     return std::make_shared<RenameSourceOperatorNode>(newSourceName, id);
@@ -60,6 +64,14 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(con
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression,
                                                                       OperatorId id) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
+}
+
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createInferModelOperator(std::string model,
+                                                                             std::vector<ExpressionItemPtr> inputFieldsPtr,
+                                                                             std::vector<ExpressionItemPtr> outputFieldsPtr,
+                                                                             OperatorId id) {
+
+    return std::make_shared<InferModelLogicalOperatorNode>(model, inputFieldsPtr, outputFieldsPtr, id);
 }
 
 LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createUnionOperator(OperatorId id) {

@@ -22,6 +22,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
     builder.declations << "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n"
+                          "#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>\n"
                           "#include <cstdint>\n"
                           "#include <string.h>\n"
                           "#include <State/StateVariable.hpp>\n"
@@ -37,6 +38,7 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Runtime/Execution/PipelineExecutionContext.hpp>\n"
                           "#include <Runtime/Execution/ExecutablePipelineStage.hpp>\n"
                           "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>\n"
+                          "#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>\n"
@@ -53,6 +55,9 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
+                          "#include <tensorflow/lite/c/c_api.h>\n"
+                          "#include <tensorflow/lite/c/c_api_experimental.h>\n"
+                          "#include <tensorflow/lite/c/common.h>\n"
                           "using namespace NES::QueryCompilation;"
                        << std::endl;
 

@@ -25,6 +25,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
@@ -83,6 +84,12 @@ class CodeGenerator {
      * @return flag if the generation was successful.
      */
     virtual bool generateCodeForFilterPredicated(PredicatePtr predicate, PipelineContextPtr context) = 0;
+
+    /**
+     * @brief Code generation for an infer model operator
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForInferModel(PipelineContextPtr context, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) = 0;
 
     /**
      * @brief Code generation for a map operator, which depends on a particular map predicate.
@@ -262,6 +269,11 @@ class CodeGenerator {
         QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
+
+    /**
+    * @brief Code generation the setup method for inferModel operators.
+    */
+    virtual uint64_t generateInferModelSetup(PipelineContextPtr context, Join::InferModelOperatorHandlerPtr operatorHandler) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.

@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -34,6 +35,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -56,6 +58,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -136,6 +139,8 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const QueryPlanPtr& que
         lowerWatermarkAssignmentOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         lowerMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
+        lowerInferModelOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
         lowerProjectOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
@@ -175,6 +180,18 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const QueryPlanPtr&, 
                                                                                       projectOperator->getOutputSchema(),
                                                                                       projectOperator->getExpressions());
     operatorNode->replace(physicalProjectOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+    auto inferModelOperator = operatorNode->as<InferModelLogicalOperatorNode>();
+    auto inferModelOperatorHandler = Join::InferModelOperatorHandler::create(inferModelOperator->getDeployedModelPath());
+    auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(inferModelOperator->getInputSchema(),
+                                                                                            inferModelOperator->getOutputSchema(),
+                                                                                            inferModelOperator->getModel(),
+                                                                                            inferModelOperator->getInputFieldsAsPtr(),
+                                                                                            inferModelOperator->getOutputFieldsAsPtr(),
+                                                                                            inferModelOperatorHandler);
+    operatorNode->replace(physicalInferModelOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {

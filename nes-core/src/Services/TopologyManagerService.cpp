@@ -31,7 +31,7 @@ TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(
 }
 
 uint64_t
-TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> coordinates) {
+TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, bool tfInstalled, std::optional<GeographicalLocation> coordinates)  {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -48,6 +48,7 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
+    newTopologyNode->addNodeProperty("tfInstalled", tfInstalled);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");

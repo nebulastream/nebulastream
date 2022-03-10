@@ -381,7 +381,8 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         const RegistrationMetrics& registrationMetrics,
-                                        std::optional<GeographicalLocation> coordinates) {
+                                        std::optional<GeographicalLocation> coordinates,
+                                        bool tfInstalled) {
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
@@ -389,6 +390,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
+    request.set_tfinstalled(tfInstalled);
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     if (coordinates.has_value()) {
         NES_DEBUG("Registered node is a field node");

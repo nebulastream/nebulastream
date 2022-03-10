@@ -15,4 +15,5 @@ add_source_files(nes-core
         AggregationWindowHandler.cpp
         WindowOperatorHandler.cpp
         JoinOperatorHandler.cpp
+        InferModelOperatorHandler.cpp
 )
