@@ -111,6 +111,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             terminationType = Runtime::QueryTerminationType::Failure;
             break;
         }
+        case Runtime::FailEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::Failure;
+            isTermination = true;
+            break;
+        }
         default: {
             break;
         }
