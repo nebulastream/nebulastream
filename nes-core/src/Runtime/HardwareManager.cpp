@@ -36,6 +36,7 @@ void readCpuConfig(uint32_t& numa_nodes_count,
                    std::unordered_map<uint64_t, HardwareManager::NumaDescriptor>& cpuMapping) {
 #ifdef __linux__
     std::stringstream buffer;
+    // TODO #2665 Parsing lscpu output is brittle, use more stable interface.
     FILE* fp = popen("lscpu --all --extended", "r");
     NES_ASSERT2_FMT(fp != nullptr, "Cannot execute `lscpu --all --extended`");
     char temp[1024];
