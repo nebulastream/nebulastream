@@ -37,7 +37,7 @@ std::optional<Runtime::TupleBuffer> TupleView::receiveData(){
 
 bool TupleView::writeData(Runtime::TupleBuffer buffer){
     std::unique_lock<std::mutex> lock(mutex);
-    if (!buffer.isValid()) {
+    if (!buffer) {
         NES_ERROR("TupleView::writeData: input buffer invalid");
         return false;
     }

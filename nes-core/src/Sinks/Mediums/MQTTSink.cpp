@@ -78,7 +78,7 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     std::unique_lock lock(writeMutex);
     NES_ASSERT(connected, "MQTTSink::writeData: cannot write buffer because client is not connected");
 
-    if (!inputBuffer.isValid()) {
+    if (!inputBuffer) {
         NES_ERROR("MQTTSink::writeData input buffer invalid");
         return false;
     }

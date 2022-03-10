@@ -293,19 +293,19 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @brief
      * @param source
      */
-    void notifySourceCompletion(DataSourcePtr source);
+    void notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType);
 
     /**
      * @brief
      * @param pipeline
      */
-    void notifyPipelineCompletion(QuerySubPlanId subPlanId, Execution::ExecutablePipelinePtr pipeline);
+    void notifyPipelineCompletion(QuerySubPlanId subPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
 
     /**
      * @brief
      * @param pipeline
      */
-    void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr pipeline, bool isGraceful);
+    void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr pipeline, QueryTerminationType terminationType);
 
   private:
     friend class ThreadPool;
@@ -326,9 +326,12 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param reference to processed task
      * @oaram reference to worker context
      */
-    virtual void completedWork(Task& task, WorkerContext& workerContext);
+    void completedWork(Task& task, WorkerContext& workerContext);
 
   protected:
+
+    virtual void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext);
+
     /**
      * @brief
      * @return
@@ -434,13 +437,13 @@ class DynamicQueryManager : public AbstractQueryManager {
     ExecutionResult terminateLoop(WorkerContext&) override;
 
     /**
-     * @brief finalize task execution by:
-     * 1.) update statistics (number of processed tuples and tasks)
-     * 2.) release input buffer (give back to the buffer manager)
-     * @param reference to processed task
-     * @oaram reference to worker context
+     * @brief
+     * @param task
+     * @param queryId
+     * @param subPlanId
+     * @param workerContext
      */
-    void completedWork(Task& task, WorkerContext& workerContext) override;
+    void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
 
 
   private:
@@ -531,13 +534,12 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     ExecutionResult terminateLoop(WorkerContext&) override;
 
     /**
-     * @brief finalize task execution by:
-     * 1.) update statistics (number of processed tuples and tasks)
-     * 2.) release input buffer (give back to the buffer manager)
-     * @param reference to processed task
-     * @oaram reference to worker context
+     * @brief
+     * @param queryId
+     * @param subPlanId
+     * @param workerContext
      */
-    void completedWork(Task& task, WorkerContext& workerContext) override;
+    void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
 
 
   private:

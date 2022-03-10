@@ -44,7 +44,7 @@ AbstractQueryManager::AbstractQueryManager(std::vector<BufferManagerPtr> bufferM
 
     tempCounterTasksCompleted.resize(numThreads);
 
-    asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>();
+    asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(1);
 }
 
 DynamicQueryManager::DynamicQueryManager(std::vector<BufferManagerPtr> bufferManagers,
@@ -62,12 +62,12 @@ DynamicQueryManager::DynamicQueryManager(std::vector<BufferManagerPtr> bufferMan
 }
 
 MultiQueueQueryManager::MultiQueueQueryManager(std::vector<BufferManagerPtr> bufferManagers,
-                                       uint64_t nodeEngineId,
-                                       uint16_t numThreads,
-                                       HardwareManagerPtr hardwareManager,
-                                       std::vector<uint64_t> workerToCoreMapping,
-                                       uint64_t numberOfQueues,
-                                       uint64_t numberOfThreadsPerQueue)
+                                               uint64_t nodeEngineId,
+                                               uint16_t numThreads,
+                                               HardwareManagerPtr hardwareManager,
+                                               std::vector<uint64_t> workerToCoreMapping,
+                                               uint64_t numberOfQueues,
+                                               uint64_t numberOfThreadsPerQueue)
     : AbstractQueryManager(std::move(bufferManagers),
                            nodeEngineId,
                            numThreads,
@@ -229,8 +229,10 @@ Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(Qu
 }
 
 QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(QuerySubPlanId qepId) {
-    std::unique_lock lock(statisticsMutex);
-    return queryToStatisticsMap.find(qepId);
+    if (queryToStatisticsMap.contains(qepId)) {
+        return queryToStatisticsMap.find(qepId);
+    }
+    return nullptr;
 }
 
 void AbstractQueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
@@ -264,7 +266,8 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
-
+            // we need to think if we wanna remove this after a soft stop
+//            queryToStatisticsMap.erase(qepId);
             NES_DEBUG("AbstractQueryManager: removed running QEP " << qepId);
             break;
         }

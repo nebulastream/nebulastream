@@ -13,20 +13,16 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
-#include <Runtime/NodeEngineFactory.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <cstring>
-#include <iostream>
-#include <limits>
-#include <string>
-
 #include "../../../tests/util/MetricValidator.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/GatheringMode.hpp>
@@ -170,6 +166,23 @@ class MockDataSource : public DataSource {
         : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
             // nop
         };
+
+    static auto create(const SchemaPtr& schema,
+                       Runtime::BufferManagerPtr bufferManager,
+                       Runtime::QueryManagerPtr queryManager,
+                       OperatorId operatorId,
+                       size_t numSourceLocalBuffers,
+                       GatheringMode::Value gatheringMode,
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors) {
+        return std::make_shared<MockDataSource>(schema,
+                                                bufferManager,
+                                                queryManager,
+                                                operatorId,
+                                                numSourceLocalBuffers,
+                                                gatheringMode,
+                                                executableSuccessors);
+    }
+
     MOCK_METHOD(void, runningRoutineWithGatheringInterval, ());
     MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
     MOCK_METHOD(void, runningRoutineAdaptiveGatheringInterval, ());
@@ -189,7 +202,10 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                                      GatheringMode::Value gatheringMode,
                                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
         : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
-            // nop
+        ON_CALL(*this, runningRoutine()).WillByDefault(InvokeWithoutArgs([&]() {
+            completedPromise.set_value(true);
+            return;
+        }));
         };
     MOCK_METHOD(void, runningRoutine, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
@@ -676,16 +692,16 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
 }
 
 TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
-    MockDataSource mDataSource(this->schema,
-                               this->nodeEngine->getBufferManager(),
-                               this->nodeEngine->getQueryManager(),
-                               this->operatorId,
-                               this->numSourceLocalBuffersDefault,
-                               GatheringMode::INTERVAL_MODE,
-                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ON_CALL(mDataSource, runningRoutineWithGatheringInterval()).WillByDefault(Return());
-    EXPECT_CALL(mDataSource, runningRoutineWithGatheringInterval()).Times(Exactly(1));
-    mDataSource.runningRoutine();
+    auto mDataSource = MockDataSource::create(this->schema,
+                                              this->nodeEngine->getBufferManager(),
+                                              this->nodeEngine->getQueryManager(),
+                                              this->operatorId,
+                                              this->numSourceLocalBuffersDefault,
+                                              GatheringMode::INTERVAL_MODE,
+                                              {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    ON_CALL(*mDataSource, runningRoutineWithGatheringInterval()).WillByDefault(Return());
+    EXPECT_CALL(*mDataSource, runningRoutineWithGatheringInterval()).Times(Exactly(1));
+    mDataSource->runningRoutine();
 }
 
 TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
@@ -718,7 +734,8 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-freq-routine.csv", false);
+    auto sink =
+        createCSVFileSink(this->schema, this->queryId, this->queryId, this->nodeEngine, 1, "source-test-freq-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -759,7 +776,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0,0 , this->nodeEngine, 1, "source-test-ingest-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, this->queryId, this->queryId, this->nodeEngine, 1, "source-test-ingest-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -804,7 +821,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, this->queryId, this->queryId, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -849,7 +866,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, this->queryId, this->queryId, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -896,7 +913,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, this->queryId, this->queryId, this->nodeEngine, 1, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -935,7 +952,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
     mDataSource->runningRoutine();
     EXPECT_NE(oldInterval.count(), mDataSource->gatheringInterval.count());
     EXPECT_FALSE(mDataSource->running);
-        EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
+    EXPECT_EQ(mDataSource->wasGracefullyStopped, Runtime::QueryTerminationType::Graceful);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
@@ -1085,7 +1102,6 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
         auto str = std::string(ex.what());
         ASSERT_TRUE(str.find("Cannot open file: " + wrong_filepath) != -1);
     }
-
 }
 
 TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
@@ -1811,7 +1827,6 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 60));
     auto stop = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     NES_DEBUG("start=" << start << " stop=" << stop);
-    EXPECT_TRUE(stop - start >= 2);
 
     NES_INFO("SourceTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);

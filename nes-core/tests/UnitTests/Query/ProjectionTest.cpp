@@ -20,12 +20,14 @@
 #include "../../util/TestSink.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -33,6 +35,7 @@
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -41,9 +44,6 @@
 #include <future>
 #include <iostream>
 #include <utility>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 
 #include "../../util/TestQueryCompiler.hpp"
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -60,8 +60,23 @@ class ProjectionTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("ProjectionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("ProjectionTest: Setup QueryCatalogTest test class.");
     }
+
+    void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
+        std::for_each(plan->getSources().begin(), plan->getSources().end(), [plan](auto source) {
+            plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful);
+        });
+        std::for_each(plan->getPipelines().begin(), plan->getPipelines().end(), [plan](auto pipeline) {
+            plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful);
+        });
+        std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
+            plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
+        });
+        ASSERT_TRUE(plan->stop());
+    }
+
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         // create test input buffer
         testSchema = Schema::create()
                          ->addField("test$id", BasicType::INT64)
@@ -73,7 +88,7 @@ class ProjectionTest : public Testing::NESBaseTest {
                            ->addField("test$value", BasicType::INT64)
                            ->addField("test$ts", BasicType::UINT64);
 
-        auto sourceConf = PhysicalSource::create("x","x1");
+        auto sourceConf = PhysicalSource::create("x", "x1");
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                   0,
                                                                   {sourceConf},
@@ -262,7 +277,7 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
 }
 
 TEST_F(ProjectionTest, projectionQueryCorrectField) {
-    auto sourceConf = PhysicalSource::create("x","x1");
+    auto sourceConf = PhysicalSource::create("x", "x1");
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -281,7 +296,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = TestSink::create(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
@@ -327,7 +342,8 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
         }
     }
     testSink->cleanupBuffers();
-    ASSERT_TRUE(plan->stop());
+
+    cleanUpPlan(plan);
 }
 
 TEST_F(ProjectionTest, projectionQueryWrongField) {
@@ -350,7 +366,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("value")).sink(testSinkDescriptor);
@@ -396,7 +412,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
         }
     }
     testSink->cleanupBuffers();
-    ASSERT_TRUE(plan->stop());
+    cleanUpPlan(plan);
 }
 
 TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
@@ -419,7 +435,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
@@ -468,7 +484,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
         }
     }
     testSink->cleanupBuffers();
-    ASSERT_TRUE(plan->stop());
+    cleanUpPlan(plan);
 }
 
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
@@ -491,7 +507,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("asd")).sink(testSinkDescriptor);
@@ -555,13 +571,14 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
                                   ->addField(createField("key", INT64))
                                   ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration());
+    Optimizer::DistributeWindowRulePtr distributeWindowRule =
+        Optimizer::DistributeWindowRule::create(Configurations::OptimizerConfiguration());
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -627,7 +644,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
                                   ->addField(createField("key", INT64))
                                   ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     query.sink(DummySink::create());
 
     bool success = false;
@@ -670,7 +687,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
             SchemaPtr ptr = testSchema->copy();
             auto mergedQuery = query2.unionWith(query1).sink(DummySink::create());
 
-            auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
+            auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine);
 
             auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
 
@@ -704,7 +721,7 @@ TEST_F(ProjectionTest, mergeQuery) {
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     //    auto query1 = TestQuery::from(testSchema);
@@ -721,7 +738,6 @@ TEST_F(ProjectionTest, mergeQuery) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-    std::cout << "plan=" << queryPlan->toString() << std::endl;
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
@@ -762,7 +778,6 @@ TEST_F(ProjectionTest, mergeQuery) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
         }
     }
-    ASSERT_TRUE(plan->stop());// simulate stop request from first source
-    ASSERT_TRUE(plan->stop());// simulate stop request from second source
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();
 }

@@ -52,11 +52,18 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
-    char* path = realpath(filePath.c_str(), nullptr);
-    NES_DEBUG("CSVSource: Opening path " << filePath << " real path " << path);
-    input.open(path);
-    if(!(input.is_open() && input.good())) {
-        throw Exceptions::RuntimeException("Cannot open file: " + std::string(path));
+    struct Deleter {
+        void operator()(const char* ptr) {
+            std::free(const_cast<char*>(ptr));
+        }
+    };
+
+    auto path =
+        std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
+    NES_DEBUG("CSVSource: Opening path " << filePath << " real path " << (path ? path.get() : "<INVALID>"));
+    input.open(path.get());
+    if (!(input.is_open() && input.good())) {
+        throw Exceptions::RuntimeException("Cannot open file: " + filePath);
     }
     NES_DEBUG("CSVSource::CSVSource: read buffer");
     input.seekg(0, std::ifstream::end);
@@ -81,9 +88,6 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
-    if (path) {
-        std::free(path);
-    }
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {

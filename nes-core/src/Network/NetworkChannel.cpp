@@ -187,7 +187,10 @@ EventOnlyNetworkChannel::~EventOnlyNetworkChannel() {
     NES_ASSERT2_FMT(this->isClosed, "Event Channel not closed " << channelId);
 }
 
-void EventOnlyNetworkChannel::close(Runtime::QueryTerminationType terminationType) { inherited::close(canSendEvent && !canSendData, terminationType); }
+void EventOnlyNetworkChannel::close(Runtime::QueryTerminationType terminationType) {
+    NES_DEBUG("Closing EventOnlyNetworkChannel " << channelId);
+    inherited::close(canSendEvent && !canSendData, terminationType);
+}
 
 EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
                                                            std::string&& socketAddr,

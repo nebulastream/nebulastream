@@ -40,7 +40,7 @@ class JoinHandler : public AbstractJoinHandler {
                          BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
                          uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
-          executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2), isRunning(false) {
+          executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(3), isRunning(false) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();

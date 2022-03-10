@@ -61,7 +61,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         throw log4cxx::helpers::Exception("Write to zmq sink failed");
     }
 
-    if (!inputBuffer.isValid()) {
+    if (!inputBuffer) {
         NES_ERROR("ZmqSink::writeData input buffer invalid");
         return false;
     }

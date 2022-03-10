@@ -47,11 +47,11 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
             status == PartitionRegistrationStatus::Registered) {
             // increment the counter
             partitionManager->pinSubpartitionConsumer(nesPartition);
-            NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " REGISTERED");
+            NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for DataChannel " << msg.getChannelId().toString() << " REGISTERED");
             // send response back to the client based on the identity
             return Messages::ServerReadyMessage(msg.getChannelId());
         } else if (status == PartitionRegistrationStatus::Deleted) {
-            NES_WARNING("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " WAS DELETED");
+            NES_WARNING("ExchangeProtocol: ClientAnnouncement received for  DataChannel " << msg.getChannelId().toString() << " but WAS DELETED");
             protocolListener->onServerError(Messages::ErrorMessage(msg.getChannelId(), ErrorType::DeletedPartitionError));
             return Messages::ErrorMessage(msg.getChannelId(), ErrorType::DeletedPartitionError);
         }
@@ -59,6 +59,7 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
         // we got a connection from an event-only channel: it means there is/will be an event consumer attached to a partition producer
         if (auto status = partitionManager->getProducerRegistrationStatus(nesPartition);
             status == PartitionRegistrationStatus::Registered) {
+            NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for EventChannel " << msg.getChannelId().toString() << " REGISTERED");
             partitionManager->pinSubpartitionProducer(nesPartition);
             // send response back to the client based on the identity
             return Messages::ServerReadyMessage(msg.getChannelId());
@@ -107,7 +108,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     if (partitionManager->getConsumerRegistrationStatus(endOfStreamMessage.getChannelId().getNesPartition())
         == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(!endOfStreamMessage.isEventChannel(),
-                        "Received EOS on data channel for consumer " << endOfStreamMessage.getChannelId().toString());
+                        "Received EOS for data channel on event channel for consumer " << endOfStreamMessage.getChannelId().toString());
         if (partitionManager->unregisterSubpartitionConsumer(endOfStreamMessage.getChannelId().getNesPartition())) {
             partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition())
                 ->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
@@ -120,7 +121,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     } else if (partitionManager->getProducerRegistrationStatus(endOfStreamMessage.getChannelId().getNesPartition())
                == PartitionRegistrationStatus::Registered) {
         NES_ASSERT2_FMT(endOfStreamMessage.isEventChannel(),
-                        "Received EOS on data channel for producer " << endOfStreamMessage.getChannelId().toString());
+                        "Received EOS for event channel on data channel for producer " << endOfStreamMessage.getChannelId().toString());
         if (partitionManager->unregisterSubpartitionProducer(endOfStreamMessage.getChannelId().getNesPartition())) {
             NES_DEBUG("ExchangeProtocol: EndOfStream message received from event channel "
                       << endOfStreamMessage.getChannelId().toString() << " but with no active subpartition");

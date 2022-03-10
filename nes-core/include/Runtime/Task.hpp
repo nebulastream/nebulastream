@@ -48,13 +48,13 @@ class alignas(64) Task {
      * @brief return the number of tuples in the working buffer
      * @return number of input tuples in working buffer
      */
-    uint64_t getNumberOfTuples();
+    uint64_t getNumberOfTuples() const;
 
     /**
     * @brief return the number of tuples in the input buffer (for statistics)
     * @return number of input tuples in input buffer
     */
-    uint64_t getNumberOfInputTuples();
+    uint64_t getNumberOfInputTuples() const;
 
     /**
      * @brief method to return the qep of a task
@@ -66,7 +66,7 @@ class alignas(64) Task {
    * @brief method to check if it is a watermark-only buffer
    * @retun bool indicating if this buffer is for watermarks only
    */
-    bool isReconfiguration();
+    bool isReconfiguration() const;
 
     /**
      * @return true if this Task is valid and it is safe to execute
@@ -78,7 +78,7 @@ class alignas(64) Task {
      */
     bool operator!() const;
 
-    std::string toString();
+    std::string toString() const;
 
     uint64_t getId() const;
 
@@ -86,7 +86,7 @@ class alignas(64) Task {
      * This method returns the reference to the buffer of this task
      * @return
      */
-    TupleBuffer& getBufferRef();
+    TupleBuffer const& getBufferRef() const;
 
   private:
     Execution::SuccessorExecutablePipeline pipeline{};

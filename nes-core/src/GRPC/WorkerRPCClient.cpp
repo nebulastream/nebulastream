@@ -123,13 +123,16 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
             } else if (mode == Stop) {
                 auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
                 status = call->status.ok();
+                if (!status) {
+                    NES_ERROR("RPC Failed: " << call->status.error_message());
+                }
                 delete call;
             } else {
                 NES_NOT_IMPLEMENTED();
             }
 
             if (!status) {
-                NES_THROW_RUNTIME_ERROR("Deployment RPC failed, a scheduled async call for mode" << mode << " failed");
+                NES_THROW_RUNTIME_ERROR("RPC failed, a scheduled async call for mode" << mode << " failed");
             }
 
             // Once we're complete, deallocate the call object.

@@ -39,6 +39,9 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
+# Enable exception interception (for debugging purpose)
+option(CMAKE_NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
+
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "DEBUG" CACHE STRING "LogLevel")
 
@@ -88,6 +91,10 @@ endif ()
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
+
+if (CMAKE_NES_ENABLE_CXA_THROW_HOOK)
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_ENABLE_CXA_THROW_HOOK=1")
+endif()
 
 # this is an experimental feature; do not rely on it yet
 #if(NES_COMPUTE_COVERAGE)
@@ -159,7 +166,7 @@ get_nes_log_level_value(NES_LOGGING_VALUE)
 
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
-set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -std=c++20 -fno-omit-frame-pointer -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
 

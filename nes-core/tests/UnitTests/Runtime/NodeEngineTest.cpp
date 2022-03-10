@@ -357,7 +357,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 = createTextFileSink(sch1, 0, 0, engine, 1, getTestResourceFolder() / "qep1.txt", false);
+    auto sink1 = createTextFileSink(sch1, 1, 1, engine, 1, getTestResourceFolder() / "qep1.txt", false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, 1, context1, executable1, 1, {sink1});
@@ -367,7 +367,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink2 = createTextFileSink(sch2, 0, 0, engine, 1, getTestResourceFolder() / "qep2.txt", false);
+    auto sink2 = createTextFileSink(sch2, 2, 2, engine, 1, getTestResourceFolder() / "qep2.txt", false);
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, 2, context2, executable2, 1, {sink2});
@@ -447,7 +447,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     testOutput(getTestResourceFolder() / "qep2.txt");
 }
 //
-TEST_F(NodeEngineTest, testParallelSameSink) {
+TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) { // shared sinks are not supported
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});

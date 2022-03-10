@@ -16,20 +16,26 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <exception>
+#include <numeric>
+#include <string>
 
 namespace NES::Runtime {
 
-AsyncTaskExecutor::AsyncTaskExecutor() : running(true) {
-    runningThread = std::make_shared<std::thread>([this]() {
-        try {
-            setThreadName("AsyncThread");
-            runningRoutine();
-            completionPromise.set_value(true);
-        } catch (std::exception const& ex) {
-            completionPromise.set_exception(std::make_exception_ptr(ex));
-        }
-    });
-    runningThread->detach();
+AsyncTaskExecutor::AsyncTaskExecutor(uint32_t numOfThreads) : running(true) {
+    for (uint32_t i = 0; i < numOfThreads; ++i) {
+        auto promise = std::make_shared<std::promise<bool>>();
+        completionPromises.emplace_back(promise);
+        runningThreads.emplace_back(std::make_shared<std::thread>([this, i, promise]() {
+            try {
+                setThreadName("AsyncThr-%d", i);
+                runningRoutine();
+                promise->set_value(true);
+            } catch (std::exception const& ex) {
+                promise->set_exception(std::make_exception_ptr(ex));
+            }
+        }));
+        runningThreads.back()->detach();
+    }
 }
 
 AsyncTaskExecutor::~AsyncTaskExecutor() { destroy(); }
@@ -56,13 +62,18 @@ bool AsyncTaskExecutor::destroy() {
         try {
             {
                 std::unique_lock lock(workMutex);
-                asyncTaskQueue.emplace_back(
-                    []() {
-                    },
-                    nullptr);
+                for (uint32_t i = 0; i < runningThreads.size(); ++i) {
+                    asyncTaskQueue.emplace_back(
+                        []() {
+                        },
+                        nullptr);
+                }
                 cv.notify_all();
             }
-            bool result = completionPromise.get_future().get();
+            auto result = std::accumulate(completionPromises.begin(), completionPromises.end(), true, [](bool acc, auto promise) {
+                auto r = promise->get_future().get();
+                return acc && r;
+            });
             NES_ASSERT(result, "Cannot shutdown AsyncTaskExecutor");
             {
                 std::unique_lock lock(workMutex);
