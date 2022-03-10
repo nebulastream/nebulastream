@@ -188,8 +188,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
     switch (task.getType()) {
         case HardEndOfStream:
         case SoftEndOfStream: {
-            auto targetQep = task.getUserData<std::weak_ptr<ExecutableQueryPlan>>();
-            //we mantain a set of producers, and we will only trigger the end of source once all producers have sent the EOS, for this we decrement the counter
+            //we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1) {//all producers sent EOS
                 NES_DEBUG("Reconfiguration of pipeline belonging to subplanId: " << querySubPlanId << " stage id: " << pipelineId
@@ -198,14 +197,17 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                     operatorHandler->postReconfigurationCallback(task);
                 }
                 stop();
-                queryManager->notifyPipelineCompletion(querySubPlanId, shared_from_this<ExecutablePipeline>());
+                queryManager->notifyPipelineCompletion(querySubPlanId,
+                                                       shared_from_this<ExecutablePipeline>(),
+                                                       task.getType() == Runtime::SoftEndOfStream
+                                                           ? Runtime::QueryTerminationType::Graceful
+                                                           : Runtime::QueryTerminationType::HardStop);
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
                         auto newReconf = ReconfigurationMessage(queryId,
                                                                 querySubPlanId,
                                                                 task.getType(),
-                                                                *pipe,
-                                                                std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
+                                                                *pipe);
                         queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
                         NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: "
                                   << querySubPlanId << " stage id: " << (*pipe)->getPipelineId()

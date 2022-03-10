@@ -131,53 +131,10 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 }
 
 NesCoordinator::~NesCoordinator() {
-    NES_DEBUG("NesCoordinator::~NesCoordinator()");
-    NES_DEBUG("NesCoordinator::~NesCoordinator() ptr usage=" << workerRpcClient.use_count());
-
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     sourceCatalog->reset();
-    queryCatalogService->clearQueries();
-
-    topology.reset();
-    sourceCatalog.reset();
-    globalExecutionPlan.reset();
-    queryCatalogService.reset();
-    workerRpcClient.reset();
-    queryRequestQueue.reset();
-    queryRequestProcessorService.reset();
-    queryService.reset();
-    monitoringService.reset();
-    maintenanceService.reset();
-    queryRequestProcessorThread.reset();
-    worker.reset();
-    sourceCatalogService.reset();
-    topologyManagerService.reset();
-    healthCheckService.reset();
-    restThread.reset();
-    restServer.reset();
-    rpcThread.reset();
-    coordinatorConfiguration.reset();
-    workerConfig.reset();
-
-    NES_ASSERT(topology.use_count() == 0, "NesCoordinator topology leaked");
-    NES_ASSERT(sourceCatalog.use_count() == 0, "NesCoordinator sourceCatalog leaked");
-    NES_ASSERT(globalExecutionPlan.use_count() == 0, "NesCoordinator globalExecutionPlan leaked");
-    NES_ASSERT(queryCatalogService.use_count() == 0, "NesCoordinator queryCatalogService leaked");
-    NES_ASSERT(workerRpcClient.use_count() == 0, "NesCoordinator workerRpcClient leaked");
-    NES_ASSERT(queryRequestQueue.use_count() == 0, "NesCoordinator queryRequestQueue leaked");
-    NES_ASSERT(queryRequestProcessorService.use_count() == 0, "NesCoordinator queryRequestProcessorService leaked");
-    NES_ASSERT(queryService.use_count() == 0, "NesCoordinator queryService leaked");
-
-    NES_ASSERT(rpcThread.use_count() == 0, "NesCoordinator rpcThread leaked");
-    NES_ASSERT(queryRequestProcessorThread.use_count() == 0, "NesCoordinator queryRequestProcessorThread leaked");
-    NES_ASSERT(worker.use_count() == 0, "NesCoordinator worker leaked");
-    NES_ASSERT(restServer.use_count() == 0, "NesCoordinator restServer leaked");
-    NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
-    NES_ASSERT(sourceCatalogService.use_count() == 0, "NesCoordinator sourceCatalogService leaked");
-    NES_ASSERT(topologyManagerService.use_count() == 0, "NesCoordinator topologyManagerService leaked");
-    NES_ASSERT(maintenanceService.use_count() == 0, "NesCoordinator maintenanceService leaked");
-    NES_ASSERT(healthCheckService.use_count() == 0, "NesCoordinator healthCheckService leaked");
+    queryCatalog->clearQueries();
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }

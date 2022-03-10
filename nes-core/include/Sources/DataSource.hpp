@@ -26,6 +26,7 @@
 #include <Util/GatheringMode.hpp>
 #include <atomic>
 #include <chrono>
+#include <future>
 #include <mutex>
 #include <optional>
 #include <thread>
@@ -243,7 +244,10 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     GatheringMode::Value gatheringMode;
     SourceType type;
     Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful};// protected by mutex
+    std::atomic_bool wasStarted{false};
+    std::atomic_bool futureRetrieved{false};
     std::atomic_bool running{false};
+    std::promise<bool> completedPromise;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
     /**
@@ -257,7 +261,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   private:
     mutable std::recursive_mutex startStopMutex;
-    std::shared_ptr<std::thread> thread{nullptr};
+//    std::shared_ptr<std::thread> thread{nullptr};
     uint64_t maxSequenceNumber = 0;
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 
@@ -283,6 +287,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::unique_ptr<KalmanFilter> kFilter;// TODO(Dimitrios) is this the right place to have it?
 
     bool endOfStreamSent{false};// protected by startStopMutex
+
+
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

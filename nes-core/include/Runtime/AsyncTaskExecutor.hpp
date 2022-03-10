@@ -39,7 +39,7 @@ class AsyncTaskExecutor {
 
         AsyncTaskFuture& operator=(const AsyncTaskFuture& that) {
             promise = that.promise;
-            future = that.promise->get_future();
+            future = that.future;
             return *this;
         }
 
@@ -106,7 +106,7 @@ class AsyncTaskExecutor {
     };
 
   public:
-    explicit AsyncTaskExecutor();
+    explicit AsyncTaskExecutor(uint32_t numOfThreads = 1);
 
     ~AsyncTaskExecutor();
 
@@ -142,11 +142,11 @@ class AsyncTaskExecutor {
 
     std::condition_variable cv;
 
-    std::shared_ptr<std::thread> runningThread;
+    std::vector<std::shared_ptr<std::thread>> runningThreads;
 
     std::atomic<bool> running;
 
-    std::promise<bool> completionPromise;
+    std::vector<std::shared_ptr<std::promise<bool>>> completionPromises;
 
     std::deque<AsyncTaskWrapper> asyncTaskQueue;
 };

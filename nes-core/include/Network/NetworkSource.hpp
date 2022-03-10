@@ -98,6 +98,12 @@ class NetworkSource : public DataSource {
      */
     void onEndOfStream(Runtime::QueryTerminationType terminationType) override;
 
+    bool preStart();
+
+    friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) {
+        return lhs.nesPartition < rhs.nesPartition;
+    }
+
   private:
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;

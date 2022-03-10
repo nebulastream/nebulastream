@@ -16,12 +16,13 @@
 #define NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
 
 #include <API/Schema.hpp>
-#include <Sources/DataSource.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <deque>
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
+
 namespace NES {
 
 class LogicalSource;
@@ -195,4 +196,4 @@ class SourceCatalog {
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

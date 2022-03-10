@@ -71,7 +71,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     NES_DEBUG("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " and mode "
                                             << this->getAppendAsString());
 
-    if (!inputBuffer.isValid()) {
+    if (!inputBuffer) {
         NES_ERROR("FileSink::writeData input buffer invalid");
         return false;
     }

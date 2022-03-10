@@ -20,8 +20,6 @@
 #include <folly/experimental/exception_tracer/ExceptionTracerLib.h>
 #include <memory>
 
-#define ENABLE_CXA_THROW_HOOK // for debugging purposes only
-
 namespace NES::Runtime {
 namespace detail {
 static backward::SignalHandling sh;
@@ -71,7 +69,7 @@ void nesUnexpectedException() {
     Exceptions::invokeErrorHandlers(currentException, std::move(stacktrace));
 }
 #ifdef __linux__
-#ifdef ENABLE_CXA_THROW_HOOK
+#ifdef NES_ENABLE_CXA_THROW_HOOK
 void nesCxaThrowHook(void* ex, std::type_info* info, void (**deleter)(void*)) noexcept {
     using namespace std::string_literals;
 
@@ -98,7 +96,7 @@ struct ErrorHandlerLoader {
         std::set_terminate(nesTerminateHandler);
         std::set_new_handler(nesTerminateHandler);
 #ifdef __linux__
-#ifdef ENABLE_CXA_THROW_HOOK
+#ifdef NES_ENABLE_CXA_THROW_HOOK
         folly::exception_tracer::registerCxaThrowCallback(nesCxaThrowHook);
 #endif
 #endif

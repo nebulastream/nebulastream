@@ -77,6 +77,11 @@ class NesPartition {
             && lhs.subpartitionId == rhs.subpartitionId;
     }
 
+    friend bool operator<(const NesPartition& lhs, const NesPartition& rhs) {
+        return lhs.queryId < rhs.queryId && lhs.operatorId < rhs.operatorId && lhs.partitionId < rhs.partitionId
+            && lhs.subpartitionId < rhs.subpartitionId;
+    }
+
   private:
     const QueryId queryId;
     const OperatorId operatorId;

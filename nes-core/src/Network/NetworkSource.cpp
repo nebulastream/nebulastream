@@ -66,11 +66,17 @@ template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 }// namespace detail
 
+bool NetworkSource::preStart() {
+    auto emitter = shared_from_base<DataEmitter>();
+    return networkManager->registerSubpartitionConsumer(nesPartition, sinkLocation, emitter);
+}
+
 bool NetworkSource::start() {
     using namespace Runtime;
     NES_DEBUG("NetworkSource: start called on " << nesPartition);
     auto emitter = shared_from_base<DataEmitter>();
-    if (networkManager->registerSubpartitionConsumer(nesPartition, sinkLocation, emitter)) {
+    auto expected = false;
+    if (running.compare_exchange_strong(expected, true)) {
         for (const auto& successor : executableSuccessors) {
             auto querySubPlanId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
                                                                     return sink->getParentPlanId();
@@ -88,9 +94,10 @@ bool NetworkSource::start() {
                                       successor);
 
             auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, Runtime::Initialize, shared_from_base<DataSource>());
-            queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
+            queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);
+            break; // hack as currently we assume only one executableSuccessor
         }
-        running = true;
+        NES_DEBUG("NetworkSource: start completed on " << nesPartition);
         return true;
     }
     return false;
@@ -102,20 +109,28 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     NES_ASSERT2_FMT(type == Runtime::QueryTerminationType::HardStop,
                     "NetworkSource::stop only supports HardStop :: partition " << nesPartition);
     if (running.compare_exchange_strong(expected, false)) {
+        NES_DEBUG("NetworkSource: stop called on " << nesPartition << " sending hard eos");
+        auto newReconf =
+            ReconfigurationMessage(-1, -1, Runtime::HardEndOfStream, DataSource::shared_from_base<DataSource>());
+        queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
+        queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         for (const auto& successor : executableSuccessors) {
-            auto [queryId, querySubPlanId] =
-                std::visit(detail::overloaded{[](DataSinkPtr sink) {
-                                                  return std::make_tuple(sink->getQueryId(), sink->getParentPlanId());
-                                              },
-                                              [](Execution::ExecutablePipelinePtr pipeline) {
-                                                  return std::make_tuple(pipeline->getQueryId(), pipeline->getQuerySubPlanId());
-                                              }},
-                           successor);
-            auto newReconf =
-                ReconfigurationMessage(queryId, querySubPlanId, Runtime::HardEndOfStream, shared_from_base<DataSource>());
-            queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
+            std::visit(detail::overloaded{[this](DataSinkPtr sink) {
+                                              auto queryId = sink->getQueryId();
+                                              auto subPlanId = sink->getParentPlanId();
+                                              auto newReconf =
+                                                  ReconfigurationMessage(queryId, subPlanId, Runtime::HardEndOfStream, sink);
+                                              queryManager->addReconfigurationMessage(queryId, subPlanId, newReconf, true);
+                                          },
+                                          [this](Execution::ExecutablePipelinePtr pipeline) {
+                                              auto queryId = pipeline->getQueryId();
+                                              auto subPlanId = pipeline->getQuerySubPlanId();
+                                              auto newReconf =
+                                                  ReconfigurationMessage(queryId, subPlanId, Runtime::HardEndOfStream, pipeline);
+                                              queryManager->addReconfigurationMessage(queryId, subPlanId, newReconf, true);
+                                          }},
+                       successor);
         }
-        queryManager->notifySourceCompletion(shared_from_base<DataSource>());
         NES_DEBUG("NetworkSource: stop called on " << nesPartition << " sent hard eos");
     } else {
         NES_DEBUG("NetworkSource: stop called on " << nesPartition << " but was already stopped");
@@ -191,7 +206,10 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
             bool expected = true;
             if (running.compare_exchange_strong(expected, false)) {
                 NES_DEBUG("NetworkSource is stopped on reconf task with id " << nesPartition.toString());
-                queryManager->notifySourceCompletion(shared_from_base<DataSource>());
+                queryManager->notifySourceCompletion(shared_from_base<DataSource>(),
+                                                     task.getType() == Runtime::SoftEndOfStream
+                                                         ? Runtime::QueryTerminationType::Graceful
+                                                         : Runtime::QueryTerminationType::HardStop);
             }
             return;
         }

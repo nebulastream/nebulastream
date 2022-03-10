@@ -33,19 +33,19 @@ class TestSink : public SinkMedium {
   public:
     TestSink(uint64_t expectedBuffer,
              const SchemaPtr& schema,
-             const Runtime::BufferManagerPtr& bufferManager,
+             const Runtime::NodeEnginePtr & nodeEngine,
              uint32_t numOfProducers = 1)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, numOfProducers, 0, 0),
+        : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0),
           expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink>
-    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager, uint32_t numOfProducers = 1) {
-        return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager, numOfProducers);
+    create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::NodeEnginePtr& engine, uint32_t numOfProducers = 1) {
+        return std::make_shared<TestSink>(expectedBuffer, schema, engine, numOfProducers);
     }
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
-        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(inputBuffer, getSchemaPtr()));
+//        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(inputBuffer, getSchemaPtr()));
 
         resultBuffers.emplace_back(std::move(inputBuffer));
         if (resultBuffers.size() == expectedBuffer) {

@@ -120,7 +120,7 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 uint32_t activeProducers,
                                 std::ostream& out) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, querySubPlanId, queryId, out);
+    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out);
 }
 
 DataSinkPtr createNullOutputSink(QueryId queryId,

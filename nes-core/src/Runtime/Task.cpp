@@ -48,10 +48,11 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     }
 }
 
-uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
-uint64_t Task::getNumberOfInputTuples() { return inputTupleCount; }
+uint64_t Task::getNumberOfTuples() const { return buf.getNumberOfTuples(); }
 
-bool Task::isReconfiguration() {
+uint64_t Task::getNumberOfInputTuples() const { return inputTupleCount; }
+
+bool Task::isReconfiguration() const {
     if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
         return (*executablePipeline)->isReconfiguration();
     }
@@ -60,14 +61,15 @@ bool Task::isReconfiguration() {
 
 Execution::SuccessorExecutablePipeline Task::getExecutable() { return pipeline; }
 
-TupleBuffer& Task::getBufferRef() { return buf; }
+TupleBuffer const& Task::getBufferRef() const { return buf; }
 
 bool Task::operator!() const { return pipeline.valueless_by_exception(); }
 
 Task::operator bool() const { return !pipeline.valueless_by_exception(); }
+
 uint64_t Task::getId() const { return id; }
 
-std::string Task::toString() {
+std::string Task::toString() const {
     std::stringstream ss;
     ss << "Task: id=" << id;
     if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
