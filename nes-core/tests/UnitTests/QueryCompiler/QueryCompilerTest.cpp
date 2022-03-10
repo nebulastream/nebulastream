@@ -74,12 +74,24 @@ class QueryCompilerTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
-    void TearDown() override { NES_DEBUG("Tear down QueryCompilerTest Test."); }
+    void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
+        std::for_each(plan->getSources().begin(), plan->getSources().end(), [plan](auto source) {
+            plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful);
+        });
+        std::for_each(plan->getPipelines().begin(), plan->getPipelines().end(), [plan](auto pipeline) {
+            plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful);
+        });
+        std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
+            plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
+        });
+        (plan->stop());
+    }
 };
 
 /**
@@ -125,6 +137,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto result = queryCompiler->compileQuery(request);
 
     ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
 }
 
 /**
@@ -169,6 +182,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     auto result = queryCompiler->compileQuery(request);
 
     ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
 }
 /**
  * @brief Input Query Plan:
@@ -216,6 +230,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
 }
 
 /**
@@ -265,6 +280,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
 }
 
 /**
@@ -316,6 +332,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
 }
 
 /**
@@ -372,6 +389,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
 }
 
 class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
@@ -431,6 +449,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     auto result = queryCompiler->compileQuery(request);
 
     ASSERT_FALSE(result->hasError());
+    cleanUpPlan(result->getExecutableQueryPlan());
 }
 
 }// namespace NES

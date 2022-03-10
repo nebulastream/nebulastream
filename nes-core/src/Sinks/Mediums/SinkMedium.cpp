@@ -17,10 +17,10 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
-#include <utility>
+
 
 namespace NES {
 
@@ -33,7 +33,8 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
       querySubPlanId(querySubPlanId) {
     //TODO: issue #2543
     watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(1);
-    NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers");
+    NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
+    NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
 }
 
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
@@ -86,8 +87,10 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
             if (activeProducers.fetch_sub(1) == 1) {
                 shutdown();
                 nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
-                                                                    shared_from_this<SinkMedium>(),
-                                                                    message.getType() == Runtime::SoftEndOfStream);
+                                                                    std::static_pointer_cast<SinkMedium>(shared_from_this()),
+                                                                    message.getType() == Runtime::SoftEndOfStream
+                                                                        ? Runtime::QueryTerminationType::Graceful
+                                                                        : Runtime::QueryTerminationType::HardStop);
                 NES_DEBUG("Sink " << toString() << " is terminated");
             }
             break;

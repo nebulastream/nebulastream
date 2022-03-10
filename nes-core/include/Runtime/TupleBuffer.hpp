@@ -148,7 +148,7 @@ class TupleBuffer {
     TupleBuffer* operator&() = delete;
 
     /// @brief Return if this is not valid.
-    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return !isValid(); }
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return ptr == nullptr; }
 
     /// @brief release the resource if necessary.
     inline ~TupleBuffer() noexcept { release(); }
@@ -190,14 +190,19 @@ class TupleBuffer {
         return reinterpret_cast<T*>(ptr);
     }
 
+    /// @brief return the TupleBuffer's content as pointer to `T`.
+    template<typename T = uint8_t>
+    inline const T* getBuffer() const noexcept {
+        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
+        static_assert(ispow2<alignof(T)>);
+        return reinterpret_cast<const T*>(ptr);
+    }
+
     /// @brief Print the buffer's address.
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
     friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept {
         return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
     }
-
-    /// @brief true if the interal pointer is not null
-    [[nodiscard]] constexpr bool isValid() const noexcept { return ptr != nullptr; }
 
     /// @brief get the buffer's size.
     [[nodiscard]] inline uint64_t getBufferSize() const noexcept { return size; }

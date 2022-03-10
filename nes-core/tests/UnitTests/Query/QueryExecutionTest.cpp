@@ -86,6 +86,19 @@ class QueryExecutionTest : public testing::Test {
         distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
     }
 
+    void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
+        std::for_each(plan->getSources().begin(), plan->getSources().end(), [plan](auto source) {
+            plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful);
+        });
+        std::for_each(plan->getPipelines().begin(), plan->getPipelines().end(), [plan](auto pipeline) {
+            plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful);
+        });
+        std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
+            plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
+        });
+        ASSERT_TRUE(plan->stop());
+    }
+
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
@@ -276,7 +289,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
             options->setFilterProcessingStrategy(filterProcessingStrategy);
 
             // now, test the query for all possible combinations
-            auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+            auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
             auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
             // two filter operators to validate correct behaviour of (multiple) branchless predicated filters
@@ -320,8 +333,14 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     // id
                     EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
                 }
+
+
+            } else {
+                FAIL();
             }
-            ASSERT_TRUE(plan->stop());
+
+            cleanUpPlan(plan);
+
             testSink->cleanupBuffers();// wont be called by runtime as no runtime support in this test
             ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 
@@ -349,7 +368,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
@@ -392,7 +411,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
         }
     }
-    ASSERT_TRUE(plan->stop());
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();// need to be called manually here
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -427,7 +446,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
                             ->addField("result_exp", BasicType::FLOAT64)
                             ->addField("result_batch_test", BasicType::BOOLEAN);
 
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor)
@@ -493,7 +512,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
 
         EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, outputSchema));
     }
-    ASSERT_TRUE(plan->stop());
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -545,7 +564,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
                                   ->addField("test$value", INT64);
 
     // each source buffer produce 1 result buffer, totalling 2 buffers
-    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
@@ -612,7 +631,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
                                   ->addField(createField("test$key", INT64))
                                   ->addField("test$value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
@@ -704,7 +723,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
                                   ->addField(createField("key", INT64))
                                   ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
@@ -790,7 +809,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
                                   ->addField(createField("key", INT64))
                                   ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
@@ -863,7 +882,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
                                   ->addField(createField("key", INT64))
                                   ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
@@ -949,7 +968,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                                   ->addField(createField("key", INT64))
                                   ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
@@ -1017,7 +1036,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     SchemaPtr ptr = testSchema->copy();
     auto mergedQuery = query2.unionWith(query1).sink(DummySink::create());
 
-    auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
@@ -1108,7 +1127,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
@@ -1160,7 +1179,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
         }
     }
-    ASSERT_TRUE(plan->stop());
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }

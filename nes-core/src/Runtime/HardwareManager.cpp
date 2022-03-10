@@ -72,8 +72,6 @@ void readCpuConfig(uint32_t& numa_nodes_count,
 #endif
         if (!online) {
             continue;
-        }        if (!online) {
-            continue;
         }
         if (auto it = cpuMapping.find(node); it != cpuMapping.end()) {
             cpuMapping[node] = HardwareManager::NumaDescriptor(node);

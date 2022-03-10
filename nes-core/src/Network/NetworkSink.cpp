@@ -58,15 +58,21 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     return false;
 }
 
+void NetworkSink::preSetup() {
+    NES_DEBUG("NetworkSink: method preSetup() called " << nesPartition.toString() << " qep " << querySubPlanId);
+    NES_ASSERT2_FMT(
+        networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, inherited1::shared_from_this()),
+        "Cannot register event listener " << nesPartition.toString());
+}
+
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << querySubPlanId);
-    networkManager->registerSubpartitionEventConsumer(receiverLocation, nesPartition, inherited1::shared_from_this());
     auto reconf = Runtime::ReconfigurationMessage(queryId,
                                                   querySubPlanId,
                                                   Runtime::Initialize,
                                                   inherited0::shared_from_this(),
                                                   std::make_any<uint32_t>(numOfProducers));
-    queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, false);
+    queryManager->addReconfigurationMessage(queryId, querySubPlanId, reconf, true);
 }
 
 void NetworkSink::shutdown() {
@@ -104,6 +110,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             isTermination = true;
             break;
         }
+        case Runtime::FailEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::Failure;
+            isTermination = true;
+            break;
+        }
         default: {
             break;
         }
@@ -123,15 +134,6 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan "
                                                                    << querySubPlanId);
     inherited0::postReconfigurationCallback(task);
-    switch (task.getType()) {
-        case Runtime::HardEndOfStream:
-        case Runtime::SoftEndOfStream: {
-            break;
-        }
-        default: {
-            break;
-        }
-    }
 }
 
 void NetworkSink::onEvent(Runtime::BaseEvent& event) {

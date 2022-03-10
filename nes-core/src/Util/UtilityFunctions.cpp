@@ -73,7 +73,7 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
 }
 
 std::string Util::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema) {
-    if (!buffer.isValid()) {
+    if (!buffer) {
         return "INVALID_BUFFER_PTR";
     }
     std::stringstream str;

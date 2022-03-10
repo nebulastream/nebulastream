@@ -33,7 +33,7 @@
 
 namespace NES::Runtime {
 void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
-                                           Execution::ExecutableQueryPlanStatus status) {
+                                                   Execution::ExecutableQueryPlanStatus status) {
     NES_ASSERT(qep, "Invalid query plan object");
     if (status == Execution::ExecutableQueryPlanStatus::Stopped) {
         // if we got here it means the query gracefully stopped
@@ -71,26 +71,29 @@ void AbstractQueryManager::notifyOperatorFailure(DataSourcePtr failedSource, con
                           return true;
                       });
 }
+
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline, const std::string& errorMessage) {
     NES_ASSERT(false, errorMessage);
 }
-void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source) {
+
+void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
     auto& qep = sourceToQEPMapping[source->getOperatorId()];
     NES_ASSERT2_FMT(qep, "invalid query plan for source " << source->getOperatorId());
-    qep->notifySourceCompletion(source);
+    qep->notifySourceCompletion(source, terminationType);
 }
-void AbstractQueryManager::notifyPipelineCompletion(QuerySubPlanId subPlanId, Execution::ExecutablePipelinePtr pipeline) {
+
+void AbstractQueryManager::notifyPipelineCompletion(QuerySubPlanId subPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
     auto& qep = runningQEPs[subPlanId];
     NES_ASSERT2_FMT(qep, "invalid query plan for pipeline " << pipeline->getPipelineId());
-    qep->notifyPipelineCompletion(pipeline);
+    qep->notifyPipelineCompletion(pipeline, terminationType);
 }
 
-void AbstractQueryManager::notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr sink, bool isGraceful) {
+void AbstractQueryManager::notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr sink, QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
     auto& qep = runningQEPs[subPlanId];
     NES_ASSERT2_FMT(qep, "invalid query plan for sink " << sink->getOperatorId());
-    qep->notifySinkCompletion(sink, isGraceful);
+    qep->notifySinkCompletion(sink, terminationType);
 }
-}
+}// namespace NES::Runtime

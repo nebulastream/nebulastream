@@ -19,11 +19,12 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
-#include "../../Sources/SourcesForwardedRefs.hpp"
+#include <Sources/SourcesForwardedRefs.hpp>
 #include <atomic>
 #include <future>
 #include <map>
@@ -93,19 +94,19 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @brief
      * @param source
      */
-    void notifySourceCompletion(DataSourcePtr source);
+    void notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType);
 
     /**
      * @brief
      * @param pipeline
      */
-    void notifyPipelineCompletion(ExecutablePipelinePtr pipeline);
+    void notifyPipelineCompletion(ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
 
     /**
      * @brief
      * @param sink
      */
-    void notifySinkCompletion(DataSinkPtr sink, bool isGraceful);
+    void notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType);
 
     /**
      * @brief Setup the query plan, e.g., instantiate state variables.
@@ -179,13 +180,6 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     QuerySubPlanId getQuerySubPlanId() const;
 
     /**
-     * @brief reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     * @param context the worker context
-     */
-    void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
-
-    /**
      * @brief final reconfigure callback called upon a reconfiguration
      * @param task the reconfig descriptor
      */
@@ -206,7 +200,6 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     void onEvent(BaseEvent& event) override;
 
   private:
-
     /**
      * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
      * @tparam Derived the class type that we want to cast the shared ptr
@@ -236,4 +229,4 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
 
 }// namespace NES::Runtime::Execution
 
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_

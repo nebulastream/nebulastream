@@ -164,7 +164,7 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
 
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("KalmanFilter::updateFromTupleBuffer: updating from a whole tuple buffer");
-    if (tupleBuffer.isValid()) {
+    if (!!tupleBuffer) {
         Eigen::VectorXd valueVector(1);
         auto numOfTuples = tupleBuffer.getNumberOfTuples();
         auto records = tupleBuffer.getBuffer<Sensors::SingleSensor>();

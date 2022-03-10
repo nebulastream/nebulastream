@@ -17,12 +17,12 @@
 #include <gtest/gtest.h>
 
 namespace NES {
-class AsyncTaskExecutorTest : public testing::Test {
+class AsyncTaskExecutorTest : public ::testing::TestWithParam<int> {
   protected:
     Runtime::AsyncTaskExecutorPtr executor{nullptr};
 
   public:
-    void SetUp() { executor = std::make_shared<Runtime::AsyncTaskExecutor>(); }
+    void SetUp() { executor = std::make_shared<Runtime::AsyncTaskExecutor>(GetParam()); }
 
     void TearDown() { executor.reset(); }
 
@@ -30,9 +30,9 @@ class AsyncTaskExecutorTest : public testing::Test {
     static void SetUpTestCase() { NES::setupLogging("AsyncTaskExecutorTest.log", NES::LOG_DEBUG); }
 };
 
-TEST_F(AsyncTaskExecutorTest, startAndDestroy) { ASSERT_TRUE(executor->destroy()); }
+TEST_P(AsyncTaskExecutorTest, startAndDestroy) { ASSERT_TRUE(executor->destroy()); }
 
-TEST_F(AsyncTaskExecutorTest, submitTask) {
+TEST_P(AsyncTaskExecutorTest, submitTask) {
     auto future = executor->runAsync(
         [](auto x, auto y) {
             return x + y;
@@ -44,7 +44,7 @@ TEST_F(AsyncTaskExecutorTest, submitTask) {
     ASSERT_EQ(2, sum);
 }
 
-TEST_F(AsyncTaskExecutorTest, submitConcatenatedTasks) {
+TEST_P(AsyncTaskExecutorTest, submitConcatenatedTasks) {
     try {
         auto future = executor
                           ->runAsync(
@@ -65,7 +65,7 @@ TEST_F(AsyncTaskExecutorTest, submitConcatenatedTasks) {
     }
 }
 
-TEST_F(AsyncTaskExecutorTest, submitTaskWithStoppedExecutor) {
+TEST_P(AsyncTaskExecutorTest, submitTaskWithStoppedExecutor) {
     executor->destroy();
     try {
         auto future = executor->runAsync(
@@ -84,5 +84,7 @@ TEST_F(AsyncTaskExecutorTest, submitTaskWithStoppedExecutor) {
         FAIL();
     }
 }
+
+INSTANTIATE_TEST_CASE_P(AsyncTaskExecutorMTTest, AsyncTaskExecutorTest, ::testing::Values(1, 4, 8));
 
 }// namespace NES

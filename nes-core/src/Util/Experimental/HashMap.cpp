@@ -30,7 +30,7 @@ uint64_t Hashmap::setSize(uint64_t nrEntries) {
     assert(nrEntries != 0);
 
     currentSize = 0;
-    if (entryBuffer.isValid()) {
+    if (!!entryBuffer) {
         entryBuffer.release();
         entries = nullptr;
         if (storageBuffers != nullptr) {

@@ -87,6 +87,11 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     void setup() override;
 
     /**
+     * @brief
+     */
+    void preSetup();
+
+    /**
     * @brief Destroys the network sink
     */
     void shutdown() override;
@@ -102,6 +107,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @return id
      */
     uint64_t getUniqueNetworkSinkDescriptorId();
+
+    friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) {
+        return lhs.nesPartition < rhs.nesPartition;
+    }
 
   private:
     uint64_t uniqueNetworkSinkDescriptorId;

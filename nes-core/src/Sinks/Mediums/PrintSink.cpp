@@ -38,9 +38,9 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     std::unique_lock lock(writeMutex);
     NES_DEBUG("PrintSink: getSchema medium " << toString() << " format " << sinkFormat->toString());
 
-    if (!inputBuffer.isValid()) {
-        NES_ERROR("PrintSink::writeData input buffer invalid");
-        return false;
+    if (!inputBuffer) {
+        // TODO throw exception here?
+        throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
     }
     if (!schemaWritten) {
         NES_DEBUG("PrintSink::getData: write schema");
