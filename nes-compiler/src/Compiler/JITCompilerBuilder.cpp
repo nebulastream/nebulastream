@@ -18,7 +18,7 @@
 namespace NES::Compiler {
 
 JITCompilerBuilder&
-JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler>& languageCompiler) {
+JITCompilerBuilder::registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler) {
     NES_ASSERT(languageCompiler, "Language compiler should not be null.");
     NES_ASSERT(!languageCompiler->getLanguage().empty(), "Invalid language provided.");
     NES_ASSERT(languageCompilers.find(languageCompiler->getLanguage()) == languageCompilers.end(),
