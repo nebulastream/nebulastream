@@ -38,9 +38,10 @@ AbstractQueryManager::AbstractQueryManager(std::vector<BufferManagerPtr> bufferM
                                            uint64_t nodeEngineId,
                                            uint16_t numThreads,
                                            HardwareManagerPtr hardwareManager,
+                                           const StateManagerPtr& stateManager,
                                            std::vector<uint64_t> workerToCoreMapping)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
-      hardwareManager(hardwareManager), workerToCoreMapping(workerToCoreMapping) {
+      hardwareManager(hardwareManager), workerToCoreMapping(workerToCoreMapping), stateManager(stateManager) {
 
     tempCounterTasksCompleted.resize(numThreads);
 
@@ -51,11 +52,13 @@ DynamicQueryManager::DynamicQueryManager(std::vector<BufferManagerPtr> bufferMan
                                          uint64_t nodeEngineId,
                                          uint16_t numThreads,
                                          HardwareManagerPtr hardwareManager,
+                                         const StateManagerPtr& stateManager,
                                          std::vector<uint64_t> workerToCoreMapping)
     : AbstractQueryManager(std::move(bufferManagers),
                            nodeEngineId,
                            numThreads,
                            std::move(hardwareManager),
+                           stateManager,
                            std::move(workerToCoreMapping)),
       taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY)) {
     NES_DEBUG("QueryManger: use dynamic mode with numThreads=" << numThreads);
@@ -65,6 +68,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::vector<BufferManagerPtr> buf
                                                uint64_t nodeEngineId,
                                                uint16_t numThreads,
                                                HardwareManagerPtr hardwareManager,
+                                               const StateManagerPtr& stateManager,
                                                std::vector<uint64_t> workerToCoreMapping,
                                                uint64_t numberOfQueues,
                                                uint64_t numberOfThreadsPerQueue)
@@ -72,6 +76,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::vector<BufferManagerPtr> buf
                            nodeEngineId,
                            numThreads,
                            std::move(hardwareManager),
+                           stateManager,
                            std::move(workerToCoreMapping)) {
 
     NES_DEBUG("QueryManger: use static mode for numberOfQueues=" << numberOfQueues << " numThreads=" << numThreads

@@ -125,7 +125,8 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
 
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<BufferManagerPtr> bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
-        auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(bufferManager, 0, 1, nullptr);
+        auto stateManager = std::make_shared<Runtime::StateManager>(0);
+        auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(bufferManager, 0, 1, nullptr, stateManager);
         auto bufferStorage = std::make_shared<BufferStorage>();
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(0,
