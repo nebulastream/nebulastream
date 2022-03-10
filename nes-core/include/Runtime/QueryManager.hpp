@@ -79,6 +79,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                   uint64_t nodeEngineId,
                                   uint16_t numThreads,
                                   HardwareManagerPtr hardwareManager,
+                                  const StateManagerPtr& stateManager,
                                   std::vector<uint64_t> workerToCoreMapping = {});
 
     virtual ~AbstractQueryManager() NES_NOEXCEPT(false) override;
@@ -152,7 +153,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager);
+    bool startQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
     /**
      * @brief method to start a query
@@ -396,6 +397,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
+
+    StateManagerPtr stateManager;
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
@@ -407,6 +410,7 @@ class DynamicQueryManager : public AbstractQueryManager {
                                  uint64_t nodeEngineId,
                                  uint16_t numThreads,
                                  HardwareManagerPtr hardwareManager,
+                                 const StateManagerPtr& stateManager,
                                  std::vector<uint64_t> workerToCoreMapping = {});
 
     void destroy() override;
@@ -500,6 +504,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
                                     uint64_t nodeEngineId,
                                     uint16_t numThreads,
                                     HardwareManagerPtr hardwareManager,
+                                    const StateManagerPtr& stateManager,
                                     std::vector<uint64_t> workerToCoreMapping = {},
                                     uint64_t numberOfQueues = 1,
                                     uint64_t numberOfThreadsPerQueue = 1);

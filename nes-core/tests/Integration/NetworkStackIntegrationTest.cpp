@@ -11,7 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/QueryAPI.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -23,24 +26,6 @@
 #include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Runtime/HardwareManager.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Sources/DefaultSource.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <State/StateManager.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/ThreadBarrier.hpp>
-#include <Util/UtilityFunctions.hpp>
-
-#include "../util/NesBaseTest.hpp"
-#include "../util/TestQuery.hpp"
-#include "../util/TestQueryCompiler.hpp"
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -48,11 +33,27 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/HardwareManager.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Sources/SourceCreator.hpp>
+#include <State/StateManager.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/ThreadBarrier.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 #include <random>
 #include <utility>
+
+#include "../util/NesBaseTest.hpp"
+#include "../util/TestQuery.hpp"
+#include "../util/TestQueryCompiler.hpp"
 
 using namespace std;
 
@@ -149,8 +150,15 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, queryCompilerConfiguration);
+    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                   *dataPort1,
+                                                                   {physicalSource},
+                                                                   1,
+                                                                   bufferSize,
+                                                                   buffersManaged,
+                                                                   64,
+                                                                   64,
+                                                                   queryCompilerConfiguration);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -179,8 +187,15 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
     auto defaultSourceType = DefaultSourceType::create();
     auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, queryCompilerConfiguration);
+    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                   *dataPort1,
+                                                                   {physicalSource},
+                                                                   1,
+                                                                   bufferSize,
+                                                                   buffersManaged,
+                                                                   64,
+                                                                   64,
+                                                                   queryCompilerConfiguration);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -196,16 +211,8 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
                                                          NSOURCE_RETRIES);
     EXPECT_TRUE(networkSource->start());
 
-    auto networkSink = std::make_shared<NetworkSink>(schema,
-                                                     *dataPort1,
-                                                     0,
-                                                     0,
-                                                     nodeLocation,
-                                                     nesPartition,
-                                                     nodeEngine,
-                                                     1,
-                                                     NSOURCE_RETRY_WAIT,
-                                                     NSOURCE_RETRIES);
+    auto networkSink = std::make_shared<
+        NetworkSink>(schema, *dataPort1, 0, 0, nodeLocation, nesPartition, nodeEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
 
     nodeEngine->getNetworkManager()->unregisterSubpartitionConsumer(nesPartition);
 
@@ -226,9 +233,10 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         std::vector<PhysicalSourcePtr> physicalSources{physicalSource};
         auto partitionManager = std::make_shared<Network::PartitionManager>();
+        auto stateManager = std::make_shared<Runtime::StateManager>(0);
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
             std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
-        auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(bufferManagers, 0, 1, nullptr);
+        auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(bufferManagers, 0, 1, nullptr, stateManager);
         auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(0,
@@ -365,8 +373,15 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
 
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-        auto nodeEngine2 =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort2, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
+        auto nodeEngine2 = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                        *dataPort2,
+                                                                        {physicalSource},
+                                                                        1,
+                                                                        bufferSize,
+                                                                        buffersManaged,
+                                                                        64,
+                                                                        64,
+                                                                        Configurations::QueryCompilerConfiguration());
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -516,8 +531,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                        successors);
             });
 
-        auto testSink =
-            std::make_shared<TestSink>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
+        auto testSink = std::make_shared<TestSink>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
         finalSinks.emplace_back(testSink);
         auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
@@ -549,18 +563,18 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                                      latch);
             });
 
-    auto networkSink = std::make_shared<NetworkSink>(schema,
-                                                     i,
-                                                     i,
-                                                     subPlanId,
-                                                     nodeLocationReceiver,
-                                                     nesPartition,
-                                                     nodeEngineSender,
-                                                     1,
-                                                     NSOURCE_RETRY_WAIT,
-                                                     NSOURCE_RETRIES);
-    auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
-    auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
+        auto networkSink = std::make_shared<NetworkSink>(schema,
+                                                         i,
+                                                         i,
+                                                         subPlanId,
+                                                         nodeLocationReceiver,
+                                                         nesPartition,
+                                                         nodeEngineSender,
+                                                         1,
+                                                         NSOURCE_RETRY_WAIT,
+                                                         NSOURCE_RETRIES);
+        auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
+        auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
 
         auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
         queryPlan2->setQueryId(i);
@@ -593,7 +607,6 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }
-
 
 namespace detail {
 struct TestEvent {
@@ -796,8 +809,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                             successors) {}
     };
 
-    auto testSink =
-        std::make_shared<TestSinkEvent>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
+    auto testSink = std::make_shared<TestSinkEvent>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);

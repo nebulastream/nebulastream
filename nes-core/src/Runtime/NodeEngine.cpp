@@ -170,7 +170,7 @@ bool NodeEngine::startQuery(QueryId queryId) {
 
         for (auto querySubPlanId : querySubPlanIds) {
             try {
-                if (queryManager->startQuery(deployedQEPs[querySubPlanId], stateManager)) {
+                if (queryManager->startQuery(deployedQEPs[querySubPlanId])) {
                     NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " succeeded");
                 } else {
                     NES_DEBUG("Runtime: start of QEP " << querySubPlanId << " failed");

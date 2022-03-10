@@ -122,6 +122,12 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             throw Exceptions::RuntimeException("Error while creating buffer manager");
         }
 
+        auto stateManager = std::make_shared<StateManager>(nodeEngineId);
+        if (!stateManager) {
+            NES_ERROR("Runtime: error while creating stateManager");
+            throw Exceptions::RuntimeException("Error while creating stateManager");
+        }
+
         std::vector<uint64_t> workerToCoreMappingVec;
         QueryManagerPtr queryManager;
         if (workerToCoreMapping != "") {
@@ -132,20 +138,22 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         switch (queryManagerMode) {
             case QueryExecutionMode::Dynamic: {
                 queryManager = std::make_shared<DynamicQueryManager>(bufferManagers,
-                                                              nodeEngineId,
-                                                              numThreads,
-                                                              hardwareManager,
-                                                              workerToCoreMappingVec);
+                                                                     nodeEngineId,
+                                                                     numThreads,
+                                                                     hardwareManager,
+                                                                     stateManager,
+                                                                     workerToCoreMappingVec);
                 break;
             }
             case QueryExecutionMode::Static: {
                 queryManager = std::make_shared<MultiQueueQueryManager>(bufferManagers,
-                                                              nodeEngineId,
-                                                              numThreads,
-                                                              hardwareManager,
-                                                              workerToCoreMappingVec,
-                                                              numberOfQueues,
-                                                              numberOfThreadsPerQueue);
+                                                                        nodeEngineId,
+                                                                        numThreads,
+                                                                        hardwareManager,
+                                                                        stateManager,
+                                                                        workerToCoreMappingVec,
+                                                                        numberOfQueues,
+                                                                        numberOfThreadsPerQueue);
                 break;
             }
             default: {
@@ -154,28 +162,23 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             }
         }
 
-        auto stateManager = std::make_shared<StateManager>(nodeEngineId);
         auto bufferStorage = std::make_shared<BufferStorage>();
         auto materializedViewManager = std::make_shared<Experimental::MaterializedView::MaterializedViewManager>();
         if (!partitionManager) {
             NES_ERROR("Runtime: error while creating partition manager");
-            throw log4cxx::helpers::Exception("Error while creating partition manager");
+            throw Exceptions::RuntimeException("Error while creating partition manager");
         }
         if (!queryManager) {
             NES_ERROR("Runtime: error while creating queryManager");
-            throw log4cxx::helpers::Exception("Error while creating queryManager");
-        }
-        if (!stateManager) {
-            NES_ERROR("Runtime: error while creating stateManager");
-            throw log4cxx::helpers::Exception("Error while creating stateManager");
+            throw Exceptions::RuntimeException("Error while creating queryManager");
         }
         if (!bufferStorage) {
             NES_ERROR("Runtime: error while creating bufferStorage");
-            throw log4cxx::helpers::Exception("Error while creating bufferStorage");
+            throw Exceptions::RuntimeException("Error while creating bufferStorage");
         }
         if (!materializedViewManager) {
             NES_ERROR("Runtime: error while creating materializedViewMananger");
-            throw log4cxx::helpers::Exception("Error while creating materializedViewMananger");
+            throw Exceptions::RuntimeException("Error while creating materializedViewMananger");
         }
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -185,7 +188,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler);
         if (!compiler) {
             NES_ERROR("Runtime: error while creating compiler");
-            throw log4cxx::helpers::Exception("Error while creating compiler");
+            throw Exceptions::RuntimeException("Error while creating compiler");
         }
         auto engine = std::make_shared<NodeEngine>(
             physicalSources,

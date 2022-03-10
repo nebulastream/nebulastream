@@ -26,7 +26,6 @@ namespace NES {
 
 TextFormat::TextFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
     : SinkFormat(std::move(schema), std::move(bufferManager)) {
-    NES_DEBUG("TextFormat::()");
 }
 
 std::optional<Runtime::TupleBuffer> TextFormat::getSchema() {

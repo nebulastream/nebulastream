@@ -105,7 +105,6 @@ std::string QueryPlan::toString() {
 }
 
 std::vector<OperatorNodePtr> QueryPlan::getRootOperators() {
-    NES_DEBUG("QueryPlan: Get all root operators.");
     return rootOperators;
 }
 
