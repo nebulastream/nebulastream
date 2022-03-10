@@ -28,6 +28,7 @@ add_source_files(nes-core
         WorkerContext.cpp
         LocalBufferPool.cpp
         NodeEngineFactory.cpp
+        NodeEngineBuilder.cpp
         HardwareManager.cpp
         MaterializedViewManager.cpp
         Allocator/NumaRegionMemoryAllocator.cpp
