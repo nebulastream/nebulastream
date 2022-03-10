@@ -24,7 +24,7 @@
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger//Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <memory>
