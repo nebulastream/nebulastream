@@ -37,6 +37,7 @@ class JITCompiler {
      */
     [[nodiscard]] std::future<CompilationResult> compile(std::shared_ptr<const CompilationRequest> request) const;
 
+    ~JITCompiler();
   private:
     /**
      * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
