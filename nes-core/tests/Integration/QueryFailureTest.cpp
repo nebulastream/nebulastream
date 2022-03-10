@@ -25,7 +25,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger//Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
@@ -41,12 +41,11 @@ using namespace Configurations;
 class QueryFailureTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("QueryFailureTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup QueryFailureTest test class.");
+        NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG);
     }
 };
 
-TEST_F(QueryFailureTest, failQueryUponSubmission) {
+TEST_F(QueryFailureTest, DISABLED_failQueryUponSubmission) {
     struct Test {
         uint32_t id;
         uint32_t value;
@@ -91,6 +90,6 @@ TEST_F(QueryFailureTest, failQueryUponSubmission) {
 
 }
 
-TEST_F(QueryFailureTest, failRunningQuery) {}
+TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {}
 
 }// namespace NES

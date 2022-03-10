@@ -14,7 +14,7 @@
 #include <Exceptions/RuntimeException.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Util/Backward/backward.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <csignal>
 #include <folly/experimental/exception_tracer/ExceptionTracerLib.h>

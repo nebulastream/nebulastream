@@ -15,13 +15,14 @@
 #ifndef NES_NES_CORE_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
 #define NES_NES_CORE_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
 
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <condition_variable>
 #include <deque>
 #include <future>
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace NES::Runtime {
 
@@ -43,11 +44,11 @@ class AsyncTaskExecutor {
             return *this;
         }
 
-        R wait() { return future.get(); }
+        [[nodiscard]] R wait() { return future.get(); }
 
         template<class Function>
         [[nodiscard]] AsyncTaskFuture<std::invoke_result_t<std::decay_t<Function>, std::decay_t<R>>> thenAsync(Function&& f) {
-            return owner->runAsync([this, f]() {
+            return owner->runAsync([this, f = std::move(f)]() {
                 return f(future.get());
             });
         }
