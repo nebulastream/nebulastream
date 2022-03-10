@@ -21,7 +21,8 @@ namespace NES::Runtime {
 
 enum class QueryTerminationType : uint8_t { Graceful, HardStop, Failure };
 
-static std::ostream& operator<<(std::ostream& os, const QueryTerminationType type) {
+template <typename O = std::ostream>
+static O& operator<<(O& os, const QueryTerminationType& type) {
     switch (type) {
         case QueryTerminationType::Graceful: return os << "Graceful";
         case QueryTerminationType::HardStop: return os << "HardStop";

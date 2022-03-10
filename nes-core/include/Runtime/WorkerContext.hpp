@@ -17,6 +17,7 @@
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>

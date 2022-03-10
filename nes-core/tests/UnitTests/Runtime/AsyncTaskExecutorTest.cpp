@@ -27,7 +27,7 @@ class AsyncTaskExecutorTest : public ::testing::TestWithParam<int> {
     void TearDown() { executor.reset(); }
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { NES::setupLogging("AsyncTaskExecutorTest.log", NES::LOG_DEBUG); }
+    static void SetUpTestCase() { NES::Logger::setupLogging("AsyncTaskExecutorTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
 TEST_P(AsyncTaskExecutorTest, startAndDestroy) { ASSERT_TRUE(executor->destroy()); }
