@@ -29,9 +29,11 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
+#include <log4cxx/helpers/exception.h>
+
 namespace NES::Runtime {
 NodeEngineBuilder NodeEngineBuilder::create() { return NodeEngineBuilder(); }
 
