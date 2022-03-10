@@ -27,6 +27,7 @@ std::shared_ptr<File> File::createFile(const std::string& absoluteFilePath, cons
     NES_DEBUG("Create File to file://" << absoluteFilePath);
     std::ofstream resultFile(absoluteFilePath, std::ios::trunc | std::ios::out);
     resultFile << content;
+    resultFile.flush();
     return std::make_shared<File>(absoluteFilePath);
 }
 
