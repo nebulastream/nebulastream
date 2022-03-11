@@ -108,6 +108,10 @@ void HealthCheckService::checkFromCoordinatorSide() {
                     } else {
                         NES_THROW_RUNTIME_ERROR("Node went offline but could not be removed from topology");
                     }
+                    //Source catalog
+//                    SourceCatalogService unregisterPhysicalSource
+
+                    //TODO Create issue for remove and child
                 }
                 ++topologyIterator;
             }
