@@ -20,9 +20,8 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
-GlobalExecutionPlan::GlobalExecutionPlan() { NES_DEBUG("GlobalExecutionPlan()"); }
 
-GlobalExecutionPlanPtr GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(GlobalExecutionPlan()); }
+GlobalExecutionPlanPtr GlobalExecutionPlan::create() { return std::make_shared<GlobalExecutionPlan>(); }
 
 bool GlobalExecutionPlan::checkIfExecutionNodeExists(uint64_t id) {
     NES_DEBUG("GlobalExecutionPlan: Checking if Execution node with id " << id << " exists");

@@ -137,7 +137,6 @@ class GlobalExecutionPlan {
     std::map<uint64_t, uint32_t> getMapOfTopologyNodeIdToOccupiedResource(QueryId queryId);
 
   private:
-    explicit GlobalExecutionPlan();
     /**
      * Map the input execution node with different sub query plans it has
      * @param executionNode : the input execution node
