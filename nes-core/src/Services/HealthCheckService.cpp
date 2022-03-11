@@ -102,16 +102,22 @@ void HealthCheckService::checkFromCoordinatorSide() {
                     NES_DEBUG("NesCoordinator::healthCheck: node=" << destAddress << " is alive");
                 } else {
                     NES_ERROR("NesCoordinator::healthCheck: node=" << destAddress << " went dead so we remove it");
-                    auto ret = topologyManagerService->removePhysicalNode(currentTopologyNode);
-                    if (ret) {
-                        NES_DEBUG("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
+                    if (topologyManagerService->getRootNode()->getId() == currentTopologyNode->getId()) {
+                        NES_WARNING("The failing node is the root node so we cannot delete it");
+                        shutdownRPC->set_value(true);
+                        return;
                     } else {
-                        NES_THROW_RUNTIME_ERROR("Node went offline but could not be removed from topology");
-                    }
-                    //Source catalog
-//                    SourceCatalogService unregisterPhysicalSource
+                        auto ret = topologyManagerService->removePhysicalNode(currentTopologyNode);
+                        if (ret) {
+                            NES_DEBUG("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
+                        } else {
+                            NES_THROW_RUNTIME_ERROR("Node went offline but could not be removed from topology");
+                        }
+                        //Source catalog
+                        //                    SourceCatalogService unregisterPhysicalSource
 
-                    //TODO Create issue for remove and child
+                        //TODO Create issue for remove and child
+                    }
                 }
                 ++topologyIterator;
             }
