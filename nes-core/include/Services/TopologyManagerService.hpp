@@ -30,6 +30,9 @@ namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+class AbstractHealthCheckService;
+using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
+
 /**
  * @brief: This class is responsible for registering/unregistering nodes and adding and removing parentNodes.
  */
@@ -112,6 +115,13 @@ class TopologyManagerService {
      */
     bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
 
+
+    /**
+     * Sets the health service
+     * @param healthCheckService
+     */
+    void setHealthService(HealthCheckServicePtr healthCheckService);
+
   private:
     TopologyPtr topology;
     std::mutex registerDeregisterNode;
@@ -122,6 +132,8 @@ class TopologyManagerService {
      * @return next topology node id
      */
     uint64_t getNextTopologyNodeId();
+
+    HealthCheckServicePtr healthCheckService;
 };
 
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;

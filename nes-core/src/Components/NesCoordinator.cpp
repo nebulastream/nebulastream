@@ -54,8 +54,9 @@
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <GRPC/HealthCheckRPCImpl.hpp>
+#include <GRPC/HealthCheckRPCServer.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
+#include <Services/CoordinatorHealthCheckService.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -148,6 +149,7 @@ NesCoordinator::~NesCoordinator() {
     worker.reset();
     sourceCatalogService.reset();
     topologyManagerService.reset();
+    healthCheckService.reset();
     restThread.reset();
     restServer.reset();
     rpcThread.reset();
@@ -171,6 +173,7 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(sourceCatalogService.use_count() == 0, "NesCoordinator sourceCatalogService leaked");
     NES_ASSERT(topologyManagerService.use_count() == 0, "NesCoordinator topologyManagerService leaked");
     NES_ASSERT(maintenanceService.use_count() == 0, "NesCoordinator maintenanceService leaked");
+    NES_ASSERT(healthCheckService.use_count() == 0, "NesCoordinator healthCheckService leaked");
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
@@ -263,7 +266,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    healthCheckService = std::make_shared<HealthCheckService>(topologyManagerService, workerRpcClient);
+    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, workerRpcClient);
+    topologyManagerService->setHealthService(healthCheckService);
     NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
 
@@ -355,8 +359,8 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     std::unique_ptr<grpc::ServerBuilderOption> option(
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
-    const std::string kHealthyService("healthy_service");
-    HealthCheckRPCImpl healthCheckServiceImpl;
+    const std::string kHealthyService("NES_DEFAULT_HEALTH_CHECK_SERVICE");
+    HealthCheckRPCServer healthCheckServiceImpl;
     healthCheckServiceImpl.SetStatus(kHealthyService, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
 

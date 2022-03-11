@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SERVICES_HEALTHCHECKSERVICE_HPP_
-#define NES_INCLUDE_SERVICES_HEALTHCHECKSERVICE_HPP_
+#ifndef NES_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
+#define NES_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
 
+#include <future>
 #include <memory>
 #include <thread>
-#include <future>
+#include <map>
 namespace NES {
 
 class CoordinatorRPCClient;
@@ -29,31 +30,49 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+const uint64_t waitTimeInSeconds = 1;
+
 /**
  * @brief: This class is responsible for handling requests related to monitor the alive status of nodes
  */
-class HealthCheckService {
+class AbstractHealthCheckService {
   public:
-    HealthCheckService(TopologyManagerServicePtr topologyManagerService, WorkerRPCClientPtr workerRPCClient);
 
-    HealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient);
+    AbstractHealthCheckService();
 
-    void startHealthCheck();
+    virtual ~AbstractHealthCheckService(){};
 
+    /**
+     * Method to start the health checking
+     */
+    virtual void startHealthCheck() = 0;
+
+    /**
+     * Method to stop the health checking
+     */
     void stopHealthCheck();
-  private:
-    void checkFromWorkerSide();
-    void checkFromCoordinatorSide();
 
-    TopologyManagerServicePtr topologyManagerService;
-    WorkerRPCClientPtr workerRPCClient;
-    CoordinatorRPCClientPtr coordinatorRpcClient;
+    /**
+     * Method to add a node for health checking
+     * @param node
+     */
+    void addNodeToHealthCheck(TopologyNodePtr node);
+
+    /**
+     * Method to remove a node from the health checking
+     * @param node
+     */
+    void removeNodeFromHealthCheck(TopologyNodePtr node);
+
+  protected:
     std::shared_ptr<std::thread> healthCheckingThread;
     bool isRunning = false;
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
+    std::map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
 };
-
-using HealthCheckServicePtr = std::shared_ptr<HealthCheckService>;
 
 }// namespace NES
 

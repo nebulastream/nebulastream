@@ -245,7 +245,6 @@ class Topology {
     */
     static TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes);
 
-
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
 

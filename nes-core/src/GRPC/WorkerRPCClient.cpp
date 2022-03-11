@@ -423,7 +423,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address) {
     std::unique_ptr<grpc::health::v1::Health::Stub> workerStub = grpc::health::v1::Health::NewStub(chan);
 
     grpc::health::v1::HealthCheckRequest request;
-    request.set_service("healthy_service");
+    request.set_service("NES_DEFAULT_HEALTH_CHECK_SERVICE");
     grpc::health::v1::HealthCheckResponse response;
     ClientContext context;
     Status status = workerStub->Check(&context, request, &response);
