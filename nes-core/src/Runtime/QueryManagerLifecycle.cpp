@@ -104,7 +104,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     // 2b. start net sinks
     for (const auto& sink : netSinks) {
         startFutures.emplace_back(asyncTaskExecutor->runAsync([sink]() {
-            NES_DEBUG("AbstractQueryManager: start network sink " << sink);
+            NES_DEBUG("AbstractQueryManager: start network sink " << sink->toString());
             sink->setup();
             return true;
         }));
@@ -141,6 +141,11 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         sink->setup();
     }
 
+    {
+        std::unique_lock lock(queryMutex);
+        runningQEPs.emplace(qep->getQuerySubPlanId(), qep);
+    }
+
     return true;
 }
 
@@ -161,8 +166,8 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
                                                                                     << qep->getQueryId());
-    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
-               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+//    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
+//               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     // 5. start data sources
     for (const auto& source : qep->getSources()) {
@@ -175,11 +180,6 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         } else {
             NES_DEBUG("AbstractQueryManager: source " << source << " started successfully");
         }
-    }
-
-    {
-        std::unique_lock lock(queryMutex);
-        runningQEPs.emplace(qep->getQuerySubPlanId(), qep);
     }
     return true;
 }
