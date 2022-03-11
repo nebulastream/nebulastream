@@ -18,6 +18,7 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/OperatorId.hpp>
+#include <Operators/OriginId.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
