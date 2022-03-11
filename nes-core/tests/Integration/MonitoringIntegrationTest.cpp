@@ -72,27 +72,27 @@ TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ull);
+    ASSERT_NE(port, 0ull);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart2);
+    ASSERT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
     bool retConWrk1 = wrk1->connect();
-    EXPECT_TRUE(retConWrk1);
+    ASSERT_TRUE(retConWrk1);
     cout << "worker 1 connected " << endl;
 
     bool retConWrk2 = wrk2->connect();
-    EXPECT_TRUE(retConWrk2);
+    ASSERT_TRUE(retConWrk2);
     cout << "worker 2 connected " << endl;
 
     // requesting the monitoring data
@@ -100,11 +100,11 @@ TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
     auto plan = MonitoringPlan::create(metrics);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
-    EXPECT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
+    ASSERT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
     auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
-    EXPECT_EQ(jsons.size(), nodeNumber);
+    ASSERT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
@@ -113,17 +113,17 @@ TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
         NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-        EXPECT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     }
 
     bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
+    ASSERT_TRUE(retStopWrk1);
 
     bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
+    ASSERT_TRUE(retStopWrk2);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
@@ -142,27 +142,27 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ull);
+    ASSERT_NE(port, 0ull);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart2);
+    ASSERT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
     bool retConWrk1 = wrk1->connect();
-    EXPECT_TRUE(retConWrk1);
+    ASSERT_TRUE(retConWrk1);
     cout << "worker 1 connected " << endl;
 
     bool retConWrk2 = wrk2->connect();
-    EXPECT_TRUE(retConWrk2);
+    ASSERT_TRUE(retConWrk2);
     cout << "worker 2 connected " << endl;
 
     // requesting the monitoring data
@@ -170,11 +170,11 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
     auto plan = MonitoringPlan::create(metrics);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
-    EXPECT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
+    ASSERT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
-    EXPECT_EQ(jsons.size(), nodeNumber);
+    ASSERT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
@@ -182,19 +182,19 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
         NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
-        EXPECT_TRUE(json.has_field("registration"));
+        ASSERT_TRUE(json.has_field("registration"));
         json = json["registration"];
-        EXPECT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     }
 
     bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
+    ASSERT_TRUE(retStopWrk1);
 
     bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
+    ASSERT_TRUE(retStopWrk2);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
@@ -214,27 +214,27 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ull);
+    ASSERT_NE(port, 0ull);
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart2);
+    ASSERT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
     bool retConWrk1 = wrk1->connect();
-    EXPECT_TRUE(retConWrk1);
+    ASSERT_TRUE(retConWrk1);
     cout << "worker 1 connected " << endl;
 
     bool retConWrk2 = wrk2->connect();
-    EXPECT_TRUE(retConWrk2);
+    ASSERT_TRUE(retConWrk2);
     cout << "worker 2 connected " << endl;
 
     // requesting the monitoring data
@@ -243,12 +243,12 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
 
-    EXPECT_FALSE(crd->getMonitoringService()->isMonitoringEnabled());
+    ASSERT_FALSE(crd->getMonitoringService()->isMonitoringEnabled());
 
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
-    EXPECT_EQ(jsons.size(), nodeNumber);
+    ASSERT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
@@ -256,19 +256,19 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
         NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
-        EXPECT_TRUE(json.has_field("registration"));
+        ASSERT_TRUE(json.has_field("registration"));
         json = json["registration"];
-        EXPECT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     }
 
     bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
+    ASSERT_TRUE(retStopWrk1);
 
     bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
+    ASSERT_TRUE(retStopWrk2);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 }// namespace NES
