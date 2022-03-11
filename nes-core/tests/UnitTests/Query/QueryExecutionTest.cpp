@@ -126,6 +126,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         queryPlan = originIdInferenceRule->apply(queryPlan);
         queryPlan = typeInferencePhase->execute(queryPlan);
         auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+        options->setWindowingStrategy(NES::QueryCompilation::QueryCompilerOptions::THREAD_LOCAL);
         auto queryCompiler = TestUtils::createTestQueryCompiler(options);
         auto result = queryCompiler->compileQuery(request);
         return result->getExecutableQueryPlan();
