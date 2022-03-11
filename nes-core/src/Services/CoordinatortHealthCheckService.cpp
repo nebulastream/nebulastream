@@ -52,7 +52,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                         if (ret) {
                             NES_DEBUG("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
                         } else {
-                            NES_THROW_RUNTIME_ERROR("Node went offline but could not be removed from topology");
+                            NES_DEBUG("Node went offline but could not be removed from topology");
                         }
                         //Source catalog
                         //                    SourceCatalogService unregisterPhysicalSource

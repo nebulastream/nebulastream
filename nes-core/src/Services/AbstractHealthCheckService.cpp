@@ -111,12 +111,11 @@ void AbstractHealthCheckService::stopHealthCheck() {
 
 void AbstractHealthCheckService::addNodeToHealthCheck(TopologyNodePtr node)
 {
-    if(nodeIdToTopologyNodeMap.find(node->getId()) == nodeIdToTopologyNodeMap.end())
+    NES_DEBUG("HealthCheckService: adding node with id " << node->getId());
+    if(nodeIdToTopologyNodeMap.find(node->getId()) != nodeIdToTopologyNodeMap.end())
     {
         NES_THROW_RUNTIME_ERROR("HealthCheckService want to add node that already exists id=" << node->getId());
     }
-
-    NES_DEBUG("HealthCheckService: adding node with id " << node->getId());
     nodeIdToTopologyNodeMap[node->getId()] = node;
 }
 
