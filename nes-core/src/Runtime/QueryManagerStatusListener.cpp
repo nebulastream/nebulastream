@@ -93,7 +93,7 @@ void AbstractQueryManager::notifyPipelineCompletion(QuerySubPlanId subPlanId, Ex
 void AbstractQueryManager::notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr sink, QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
     auto& qep = runningQEPs[subPlanId];
-    NES_ASSERT2_FMT(qep, "invalid query plan for sink " << sink->getOperatorId());
+    NES_ASSERT2_FMT(qep, "invalid query plan " << subPlanId << " for sink " << sink->toString());
     qep->notifySinkCompletion(sink, terminationType);
 }
 }// namespace NES::Runtime
