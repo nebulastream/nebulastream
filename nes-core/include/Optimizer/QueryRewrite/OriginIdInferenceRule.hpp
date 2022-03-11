@@ -24,60 +24,26 @@ class OriginIdInferenceRule;
 using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferenceRule>;
 
 /**
- * @brief This rule will replace the logical window operator with either a centralized or distributed implementation.
- * The following rule applies:
- *      - if the logical window operators has more than one child, we will replace it with a distributed implementation, otherwise with a centralized
+ * @brief The OriginIdInferenceRule traverses the operator tree and assigns origin ids to operators.
  *
- * Example: a query for centralized window:
- *                                          Sink
- *                                           |
- *                                           LogicalWindow
- *                                           |
- *                                        Source(Car)
-     will be changed to:
+ * In general, origin ids are emitted from sources, windows or or other stateful operators and are used to identify the origin of records.
+ * This is crucial for stateful operators, which have to make guarantees over the order of records in the stream (see WatermarkProcessor)
  *
- *                                                  Sink
- *                                                  |
- *                                              LogicalWindow
- *                                                   |
- *                                        Source(Car)    Source(Car)
- *
- * Example: a query for distributed window:
- *
- *
- *
- *                                                 Sink
- *                                                     |
- *                                              WindowCombiner
- *                                                /     \
- *                                              /        \
- *                                    WindowSlicer        WindowSlicer
- *                                           |             |
- *                                      Source(Car1)    Source(Car2)
- * ---------------------------------------------
- * Example: a query :                       Sink
- *                                           |
- *                                           Window
- *                                           |
- *                                        Source(Car)
- *
- * will be expanded to:                        Sink
- *                                               |
- *                                          Window-Combiner
- *                                                |
- *                                          Watermark-Assigner
- *                                             /    \
- *                                           /       \
- *                            Window-SliceCreator Window-SliceCreator
- *                                      |               |
- *                             Watermark-Assigner   Watermark-Assigner
- *                                      |               |
- *                                   Source(Car1)    Source(Car2)
+ * This rule is performed in two phases:
+ * 1. It assigns unique origin ids to all operators, which inherit from OriginIdAssignmentOperator.
+ * These origin ids are unique to a specific query.
+ * 2. It processes all operators and assigns the input and output origin ids.
 */
 class OriginIdInferenceRule : public BaseRewriteRule {
   public:
     static OriginIdInferenceRulePtr create();
     virtual ~OriginIdInferenceRule() = default;
+
+    /**
+     * @brief Apply the rule to the Query plan
+     * @param queryPlanPtr : The original query plan
+     * @return The updated query plan
+     */
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:

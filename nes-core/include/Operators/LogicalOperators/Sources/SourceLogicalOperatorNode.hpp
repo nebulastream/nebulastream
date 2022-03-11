@@ -26,7 +26,7 @@ namespace NES {
 class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode, public OriginIdAssignmentOperator {
   public:
     explicit SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor, OperatorId id);
-    explicit SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, uint64_t originId);
+    explicit SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, OriginId originId);
 
     /**
      * @brief Returns the source descriptor of the source operators.

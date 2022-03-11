@@ -116,7 +116,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @param ts
      * @param originId
      */
-    void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber, Runtime::WorkerContextRef workerContext) {
+    void updateMaxTs(uint64_t ts, OriginId originId, uint64_t sequenceNumber, Runtime::WorkerContextRef workerContext) {
         std::unique_lock lock(windowMutex);
         NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId);
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {

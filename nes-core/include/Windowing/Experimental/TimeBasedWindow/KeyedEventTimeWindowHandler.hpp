@@ -63,7 +63,7 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler,
     void triggerThreadLocalState(Runtime::WorkerContext& wctx,
                                  Runtime::Execution::PipelineExecutionContext& ctx,
                                  uint64_t workerId,
-                                 uint64_t originId,
+                                 OriginId originId,
                                  uint64_t sequenceNumber,
                                  uint64_t watermarkTs);
 

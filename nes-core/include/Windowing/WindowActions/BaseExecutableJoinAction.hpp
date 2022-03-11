@@ -43,7 +43,7 @@ class BaseExecutableJoinAction {
 
     virtual SchemaPtr getJoinSchema() = 0;
 
-    virtual void setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
+    virtual void setup(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, OriginId originId) {
         NES_ASSERT(pipelineExecutionContext, "invalid pipelineExecutionContext");
         this->originId = originId;
         this->weakExecutionContext = pipelineExecutionContext;
@@ -57,7 +57,7 @@ class BaseExecutableJoinAction {
     // otherwise we ll file an issue and forget about it
     std::shared_ptr<Runtime::Execution::PipelineExecutionContext> phantom;
 
-    uint64_t originId;
+    OriginId originId;
 };
 }// namespace NES::Join
 

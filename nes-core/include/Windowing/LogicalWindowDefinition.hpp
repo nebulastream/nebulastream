@@ -162,7 +162,7 @@ class LogicalWindowDefinition {
      * @brief Setter for the origin id
      * @param originId
      */
-    void setOriginId(uint64_t originId);
+    void setOriginId(OriginId originId);
 
     /**
      * @brief Creates a copy of the logical window definition
@@ -210,7 +210,7 @@ class LogicalWindowDefinition {
     std::vector<FieldAccessExpressionNodePtr> onKey;
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges = 0;
-    uint64_t originId{};
+    OriginId originId{};
     uint64_t allowedLateness;
 };
 

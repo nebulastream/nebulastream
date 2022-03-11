@@ -159,6 +159,10 @@ class OperatorNode : public Node {
      */
     bool hasProperty(const std::string& key);
 
+    /**
+     * @brief Gets the output origin ids from this operator
+     * @return std::vector<OriginId>
+     */
     virtual std::vector<OriginId> getOutputOriginIds() = 0;
 
   protected:

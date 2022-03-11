@@ -64,10 +64,18 @@ class ExchangeOperatorNode : public virtual OperatorNode {
      * @brief set the result schema of this operator
      * @param outputSchema
     */
-
     void setOutputSchema(SchemaPtr outputSchema) override;
+
+    /**
+     * @brief Set the input origin ids from the input stream
+     * @param originIds
+     */
     void setInputOriginIds(std::vector<OriginId> originIds);
 
+    /**
+     * @brief Gets the output origin ids from this operator
+     * @return std::vector<OriginId>
+     */
     std::vector<OriginId> getOutputOriginIds() override;
 
   protected:

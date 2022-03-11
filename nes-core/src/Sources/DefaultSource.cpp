@@ -37,7 +37,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                              const uint64_t numbersOfBufferToProduce,
                              uint64_t gatheringInterval,
                              OperatorId operatorId,
-                             uint64_t originId,
+                             OriginId originId,
                              size_t numSourceLocalBuffers,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),

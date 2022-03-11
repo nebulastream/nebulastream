@@ -138,7 +138,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
-    uint64_t originId{};
+    OriginId originId{};
     std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarkProcessorLeft;
     std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarkProcessorRight;
     uint64_t lastWatermark{};

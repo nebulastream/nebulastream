@@ -152,7 +152,7 @@ class BufferControlBlock {
      * @brief set originId
      * @param originId
      */
-    void setOriginId(uint64_t originId);
+    void setOriginId(OriginId originId);
 
     /**
     * @brief method to set the watermark with a timestamp

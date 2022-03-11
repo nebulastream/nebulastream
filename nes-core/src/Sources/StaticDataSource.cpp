@@ -45,7 +45,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                                    ::NES::Runtime::BufferManagerPtr bufferManager,
                                    ::NES::Runtime::QueryManagerPtr queryManager,
                                    OperatorId operatorId,
-                                   uint64_t originId,
+                                   OriginId originId,
                                    size_t numSourceLocalBuffers,
                                    std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),

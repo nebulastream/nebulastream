@@ -210,7 +210,7 @@ class DataBufferMessage {
 
     explicit inline DataBufferMessage(uint32_t payloadSize,
                                       uint32_t numOfRecords,
-                                      uint64_t originId,
+                                      OriginId originId,
                                       uint64_t watermark,
                                       uint64_t creationTimestamp,
                                       uint64_t sequenceNumber) noexcept

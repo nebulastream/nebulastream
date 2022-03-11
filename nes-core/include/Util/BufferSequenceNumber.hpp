@@ -35,7 +35,7 @@ class BufferSequenceNumber {
      * @param originId origin id
      * @return buffer sequence number
      */
-    BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId){};
+    BufferSequenceNumber(uint64_t sequenceNumber, OriginId originId) : sequenceNumber(sequenceNumber), originId(originId){};
 
     /**
      * @brief Getter for a sequence number of a buffer sequence number
@@ -51,7 +51,7 @@ class BufferSequenceNumber {
 
   private:
     uint64_t sequenceNumber;
-    uint64_t originId;
+    OriginId originId;
     friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
         return lhs.sequenceNumber < rhs.sequenceNumber;
     }

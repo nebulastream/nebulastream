@@ -33,7 +33,7 @@ MonitoringSource::MonitoringSource(const MetricCollectorPtr& metricCollector,
                                    const uint64_t numbersOfBufferToProduce,
                                    uint64_t sourceGatheringInterval,
                                    OperatorId operatorId,
-                                   uint64_t originId,
+                                   OriginId originId,
                                    size_t numSourceLocalBuffers,
                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DefaultSource(Schema::create(),

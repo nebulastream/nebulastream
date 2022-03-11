@@ -17,7 +17,7 @@
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
-                                               uint64_t originId,
+                                               OriginId originId,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                SourceDescriptorPtr sourceDescriptor)
@@ -25,7 +25,7 @@ PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
       sourceDescriptor(std::move(sourceDescriptor)), originId(originId) {}
 
 std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(OperatorId id,
-                                                                       uint64_t originId,
+                                                                       OriginId originId,
                                                                        const SchemaPtr& inputSchema,
                                                                        const SchemaPtr& outputSchema,
                                                                        const SourceDescriptorPtr& sourceDescriptor) {
@@ -39,7 +39,7 @@ PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, So
 
 uint64_t PhysicalSourceOperator::getOriginId() { return originId; }
 
-void PhysicalSourceOperator::setOriginId(uint64_t originId) { this->originId = originId; }
+void PhysicalSourceOperator::setOriginId(OriginId originId) { this->originId = originId; }
 
 SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }
 

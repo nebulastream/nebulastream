@@ -46,10 +46,14 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode, public OriginI
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
-   std::vector<OriginId> getOutputOriginIds() override;
-   void inferInputOrigins() override;
+    /**
+     * @brief Gets the output origin ids from this operator
+     * @return std::vector<OriginId>
+     */
+    std::vector<OriginId> getOutputOriginIds() override;
+    void inferInputOrigins() override;
 
- private:
+  private:
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 }// namespace NES

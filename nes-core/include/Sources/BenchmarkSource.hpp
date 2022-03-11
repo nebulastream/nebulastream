@@ -53,7 +53,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              uint64_t numBuffersToProcess,
                              uint64_t gatheringValue,
                              OperatorId operatorId,
-                             uint64_t originId,
+                             OriginId originId,
                              size_t numSourceLocalBuffers,
                              GatheringMode::Value gatheringMode,
                              SourceMode::Value sourceMode,

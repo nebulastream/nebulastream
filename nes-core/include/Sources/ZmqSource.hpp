@@ -41,7 +41,7 @@ class ZmqSource : public DataSource {
                        const std::string& host,
                        uint16_t port,
                        OperatorId operatorId,
-                       uint64_t originId,
+                       OriginId originId,
                        uint64_t numSourceLocalBuffers,
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);

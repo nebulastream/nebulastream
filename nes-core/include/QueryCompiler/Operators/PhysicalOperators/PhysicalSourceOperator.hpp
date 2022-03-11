@@ -25,26 +25,26 @@ namespace PhysicalOperators {
 class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalSourceOperator(OperatorId id,
-                           uint64_t originId,
+                           OriginId originId,
                            SchemaPtr inputSchema,
                            SchemaPtr outputSchema,
                            SourceDescriptorPtr sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator> create(OperatorId id,
-                                                          uint64_t originId,
+                                                          OriginId originId,
                                                           const SchemaPtr& inputSchema,
                                                           const SchemaPtr& outputSchema,
                                                           const SourceDescriptorPtr& sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator>
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     SourceDescriptorPtr getSourceDescriptor();
-    void setOriginId(uint64_t originId);
-    uint64_t getOriginId();
+    void setOriginId(OriginId originId);
+    OriginId getOriginId();
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;
-    uint64_t originId;
+    OriginId originId;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
