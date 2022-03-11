@@ -37,9 +37,9 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
         throw CompilerException("No language compiler found for language: " + language);
     }
 
-    auto comp = languageCompiler->second;
-    auto asyncResult = std::async(std::launch::deferred, [comp, request]() {
-         return comp->compile(request);
+    auto compiler = languageCompiler->second;
+    auto asyncResult = std::async(std::launch::deferred, [compiler, request]() {
+         return compiler->compile(request);
 
     });
     return asyncResult;

@@ -35,7 +35,7 @@ class DataSourceProvider {
      * @return DataSourcePtr
      */
     virtual DataSourcePtr lower(OperatorId operatorId,
-                                uint64_t originId,
+                                OriginId originId,
                                 SourceDescriptorPtr sourceDescriptor,
                                 Runtime::NodeEnginePtr nodeEngine,
                                 std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);

@@ -109,7 +109,7 @@ std::string LogicalWindowDefinition::toString() {
     return ss.str();
 }
 uint64_t LogicalWindowDefinition::getOriginId() const { return originId; }
-void LogicalWindowDefinition::setOriginId(uint64_t originId) { this->originId = originId; }
+void LogicalWindowDefinition::setOriginId(OriginId originId) { this->originId = originId; }
 uint64_t LogicalWindowDefinition::getAllowedLateness() const { return allowedLateness; }
 
 bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefinition) {

@@ -25,7 +25,7 @@ SourceLogicalOperatorNode::SourceLogicalOperatorNode(SourceDescriptorPtr const& 
 
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(SourceDescriptorPtr const& sourceDescriptor,
                                                      OperatorId id,
-                                                     uint64_t originId)
+                                                     OriginId originId)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), OriginIdAssignmentOperator(id, originId),
       sourceDescriptor(sourceDescriptor) {}
 

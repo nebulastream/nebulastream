@@ -35,7 +35,7 @@ class SenseSource : public DataSource {
                          Runtime::QueryManagerPtr queryManager,
                          std::string udfs,
                          OperatorId operatorId,
-                         uint64_t originId,
+                         OriginId originId,
                          size_t numSourceLocalBuffers,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 

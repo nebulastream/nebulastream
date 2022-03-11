@@ -72,10 +72,22 @@ class UnaryOperatorNode : public virtual OperatorNode {
     */
     void setOutputSchema(SchemaPtr outputSchema) override;
 
+    /**
+     * @brief Set the input origin ids from the input stream
+     * @param originIds
+     */
     void setInputOriginIds(std::vector<OriginId> originIds);
 
+    /**
+     * @brief Gets the input origin ids  from the input stream
+     * @return std::vector<OriginId>
+     */
     std::vector<OriginId> getInputOriginIds();
 
+    /**
+     * @brief Gets the output origin ids from this operator
+     * @return std::vector<OriginId>
+     */
     virtual std::vector<OriginId> getOutputOriginIds() override;
 
   protected:

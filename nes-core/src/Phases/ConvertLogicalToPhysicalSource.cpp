@@ -45,7 +45,7 @@ namespace NES {
 
 DataSourcePtr
 ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
-                                                 uint64_t originId,
+                                                 OriginId originId,
                                                  const SourceDescriptorPtr& sourceDescriptor,
                                                  const Runtime::NodeEnginePtr& nodeEngine,
                                                  size_t numSourceLocalBuffers,

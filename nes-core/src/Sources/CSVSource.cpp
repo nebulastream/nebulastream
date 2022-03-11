@@ -35,7 +35,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::QueryManagerPtr queryManager,
                      CSVSourceTypePtr csvSourceType,
                      OperatorId operatorId,
-                     uint64_t originId,
+                     OriginId originId,
                      size_t numSourceLocalBuffers,
                      GatheringMode::Value gatheringMode,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)

@@ -57,7 +57,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
                         OperatorId operatorId,
-                        uint64_t originId,
+                        OriginId originId,
                         size_t numSourceLocalBuffers,
                         GatheringMode::Value gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
@@ -235,7 +235,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
-    uint64_t originId;
+    OriginId originId;
     SchemaPtr schema;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};

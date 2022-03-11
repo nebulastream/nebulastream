@@ -50,7 +50,7 @@ NES::Experimental::Hashmap KeyedEventTimeWindowHandler::getHashMap() { return fa
 void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
                                                           Runtime::Execution::PipelineExecutionContext& ctx,
                                                           uint64_t workerId,
-                                                          uint64_t originId,
+                                                          OriginId originId,
                                                           uint64_t sequenceNumber,
                                                           uint64_t watermarkTs) {
 

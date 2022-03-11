@@ -31,7 +31,7 @@ LambdaSource::LambdaSource(
     uint64_t gatheringValue,
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
-    uint64_t originId,
+    OriginId originId,
     size_t numSourceLocalBuffers,
     GatheringMode::Value gatheringMode,
     uint64_t sourceAffinity,

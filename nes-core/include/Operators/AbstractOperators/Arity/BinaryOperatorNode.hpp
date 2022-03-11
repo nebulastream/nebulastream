@@ -80,12 +80,34 @@ class BinaryOperatorNode : public virtual OperatorNode {
     */
     void setOutputSchema(SchemaPtr outputSchema) override;
 
+    /**
+     * @brief Set the input origin ids for the left input stream.
+     * @param originIds
+     */
     void setLeftInputOriginIds(std::vector<OriginId> originIds);
+
+    /**
+     * @brief Gets the input origin ids for the left input stream
+     * @return std::vector<OriginId>
+     */
     virtual std::vector<OriginId> getLeftInputOriginIds();
 
+    /**
+     * @brief Set the input origin ids for the right input stream.
+     * @param originIds
+     */
     void setRightInputOriginIds(std::vector<OriginId> originIds);
+
+    /**
+     * @brief Gets the input origin ids for the right input stream
+     * @return std::vector<OriginId>
+     */
     virtual std::vector<OriginId> getRightInputOriginIds();
 
+    /**
+     * @brief Gets the output origin ids for the result stream
+     * @return std::vector<OriginId>
+     */
     std::vector<OriginId> getOutputOriginIds() override;
 
   protected:

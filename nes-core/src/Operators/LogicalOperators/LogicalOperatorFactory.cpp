@@ -36,7 +36,7 @@
 namespace NES {
 
 LogicalUnaryOperatorNodePtr
-LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr& sourceDescriptor, OperatorId id, uint64_t originId) {
+LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr& sourceDescriptor, OperatorId id, OriginId originId) {
     return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, id, originId);
 }
 

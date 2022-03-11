@@ -22,7 +22,11 @@ namespace NES {
  * @brief this alias represent a origin.
  */
 using OriginId = uint64_t;
-static constexpr uint64_t INVALID_ORIGIN_ID = 0;
+
+/**
+ * @brief The invalid origin id is always zero.
+ */
+static constexpr OriginId INVALID_ORIGIN_ID = 0;
 }// namespace NES
 
 #endif// NES_INCLUDE_OPERATORS_ORIGINID_HPP_
