@@ -19,7 +19,7 @@
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/HealthCheckRPCImpl.hpp>
+#include <GRPC/HealthCheckRPCServer.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
@@ -36,6 +36,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+#include <Services/WorkerHealthCheckService.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -112,8 +113,8 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     std::unique_ptr<grpc::ServerBuilderOption> option(
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
-    const std::string kHealthyService("healthy_service");
-    HealthCheckRPCImpl healthCheckServiceImpl;
+    const std::string kHealthyService("NES_DEFAULT_HEALTH_CHECK_SERVICE");
+    HealthCheckRPCServer healthCheckServiceImpl;
     healthCheckServiceImpl.SetStatus(
         kHealthyService,
         grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
@@ -285,7 +286,7 @@ bool NesWorker::connect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
-        healthCheckService = std::make_shared<HealthCheckService>(coordinatorRpcClient);
+        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient);
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
         return true;

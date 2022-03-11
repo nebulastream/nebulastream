@@ -13,7 +13,7 @@
 */
 
 
-#include <GRPC/HealthCheckRPCImpl.hpp>
+#include <GRPC/HealthCheckRPCServer.hpp>
 #include <grpc/grpc.h>
 
 using grpc::health::v1::HealthCheckRequest;
@@ -21,7 +21,7 @@ using grpc::health::v1::HealthCheckResponse;
 
 namespace NES{
 
-grpc::Status NES::HealthCheckRPCImpl::Check(grpc::ServerContext* /*context*/,
+grpc::Status NES::HealthCheckRPCServer::Check(grpc::ServerContext* /*context*/,
                                      const HealthCheckRequest* request,
                                      HealthCheckResponse* response) {
   std::lock_guard<std::mutex> lock(mutex);
@@ -33,7 +33,7 @@ grpc::Status NES::HealthCheckRPCImpl::Check(grpc::ServerContext* /*context*/,
   return grpc::Status::OK;
 }
 
-grpc::Status HealthCheckRPCImpl::Watch(
+grpc::Status HealthCheckRPCServer::Watch(
     grpc::ServerContext* context, const HealthCheckRequest* request,
     grpc::ServerWriter<HealthCheckResponse>* writer) {
   auto last_state = HealthCheckResponse::UNKNOWN;
@@ -58,7 +58,7 @@ grpc::Status HealthCheckRPCImpl::Watch(
   return grpc::Status::OK;
 }
 
-void HealthCheckRPCImpl::SetStatus(
+void HealthCheckRPCServer::SetStatus(
     const std::string& service_name,
     grpc::health::v1::HealthCheckResponse::ServingStatus status) {
   std::lock_guard<std::mutex> lock(mutex);
@@ -68,7 +68,7 @@ void HealthCheckRPCImpl::SetStatus(
   statusMap[service_name] = status;
 }
 
-void HealthCheckRPCImpl::SetAll(grpc::health::v1::HealthCheckResponse::ServingStatus status) {
+void HealthCheckRPCServer::SetAll(grpc::health::v1::HealthCheckResponse::ServingStatus status) {
   std::lock_guard<std::mutex> lock(mutex);
   if (shutdown) {
     return;
@@ -78,7 +78,7 @@ void HealthCheckRPCImpl::SetAll(grpc::health::v1::HealthCheckResponse::ServingSt
   }
 }
 
-void HealthCheckRPCImpl::Shutdown() {
+void HealthCheckRPCServer::Shutdown() {
   std::lock_guard<std::mutex> lock(mutex);
   if (shutdown) {
     return;

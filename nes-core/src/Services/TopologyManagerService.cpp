@@ -17,6 +17,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <CoordinatorRPCService.pb.h>
+#include <Services/AbstractHealthCheckService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -29,9 +30,15 @@ namespace NES {
 TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(std::move(topology)) {
     NES_DEBUG("TopologyManagerService()");
 }
+void TopologyManagerService::setHealthService(HealthCheckServicePtr healthCheckService) {
+    this->healthCheckService = healthCheckService;
+}
 
-uint64_t
-TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, GeographicalLocation coordinates) {
+uint64_t TopologyManagerService::registerNode(const std::string& address,
+                                              int64_t grpcPort,
+                                              int64_t dataPort,
+                                              uint16_t numberOfSlots,
+                                              GeographicalLocation coordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -71,6 +78,11 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
         NES_DEBUG("added node does not have a geographical location");
     }
 
+    if (healthCheckService) {
+        //add node to health check
+        healthCheckService->addNodeToHealthCheck(newTopologyNode);
+    }
+
     NES_DEBUG("TopologyManagerService::registerNode: topology after insert = ");
     topology->print();
     return id;
@@ -85,6 +97,11 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
     if (!physicalNode) {
         NES_ERROR("CoordinatorActor: node with id not found " << nodeId);
         return false;
+    }
+
+    if (healthCheckService) {
+        //remove node to health check
+        healthCheckService->removeNodeFromHealthCheck(physicalNode);
     }
 
     NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
@@ -184,11 +201,13 @@ uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNode
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of furture movement
 
-std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> TopologyManagerService::getNodesInRange(GeographicalLocation center, double radius) {
+std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> TopologyManagerService::getNodesInRange(GeographicalLocation center,
+                                                                                                      double radius) {
     return topology->getNodesInRange(center, radius);
 }
 
-std::vector<std::pair<uint64_t , GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(GeographicalLocation center, double radius) {
+std::vector<std::pair<uint64_t, GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(GeographicalLocation center,
+                                                                                                  double radius) {
     auto list = getNodesInRange(center, radius);
     std::vector<std::pair<uint64_t, GeographicalLocation>> nodeIDsInRange{};
     nodeIDsInRange.reserve(list.size());
@@ -198,10 +217,7 @@ std::vector<std::pair<uint64_t , GeographicalLocation>> TopologyManagerService::
     return nodeIDsInRange;
 }
 
-TopologyNodePtr TopologyManagerService::getRootNode()
-{
-    return topology->getRoot();
-}
+TopologyNodePtr TopologyManagerService::getRootNode() { return topology->getRoot(); }
 
 bool TopologyManagerService::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     return topology->removePhysicalNode(nodeToRemove);

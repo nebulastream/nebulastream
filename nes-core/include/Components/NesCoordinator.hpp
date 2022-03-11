@@ -20,16 +20,12 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/SourceCatalogService.hpp>
-#include <Services/TopologyManagerService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <future>
 #include <string>
 #include <thread>
 #include <vector>
-#include <Services/TopologyManagerService.hpp>
-#include <grpcpp/health_check_service_interface.h>
-#include <Services/HealthCheckService.hpp>
 
 namespace grpc {
 class Server;
@@ -85,6 +81,11 @@ using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
+
+class AbstractHealthCheckService;
+using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
+
+
 
 namespace Catalogs {
 
@@ -211,8 +212,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     NesWorkerPtr getNesWorker();
 
-  protected:
-    /// NOTE: This method is not part of the public API for this class.
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient

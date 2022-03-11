@@ -28,7 +28,7 @@ namespace NES {
  * This implementation follows the example: https://github.com/grpc/grpc/blob/master/test/cpp/end2end/test_health_check_service_impl.cc
  *
  */
-class HealthCheckRPCImpl : public grpc::health::v1::Health::Service {
+class HealthCheckRPCServer : public grpc::health::v1::Health::Service {
   public:
     grpc::Status Check(grpc::ServerContext* context,
                        const grpc::health::v1::HealthCheckRequest* request,
@@ -39,10 +39,10 @@ class HealthCheckRPCImpl : public grpc::health::v1::Health::Service {
 
     /**
     * Method to set the status for health checking for a particular service
-    * @param service_name
+    * @param serviceName
     * @param status
     */
-    void SetStatus(const std::string& service_name, grpc::health::v1::HealthCheckResponse::ServingStatus status);
+    void SetStatus(const std::string& serviceName, grpc::health::v1::HealthCheckResponse::ServingStatus status);
 
     /**
     * Method to set the health checking for all services

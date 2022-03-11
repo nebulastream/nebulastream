@@ -18,7 +18,7 @@ add_source_files(nes-core
         WorkerRPCServer.cpp
         GrpcLibraryInizializer.cpp
         CallData.cpp
-        HealthCheckRPCImpl.cpp
+        HealthCheckRPCServer.cpp
 )
 
 add_subdirectory(Serialization)
