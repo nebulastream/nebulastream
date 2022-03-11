@@ -20,6 +20,9 @@
 namespace NES::QueryCompilation {
 FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
+#ifdef USE_TF
+    builder.declations << "#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>\n"
+#endif
     builder.declations
         << "#include <API/Schema.hpp>\n"
            "#include <Common/ExecutableType/Array.hpp>\n"
