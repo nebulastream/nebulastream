@@ -54,7 +54,7 @@ float NES::TensorflowAdapter::getResultAt(int i) {
     #ifdef TFDEF
     return output[i];
     #else
-    if(i);
+    if(i) printf("");
     return 0.0;
     #endif
 }
@@ -87,7 +87,7 @@ void NES::TensorflowAdapter::infer(int n, ...){
     output = (float*) malloc(output_size);
     TfLiteTensorCopyToBuffer(output_tensor, output, output_size);
 #else
-    if(n);
-    if(output);
+    if(n) printf("");
+    if(output) printf("");
 #endif
 }
