@@ -22,8 +22,8 @@ jobs:
       matrix:
         include:
           - osversion: ubuntu-18_04
-            require_build: "false"
-            require_test: "false"
+            require_build: "true"
+            require_test: "true"
           - osversion: ubuntu-20_04
             require_build: "true"
             require_test: "true"

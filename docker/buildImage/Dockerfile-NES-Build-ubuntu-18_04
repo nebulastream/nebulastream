@@ -1,5 +1,12 @@
 FROM ubuntu:18.04
 
+
+RUN apt-get update  -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq software-properties-common
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test  && \
+     apt-get update  -qq && \
+     DEBIAN_FRONTEND="noninteractive" apt-get install gcc-9 g++-9 -qq && \
+     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libdwarf-dev \
     libdwarf1 \
@@ -24,6 +31,8 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     libbsd-dev \
     software-properties-common \
     && apt-get clean -qq
+
+
 
 RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' \
