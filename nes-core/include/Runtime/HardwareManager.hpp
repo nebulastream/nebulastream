@@ -127,7 +127,7 @@ class HardwareManager {
      * @param numaNodeIndex
      * @return
      */
-    NumaRegionMemoryAllocatorPtr getNumaAllactor(uint32_t numaNodeIndex) const;
+    NumaRegionMemoryAllocatorPtr getNumaAllocator(uint32_t numaNodeIndex) const;
 #endif
     /**
      * @brief Provides the count of available numa nodes

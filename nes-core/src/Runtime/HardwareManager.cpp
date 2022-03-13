@@ -112,7 +112,7 @@ HardwareManager::HardwareManager() : globalAllocator(std::make_shared<NesDefault
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 uint32_t HardwareManager::getNumberOfNumaRegions() const { return numaRegions.size(); }
 
-NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllactor(uint32_t numaNodeIndex) const {
+NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllocator(uint32_t numaNodeIndex) const {
     NES_ASSERT2_FMT(numaNodeIndex < numaRegions.size(), "Invalid numa region " << numaNodeIndex);
     return numaRegions[numaNodeIndex];
 }
