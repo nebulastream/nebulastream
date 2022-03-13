@@ -166,6 +166,9 @@ class KalmanFilter {
     double getEstimationErrorDifference();
     // same as getExponentialFrequency() but cuts off on a threshold
     std::chrono::milliseconds getExponentialFrequencyWithHalfLimit();
+    // same as original impl., contain limits and can be used for standalone tests
+    std::chrono::milliseconds getStandaloneExponentialDecayFrequency();
+    std::chrono::milliseconds getStandaloneExponentialGrowthFrequency();
 
   protected:
     /**

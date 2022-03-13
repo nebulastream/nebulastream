@@ -200,24 +200,30 @@ double KalmanFilter::getEstimationErrorDifference() {
     return this->kfErrorWindow[0] - this->kfErrorWindow[1];
 }
 
-// TODO: remove the triggering if clause, we still use it for testing
 std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
+    auto newFreqCandidate = this->initialFreq.count() * std::pow((1 - .25), this->decreaseCounter); // y = y0 * ((1-b) ^ x)
+    ++this->decreaseCounter;
+    this->increaseCounter = 1;
+    return std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
+}
+
+std::chrono::milliseconds KalmanFilter::getStandaloneExponentialDecayFrequency() {
     if (this->getEstimationErrorDifference() > 0.6) {
-        auto newFreqCandidate = this->initialFreq.count() * std::pow((1 - .25), this->decreaseCounter); // y = y0 * ((1-b) ^ x)
-        ++this->decreaseCounter;
-        this->increaseCounter = 1;
-        return std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
+        this->gatheringInterval = this->getExponentialDecayFrequency();
     }
     return this->gatheringInterval;
 }
 
-// TODO: remove the triggering if clause, we still use it for testing
 std::chrono::milliseconds KalmanFilter::getExponentialGrowthFrequency() {
+    auto newFreqCandidate = this->initialFreq.count() * std::pow((1 + .25), this->increaseCounter); // y = y0 * ((1+b) ^ x)
+    ++this->increaseCounter;
+    this->decreaseCounter = 1;
+    return std::chrono::milliseconds((int) trunc(newFreqCandidate));
+}
+
+std::chrono::milliseconds KalmanFilter::getStandaloneExponentialGrowthFrequency() {
     if (this->getTotalEstimationError() < 0.24) {
-        auto newFreqCandidate = this->initialFreq.count() * std::pow((1 + .25), this->increaseCounter); // y = y0 * ((1+b) ^ x)
-        ++this->increaseCounter;
-        this->decreaseCounter = 1;
-        return std::chrono::milliseconds((int) trunc(newFreqCandidate));
+        this->gatheringInterval = this->getExponentialGrowthFrequency();
     }
     return this->gatheringInterval;
 }
@@ -227,14 +233,20 @@ std::chrono::milliseconds KalmanFilter::getExponentialFrequencyWithHalfLimit() {
      * diff is new - old, negative means new is small
      * so we don't need to cover it
      */
+    auto lowerLimit = initialFreq.count() / 2;
+    auto upperLimit = (initialFreq.count() + (initialFreq.count() / 2));
     if (this->getEstimationErrorDifference() > 0.6) {
         auto frequencyCandidate = this->getExponentialDecayFrequency();
-        if (frequencyCandidate.count() < initialFreq.count() * 2) {
+        if (frequencyCandidate.count() < lowerLimit) {
+            this->gatheringInterval = std::chrono::milliseconds(lowerLimit);
+        } else {
             this->gatheringInterval = frequencyCandidate;
         }
     } else if (this->getTotalEstimationError() < 0.24) {
         auto frequencyCandidate = this->getExponentialGrowthFrequency();
-        if (frequencyCandidate.count() > initialFreq.count() / 2) {
+        if (frequencyCandidate.count() > upperLimit) {
+            this->gatheringInterval = std::chrono::milliseconds(upperLimit);
+        } else {
             this->gatheringInterval = frequencyCandidate;
         }
     }
