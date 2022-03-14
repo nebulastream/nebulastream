@@ -20,9 +20,12 @@
 namespace NES {
 
 WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient)
-    : coordinatorRpcClient(coordinatorRpcClient) {}
+    : coordinatorRpcClient(coordinatorRpcClient) {
+    id = coordinatorRpcClient->getId();
+}
 
 void WorkerHealthCheckService::startHealthCheck() {
+    NES_DEBUG("WorkerHealthCheckService::startHealthCheck worker id=" << id);
     isRunning = true;
     NES_DEBUG("start health checking on worker");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
@@ -36,15 +39,15 @@ void WorkerHealthCheckService::startHealthCheck() {
             if (isAlive) {
                 NES_DEBUG("NesWorker::healthCheck: for worker id=" << coordinatorRpcClient->getId() << " is alive");
             } else {
-                NES_ERROR("NesWorker::healthCheck: for worker id="
+                NES_WARNING("NesWorker::healthCheck: for worker id="
                           << coordinatorRpcClient->getId() << " coordinator went down so shutting down the worker with ip");
-                std::exit(-1);
+//                std::exit(-1);
             }
             std::this_thread::sleep_for(std::chrono::seconds(waitTimeInSeconds));
         }
         //        we have to wait until the code above terminates to proceed afterwards with shutdown of the rpc server (can be delayed due to sleep)
         shutdownRPC->set_value(true);
-        NES_DEBUG("NesWorker::healthCheck: stop health checking");
+        NES_DEBUG("NesWorker::healthCheck: stop health checking id=" << id);
     }));
 }
 

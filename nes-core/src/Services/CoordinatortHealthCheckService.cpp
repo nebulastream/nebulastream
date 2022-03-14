@@ -22,16 +22,19 @@ namespace NES {
 
 CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
                                                              WorkerRPCClientPtr workerRPCClient)
-    : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient) {}
+    : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient) {
+    id = 9999;
+}
 
 void CoordinatorHealthCheckService::startHealthCheck() {
+    NES_DEBUG("CoordinatorHealthCheckService::startHealthCheck");
     isRunning = true;
     NES_DEBUG("start health checking on coordinator");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
 
         while (isRunning) {
-            for (auto node : nodeIdToTopologyNodeMap) {
+            for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
                 auto nodeIp = node.second->getIpAddress();
                 auto nodeGrpcPort = node.second->getGrpcPort();
                 std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
@@ -42,7 +45,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                 if (res) {
                     NES_DEBUG("NesCoordinator::healthCheck: node=" << destAddress << " is alive");
                 } else {
-                    NES_ERROR("NesCoordinator::healthCheck: node=" << destAddress << " went dead so we remove it");
+                    NES_WARNING("NesCoordinator::healthCheck: node=" << destAddress << " went dead so we remove it");
                     if (topologyManagerService->getRootNode()->getId() == node.second->getId()) {
                         NES_WARNING("The failing node is the root node so we cannot delete it");
                         shutdownRPC->set_value(true);
@@ -52,7 +55,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                         if (ret) {
                             NES_DEBUG("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
                         } else {
-                            NES_DEBUG("Node went offline but could not be removed from topology");
+                            NES_WARNING("Node went offline but could not be removed from topology");
                         }
                         //Source catalog
                         //                    SourceCatalogService unregisterPhysicalSource
@@ -65,7 +68,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
             std::this_thread::sleep_for(std::chrono::seconds(waitTimeInSeconds));
         }
         shutdownRPC->set_value(true);
-        NES_DEBUG("NesCo547ordinator: stop health checking");
+        NES_DEBUG("NesCoordinator: stop health checking");
     }));
 }
 
