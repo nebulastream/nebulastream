@@ -18,18 +18,39 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-//#include <Compiler/LanguageCompiler.hpp>
+#include <Compiler/LanguageCompiler.hpp>
 namespace NES::Runtime {
 enum class NumaAwarenessFlag { ENABLED, DISABLED };
+/**
+ * This class is used to create instances of NodeEngine using the builder pattern.
+ */
 class NodeEngineBuilder {
 
   public:
+    /**
+     * Creates a default NodeEngineBuilder
+     * @param workerConfiguration contains values that configure aspects of the NodeEngine
+     * @return NodeEngineBuilder
+     */
     static NodeEngineBuilder create(Configurations::WorkerConfiguration workerConfiguration);
 
     NodeEngineBuilder() = delete;
 
+    //setters for configurations that are not included in WorkerConfigurations but can be set to customize a NodeEngine
+    //Mandatory
+    /**
+     * setter used to pass hostname to NodeEndineBuilder. Mandatory to use, as hostname is needed to create NetworkManager
+     * @param hostname : string representing hostname
+     * @return NodeEngineBuilder&
+     */
     NodeEngineBuilder& setHostname(const std::string& hostname);
+    /**
+     * setter used to pass NesWorker to NodeEngineBuilder. Mandatory
+     * @param nesWorker :
+     * @return NodeEngineBuilder&
+     */
     NodeEngineBuilder& setNesWorker(std::weak_ptr<NesWorker>&& nesWorker);
+    //Optional
     NodeEngineBuilder& setNodeEngineId(uint64_t nodeEngineId);
     NodeEngineBuilder& setPartitionManager(Network::PartitionManagerPtr partitionManager);
     NodeEngineBuilder& setHardwareManager(HardwareManagerPtr hardwareManager);
@@ -38,12 +59,16 @@ class NodeEngineBuilder {
     NodeEngineBuilder& setStateManager(StateManagerPtr stateManager);
     NodeEngineBuilder& setBufferStorage(BufferStoragePtr bufferStorage);
     NodeEngineBuilder& setMaterializedViewManager(Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager);
-    //NodeEngineBuilder& setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler);
+    NodeEngineBuilder& setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler);
     NodeEngineBuilder& setJITCompiler(Compiler::JITCompilerPtr jitCompiler );
     NodeEngineBuilder& setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory);
     NodeEngineBuilder& setCompiler(QueryCompilation::QueryCompilerPtr queryCompiler);
 
 
+    /**
+     * performs safety checks and returns a NodeEngine
+     * @return NodeEnginePtr
+     */
     NodeEnginePtr build();
 
   private:
@@ -58,14 +83,18 @@ class NodeEngineBuilder {
     StateManagerPtr stateManager;
     BufferStoragePtr bufferStorage;
     Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
-    //std::shared_ptr<Compiler::LanguageCompiler> languageCompiler;
+    std::shared_ptr<Compiler::LanguageCompiler> languageCompiler;
     Compiler::JITCompilerPtr jitCompiler;
     QueryCompilation::Phases::PhaseFactoryPtr phaseFactory;
     QueryCompilation::QueryCompilerPtr queryCompiler;
 
-
-
-        static QueryCompilation::QueryCompilerOptionsPtr
+    /**
+     *  Used during build() to convert the QueryCompilerConfigurations in the WorkerConfigruations to QueryCompilationOptions,
+     *  which is then used to create a QueryCompiler
+     * @param queryCompilerConfiguration : values to confiugre
+     * @return QueryCompilerOptionsPtr
+     */
+    static QueryCompilation::QueryCompilerOptionsPtr
     createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration queryCompilerConfiguration);
 
     /**

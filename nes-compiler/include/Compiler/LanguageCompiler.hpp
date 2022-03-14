@@ -13,6 +13,8 @@
 */
 #ifndef NES_INCLUDE_COMPILER_LANGUAGECOMPILER_HPP_
 #define NES_INCLUDE_COMPILER_LANGUAGECOMPILER_HPP_
+#include <Compiler/CompilationRequest.hpp>
+#include <Compiler/CompilationResult.hpp>
 namespace NES::Compiler {
 
 /**
