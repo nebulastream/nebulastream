@@ -36,7 +36,7 @@ void WorkerHealthCheckService::startHealthCheck() {
 
         NES_DEBUG("NesWorker: start health checking");
         while (isRunning) {
-            NES_DEBUG("NesWorker::healthCheck for worker id= " << coordinatorRpcClient->getId());
+            NES_TRACE("NesWorker::healthCheck for worker id= " << coordinatorRpcClient->getId());
 
             bool isAlive = coordinatorRpcClient->checkCoordinatorHealth(healthServiceName);
             if (isAlive) {
@@ -44,7 +44,6 @@ void WorkerHealthCheckService::startHealthCheck() {
             } else {
                 NES_WARNING("NesWorker::healthCheck: for worker id="
                             << coordinatorRpcClient->getId() << " coordinator went down so shutting down the worker with ip");
-                //                std::exit(-1);
                 worker->stop(true);
             }
             std::this_thread::sleep_for(std::chrono::seconds(waitTimeInSeconds));
