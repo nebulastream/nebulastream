@@ -285,7 +285,7 @@ bool NesWorker::connect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
-        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient, HEALTH_SERVICE_NAME);
+        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient, HEALTH_SERVICE_NAME, this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
         return true;
