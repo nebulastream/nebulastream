@@ -113,10 +113,9 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     std::unique_ptr<grpc::ServerBuilderOption> option(
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
-    const std::string kHealthyService("NES_DEFAULT_HEALTH_CHECK_SERVICE");
     HealthCheckRPCServer healthCheckServiceImpl;
     healthCheckServiceImpl.SetStatus(
-        kHealthyService,
+        HEALTHSERVICENAME,
         grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
 
@@ -235,8 +234,7 @@ bool NesWorker::stop(bool) {
     if (isRunning.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NesWorker::stopping health check");
         if (healthCheckService) {//connected &&
-            if(healthCheckService->getRunning())
-            {
+            if(healthCheckService->getRunning()) {
                 healthCheckService->stopHealthCheck();
             }
             else
@@ -293,7 +291,7 @@ bool NesWorker::connect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
-        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient);
+        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient, HEALTHSERVICENAME);
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
         return true;

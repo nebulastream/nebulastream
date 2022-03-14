@@ -189,8 +189,7 @@ class WorkerRPCClient {
      * @param address: ip address of the source
      * @return bool indicating success
      */
-    bool checkHealth(const std::string& address);
-
+    bool checkHealth(const std::string& address, std::string healthServiceName);
 
   private:
 };

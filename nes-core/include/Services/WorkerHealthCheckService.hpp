@@ -24,7 +24,7 @@ namespace NES {
  */
 class WorkerHealthCheckService : public NES::AbstractHealthCheckService {
   public:
-    WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient);
+    WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient, std::string healthServiceName);
 
     /**
      * Method to start the health checking

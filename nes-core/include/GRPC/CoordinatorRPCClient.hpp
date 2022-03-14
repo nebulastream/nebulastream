@@ -124,10 +124,10 @@ class CoordinatorRPCClient {
 
     /**
      * @brief method to check if the coordinator is alive
+     * @param healthServiceName name of the service
      * @return bool indicating success
      */
-    bool checkCoordinatorHealth();
-
+    bool checkCoordinatorHealth(std::string healthServiceName);
 
     /**
    * @brief method to unregister a node after the connection is established

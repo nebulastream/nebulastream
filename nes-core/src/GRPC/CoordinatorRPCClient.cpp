@@ -486,14 +486,13 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::get
     return nodesInRange;
 }
 
-
-bool CoordinatorRPCClient::checkCoordinatorHealth()
+bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName)
 {
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<grpc::health::v1::Health::Stub> workerStub = grpc::health::v1::Health::NewStub(chan);
 
     grpc::health::v1::HealthCheckRequest request;
-    request.set_service("NES_DEFAULT_HEALTH_CHECK_SERVICE");
+    request.set_service(healthServiceName);
     grpc::health::v1::HealthCheckResponse response;
     ClientContext context;
     Status status = workerStub->Check(&context, request, &response);

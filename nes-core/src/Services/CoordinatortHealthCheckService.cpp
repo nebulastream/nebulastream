@@ -21,9 +21,10 @@
 namespace NES {
 
 CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
-                                                             WorkerRPCClientPtr workerRPCClient)
+                                                             WorkerRPCClientPtr workerRPCClient, std::string healthServiceName)
     : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient) {
     id = 9999;
+    this->healthServiceName = healthServiceName;
 }
 
 void CoordinatorHealthCheckService::startHealthCheck() {
@@ -41,7 +42,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
 
                 //check health
                 NES_DEBUG("NesCoordinator::healthCheck: checking node=" << destAddress);
-                auto res = workerRPCClient->checkHealth(destAddress);
+                auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
                 if (res) {
                     NES_DEBUG("NesCoordinator::healthCheck: node=" << destAddress << " is alive");
                 } else {
