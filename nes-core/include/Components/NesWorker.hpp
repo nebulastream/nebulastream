@@ -42,7 +42,7 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-static constexpr auto HEALTHSERVICENAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
+static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
 
 class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, public Exceptions::ErrorListener {
     using inherited0 = detail::virtual_enable_shared_from_this<NesWorker>;

@@ -28,6 +28,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
+#include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
@@ -36,7 +37,6 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-#include <Services/WorkerHealthCheckService.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -58,9 +58,9 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationCoordinates(workerConfig->locationCoordinates.getValue()),
-      queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
-      enableMonitoring(workerConfig->enableMonitoring.getValue()), numberOfQueues(workerConfig->numberOfQueues.getValue()),
+      locationCoordinates(workerConfig->locationCoordinates.getValue()), queryCompilerConfiguration(workerConfig->queryCompiler),
+      enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()),
+      numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
       queryManagerMode(workerConfig->queryManagerMode.getValue()) {
     setThreadName("NesWorker");
@@ -115,7 +115,7 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
     builder.SetOption(std::move(option));
     HealthCheckRPCServer healthCheckServiceImpl;
     healthCheckServiceImpl.SetStatus(
-        HEALTHSERVICENAME,
+        HEALTH_SERVICE_NAME,
         grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
 
@@ -233,14 +233,8 @@ bool NesWorker::stop(bool) {
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NesWorker::stopping health check");
-        if (healthCheckService) {//connected &&
-            if(healthCheckService->getRunning()) {
-                healthCheckService->stopHealthCheck();
-            }
-            else
-            {
-                NES_DEBUG("NesWorker::stopping health check already stopped");
-            }
+        if (healthCheckService) {
+            healthCheckService->stopHealthCheck();
         } else {
             NES_WARNING("No health check service was created");
         }
@@ -291,7 +285,7 @@ bool NesWorker::connect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
-        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient, HEALTHSERVICENAME);
+        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient, HEALTH_SERVICE_NAME);
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
         return true;
@@ -455,7 +449,6 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 bool NesWorker::hasLocation() { return locationCoordinates.isValid(); }
-
 
 bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
     locationCoordinates = geoLoc;

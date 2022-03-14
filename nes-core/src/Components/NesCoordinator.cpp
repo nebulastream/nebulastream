@@ -266,7 +266,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, workerRpcClient, HEALTHSERVICENAME);
+    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, workerRpcClient, HEALTH_SERVICE_NAME);
     topologyManagerService->setHealthService(healthCheckService);
     NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
@@ -360,7 +360,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
     HealthCheckRPCServer healthCheckServiceImpl;
-    healthCheckServiceImpl.SetStatus(HEALTHSERVICENAME, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
+    healthCheckServiceImpl.SetStatus(HEALTH_SERVICE_NAME, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
 
     rpcServer = builder.BuildAndStart();

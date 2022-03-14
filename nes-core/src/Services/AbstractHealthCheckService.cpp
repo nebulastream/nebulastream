@@ -22,7 +22,11 @@ AbstractHealthCheckService::AbstractHealthCheckService() {}
 
 void AbstractHealthCheckService::stopHealthCheck() {
     NES_DEBUG("AbstractHealthCheckService::stopHealthCheck called on id=" << id);
-    isRunning = false;
+    auto expected = true;
+    if (!isRunning.compare_exchange_strong(expected, false)) {
+        NES_DEBUG("AbstractHealthCheckService::stopHealthCheck health check already stopped");
+        return;
+    }
     auto ret = shutdownRPC->get_future().get();
     NES_ASSERT(ret, "fail to shutdown health check");
 
@@ -54,9 +58,6 @@ void AbstractHealthCheckService::removeNodeFromHealthCheck(TopologyNodePtr node)
     nodeIdToTopologyNodeMap.erase(node->getId());
 }
 
-bool AbstractHealthCheckService::getRunning()
-{
-    return isRunning;
-}
+bool AbstractHealthCheckService::getRunning() { return isRunning; }
 
 }// namespace NES
