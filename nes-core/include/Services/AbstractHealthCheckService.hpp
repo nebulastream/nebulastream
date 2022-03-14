@@ -19,6 +19,9 @@
 #include <memory>
 #include <thread>
 #include <map>
+#include <stdint.h>
+#include <Util/libcuckoo/cuckoohash_map.hh>
+
 namespace NES {
 
 class CoordinatorRPCClient;
@@ -43,7 +46,8 @@ class AbstractHealthCheckService {
 
     AbstractHealthCheckService();
 
-    virtual ~AbstractHealthCheckService(){};
+    virtual ~AbstractHealthCheckService(){
+    };
 
     /**
      * Method to start the health checking
@@ -67,11 +71,19 @@ class AbstractHealthCheckService {
      */
     void removeNodeFromHealthCheck(TopologyNodePtr node);
 
+    /**
+     * Method to return if the health server is still running
+     * @return
+     */
+    bool getRunning();
+
+
   protected:
     std::shared_ptr<std::thread> healthCheckingThread;
-    bool isRunning = false;
+    std::atomic<bool> isRunning = false;
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
-    std::map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
+    cuckoohash_map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
+    uint64_t id;
 };
 
 }// namespace NES

@@ -233,9 +233,16 @@ bool NesWorker::stop(bool) {
 
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
-        NES_DEBUG("NesWorker::stop health check");
-        if (connected && healthCheckService) {
-            healthCheckService->stopHealthCheck();
+        NES_DEBUG("NesWorker::stopping health check");
+        if (healthCheckService) {//connected &&
+            if(healthCheckService->getRunning())
+            {
+                healthCheckService->stopHealthCheck();
+            }
+            else
+            {
+                NES_DEBUG("NesWorker::stopping health check already stopped");
+            }
         } else {
             NES_WARNING("No health check service was created");
         }
@@ -304,6 +311,7 @@ bool NesWorker::disconnect() {
         connected = false;
         NES_DEBUG("NesWorker::stop health check");
         healthCheckService->stopHealthCheck();
+        NES_DEBUG("NesWorker::stop health check successful");
         return true;
     }
     NES_DEBUG("NesWorker::registerNode rpc unregister failed");
