@@ -177,7 +177,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     virtual void poisonWorkers() = 0;
 
     /**
-     * @brief reset query manager to intial state
+     * @brief reset query manager. After this call, it wont be possible to use the query manager.
      */
     virtual void destroy();
 
@@ -233,23 +233,23 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
   public:
     /**
-     * @brief
-     * @param pipeline
-     * @param message
+     * @brief This method informs the QueryManager that a task has failed
+     * @param pipeline the enclosed pipeline or sink
+     * @param message the reason of the feature
      */
     void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
 
     /**
-     * @brief
-     * @param source
-     * @param errorMessage
+     * @brief This method informs the QueryManager that a source has failed
+     * @param source the failed source
+     * @param errorMessage the reason of the feature
      */
-    void notifyOperatorFailure(DataSourcePtr source, const std::string errorMessage);
+    void notifySourceFailure(DataSourcePtr source, const std::string errorMessage);
 
     /**
-     * @brief
-     * @param qep
-     * @param newStatus
+     * @brief Informs the query manager about a status change in a sub query plan
+     * @param qep the sub query plan
+     * @param newStatus the new status of the query plan
      */
     void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus newStatus);
 
@@ -291,22 +291,27 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     uint64_t getNumberOfWorkerThreads();
 
     /**
-     * @brief
-     * @param source
+     * @brief Notifies that a source operator is done with its execution
+     * @param source the completed source
+     * @param terminationType the type of termination (e.g., failure, soft)
      */
     void notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType);
 
     /**
-     * @brief
-     * @param pipeline
+     * @brief Notifies that a pipeline is done with its execution
+     * @param subPlanId the plan the pipeline belongs to
+     * @param pipeline the terminated pipeline
+     * @param terminationType the type of termination (e.g., failure, soft)
      */
     void notifyPipelineCompletion(QuerySubPlanId subPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
 
     /**
-     * @brief
-     * @param pipeline
+     * @brief Notifies that a sink operator is done with its execution
+     * @param subPlanId the plan the sink belongs to
+     * @param sink the terminated sink
+     * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr pipeline, QueryTerminationType terminationType);
+    void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
 
   private:
     friend class ThreadPool;
@@ -334,29 +339,29 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     virtual void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext);
 
     /**
-     * @brief
-     * @return
+     * @brief Executes cleaning up logic on the task queue
+     * @return an ExecutionResult
      */
     virtual ExecutionResult terminateLoop(WorkerContext&) = 0;
 
     /**
-     * @brief
-     * @param source
-     * @return
+     * @brief Triggers a soft end of stream for a source
+     * @param source the source for which to trigger the soft end of stream
+     * @return true if successful
      */
     bool addSoftEndOfStream(DataSourcePtr source);
 
     /**
-     * @brief
-     * @param source
-     * @return
+     * @brief Triggers a hard end of stream for a source
+     * @param source the source for which to trigger the hard end of stream
+     * @return true if successful
      */
     bool addHardEndOfStream(DataSourcePtr source);
 
     /**
-     * @brief
-     * @param source
-     * @return
+     * @brief Triggers a failure end of stream for a source
+     * @param source the source for which to trigger the failure end of stream
+     * @return true if successful
      */
     bool addFailureEndOfStream(DataSourcePtr source);
 

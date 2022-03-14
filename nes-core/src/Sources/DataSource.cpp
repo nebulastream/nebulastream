@@ -213,7 +213,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
             }
         } catch (std::exception const& e) {// it would not work if you pass by value
             NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
-            queryManager->notifyOperatorFailure(shared_from_base<DataSource>(), std::string(e.what()));
+            queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
         }
     }
 
@@ -246,7 +246,7 @@ void DataSource::runningRoutine() {
         }
         completedPromise.set_value(true);
     } catch (std::exception const& exception) {
-        queryManager->notifyOperatorFailure(shared_from_base<DataSource>(), exception.what());
+        queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception.what());
         completedPromise.set_exception(std::make_exception_ptr(exception));
     } catch (...) {
         try {
@@ -256,7 +256,7 @@ void DataSource::runningRoutine() {
                 std::rethrow_exception(expPtr);
             }
         } catch (std::exception const& exception) {
-            queryManager->notifyOperatorFailure(shared_from_base<DataSource>(), exception.what());
+            queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception.what());
         }
     }
     NES_DEBUG("DataSource " << operatorId << " end runningRoutine");
