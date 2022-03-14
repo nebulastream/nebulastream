@@ -42,11 +42,6 @@ NodeEngineBuilder NodeEngineBuilder::create(Configurations::WorkerConfiguration 
     return NodeEngineBuilder(workerConfiguration);
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setHostname(const std::string& hostname){
-    this->hostname = hostname;
-    return *this;
-};
-
 NodeEngineBuilder& NodeEngineBuilder::setNesWorker(std::weak_ptr<NesWorker>&& nesWorker){
     this->nesWorker = std::move(nesWorker);
     return *this;
@@ -112,11 +107,6 @@ NodeEngineBuilder& NodeEngineBuilder::setCompiler(QueryCompilation::QueryCompile
 }
 
 NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
-    if(hostname == ""){
-        NES_ERROR("Runtime: error while building NodeEngine: no hostname provided");
-        throw Exceptions::RuntimeException("Error while building NodeEngine : no hostname provided", NES::collectAndPrintStacktrace());
-    }
-
     if(nesWorker.expired()){
         NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
         throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided", NES::collectAndPrintStacktrace());
@@ -251,7 +241,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(bufferStorage),
             [this](const std::shared_ptr<NodeEngine>& engine) {
                 return Network::NetworkManager::create(engine->getNodeEngineId(),
-                                                       hostname,
+                                                       this->workerConfiguration.localWorkerIp.getValue(),
                                                        this->workerConfiguration.dataPort.getValue(),
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(),
