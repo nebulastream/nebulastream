@@ -12,15 +12,17 @@
     limitations under the License.
 */
 
+#include <Components/NesWorker.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-
 namespace NES {
 
-WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient, std::string healthServiceName)
-    : coordinatorRpcClient(coordinatorRpcClient) {
+WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient,
+                                                   std::string healthServiceName,
+                                                   NesWorkerPtr worker)
+    : coordinatorRpcClient(coordinatorRpcClient), worker(worker){
     id = coordinatorRpcClient->getId();
     this->healthServiceName = healthServiceName;
 }
@@ -42,7 +44,8 @@ void WorkerHealthCheckService::startHealthCheck() {
             } else {
                 NES_WARNING("NesWorker::healthCheck: for worker id="
                             << coordinatorRpcClient->getId() << " coordinator went down so shutting down the worker with ip");
-//                std::exit(-1);
+                //                std::exit(-1);
+                worker->stop(true);
             }
             std::this_thread::sleep_for(std::chrono::seconds(waitTimeInSeconds));
         }

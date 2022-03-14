@@ -18,13 +18,15 @@
 #include <Services/AbstractHealthCheckService.hpp>
 
 namespace NES {
+class NesWorker;
+using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 /**
  * @brief: This class is responsible for handling requests related to monitor the alive status of nodes from the worker
  */
 class WorkerHealthCheckService : public NES::AbstractHealthCheckService {
   public:
-    WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient, std::string healthServiceName);
+    WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient, std::string healthServiceName, NesWorkerPtr worker);
 
     /**
      * Method to start the health checking
@@ -33,6 +35,7 @@ class WorkerHealthCheckService : public NES::AbstractHealthCheckService {
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
+    NesWorkerPtr worker;
 };
 
 using WorkerHealthCheckServicePtr = std::shared_ptr<WorkerHealthCheckService>;
