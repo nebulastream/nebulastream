@@ -15,12 +15,12 @@
 #ifndef NES_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_ABSTRACTHEALTHCHECKSERVICE_HPP_
 
-#include <future>
-#include <memory>
-#include <thread>
-#include <map>
-#include <stdint.h>
 #include <Util/libcuckoo/cuckoohash_map.hh>
+#include <future>
+#include <map>
+#include <memory>
+#include <stdint.h>
+#include <thread>
 
 namespace NES {
 
@@ -43,7 +43,6 @@ const std::chrono::seconds waitTimeInSeconds = std::chrono::seconds(1);
  */
 class AbstractHealthCheckService {
   public:
-
     AbstractHealthCheckService();
 
     virtual ~AbstractHealthCheckService(){};
@@ -75,7 +74,6 @@ class AbstractHealthCheckService {
      * @return
      */
     bool getRunning();
-
 
   protected:
     std::shared_ptr<std::thread> healthCheckingThread;
