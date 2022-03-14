@@ -444,4 +444,36 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
     }
 }
 
+
+TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorkerWithKill) {
+    NES_INFO(" start coordinator");
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test")});
+
+    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test")});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
+
+    worker1.kill();
+    sleep(5);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
+
+    worker2.kill();
+    sleep(5);
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
+
+
+}
+
 }// namespace NES

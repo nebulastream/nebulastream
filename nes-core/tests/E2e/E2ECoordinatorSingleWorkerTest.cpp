@@ -603,7 +603,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     ASSERT_TRUE(found);
 }
 
-
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     remove("nesWorkerStarter.log");
 

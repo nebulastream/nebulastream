@@ -36,18 +36,17 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-const uint64_t waitTimeInSeconds = 1;
+const std::chrono::seconds waitTimeInSeconds = std::chrono::seconds(1);
 
 /**
- * @brief: This class is responsible for handling requests related to monitor the alive status of nodes
+ * @brief: This class is responsible for handling requests related to monitor the alive status of nodes.
  */
 class AbstractHealthCheckService {
   public:
 
     AbstractHealthCheckService();
 
-    virtual ~AbstractHealthCheckService(){
-    };
+    virtual ~AbstractHealthCheckService(){};
 
     /**
      * Method to start the health checking
@@ -61,13 +60,13 @@ class AbstractHealthCheckService {
 
     /**
      * Method to add a node for health checking
-     * @param node
+     * @param node pointer to the node in the topology
      */
     void addNodeToHealthCheck(TopologyNodePtr node);
 
     /**
      * Method to remove a node from the health checking
-     * @param node
+     * @param node pointer to the node in the topology
      */
     void removeNodeFromHealthCheck(TopologyNodePtr node);
 
@@ -84,6 +83,7 @@ class AbstractHealthCheckService {
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
     cuckoohash_map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
     uint64_t id;
+    std::string healthServiceName;
 };
 
 }// namespace NES

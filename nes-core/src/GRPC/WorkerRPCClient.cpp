@@ -418,12 +418,12 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
     }
 }
 
-bool WorkerRPCClient::checkHealth(const std::string& address) {
+bool WorkerRPCClient::checkHealth(const std::string& address, std::string healthServiceName) {
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<grpc::health::v1::Health::Stub> workerStub = grpc::health::v1::Health::NewStub(chan);
 
     grpc::health::v1::HealthCheckRequest request;
-    request.set_service("NES_DEFAULT_HEALTH_CHECK_SERVICE");
+    request.set_service(healthServiceName);
     grpc::health::v1::HealthCheckResponse response;
     ClientContext context;
     Status status = workerStub->Check(&context, request, &response);

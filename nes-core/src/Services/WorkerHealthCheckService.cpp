@@ -19,9 +19,10 @@
 
 namespace NES {
 
-WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient)
+WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient, std::string healthServiceName)
     : coordinatorRpcClient(coordinatorRpcClient) {
     id = coordinatorRpcClient->getId();
+    this->healthServiceName = healthServiceName;
 }
 
 void WorkerHealthCheckService::startHealthCheck() {
@@ -35,7 +36,7 @@ void WorkerHealthCheckService::startHealthCheck() {
         while (isRunning) {
             NES_DEBUG("NesWorker::healthCheck for worker id= " << coordinatorRpcClient->getId());
 
-            bool isAlive = coordinatorRpcClient->checkCoordinatorHealth();
+            bool isAlive = coordinatorRpcClient->checkCoordinatorHealth(healthServiceName);
             if (isAlive) {
                 NES_DEBUG("NesWorker::healthCheck: for worker id=" << coordinatorRpcClient->getId() << " is alive");
             } else {
