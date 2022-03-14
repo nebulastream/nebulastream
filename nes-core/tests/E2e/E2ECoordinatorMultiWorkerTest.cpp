@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
+#include "../util/NesBaseTest.hpp"
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -19,7 +20,6 @@
 #include <cpprest/http_client.h>
 #include <cstdio>
 #include <gtest/gtest.h>
-#include "../util/NesBaseTest.hpp"
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -444,7 +444,6 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
     }
 }
 
-
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorkerWithKill) {
     NES_INFO(" start coordinator");
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
@@ -472,8 +471,6 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorkerWithKill) 
     worker2.kill();
     sleep(5);
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
-
 }
 
 }// namespace NES
