@@ -32,7 +32,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
-#include <log4cxx/helpers/exception.h>
 
 namespace NES::Runtime {
 
@@ -93,10 +92,10 @@ NodeEngineBuilder& NodeEngineBuilder::setMaterializedViewManager(Experimental::M
     return *this;
 }
 
-//NodeEngineBuilder& NodeEngineBuilder::setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler){
-//    this->languageCompiler = languageCompiler;
-//    return *this;
-//}
+NodeEngineBuilder& NodeEngineBuilder::setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler){
+    this->languageCompiler = languageCompiler;
+    return *this;
+}
 
 NodeEngineBuilder& NodeEngineBuilder::setJITCompiler(Compiler::JITCompilerPtr jitCompiler){
     this->jitCompiler = jitCompiler;
@@ -183,8 +182,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         }
 #endif
         if (bufferManagers.empty()) {
-            NES_ERROR("Runtime: error while creating buffer manager");
-            throw log4cxx::helpers::Exception("Error while creating buffer manager");
+            NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
+            throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided", NES::collectAndPrintStacktrace());
         }
 
         QueryManagerPtr queryManager;
@@ -211,34 +210,34 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto bufferStorage = (!this->bufferStorage) ? std::make_shared<BufferStorage>() : this->bufferStorage;
         auto materializedViewManager = (!this->materializedViewManager) ? std::make_shared<Experimental::MaterializedView::MaterializedViewManager>() : this->materializedViewManager;
         if (!partitionManager) {
-            NES_ERROR("Runtime: error while creating partition manager");
-            throw log4cxx::helpers::Exception("Error while creating partition manager");
+            NES_ERROR("Runtime: error while building NodeEngine: error while creating PartitionManager");
+            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating PartitionManager", NES::collectAndPrintStacktrace());
         }
         if (!queryManager) {
-            NES_ERROR("Runtime: error while creating queryManager");
-            throw log4cxx::helpers::Exception("Error while creating queryManager");
+            NES_ERROR("Runtime: error while building NodeEngine: error while creating QueryManager");
+            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating QueryManager", NES::collectAndPrintStacktrace());
         }
         if (!stateManager) {
-            NES_ERROR("Runtime: error while creating stateManager");
-            throw log4cxx::helpers::Exception("Error while creating stateManager");
+            NES_ERROR("Runtime: error while building NodeEngine: error while creating StateManager");
+            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating StateManager", NES::collectAndPrintStacktrace());
         }
         if (!bufferStorage) {
-            NES_ERROR("Runtime: error while creating bufferStorage");
-            throw log4cxx::helpers::Exception("Error while creating bufferStorage");
+            NES_ERROR("Runtime: error while building NodeEngine: error while creating BufferStorage");
+            throw Exceptions::RuntimeException("Error while building NodeEngine : Error while creating BufferStorage", NES::collectAndPrintStacktrace());
         }
         if (!materializedViewManager) {
-            NES_ERROR("Runtime: error while creating materializedViewMananger");
-            throw log4cxx::helpers::Exception("Error while creating materializedViewMananger");
+            NES_ERROR("Runtime: error while building NodeEngine: error while creating MaterializedViewManager");
+            throw Exceptions::RuntimeException("Error while building NodeEngine : error while creating MaterializedViewManager", NES::collectAndPrintStacktrace());
         }
-        auto cppCompiler = Compiler::CPPCompiler::create();
+        auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
         auto jitCompiler = (!this->jitCompiler) ? Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build() : this->jitCompiler;
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration.queryCompiler);
         queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue());
         auto compiler = (!this->queryCompiler) ? QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler) : this->queryCompiler;
         if (!compiler) {
-            NES_ERROR("Runtime: error while creating compiler");
-            throw log4cxx::helpers::Exception("Error while creating compiler");
+            NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
+            throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler", NES::collectAndPrintStacktrace());
         }
         std::vector<PhysicalSourcePtr> physicalSources;
         for(auto entry : workerConfiguration.physicalSources.getValues()) {
