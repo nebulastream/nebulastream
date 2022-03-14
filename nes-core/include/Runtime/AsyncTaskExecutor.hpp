@@ -26,11 +26,24 @@
 
 namespace NES::Runtime {
 
+/**
+ * @brief This is a multi-threaded task executor that execute asynchronously tasks. Submitted task are paired to a future value
+ * that can be retrieved when the async task is executed.
+ */
 class AsyncTaskExecutor {
   public:
+    /**
+     * @brief This is a future that the async executor returns, which can be retrieved using `.wait()`
+     * @tparam R the return type
+     */
     template<class R>
     class AsyncTaskFuture {
       public:
+        /**
+         * @brief Creates an AsyncTaskFuture from a promise and a reference to the executor
+         * @param promise the promise that the executor will fulfill
+         * @param owner the executor
+         */
         explicit AsyncTaskFuture(std::shared_ptr<std::promise<R>> promise, AsyncTaskExecutor* owner)
             : promise(std::move(promise)), owner(owner) {
             future = this->promise->get_future();
@@ -44,8 +57,20 @@ class AsyncTaskExecutor {
             return *this;
         }
 
+        /**
+         * @brief This call blocks until the promise is fulfilled and returns the produced value
+         * @return
+         */
         [[nodiscard]] R wait() { return future.get(); }
 
+        /**
+         * @brief This method creates a new (inner) AsyncTaskFuture from an already existing (*this) AsyncTaskFuture.
+         * When the *this AsyncTaskFuture is fulfilled, its internal value is passed to f and the return value is set as internal
+         * value of the inner AsyncTaskFuture.
+         * @tparam Function the function type to execute on the promise value of the *this AsyncTaskFuture
+         * @param f the function to execute on the promise value of the *this AsyncTaskFuture
+         * @return a new inner AsyncTaskFuture
+         */
         template<class Function>
         [[nodiscard]] AsyncTaskFuture<std::invoke_result_t<std::decay_t<Function>, std::decay_t<R>>> thenAsync(Function&& f) {
             return owner->runAsync([this, f = std::move(f)]() {
@@ -53,25 +78,47 @@ class AsyncTaskExecutor {
             });
         }
 
-        bool operator!() const { return promise == nullptr; }
+        /**
+         * @brief operator! returns true if the AsyncTaskFuture is invalid
+         * @return true if the AsyncTaskFuture is invalid
+         */
+        [[nodiscard]] bool operator!() const { return promise == nullptr; }
 
-        operator bool() const { return promise != nullptr; }
+        /**
+         * @brief operator bool() returns true if the AsyncTaskFuture is valid
+         * @return true if the AsyncTaskFuture is valid
+         */
+        [[nodiscard]] operator bool() const { return promise != nullptr; }
 
       private:
-        std::shared_ptr<std::promise<R>> promise;
+        std::shared_ptr<std::promise<R>> promise;// we need this variable to keep the promise machinery alive
         std::shared_future<R> future;
         AsyncTaskExecutor* owner;
     };
 
   private:
+    /**
+     * @brief This is the internal task that the executor runs internally.
+     * @tparam R the return type of the AsyncTask
+     * @tparam ArgTypes the arguments types to pass to the AsyncTask functor
+     */
     template<class R, class... ArgTypes>
     class AsyncTask {
       public:
+        /**
+         * @brief Creates an AsyncTask from a function f
+         * @tparam Function the function type
+         * @param f the function to execute on the async executor
+         */
         template<class Function,
                  std::enable_if_t<std::is_same_v<R, std::invoke_result_t<std::decay_t<Function>, std::decay_t<ArgTypes>...>>,
                                   bool> = true>
         explicit AsyncTask(Function&& f) : func(std::move(f)), promise(std::make_shared<std::promise<R>>()) {}
 
+        /**
+         * @brief Executes the function on a variadic set of arguments
+         * @param args the arguments
+         */
         void operator()(ArgTypes... args) {
             try {
                 R ret = func(std::forward<ArgTypes>(args)...);
@@ -81,6 +128,12 @@ class AsyncTaskExecutor {
             }
         }
 
+        /**
+         * @brief Creates an AsyncTaskFuture out of the current task. The AsyncTaskFuture is to be used to retrieve the AsyncTask
+         * produced value
+         * @param owner the owning executor
+         * @return the AsyncTaskFuture to wait on
+         */
         AsyncTaskFuture<R> makeFuture(AsyncTaskExecutor* owner) { return AsyncTaskFuture(promise, owner); }
 
       private:
@@ -88,18 +141,29 @@ class AsyncTaskExecutor {
         std::shared_ptr<std::promise<R>> promise;
     };
 
+    /**
+     * @brief a type-less wrapper of the AsyncTask. Necessary to store this in a simple container like an `std::dequeue`
+     */
     class AsyncTaskWrapper {
       public:
+        /**
+         * @brief Creates a new AsyncTaskWrapper from a function that wraps an AsyncTask
+         * and a void pointer to the asyncTaskPtr (for garbage collection)
+         * @param func the function to execute
+         * @param asyncTaskPtr
+         */
         explicit AsyncTaskWrapper(std::function<void(void)>&& func, void* asyncTaskPtr)
             : func(func), asyncTaskPtr(asyncTaskPtr) {}
 
+        /// deallocates the internal AsyncTask for garbage collection
         ~AsyncTaskWrapper() noexcept {
             if (asyncTaskPtr) {
                 std::free(asyncTaskPtr);
             }
         }
 
-        void operator()() { func(); }
+        /// executes the inner AsyncTask
+        inline void operator()() { func(); }
 
       private:
         std::function<void(void)> func;
@@ -107,18 +171,36 @@ class AsyncTaskExecutor {
     };
 
   public:
+    /**
+     * @brief Creates an AsyncTaskExecutor using `numOfThreads` threads
+     * @param numOfThreads the number of threads to use for the executor
+     */
     explicit AsyncTaskExecutor(uint32_t numOfThreads = 1);
 
+    /// destructor to clean up inner resources
     ~AsyncTaskExecutor();
 
+    /**
+     * @brief Method to clean up the internal resources (called by the destructor).
+     * Only the first invocation cleans inner resources. Subsequent calls won't produced any effect.
+     * @return
+     */
     bool destroy();
 
+    /**
+     * @brief Submits an async task to the executor to be executed in the future
+     * @param f function to execute
+     * @param args its arguments
+     * @return a future to the completable future
+     */
     template<class Function, class... Args>
     [[nodiscard]] AsyncTaskFuture<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>> runAsync(Function&& f,
                                                                                                                 Args&&... args) {
         if (!running) {
             throw Exceptions::RuntimeException("Async Executor is destroyed");
         }
+        // allocates a task on the heap and captures all arguments and types in the AsyncTask
+        // next, everything is captured in the AsyncTaskWrapper, which has no types.
         auto taskPtr = malloc(sizeof(AsyncTask<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>, Args...>));
         NES_ASSERT(taskPtr, "Cannot allocate async task");
         auto* task =
@@ -136,6 +218,7 @@ class AsyncTaskExecutor {
     }
 
   private:
+    /// the inner thread routine that executes async tasks
     void runningRoutine();
 
   private:

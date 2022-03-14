@@ -52,13 +52,13 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
             false);
     }
 }
-void AbstractQueryManager::notifyOperatorFailure(DataSourcePtr failedSource, const std::string) {
+void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string) {
     std::unique_lock lock(queryMutex);
     auto qepToFail = sourceToQEPMapping[failedSource->getOperatorId()];
     lock.unlock();
     // we cant fail a query from a source because failing a query eventually calls stop on the failed query
     // this means we are going to call join on the source thread
-    // however, notifyOperatorFailure may be called from the source thread itself, thus, resulting in a deadlock
+    // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
     auto future = asyncTaskExecutor
                       ->runAsync(
                           [this](auto qepToFail) {
