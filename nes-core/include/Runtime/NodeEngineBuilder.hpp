@@ -35,22 +35,12 @@ class NodeEngineBuilder {
     static NodeEngineBuilder create(Configurations::WorkerConfiguration workerConfiguration);
 
     NodeEngineBuilder() = delete;
-
-    //setters for configurations that are not included in WorkerConfigurations but can be set to customize a NodeEngine
-    //Mandatory
-    /**
-     * setter used to pass hostname to NodeEndineBuilder. Mandatory to use, as hostname is needed to create NetworkManager
-     * @param hostname : string representing hostname
-     * @return NodeEngineBuilder&
-     */
-    NodeEngineBuilder& setHostname(const std::string& hostname);
     /**
      * setter used to pass NesWorker to NodeEngineBuilder. Mandatory
-     * @param nesWorker :
+     * @param nesWorker
      * @return NodeEngineBuilder&
      */
     NodeEngineBuilder& setNesWorker(std::weak_ptr<NesWorker>&& nesWorker);
-    //Optional
     NodeEngineBuilder& setNodeEngineId(uint64_t nodeEngineId);
     NodeEngineBuilder& setPartitionManager(Network::PartitionManagerPtr partitionManager);
     NodeEngineBuilder& setHardwareManager(HardwareManagerPtr hardwareManager);
@@ -73,7 +63,6 @@ class NodeEngineBuilder {
 
   private:
     NodeEngineBuilder(Configurations::WorkerConfiguration workerConfiguration);
-    std::string hostname;
     std::weak_ptr<NesWorker> nesWorker;
     uint64_t nodeEngineId;
     Network::PartitionManagerPtr partitionManager;
@@ -87,6 +76,7 @@ class NodeEngineBuilder {
     Compiler::JITCompilerPtr jitCompiler;
     QueryCompilation::Phases::PhaseFactoryPtr phaseFactory;
     QueryCompilation::QueryCompilerPtr queryCompiler;
+    Configurations::WorkerConfiguration workerConfiguration;
 
     /**
      *  Used during build() to convert the QueryCompilerConfigurations in the WorkerConfigruations to QueryCompilationOptions,
@@ -102,9 +92,6 @@ class NodeEngineBuilder {
      * @return node id
      */
     static uint64_t getNextNodeEngineId();
-
-    Configurations::WorkerConfiguration workerConfiguration;
-
 };
 }// namespace NES::Runtime
 #endif//NES_NODEENGINEBUILDER_HPP
