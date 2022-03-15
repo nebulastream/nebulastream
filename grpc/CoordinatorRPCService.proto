@@ -54,6 +54,12 @@ service CoordinatorRPCService {
 
   // send errors to the coordinator
   rpc SendErrors (SendErrorsMessage) returns (ErrorReply) {}
+
+  rpc RequestSoftStop (RequestSoftStopMessage) returns (StopRequestReply) {}
+
+  rpc SoftStopTriggered (SoftStopTriggeredMessage) returns (SoftStopTriggeredReply) {}
+
+  rpc SoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
 }
 
 message RegisterNodeRequest {
@@ -185,11 +191,11 @@ message EpochBarrierPropagationNotification{
 message EpochBarrierPropagationReply{
   bool success = 1;
 }
-message GetNodesInRangeReply {
+message GetNodesInRangeReply{
   repeated NodeGeoInfo nodes = 1;
 }
 
-message SerializableRegistrationMetrics {
+message SerializableRegistrationMetrics{
   uint64 totalMemoryBytes = 1;
   uint32 cpuCoreNum = 2;
   uint64 totalCPUJiffies = 3;
@@ -205,5 +211,29 @@ message SendErrorsMessage{
 }
 
 message ErrorReply{
+  bool success = 1;
+}
+
+message RequestSoftStopMessage{
+  uint64 queryId = 1;
+}
+
+message StopRequestReply{
+  bool success = 1;
+}
+
+message SoftStopTriggeredMessage{
+  bool triggered = 1;
+}
+
+message SoftStopTriggeredReply{
+  bool success = 1;
+}
+
+message SoftStopCompletionMessage{
+  bool completed = 1;
+}
+
+message SoftStopCompletionReply{
   bool success = 1;
 }
