@@ -296,14 +296,22 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& o
 TEST_F(NodeEngineTest, testStartStopEngineEmpty) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
     EXPECT_TRUE(engine->stop());
 }
 
 TEST_F(NodeEngineTest, teststartDeployStop) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -317,7 +325,11 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
 TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -332,7 +344,11 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
 TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
@@ -352,7 +368,11 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
 TEST_F(NodeEngineTest, testParallelDifferentSource) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -406,7 +426,11 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
 TEST_F(NodeEngineTest, testParallelSameSource) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
@@ -450,7 +474,11 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 TEST_F(NodeEngineTest, testParallelSameSink) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     // create two executable query plans, which emit to the same sink
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -504,7 +532,11 @@ TEST_F(NodeEngineTest, testParallelSameSink) {
 TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     auto sink1 = createTextFileSink(sch1, 0, 0, engine, getTestResourceFolder() / "qep3.txt", true);
@@ -584,7 +616,11 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 TEST_F(NodeEngineTest, testStartStopStartStop) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -603,14 +639,24 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
 TEST_F(NodeEngineTest, testBufferData) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(31337);
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
     EXPECT_FALSE(engine->bufferData(0, 0));
 }
 
 TEST_F(NodeEngineTest, testReconfigureSink) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(31337);
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
     EXPECT_FALSE(engine->updateNetworkSink(0, "test", 0, 0, 0));
 }
 
@@ -816,7 +862,12 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
 TEST_F(NodeEngineTest, DISABLED_testFatalCrash) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(31337);
+    workerConfiguration->physicalSources.add(physicalSource);
+
+    auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
     EXPECT_EXIT(detail::segkiller(), testing::ExitedWithCode(1), "Runtime failed fatally");
 }
 

@@ -225,7 +225,11 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
+    auto workerConfigurations = WorkerConfiguration::create();
+    workerConfigurations->dataPort.setValue(31341);
+    workerConfigurations->physicalSources.add(conf);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
 
     auto aggregation = Avg(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -316,7 +320,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
+    auto workerConfigurations = WorkerConfiguration::create();
+    workerConfigurations->dataPort.setValue(31341);
+    workerConfigurations->physicalSources.add(conf);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -409,7 +417,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
+    auto workerConfigurations = WorkerConfiguration::create();
+    workerConfigurations->dataPort.setValue(31341);
+    workerConfigurations->physicalSources.add(conf);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -492,7 +504,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
+    auto workerConfigurations = WorkerConfiguration::create();
+    workerConfigurations->dataPort.setValue(31341);
+    workerConfigurations->physicalSources.add(conf);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -573,7 +589,11 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
     auto port = getAvailablePort();
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", *port, {conf});
+    auto workerConfigurations = WorkerConfiguration::create();
+    workerConfigurations->dataPort.setValue(*port);
+    workerConfigurations->physicalSources.add(conf);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", *port, {conf});
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -658,7 +678,10 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {conf});
+    auto workerConfigurations = WorkerConfiguration::create();
+    workerConfigurations->physicalSources.add(conf);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {conf});
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -742,7 +765,11 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
+    auto workerConfigurations = WorkerConfiguration::create();
+    workerConfigurations->dataPort.setValue(31341);
+    workerConfigurations->physicalSources.add(conf);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);

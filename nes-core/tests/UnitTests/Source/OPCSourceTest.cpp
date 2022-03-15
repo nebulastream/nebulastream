@@ -52,7 +52,10 @@ class OPCSourceTest : public testing::Test {
         test_schema = Schema::create()->addField("var", UINT32);
 
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, conf);
+        auto workerConfigurations = WorkerConfiguration::create();
+        workerConfigurations->physicalSources.add(sourceConf);
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, conf);
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();

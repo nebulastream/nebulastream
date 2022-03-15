@@ -97,15 +97,22 @@ TEST_F(QueryCompilerTest, filterQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {sourceConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                   0,
+//                                                                   {sourceConf},
+//                                                                   1,
+//                                                                   4096,
+//                                                                   1024,
+//                                                                   12,
+//                                                                   12,
+//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -144,18 +151,25 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {sourceConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration(),
-                                                                   std::weak_ptr<NesWorker>(),
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED,
-                                                                   "");
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                   0,
+//                                                                   {sourceConf},
+//                                                                   1,
+//                                                                   4096,
+//                                                                   1024,
+//                                                                   12,
+//                                                                   12,
+//                                                                   Configurations::QueryCompilerConfiguration(),
+//                                                                   std::weak_ptr<NesWorker>(),
+//                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED,
+//                                                                   "");
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -193,15 +207,22 @@ TEST_F(QueryCompilerTest, windowQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {sourceConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                   0,
+//                                                                   {sourceConf},
+//                                                                   1,
+//                                                                   4096,
+//                                                                   1024,
+//                                                                   12,
+//                                                                   12,
+//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -244,15 +265,22 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {sourceConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                   0,
+//                                                                   {sourceConf},
+//                                                                   1,
+//                                                                   4096,
+//                                                                   1024,
+//                                                                   12,
+//                                                                   12,
+//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -296,15 +324,22 @@ TEST_F(QueryCompilerTest, unionQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {sourceConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                   0,
+//                                                                   {sourceConf},
+//                                                                   1,
+//                                                                   4096,
+//                                                                   1024,
+//                                                                   12,
+//                                                                   12,
+//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -351,15 +386,23 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf1 = PhysicalSource::create(leftSourceLogicalSourceName, "x1", defaultSourceType);
     auto sourceConf2 = PhysicalSource::create(rightSourceLogicalSourceName, "x1", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {sourceConf1, sourceConf2},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf1);
+    workerConfiguration->physicalSources.add(sourceConf2);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                   0,
+//                                                                   {sourceConf1, sourceConf2},
+//                                                                   1,
+//                                                                   4096,
+//                                                                   1024,
+//                                                                   12,
+//                                                                   12,
+//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -411,15 +454,23 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {sourceConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+    //                                                                   0,
+    //                                                                   {sourceConf},
+    //                                                                   1,
+    //                                                                   4096,
+    //                                                                   1024,
+    //                                                                   12,
+    //                                                                   12,
+    //                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);

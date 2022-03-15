@@ -71,7 +71,11 @@ class GPUQueryExecutionTest : public testing::Test {
                                      ->addField("test$value", BasicType::INT64);
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
+        auto workerConfiguration  = WorkerConfiguration::create();
+        workerConfiguration->physicalSources.add(sourceConf);
+
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
     }
 
     /* Will be called before a test is executed. */

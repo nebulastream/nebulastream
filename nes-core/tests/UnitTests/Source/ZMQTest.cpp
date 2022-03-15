@@ -49,7 +49,11 @@ class ZMQTest : public testing::Test {
     void SetUp() override {
         NES_DEBUG("Setup ZMQTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3001, {conf});
+        auto workerConfigurations = WorkerConfiguration::create();
+        workerConfigurations->dataPort.setValue(3001);
+        workerConfigurations->physicalSources.add(conf);
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3001, {conf});
 
         address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
 
