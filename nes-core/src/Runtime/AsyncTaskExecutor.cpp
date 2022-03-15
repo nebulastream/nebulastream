@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/AsyncTaskExecutor.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <Util/Logger//Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <exception>
@@ -21,7 +22,9 @@
 
 namespace NES::Runtime {
 
-AsyncTaskExecutor::AsyncTaskExecutor(uint32_t numOfThreads) : running(true) {
+AsyncTaskExecutor::AsyncTaskExecutor(const HardwareManagerPtr& hardwareManager, uint32_t numOfThreads)
+    : running(true), hardwareManager(hardwareManager) {
+    NES_ASSERT(this->hardwareManager, "Invalid hardware manager");
     for (uint32_t i = 0; i < numOfThreads; ++i) {
         auto promise = std::make_shared<std::promise<bool>>();
         completionPromises.emplace_back(promise);
@@ -39,6 +42,12 @@ AsyncTaskExecutor::AsyncTaskExecutor(uint32_t numOfThreads) : running(true) {
 }
 
 AsyncTaskExecutor::~AsyncTaskExecutor() { destroy(); }
+
+void* AsyncTaskExecutor::allocateAsyncTask(size_t taskSize) { return hardwareManager->getGlobalAllocator()->allocate(taskSize); }
+
+void AsyncTaskExecutor::deallocateAsyncTask(void* task, size_t size) {
+    hardwareManager->getGlobalAllocator()->deallocate(task, size);
+}
 
 void AsyncTaskExecutor::runningRoutine() {
     while (true) {
@@ -66,7 +75,8 @@ bool AsyncTaskExecutor::destroy() {
                     asyncTaskQueue.emplace_back(
                         []() {
                         },
-                        nullptr);
+                        []() {
+                        });
                 }
                 cv.notify_all();
             }

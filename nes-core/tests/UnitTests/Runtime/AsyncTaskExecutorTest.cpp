@@ -12,19 +12,32 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
+#include <Runtime/HardwareManager.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 namespace NES {
-class AsyncTaskExecutorTest : public ::testing::TestWithParam<int> {
+
+class AsyncTaskExecutorTest : public Testing::TestWithErrorHandling<::testing::TestWithParam<int>> {
+    using Base = Testing::TestWithErrorHandling<::testing::TestWithParam<int>>;
+
   protected:
     Runtime::AsyncTaskExecutorPtr executor{nullptr};
+    Runtime::HardwareManagerPtr hardwareManager{nullptr};
 
   public:
-    void SetUp() { executor = std::make_shared<Runtime::AsyncTaskExecutor>(GetParam()); }
+    void SetUp() override {
+        Base::SetUp();
+        hardwareManager = std::make_shared<Runtime::HardwareManager>();
+        executor = std::make_shared<Runtime::AsyncTaskExecutor>(hardwareManager, GetParam());
+    }
 
-    void TearDown() { executor.reset(); }
+    void TearDown() override {
+        Base::TearDown();
+        executor.reset();
+    }
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("AsyncTaskExecutorTest.log", NES::LogLevel::LOG_DEBUG); }
