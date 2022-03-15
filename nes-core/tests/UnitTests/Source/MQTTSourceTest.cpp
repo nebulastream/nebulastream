@@ -68,7 +68,6 @@ class MQTTSourceTest : public Testing::NESBaseTest {
         test_schema = Schema::create()->addField("var", UINT32);
         mqttSourceType = MQTTSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->physicalSources.add(sourceConf);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
         //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
         bufferManager = nodeEngine->getBufferManager();
