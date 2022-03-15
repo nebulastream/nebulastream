@@ -790,7 +790,6 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
         workerConfiguration->numberOfBuffersPerWorker.setValue(64);
-        workerConfiguration->physicalSources.clear();
         workerConfiguration->physicalSources.add(sourceConf);
         auto nodeEngine =
             Runtime::NodeEngineBuilder::create(workerConfiguration).build();

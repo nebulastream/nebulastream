@@ -97,7 +97,10 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
         csvSourceType->setNumberOfBuffersToProduce(3);
         PhysicalSourcePtr sourceConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
+        auto workerConfigurations = WorkerConfiguration::create();
+        workerConfigurations->physicalSources.add(sourceConf);
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+        //this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
 
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;

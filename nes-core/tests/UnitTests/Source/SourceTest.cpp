@@ -431,7 +431,10 @@ class SourceTest : public Testing::NESBaseTest {
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
+        auto workerConfigurations = WorkerConfiguration::create();
+        workerConfigurations->physicalSources.add(sourceConf);
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+        //this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
         this->path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
         this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";

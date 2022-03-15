@@ -65,7 +65,13 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
     void SetUp() override {
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3111, {conf});
+        auto workerConfiguration  = WorkerConfiguration::create();
+        workerConfiguration->dataPort->setValue(3111);
+        workerConfiguration->physicalSources.add(conf);
+
+
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3111, {conf});
         testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 

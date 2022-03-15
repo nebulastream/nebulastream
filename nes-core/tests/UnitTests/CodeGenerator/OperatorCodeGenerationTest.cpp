@@ -398,7 +398,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
@@ -446,7 +450,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -502,7 +510,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -523,7 +535,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -566,7 +582,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -641,7 +661,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
@@ -788,7 +812,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
@@ -831,7 +859,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -883,7 +915,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -957,7 +993,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
     /* prepare objects for test */
     auto source =
@@ -1031,8 +1071,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
-
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     /* prepare objects for test */
     auto source =
         createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COLUMNAR_LAYOUT);
@@ -1104,8 +1147,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
-
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     /* prepare objects for test */
     auto source =
         createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::ROW_LAYOUT);
@@ -1180,8 +1226,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
-
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1260,8 +1309,11 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
-
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto pipelineContext1 = QueryCompilation::PipelineContext::create();
@@ -1379,7 +1431,11 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         /* prepare objects for test */
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-        auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+        auto workerConfiguration  = WorkerConfiguration::create();
+        workerConfiguration->dataPort.setValue(6116);
+        workerConfiguration->physicalSources.add(physicalSource);
+        auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
         Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
         auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
         auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1466,7 +1522,11 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1545,7 +1605,11 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     /* prepare objects for test */
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1615,7 +1679,11 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
 TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(6116);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    //auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());

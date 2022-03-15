@@ -49,15 +49,24 @@ class AdaptiveKFTest : public testing::Test {
         NES_INFO("Setup AdaptiveKFTest class.");
         sourceConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", UINT32);
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                  31337,
-                                                                  {sourceConf},
-                                                                  1,
-                                                                  4096,
-                                                                  1024,
-                                                                  12,
-                                                                  12,
-                                                                  Configurations::QueryCompilerConfiguration());
+        auto workerConfiguration  = WorkerConfiguration::create();
+        workerConfiguration->dataPort.setValue(31337);
+        workerConfiguration->physicalSources.add(sourceConf);
+        workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+        workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+        auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+
+//        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                  31337,
+//                                                                  {sourceConf},
+//                                                                  1,
+//                                                                  4096,
+//                                                                  1024,
+//                                                                  12,
+//                                                                  12,
+//                                                                  Configurations::QueryCompilerConfiguration());
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
         // Fake measurements for y with noise
         measurements = {

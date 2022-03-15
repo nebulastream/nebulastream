@@ -46,15 +46,21 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
-        engine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                              0,
-                                                              {physicalSource},
-                                                              1,
-                                                              4096,
-                                                              1024,
-                                                              12,
-                                                              12,
-                                                              Configurations::QueryCompilerConfiguration());
+        auto workerConfiguration  = WorkerConfiguration::create();
+        workerConfiguration->physicalSources.add(physicalSource);
+        workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+        workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+        engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//        engine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                              0,
+//                                                              {physicalSource},
+//                                                              1,
+//                                                              4096,
+//                                                              1024,
+//                                                              12,
+//                                                              12,
+//                                                              Configurations::QueryCompilerConfiguration());
     }
 
     void TearDown() override {

@@ -80,15 +80,24 @@ class CodeGenerationTest : public testing::Test {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                  6262,
-                                                                  {sourceConf},
-                                                                  1,
-                                                                  4096,
-                                                                  1024,
-                                                                  12,
-                                                                  12,
-                                                                  Configurations::QueryCompilerConfiguration());
+        auto workerConfiguration  = WorkerConfiguration::create();
+        workerConfiguration->dataPort.setValue(6262);
+        workerConfiguration->physicalSources.add(sourceConf);
+        workerConfiguration->bufferSizeInBytes.setValue(4096);
+        workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(1024);
+        workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+        workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+//        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+//                                                                  6262,
+//                                                                  {sourceConf},
+//                                                                  1,
+//                                                                  4096,
+//                                                                  1024,
+//                                                                  12,
+//                                                                  12,
+//                                                                  Configurations::QueryCompilerConfiguration());
     }
 
     /* Will be called before a test is executed. */
