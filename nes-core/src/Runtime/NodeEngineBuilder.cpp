@@ -35,9 +35,9 @@
 
 namespace NES::Runtime {
 
-NodeEngineBuilder::NodeEngineBuilder(Configurations::WorkerConfiguration workerConfiguration): workerConfiguration(workerConfiguration) {}
+NodeEngineBuilder::NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration): workerConfiguration(workerConfiguration) {}
 
-NodeEngineBuilder NodeEngineBuilder::create(Configurations::WorkerConfiguration workerConfiguration) {
+NodeEngineBuilder NodeEngineBuilder::create(Configurations::WorkerConfigurationPtr workerConfiguration) {
 
     return NodeEngineBuilder(workerConfiguration);
 }
@@ -108,8 +108,7 @@ NodeEngineBuilder& NodeEngineBuilder::setCompiler(QueryCompilation::QueryCompile
 
 NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
     if(nesWorker.expired()){
-        NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
-        throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided", NES::collectAndPrintStacktrace());
+        this->nesWorker = std::weak_ptr<NesWorker>();
     }
 
     try {
@@ -118,44 +117,44 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto hardwareManager = (!this->hardwareManager) ? std::make_shared<Runtime::HardwareManager>() : this->hardwareManager;
         std::vector<BufferManagerPtr> bufferManagers;
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-            if (workerConfiguration.numaAwareness.getValue()) {
-                auto numberOfBufferPerNumaNode = workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()
+            if (workerConfiguration->numaAwareness.getValue()) {
+                auto numberOfBufferPerNumaNode = workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue()
                     / hardwareManager->getNumberOfNumaRegions();
-                NES_ASSERT2_FMT(workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue() < numberOfBufferPerNumaNode,
+                NES_ASSERT2_FMT(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue() < numberOfBufferPerNumaNode,
                                 "The number of buffer for each numa node: "
                                     << numberOfBufferPerNumaNode << " is lower than the fixed size pool: "
-                                    << workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue());
-                NES_ASSERT2_FMT(workerConfiguration.numberOfBuffersPerWorker.getValue() < numberOfBufferPerNumaNode,
+                                    << workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
+                NES_ASSERT2_FMT(workerConfiguration->numberOfBuffersPerWorker.getValue() < numberOfBufferPerNumaNode,
                                 "The number of buffer for each numa node: "
                                     << numberOfBufferPerNumaNode << " is lower than the pipeline pool: "
-                                    << workerConfiguration.numberOfBuffersPerWorker.getValue());
+                                    << workerConfiguration->numberOfBuffersPerWorker.getValue());
                 for (auto i = 0u; i < hardwareManager->getNumberOfNumaRegions(); ++i) {
-                    bufferManagers.push_back(std::make_shared<BufferManager>(workerConfiguration.bufferSizeInBytes.getValue(),
+                    bufferManagers.push_back(std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
                                                                              numberOfBufferPerNumaNode,
                                                                              hardwareManager->getNumaAllocator(i)));
                 }
             } else {
                 bufferManagers.push_back(
-                    std::make_shared<BufferManager>(workerConfiguration.bufferSizeInBytes.getValue(),
-                                                    workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+                    std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
+                                                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                                                     hardwareManager->getGlobalAllocator()));
             }
 #elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
-        NES_WARNING("Numa flags " << int(!workerConfiguration.numaAwareness.getValue()));
+        NES_WARNING("Numa flags " << int(!workerConfiguration->numaAwareness.getValue()));
 
         //get the list of queue where to pin from the config
-        std::vector<uint64_t> queuePinListMapping = Util::splitWithStringDelimiter<uint64_t>(workerConfiguration.queuePinList.getValue(), ",");
+        std::vector<uint64_t> queuePinListMapping = Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->queuePinList.getValue(), ",");
         auto numberOfQueues = Util::numberOfUniqueValues(queuePinListMapping);
 
         //create one buffer manager per queue
         if (numberOfQueues == 0) {
-            bufferManagers.push_back(std::make_shared<BufferManager>(workerConfiguration.bufferSizeInBytes.getValue(),
-                                                                     workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+            bufferManagers.push_back(std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
+                                                                     workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                                                                      hardwareManager->getGlobalAllocator()));
         } else {
             for (auto i = 0u; i < numberOfQueues; ++i) {
-                bufferManagers.push_back(std::make_shared<BufferManager>(workerConfiguration.bufferSizeInBytes.getValue(),
-                                                                         workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+                bufferManagers.push_back(std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
+                                                                         workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                                                                          hardwareManager->getGlobalAllocator()));
             }
         }
@@ -163,11 +162,11 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         if (!this->bufferManagers.empty()) {
             bufferManagers = this->bufferManagers;
         } else {
-            NES_WARNING("Numa flags " << int(!workerConfiguration.numaAwareness.getValue()) << " are ignored");
+            NES_WARNING("Numa flags " << int(!workerConfiguration->numaAwareness.getValue()) << " are ignored");
             bufferManagers.push_back(
-                std::make_shared<BufferManager>(workerConfiguration.bufferSizeInBytes.getValue(),
+                std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
 
-                                                workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+                                                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                                                 hardwareManager->getGlobalAllocator()));
         }
 #endif
@@ -177,23 +176,23 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         }
 
         QueryManagerPtr queryManager;
-        if(!this->queryManager) {
+        if(this->queryManager) {
             queryManager = this->queryManager;
         }
         else {
-            if (workerConfiguration.workerPinList.getValue()!= "") {
-                std::vector<uint64_t> workerToCoreMappingVec = Util::splitWithStringDelimiter<uint64_t>(workerConfiguration.workerPinList.getValue(), ",");
-                NES_ASSERT(workerToCoreMappingVec.size() == workerConfiguration.numWorkerThreads.getValue(), " we need one position for each thread in mapping");
+            if (workerConfiguration->workerPinList.getValue()!= "") {
+                std::vector<uint64_t> workerToCoreMappingVec = Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
+                NES_ASSERT(workerToCoreMappingVec.size() == workerConfiguration->numWorkerThreads.getValue(), " we need one position for each thread in mapping");
                 queryManager = std::make_shared<QueryManager>(bufferManagers,
                                                               nodeEngineId,
-                                                              workerConfiguration.numWorkerThreads.getValue(),     //QueryManager expects uint16_t but this value is uint64_t, expect error
+                                                              workerConfiguration->numWorkerThreads.getValue(),     //QueryManager expects uint16_t but this value is uint64_t, expect error
                                                               hardwareManager,
                                                               workerToCoreMappingVec,
-                                                              workerConfiguration.numberOfQueues.getValue(),
-                                                              workerConfiguration.numberOfThreadsPerQueue.getValue(),
-                                                              workerConfiguration.queryManagerMode.getValue());
+                                                              workerConfiguration->numberOfQueues.getValue(),
+                                                              workerConfiguration->numberOfThreadsPerQueue.getValue(),
+                                                              workerConfiguration->queryManagerMode.getValue());
             } else {
-                queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, workerConfiguration.numWorkerThreads.getValue(), hardwareManager);
+                queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, workerConfiguration->numWorkerThreads.getValue(), hardwareManager);
             }
         }
         auto stateManager = (!this->stateManager) ? std::make_shared<StateManager>(nodeEngineId) : this->stateManager;
@@ -222,15 +221,15 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
         auto jitCompiler = (!this->jitCompiler) ? Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build() : this->jitCompiler;
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
-        auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration.queryCompiler);
-        queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue());
+        auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
+        queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
         auto compiler = (!this->queryCompiler) ? QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler) : this->queryCompiler;
         if (!compiler) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
             throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler", NES::collectAndPrintStacktrace());
         }
         std::vector<PhysicalSourcePtr> physicalSources;
-        for(auto entry : workerConfiguration.physicalSources.getValues()) {
+        for(auto entry : workerConfiguration->physicalSources.getValues()) {
             physicalSources.push_back(entry.getValue());
         }
         std::shared_ptr<NodeEngine> engine ( new NodeEngine(
@@ -241,11 +240,11 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(bufferStorage),
             [this](const std::shared_ptr<NodeEngine>& engine) {
                 return Network::NetworkManager::create(engine->getNodeEngineId(),
-                                                       this->workerConfiguration.localWorkerIp.getValue(),
-                                                       this->workerConfiguration.dataPort.getValue(),
+                                                       this->workerConfiguration->localWorkerIp.getValue(),
+                                                       this->workerConfiguration->dataPort.getValue(),
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(),
-                                                       this->workerConfiguration.numWorkerThreads.getValue());
+                                                       this->workerConfiguration->numWorkerThreads.getValue());
             },
             std::move(partitionManager),
             std::move(compiler),
@@ -253,9 +252,9 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             std::move(nesWorker),
             std::move(materializedViewManager),
             nodeEngineId,
-            workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
-            workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue(),
-            workerConfiguration.numberOfBuffersPerWorker.getValue()));
+            workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+            workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
+            workerConfiguration->numberOfBuffersPerWorker.getValue()));
 
 //        auto engine = std::make_shared<NodeEngine>(
 //            physicalSources,
@@ -265,11 +264,11 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 //            std::move(bufferStorage),
 //            [this](const std::shared_ptr<NodeEngine>& engine) {
 //                return Network::NetworkManager::create(engine->getNodeEngineId(),
-//                                                       this->workerConfiguration.localWorkerIp.getValue(),
-//                                                       this->workerConfiguration.dataPort.getValue(),
+//                                                       this->workerConfiguration->localWorkerIp.getValue(),
+//                                                       this->workerConfiguration->dataPort.getValue(),
 //                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
 //                                                       engine->getBufferManager(),
-//                                                       this->workerConfiguration.numWorkerThreads.getValue());
+//                                                       this->workerConfiguration->numWorkerThreads.getValue());
 //            },
 //            std::move(partitionManager),
 //            std::move(compiler),
@@ -277,9 +276,9 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
 //            std::move(nesWorker),
 //            std::move(materializedViewManager),
 //            nodeEngineId,
-//            workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
-//            workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue(),
-//            workerConfiguration.numberOfBuffersPerWorker.getValue());
+//            workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+//            workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
+//            workerConfiguration->numberOfBuffersPerWorker.getValue());
         Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
