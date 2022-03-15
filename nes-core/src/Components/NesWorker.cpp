@@ -424,7 +424,7 @@ bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
 void NesWorker::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::string errorMsg;
-    std::cerr << "QNesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+    std::cerr << "NesWorker failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;

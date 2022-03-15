@@ -14,6 +14,8 @@
 #ifndef NES_TESTS_UTIL_NESBASETEST_HPP_
 #define NES_TESTS_UTIL_NESBASETEST_HPP_
 
+#include <Exceptions/ErrorListener.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <typeinfo>
@@ -25,7 +27,42 @@
     }
 
 namespace NES {
+namespace Exceptions {
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+}// namespace Exceptions
 namespace Testing {
+
+template<typename T>
+class TestWithErrorHandling : public T, public Exceptions::ErrorListener {
+    struct Deleter {
+        void operator()(void*) {}
+    };
+
+  public:
+    void SetUp() override {
+        T::SetUp();
+        Exceptions::installGlobalErrorListener(self = std::shared_ptr<Exceptions::ErrorListener>(this, Deleter()));
+    }
+
+    void TearDown() override {
+        T::TearDown();
+        Exceptions::removeGlobalErrorListener(self);
+        self.reset();
+    }
+
+    void onFatalError(int signalNumber, std::string callstack) override {
+        NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+    }
+
+    void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
+        NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
+    }
+
+  private:
+    std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
+};
+
 class NesPortDispatcher;
 
 /**

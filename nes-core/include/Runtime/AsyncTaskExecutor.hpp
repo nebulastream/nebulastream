@@ -15,6 +15,7 @@
 #ifndef NES_NES_CORE_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
 #define NES_NES_CORE_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
 
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <condition_variable>
 #include <deque>
@@ -44,16 +45,17 @@ class AsyncTaskExecutor {
          * @param promise the promise that the executor will fulfill
          * @param owner the executor
          */
-        explicit AsyncTaskFuture(std::shared_ptr<std::promise<R>> promise, AsyncTaskExecutor* owner)
+        explicit AsyncTaskFuture(std::shared_ptr<std::promise<R>> promise, AsyncTaskExecutor& owner)
             : promise(std::move(promise)), owner(owner) {
             future = this->promise->get_future();
         }
 
-        AsyncTaskFuture(const AsyncTaskFuture& that) { *this = that; }
+        AsyncTaskFuture(const AsyncTaskFuture& that) : promise(that.promise), future(that.future), owner(that.owner) {}
 
         AsyncTaskFuture& operator=(const AsyncTaskFuture& that) {
             promise = that.promise;
             future = that.future;
+            owner = that.owner;
             return *this;
         }
 
@@ -73,7 +75,7 @@ class AsyncTaskExecutor {
          */
         template<class Function>
         [[nodiscard]] AsyncTaskFuture<std::invoke_result_t<std::decay_t<Function>, std::decay_t<R>>> thenAsync(Function&& f) {
-            return owner->runAsync([this, f = std::move(f)]() {
+            return owner.runAsync([this, f = std::move(f)]() {
                 return f(future.get());
             });
         }
@@ -93,7 +95,7 @@ class AsyncTaskExecutor {
       private:
         std::shared_ptr<std::promise<R>> promise;// we need this variable to keep the promise machinery alive
         std::shared_future<R> future;
-        AsyncTaskExecutor* owner;
+        AsyncTaskExecutor& owner;
     };
 
   private:
@@ -134,7 +136,7 @@ class AsyncTaskExecutor {
          * @param owner the owning executor
          * @return the AsyncTaskFuture to wait on
          */
-        AsyncTaskFuture<R> makeFuture(AsyncTaskExecutor* owner) { return AsyncTaskFuture(promise, owner); }
+        AsyncTaskFuture<R> makeFuture(AsyncTaskExecutor& owner) { return AsyncTaskFuture(promise, owner); }
 
       private:
         std::function<R(ArgTypes...)> func;
@@ -152,14 +154,15 @@ class AsyncTaskExecutor {
          * @param func the function to execute
          * @param asyncTaskPtr
          */
-        explicit AsyncTaskWrapper(std::function<void(void)>&& func, void* asyncTaskPtr)
-            : func(func), asyncTaskPtr(asyncTaskPtr) {}
+        explicit AsyncTaskWrapper(std::function<void(void)>&& func, std::function<void(void)>&& releaseCallback)
+            : func(std::move(func)), releaseCallback(std::move(releaseCallback)) {
+            NES_VERIFY(!!this->func, "Invalid callback");
+            NES_VERIFY(!!this->releaseCallback, "Invalid gc callback");
+        }
 
         /// deallocates the internal AsyncTask for garbage collection
         ~AsyncTaskWrapper() noexcept {
-            if (asyncTaskPtr) {
-                std::free(asyncTaskPtr);
-            }
+            releaseCallback();
         }
 
         /// executes the inner AsyncTask
@@ -167,7 +170,7 @@ class AsyncTaskExecutor {
 
       private:
         std::function<void(void)> func;
-        void* asyncTaskPtr;
+        std::function<void(void)> releaseCallback;
     };
 
   public:
@@ -175,7 +178,7 @@ class AsyncTaskExecutor {
      * @brief Creates an AsyncTaskExecutor using `numOfThreads` threads
      * @param numOfThreads the number of threads to use for the executor
      */
-    explicit AsyncTaskExecutor(uint32_t numOfThreads = 1);
+    explicit AsyncTaskExecutor(const HardwareManagerPtr& hardwareMananger, uint32_t numOfThreads = 1);
 
     /// destructor to clean up inner resources
     ~AsyncTaskExecutor();
@@ -201,17 +204,23 @@ class AsyncTaskExecutor {
         }
         // allocates a task on the heap and captures all arguments and types in the AsyncTask
         // next, everything is captured in the AsyncTaskWrapper, which has no types.
-        auto taskPtr = malloc(sizeof(AsyncTask<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>, Args...>));
+        constexpr auto taskSize = sizeof(AsyncTask<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>, Args...>);
+        auto taskPtr = allocateAsyncTask(taskSize);
         NES_ASSERT(taskPtr, "Cannot allocate async task");
         auto* task =
             new (taskPtr) AsyncTask<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>, Args...>(std::move(f));
-        auto future = task->makeFuture(this);
+        auto future = task->makeFuture(*this);
         std::function<void(void)> asyncCallback = [task, args...]() mutable {
             (*task)(std::forward<Args>(args)...);
         };
+        std::function<void(void)> releaseCallback = [this, taskPtr]() {
+            deallocateAsyncTask(taskPtr, taskSize);
+        };
+        NES_ASSERT(!!asyncCallback, "Cannot allocate async task");
+        NES_ASSERT(!!releaseCallback, "Cannot allocate async task");
         {
             std::unique_lock lock(workMutex);
-            asyncTaskQueue.emplace_back(std::move(asyncCallback), taskPtr);
+            asyncTaskQueue.emplace_back(std::move(asyncCallback), std::move(releaseCallback));
             cv.notify_all();
         }
         return future;
@@ -220,6 +229,10 @@ class AsyncTaskExecutor {
   private:
     /// the inner thread routine that executes async tasks
     void runningRoutine();
+
+    void* allocateAsyncTask(size_t taskSize);
+
+    void deallocateAsyncTask(void* task, size_t size);
 
   private:
     mutable std::mutex workMutex;
@@ -233,6 +246,8 @@ class AsyncTaskExecutor {
     std::vector<std::shared_ptr<std::promise<bool>>> completionPromises;
 
     std::deque<AsyncTaskWrapper> asyncTaskQueue;
+
+    HardwareManagerPtr hardwareManager;
 };
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
