@@ -112,7 +112,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
 
     // 3a. pre-start net sources
     for (const auto& source : netSources) {
-        if (!source->preStart()) {
+        if (!source->bind()) {
             NES_WARNING("AbstractQueryManager: network source " << source << " could not started as it is already running");
         } else {
             NES_DEBUG("AbstractQueryManager: network source " << source << " started successfully");

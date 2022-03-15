@@ -18,9 +18,6 @@
 #include <Util/SourceLocation.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <exception>
-#if 0
-#include <format>
-#endif
 #include <stdexcept>
 #include <string>
 
@@ -43,20 +40,7 @@ class RuntimeException : virtual public std::exception {
     explicit RuntimeException(std::string msg,
                               std::string&& stacktrace = collectAndPrintStacktrace(),
                               std::source_location location = std::source_location::current());
-#if 0
-    /** Constructor
-     *  @param msg The error message
-     *  @param stacktrace Error stacktrace
-     */
-    template<typename... Args>
-    explicit RuntimeException(std::string&& fmt,
-                              Args&&... args,
-                              std::string&& stacktrace = collectAndPrintStacktrace(),
-                              std::source_location location = std::source_location::current())
-        : RuntimeException(std::format(std::move(fmt), std::forward<Args>(args)...), std::move(stacktrace), std::move(location)) {
-        // nop
-    }
-#endif
+
     /** Constructor
     *  @param msg The error message
     *  @param stacktrace Error stacktrace

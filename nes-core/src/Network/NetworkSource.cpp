@@ -66,7 +66,7 @@ template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 }// namespace detail
 
-bool NetworkSource::preStart() {
+bool NetworkSource::bind() {
     auto emitter = shared_from_base<DataEmitter>();
     return networkManager->registerSubpartitionConsumer(nesPartition, sinkLocation, emitter);
 }
