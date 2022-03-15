@@ -25,8 +25,6 @@ PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), rec
     this->code = std::make_shared<GeneratedCode>();
 }
 
-PipelineContext::~PipelineContext() { NES_DEBUG("~PipelineContext(" + pipelineName + ")"); }
-
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
 BlockScopeStatementPtr PipelineContext::createSetupScope() { return setupScopes.emplace_back(BlockScopeStatement::create()); }
