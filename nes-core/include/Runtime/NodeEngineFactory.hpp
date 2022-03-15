@@ -28,7 +28,7 @@ class QueryCompilerConfiguration;
 }
 
 namespace Runtime {
-enum class NumaAwarenessFlag { ENABLED, DISABLED };
+//enum class NumaAwarenessFlag { ENABLED, DISABLED };
 /**
  * @brief A general factory to create a node engine given some configuration.
  */

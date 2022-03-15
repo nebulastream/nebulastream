@@ -15,18 +15,21 @@
 #ifndef NES_NODEENGINEBUILDER_HPP
 #define NES_NODEENGINEBUILDER_HPP
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <Network/NetworkForwardRefs.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Compiler/LanguageCompiler.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
+#include <Components/NesWorker.hpp>
 namespace NES::Runtime {
-enum class NumaAwarenessFlag { ENABLED, DISABLED };
 /**
  * This class is used to create instances of NodeEngine using the builder pattern.
  */
 class NodeEngineBuilder {
 
   public:
+
+    NodeEngineBuilder() = delete;
     /**
      * Creates a default NodeEngineBuilder
      * @param workerConfiguration contains values that configure aspects of the NodeEngine
@@ -34,33 +37,103 @@ class NodeEngineBuilder {
      */
     static NodeEngineBuilder create(Configurations::WorkerConfiguration workerConfiguration);
 
-    NodeEngineBuilder() = delete;
     /**
      * setter used to pass NesWorker to NodeEngineBuilder. Mandatory
      * @param nesWorker
      * @return NodeEngineBuilder&
      */
     NodeEngineBuilder& setNesWorker(std::weak_ptr<NesWorker>&& nesWorker);
-    NodeEngineBuilder& setNodeEngineId(uint64_t nodeEngineId);
-    NodeEngineBuilder& setPartitionManager(Network::PartitionManagerPtr partitionManager);
-    NodeEngineBuilder& setHardwareManager(HardwareManagerPtr hardwareManager);
-    NodeEngineBuilder& setBufferManagers(std::vector<BufferManagerPtr> bufferManagers);
-    NodeEngineBuilder& setQueryManager(QueryManagerPtr queryManager);
-    NodeEngineBuilder& setStateManager(StateManagerPtr stateManager);
-    NodeEngineBuilder& setBufferStorage(BufferStoragePtr bufferStorage);
-    NodeEngineBuilder& setMaterializedViewManager(Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager);
-    NodeEngineBuilder& setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler);
-    NodeEngineBuilder& setJITCompiler(Compiler::JITCompilerPtr jitCompiler );
-    NodeEngineBuilder& setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory);
-    NodeEngineBuilder& setCompiler(QueryCompilation::QueryCompilerPtr queryCompiler);
 
+    /**
+     * setter used to pass a NodeEngineId to NodeEngineBuilder. Optional
+     * @param nodeEngineId
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setNodeEngineId(uint64_t nodeEngineId);
+
+    /**
+     * setter used to pass a partition manager to NodeEngineBuilder. Optional
+     * @param partitionManager
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setPartitionManager(Network::PartitionManagerPtr partitionManager);
+
+    /**
+     * setter used to pass a hardware manager to NodeEngineBuilder. Optional
+     * @param hardwareManager
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setHardwareManager(HardwareManagerPtr hardwareManager);
+
+    /**
+     * setter used to pass a vector of buffer managers to NodeEngineBuilder. Optional
+     * @param std::vector<BufferManagerPtr>
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setBufferManagers(std::vector<BufferManagerPtr> bufferManagers);
+
+    /**
+     * setter used to pass a query manager to NodeEngineBuilder. Optional
+     * @param queryManager
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setQueryManager(QueryManagerPtr queryManager);
+
+    /**
+     * setter used to pass a state manager to NodeEngineBuilder. Optional
+     * @param stateManager
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setStateManager(StateManagerPtr stateManager);
+
+    /**
+     * setter used to pass buffer storage to NodeEngineBuilder. Optional
+     * @param bufferStorage
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setBufferStorage(BufferStoragePtr bufferStorage);
+
+    /**
+     * setter used to pass a materialized view manager to NodeEngineBuilder. Optional
+     * @param materializedViewManager
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setMaterializedViewManager(NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager);
+
+    /**
+     * setter used to pass a language compiler to NodeEngineBuilder. Optional
+     * @param languageCompiler
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setLanguageCompiler(std::shared_ptr<Compiler::LanguageCompiler> languageCompiler);
+
+    /**
+     * setter used to pass a language a jit compiler to NodeEngineBuilder. Optional
+     * @param jitCompiler
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setJITCompiler(Compiler::JITCompilerPtr jitCompiler );
+
+    /**
+     * setter used to pass a language a phase factory to NodeEngineBuilder. Optional
+     * @param phaseFactory
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory);
+
+    /**
+     * setter used to pass a language a query compiler to NodeEngineBuilder. Optional
+     * @param queryCompiler
+     * @return NodeEngineBuilder&
+     */
+    NodeEngineBuilder& setCompiler(QueryCompilation::QueryCompilerPtr queryCompiler);
 
     /**
      * performs safety checks and returns a NodeEngine
      * @return NodeEnginePtr
      */
     NodeEnginePtr build();
-
+    
   private:
     NodeEngineBuilder(Configurations::WorkerConfiguration workerConfiguration);
     std::weak_ptr<NesWorker> nesWorker;
@@ -71,7 +144,7 @@ class NodeEngineBuilder {
     QueryManagerPtr queryManager;
     StateManagerPtr stateManager;
     BufferStoragePtr bufferStorage;
-    Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
+    NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::shared_ptr<Compiler::LanguageCompiler> languageCompiler;
     Compiler::JITCompilerPtr jitCompiler;
     QueryCompilation::Phases::PhaseFactoryPtr phaseFactory;

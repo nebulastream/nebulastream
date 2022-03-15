@@ -174,7 +174,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             NES_ERROR("Runtime: error while creating compiler");
             throw log4cxx::helpers::Exception("Error while creating compiler");
         }
-        auto engine = std::make_shared<NodeEngine>(
+        std::shared_ptr<NodeEngine> engine( new NodeEngine(
             physicalSources,
             std::move(hardwareManager),
             std::move(bufferManagers),
@@ -196,7 +196,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             nodeEngineId,
             numberOfBuffersInGlobalBufferManager,
             numberOfBuffersInSourceLocalBufferPool,
-            numberOfBuffersPerWorker);
+            numberOfBuffersPerWorker));
         Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {

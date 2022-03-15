@@ -23,6 +23,8 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -62,25 +64,23 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   public:
     enum NodeEngineQueryStatus { started, stopped, registered };
 
-    /**
-     * @brief Create a node engine and gather node information
-     * and initialize QueryManager, BufferManager and ThreadPool
-     */
-    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
-                        HardwareManagerPtr&&,
-                        std::vector<BufferManagerPtr>&&,
-                        QueryManagerPtr&&,
-                        BufferStoragePtr&&,
-                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
-                        Network::PartitionManagerPtr&&,
-                        QueryCompilation::QueryCompilerPtr&&,
-                        StateManagerPtr&&,
-                        std::weak_ptr<NesWorker>&&,
-                        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
-                        uint64_t nodeEngineId,
-                        uint64_t numberOfBuffersInGlobalBufferManager,
-                        uint64_t numberOfBuffersInSourceLocalBufferPool,
-                        uint64_t numberOfBuffersPerWorker);
+    friend NodeEnginePtr NodeEngineBuilder::build();
+
+    friend NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
+                                                             const uint16_t port,
+                                                             std::vector<PhysicalSourcePtr> physicalSources,
+                                                             const uint16_t numThreads,
+                                                             const uint64_t bufferSize,
+                                                             const uint64_t numberOfBuffersInGlobalBufferManager,
+                                                             const uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                                             const uint64_t numberOfBuffersPerWorker,
+                                                             const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
+                                                             std::weak_ptr<NesWorker>&& nesWorker,
+                                                             NumaAwarenessFlag enableNumaAwareness,
+                                                             const std::string& workerToCoreMapping,
+                                                             uint64_t numberOfQueues,
+                                                             uint64_t numberOfThreadsPerQueue,
+                                                             QueryManager::QueryMangerMode queryManagerMode);
 
     ~NodeEngine() override;
 
@@ -303,6 +303,27 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return executable query plan
      */
     std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(uint64_t querySubPlanId) const;
+
+  protected:
+    /**
+     * @brief Create a node engine and gather node information
+     * and initialize QueryManager, BufferManager and ThreadPool
+     */
+    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
+                        HardwareManagerPtr&&,
+                        std::vector<BufferManagerPtr>&&,
+                        QueryManagerPtr&&,
+                        BufferStoragePtr&&,
+                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+                        Network::PartitionManagerPtr&&,
+                        QueryCompilation::QueryCompilerPtr&&,
+                        StateManagerPtr&&,
+                        std::weak_ptr<NesWorker>&&,
+                        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
+                        uint64_t nodeEngineId,
+                        uint64_t numberOfBuffersInGlobalBufferManager,
+                        uint64_t numberOfBuffersInSourceLocalBufferPool,
+                        uint64_t numberOfBuffersPerWorker);
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;

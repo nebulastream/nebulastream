@@ -82,7 +82,7 @@ NodeEngineBuilder& NodeEngineBuilder::setBufferStorage(BufferStoragePtr bufferSt
     return *this;
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setMaterializedViewManager(Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager){
+NodeEngineBuilder& NodeEngineBuilder::setMaterializedViewManager(NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager){
     this->materializedViewManager = materializedViewManager;
     return *this;
 }
@@ -233,7 +233,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         for(auto entry : workerConfiguration.physicalSources.getValues()) {
             physicalSources.push_back(entry.getValue());
         }
-        auto engine = std::make_shared<NodeEngine>(
+        std::shared_ptr<NodeEngine> engine ( new NodeEngine(
             physicalSources,
             std::move(hardwareManager),
             std::move(bufferManagers),
@@ -255,7 +255,31 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             nodeEngineId,
             workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
             workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue(),
-            workerConfiguration.numberOfBuffersPerWorker.getValue());
+            workerConfiguration.numberOfBuffersPerWorker.getValue()));
+
+//        auto engine = std::make_shared<NodeEngine>(
+//            physicalSources,
+//            std::move(hardwareManager),
+//            std::move(bufferManagers),
+//            std::move(queryManager),
+//            std::move(bufferStorage),
+//            [this](const std::shared_ptr<NodeEngine>& engine) {
+//                return Network::NetworkManager::create(engine->getNodeEngineId(),
+//                                                       this->workerConfiguration.localWorkerIp.getValue(),
+//                                                       this->workerConfiguration.dataPort.getValue(),
+//                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+//                                                       engine->getBufferManager(),
+//                                                       this->workerConfiguration.numWorkerThreads.getValue());
+//            },
+//            std::move(partitionManager),
+//            std::move(compiler),
+//            std::move(stateManager),
+//            std::move(nesWorker),
+//            std::move(materializedViewManager),
+//            nodeEngineId,
+//            workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue(),
+//            workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue(),
+//            workerConfiguration.numberOfBuffersPerWorker.getValue());
         Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
@@ -284,7 +308,7 @@ NodeEngineBuilder::createQueryCompilationOptions(const Configurations::QueryComp
 
 uint64_t NodeEngineBuilder::getNextNodeEngineId() {
     const uint64_t max = -1;
-    std::atomic<uint64_t> id = time(nullptr) ^ getpid();
+    uint64_t id = time(nullptr) ^ getpid();
     return (++id % max);
 }
 }//namespace NES::Runtime
