@@ -27,7 +27,7 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -785,8 +785,15 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         });
 
         PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
+        auto workerConfiguration  = WorkerConfiguration::create();
+        workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
+        workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
+        workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
+        workerConfiguration->numberOfBuffersPerWorker.setValue(64);
+        workerConfiguration->physicalSources.clear();
+        workerConfiguration->physicalSources.add(sourceConf);
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {sourceConf}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
+            Runtime::NodeEngineBuilder::create(workerConfiguration).build();
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,

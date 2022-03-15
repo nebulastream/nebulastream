@@ -35,10 +35,10 @@ class NodeEngineBuilder {
      * @param workerConfiguration contains values that configure aspects of the NodeEngine
      * @return NodeEngineBuilder
      */
-    static NodeEngineBuilder create(Configurations::WorkerConfiguration workerConfiguration);
+    static NodeEngineBuilder create(Configurations::WorkerConfigurationPtr workerConfiguration);
 
     /**
-     * setter used to pass NesWorker to NodeEngineBuilder. Mandatory
+     * setter used to pass NesWorker to NodeEngineBuilder. Optional
      * @param nesWorker
      * @return NodeEngineBuilder&
      */
@@ -135,7 +135,7 @@ class NodeEngineBuilder {
     NodeEnginePtr build();
     
   private:
-    NodeEngineBuilder(Configurations::WorkerConfiguration workerConfiguration);
+    NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
     std::weak_ptr<NesWorker> nesWorker;
     uint64_t nodeEngineId;
     Network::PartitionManagerPtr partitionManager;
@@ -149,7 +149,7 @@ class NodeEngineBuilder {
     Compiler::JITCompilerPtr jitCompiler;
     QueryCompilation::Phases::PhaseFactoryPtr phaseFactory;
     QueryCompilation::QueryCompilerPtr queryCompiler;
-    Configurations::WorkerConfiguration workerConfiguration;
+    Configurations::WorkerConfigurationPtr workerConfiguration;
 
     /**
      *  Used during build() to convert the QueryCompilerConfigurations in the WorkerConfigruations to QueryCompilationOptions,
