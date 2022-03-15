@@ -20,6 +20,7 @@
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
@@ -66,7 +67,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration  = WorkerConfiguration::create();
-        workerConfiguration->dataPort->setValue(3111);
+        workerConfiguration->dataPort.setValue(3111);
         workerConfiguration->physicalSources.add(conf);
 
 
