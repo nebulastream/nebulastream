@@ -33,6 +33,7 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/Runtime/WindowSliceStore.hpp>\n"
                           "#include <Runtime/TupleBuffer.hpp>\n"
                           "#include <Runtime/ExecutionResult.hpp>\n"
+                          "#include <Runtime/QueryTerminationType.hpp>\n"
                           "#include <Runtime/WorkerContext.hpp>\n"
                           "#include <Runtime/Execution/PipelineExecutionContext.hpp>\n"
                           "#include <Runtime/Execution/ExecutablePipelineStage.hpp>\n"

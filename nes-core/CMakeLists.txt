@@ -95,6 +95,7 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/NesThread.hpp Runtime/NesThread.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/RuntimeForwardRefs.hpp Runtime/RuntimeForwardRefs.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/UtilityFunctions.hpp Util/UtilityFunctions.hpp)
+register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/QueryTerminationType.hpp Runtime/QueryTerminationType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/OperatorId.hpp Operators/OperatorId.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/QueryPlan.hpp Plans/Query/QueryPlan.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/TupleBuffer.hpp Runtime/TupleBuffer.hpp)
