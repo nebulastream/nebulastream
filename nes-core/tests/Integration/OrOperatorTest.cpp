@@ -242,6 +242,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
 
 /* 3.Test
  * Multi-OR Operators in one Query
+ * //TODO Disabled waiting for issue #2600
  */
 TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NES_DEBUG("start coordinator");
