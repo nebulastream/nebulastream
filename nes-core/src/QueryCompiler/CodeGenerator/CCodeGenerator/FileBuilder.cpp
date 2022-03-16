@@ -20,12 +20,12 @@
 namespace NES::QueryCompilation {
 FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
-    #ifdef USE_TF
+    #ifdef TFDEF
         builder.declations << "#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>\n"
                               "#include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>\n"
                               "#include <tensorflow/lite/c/c_api.h>\n"
                               "#include <tensorflow/lite/c/c_api_experimental.h>\n"
-                              "#include <tensorflow/lite/c/common.h>\n"
+                              "#include <tensorflow/lite/c/common.h>\n";
 
     #endif
     builder.declations
