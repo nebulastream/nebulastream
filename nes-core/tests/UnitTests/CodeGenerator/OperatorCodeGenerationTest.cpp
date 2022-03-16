@@ -967,7 +967,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto imop = op->as<InferModelLogicalOperatorNode>();
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
-//    codeGenerator->generateInferModelSetup(context);
+    codeGenerator->generateInferModelSetup(context, inferModelOperatorHandler);
     codeGenerator->generateCodeForInferModel(context, imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
 
     /* generate code for writing result tuples to output buffer */

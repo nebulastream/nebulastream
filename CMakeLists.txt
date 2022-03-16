@@ -74,7 +74,7 @@ execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
-project(NES C CXX)
+project(NES CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
@@ -355,18 +355,6 @@ if (NOT ${Z3_FOUND})
 endif ()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
 message(STATUS "Using z3: " ${Z3_LIBRARIES})
-
-# TensorFlow Lite
-#message(STATUS, "TF-Lite")
-
-
-#set(TENSORFLOW_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/tensorflow_src" CACHE PATH
-#    "Directory that contains the TensorFlow project")
-#add_subdirectory(
-#        "${TENSORFLOW_SOURCE_DIR}/tensorflow/lite"
-#        "${CMAKE_CURRENT_BINARY_DIR}/tensorflow-lite"
-#        EXCLUDE_FROM_ALL
-#)
 
 # Log4cc
 find_package(log4cxx CONFIG REQUIRED)
