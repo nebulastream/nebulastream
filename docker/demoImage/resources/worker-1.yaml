@@ -1,0 +1,10 @@
+logLevel: LOG_WARNING
+physicalSources:
+        - logicalSourceName: wind_turbines
+          physicalSourceName: wind_turbine_1
+          type: CSVSource
+          configuration:
+                  filePath: /wind_turbine_1.csv
+                  numberOfBuffersToProduce: 1024
+                  numberOfTuplesToProducePerBuffer: 0
+                  skipHeader: true

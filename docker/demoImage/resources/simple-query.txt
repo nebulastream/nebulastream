@@ -1,0 +1,4 @@
+{
+  "userQuery": "Query::from(\"wind_turbines\").sink(FileSinkDescriptor::create(\"/simple-query.txt\", \"CSV_FORMAT\", \"APPEND\"));",
+  "strategyName": "BottomUp"
+}

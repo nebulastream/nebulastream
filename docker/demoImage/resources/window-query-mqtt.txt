@@ -1,0 +1,4 @@
+{
+  "userQuery": "Query::from(\"wind_turbines\").window(TumblingWindow::of(EventTime(Attribute(\"features_properties_updated\")), Minutes(10))).byKey(Attribute(\"metadata_id\")).apply(Sum(Attribute(\"features_properties_mag\"))).sink(MQTTSinkDescriptor::create(\"ws://127.0.0.1:9001\", \"/nesui\", \"rfRqLGZRChg8eS30PEeR\", 5, MQTTSinkDescriptor::milliseconds, 500, MQTTSinkDescriptor::atLeastOnce, false));",
+  "strategyName": "BottomUp"
+}

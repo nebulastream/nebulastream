@@ -1,0 +1,23 @@
+# We copy the NES UI from a prebuild UI image.
+FROM nebulastream/nes-ui-image:viktor AS uiimage
+
+# The base image is the NES executable image to run the coordinator and a worker.
+FROM nebulastream/nes-executable-image:viktor AS execimage
+
+# Copy the NES UI from a prebuild UI image.
+RUN mkdir -p /app
+COPY --from=uiimage /app /app
+
+RUN apt-get update -q && DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -q -y npm vim tmux mosquitto curl
+RUN cd /app && npm install --silent && npm install react-scripts@3.4.1 -g --silent
+
+# Copy the entry point shell script.
+COPY ./docker/demoImage/entrypoint-nes-demo.sh /entrypoint.sh
+COPY ./docker/demoImage/resources/coordinator.yaml /
+COPY ./docker/demoImage/resources/worker-1.yaml /
+COPY ./docker/demoImage/resources/worker-2.yaml /
+COPY ./docker/demoImage/resources/wind_turbine_1.csv /
+COPY ./docker/demoImage/resources/wind_turbine_2.csv /
+COPY ./docker/demoImage/resources/window-query-mqtt.txt /
+
+ENTRYPOINT ["/entrypoint.sh"]
