@@ -23,4 +23,5 @@ add_source_files(nes-core
         Controller/TopologyController.cpp
         Controller/MaintenanceController.cpp
         RestServer.cpp
-)
+        RestServerInterruptHandler.cpp
+        )

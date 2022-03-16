@@ -17,7 +17,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <REST/RestEngine.hpp>
-#include <REST/usr_interrupt_handler.hpp>
+#include <REST/RestServerInterruptHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
@@ -55,14 +55,14 @@ RestServer::RestServer(std::string host,
 bool RestServer::start() {
 
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
-    InterruptHandler::hookUserInterruptHandler();
+    RestServerInterruptHandler::hookUserInterruptHandler();
     restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
         // wait for server initialization...
         restEngine->accept().wait();
         NES_DEBUG("RestServer: Server started");
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
-        InterruptHandler::waitForUserInterrupt();
+        RestServerInterruptHandler::waitForUserInterrupt();
         restEngine->shutdown();
         restEngine.reset();
         NES_DEBUG("RestServer: after waitForUserInterrupt");
@@ -78,7 +78,7 @@ bool RestServer::start() {
 
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
-    InterruptHandler::handleUserInterrupt(SIGTERM);
+    RestServerInterruptHandler::handleUserInterrupt(SIGTERM);
     return true;
 }
 
