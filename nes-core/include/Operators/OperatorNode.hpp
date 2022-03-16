@@ -37,7 +37,7 @@ class OperatorNode : public Node {
     /**
      * @brief gets the operator id.
      * Unique Identifier of the operator within a query.
-     * @return u_int64_t
+     * @return uint64_t
      */
     uint64_t getId() const;
 

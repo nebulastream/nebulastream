@@ -995,7 +995,7 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsNoCycle) {
     children = filterOp6->getAndFlattenAllChildren(true);
     EXPECT_EQ(children.size(), expected.size());
 
-    for (u_int64_t i = 0; i < children.size(); i++) {
+    for (uint64_t i = 0; i < children.size(); i++) {
         EXPECT_TRUE(children[i]->equal(expected[i]));
     }
 }
@@ -1021,7 +1021,7 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsForCycle) {
 
     children = filterOp6->getAndFlattenAllChildren(false);
     EXPECT_EQ(children.size(), expected.size());
-    for (u_int64_t i = 0; i < children.size(); i++) {
+    for (uint64_t i = 0; i < children.size(); i++) {
         EXPECT_TRUE(children[i]->equal(expected[i]));
     }
 }
@@ -1067,7 +1067,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     ;
     // EXPECT_EQ(children.size(), expected.size());
 
-    for (u_int64_t i = 0; i < children.size(); i++) {
+    for (uint64_t i = 0; i < children.size(); i++) {
         std::cout << i << std::endl;
         // both reference to the same pointer
         EXPECT_TRUE(children[i]->isIdentical(expected[i]));
@@ -1280,7 +1280,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithSinglePredecessor) {
 
     auto vec = filterOp6->split(filterOp2);
     EXPECT_EQ(vec.size(), expected.size());
-    for (u_int64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
@@ -1300,7 +1300,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithAtLastSuccessor) {
 
     auto vec = filterOp6->split(filterOp3);
     EXPECT_EQ(vec.size(), expected.size());
-    for (u_int64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
@@ -1318,7 +1318,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithAtRoot) {
 
     auto vec = filterOp6->split(filterOp6);
     EXPECT_EQ(vec.size(), expected.size());
-    for (u_int64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
@@ -1339,7 +1339,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithMultiplePredecessors) {
 
     auto vec = filterOp6->split(filterOp1);
     EXPECT_EQ(vec.size(), expected.size());
-    for (u_int64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }

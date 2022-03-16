@@ -73,7 +73,7 @@ uint32_t ExecutionNode::getOccupiedResources(QueryId queryId) {
         NES_DEBUG("ExecutionNode : calculate the number of resources occupied by the query sub plan and release them");
         auto roots = querySubPlan->getRootOperators();
         // vector keeping track of already visited nodes.
-        std::set<u_int64_t> visitedOpIds;
+        std::set<uint64_t> visitedOpIds;
         NES_DEBUG("ExecutionNode : Iterate over all root nodes in the query sub graph to calculate occupied resources");
         for (const auto& root : roots) {
             NES_DEBUG("ExecutionNode : Iterate the root node using BFS");

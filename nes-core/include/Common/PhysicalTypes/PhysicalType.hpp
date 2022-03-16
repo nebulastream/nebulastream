@@ -37,7 +37,7 @@ class PhysicalType {
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
-     * @return u_int64_t
+     * @return uint64_t
      */
     [[nodiscard]] virtual uint64_t size() const = 0;
 
