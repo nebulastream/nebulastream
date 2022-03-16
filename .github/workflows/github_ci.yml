@@ -59,7 +59,7 @@ jobs:
             require_build: "true"
             require_test: "true"
           - osversion: alpine-3.15
-            require_build: "false"
+            require_build: "true"
             require_test: "false"
     steps:
       - uses: AutoModality/action-clean@v1
