@@ -24,7 +24,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>

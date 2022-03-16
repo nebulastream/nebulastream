@@ -31,7 +31,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>

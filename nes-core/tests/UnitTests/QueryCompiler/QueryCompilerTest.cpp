@@ -41,7 +41,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
