@@ -17,7 +17,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <REST/RestEngine.hpp>
-#include <REST/runtime_utils.hpp>
 #include <REST/usr_interrupt_handler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
@@ -71,7 +70,7 @@ bool RestServer::start() {
         NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
         return false;
     } catch (...) {
-        RuntimeUtils::printStackTrace();
+        NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
         return false;
     }
     return true;

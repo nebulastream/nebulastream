@@ -13,7 +13,6 @@
 */
 
 #include <REST/Controller/ConnectivityController.hpp>
-#include <REST/std_service.hpp>
 #include <cpprest/json.h>
 
 namespace NES {

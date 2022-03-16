@@ -17,7 +17,6 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
-#include <REST/runtime_utils.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/json.h>
@@ -74,7 +73,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            RuntimeUtils::printStackTrace();
+            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
     } else if (path[1] == "allRegisteredQueries") {
@@ -109,7 +108,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            RuntimeUtils::printStackTrace();
+            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
 
@@ -148,7 +147,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            RuntimeUtils::printStackTrace();
+            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
     } else if (path[1] == "status") {
@@ -181,7 +180,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            RuntimeUtils::printStackTrace();
+            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
     } else {
