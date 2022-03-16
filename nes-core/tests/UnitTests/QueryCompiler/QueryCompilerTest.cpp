@@ -104,15 +104,6 @@ TEST_F(QueryCompilerTest, filterQuery) {
 
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                   0,
-//                                                                   {sourceConf},
-//                                                                   1,
-//                                                                   4096,
-//                                                                   1024,
-//                                                                   12,
-//                                                                   12,
-//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -158,18 +149,6 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
 
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                   0,
-//                                                                   {sourceConf},
-//                                                                   1,
-//                                                                   4096,
-//                                                                   1024,
-//                                                                   12,
-//                                                                   12,
-//                                                                   Configurations::QueryCompilerConfiguration(),
-//                                                                   std::weak_ptr<NesWorker>(),
-//                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED,
-//                                                                   "");
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -214,15 +193,6 @@ TEST_F(QueryCompilerTest, windowQuery) {
 
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                   0,
-//                                                                   {sourceConf},
-//                                                                   1,
-//                                                                   4096,
-//                                                                   1024,
-//                                                                   12,
-//                                                                   12,
-//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -272,15 +242,6 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
 
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                   0,
-//                                                                   {sourceConf},
-//                                                                   1,
-//                                                                   4096,
-//                                                                   1024,
-//                                                                   12,
-//                                                                   12,
-//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -331,15 +292,6 @@ TEST_F(QueryCompilerTest, unionQuery) {
 
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                   0,
-//                                                                   {sourceConf},
-//                                                                   1,
-//                                                                   4096,
-//                                                                   1024,
-//                                                                   12,
-//                                                                   12,
-//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -394,15 +346,6 @@ TEST_F(QueryCompilerTest, joinQuery) {
 
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                   0,
-//                                                                   {sourceConf1, sourceConf2},
-//                                                                   1,
-//                                                                   4096,
-//                                                                   1024,
-//                                                                   12,
-//                                                                   12,
-//                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -462,15 +405,6 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
 
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-    //    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-    //                                                                   0,
-    //                                                                   {sourceConf},
-    //                                                                   1,
-    //                                                                   4096,
-    //                                                                   1024,
-    //                                                                   12,
-    //                                                                   12,
-    //                                                                   Configurations::QueryCompilerConfiguration());
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);

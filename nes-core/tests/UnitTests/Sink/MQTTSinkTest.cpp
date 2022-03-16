@@ -72,7 +72,6 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
 
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3111, {conf});
         testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 

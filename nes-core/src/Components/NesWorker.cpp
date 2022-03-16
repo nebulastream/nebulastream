@@ -147,22 +147,30 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
-                                                                  localWorkerZmqPort,
-                                                                  physicalSources,
-                                                                  numWorkerThreads,
-                                                                  bufferSizeInBytes,
-                                                                  numberOfBuffersInGlobalBufferManager,
-                                                                  numberOfBuffersInSourceLocalBufferPool,
-                                                                  numberOfBuffersPerWorker,
-                                                                  queryCompilerConfiguration,
-                                                                  this->inherited0::shared_from_this(),
-                                                                  enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
-                                                                                      : Runtime::NumaAwarenessFlag::DISABLED,
-                                                                  workerToCoreMapping,
-                                                                  numberOfQueues,
-                                                                  numberOfThreadsPerQueue,
-                                                                  queryManagerMode);
+        auto workerConfigurations = WorkerConfiguration::create();
+        workerConfigurations->localWorkerIp.setValue(localWorkerIp);
+        workerConfigurations->dataPort.setValue(localWorkerZmqPort);
+        for(auto source : physicalSources)
+            workerConfigurations->physicalSources.add(source);
+        workerConfigurations->numWorkerThreads.setValue(numWorkerThreads);
+        workerConfigurations->bufferSizeInBytes.setValue(bufferSizeInBytes);
+        workerConfigurations->numberOfBuffersInGlobalBufferManager.setValue(numberOfBuffersInGlobalBufferManager);
+        workerConfigurations->numberOfBuffersInSourceLocalBufferPool.setValue(numberOfBuffersInSourceLocalBufferPool);
+        workerConfigurations->numberOfBuffersPerWorker.setValue(numberOfBuffersPerWorker);
+        workerConfigurations->queryCompiler.compilationStrategy.setValue(queryCompilerConfiguration.compilationStrategy);
+        workerConfigurations->queryCompiler.outputBufferOptimizationLevel.setValue(queryCompilerConfiguration.outputBufferOptimizationLevel);
+        workerConfigurations->queryCompiler.pipeliningStrategy.setValue(queryCompilerConfiguration.pipeliningStrategy);
+        workerConfigurations->queryCompiler.windowingStrategy.setValue(queryCompilerConfiguration.windowingStrategy);
+        workerConfigurations->numaAwareness.setValue(enableNumaAwareness);
+        workerConfigurations->workerPinList.setValue(workerToCoreMapping);
+        workerConfigurations->numberOfQueues.setValue(numberOfQueues);
+        workerConfigurations->numberOfThreadsPerQueue.setValue(numberOfThreadsPerQueue);
+        workerConfigurations->queryManagerMode.setValue(queryManagerMode);
+
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                     .setNesWorker(this->inherited0::shared_from_this())
+                     .build();
+
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create(enableMonitoring);
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << enableMonitoring);

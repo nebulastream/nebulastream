@@ -80,15 +80,6 @@ class ProjectionTest : public Testing::NESBaseTest {
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                  0,
-//                                                                  {sourceConf},
-//                                                                  1,
-//                                                                  4096,
-//                                                                  1024,
-//                                                                  12,
-//                                                                  12,
-//                                                                  Configurations::QueryCompilerConfiguration());
     }
 
     /* Will be called before a test is executed. */

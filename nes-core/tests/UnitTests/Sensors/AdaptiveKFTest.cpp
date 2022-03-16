@@ -58,15 +58,6 @@ class AdaptiveKFTest : public testing::Test {
 
         auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
 
-//        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                                  31337,
-//                                                                  {sourceConf},
-//                                                                  1,
-//                                                                  4096,
-//                                                                  1024,
-//                                                                  12,
-//                                                                  12,
-//                                                                  Configurations::QueryCompilerConfiguration());
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
         // Fake measurements for y with noise
         measurements = {

@@ -57,7 +57,6 @@ class OPCSinkTest : public testing::Test {
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, conf);
     }
 
     /* Will be called after a test is executed. */

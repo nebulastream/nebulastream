@@ -53,7 +53,6 @@ class ZMQTest : public testing::Test {
         workerConfigurations->dataPort.setValue(3001);
         workerConfigurations->physicalSources.add(conf);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
-        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3001, {conf});
 
         address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
 
