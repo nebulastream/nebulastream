@@ -52,15 +52,6 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
         engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-//        engine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-//                                                              0,
-//                                                              {physicalSource},
-//                                                              1,
-//                                                              4096,
-//                                                              1024,
-//                                                              12,
-//                                                              12,
-//                                                              Configurations::QueryCompilerConfiguration());
     }
 
     void TearDown() override {

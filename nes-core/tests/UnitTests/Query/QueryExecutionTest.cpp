@@ -78,7 +78,6 @@ class QueryExecutionTest : public testing::Test {
         workerConfiguration->physicalSources.add(sourceConf);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
         // enable distributed window optimization
         auto optimizerConfiguration = Configurations::OptimizerConfiguration();
         optimizerConfiguration.performDistributedWindowOptimization = true;

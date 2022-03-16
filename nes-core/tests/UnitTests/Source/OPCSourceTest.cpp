@@ -55,7 +55,6 @@ class OPCSourceTest : public testing::Test {
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
-        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, conf);
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();

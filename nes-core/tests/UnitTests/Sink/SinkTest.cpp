@@ -69,7 +69,6 @@ class SinkTest : public Testing::NESBaseTest {
         workerConfiguration->physicalSources.add(sourceConf);
 
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-        //this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
     }
 
     /* Called after a single test. */

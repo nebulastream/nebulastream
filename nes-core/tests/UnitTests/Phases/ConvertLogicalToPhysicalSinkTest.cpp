@@ -44,7 +44,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
         workerConfiguration->physicalSources.add(physicalSource);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
+
         testPlan = QueryCompilation::PipelineQueryPlan::create(0, 0);
     }
 

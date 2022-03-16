@@ -75,7 +75,6 @@ class GPUQueryExecutionTest : public testing::Test {
         workerConfiguration->physicalSources.add(sourceConf);
 
         nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-        //nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {sourceConf});
     }
 
     /* Will be called before a test is executed. */
