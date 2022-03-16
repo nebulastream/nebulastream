@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

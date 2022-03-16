@@ -30,7 +30,7 @@
 #include <thread>
 
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <future>
 
 const std::string& url = "opc.tcp://localhost:4840";

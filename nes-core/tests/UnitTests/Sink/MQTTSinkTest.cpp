@@ -19,7 +19,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>

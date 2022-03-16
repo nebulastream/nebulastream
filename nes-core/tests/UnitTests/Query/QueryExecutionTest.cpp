@@ -36,7 +36,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DefaultSource.hpp>

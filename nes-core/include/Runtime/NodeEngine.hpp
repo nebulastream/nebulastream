@@ -24,7 +24,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/NodeEngineFactory.hpp>
+
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -65,22 +65,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     enum NodeEngineQueryStatus { started, stopped, registered };
 
     friend NodeEnginePtr NodeEngineBuilder::build();
-
-    friend NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
-                                                             const uint16_t port,
-                                                             std::vector<PhysicalSourcePtr> physicalSources,
-                                                             const uint16_t numThreads,
-                                                             const uint64_t bufferSize,
-                                                             const uint64_t numberOfBuffersInGlobalBufferManager,
-                                                             const uint64_t numberOfBuffersInSourceLocalBufferPool,
-                                                             const uint64_t numberOfBuffersPerWorker,
-                                                             const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
-                                                             std::weak_ptr<NesWorker>&& nesWorker,
-                                                             NumaAwarenessFlag enableNumaAwareness,
-                                                             const std::string& workerToCoreMapping,
-                                                             uint64_t numberOfQueues,
-                                                             uint64_t numberOfThreadsPerQueue,
-                                                             QueryManager::QueryMangerMode queryManagerMode);
 
     ~NodeEngine() override;
 
