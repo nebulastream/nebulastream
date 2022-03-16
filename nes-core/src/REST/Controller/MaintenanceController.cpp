@@ -12,8 +12,6 @@
     limitations under the License.
 */
 #include <REST/Controller/MaintenanceController.hpp>
-#include <REST/runtime_utils.hpp>
-#include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Phases/MigrationType.hpp>
 
@@ -64,7 +62,7 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                   handleException(request, exc);
                   return;
               } catch (...) {
-                  RuntimeUtils::printStackTrace();
+                  NES_FATAL_ERROR("MaintenanceController: unknown exception.");
                   internalServerErrorImpl(request);
                   return;
               }

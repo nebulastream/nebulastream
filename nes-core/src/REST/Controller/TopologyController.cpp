@@ -13,7 +13,6 @@
 */
 
 #include <REST/Controller/TopologyController.hpp>
-#include <REST/runtime_utils.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -95,7 +94,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    RuntimeUtils::printStackTrace();
+                    NES_FATAL_ERROR("TopologyController: unknown exception.");
                     internalServerErrorImpl(message);
                     return;
                 }
@@ -159,7 +158,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    RuntimeUtils::printStackTrace();
+                    NES_FATAL_ERROR("TopologyController: unknown exception.");
                     internalServerErrorImpl(message);
                     return;
                 }
