@@ -23,4 +23,5 @@ add_source_files(nes-core
         AbstractHealthCheckService.cpp
         CoordinatortHealthCheckService.cpp
         WorkerHealthCheckService.cpp
-)
+        QueryCatalogService.cpp
+        )
