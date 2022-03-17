@@ -367,6 +367,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             NES_ERROR("QueryController: Unable to find query Id for the stop-query request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
+            errorResponse["queryId"] = web::json::value::null();
             badRequestImpl(request, errorResponse);
             return;
         }
@@ -380,6 +381,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
                 NES_ERROR("QueryController: Unable to find query with provided query Id for the DEL request");
                 web::json::value errorResponse{};
                 errorResponse["detail"] = web::json::value::string("Parameter queryId does not exist");
+                errorResponse["queryId"] = web::json::value::number(queryId);
                 badRequestImpl(request, errorResponse);
                 return;
             }
@@ -387,6 +389,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             //Prepare the response
             web::json::value result{};
             result["success"] = web::json::value::boolean(success);
+            result["queryId"] = web::json::value::number(queryId);
             successMessageImpl(request, result);
             return;
         } catch (QueryNotFoundException& exc) {
