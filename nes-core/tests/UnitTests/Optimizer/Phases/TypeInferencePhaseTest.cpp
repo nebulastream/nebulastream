@@ -1141,9 +1141,9 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
     auto inputSchema =
         Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
 
-    streamCatalog->addLogicalStream("QnV1", inputSchema);
-    streamCatalog->addLogicalStream("QnV2", inputSchema);
-    streamCatalog->addLogicalStream("QnV3", inputSchema);
+    streamCatalog->addLogicalSource("QnV1", inputSchema);
+    streamCatalog->addLogicalSource("QnV2", inputSchema);
+    streamCatalog->addLogicalSource("QnV3", inputSchema);
 
    auto query = Query::from("QnV1").filter(Attribute("velocity")>50)
                      .orWith(Query::from("QnV2").filter(Attribute("quantity")>5)
