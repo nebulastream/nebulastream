@@ -41,7 +41,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -402,7 +402,6 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
-
 
     auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();

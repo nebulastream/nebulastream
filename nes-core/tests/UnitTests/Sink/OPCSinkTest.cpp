@@ -28,7 +28,7 @@
 #include <open62541/server_config_default.h>
 #include <string>
 #include <thread>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 #include <future>

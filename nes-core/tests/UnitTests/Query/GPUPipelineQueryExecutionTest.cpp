@@ -40,7 +40,7 @@
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>

@@ -18,7 +18,7 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>

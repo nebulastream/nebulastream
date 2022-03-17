@@ -27,7 +27,7 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>

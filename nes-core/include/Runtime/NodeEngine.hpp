@@ -24,7 +24,6 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -64,6 +63,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   public:
     enum NodeEngineQueryStatus { started, stopped, registered };
 
+    /**
+     *  NodeEngine constructor is made proteced.
+     *  NodeEngineBuilder is made a friend of NodeEngine, allowing NodeEngineBuilder to call NodeEngine constructor.
+     *  To create a NodeEngine, use NodeEngineBuilder.
+     */
     friend NodeEnginePtr NodeEngineBuilder::build();
 
     ~NodeEngine() override;

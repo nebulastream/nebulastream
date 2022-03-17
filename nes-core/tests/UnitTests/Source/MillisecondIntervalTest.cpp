@@ -25,7 +25,7 @@
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>

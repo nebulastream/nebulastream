@@ -42,7 +42,7 @@ NodeEngineBuilder NodeEngineBuilder::create(Configurations::WorkerConfigurationP
     return NodeEngineBuilder(workerConfiguration);
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setNesWorker(std::weak_ptr<NesWorker>&& nesWorker){
+NodeEngineBuilder& NodeEngineBuilder::setNesWorker(std::shared_ptr<NesWorker> nesWorker){
     this->nesWorker = std::move(nesWorker);
     return *this;
 };
@@ -107,8 +107,8 @@ NodeEngineBuilder& NodeEngineBuilder::setCompiler(QueryCompilation::QueryCompile
 }
 
 NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
-    if(nesWorker.expired()){
-        this->nesWorker = std::weak_ptr<NesWorker>();
+    if(!nesWorker){
+        this->nesWorker = std::shared_ptr<NesWorker>();
     }
 
     try {
@@ -255,30 +255,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
             workerConfiguration->numberOfBuffersPerWorker.getValue()));
-
-//        auto engine = std::make_shared<NodeEngine>(
-//            physicalSources,
-//            std::move(hardwareManager),
-//            std::move(bufferManagers),
-//            std::move(queryManager),
-//            std::move(bufferStorage),
-//            [this](const std::shared_ptr<NodeEngine>& engine) {
-//                return Network::NetworkManager::create(engine->getNodeEngineId(),
-//                                                       this->workerConfiguration->localWorkerIp.getValue(),
-//                                                       this->workerConfiguration->dataPort.getValue(),
-//                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-//                                                       engine->getBufferManager(),
-//                                                       this->workerConfiguration->numWorkerThreads.getValue());
-//            },
-//            std::move(partitionManager),
-//            std::move(compiler),
-//            std::move(stateManager),
-//            std::move(nesWorker),
-//            std::move(materializedViewManager),
-//            nodeEngineId,
-//            workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
-//            workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
-//            workerConfiguration->numberOfBuffersPerWorker.getValue());
         Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {

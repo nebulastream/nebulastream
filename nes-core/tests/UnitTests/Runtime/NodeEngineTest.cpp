@@ -31,7 +31,7 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -222,7 +222,25 @@ class NodeEngineTest : public Testing::NESBaseTest {
 
         NES_INFO("Setup EngineTest test class.");
     }
-    static void TearDownTestCase() { NES_INFO("TearDownTestCase EngineTest test class."); }
+
+    void SetUp() override {
+        NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
+        Testing::NESBaseTest::SetUp();
+        dataPort = Testing::NESBaseTest::getAvailablePort();
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() override {
+        NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
+        dataPort.reset();
+        Testing::NESBaseTest::TearDown();
+    }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
+
+  protected:
+    Testing::BorrowedPortPtr dataPort;
 };
 /**
  * Helper Methods
@@ -640,7 +658,7 @@ TEST_F(NodeEngineTest, testBufferData) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
     auto workerConfiguration  = WorkerConfiguration::create();
-    workerConfiguration->dataPort.setValue(31337);
+    workerConfiguration->dataPort.setValue(*dataPort);
     workerConfiguration->physicalSources.add(physicalSource);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
@@ -651,7 +669,7 @@ TEST_F(NodeEngineTest, testReconfigureSink) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
     auto workerConfiguration  = WorkerConfiguration::create();
-    workerConfiguration->dataPort.setValue(31337);
+    workerConfiguration->dataPort.setValue(*dataPort);
     workerConfiguration->physicalSources.add(physicalSource);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
@@ -861,7 +879,7 @@ TEST_F(NodeEngineTest, DISABLED_testFatalCrash) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
     auto workerConfiguration  = WorkerConfiguration::create();
-    workerConfiguration->dataPort.setValue(31337);
+    workerConfiguration->dataPort.setValue(*dataPort);
     workerConfiguration->physicalSources.add(physicalSource);
 
     auto engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
