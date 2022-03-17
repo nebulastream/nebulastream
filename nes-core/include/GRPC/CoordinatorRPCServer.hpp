@@ -175,11 +175,44 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     /**
      * @brief RPC Call to send errors to the coordinator
      * @param context: the server context
-     * @param request that is sent from worker to the coordinator and filled with information of errors
-     * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
+     * @param request: that is sent from worker to the coordinator and filled with information of errors
+     * @param reply: that is sent back from the coordinator to the worker to confirm that notification was successful
      * @return success
      */
     Status SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) override;
+
+    /**
+     * Request if soft stop can be performed for the query
+     * @param context : the server context
+     * @param request : that is sent from worker to the coordinator and containing the query id for which the soft stop to request
+     * @param response : that is sent back from the coordinator to the worker if soft stop can be processed or not
+     * @return true if soft stop can be performed else false
+     */
+    Status RequestSoftStop(::grpc::ServerContext* context,
+                           const ::RequestSoftStopMessage* request,
+                           ::StopRequestReply* response) override;
+
+    /**
+     * Notify coordinator that for a subquery plan the soft stop is triggered or not
+     * @param context : the server context
+     * @param request : that is sent from worker to the coordinator and containing the query id, sub query id, and if soft stop is triggered
+     * @param response : that is sent back from the coordinator to the worker if request is processed
+     * @return true if coordinator successfully recorded the information else false
+     */
+    Status NotifySoftStopTriggered(::grpc::ServerContext* context,
+                                   const ::SoftStopTriggeredMessage* request,
+                                   ::SoftStopTriggeredReply* response) override;
+
+    /**
+     * Notify coordinator that for a subquery plan the soft stop is completed or not
+     * @param context : the server context
+     * @param request : that is sent from worker to the coordinator and containing the query id, sub query id, and if soft stop is completed
+     * @param response : that is sent back from the coordinator to the worker if request is processed
+     * @return true if the request is acknowledged
+     */
+    Status NotifySoftStopCompleted(::grpc::ServerContext* context,
+                                   const ::SoftStopCompletionMessage* request,
+                                   ::SoftStopCompletionReply* response) override;
 
   private:
     TopologyManagerServicePtr topologyManagerService;

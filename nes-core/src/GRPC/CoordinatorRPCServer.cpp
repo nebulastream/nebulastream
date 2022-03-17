@@ -33,18 +33,19 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     if (request->has_coordinates()) {
         NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
         id = topologyManagerService->registerNode(request->address(),
-                                                           request->grpcport(),
-                                                           request->dataport(),
-                                                           request->numberofslots(),
-                                                           GeographicalLocation(request->coordinates()));
+                                                  request->grpcport(),
+                                                  request->dataport(),
+                                                  request->numberofslots(),
+                                                  GeographicalLocation(request->coordinates()));
     } else {
         id = topologyManagerService->registerNode(request->address(),
-                                                           request->grpcport(),
-                                                           request->dataport(),
-                                                           request->numberofslots());
+                                                  request->grpcport(),
+                                                  request->dataport(),
+                                                  request->numberofslots());
     }
 
-    auto registrationMetrics = std::make_shared<Metric>(RegistrationMetrics(request->registrationmetrics()), MetricType::RegistrationMetric);
+    auto registrationMetrics =
+        std::make_shared<Metric>(RegistrationMetrics(request->registrationmetrics()), MetricType::RegistrationMetric);
     monitoringManager->addMonitoringData(id, registrationMetrics);
 
     if (id != 0) {
@@ -212,11 +213,11 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
 }
 
 Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
-                              const EpochBarrierPropagationNotification* request,
-                              EpochBarrierPropagationReply* reply) {
+                                                    const EpochBarrierPropagationNotification* request,
+                                                    EpochBarrierPropagationReply* reply) {
     try {
         NES_INFO("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp "
-                  << request->timestamp() << "and querySubPlanId " << request->queryid());
+                 << request->timestamp() << "and querySubPlanId " << request->queryid());
         this->replicationService->notifyEpochTermination(request->timestamp(), request->queryid());
         reply->set_success(true);
         return Status::OK;
@@ -228,12 +229,13 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
-    std::vector<std::pair<uint64_t , GeographicalLocation>> inRange = topologyManagerService->getNodesIdsInRange(GeographicalLocation(request->coord()), request->radius());
+    std::vector<std::pair<uint64_t, GeographicalLocation>> inRange =
+        topologyManagerService->getNodesIdsInRange(GeographicalLocation(request->coord()), request->radius());
 
     for (auto elem : inRange) {
         NodeGeoInfo* nodeInfo = reply->add_nodes();
         nodeInfo->set_id(elem.first);
-        nodeInfo->set_allocated_coord(new Coordinates {elem.second});
+        nodeInfo->set_allocated_coord(new Coordinates{elem.second});
     }
     return Status::OK;
 }
@@ -241,8 +243,7 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
 Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) {
     try {
         NES_ERROR("CoordinatorRPCServer::sendErrors: failure message received."
-                  << "Id of worker: " << request->workerid()
-                  << " Reason for failure: " << request->errormsg());
+                  << "Id of worker: " << request->workerid() << " Reason for failure: " << request->errormsg());
         // TODO implement here what happens with received Error Messages
         reply->set_success(true);
         return Status::OK;
@@ -250,4 +251,26 @@ Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage*
         NES_ERROR("CoordinatorRPCServer: received broken failure message: " << ex.what());
         return Status::CANCELLED;
     }
+}
+
+Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext* context,
+                                             const ::RequestSoftStopMessage* request,
+                                             ::StopRequestReply* response) {
+
+    //TODO: Add logic to request soft stop
+    return Status::OK;
+}
+
+Status CoordinatorRPCServer::NotifySoftStopTriggered(::grpc::ServerContext* context,
+                                                     const ::SoftStopTriggeredMessage* request,
+                                                     ::SoftStopTriggeredReply* response) {
+    //TODO: Add logic to handle soft stop trigger message
+    return Status::OK;
+}
+
+Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext* context,
+                                                     const ::SoftStopCompletionMessage* request,
+                                                     ::SoftStopCompletionReply* response) {
+    //TODO: Add logic to handle soft stop trigger message
+    return Status::OK;
 }
