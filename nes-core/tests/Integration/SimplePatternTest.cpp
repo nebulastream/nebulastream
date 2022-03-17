@@ -463,7 +463,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
-    worker1Configuration->coordinatorPort = (port);
+    worker1Configuration->coordinatorPort = port;
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
