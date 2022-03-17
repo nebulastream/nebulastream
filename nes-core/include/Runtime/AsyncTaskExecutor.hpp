@@ -63,7 +63,7 @@ class AsyncTaskExecutor {
          * @brief This call blocks until the promise is fulfilled and returns the produced value
          * @return
          */
-        [[nodiscard]] R wait() { return future.get(); }
+        [[nodiscard]] inline R wait() { return future.get(); }
 
         /**
          * @brief This method creates a new (inner) AsyncTaskFuture from an already existing (*this) AsyncTaskFuture.
@@ -84,13 +84,13 @@ class AsyncTaskExecutor {
          * @brief operator! returns true if the AsyncTaskFuture is invalid
          * @return true if the AsyncTaskFuture is invalid
          */
-        [[nodiscard]] bool operator!() const { return promise == nullptr; }
+        [[nodiscard]] inline bool operator!() const { return promise == nullptr; }
 
         /**
          * @brief operator bool() returns true if the AsyncTaskFuture is valid
          * @return true if the AsyncTaskFuture is valid
          */
-        [[nodiscard]] operator bool() const { return promise != nullptr; }
+        [[nodiscard]] inline operator bool() const { return promise != nullptr; }
 
       private:
         std::shared_ptr<std::promise<R>> promise;// we need this variable to keep the promise machinery alive
@@ -121,7 +121,7 @@ class AsyncTaskExecutor {
          * @brief Executes the function on a variadic set of arguments
          * @param args the arguments
          */
-        void operator()(ArgTypes... args) {
+        inline void operator()(ArgTypes... args) {
             try {
                 R ret = func(std::forward<ArgTypes>(args)...);
                 promise->set_value(std::move(ret));
@@ -136,7 +136,7 @@ class AsyncTaskExecutor {
          * @param owner the owning executor
          * @return the AsyncTaskFuture to wait on
          */
-        AsyncTaskFuture<R> makeFuture(AsyncTaskExecutor& owner) { return AsyncTaskFuture(promise, owner); }
+        inline AsyncTaskFuture<R> makeFuture(AsyncTaskExecutor& owner) { return AsyncTaskFuture(promise, owner); }
 
       private:
         std::function<R(ArgTypes...)> func;
@@ -161,9 +161,7 @@ class AsyncTaskExecutor {
         }
 
         /// deallocates the internal AsyncTask for garbage collection
-        ~AsyncTaskWrapper() noexcept {
-            releaseCallback();
-        }
+        ~AsyncTaskWrapper() noexcept { releaseCallback(); }
 
         /// executes the inner AsyncTask
         inline void operator()() { func(); }
@@ -205,7 +203,7 @@ class AsyncTaskExecutor {
         // allocates a task on the heap and captures all arguments and types in the AsyncTask
         // next, everything is captured in the AsyncTaskWrapper, which has no types.
         constexpr auto taskSize = sizeof(AsyncTask<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>, Args...>);
-        auto taskPtr = allocateAsyncTask(taskSize);
+        auto* taskPtr = allocateAsyncTask(taskSize);
         NES_ASSERT(taskPtr, "Cannot allocate async task");
         auto* task =
             new (taskPtr) AsyncTask<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>, Args...>(std::move(f));
