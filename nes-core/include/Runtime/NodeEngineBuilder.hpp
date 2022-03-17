@@ -42,7 +42,7 @@ class NodeEngineBuilder {
      * @param nesWorker
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setNesWorker(std::weak_ptr<NesWorker>&& nesWorker);
+    NodeEngineBuilder& setNesWorker(std::shared_ptr<NesWorker> nesWorker);
 
     /**
      * setter used to pass a NodeEngineId to NodeEngineBuilder. Optional
@@ -136,7 +136,7 @@ class NodeEngineBuilder {
     
   private:
     NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
-    std::weak_ptr<NesWorker> nesWorker;
+    std::shared_ptr<NesWorker> nesWorker;
     uint64_t nodeEngineId;
     Network::PartitionManagerPtr partitionManager;
     HardwareManagerPtr hardwareManager;

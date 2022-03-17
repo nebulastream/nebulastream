@@ -44,7 +44,7 @@
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -67,7 +67,7 @@ using std::endl;
 namespace NES {
 using namespace QueryCompilation;
 
-class CodeGenerationTest : public testing::Test {
+class CodeGenerationTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -78,10 +78,12 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
+        Testing::NESBaseTest::SetUp();
+        dataPort = Testing::NESBaseTest::getAvailablePort();
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
         auto workerConfiguration  = WorkerConfiguration::create();
-        workerConfiguration->dataPort.setValue(6262);
+        workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSources.add(sourceConf);
         workerConfiguration->bufferSizeInBytes.setValue(4096);
         workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(1024);
@@ -94,6 +96,8 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called before a test is executed. */
     void TearDown() override {
         std::cout << "Tear down CodeGenerationTest test case." << std::endl;
+        dataPort.reset();
+        Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
     }
 
@@ -101,6 +105,9 @@ class CodeGenerationTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down CodeGenerationTest test class." << std::endl; }
 
     Runtime::NodeEnginePtr nodeEngine;
+
+  protected:
+    Testing::BorrowedPortPtr dataPort;
 };
 
 class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {

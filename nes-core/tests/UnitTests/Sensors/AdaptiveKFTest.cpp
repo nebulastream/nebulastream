@@ -14,7 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -26,10 +26,11 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <NesBaseTest.hpp>
 
 namespace NES {
 
-class AdaptiveKFTest : public testing::Test {
+class AdaptiveKFTest : public Testing::NESBaseTest {
   public:
     SchemaPtr schema;
     PhysicalSourcePtr sourceConf;
@@ -47,10 +48,12 @@ class AdaptiveKFTest : public testing::Test {
 
     void SetUp() override {
         NES_INFO("Setup AdaptiveKFTest class.");
+        Testing::NESBaseTest::SetUp();
+        dataPort = Testing::NESBaseTest::getAvailablePort();
         sourceConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", UINT32);
         auto workerConfiguration  = WorkerConfiguration::create();
-        workerConfiguration->dataPort.setValue(31337);
+        workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSources.add(sourceConf);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
@@ -70,7 +73,12 @@ class AdaptiveKFTest : public testing::Test {
             500,           900,           900,           -0.155607486619, -0.287198661013, -0.602973173813};
     }
 
-    void TearDown() override { NES_INFO("Tear down AdaptiveKFTest class."); }
+    void TearDown() override {
+        NES_INFO("Tear down AdaptiveKFTest class.");
+        NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
+        dataPort.reset();
+        Testing::NESBaseTest::TearDown();
+    }
 
     std::string getTsInRfc3339(std::chrono::milliseconds gatheringInterval = std::chrono::milliseconds{0}) {
         if (gatheringInterval.count() > 0) {
@@ -84,6 +92,9 @@ class AdaptiveKFTest : public testing::Test {
         ss << std::put_time(gmtime(&c_now), "%FT%T") << '.' << std::setfill('0') << std::setw(3) << millis.count() << 'Z';
         return ss.str();
     }
+
+  protected:
+    Testing::BorrowedPortPtr dataPort;
 };
 
 class KFProxy : public KalmanFilter {

@@ -19,7 +19,6 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/NodeEngine.hpp>
-
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -64,10 +63,12 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        dataPort = Testing::NESBaseTest::getAvailablePort();
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfiguration  = WorkerConfiguration::create();
-        workerConfiguration->dataPort.setValue(3111);
+        workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSources.add(conf);
 
 
@@ -77,6 +78,8 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
+        dataPort.reset();
+        Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("Setup MQTT test case.");
     }
@@ -150,6 +153,9 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down MQTT test class."); }
+
+  protected:
+    Testing::BorrowedPortPtr dataPort;
 };
 
 /* ------------------------------------------------------------------------------ */

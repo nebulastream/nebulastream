@@ -24,7 +24,7 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {

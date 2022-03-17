@@ -26,7 +26,7 @@
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
-
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -484,7 +484,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     auto latch = std::make_shared<ThreadBarrier>(numQueries);
 
     auto workerConfiguration  = WorkerConfiguration::create();
-    workerConfiguration->dataPort.setValue(31337);
+    workerConfiguration->dataPort.setValue(*dataPort1);
     for(auto source : physicalSources)
         workerConfiguration->physicalSources.add(source);
     workerConfiguration->numWorkerThreads.setValue(numThreads);
@@ -497,7 +497,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     auto netManagerSender = nodeEngineSender->getNetworkManager();
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto workerConfiguration1  = WorkerConfiguration::create();
-    workerConfiguration1->dataPort.setValue(31338);
+    workerConfiguration1->dataPort.setValue(*dataPort2);
     for(auto source : physicalSources)
         workerConfiguration1->physicalSources.add(source);
     workerConfiguration1->numWorkerThreads.setValue(numThreads);
