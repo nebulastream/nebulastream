@@ -118,19 +118,24 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
-
+    // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
+    // in case of composed streams on the right branch
     if (sourceNameRight.find("_") != std::string::npos) {
+        // we find the most left source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameRight.find("_");
         uint64_t posEnd = sourceNameRight.find("_",posStart + 1);
         sourceNameRight = sourceNameRight.substr(posStart + 1,posEnd - 2) + "$" + timestamp;
-    } else{
+    } // in case the right branch only contains 1 source we can just use it
+    else{
         sourceNameRight = sourceNameRight + "$" + timestamp;
     }
-
+    // in case of composed streams on the left branch
     if (sourceNameLeft.find("_") != std::string::npos) {
+        // we find the most right source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameLeft.find_last_of("_");
         sourceNameLeft = sourceNameLeft.substr(posStart + 1) + "$" + timestamp;
-    } else{
+    } // in case the left branch only contains 1 source we can just use it
+    else{
         sourceNameLeft = sourceNameLeft + "$" + timestamp;
     }
     NES_DEBUG("ExpressionItem for Left stream " << sourceNameLeft);
