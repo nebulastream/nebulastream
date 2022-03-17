@@ -1175,9 +1175,9 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
     auto inputSchema =
         Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
 
-    streamCatalog->addLogicalStream("QnV", inputSchema);
-    streamCatalog->addLogicalStream("QnV1", inputSchema);
-    streamCatalog->addLogicalStream("QnV2", inputSchema);
+    streamCatalog->addLogicalSource("QnV", inputSchema);
+    streamCatalog->addLogicalSource("QnV1", inputSchema);
+    streamCatalog->addLogicalSource("QnV2", inputSchema);
 
     auto query = Query::from("QnV").filter(Attribute("velocity")>50)
                         .andWith(Query::from("QnV1").filter(Attribute("quantity")>50))
@@ -1225,9 +1225,9 @@ TEST_F(TypeInferencePhaseTest, DISABLED_inferSeqwithQuery) {
     auto inputSchema =
         Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
 
-    streamCatalog->addLogicalStream("QnV", inputSchema);
-    streamCatalog->addLogicalStream("QnV1", inputSchema);
-    streamCatalog->addLogicalStream("QnV2", inputSchema);
+    streamCatalog->addLogicalSource("QnV", inputSchema);
+    streamCatalog->addLogicalSource("QnV1", inputSchema);
+    streamCatalog->aaddLogicalSource("QnV2", inputSchema);
 
     auto query = Query::from("QnV").filter(Attribute("velocity")>50)
                      .seqWith(Query::from("QnV1").filter(Attribute("quantity")>50))
@@ -1275,9 +1275,9 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
     auto inputSchema =
         Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
 
-    streamCatalog->addLogicalStream("QnV", inputSchema);
-    streamCatalog->addLogicalStream("QnV1", inputSchema);
-    streamCatalog->addLogicalStream("QnV2", inputSchema);
+    streamCatalog->addLogicalSource("QnV", inputSchema);
+    streamCatalog->addLogicalSource("QnV1", inputSchema);
+    streamCatalog->addLogicalSource("QnV2", inputSchema);
 
     auto query = Query::from("QnV").filter(Attribute("velocity")>50)
                      .seqWith(Query::from("QnV1").filter(Attribute("quantity")>50))
