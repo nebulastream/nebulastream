@@ -47,7 +47,7 @@ class RemoteClient {
      */
     explicit RemoteClient(const std::string& coordinatorHost = "127.0.0.1",
                           uint16_t coordinatorPort = 8081,
-                          std::chrono::seconds requestTimeout = std::chrono::seconds(20));
+                          std::chrono::seconds requestTimeout = std::chrono::seconds(20), bool disableLogging = false);
 
     /**
      * @brief test if a connection to the coordinator can be established

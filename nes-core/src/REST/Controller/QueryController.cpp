@@ -56,7 +56,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             return;
         }
         try {
-             // get the queryId from user input
+            // get the queryId from user input
             QueryId queryId = std::stoi(queryParameter->second);
             NES_DEBUG("Query Controller: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
@@ -132,7 +132,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         }
 
         try {
-             // get the queryId from user input
+            // get the queryId from user input
             QueryId queryId = std::stoi(param->second);
             NES_DEBUG("Query Controller: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
@@ -184,18 +184,20 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             NES_DEBUG("Query Controller: Get the registered query");
             if (!queryCatalog->queryExists(queryId)) {
                 web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("QueryController: Provided QueryId does not exist: " + std::to_string(queryId));
+                errorResponse["detail"] =
+                    web::json::value::string("QueryController: Provided QueryId does not exist: " + std::to_string(queryId));
                 badRequestImpl(request, errorResponse);
                 throw log4cxx::helpers::Exception("QueryController: Provided QueryId does not exist: " + std::to_string(queryId));
             }
 
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
-            NES_DEBUG("QueryController:: Getting the json representation of status");
+            NES_DEBUG("QueryController:: Getting the json representation of status: queryId="
+                      << queryId << " status=" << queryCatalogEntry->getQueryStatusAsString());
             web::json::value result{};
             auto node = web::json::value::object();
             // use the id of the root operator to fill the id field
-            node["status"] = web::json::value::string("QueryId " + std::to_string(queryId) + "has Status: " + queryCatalogEntry->getQueryStatusAsString());
+            node["status"] = web::json::value::string(queryCatalogEntry->getQueryStatusAsString());
             //Prepare the response
             successMessageImpl(request, node);
             return;
@@ -203,8 +205,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             RuntimeUtils::printStackTrace();
             internalServerErrorImpl(request);
         }
-    }
-    else {
+    } else {
         resourceNotFoundImpl(request);
     }
 }
@@ -299,7 +300,8 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     auto* context = protobufMessage->mutable_context();
                     if (!context->contains("placement")) {
                         web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: No placement strategy found in query string");
+                        errorResponse["detail"] =
+                            web::json::value::string("QueryController: No placement strategy found in query string");
                         badRequestImpl(message, errorResponse);
                         throw log4cxx::helpers::Exception("QueryController: No placement strategy found in query string");
                     }
