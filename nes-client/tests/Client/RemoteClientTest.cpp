@@ -19,6 +19,7 @@
 #include <API/Query.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Client/ClientException.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Client/RemoteClient.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -80,9 +81,12 @@ class RemoteClientTest : public Testing::NESBaseTest {
     bool stopQuery(int64_t queryId) {
         auto res = client->stopQuery(queryId);
         if (!!res) {
-            auto statusStr = client->getQueryStatus(queryId);
-            auto status = stringToQueryStatusMap(statusStr);
-            while (status != Stopped) {
+            while (true) {
+                auto statusStr = client->getQueryStatus(queryId);
+                auto status = stringToQueryStatusMap(statusStr);
+                if (status == Stopped) {
+                    break;
+                }
                 NES_DEBUG("Query " << queryId << " not stopped yet but " << statusStr);
                 usleep(500 * 1000);// 500ms
             }
@@ -149,16 +153,15 @@ TEST_F(RemoteClientTest, SubmitQueryTest) {
 
 TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest) {
     Query query = Query::from("default_l").sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query.getQueryPlan();
-    int64_t queryId = client->submitQuery(queryPlan);
-    checkForQueryStart(queryId);
-    ASSERT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
-    auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
-    // Expect that the query id and query sub plan id from the deserialized query plan are valid
-    EXPECT_FALSE(insertedQueryPlan->getQueryId() != INVALID_QUERY_ID);
-    EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() != INVALID_QUERY_SUB_PLAN_ID);
-
-    ASSERT_TRUE(stopQuery(queryId));
+    EXPECT_THROW(
+        try { client->submitQuery(query); } catch (std::exception const& e) {
+            std::string errorMessage = e.what();
+            constexpr auto expectedMessage =
+                "Semantic error: The logical source 'default_l' can not be found in the SourceCatalog";
+            ASSERT_NE(errorMessage.find(expectedMessage), std::string::npos);
+            throw;
+        },
+        Client::ClientException);
 }
 
 /**
@@ -297,67 +300,16 @@ TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
 }
 
 /**
- * @brief Test error handling for wrong queries (unknown logical stream)
- * @result expected failure message
- */
-TEST_F(RemoteClientTest, SubmitNonExistingLogicalStreamQueryTest) {
-    Query query = Query::from("default_");
-    auto queryPlan = query.getQueryPlan();
-    try {
-        int64_t queryId = client->submitQuery(queryPlan);
-    } catch (const std::exception& e) {
-        std::string expect = "The logical source";
-        EXPECT_TRUE(std::string(e.what()).compare(0, expect.size() - 1, expect));
-    }
-}
-
-/**
  * @brief Test if retrieving the execution plan works properly
  * @result execution plan is as expected
  */
-TEST_F(RemoteClientTest, StopAStoppedQuery) {
-    Query query = Query::from("default_logical");
-    int64_t queryId = client->submitQuery(query);
-
-    EXPECT_TRUE(stopQuery(queryId));
-    sleep(3);
-    EXPECT_TRUE(stopQuery(queryId));
-}
-
-/**
- * @brief Test if retrieving the execution plan works properly
- * @result execution plan is as expected
- */
-TEST_F(RemoteClientTest, StopAInvalidQueryId) {
-    Query query = Query::from("default_logical");
-    int64_t queryId = client->submitQuery(query);
-    sleep(2);
-    EXPECT_FALSE(stopQuery(queryId + 1));
-}
-
-
-/**
- * @brief Test getting queries by status works properly
- */
-TEST_F(RemoteClientTest, GetQueriesWithStatusTest2) {
-    Query query = Query::from("default_");
-    int64_t queryId = client->submitQuery(query);
-    checkForQueryStart(queryId);
-    std::string queries = client->getQueries(Registered);
-    std::string expect = "[{\"queryId\":";
-    ASSERT_TRUE(queries.compare(0, expect.size() - 1, expect));
-    ASSERT_TRUE(stopQuery(queryId));
-}
-
-/**
-  * @brief Test if retrieving the execution plan works properly
-  * @result execution plan is as expected
-  */
 TEST_F(RemoteClientTest, StopAStoppedQuery) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     int64_t queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
-    ASSERT_TRUE(stopQuery(queryId));
+    EXPECT_TRUE(stopQuery(queryId));
+    sleep(3);
+    EXPECT_FALSE(stopQuery(queryId));
 }
 
 /**
@@ -365,5 +317,21 @@ TEST_F(RemoteClientTest, StopAStoppedQuery) {
   * @result execution plan is as expected
   */
 TEST_F(RemoteClientTest, StopInvalidQueryId) { ASSERT_FALSE(stopQuery(21)); }
+
+/**
+ * @brief Test if retrieving the execution plan works properly
+ * @result execution plan is as expected
+ */
+TEST_F(RemoteClientTest, DeployInvalidQuery) {
+    Query query = Query::from("default_logical");
+    EXPECT_THROW(
+        try { client->submitQuery(query); } catch (std::exception const& e) {
+            std::string errorMessage = e.what();
+            constexpr auto expected = "does not contain a valid sink operator as root";
+            EXPECT_NE(errorMessage.find(expected), std::string::npos);
+            throw;
+        },
+        Client::ClientException);
+}
 
 }// namespace NES

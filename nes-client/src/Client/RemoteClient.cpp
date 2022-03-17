@@ -90,10 +90,14 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
 
     uint64_t queryId = 0;// Invalid query
     try {
-        queryId = jsonReturn.at("queryId").as_integer();
+        if (jsonReturn.has_field("queryId")) {
+            queryId = jsonReturn.at("queryId").as_integer();
+        } else {
+            throw ClientException(jsonReturn.at("message").as_string() + ": " + jsonReturn.at("detail").as_string());
+        }
     } catch (const web::json::json_exception& e) {
-        NES_ERROR("RemoteClient::submitQuery: error while parsing queryId: " << e.what());
-        throw ClientException("RemoteClient::submitQuery: error while parsing queryId:");
+        NES_ERROR("RemoteClient::submitQuery: error= " << e.what());
+        throw ClientException(e.what());
     }
     return queryId;
 }
@@ -233,7 +237,8 @@ RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
     QueryStopResult r;
     auto withError = !jsonReturn.has_field("success");
     if (withError) {
-        r.errorMessage = jsonReturn.at("detail").as_string();
+        r.errorMessage =
+            (jsonReturn.has_field("detail")) ? jsonReturn.at("detail").as_string() : jsonReturn.at("message").as_string();
     }
     r.withError = withError;
     r.queryId = jsonReturn.at("queryId").as_integer();

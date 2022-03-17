@@ -117,7 +117,10 @@ void BaseController::handleException(const web::http::http_request& message, con
             }
         }
         this->badRequestImpl(message, errorResponse);
-
+    } else if (std::string(exceptionMsg).find("does not contain a valid sink operator as root")) {
+        errorResponse["message"] = web::json::value::string("Semantic error");
+        errorResponse["detail"] = web::json::value::string(exceptionMsg);
+        this->badRequestImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("Syntax error: Malformed object literal") != std::string::npos) {
         // handle error caused by syntax error in input body
         errorResponse["message"] = web::json::value::string("Syntax error");

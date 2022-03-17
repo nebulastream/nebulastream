@@ -41,12 +41,12 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                 std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
 
                 //check health
-                NES_DEBUG("NesCoordinator::healthCheck: checking node=" << destAddress);
+                NES_TRACE("NesCoordinator::healthCheck: checking node=" << destAddress);
                 auto res = workerRPCClient->checkHealth(destAddress, healthServiceName);
                 if (res) {
-                    NES_DEBUG("NesCoordinator::healthCheck: node=" << destAddress << " is alive");
+                    NES_TRACE("NesCoordinator::healthCheck: node=" << destAddress << " is alive");
                 } else {
-                    NES_TRACE("NesCoordinator::healthCheck: node=" << destAddress << " went dead so we remove it");
+                    NES_WARNING("NesCoordinator::healthCheck: node=" << destAddress << " went dead so we remove it");
                     if (topologyManagerService->getRootNode()->getId() == node.second->getId()) {
                         NES_WARNING("The failing node is the root node so we cannot delete it");
                         shutdownRPC->set_value(true);
@@ -54,7 +54,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     } else {
                         auto ret = topologyManagerService->removePhysicalNode(node.second);
                         if (ret) {
-                            NES_DEBUG("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
+                            NES_TRACE("NesCoordinator::healthCheck: remove node =" << destAddress << " successfully");
                         } else {
                             NES_WARNING("Node went offline but could not be removed from topology");
                         }

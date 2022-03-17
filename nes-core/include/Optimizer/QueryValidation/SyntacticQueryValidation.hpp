@@ -45,11 +45,6 @@ class SyntacticQueryValidation {
     static SyntacticQueryValidationPtr create(QueryParsingServicePtr queryParsingService);
 
     /**
-     * @brief Checks the syntactic validity of a Query string
-     */
-    void checkValidity(const std::string& inputQuery);
-
-    /**
      * @brief Checks the syntactic validity of a Query string and returns the created Query object
      */
     QueryPtr validate(const std::string& inputQuery);
