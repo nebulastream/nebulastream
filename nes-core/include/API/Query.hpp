@@ -202,27 +202,35 @@ class Seq {
      * Thus, 'times' enables patterns of arbitrary length (when only minOccurrences are defined) or
      * requires a specified number of tuples (minOccurrence, maxOccurrence) to occur
      * The Times operator requires the call of the window operator afterwards
-     * @return the query
+     * @return cepBuilder
      */
 
 class Times {
   public:
     /**
-     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @brief Constructor (bounded variant to a number of minOccurrences to maxOccurrences of event occurrence)
      * @param minOccurrences: minimal number of occurrences of a specified event, i.e., tuples
      * @param maxOccurrences: maximal number of occurrences of a specified event, i.e., tuples
+     * @param originalQuery
+     * @return cepBuilder
      */
     Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery);
 
     /**
-     * @brief Constructor. Initialises always subQueryRhs and original Query
-     * @param minOccurance
-     * @param maxOccurance
+     * @brief Constructor (bounded variant to exact amount of occurrence)
+     * @param occurrence the exact amount of occurrences expected
      * @param originalQuery
+     * @return cepBuilder
      */
     Times(const uint64_t occurrences, Query& originalQuery);
 
+    /**
+     * @brief Constructor (unbounded variant)
+     * @param originalQuery
+     * @return cepBuilder
+     */
     Times(Query& originalQuery);
+
     /**
      * @brief: calls internal the original seqWith function with all the gathered parameters.
      * @param windowType
@@ -280,35 +288,35 @@ class Query {
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
      * @param subQueryRhs
-     * @return object where the window() function is defined and can be called by user
+     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
      */
     CEPOperatorBuilder::And andWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
      * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
+     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
      */
     CEPOperatorBuilder::Seq seqWith(const Query& subQueryRhs);
 
     /**
-     * @brief can be called on the original query to detect an number event occurrences between minOccurrence and maxOccurence in a stream
+     * @brief can be called on the original query to detect an number event occurrences between minOccurrence and maxOccurrence in a stream
      * @param minOccurrences
      * @param maxOccurrences
-     * @return the query
+     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
      */
     CEPOperatorBuilder::Times times(const uint64_t minOccurrences, const uint64_t maxOccurrences);
 
     /**
      * @brief can be called on the original query to detect an exact number event occurrences in a stream
      * @param occurrences
-     * @return the query
+     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
      */
     CEPOperatorBuilder::Times times(const uint64_t occurrences);
 
     /**
-     * @brief can be called on the original query to detect multiple occurences of specified events in a stream
-     * @return the query
+     * @brief can be called on the original query to detect multiple occurrences of specified events in a stream
+     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
      */
     CEPOperatorBuilder::Times times();
 

@@ -176,16 +176,19 @@ std::string keyAssignmentLeft() {
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
     : originalQuery(originalQuery), minOccurrences(minOccurrences),
       maxOccurrences(maxOccurrences),bounded(true){
+    // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Times::Times(const uint64_t occurrences, Query& originalQuery)
     : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(occurrences), bounded(true) {
+    // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Times::Times(Query& originalQuery)
     : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(0), bounded(false) {
+    // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
