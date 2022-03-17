@@ -75,15 +75,18 @@ void LoggerDetails::setLogLevel(const LogLevel logLevel) {
 
 void LoggerDetails::setupLogging(const std::string& logFileName) {
     std::cout << "Logger: Setting up logger" << std::endl;
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(new CustomPatternLayout());
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, logFileName);
-    log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-    loggerPtr->addAppender(file);
-    loggerPtr->addAppender(console);
+    auto expected = false;
+    if (isRegistered.compare_exchange_strong(expected, true)) {
+        // create PatternLayout
+        log4cxx::LayoutPtr layoutPtr(new CustomPatternLayout());
+        // create FileAppender
+        LOG4CXX_DECODE_CHAR(fileName, logFileName);
+        log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+        // create ConsoleAppender
+        log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+        loggerPtr->addAppender(file);
+        loggerPtr->addAppender(console);
+    }
 }
 
 void LoggerDetails::log(const LogLevel& logLevel, const std::string& message, const std::source_location location) {

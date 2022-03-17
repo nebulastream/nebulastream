@@ -30,9 +30,14 @@ using namespace std::string_literals;
 
 namespace NES::Client {
 
-RemoteClient::RemoteClient(const std::string& coordinatorHost, uint16_t coordinatorRESTPort, std::chrono::seconds requestTimeout)
+RemoteClient::RemoteClient(const std::string& coordinatorHost,
+                           uint16_t coordinatorRESTPort,
+                           std::chrono::seconds requestTimeout,
+                           bool disableLogging)
     : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort), requestTimeout(requestTimeout) {
-    NES::Logger::setupLogging("nesRemoteClientStarter.log", LogLevel::LOG_DEBUG);
+    if (!disableLogging) {
+        NES::Logger::setupLogging("nesRemoteClientStarter.log", LogLevel::LOG_DEBUG);
+    }
 
     if (coordinatorHost.empty()) {
         throw ClientException("host name for coordinator is empty");
@@ -198,7 +203,7 @@ std::string RemoteClient::getQueryStatus(uint64_t queryId) {
             }
         })
         .wait();
-    return jsonReturn.serialize();
+    return jsonReturn.at("status").as_string();
 }
 
 RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
@@ -226,10 +231,11 @@ RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
         })
         .wait();
     QueryStopResult r;
-    auto withError = !jsonReturn.at("success").as_bool();
+    auto withError = !jsonReturn.has_field("success");
     if (withError) {
         r.errorMessage = jsonReturn.at("detail").as_string();
     }
+    r.withError = withError;
     r.queryId = jsonReturn.at("queryId").as_integer();
     return r;
 }

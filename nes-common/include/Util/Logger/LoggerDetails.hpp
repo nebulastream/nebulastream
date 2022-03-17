@@ -17,6 +17,8 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <log4cxx/logger.h>
+#include <atomic>
+
 namespace NES::detail {
 
 /**
@@ -54,6 +56,7 @@ class LoggerDetails {
 
   private:
     log4cxx::LoggerPtr loggerPtr;
+    std::atomic<bool> isRegistered{false};
 };
 
 }// namespace NES::detail
