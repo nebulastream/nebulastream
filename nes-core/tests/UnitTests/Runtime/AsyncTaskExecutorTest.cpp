@@ -35,8 +35,8 @@ class AsyncTaskExecutorTest : public Testing::TestWithErrorHandling<::testing::T
     }
 
     void TearDown() override {
-        Base::TearDown();
         executor.reset();
+        Base::TearDown();
     }
 
     /* Will be called before any test in this class are executed. */
