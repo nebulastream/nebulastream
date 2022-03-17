@@ -22,10 +22,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
 #include <fstream>
+#include <health.grpc.pb.h>
+#include <log4cxx/helpers/exception.h>
 #include <optional>
 #include <string>
-#include <log4cxx/helpers/exception.h>
-#include <health.grpc.pb.h>
 namespace NES {
 
 namespace detail {
@@ -390,7 +390,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_numberofslots(numberOfSlots);
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
-    request.set_allocated_coordinates(new Coordinates {coordinates});
+    request.set_allocated_coordinates(new Coordinates{coordinates});
 
     class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
       public:
@@ -472,7 +472,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
 std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(GeographicalLocation coord,
                                                                                                double radius) {
     GetNodesInRangeRequest request;
-    request.set_allocated_coord(new Coordinates {coord});
+    request.set_allocated_coord(new Coordinates{coord});
     request.set_radius(radius);
     GetNodesInRangeReply reply;
     ClientContext context;
@@ -486,8 +486,7 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::get
     return nodesInRange;
 }
 
-bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName)
-{
+bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName) {
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<grpc::health::v1::Health::Stub> workerStub = grpc::health::v1::Health::NewStub(chan);
 
@@ -505,7 +504,6 @@ bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName)
         return response.status();
     }
 }
-
 
 bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
     EpochBarrierPropagationNotification request;
@@ -539,6 +537,57 @@ bool CoordinatorRPCClient::sendErrors(uint64_t workerId, std::string errorMsg) {
         return true;
     }
     return false;
+}
+
+bool CoordinatorRPCClient::requestSoftStop(QueryId queryId) {
+
+    //Build request
+    RequestSoftStopMessage requestSoftStopMessage;
+    requestSoftStopMessage.set_queryid(queryId);
+
+    //Build response
+    StopRequestReply stopRequestReply;
+
+    ClientContext context;
+    coordinatorStub->RequestSoftStop(&context, requestSoftStopMessage, &stopRequestReply);
+
+    //return the response
+    return stopRequestReply.success();
+}
+
+bool CoordinatorRPCClient::notifySoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered) {
+
+    //Build request
+    SoftStopTriggeredMessage softStopTriggeredMessage;
+    softStopTriggeredMessage.set_queryid(queryId);
+    softStopTriggeredMessage.set_querysubplanid(querySubPlanId);
+    softStopTriggeredMessage.set_triggered(triggered);
+
+    //Build response
+    SoftStopTriggeredReply softStopTriggeredReply;
+
+    ClientContext context;
+    coordinatorStub->NotifySoftStopTriggered(&context, softStopTriggeredMessage, &softStopTriggeredReply);
+
+    //return the response
+    return softStopTriggeredReply.success();
+}
+
+bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed) {
+    //Build request
+    SoftStopCompletionMessage softStopCompletionMessage;
+    softStopCompletionMessage.set_queryid(queryId);
+    softStopCompletionMessage.set_querysubplanid(querySubPlanId);
+    softStopCompletionMessage.set_completed(completed);
+
+    //Build response
+    SoftStopCompletionReply softStopCompletionReply;
+
+    ClientContext context;
+    coordinatorStub->NotifySoftStopCompleted(&context, softStopCompletionMessage, &softStopCompletionReply);
+
+    //return the response
+    return softStopCompletionReply.success();
 }
 
 }// namespace NES

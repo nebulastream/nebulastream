@@ -16,6 +16,7 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <grpcpp/grpcpp.h>
 #include <optional>
@@ -175,6 +176,31 @@ class CoordinatorRPCClient {
      * @return bool indicating success
      */
     bool sendErrors(uint64_t workerId, std::string errorMsg);
+
+    /**
+     * Request if soft stop can be performed for the query
+     * @param queryId : the query id for which soft stop to be performed
+     * @return true if coordinator returns true else false
+     */
+    bool requestSoftStop(QueryId queryId);
+
+    /**
+     * Notify coordinator that for a subquery plan the soft stop is triggered or not
+     * @param queryId: the query id to which the subquery plan belongs to
+     * @param querySubPlanId: the query sub plan id
+     * @param triggered: boolean value indicating if soft stop triggered or not
+     * @return true if coordinator successfully recorded the information else false
+     */
+    bool notifySoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered);
+
+    /**
+     * Notify coordinator that for a subquery plan the soft stop is completed or not
+     * @param queryId: the query id to which the subquery plan belongs to
+     * @param querySubPlanId: the query sub plan id
+     * @param completed: boolean value indicating if soft stop completed or not
+     * @return true if coordinator successfully recorded the information else false
+     */
+    bool notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed);
 
   private:
     uint64_t workerId;
