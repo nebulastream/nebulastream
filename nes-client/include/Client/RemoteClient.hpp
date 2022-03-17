@@ -16,8 +16,8 @@
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
 #include <API/Query.hpp>
-#include <Client/QueryConfig.hpp>
 #include <Catalogs/Query/QueryStatus.hpp>
+#include <Client/QueryConfig.hpp>
 #include <chrono>
 
 namespace NES {
@@ -29,15 +29,25 @@ namespace NES::Client {
  */
 class RemoteClient {
   public:
+    struct QueryStopResult {
+        QueryId queryId;
+        bool withError;
+        std::string errorMessage;
+
+        bool operator!() const { return withError; }
+        operator bool() const { return !withError; }
+    };
+
+  public:
     /**
      * @brief constructor of the client
      * @param string coordinator host e.g. 127.0.0.1
      * @param uint16_t coordinator REST port e.g. 8081
      * @param seconds request timeout
      */
-    RemoteClient(const std::string& coordinatorHost = "127.0.0.1",
-                 uint16_t coordinatorPort = 8081,
-                 std::chrono::seconds requestTimeout = std::chrono::seconds(20));
+    explicit RemoteClient(const std::string& coordinatorHost = "127.0.0.1",
+                          uint16_t coordinatorPort = 8081,
+                          std::chrono::seconds requestTimeout = std::chrono::seconds(20));
 
     /**
      * @brief test if a connection to the coordinator can be established
@@ -58,7 +68,7 @@ class RemoteClient {
      * @param uint64_t query id
      * @return stop was successfully, if not why
      */
-    std::string stopQuery(uint64_t queryId);
+    [[nodiscard]] QueryStopResult stopQuery(uint64_t queryId);
 
     /**
      * @brief get a queries query plan
@@ -128,6 +138,6 @@ class RemoteClient {
     std::string getHostName();
 };
 using RemoteClientPtr = std::shared_ptr<RemoteClient>;
-}// namespace NES
+}// namespace NES::Client
 
 #endif//NES_INCLUDE_CLIENT_CPPCLIENT_HPP_

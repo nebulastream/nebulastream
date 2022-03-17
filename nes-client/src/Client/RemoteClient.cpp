@@ -13,6 +13,7 @@
 */
 
 #include <API/Query.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Client/ClientException.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Client/RemoteClient.hpp>
@@ -24,7 +25,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <cpprest/http_client.h>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
+
+using namespace std::string_literals;
 
 namespace NES::Client {
 
@@ -199,15 +201,15 @@ std::string RemoteClient::getQueryStatus(uint64_t queryId) {
     return jsonReturn.serialize();
 }
 
-std::string RemoteClient::stopQuery(uint64_t queryId) {
+RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
     auto restMethod = web::http::methods::DEL;
-    auto path = "query/stop-query?queryId=" + std::to_string(queryId);
+    auto path = "query/stop-query?queryId="s + std::to_string(queryId);
     auto message = "";
 
     web::json::value jsonReturn;
     web::http::client::http_client_config cfg;
     cfg.set_timeout(requestTimeout);
-    NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
+    NES_DEBUG("RemoteClient::stopQuery: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
     web::http::client::http_client client(getHostName(), cfg);
     client.request(restMethod, path, message)
         .then([](const web::http::http_response& response) {
@@ -223,7 +225,13 @@ std::string RemoteClient::stopQuery(uint64_t queryId) {
             }
         })
         .wait();
-    return jsonReturn.serialize();;
+    QueryStopResult r;
+    auto withError = !jsonReturn.at("success").as_bool();
+    if (withError) {
+        r.errorMessage = jsonReturn.at("detail").as_string();
+    }
+    r.queryId = jsonReturn.at("queryId").as_integer();
+    return r;
 }
 
 std::string RemoteClient::getTopology() {

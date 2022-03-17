@@ -74,12 +74,9 @@ class RemoteClientTest : public Testing::NESBaseTest {
     }
 
     bool stopQuery(int64_t queryId) {
-        for (int i = 0; i < 5; i++) {
-            sleep(2);
-            client->stopQuery(queryId);
-            if (crd->getQueryCatalog()->queryExists(queryId) && !crd->getQueryCatalog()->isQueryRunning(queryId)) {
-                return true;
-            }
+        auto res = client->stopQuery(queryId);
+        if (!!res) {
+            client->
         }
         return false;
     }
@@ -181,9 +178,9 @@ TEST_F(RemoteClientTest, StopQueryTest) {
     for (int i = 0; i < 5; i++) {
         sleep(2);
         NES_INFO("StopQueryTest: client->stopQuery(queryId);" + to_string(crd->getQueryCatalog()->isQueryRunning(queryId)));
-        client->stopQuery(queryId);
+        auto res = client->stopQuery(queryId);
         NES_INFO("StopQueryTest: client->stopQuery(queryId);--");
-        if (!crd->getQueryCatalog()->isQueryRunning(queryId)) {
+        if (!!res && !crd->getQueryCatalog()->isQueryRunning(queryId)) {
             return;
         }
     }
