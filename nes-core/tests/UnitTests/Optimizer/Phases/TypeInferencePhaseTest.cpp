@@ -1368,7 +1368,7 @@ TEST_F(TypeInferencePhaseTest, DISABLED_inferSeqwithQuery) {
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
-    streamCatalog->aaddLogicalSource("QnV2", inputSchema);
+    streamCatalog->addLogicalSource("QnV2", inputSchema);
 
     auto query = Query::from("QnV").filter(Attribute("velocity")>50)
                      .seqWith(Query::from("QnV1").filter(Attribute("quantity")>50))
