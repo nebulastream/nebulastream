@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include "../../../tests/util/MetricValidator.hpp"
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
+#include "../../../tests/util/MetricValidator.hpp"
 
 #include <Monitoring/MonitoringCatalog.hpp>
 
