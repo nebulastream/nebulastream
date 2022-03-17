@@ -12,9 +12,13 @@
     limitations under the License.
 */
 
+#include <API/QueryAPI.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <string>
 
 namespace NES::Optimizer {
 
@@ -25,18 +29,8 @@ SyntacticQueryValidationPtr SyntacticQueryValidation::create(QueryParsingService
     return std::make_shared<SyntacticQueryValidation>(queryParsingService);
 }
 
-void SyntacticQueryValidation::checkValidity(const std::string& inputQuery) {
-    try {
-        // Compiling the query string to an object
-        // If it's unsuccessful, the validity check fails
-        QueryPtr query = queryParsingService->createQueryFromCodeString(inputQuery);
-    } catch (const std::exception& ex) {
-        handleException(ex);
-    }
-}
-
 NES::QueryPtr SyntacticQueryValidation::validate(const std::string& inputQuery) {
-    NES::QueryPtr query;
+    NES::QueryPtr query = nullptr;
     try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails

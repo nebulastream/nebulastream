@@ -17,6 +17,7 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/SignatureComputationException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -29,7 +30,7 @@
 #include <iterator>
 #include <utility>
 #include <z3++.h>
-
+using namespace std::string_literals;
 namespace NES::Optimizer {
 
 SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks)
@@ -40,7 +41,16 @@ SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPt
 }
 
 void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
-
+    // check if we have valid root operators, i.e., sinks
+    auto rootOperators = queryPlan->getRootOperators();
+    if (rootOperators.empty()) {
+        throw InvalidQueryException("Query "s + queryPlan->toString() + " does not contain any root operator");
+    }
+    for (auto& root : rootOperators) {
+        if (!root->instanceOf<SinkLogicalOperatorNode>()) {
+            throw InvalidQueryException("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
+        }
+    }
     // Checking if the logical source can be found in the source catalog
     logicalSourceValidityCheck(queryPlan, sourceCatalog);
     // Checking if the physical source can be found in the source catalog

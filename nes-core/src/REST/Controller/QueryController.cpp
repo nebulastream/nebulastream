@@ -329,11 +329,8 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         throw log4cxx::helpers::Exception("QueryController: " + lineageString);
                     }
 
-                    QueryId queryId = queryService->addQueryRequest(*queryString,
-                                                                    queryPlan,
-                                                                    placementStrategy,
-                                                                    faultToleranceMode,
-                                                                    lineageMode);
+                    QueryId queryId =
+                        queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceMode, lineageMode);
 
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
@@ -394,17 +391,20 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             result["queryId"] = web::json::value::number(queryId);
             successMessageImpl(request, result);
             return;
-        } catch (QueryNotFoundException& exc) {
+        } catch (QueryNotFoundException const& exc) {
             NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
                       "user request:"
                       << exc.what());
             handleException(request, exc);
             return;
-        } catch (InvalidQueryStatusException& exc) {
+        } catch (InvalidQueryStatusException const& exc) {
             NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
                       "user request:"
                       << exc.what());
-            handleException(request, exc);
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string(exc.what());
+            errorResponse["queryId"] = web::json::value::number(std::stoi(param->second));
+            badRequestImpl(request, errorResponse);
             return;
         } catch (...) {
             RuntimeUtils::printStackTrace();

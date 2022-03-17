@@ -41,7 +41,7 @@ class SyntacticQueryValidationTest : public testing::Test {
     void TestForException(const std::string& queryString) {
         PrintQString(queryString);
         auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
-        EXPECT_THROW(syntacticQueryValidation->checkValidity(queryString), InvalidQueryException);
+        EXPECT_THROW(syntacticQueryValidation->validate(queryString), InvalidQueryException);
     }
 };
 
@@ -53,7 +53,7 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 
     std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100); )";
 
-    syntacticQueryValidation->checkValidity(queryString);
+    syntacticQueryValidation->validate(queryString);
 }
 
 TEST_F(SyntacticQueryValidationTest, validAttributeRenameFromProjectOperator) {
@@ -63,7 +63,7 @@ TEST_F(SyntacticQueryValidationTest, validAttributeRenameFromProjectOperator) {
 
     std::string queryString = R"(Query::from("default_logical").project(Attribute("id").as("identity")); )";
 
-    syntacticQueryValidation->checkValidity(queryString);
+    syntacticQueryValidation->validate(queryString);
 }
 
 // Test a query with missing ; at line end
