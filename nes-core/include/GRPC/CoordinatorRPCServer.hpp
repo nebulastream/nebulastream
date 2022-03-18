@@ -49,6 +49,7 @@ using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
  */
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
+
     /**
      * @brief Create coordinator RPC server
      * @param topologyManagerService : the instance of the topologyManagerService
