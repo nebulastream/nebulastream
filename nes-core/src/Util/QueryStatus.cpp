@@ -12,33 +12,33 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/QueryStatus.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <string>
+#include <Util/QueryStatus.hpp>
+
 namespace NES {
 
-std::string toString(const QueryStatus queryStatus) {
+std::string QueryStatus::toString(const Value queryStatus) {
     switch (queryStatus) {
         case Registered: return "REGISTERED";
         case Scheduling: return "SCHEDULING";
         case Running: return "RUNNING";
-        case MarkedForStop: return "MARKED_FOR_STOP";
+        case MarkedForStop: return "MARKED-FOR-STOP";
         case Stopped: return "STOPPED";
         case Failed: return "FAILED";
         case Restarting: return "RESTARTING";
         case Migrating: return "MIGRATING";
     }
-};
+}
 
-QueryStatus stringToQueryStatusMap(std::string queryStatus) {
+QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
     if (queryStatus == "REGISTERED") {
         return Registered;
     } else if (queryStatus == "SCHEDULING") {
         return Scheduling;
     } else if (queryStatus == "RUNNING") {
         return Running;
-    } else if (queryStatus == "MARKED_FOR_STOP") {
+    } else if (queryStatus == "MARKED-FOR-STOP") {
         return MarkedForStop;
     } else if (queryStatus == "STOPPED") {
         return Stopped;
@@ -50,6 +50,6 @@ QueryStatus stringToQueryStatusMap(std::string queryStatus) {
         NES_ERROR("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);
     }
-};
+}
 
 }// namespace NES

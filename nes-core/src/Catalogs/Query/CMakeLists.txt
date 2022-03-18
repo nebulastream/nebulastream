@@ -14,5 +14,4 @@
 add_source_files(nes-core
         QueryCatalog.cpp
         QueryCatalogEntry.cpp
-        QueryStatus.cpp
         )

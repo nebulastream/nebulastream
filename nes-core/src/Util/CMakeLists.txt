@@ -23,6 +23,7 @@ add_source_files(nes-core
         SourceMode.cpp
         KalmanFilter.cpp
         BufferStorageUnit.cpp
+        QueryStatus.cpp
 )
 if (NES_USE_MQTT)
     add_source_files(nes-core
