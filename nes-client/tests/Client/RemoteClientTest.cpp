@@ -157,7 +157,7 @@ TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest) {
         try { client->submitQuery(query); } catch (std::exception const& e) {
             std::string errorMessage = e.what();
             constexpr auto expectedMessage =
-                "Semantic error: The logical source 'default_l' can not be found in the SourceCatalog";
+                "The logical source 'default_l' can not be found in the SourceCatalog";
             ASSERT_NE(errorMessage.find(expectedMessage), std::string::npos);
             throw;
         },

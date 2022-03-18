@@ -117,7 +117,7 @@ void BaseController::handleException(const web::http::http_request& message, con
             }
         }
         this->badRequestImpl(message, errorResponse);
-    } else if (std::string(exceptionMsg).find("does not contain a valid sink operator as root")) {
+    } else if (std::string(exceptionMsg).find("does not contain a valid sink operator as root") != std::string::npos) {
         errorResponse["message"] = web::json::value::string("Semantic error");
         errorResponse["detail"] = web::json::value::string(exceptionMsg);
         this->badRequestImpl(message, errorResponse);
