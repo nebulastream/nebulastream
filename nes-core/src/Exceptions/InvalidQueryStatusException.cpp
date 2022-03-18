@@ -17,15 +17,15 @@
 
 namespace NES {
 
-InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus>& expectedStatuses,
-                                                         QueryStatus actualStatus) {
+InvalidQueryStatusException::InvalidQueryStatusException(const std::vector<QueryStatus::Value>& expectedStatuses,
+                                                         QueryStatus::Value actualStatus) {
 
     std::stringstream expectedStatus;
-    for (QueryStatus status : expectedStatuses) {
-        expectedStatus << toString(status) << " ";
+    for (QueryStatus::Value status : expectedStatuses) {
+        expectedStatus << QueryStatus::toString(status) << " ";
     }
     message = "InvalidQueryStatusException: Expected query to be in [" + expectedStatus.str() + "] but found to be in "
-        + toString(actualStatus);
+        + QueryStatus::toString(actualStatus);
 }
 
 const char* InvalidQueryStatusException::what() const noexcept { return message.c_str(); }

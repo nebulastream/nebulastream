@@ -81,7 +81,7 @@ class QueryCatalog {
      * @param id of the query
      * @param status of the query
      */
-    void markQueryAs(QueryId queryId, QueryStatus newStatus);
+    void markQueryAs(QueryId queryId, QueryStatus::Value newStatus);
 
     /**
      * @brief method to test if a query is started
@@ -116,7 +116,7 @@ class QueryCatalog {
      * @param requestedStatus : desired query status
      * @return this will return a COPY of the queries in the catalog that are running
      */
-    std::map<uint64_t, QueryCatalogEntryPtr> getQueries(QueryStatus requestedStatus);
+    std::map<uint64_t, QueryCatalogEntryPtr> getQueries(QueryStatus::Value requestedStatus);
 
     /**
      * @brief method to reset the catalog
@@ -135,7 +135,7 @@ class QueryCatalog {
     * @return returns map of query Id and query string
     * @throws exception in case of invalid status
     */
-    std::map<uint64_t, std::string> getQueriesWithStatus(std::string status);
+    std::map<uint64_t, std::string> getQueriesWithStatus(QueryStatus::Value status);
 
     /**
      * @brief Get all queries registered in the system

@@ -15,7 +15,6 @@
 #ifndef NES_QUERYCATALOGSERVICE_HPP
 #define NES_QUERYCATALOGSERVICE_HPP
 
-#include <Catalogs/Query/QueryStatus.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
