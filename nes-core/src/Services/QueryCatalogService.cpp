@@ -16,6 +16,7 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryStatus.hpp>
 
 namespace NES {
 QueryCatalogServicePtr QueryCatalogService::create(QueryCatalogPtr queryCatalog) {
@@ -33,10 +34,11 @@ bool QueryCatalogService::checkSoftStopPossible(QueryId queryId) {
 
     //Fetch the current entry for the query
     auto queryEntry = queryCatalog->getQueryCatalogEntry(queryId);
-    QueryStatus currentQueryStatus = queryEntry->getQueryStatus();
+    QueryStatus::Value currentQueryStatus = queryEntry->getQueryStatus();
 
     //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
-    if (currentQueryStatus == MarkedForStop || currentQueryStatus == Failed || currentQueryStatus == Stopped) {
+    if (currentQueryStatus == QueryStatus::MarkedForStop || currentQueryStatus == QueryStatus::Failed
+        || currentQueryStatus == QueryStatus::Stopped) {
         NES_WARNING("QueryCatalogService: Soft stop can not be initiated as query is " << queryEntry->getQueryStatusAsString());
         return false;
     }
@@ -55,10 +57,10 @@ QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
 
 std::map<uint64_t, std::string> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
 
-    //
+    QueryStatus::Value status = QueryStatus::getFromString(queryStatus);
 
     //return queries with status
-    return queryCatalog->getQueriesWithStatus(queryStatus);
+    return queryCatalog->getQueriesWithStatus(status);
 }
 
 bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus queryStatus) { return false; }

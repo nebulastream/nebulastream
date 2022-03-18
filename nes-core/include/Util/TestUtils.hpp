@@ -193,7 +193,7 @@ class TestUtils {
                 return false;
             }
             NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
-            QueryStatus status = queryCatalogEntry->getQueryStatus();
+            QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
             bool isQueryRunning = status == QueryStatus::Running;
             if (isQueryRunning) {
                 NES_TRACE("TestUtils: Query " << queryId << " is now in running status.");
@@ -201,7 +201,7 @@ class TestUtils {
             }
 
             if (status == QueryStatus::Failed || status == QueryStatus::Stopped) {
-                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " +  toString(status));
+                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " +  QueryStatus::toString(status));
                 return false;
             }
 

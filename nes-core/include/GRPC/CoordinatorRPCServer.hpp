@@ -42,12 +42,14 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
+class ReplicationService;
+using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
+
 /**
  * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
  */
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-
     /**
      * @brief Create coordinator RPC server
      * @param topologyManagerService : the instance of the topologyManagerService
@@ -59,9 +61,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
-                                  MonitoringManagerPtr monitoringService,
+                                  MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService);
-
     /**
      * @brief RPC Call to register a node
      * @param context: the server context

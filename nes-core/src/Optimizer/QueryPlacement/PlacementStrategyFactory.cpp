@@ -19,6 +19,7 @@
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <log4cxx/helpers/exception.h>
+
 namespace NES::Optimizer {
 
 BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,

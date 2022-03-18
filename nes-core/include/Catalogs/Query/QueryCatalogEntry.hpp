@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 #define NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 
-#include <Catalogs/Query/QueryStatus.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/PlacementStrategy.hpp>
+#include <Util/QueryStatus.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -42,7 +42,7 @@ class QueryCatalogEntry {
                       std::string queryString,
                       std::string queryPlacementStrategy,
                       QueryPlanPtr inputQueryPlan,
-                      QueryStatus queryStatus);
+                      QueryStatus::Value queryStatus);
 
     /**
      * @brief method to get the id of the query
@@ -78,7 +78,7 @@ class QueryCatalogEntry {
      * @brief method to get the status of the query
      * @return query status
      */
-    [[nodiscard]] QueryStatus getQueryStatus() const;
+    [[nodiscard]] QueryStatus::Value getQueryStatus() const;
 
     /**
      * @brief method to get the status of the query as string
@@ -90,7 +90,7 @@ class QueryCatalogEntry {
      * @brief method to set the status of the query
      * @param query status
      */
-    void setQueryStatus(QueryStatus queryStatus);
+    void setQueryStatus(QueryStatus::Value queryStatus);
 
     /**
      * @brief Get name of the query placement strategy
@@ -133,7 +133,7 @@ class QueryCatalogEntry {
     std::string queryPlacementStrategy;
     QueryPlanPtr inputQueryPlan;
     QueryPlanPtr executedQueryPlan;
-    QueryStatus queryStatus;
+    QueryStatus::Value queryStatus;
     std::string failureReason;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
 };

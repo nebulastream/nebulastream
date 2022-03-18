@@ -21,7 +21,7 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryString,
                                      std::string queryPlacementStrategy,
                                      QueryPlanPtr inputQueryPlan,
-                                     QueryStatus queryStatus)
+                                     QueryStatus::Value queryStatus)
     : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
       inputQueryPlan(std::move(inputQueryPlan)), queryStatus(queryStatus) {}
 
@@ -35,11 +35,11 @@ QueryPlanPtr QueryCatalogEntry::getExecutedQueryPlan() const { return executedQu
 
 void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) { this->executedQueryPlan = executedQueryPlan; }
 
-QueryStatus QueryCatalogEntry::getQueryStatus() const { return queryStatus; }
+QueryStatus::Value QueryCatalogEntry::getQueryStatus() const { return queryStatus; }
 
-std::string QueryCatalogEntry::getQueryStatusAsString() const { return toString(queryStatus); }
+std::string QueryCatalogEntry::getQueryStatusAsString() const { return QueryStatus::toString(queryStatus); }
 
-void QueryCatalogEntry::setQueryStatus(QueryStatus queryStatus) { this->queryStatus = queryStatus; }
+void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) { this->queryStatus = queryStatus; }
 
 void QueryCatalogEntry::setFailureReason(std::string failureReason) { this->failureReason = std::move(failureReason); }
 
