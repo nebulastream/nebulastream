@@ -32,8 +32,13 @@ namespace NES {
 
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
+
 class SourceCatalogService;
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
+
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
@@ -42,13 +47,20 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
  */
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
+
     /**
      * @brief Create coordinator RPC server
      * @param topologyManagerService : the instance of the topologyManagerService
      * @param sourceCatalogService : the instance of the steam catalog service
-     * @param monitoringService: the instance of monitoring service
+     * @param queryCatalogService : the instance of monitoring service
+     * @param monitoringService : the instance of monitoring service
+     * @param replicationService : the instance of monitoring service
      */
-    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService, SourceCatalogServicePtr sourceCatalogService, MonitoringManagerPtr monitoringService, ReplicationServicePtr replicationService);
+    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
+                                  SourceCatalogServicePtr sourceCatalogService,
+                                  QueryCatalogServicePtr queryCatalogService,
+                                  MonitoringManagerPtr monitoringService,
+                                  ReplicationServicePtr replicationService);
 
     /**
      * @brief RPC Call to register a node
@@ -158,9 +170,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
       * @return success
       */
     Status NotifyEpochTermination(ServerContext* context,
-                                const EpochBarrierPropagationNotification* request,
-                                EpochBarrierPropagationReply* reply) override;
-
+                                  const EpochBarrierPropagationNotification* request,
+                                  EpochBarrierPropagationReply* reply) override;
 
     /**
      * @brief RPC Call to get a list of field nodes within a defined radius around a geographical location
@@ -170,7 +181,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @return success
      */
     Status GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) override;
-
 
     /**
      * @brief RPC Call to send errors to the coordinator
@@ -217,9 +227,10 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   private:
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
+    QueryCatalogServicePtr queryCatalogService;
     MonitoringManagerPtr monitoringManager;
     ReplicationServicePtr replicationService;
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
+#endif// NES_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_

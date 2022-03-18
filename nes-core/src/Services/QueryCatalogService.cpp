@@ -12,4 +12,35 @@
     limitations under the License.
 */
 
-#include "QueryCatalogService.hpp"
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES {
+QueryCatalogServicePtr QueryCatalogService::create(QueryCatalogPtr queryCatalog) {
+    return std::make_shared<QueryCatalogService>(new QueryCatalogService(queryCatalog));
+}
+
+QueryCatalogService::QueryCatalogService(QueryCatalogPtr queryCatalog) : queryCatalog(queryCatalog) {}
+
+bool QueryCatalogService::checkSoftStopPossible(QueryId queryId) {
+
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        //TODO: Throw exception
+    }
+
+    //Fetch the current entry for the query
+    auto queryEntry = queryCatalog->getQueryCatalogEntry(queryId);
+    QueryStatus currentQueryStatus = queryEntry->getQueryStatus();
+
+    //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
+    if (currentQueryStatus == MarkedForStop || currentQueryStatus == Failed || currentQueryStatus == Stopped) {
+        NES_WARNING("QueryCatalogService: Soft stop can not be initiated as query is " << queryEntry->getQueryStatusAsString());
+        return false;
+    }
+    return true;
+}
+
+}// namespace NES
