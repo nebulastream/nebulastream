@@ -15,9 +15,86 @@
 #ifndef NES_QUERYCATALOGSERVICE_HPP
 #define NES_QUERYCATALOGSERVICE_HPP
 
+#include <Catalogs/Query/QueryStatus.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
+#include <memory>
+
 namespace NES {
 
-class QueryCatalogService {};
+class QueryCatalogEntry;
+using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
+
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class QueryCatalog;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+
+/**
+ * This class is responsible for interacting with query catalog to either fetch status of a query or to update it.
+ */
+class QueryCatalogService {
+
+  public:
+    QueryCatalogServicePtr create(QueryCatalogPtr queryCatalog);
+
+    /**
+     *
+     * @param queryId
+     * @return
+     */
+    QueryCatalogEntryPtr getEntryForQuery(QueryId queryId);
+
+    /**
+     *
+     * @param queryId
+     * @return
+     */
+    QueryCatalogEntryPtr getAllEntriesInStatus(QueryStatus queryStatus);
+
+    /**
+     *
+     * @param queryId
+     * @param queryStatus
+     * @return
+     */
+    bool updateQueryStatus(QueryId queryId, QueryStatus queryStatus);
+
+    /**
+     *
+     * @param queryId
+     * @return
+     */
+    bool checkSoftStopPossible(QueryId queryId);
+
+    /**
+     *
+     * @param queryId
+     * @param querySubPlanId
+     * @param triggered
+     * @return
+     */
+    bool registerSoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered);
+
+    /**
+     *
+     * @param queryId
+     * @param querySubPlanId
+     * @param completed
+     * @return
+     */
+    bool registerSoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed);
+
+  private:
+    QueryCatalogService(QueryCatalogPtr queryCatalog);
+
+    bool handleHardStop(QueryStatus queryStatus);
+
+    bool handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, bool stopped);
+
+    QueryCatalogPtr queryCatalog;
+};
 }// namespace NES
 
 #endif//NES_QUERYCATALOGSERVICE_HPP

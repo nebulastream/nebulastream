@@ -28,9 +28,6 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class NESExecutionPlan;
-using NESExecutionPlanPtr = std::shared_ptr<NESExecutionPlan>;
-
 /**
  * @brief class to handle the entry in the query catalog
  * @param queryId: id of the query (is also the key in the queries map)

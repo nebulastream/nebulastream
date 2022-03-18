@@ -16,6 +16,9 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Services/ReplicationService.hpp>
+#include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -23,10 +26,11 @@ using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
                                            SourceCatalogServicePtr sourceCatalogService,
+                                           QueryCatalogServicePtr queryCatalogService,
                                            MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService)
     : topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
-      monitoringManager(monitoringManager), replicationService(replicationService){};
+      queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     uint64_t id;
@@ -253,24 +257,47 @@ Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage*
     }
 }
 
-Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext* context,
+Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
                                              const ::RequestSoftStopMessage* request,
                                              ::StopRequestReply* response) {
 
-    //TODO: Add logic to request soft stop
+    //Check with query catalog service if the request possible
+    auto queryId = request->queryid();
+    auto softStopPossible = queryCatalogService->checkSoftStopPossible(queryId);
+
+    //Send response
+    response->set_success(softStopPossible);
     return Status::OK;
 }
 
-Status CoordinatorRPCServer::NotifySoftStopTriggered(::grpc::ServerContext* context,
+Status CoordinatorRPCServer::NotifySoftStopTriggered(::grpc::ServerContext*,
                                                      const ::SoftStopTriggeredMessage* request,
                                                      ::SoftStopTriggeredReply* response) {
-    //TODO: Add logic to handle soft stop trigger message
+    //Fetch the request
+    auto queryId = request->queryid();
+    auto querySubPlanId = request->querysubplanid();
+    auto requestTriggered = request->triggered();
+
+    //inform catalog service
+    bool success = queryCatalogService->registerSoftStopTriggered(queryId, querySubPlanId, requestTriggered);
+
+    //update response
+    response->set_success(success);
     return Status::OK;
 }
 
-Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext* context,
+Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
                                                      const ::SoftStopCompletionMessage* request,
                                                      ::SoftStopCompletionReply* response) {
-    //TODO: Add logic to handle soft stop trigger message
+    //Fetch the request
+    auto queryId = request->queryid();
+    auto querySubPlanId = request->querysubplanid();
+    auto softStopCompleted = request->completed();
+
+    //inform catalog service
+    bool success = queryCatalogService->registerSoftStopCompleted(queryId, querySubPlanId, softStopCompleted);
+
+    //update response
+    response->set_success(success);
     return Status::OK;
 }
