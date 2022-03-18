@@ -248,9 +248,9 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
 }
 
 /* 3. Test
- * And operator in combination with sliding window, currently disabled as output is inconsistent
+ * And operator in combination with sliding window, currently disabled as output is inconsistent (order of tuples varies)
  */
-TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
+TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     // Setup Coordinator
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                                          ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
