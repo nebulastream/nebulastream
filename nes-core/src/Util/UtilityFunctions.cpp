@@ -109,9 +109,9 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
         auto expulsionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
                                  ts.time_since_epoch()).count();
         ss << "," << std::to_string(expulsionTime);
-
-        ss << std::endl;
         #endif
+        ss << std::endl;
+
     }
     return ss.str();
 }
