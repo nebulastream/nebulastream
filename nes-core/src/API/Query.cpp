@@ -141,7 +141,7 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     else{
         sourceNameRight = sourceNameRight + "$" + timestamp;
     }
-    // in case of composed streams on the left branch
+    // in case of composed sources on the left branch
     if (sourceNameLeft.find("_") != std::string::npos) {
         // we find the most right source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameLeft.find_last_of("_");
