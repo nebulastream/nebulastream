@@ -150,8 +150,8 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     else{
         sourceNameLeft = sourceNameLeft + "$" + timestamp;
     }
-    NES_DEBUG("ExpressionItem for Left stream " << sourceNameLeft);
-    NES_DEBUG("ExpressionItem for Right stream " << sourceNameRight);
+    NES_DEBUG("ExpressionItem for Left Source " << sourceNameLeft);
+    NES_DEBUG("ExpressionItem for Right Source " << sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, onLeftKey, onRightKey, windowType)
         .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight));//call original seqWith() function
 }

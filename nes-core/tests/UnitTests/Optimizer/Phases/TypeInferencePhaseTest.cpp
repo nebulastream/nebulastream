@@ -1220,7 +1220,7 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
 /**
  * @brief In this test we infer the output schemas of multiple seqWith Operators
  */
-TEST_F(TypeInferencePhaseTest, DISABLED_inferSeqwithQuery) {
+TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema =
         Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
