@@ -43,4 +43,24 @@ bool QueryCatalogService::checkSoftStopPossible(QueryId queryId) {
     return true;
 }
 
+QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        //TODO: Throw exception
+    }
+
+    //return query catalog entry
+    return queryCatalog->getQueryCatalogEntry(queryId);
+}
+
+std::map<uint64_t, std::string> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
+
+    //
+
+    //return queries with status
+    return queryCatalog->getQueriesWithStatus(queryStatus);
+}
+
+bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus queryStatus) { return false; }
+
 }// namespace NES
