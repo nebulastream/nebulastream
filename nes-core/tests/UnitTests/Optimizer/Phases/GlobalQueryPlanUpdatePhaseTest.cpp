@@ -104,7 +104,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
@@ -135,7 +135,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
@@ -165,8 +165,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
-    queryCatalog->addNewQuery(queryString1, q1.getQueryPlan(), "TopDown");
-    queryCatalog->addNewQuery(queryString2, q2.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
@@ -201,7 +201,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     int queryId = 1;
     q1.getQueryPlan()->setQueryId(queryId);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto catalogEntry1 = queryCatalog->addNewQuery("", q1.getQueryPlan(), "topdown");
+    auto catalogEntry1 = queryCatalog->createNewEntry("", q1.getQueryPlan(), "topdown");
     //Explicitly fail the query
     queryCatalog->setQueryFailureReason(queryId, "Random reason");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
@@ -232,8 +232,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
-    queryCatalog->addNewQuery(queryString1, q1.getQueryPlan(), "TopDown");
-    queryCatalog->addNewQuery(queryString2, q2.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString1, q1.getQueryPlan(), "TopDown");
+    queryCatalog->createNewEntry(queryString2, q2.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
@@ -276,7 +276,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
         q1.getQueryPlan()->setQueryId(i);
-        queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
+        queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     }
 
     std::vector<NESRequestPtr> batchOfNesRequests;
@@ -331,7 +331,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                       .sink(NullOutputSinkDescriptor::create());
 
         q1.getQueryPlan()->setQueryId(i);
-        queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
+        queryCatalog->createNewEntry(queryString, q1.getQueryPlan(), "TopDown");
     }
 
     std::vector<NESRequestPtr> batchOfNesRequests;

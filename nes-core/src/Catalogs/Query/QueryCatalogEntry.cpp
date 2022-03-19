@@ -15,7 +15,6 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <utility>
 
 namespace NES {
@@ -44,9 +43,9 @@ std::string QueryCatalogEntry::getQueryStatusAsString() const { return QueryStat
 
 void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) { this->queryStatus = queryStatus; }
 
-void QueryCatalogEntry::setFailureReason(std::string failureReason) { this->failureReason = std::move(failureReason); }
+void QueryCatalogEntry::setMetaInformation(std::string metaInformation) { this->metaInformation = std::move(metaInformation); }
 
-std::string QueryCatalogEntry::getFailureReason() { return failureReason; }
+std::string QueryCatalogEntry::getMetaInformation() { return metaInformation; }
 
 const std::string& QueryCatalogEntry::getQueryPlacementStrategyAsString() const { return queryPlacementStrategy; }
 
@@ -88,6 +87,7 @@ QuerySubPlanMetaDataPtr QueryCatalogEntry::getQuerySubPlanMetaData(QuerySubPlanI
 
 std::vector<QuerySubPlanMetaDataPtr> QueryCatalogEntry::getAllSubQueryPlanMetaData() {
 
+    //Fetch all query sub plan metadata information
     std::vector<QuerySubPlanMetaDataPtr> allQuerySubPlanMetaData;
     for (const auto& pair : querySubPlanMetaDataMap) {
         allQuerySubPlanMetaData.emplace_back(pair.second);

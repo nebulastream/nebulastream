@@ -46,7 +46,7 @@ class QueryCatalog {
      * @return query catalog entry or nullptr
      */
     QueryCatalogEntryPtr
-    addNewQuery(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
+    createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
 
     /**
      * @brief Register invalid query received for processing
@@ -60,12 +60,6 @@ class QueryCatalog {
                                             QueryId queryId,
                                             QueryPlanPtr const& queryPlan,
                                             std::string const& placementStrategyName);
-    /**
-     * @brief Set the executed query plan for the query id
-     * @param queryId : the original query id
-     * @param executedQueryPlan : the query plan executed by NES
-     */
-    void setExecutedQueryPlan(QueryId queryId, QueryPlanPtr executedQueryPlan);
 
     /**
      * @brief method to test if a query is started
@@ -126,27 +120,6 @@ class QueryCatalog {
      * @return map of query ids and query string with query status
      */
     std::map<uint64_t, std::string> getAllQueries();
-
-    /**
-     * Set reason for query failure
-     * @param queryId : the id of the query
-     * @param failureReason : the reason for query failure
-     */
-    void setQueryFailureReason(QueryId queryId, const std::string& failureReason);
-
-    /**
-     * @brief register a request for stopping a query and add it to the scheduling queue.
-     * @param queryId: id of the user query.
-     * @return query catalog entry or nullptr
-     */
-    QueryCatalogEntryPtr markQueryForStop(QueryId queryId);
-
-    /**
-     * @brief method to change status of a query
-     * @param id of the query
-     * @param status of the query
-     */
-    void markQueryAs(QueryId queryId, QueryStatus::Value newStatus);
 
   private:
     // TODO this is a temp fix, please look at issue

@@ -142,6 +142,10 @@ void RequestProcessorService::start() {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
                             }
+
+                            for(auto& queryId : sharedQueryPlan->getQueryIds()){
+                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
+                            }
                         } else {
                             auto queryPlan = sharedQueryPlan->getQueryPlan();
                             NES_DEBUG(
@@ -160,7 +164,7 @@ void RequestProcessorService::start() {
                             }
                         }
                     }
-                    //Mark the meta data as deployed
+                    //Mark the metadata as deployed
                     sharedQueryPlan->markAsDeployed();
                     sharedQueryPlan->setAsOld();
                 }

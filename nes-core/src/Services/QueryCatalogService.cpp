@@ -17,6 +17,7 @@
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryStatus.hpp>
@@ -26,9 +27,17 @@ QueryCatalogServicePtr QueryCatalogService::create(QueryCatalogPtr queryCatalog)
     return std::make_shared<QueryCatalogService>(new QueryCatalogService(queryCatalog));
 }
 
-QueryCatalogService::QueryCatalogService(QueryCatalogPtr queryCatalog) : queryCatalog(queryCatalog) {}
+QueryCatalogService::QueryCatalogService(QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
+
+QueryCatalogEntryPtr QueryCatalogService::createNewEntry(const std::string& queryString,
+                                                         const QueryPlanPtr& queryPlan,
+                                                         const std::string& placementStrategyName) {
+    std::unique_lock lock(serviceMutex);
+    return queryCatalog->createNewEntry(queryString, queryPlan, placementStrategyName);
+}
 
 bool QueryCatalogService::checkAndMarkForSoftStop(QueryId queryId) {
+    std::unique_lock lock(serviceMutex);
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
@@ -36,87 +45,27 @@ bool QueryCatalogService::checkAndMarkForSoftStop(QueryId queryId) {
     }
 
     //Fetch the current entry for the query
-    auto queryEntry = queryCatalog->getQueryCatalogEntry(queryId);
-    QueryStatus::Value currentQueryStatus = queryEntry->getQueryStatus();
+    auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+    QueryStatus::Value currentQueryStatus = queryCatalogEntry->getQueryStatus();
 
     //If query is doing hard stop or has failed or already stopped then soft stop can not be triggered
     if (currentQueryStatus == QueryStatus::MarkedForHardStop || currentQueryStatus == QueryStatus::Failed
         || currentQueryStatus == QueryStatus::Stopped) {
-        NES_WARNING("QueryCatalogService: Soft stop can not be initiated as query in " << queryEntry->getQueryStatusAsString()
-                                                                                       << " status.");
+        NES_WARNING("QueryCatalogService: Soft stop can not be initiated as query in "
+                    << queryCatalogEntry->getQueryStatusAsString() << " status.");
         return false;
     }
 
     //Mark query for soft stop and return
-    queryCatalog->markQueryAs(queryId, QueryStatus::MarkedForSoftStop);
+    queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForSoftStop);
     return true;
 }
 
-QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
-    //Check if query exists
-    if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
-    }
+bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
+    std::unique_lock lock(serviceMutex);
 
-    //return query catalog entry
-    return queryCatalog->getQueryCatalogEntry(queryId);
-}
+    NES_INFO("QueryCatalogService: Handle hard stop request.");
 
-std::map<uint64_t, std::string> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
-
-    QueryStatus::Value status = QueryStatus::getFromString(queryStatus);
-
-    //return queries with status
-    return queryCatalog->getQueriesWithStatus(status);
-}
-
-bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation) {
-
-    //Check if query exists
-    if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
-    }
-
-    //Handle new status of the query
-    switch (queryStatus) {
-        case QueryStatus::MarkedForHardStop: handleHardStop(queryId, queryStatus); break;
-        case QueryStatus::Registered:
-        case QueryStatus::Scheduling:
-        case QueryStatus::Restarting:
-        case QueryStatus::Migrating:
-        case QueryStatus::Stopped:
-        case QueryStatus::Running: queryCatalog->markQueryAs(queryId, queryStatus); break;
-        case QueryStatus::Failed: queryCatalog->setQueryFailureReason(queryId, metaInformation); break;
-        case QueryStatus::MarkedForSoftStop:
-        case QueryStatus::SoftStopTriggered:
-        case QueryStatus::SoftStopCompleted:
-            throw InvalidQueryStatusException({QueryStatus::MarkedForHardStop,
-                                               QueryStatus::Registered,
-                                               QueryStatus::Scheduling,
-                                               QueryStatus::Restarting,
-                                               QueryStatus::Migrating,
-                                               QueryStatus::Stopped,
-                                               QueryStatus::Running,
-                                               QueryStatus::Failed},
-                                              queryStatus);
-    }
-    return false;
-}
-
-void QueryCatalogService::addSubQuery(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId) {
-    //Check if query exists
-    if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
-    }
-
-    //Fetch the current entry for the query
-    auto queryEntry = queryCatalog->getQueryCatalogEntry(queryId);
-    //Add new query sub plan
-    queryEntry->addQuerySubPlanMetaData(querySubPlanId, workerId);
-}
-
-bool QueryCatalogService::handleHardStop(QueryId queryId, QueryStatus::Value queryStatus) {
-    NES_INFO("QueryCatalog: Validating with old query status.");
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
         throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
@@ -132,11 +81,90 @@ bool QueryCatalogService::handleHardStop(QueryId queryId, QueryStatus::Value que
                                           currentStatus);
     }
     NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
-    queryCatalog->markQueryAs(queryId, queryStatus);
+    queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForHardStop);
     return true;
 }
 
-bool QueryCatalogService::handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus) {
+QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
+    std::unique_lock lock(serviceMutex);
+
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    //return query catalog entry
+    return queryCatalog->getQueryCatalogEntry(queryId);
+}
+
+std::map<uint64_t, std::string> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
+    std::unique_lock lock(serviceMutex);
+
+    QueryStatus::Value status = QueryStatus::getFromString(queryStatus);
+    //return queries with status
+    return queryCatalog->getQueriesWithStatus(status);
+}
+
+bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation) {
+
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    //Handle new status of the query
+    switch (queryStatus) {
+        case QueryStatus::Registered:
+        case QueryStatus::Scheduling:
+        case QueryStatus::Restarting:
+        case QueryStatus::Migrating:
+        case QueryStatus::Stopped:
+        case QueryStatus::Running:
+        case QueryStatus::Failed: {
+            auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            auto currentStatus = queryCatalogEntry->getQueryStatus();
+            if ((currentStatus == QueryStatus::MarkedForHardStop || currentStatus == QueryStatus::Stopped)
+                && queryStatus == QueryStatus::Running) {
+                NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
+                          + ". Can not set new status as running.");
+                throw InvalidQueryStatusException({QueryStatus::MarkedForHardStop, QueryStatus::Stopped}, queryStatus);
+            }
+            queryCatalogEntry->setQueryStatus(queryStatus);
+            queryCatalogEntry->setMetaInformation(metaInformation);
+            break;
+        }
+        default:
+            throw InvalidQueryStatusException({QueryStatus::Registered,
+                                               QueryStatus::Scheduling,
+                                               QueryStatus::Restarting,
+                                               QueryStatus::Migrating,
+                                               QueryStatus::Stopped,
+                                               QueryStatus::Running,
+                                               QueryStatus::Failed},
+                                              queryStatus);
+    }
+    return false;
+}
+
+void QueryCatalogService::addSubQuery(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId) {
+    std::unique_lock lock(serviceMutex);
+
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    //Fetch the current entry for the query
+    auto queryEntry = queryCatalog->getQueryCatalogEntry(queryId);
+    //Add new query sub plan
+    queryEntry->addQuerySubPlanMetaData(querySubPlanId, workerId);
+}
+
+bool QueryCatalogService::handleSoftStopCompletion(QueryId queryId,
+                                                   QuerySubPlanId querySubPlanId,
+                                                   QueryStatus::Value subQueryStatus) {
+
+    std::unique_lock lock(serviceMutex);
 
     NES_INFO("QueryCatalogService: Updating the status of sub query with id " << querySubPlanId << " for query with id "
                                                                               << queryId);
@@ -221,11 +249,29 @@ bool QueryCatalogService::registerSoftStopCompleted(QueryId queryId, QuerySubPla
 void QueryCatalogService::updateQuerySubPlanStatus(QueryId queryId,
                                                    QuerySubPlanId querySubPlanId,
                                                    QueryStatus::Value subQueryStatus) {
+    std::unique_lock lock(serviceMutex);
+
     switch (subQueryStatus) {
         case QueryStatus::SoftStopTriggered:
-        case QueryStatus::SoftStopCompleted: handleSoftStop(queryId, querySubPlanId, subQueryStatus); break;
+        case QueryStatus::SoftStopCompleted: handleSoftStopCompletion(queryId, querySubPlanId, subQueryStatus); break;
         default:
             throw InvalidQueryStatusException({QueryStatus::SoftStopTriggered, QueryStatus::SoftStopCompleted}, subQueryStatus);
+    }
+}
+
+void QueryCatalogService::addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan) {
+    std::unique_lock lock(serviceMutex);
+
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+    queryCatalogEntry->addOptimizationPhase(step, updatedQueryPlan);
+
+    if (step == "Executed Query Plan") {
+        queryCatalogEntry->setExecutedQueryPlan(updatedQueryPlan);
     }
 }
 

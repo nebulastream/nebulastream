@@ -18,6 +18,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
+#include <mutex>
 
 namespace NES {
 
@@ -37,6 +38,16 @@ class QueryCatalogService {
 
   public:
     QueryCatalogServicePtr create(QueryCatalogPtr queryCatalog);
+
+    /**
+     * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
+     * @param queryString: a user query in string form
+     * @param queryPlan: a user query plan to be executed
+     * @param placementStrategyName: the placement strategy (e.g. bottomUp, topDown, etc)
+     * @return query catalog entry or nullptr
+     */
+    QueryCatalogEntryPtr
+    createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
 
     /**
      *
@@ -80,6 +91,13 @@ class QueryCatalogService {
     /**
      *
      * @param queryId
+     * @return
+     */
+    bool checkAndMarkForHardStop(QueryId queryId);
+
+    /**
+     *
+     * @param queryId
      * @param querySubPlanId
      * @param triggered
      * @return
@@ -95,14 +113,15 @@ class QueryCatalogService {
      */
     bool registerSoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed);
 
+    void addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan);
+
   private:
-    QueryCatalogService(QueryCatalogPtr queryCatalog);
+    explicit QueryCatalogService(QueryCatalogPtr queryCatalog);
 
-    bool handleHardStop(QueryId queryId, QueryStatus::Value queryStatus);
-
-    bool handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool handleSoftStopCompletion(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     QueryCatalogPtr queryCatalog;
+    std::recursive_mutex serviceMutex;
 };
 }// namespace NES
 
