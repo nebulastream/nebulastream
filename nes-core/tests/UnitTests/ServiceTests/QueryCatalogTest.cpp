@@ -65,7 +65,7 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -86,7 +86,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -116,7 +116,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -142,7 +142,7 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -161,7 +161,7 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
     queryCatalog->markQueryAs(queryId, QueryStatus::Running);
 
     //Assert

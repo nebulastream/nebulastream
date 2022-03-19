@@ -114,9 +114,9 @@ class QueryCatalogEntry {
      */
     QueryCatalogEntry copy();
 
-    void setFailureReason(std::string failureReason);
+    void setMetaInformation(std::string metaInformation);
 
-    std::string getFailureReason();
+    std::string getMetaInformation();
 
     /**
      * @brief Adds a new phase to the optimizationPhases map
@@ -157,7 +157,7 @@ class QueryCatalogEntry {
     QueryPlanPtr inputQueryPlan;
     QueryPlanPtr executedQueryPlan;
     QueryStatus::Value queryStatus;
-    std::string failureReason;
+    std::string metaInformation;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
     std::map<QuerySubPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;
 };

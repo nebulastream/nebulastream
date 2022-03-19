@@ -89,7 +89,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
                 jsonEntry["queryString"] = web::json::value::string(catalogEntry->getQueryString());
                 jsonEntry["queryStatus"] = web::json::value::string(catalogEntry->getQueryStatusAsString());
                 jsonEntry["queryPlan"] = PlanJsonGenerator::getQueryPlanAsJson(catalogEntry->getInputQueryPlan());
-                jsonEntry["queryInfo"] = web::json::value::string(catalogEntry->getFailureReason());
+                jsonEntry["queryInfo"] = web::json::value::string(catalogEntry->getMetaInformation());
                 result[index] = jsonEntry;
                 index++;
             }

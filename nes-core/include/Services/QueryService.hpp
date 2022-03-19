@@ -32,8 +32,8 @@ namespace NES {
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class RequestQueue;
 using RequestQueuePtr = std::shared_ptr<RequestQueue>;
@@ -47,11 +47,11 @@ using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 class QueryService {
 
   public:
-    explicit QueryService(QueryCatalogPtr queryCatalog,
-                          RequestQueuePtr queryRequestQueue,
-                          SourceCatalogPtr sourceCatalog,
-                          QueryParsingServicePtr queryParsingService,
-                          Configurations::OptimizerConfiguration optimizerConfiguration);
+    static QueryServicePtr create(QueryCatalogServicePtr queryCatalogService,
+                                  RequestQueuePtr queryRequestQueue,
+                                  SourceCatalogPtr sourceCatalog,
+                                  QueryParsingServicePtr queryParsingService,
+                                  Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -85,6 +85,19 @@ class QueryService {
                              const LineageType lineage = LineageType::NONE);
 
     /**
+     * @brief This method is used for submitting the queries directly to the system.
+     * @param queryPlan : Query Plan Pointer Object
+     * @param placementStrategyName : Name of the placement strategy
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
+     * @return query id
+     */
+    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan,
+                             const std::string& placementStrategyName,
+                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                             const LineageType lineage = LineageType::NONE);
+
+    /**
      * @brief
      * @param queryString
      * @param queryPlan : Query Plan Pointer Object
@@ -109,6 +122,19 @@ class QueryService {
     bool validateAndQueueStopRequest(QueryId queryId);
 
   private:
+    explicit QueryService(QueryCatalogServicePtr queryCatalogService,
+                          RequestQueuePtr queryRequestQueue,
+                          SourceCatalogPtr sourceCatalog,
+                          QueryParsingServicePtr queryParsingService,
+                          Configurations::OptimizerConfiguration optimizerConfiguration);
+
+    /**
+     * Assign unique query id and operator ids to the incoming query plan from a client.
+     * @param queryPlan : query plan to process
+     */
+    void assignQueryAndOperatorIds(QueryPlanPtr queryPlan);
+
+    QueryCatalogServicePtr queryCatalogService;
     /**
      * Assign operator ids to the query plan
      * @param queryPlan: the query plan to which operator ids need to be assigned
@@ -119,6 +145,7 @@ class QueryService {
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
+    Configurations::OptimizerConfiguration optimizerConfiguration;
 };
 
 };// namespace NES
