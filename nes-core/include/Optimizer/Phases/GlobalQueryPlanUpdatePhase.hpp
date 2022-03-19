@@ -25,7 +25,6 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
-
 namespace NES {
 
 namespace Configurations {
@@ -38,8 +37,8 @@ using NESRequestPtr = std::shared_ptr<Request>;
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -76,13 +75,13 @@ class GlobalQueryPlanUpdatePhase {
   public:
     /**
      * @brief Create an instance of the GlobalQueryPlanUpdatePhase
-     * @param queryCatalog: the catalog of queries
+     * @param queryCatalogService: the catalog of queries
      * @param sourceCatalog: the catalog of sources
      * @param globalQueryPlan: the input global query plan
      * @param optimizerConfiguration: configuration for the optimizer
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
-    static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog,
+    static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogServicePtr queryCatalogService,
                                                 SourceCatalogPtr sourceCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
@@ -96,13 +95,13 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr execute(const std::vector<NESRequestPtr>& nesRequests);
 
   private:
-    explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
+    explicit GlobalQueryPlanUpdatePhase(QueryCatalogServicePtr queryCatalogService,
                                         const SourceCatalogPtr& sourceCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         const Configurations::OptimizerConfiguration optimizerConfiguration);
 
-    QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
@@ -114,4 +113,4 @@ class GlobalQueryPlanUpdatePhase {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_PHASES_GLOBALQUERYPLANUPDATEPHASE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_PHASES_GLOBALQUERYPLANUPDATEPHASE_HPP_

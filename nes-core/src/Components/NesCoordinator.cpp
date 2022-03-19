@@ -159,7 +159,7 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(topology.use_count() == 0, "NesCoordinator topology leaked");
     NES_ASSERT(sourceCatalog.use_count() == 0, "NesCoordinator sourceCatalog leaked");
     NES_ASSERT(globalExecutionPlan.use_count() == 0, "NesCoordinator globalExecutionPlan leaked");
-    NES_ASSERT(queryCatalog.use_count() == 0, "NesCoordinator queryCatalog leaked");
+    NES_ASSERT(queryCatalog.use_count() == 0, "NesCoordinator queryCatalogService leaked");
     NES_ASSERT(workerRpcClient.use_count() == 0, "NesCoordinator workerRpcClient leaked");
     NES_ASSERT(queryRequestQueue.use_count() == 0, "NesCoordinator queryRequestQueue leaked");
     NES_ASSERT(queryRequestProcessorService.use_count() == 0, "NesCoordinator queryRequestProcessorService leaked");

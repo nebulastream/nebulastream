@@ -307,7 +307,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWrongPayload) {
 TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker();
-    auto getExecutionPlanClient = createRestClient("queryCatalog/allRegisteredQueries");
+    auto getExecutionPlanClient = createRestClient("queryCatalogService/allRegisteredQueries");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

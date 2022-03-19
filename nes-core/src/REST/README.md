@@ -138,7 +138,7 @@ Here we describe the APIs used for interacting with query catalog.
 
 To get all queries registered at NebulaStream.
 
-**API**: /queryCatalog/allRegisteredQueries\
+**API**: /queryCatalogService/allRegisteredQueries\
 **Verb**: GET\
 **Response Code**: 200 OK
 
@@ -156,7 +156,7 @@ To get all queries registered at NebulaStream.
 
 To get all queries with a specific status form NebulaStream.
 
-API: /queryCatalog/queries\
+API: /queryCatalogService/queries\
 Verb: GET\
 Response Code: 200 OK
 
@@ -174,7 +174,7 @@ Response Code: 200 OK
 
 To delete a user submitted query.
 
-**API**: /queryCatalog/query\
+**API**: /queryCatalogService/query\
 **Verb**: DELETE\
 **Response Code**: 200 OK
 
