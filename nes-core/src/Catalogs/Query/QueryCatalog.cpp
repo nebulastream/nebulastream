@@ -71,7 +71,7 @@ QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& querySt
     return queryCatalogEntry;
 }
 
-void QueryCatalog::setExecutedQueryPlanForQuery(QueryId queryId, QueryPlanPtr executedQueryPlan) {
+void QueryCatalog::setExecutedQueryPlan(QueryId queryId, QueryPlanPtr executedQueryPlan) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Update query catalog entry for query with id " << queryId);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
@@ -85,7 +85,7 @@ void QueryCatalog::setQueryFailureReason(QueryId queryId, const std::string& fai
     queryCatalogEntry->setFailureReason(failureReason);
 }
 
-QueryCatalogEntryPtr QueryCatalog::stopQuery(QueryId queryId) {
+QueryCatalogEntryPtr QueryCatalog::markQueryForStop(QueryId queryId) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Validating with old query status.");
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
@@ -106,8 +106,10 @@ void QueryCatalog::markQueryAs(QueryId queryId, QueryStatus::Value newStatus) {
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << newStatus);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     QueryStatus::Value oldStatus = queryCatalogEntry->getQueryStatus();
-    if (oldStatus == QueryStatus::MarkedForStop && newStatus == QueryStatus::Running) {
-        NES_WARNING("QueryCatalog: Skip setting status of a query marked for stop as running.");
+    if ((oldStatus == QueryStatus::MarkedForStop || oldStatus == QueryStatus::Stopped) && newStatus == QueryStatus::Running) {
+        NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
+                  + ". Can not set new status as running.");
+        throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Stopped}, newStatus);
     } else {
         queries[queryId]->setQueryStatus(newStatus);
     }

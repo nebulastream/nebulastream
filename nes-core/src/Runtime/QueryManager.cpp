@@ -495,7 +495,7 @@ void QueryManager::poisonWorkers() {
 }
 
 bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful) {
-    NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
+    NES_DEBUG("QueryManager::markQueryForStop: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
 
     auto sources = qep->getSources();
@@ -524,7 +524,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
         }
     }
     for (uint32_t i = 0; i < taskQueues.size(); i++) {
-        NES_DEBUG("QueryManager: stopQuery queue sizeses are "
+        NES_DEBUG("QueryManager: markQueryForStop queue sizeses are "
                   << " id=" << i << " task queue size=" << taskQueues[i].size());
     }
 
@@ -554,7 +554,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
             ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
             true);
     }
-    NES_DEBUG("QueryManager::stopQuery: query " << qep->getQuerySubPlanId() << " was "
+    NES_DEBUG("QueryManager::markQueryForStop: query " << qep->getQuerySubPlanId() << " was "
                                                 << (ret ? "successful" : " not successful"));
     return ret;
 }

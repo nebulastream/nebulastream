@@ -139,7 +139,7 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
                                      + " in query catalog.");
     }
-    QueryCatalogEntryPtr entry = queryCatalog->stopQuery(queryId);
+    QueryCatalogEntryPtr entry = queryCatalog->markQueryForStop(queryId);
     if (entry) {
         auto request = StopQueryRequest::create(queryId);
         return queryRequestQueue->add(request);

@@ -254,7 +254,7 @@ bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId
 }
 
 bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
+    NES_DEBUG("WorkerRPCClient::markQueryForStop address=" << address << " queryId=" << queryId);
 
     StopQueryRequest request;
     request.set_queryid(queryId);
@@ -267,13 +267,13 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId) {
     Status status = workerStub->StopQuery(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::stopQuery: status ok return success=" << reply.success());
+        NES_DEBUG("WorkerRPCClient::markQueryForStop: status ok return success=" << reply.success());
         return reply.success();
     }
-    NES_ERROR(" WorkerRPCClient::stopQuery "
+    NES_ERROR(" WorkerRPCClient::markQueryForStop "
               "error="
               << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
+    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
 }
 
 bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
@@ -384,7 +384,7 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
         NES_ERROR(" WorkerRPCClient::BeginBuffer "
                   "error="
                   << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
+        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
     }
     return false;
 }

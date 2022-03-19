@@ -232,7 +232,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
 
 bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime:stopQuery for qep" << queryId);
+    NES_DEBUG("Runtime:markQueryForStop for qep" << queryId);
     auto it = queryIdToQuerySubPlanIds.find(queryId);
     if (it != queryIdToQuerySubPlanIds.end()) {
         std::vector<QuerySubPlanId> querySubPlanIds = it->second;

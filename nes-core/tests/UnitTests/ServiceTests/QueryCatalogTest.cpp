@@ -96,7 +96,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     EXPECT_TRUE(registeredQueries.size() == 1U);
 
     //SendStop request
-    catalogEntry = queryCatalog->stopQuery(queryId);
+    catalogEntry = queryCatalog->markQueryForStop(queryId);
 
     //Assert
     EXPECT_TRUE(catalogEntry);

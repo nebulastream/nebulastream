@@ -14,6 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryStatus.hpp>
@@ -29,7 +30,7 @@ bool QueryCatalogService::checkSoftStopPossible(QueryId queryId) {
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        //TODO: Throw exception
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //Fetch the current entry for the query
@@ -48,7 +49,7 @@ bool QueryCatalogService::checkSoftStopPossible(QueryId queryId) {
 QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        //TODO: Throw exception
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //return query catalog entry
@@ -63,6 +64,25 @@ std::map<uint64_t, std::string> QueryCatalogService::getAllEntriesInStatus(std::
     return queryCatalog->getQueriesWithStatus(status);
 }
 
-bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus queryStatus) { return false; }
+bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation) {
+
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    //Handle new status of the query
+    switch (queryStatus) {
+        case QueryStatus::Registered:
+        case QueryStatus::Scheduling:
+        case QueryStatus::Restarting:
+        case QueryStatus::Migrating:
+        case QueryStatus::Stopped:
+        case QueryStatus::Running: queryCatalog->markQueryAs(queryId, queryStatus); break;
+        case QueryStatus::MarkedForStop: queryCatalog->markQueryForStop(queryId); break;
+        case QueryStatus::Failed: queryCatalog->setQueryFailureReason(queryId, metaInformation); break;
+    }
+    return false;
+}
 
 }// namespace NES
