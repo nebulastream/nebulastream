@@ -12,76 +12,89 @@
     limitations under the License.
 */
 
-#include <Services/MaintenanceService.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Services/MaintenanceService.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/RequestProcessorService.hpp>
+#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryStatus.hpp>
+#include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/Request.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 
 namespace NES::Experimental {
 
-MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, RequestQueuePtr queryRequestQueue,
-                                       GlobalExecutionPlanPtr globalExecutionPlan):
-                                       topology{topology}, queryCatalog{queryCatalog},
-                                       queryRequestQueue{queryRequestQueue}, globalExecutionPlan{globalExecutionPlan}
-{
+MaintenanceService::MaintenanceService(TopologyPtr topology,
+                                       QueryCatalogServicePtr queryCatalogService,
+                                       RequestQueuePtr queryRequestQueue,
+                                       GlobalExecutionPlanPtr globalExecutionPlan)
+    : topology{topology}, queryCatalogService{queryCatalogService}, queryRequestQueue{queryRequestQueue},
+      globalExecutionPlan{globalExecutionPlan} {
     NES_DEBUG("MaintenanceService: Initializing");
 };
 
-MaintenanceService::~MaintenanceService() {
-    NES_DEBUG("Destroying MaintenanceService");
-}
+MaintenanceService::~MaintenanceService() { NES_DEBUG("Destroying MaintenanceService"); }
 
-std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value type){
+std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value type) {
     std::pair<bool, std::string> result;
     //check if topology node exists
-    if(!topology->findNodeWithId(nodeId)){
+    if (!topology->findNodeWithId(nodeId)) {
         NES_DEBUG("MaintenanceService: TopologyNode with ID: " << nodeId << " does not exist");
         result.first = false;
         result.second = "No Topology Node with ID " + std::to_string(nodeId);
         return result;
     }
+
+    //FIXME: Balint we may get in trouble with this approach as you are accessing globalExecutionPlan which is not thread safe.
+    // We may get into a situation that two threads concurrently update content for a query that you are interested in.
+    // I propose that you create only a request and rest of it is handled by Request Processor service.
+
     //check if topology has corresponding execution node
-    if(!globalExecutionPlan->checkIfExecutionNodeExists(nodeId)){
-        NES_DEBUG("MaintenanceService: No ExecutionNode for TopologyNodeID: " << nodeId << ". Node can be taken down for maintenance immediately");
+    if (!globalExecutionPlan->checkIfExecutionNodeExists(nodeId)) {
+        NES_DEBUG("MaintenanceService: No ExecutionNode for TopologyNodeID: "
+                  << nodeId << ". Node can be taken down for maintenance immediately");
         topology->findNodeWithId(nodeId)->setMaintenanceFlag(true);
         result.first = true;
-        result.second = "No ExecutionNode for TopologyNode with ID: " + std::to_string(nodeId) +". Node can be taken down for maintenance immediately";
+        result.second = "No ExecutionNode for TopologyNode with ID: " + std::to_string(nodeId)
+            + ". Node can be taken down for maintenance immediately";
         return result;
     }
     //check if valid Migration Type
-    if(!MigrationType::isValidMigrationType(type)){
-        NES_DEBUG("MaintenanceService: MigrationType: " << type << " is not a valid type. Type must be 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
+    if (!MigrationType::isValidMigrationType(type)) {
+        NES_DEBUG(
+            "MaintenanceService: MigrationType: "
+            << type
+            << " is not a valid type. Type must be 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
         result.first = false;
-        result.second = "MigrationType: " + std::to_string(type) + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)";
+        result.second = "MigrationType: " + std::to_string(type)
+            + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
+              "Buffering)";
         return result;
     }
     //get keys of map
     auto map = globalExecutionPlan->getExecutionNodeByNodeId(nodeId)->getAllQuerySubPlans();
     std::vector<uint64_t> queryIds;
-    for(auto it: map){
+    for (auto it : map) {
         queryIds.push_back(it.first);
     }
     //for each query on node, create migration request
-    for(auto queryId : queryIds){
+    for (auto queryId : queryIds) {
         //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
-        if(type == MigrationType::Value::RESTART){
-            queryCatalog->markQueryAs(queryId,QueryStatus::Restarting);
+        if (type == MigrationType::Value::RESTART) {
+            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Restarting);
             queryRequestQueue->add(RestartQueryRequest::create(queryId));
-        }
-        else {
-            queryCatalog->markQueryAs(queryId,QueryStatus::Migrating);
-            queryRequestQueue->add(MigrateQueryRequest::create(queryId,nodeId,type));
+        } else {
+            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Migrating);
+            queryRequestQueue->add(MigrateQueryRequest::create(queryId, nodeId, type));
         }
     }
     result.first = true;
-    result.second = "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(nodeId);
+    result.second =
+        "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(nodeId);
     return result;
 }
-
 }//namespace NES::Experimental

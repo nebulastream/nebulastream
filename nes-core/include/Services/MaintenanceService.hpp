@@ -14,22 +14,31 @@
 
 #ifndef NES_MAINTENANCESERVICE_HPP
 #define NES_MAINTENANCESERVICE_HPP
+
+#include <Phases/MigrationType.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <memory>
 #include <optional>
-#include <vector>
 #include <string>
-#include <Phases/MigrationType.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <WorkQueues/RequestQueue.hpp>
-#include <Topology/Topology.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <vector>
+
+namespace NES {
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
+
+class RequestQueue;
+using RequestQueuePtr = std::shared_ptr<RequestQueue>;
+
+class GlobalExecutionPlan;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+}// namespace NES
 
 namespace NES::Experimental {
 
-//fwd. decl.
-class MaintenanceService;
 class MaintenanceService;
 using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 
@@ -38,8 +47,9 @@ using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
  */
 class MaintenanceService {
   public:
-
-    MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, RequestQueuePtr queryRequestQueue,
+    MaintenanceService(TopologyPtr topology,
+                       QueryCatalogServicePtr queryCatalogService,
+                       RequestQueuePtr queryRequestQueue,
                        GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~MaintenanceService();
@@ -50,14 +60,14 @@ class MaintenanceService {
      * @param nodeId
      * @param MigrationType
      */
-  std::pair<bool, std::string> submitMaintenanceRequest(TopologyNodeId nodeId,  MigrationType::Value type);
+    std::pair<bool, std::string> submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value type);
 
   private:
     TopologyPtr topology;
-    QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
     RequestQueuePtr queryRequestQueue;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
-} //namepsace NES::Experimental
+}// namespace NES::Experimental
 #endif//NES_MAINTENANCESERVICE_HPP
