@@ -23,7 +23,7 @@ std::string QueryStatus::toString(const Value queryStatus) {
         case Registered: return "REGISTERED";
         case Scheduling: return "SCHEDULING";
         case Running: return "RUNNING";
-        case MarkedForStop: return "MARKED-FOR-STOP";
+        case MarkedForHardStop: return "MARKED-FOR-STOP";
         case Stopped: return "STOPPED";
         case Failed: return "FAILED";
         case Restarting: return "RESTARTING";
@@ -39,7 +39,7 @@ QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
     } else if (queryStatus == "RUNNING") {
         return Running;
     } else if (queryStatus == "MARKED-FOR-STOP") {
-        return MarkedForStop;
+        return MarkedForHardStop;
     } else if (queryStatus == "STOPPED") {
         return Stopped;
     } else if (queryStatus == "FAILED") {

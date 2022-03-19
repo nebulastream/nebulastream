@@ -16,6 +16,7 @@
 #define NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryStatus.hpp>
 #include <map>
@@ -27,6 +28,9 @@ namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
+class QuerySubPlanMetaData;
+using SubQueryMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 
 /**
  * @brief class to handle the entry in the query catalog
@@ -127,6 +131,20 @@ class QueryCatalogEntry {
      */
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
 
+    /**
+     * Add sub query plan tot he query catalog
+     * @param querySubPlanId : the sub query plan id
+     * @param workerId : the worker node on which the query is running
+     */
+    void addQuerySubPlan(QuerySubPlanId querySubPlanId, uint64_t workerId);
+
+    /**
+     *
+     * @param querySubPlanId
+     * @param queryStatus
+     */
+    void updateQuerySubPlanStatus(QuerySubPlanId querySubPlanId, QueryStatus::Value queryStatus);
+
   private:
     QueryId queryId;
     std::string queryString;
@@ -136,6 +154,7 @@ class QueryCatalogEntry {
     QueryStatus::Value queryStatus;
     std::string failureReason;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
+    std::map<QuerySubPlanId, SubQueryMetaDataPtr> querySubPlanMetaDataMap;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace NES

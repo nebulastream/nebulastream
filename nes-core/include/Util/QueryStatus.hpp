@@ -31,7 +31,7 @@ class QueryStatus {
      * Registered: Query is registered to be scheduled to the worker nodes (added to the queue).
      * Scheduling: Coordinator node is processing the Query and will transmit the execution pipelines to worker nodes.
      * Running: Query is now running successfully.
-     * MarkedForStop: A request arrived into the system for stopping a query and system marks the query for stopping (added to the queue).
+     * MarkedForHardStop: A request arrived into the system for stopping a query and system marks the query for stopping (added to the queue).
      * Stopped: Query was explicitly stopped either by system or by user.
      * Failed: Query failed because of some reason.
      */
@@ -39,11 +39,14 @@ class QueryStatus {
         Registered = 0,
         Scheduling = 1,
         Running = 2,
-        MarkedForStop = 3,
-        Stopped = 4,
-        Failed = 5,
-        Restarting = 6,
-        Migrating = 7
+        MarkedForHardStop = 3,
+        MarkedForSoftStop = 4,
+        softStopTriggered = 5,
+        softStopCompleted = 6,
+        Stopped = 7,
+        Failed = 8,
+        Restarting = 9,
+        Migrating = 10
     };
 
     /**
