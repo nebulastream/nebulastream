@@ -165,21 +165,19 @@ TEST_F(QueryCompilerTest, filterQuery) {
 TEST_F(QueryCompilerTest, inferModelQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    auto sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "logicalSourceName";
     std::string physicalSourceName = "x1";
-    streamCatalog->addLogicalSource(logicalSourceName, schema);
+    sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
-    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {streamConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -201,7 +199,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
     sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -226,16 +224,14 @@ TEST_F(QueryCompilerTest, mapQuery) {
     std::string physicalSourceName = "x1";
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
-    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   0,
-                                                                   {streamConf},
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   Configurations::QueryCompilerConfiguration());
+    auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->physicalSources.add(sourceConf);
+    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
+    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
+
+
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);

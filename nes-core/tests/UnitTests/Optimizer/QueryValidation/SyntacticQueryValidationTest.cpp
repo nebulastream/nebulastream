@@ -182,7 +182,6 @@ TEST_F(SyntacticQueryValidationTest, validQueryWithInferModelOperatorTest) {
                               "                                           {Attribute(\"value\"), Attribute(\"id\")},\n"
                               "                                           {Attribute(\"value\")}); ";
 
-    syntacticQueryValidation->checkValidity(queryString);
 }
 
 }// namespace NES
