@@ -929,7 +929,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
+    auto workerConfiguration  = WorkerConfiguration::create();
+    workerConfiguration->dataPort.setValue(*dataPort);
+    workerConfiguration->physicalSources.add(physicalSource);
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
