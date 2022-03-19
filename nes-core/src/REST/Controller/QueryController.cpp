@@ -22,6 +22,7 @@
 #include <REST/Controller/QueryController.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Services/QueryCatalogService.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/http_msg.h>
 #include <log4cxx/helpers/exception.h>

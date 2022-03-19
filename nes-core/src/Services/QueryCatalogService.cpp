@@ -22,9 +22,6 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
-QueryCatalogServicePtr QueryCatalogService::create(QueryCatalogPtr queryCatalog) {
-    return std::make_shared<QueryCatalogService>(new QueryCatalogService(queryCatalog));
-}
 
 QueryCatalogService::QueryCatalogService(QueryCatalogPtr queryCatalog) : queryCatalog(std::move(queryCatalog)) {}
 
@@ -277,6 +274,11 @@ void QueryCatalogService::addUpdatedQueryPlan(QueryId queryId, std::string step,
 std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalogService::getAllQueryCatalogEntries() {
     std::unique_lock lock(serviceMutex);
     return queryCatalog->getAllQueryCatalogEntries();
+}
+
+void QueryCatalogService::clearQueries() {
+    std::unique_lock lock(serviceMutex);
+    queryCatalog->clearQueries();
 }
 
 }// namespace NES

@@ -47,11 +47,11 @@ using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 class QueryService {
 
   public:
-    static QueryServicePtr create(QueryCatalogServicePtr queryCatalogService,
-                                  RequestQueuePtr queryRequestQueue,
-                                  SourceCatalogPtr sourceCatalog,
-                                  QueryParsingServicePtr queryParsingService,
-                                  Configurations::OptimizerConfiguration optimizerConfiguration);
+    explicit QueryService(QueryCatalogServicePtr queryCatalogService,
+                          RequestQueuePtr queryRequestQueue,
+                          SourceCatalogPtr sourceCatalog,
+                          QueryParsingServicePtr queryParsingService,
+                          Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -122,12 +122,6 @@ class QueryService {
     bool validateAndQueueStopRequest(QueryId queryId);
 
   private:
-    explicit QueryService(QueryCatalogServicePtr queryCatalogService,
-                          RequestQueuePtr queryRequestQueue,
-                          SourceCatalogPtr sourceCatalog,
-                          QueryParsingServicePtr queryParsingService,
-                          Configurations::OptimizerConfiguration optimizerConfiguration);
-
     /**
      * Assign unique query id and operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process

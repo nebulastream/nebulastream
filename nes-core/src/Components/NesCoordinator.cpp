@@ -104,7 +104,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
-    queryCatalogService = QueryCatalogService::create(queryCatalog);
+    queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
     queryRequestProcessorService =
         std::make_shared<RequestProcessorService>(globalExecutionPlan,
@@ -117,11 +117,11 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   this->coordinatorConfiguration->optimizer,
                                                   this->coordinatorConfiguration->enableQueryReconfiguration);
 
-    queryService = QueryService::create(queryCatalogService,
-                                        queryRequestQueue,
-                                        sourceCatalog,
-                                        queryParsingService,
-                                        this->coordinatorConfiguration->optimizer);
+    queryService = std::make_shared<QueryService>(queryCatalogService,
+                                                  queryRequestQueue,
+                                                  sourceCatalog,
+                                                  queryParsingService,
+                                                  this->coordinatorConfiguration->optimizer);
 
     udfCatalog = Catalogs::UdfCatalog::create();
     maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,
