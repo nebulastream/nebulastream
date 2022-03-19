@@ -97,7 +97,7 @@ QueryCatalogEntryPtr QueryCatalog::markQueryForStop(QueryId queryId) {
                                           currentStatus);
     }
     NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
-    markQueryAs(queryId, QueryStatus::MarkedForStop);
+    markQueryAs(queryId, QueryStatus::MarkedForHardStop);
     return queryCatalogEntry;
 }
 
@@ -106,10 +106,10 @@ void QueryCatalog::markQueryAs(QueryId queryId, QueryStatus::Value newStatus) {
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << newStatus);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
     QueryStatus::Value oldStatus = queryCatalogEntry->getQueryStatus();
-    if ((oldStatus == QueryStatus::MarkedForStop || oldStatus == QueryStatus::Stopped) && newStatus == QueryStatus::Running) {
+    if ((oldStatus == QueryStatus::MarkedForHardStop || oldStatus == QueryStatus::Stopped) && newStatus == QueryStatus::Running) {
         NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
                   + ". Can not set new status as running.");
-        throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Stopped}, newStatus);
+        throw InvalidQueryStatusException({QueryStatus::MarkedForHardStop, QueryStatus::Stopped}, newStatus);
     } else {
         queries[queryId]->setQueryStatus(newStatus);
     }

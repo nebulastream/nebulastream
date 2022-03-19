@@ -38,6 +38,8 @@ class QueryCatalogService {
   public:
     QueryCatalogServicePtr create(QueryCatalogPtr queryCatalog);
 
+    void addSubQuery(QueryId queryId, QuerySubPlanId querySubPlan, uint64_t workerId);
+
     /**
      *
      * @param queryId
@@ -59,6 +61,18 @@ class QueryCatalogService {
      * @return
      */
     bool updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation);
+
+    /**
+     *
+     * @param queryId
+     * @param querySubPlan
+     * @param queryStatus
+     * @param metaInformation
+     */
+    void updateSubQueryStatus(QueryId queryId,
+                              QuerySubPlanId querySubPlan,
+                              QueryStatus::Value queryStatus,
+                              const std::string& metaInformation);
 
     /**
      *
