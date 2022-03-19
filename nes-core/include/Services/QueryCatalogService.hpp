@@ -38,7 +38,15 @@ class QueryCatalogService {
   public:
     QueryCatalogServicePtr create(QueryCatalogPtr queryCatalog);
 
-    void addSubQuery(QueryId queryId, QuerySubPlanId querySubPlan, uint64_t workerId);
+    /**
+     *
+     * @param queryId
+     * @param querySubPlanId
+     * @param workerId
+     */
+    void addSubQuery(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId);
+
+    void updateQuerySubPlanStatus(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     /**
      *
@@ -65,21 +73,9 @@ class QueryCatalogService {
     /**
      *
      * @param queryId
-     * @param querySubPlan
-     * @param queryStatus
-     * @param metaInformation
-     */
-    void updateSubQueryStatus(QueryId queryId,
-                              QuerySubPlanId querySubPlan,
-                              QueryStatus::Value queryStatus,
-                              const std::string& metaInformation);
-
-    /**
-     *
-     * @param queryId
      * @return
      */
-    bool checkSoftStopPossible(QueryId queryId);
+    bool checkAndMarkForSoftStop(QueryId queryId);
 
     /**
      *
@@ -102,9 +98,9 @@ class QueryCatalogService {
   private:
     QueryCatalogService(QueryCatalogPtr queryCatalog);
 
-    bool handleHardStop(QueryStatus queryStatus);
+    bool handleHardStop(QueryId queryId, QueryStatus::Value queryStatus);
 
-    bool handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, bool stopped);
+    bool handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     QueryCatalogPtr queryCatalog;
 };

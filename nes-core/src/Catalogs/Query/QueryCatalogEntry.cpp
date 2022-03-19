@@ -14,6 +14,8 @@
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <utility>
 
 namespace NES {
@@ -64,14 +66,33 @@ void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr
 
 std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() { return optimizationPhases; }
 
-void QueryCatalogEntry::addQuerySubPlan(QuerySubPlanId querySubPlanId, uint64_t workerId) {
+void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId) {
 
     if (querySubPlanMetaDataMap.find(querySubPlanId) != querySubPlanMetaDataMap.end()) {
-        //TODO throw error
+        throw InvalidQueryException("Query catalog entry already contain the query sub plan id "
+                                    + std::to_string(querySubPlanId));
     }
 
     auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::Migrating, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
+}
+
+QuerySubPlanMetaDataPtr QueryCatalogEntry::getQuerySubPlanMetaData(QuerySubPlanId querySubPlanId) {
+
+    if (querySubPlanMetaDataMap.find(querySubPlanId) == querySubPlanMetaDataMap.end()) {
+        throw InvalidQueryException("Query catalog entry does not contains the input query sub pln Id "
+                                    + std::to_string(querySubPlanId));
+    }
+    return querySubPlanMetaDataMap[querySubPlanId];
+}
+
+std::vector<QuerySubPlanMetaDataPtr> QueryCatalogEntry::getAllSubQueryPlanMetaData() {
+
+    std::vector<QuerySubPlanMetaDataPtr> allQuerySubPlanMetaData;
+    for (const auto& pair : querySubPlanMetaDataMap) {
+        allQuerySubPlanMetaData.emplace_back(pair.second);
+    }
+    return allQuerySubPlanMetaData;
 }
 
 }// namespace NES

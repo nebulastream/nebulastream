@@ -30,7 +30,7 @@ class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class QuerySubPlanMetaData;
-using SubQueryMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
+using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 
 /**
  * @brief class to handle the entry in the query catalog
@@ -132,18 +132,23 @@ class QueryCatalogEntry {
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
 
     /**
-     * Add sub query plan tot he query catalog
+     * Add sub query plan to the query catalog
      * @param querySubPlanId : the sub query plan id
      * @param workerId : the worker node on which the query is running
      */
-    void addQuerySubPlan(QuerySubPlanId querySubPlanId, uint64_t workerId);
+    void addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId);
 
     /**
-     *
-     * @param querySubPlanId
-     * @param queryStatus
+     * Get sub query plan meta data
+     * @param querySubPlanId : the sub query plan id
      */
-    void updateQuerySubPlanStatus(QuerySubPlanId querySubPlanId, QueryStatus::Value queryStatus);
+    QuerySubPlanMetaDataPtr getQuerySubPlanMetaData(QuerySubPlanId querySubPlanId);
+
+    /**
+     * Get all sub query plan mea data
+     * @return vector of sub query plan meta data
+     */
+    std::vector<QuerySubPlanMetaDataPtr> getAllSubQueryPlanMetaData();
 
   private:
     QueryId queryId;
@@ -154,7 +159,7 @@ class QueryCatalogEntry {
     QueryStatus::Value queryStatus;
     std::string failureReason;
     std::map<std::string, QueryPlanPtr> optimizationPhases;
-    std::map<QuerySubPlanId, SubQueryMetaDataPtr> querySubPlanMetaDataMap;
+    std::map<QuerySubPlanId, QuerySubPlanMetaDataPtr> querySubPlanMetaDataMap;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace NES
