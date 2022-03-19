@@ -81,7 +81,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
 }
 
 bool QueryUndeploymentPhase::stopQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
-    NES_DEBUG("QueryUndeploymentPhase:stopQuery queryId=" << queryId);
+    NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId=" << queryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     //    std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
@@ -91,15 +91,15 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, const std::vector<Execut
         auto ipAddress = nesNode->getIpAddress();
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryUndeploymentPhase::stopQuery at execution node with id=" << executionNode->getId()
+        NES_DEBUG("QueryUndeploymentPhase::markQueryForStop at execution node with id=" << executionNode->getId()
                                                                                  << " and IP=" << rpcAddress);
         bool success = workerRPCClient->stopQuery(rpcAddress, queryId);
         //stop is currently sync because we need the end of source message
         //bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, *queue);
         if (success) {
-            NES_DEBUG("QueryUndeploymentPhase::stopQuery " << queryId << " to " << rpcAddress << " successful");
+            NES_DEBUG("QueryUndeploymentPhase::markQueryForStop " << queryId << " to " << rpcAddress << " successful");
         } else {
-            NES_ERROR("QueryUndeploymentPhase::stopQuery " << queryId << " to " << rpcAddress << "  failed");
+            NES_ERROR("QueryUndeploymentPhase::markQueryForStop " << queryId << " to " << rpcAddress << "  failed");
             return false;
         }
         //        completionQueues[queueForExecutionNode] = 1;

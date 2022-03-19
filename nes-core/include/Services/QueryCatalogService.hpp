@@ -58,7 +58,7 @@ class QueryCatalogService {
      * @param queryStatus
      * @return
      */
-    bool updateQueryStatus(QueryId queryId, QueryStatus queryStatus);
+    bool updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation);
 
     /**
      *
