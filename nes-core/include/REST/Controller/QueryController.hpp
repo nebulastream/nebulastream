@@ -25,20 +25,16 @@ class NesCoordinator;
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-class Topology;
-using TopologyPtr = std::shared_ptr<Topology>;
-
 class QueryController : public BaseController {
   public:
     explicit QueryController(QueryServicePtr queryService,
-                             QueryCatalogPtr queryCatalog,
-                             TopologyPtr topology,
+                             QueryCatalogServicePtr queryCatalogService,
                              GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryController() = default;
@@ -67,7 +63,7 @@ class QueryController : public BaseController {
   private:
     TopologyPtr topology;
     QueryServicePtr queryService;
-    QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 

@@ -60,7 +60,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     NES_INFO("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
@@ -130,7 +130,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     Query adhoc_query = Query::from("stream").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
@@ -167,7 +167,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();

@@ -20,7 +20,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/QueryStatus.hpp>
 
 namespace NES {
 QueryCatalogServicePtr QueryCatalogService::create(QueryCatalogPtr queryCatalog) {
@@ -273,6 +272,11 @@ void QueryCatalogService::addUpdatedQueryPlan(QueryId queryId, std::string step,
     if (step == "Executed Query Plan") {
         queryCatalogEntry->setExecutedQueryPlan(updatedQueryPlan);
     }
+}
+
+std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalogService::getAllQueryCatalogEntries() {
+    std::unique_lock lock(serviceMutex);
+    return queryCatalog->getAllQueryCatalogEntries();
 }
 
 }// namespace NES

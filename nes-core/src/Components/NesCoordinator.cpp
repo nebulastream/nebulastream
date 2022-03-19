@@ -27,6 +27,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Services/TopologyManagerService.hpp>
@@ -48,15 +49,14 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/SourceCatalogService.hpp>
 
-#include <health.pb.h>
+#include <GRPC/HealthCheckRPCServer.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Services/CoordinatorHealthCheckService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <grpcpp/health_check_service_interface.h>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <GRPC/HealthCheckRPCServer.hpp>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
-#include <Services/CoordinatorHealthCheckService.hpp>
+#include <grpcpp/health_check_service_interface.h>
+#include <health.pb.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -97,17 +97,19 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 
     sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
-    queryCatalog = std::make_shared<QueryCatalog>();
+    auto queryCatalog = std::make_shared<QueryCatalog>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
+    queryCatalogService = QueryCatalogService::create(queryCatalog);
+
     queryRequestProcessorService =
         std::make_shared<RequestProcessorService>(globalExecutionPlan,
                                                   topology,
-                                                  queryCatalog,
+                                                  queryCatalogService,
                                                   globalQueryPlan,
                                                   sourceCatalog,
                                                   workerRpcClient,
@@ -115,15 +117,17 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   this->coordinatorConfiguration->optimizer,
                                                   this->coordinatorConfiguration->enableQueryReconfiguration);
 
-    queryService = std::make_shared<QueryService>(queryCatalog,
-                                                  queryRequestQueue,
-                                                  sourceCatalog,
-                                                  queryParsingService,
-                                                  this->coordinatorConfiguration->optimizer);
+    queryService = QueryService::create(queryCatalogService,
+                                        queryRequestQueue,
+                                        sourceCatalog,
+                                        queryParsingService,
+                                        this->coordinatorConfiguration->optimizer);
 
     udfCatalog = Catalogs::UdfCatalog::create();
-    maintenanceService =
-        std::make_shared<NES::Experimental::MaintenanceService>(topology, queryCatalog, queryRequestQueue, globalExecutionPlan);
+    maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,
+                                                                                 queryCatalogService,
+                                                                                 queryRequestQueue,
+                                                                                 globalExecutionPlan);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -133,12 +137,12 @@ NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
     sourceCatalog->reset();
-    queryCatalog->clearQueries();
+    queryCatalogService->clearQueries();
 
     topology.reset();
     sourceCatalog.reset();
     globalExecutionPlan.reset();
-    queryCatalog.reset();
+    queryCatalogService.reset();
     workerRpcClient.reset();
     queryRequestQueue.reset();
     queryRequestProcessorService.reset();
@@ -159,7 +163,7 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(topology.use_count() == 0, "NesCoordinator topology leaked");
     NES_ASSERT(sourceCatalog.use_count() == 0, "NesCoordinator sourceCatalog leaked");
     NES_ASSERT(globalExecutionPlan.use_count() == 0, "NesCoordinator globalExecutionPlan leaked");
-    NES_ASSERT(queryCatalog.use_count() == 0, "NesCoordinator queryCatalogService leaked");
+    NES_ASSERT(queryCatalogService.use_count() == 0, "NesCoordinator queryCatalogService leaked");
     NES_ASSERT(workerRpcClient.use_count() == 0, "NesCoordinator workerRpcClient leaked");
     NES_ASSERT(queryRequestQueue.use_count() == 0, "NesCoordinator queryRequestQueue leaked");
     NES_ASSERT(queryRequestProcessorService.use_count() == 0, "NesCoordinator queryRequestProcessorService leaked");
@@ -248,7 +252,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     restServer = std::make_shared<RestServer>(restIp,
                                               restPort,
                                               this->inherited0::weak_from_this(),
-                                              queryCatalog,
+                                              queryCatalogService,
                                               sourceCatalog,
                                               topology,
                                               globalExecutionPlan,
@@ -266,7 +270,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, workerRpcClient, HEALTH_SERVICE_NAME);
+    healthCheckService =
+        std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, workerRpcClient, HEALTH_SERVICE_NAME);
     topologyManagerService->setHealthService(healthCheckService);
     NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
@@ -348,6 +353,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     this->replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
     CoordinatorRPCServer service(topologyManagerService,
                                  sourceCatalogService,
+                                 queryCatalogService,
                                  monitoringService->getMonitoringManager(),
                                  this->replicationService);
 
@@ -360,7 +366,9 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
         new grpc::HealthCheckServiceServerBuilderOption(std::move(healthCheckServiceInterface)));
     builder.SetOption(std::move(option));
     HealthCheckRPCServer healthCheckServiceImpl;
-    healthCheckServiceImpl.SetStatus(HEALTH_SERVICE_NAME, grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
+    healthCheckServiceImpl.SetStatus(
+        HEALTH_SERVICE_NAME,
+        grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
 
     rpcServer = builder.BuildAndStart();
@@ -377,7 +385,7 @@ std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(Quer
 
 QueryServicePtr NesCoordinator::getQueryService() { return queryService; }
 
-QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
+QueryCatalogServicePtr NesCoordinator::getQueryCatalogService() { return queryCatalogService; }
 
 Catalogs::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
 

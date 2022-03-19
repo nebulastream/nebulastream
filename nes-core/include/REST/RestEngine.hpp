@@ -59,8 +59,8 @@ using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
 class TopologyController;
 using TopologyControllerPtr = std::shared_ptr<TopologyController>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
@@ -73,9 +73,9 @@ class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs
 
-namespace Experimental{
+namespace Experimental {
 class MaintenanceService;
-using MaintenanceServicePtr = std::shared_ptr<MaintenanceService> ;
+using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 
 class MaintenanceController;
 typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
@@ -89,7 +89,7 @@ class RestEngine {
   public:
     RestEngine(const SourceCatalogPtr& sourceCatalog,
                const NesCoordinatorWeakPtr& coordinator,
-               const QueryCatalogPtr& queryCatalog,
+               const QueryCatalogServicePtr& queryCatalogService,
                const TopologyPtr& topology,
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
@@ -154,4 +154,4 @@ class RestEngine {
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;
 }// namespace NES
-#endif  // NES_INCLUDE_REST_RESTENGINE_HPP_
+#endif// NES_INCLUDE_REST_RESTENGINE_HPP_

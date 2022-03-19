@@ -414,7 +414,7 @@ class TestHarness {
         }
 
         QueryServicePtr queryService = nesCoordinator->getQueryService();
-        QueryCatalogPtr queryCatalog = nesCoordinator->getQueryCatalog();
+        QueryCatalogPtr queryCatalog = nesCoordinator->getQueryCatalogService();
 
         // local fs
         std::string filePath = testHarnessResourcePath / "testHarness.out";

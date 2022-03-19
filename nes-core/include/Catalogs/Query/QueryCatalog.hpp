@@ -18,6 +18,7 @@
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/PlacementStrategy.hpp>
+#include <Util/QueryStatus.hpp>
 #include <condition_variable>
 #include <map>
 #include <memory>

@@ -114,7 +114,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
 
@@ -202,7 +202,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
 
@@ -276,7 +276,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);

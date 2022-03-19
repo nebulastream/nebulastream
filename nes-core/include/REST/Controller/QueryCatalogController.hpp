@@ -21,8 +21,8 @@ namespace NES {
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -30,12 +30,12 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class QueryCatalogController : public BaseController {
 
   public:
-    QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator, GlobalQueryPlanPtr globalQueryPlan);
+    QueryCatalogController(QueryCatalogServicePtr queryCatalogService, NesCoordinatorWeakPtr coordinator, GlobalQueryPlanPtr globalQueryPlan);
 
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
 
   private:
-    QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
     NesCoordinatorWeakPtr coordinator;
     GlobalQueryPlanPtr globalQueryPlan;
 };

@@ -27,8 +27,8 @@ using RestEnginePtr = std::shared_ptr<RestEngine>;
 class NesCoordinator;
 using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -53,9 +53,9 @@ class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 }// namespace Catalogs
 
-namespace Experimental{
+namespace Experimental {
 class MaintenanceService;
-using MaintenanceServicePtr = std::shared_ptr<MaintenanceService> ;
+using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 }//namespace Experimental
 
 /**
@@ -74,7 +74,7 @@ class RestServer {
     RestServer(std::string host,
                uint16_t port,
                const NesCoordinatorWeakPtr& coordinator,
-               const QueryCatalogPtr& queryCatalog,
+               const QueryCatalogServicePtr& queryCatalogService,
                const SourceCatalogPtr& sourceCatalog,
                const TopologyPtr& topology,
                const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -104,4 +104,4 @@ class RestServer {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_REST_RESTSERVER_HPP_
+#endif// NES_INCLUDE_REST_RESTSERVER_HPP_

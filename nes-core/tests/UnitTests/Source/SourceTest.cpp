@@ -1724,7 +1724,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
         R"(Query::from("input1").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
-    auto queryCatalog = crd->getQueryCatalog();
+    auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -1963,7 +1963,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
         Milliseconds(1000))).sink(NullOutputSinkDescriptor::create());)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
-    auto queryCatalog = crd->getQueryCatalog();
+    auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -2050,7 +2050,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
     string query2 = R"(Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
-    auto queryCatalog = crd->getQueryCatalog();
+    auto queryCatalog = crd->getQueryCatalogService();
     auto queryId1 =
         queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId1, queryCatalog), "failed start wait");
@@ -2143,7 +2143,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     string query = R"(Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
-    auto queryCatalog = crd->getQueryCatalog();
+    auto queryCatalog = crd->getQueryCatalogService();
     auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
