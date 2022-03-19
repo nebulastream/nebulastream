@@ -44,6 +44,12 @@ class QuerySubPlanMetaData {
      */
     void updateMetaInformation(const std::string& metaInformation);
 
+    /**
+     * Get status of query sub plan
+     * @return status
+     */
+    QueryStatus::Value getQuerySubPlanStatus();
+
   private:
     QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId);
 

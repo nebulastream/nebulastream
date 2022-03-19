@@ -262,7 +262,7 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
 
     //Check with query catalog service if the request possible
     auto queryId = request->queryid();
-    auto softStopPossible = queryCatalogService->checkSoftStopPossible(queryId);
+    auto softStopPossible = queryCatalogService->checkAndMarkForSoftStop(queryId);
 
     //Send response
     response->set_success(softStopPossible);
