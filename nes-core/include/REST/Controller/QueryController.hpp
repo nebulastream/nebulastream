@@ -17,7 +17,6 @@
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/CpprestForwardedRefs.hpp>
-#include <Services/QueryService.hpp>
 
 namespace NES {
 
@@ -27,6 +26,9 @@ using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class QueryService;
+using QueryServicePtr = std::shared_ptr<QueryService>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;

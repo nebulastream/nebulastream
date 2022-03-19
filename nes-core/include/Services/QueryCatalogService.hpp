@@ -32,13 +32,16 @@ using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+
 /**
  * This class is responsible for interacting with query catalog to either fetch status of a query or to update it.
  */
 class QueryCatalogService {
 
   public:
-    static QueryCatalogServicePtr create(QueryCatalogPtr queryCatalog);
+    explicit QueryCatalogService(QueryCatalogPtr queryCatalog);
 
     /**
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
@@ -128,9 +131,9 @@ class QueryCatalogService {
 
     void addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan);
 
-  private:
-    explicit QueryCatalogService(QueryCatalogPtr queryCatalog);
+    void clearQueries();
 
+  private:
     bool handleSoftStopCompletion(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     QueryCatalogPtr queryCatalog;

@@ -22,7 +22,7 @@
 namespace NES {
 
 class QuerySubPlanMetaData;
-using SubQueryMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
+using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 
 /**
  * This class stores metadata about a query sub plan.
@@ -30,7 +30,7 @@ using SubQueryMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 class QuerySubPlanMetaData {
 
   public:
-    static SubQueryMetaDataPtr create(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId);
+    static QuerySubPlanMetaDataPtr create(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId);
 
     /**
      * Update the status of the qub query
@@ -50,8 +50,17 @@ class QuerySubPlanMetaData {
      */
     QueryStatus::Value getQuerySubPlanStatus();
 
-  private:
+    QuerySubPlanId getQuerySubPlanId() const;
+
+    QueryStatus::Value getSubQueryStatus() const;
+
+    uint64_t getWorkerId() const;
+
+    const std::string& getMetaInformation() const;
+
     QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId);
+
+  private:
 
     /**
      * Id of the subquery plan
