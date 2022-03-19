@@ -25,6 +25,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
@@ -33,12 +34,13 @@
 
 namespace NES::Optimizer {
 
-GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
+GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogServicePtr queryCatalogService,
                                                        const SourceCatalogPtr& sourceCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        const Configurations::OptimizerConfiguration optimizerConfiguration)
-    : queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
+    : queryCatalogService(std::move(queryCatalogService)), globalQueryPlan(std::move(globalQueryPlan)),
+      z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
     //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
@@ -56,12 +58,12 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
 }
 
 GlobalQueryPlanUpdatePhasePtr
-GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
+GlobalQueryPlanUpdatePhase::create(QueryCatalogServicePtr queryCatalogService,
                                    SourceCatalogPtr sourceCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    const Configurations::OptimizerConfiguration optimizerConfiguration) {
-    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalog),
+    return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalogService),
                                                                                    std::move(sourceCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
@@ -80,7 +82,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 globalQueryPlan->removeQuery(queryId);
             } else if (nesRequest->instanceOf<RunQueryRequest>()) {
 
-                auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
 
                 auto runRequest = nesRequest->as<RunQueryRequest>();
                 auto queryPlan = runRequest->getQueryPlan();
@@ -88,7 +90,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryCatalogEntry->addOptimizationPhase("Input Query Plan", queryPlan);
 
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
-                queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
+                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Scheduling, "");
 
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 queryPlan = typeInferencePhase->execute(queryPlan);
@@ -139,7 +141,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryCatalogEntry->addOptimizationPhase("Set Memory Layout Phase 2", queryPlan);
 
                 queryCatalogEntry->addOptimizationPhase("Executed Query Plan", queryPlan);
-                queryCatalog->setExecutedQueryPlan(queryId, queryPlan);
+                queryCatalogService->getEntryForQuery(queryId); setExecutedQueryPlan(queryId, queryPlan);
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryPlan);
             } else {

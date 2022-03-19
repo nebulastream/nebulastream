@@ -47,8 +47,8 @@ namespace NES {
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 
 class QueryDeploymentPhase;
 using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
@@ -78,7 +78,7 @@ class RequestProcessorService {
   public:
     explicit RequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                      const TopologyPtr& topology,
-                                     const QueryCatalogPtr& queryCatalog,
+                                     const QueryCatalogServicePtr& queryCatalogService,
                                      const GlobalQueryPlanPtr& globalQueryPlan,
                                      const SourceCatalogPtr& sourceCatalog,
                                      const WorkerRPCClientPtr& workerRpcClient,
@@ -106,7 +106,7 @@ class RequestProcessorService {
     std::mutex queryProcessorStatusLock;
     bool queryProcessorRunning;
     bool queryReconfiguration;
-    QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;

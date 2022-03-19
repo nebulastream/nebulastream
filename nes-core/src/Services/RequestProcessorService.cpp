@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
@@ -26,7 +25,6 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
-#include <Optimizer/Phases/QueryPlacementRefinementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
@@ -35,7 +33,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
-#include <Services/QueryService.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
@@ -49,14 +47,14 @@ namespace NES {
 
 RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                  const TopologyPtr& topology,
-                                                 const QueryCatalogPtr& queryCatalog,
+                                                 const QueryCatalogServicePtr& queryCatalogService,
                                                  const GlobalQueryPlanPtr& globalQueryPlan,
                                                  const SourceCatalogPtr& sourceCatalog,
                                                  const WorkerRPCClientPtr& workerRpcClient,
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration)
-    : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalog(queryCatalog),
+    : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
       queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
@@ -73,7 +71,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     cfg.set("model", false);
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
-    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
                                                                                sourceCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
@@ -169,11 +167,11 @@ void RequestProcessorService::start() {
 
                 for (const auto& queryRequest : nesRequests) {
                     auto queryId = queryRequest->getQueryId();
-                    auto catalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                    auto catalogEntry = queryCatalogService->getQueryCatalogEntry(queryId);
                     if (catalogEntry->getQueryStatus() == QueryStatus::Scheduling) {
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                        queryCatalogService->markQueryAs(queryId, QueryStatus::Running);
                     } else {
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                        queryCatalogService->markQueryAs(queryId, QueryStatus::Stopped);
                     }
                 }
                 //FIXME: Proper error handling #1585
@@ -184,7 +182,7 @@ void RequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                    queryCatalogService->markQueryAs(queryId, QueryStatus::Failed);
                 }
             } catch (QueryDeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
@@ -193,12 +191,12 @@ void RequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalog->setQueryFailureReason(queryId, ex.what());
+                    queryCatalogService->setQueryFailureReason(queryId, ex.what());
                 }
             } catch (TypeInferenceException& ex) {
                 NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
                 auto queryId = ex.getQueryId();
-                queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                queryCatalogService->markQueryAs(queryId, QueryStatus::Failed);
             } catch (InvalidQueryStatusException& ex) {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryStatusException: " << ex.what());
             } catch (QueryNotFoundException& ex) {

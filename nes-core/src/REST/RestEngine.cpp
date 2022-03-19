@@ -105,7 +105,7 @@ void RestEngine::handleGet(web::http::http_request request) {
         if (paths[0] == "sourceCatalog") {
             sourceCatalogController->handleGet(paths, request);
             return;
-        } else if (paths[0] == "queryCatalog") {
+        } else if (paths[0] == "queryCatalogService") {
             queryCatalogController->handleGet(paths, request);
             return;
         } else if (paths[0] == "monitoring") {

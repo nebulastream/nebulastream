@@ -27,7 +27,7 @@ bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult,
 
     NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
-        web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
+        web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalogService/status");
         web::uri_builder builder(("/"));
         builder.append_query(("queryId"), queryId);
         clientProc.request(web::http::methods::GET, builder.to_string())
@@ -54,7 +54,7 @@ bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult,
         NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
 
         web::http::client::http_client clientProc("http://localhost:" + restPort
-                                                  + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
+                                                  + "/v1/nes/queryCatalogService/getNumberOfProducedBuffers");
         web::uri_builder builder(("/"));
         builder.append_query(("queryId"), queryId);
         clientProc.request(web::http::methods::GET, builder.to_string())

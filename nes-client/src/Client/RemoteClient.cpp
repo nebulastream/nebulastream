@@ -274,7 +274,7 @@ std::string RemoteClient::getTopology() {
 
 std::string RemoteClient::getQueries() {
     auto restMethod = web::http::methods::GET;
-    auto path = "queryCatalog/allRegisteredQueries";
+    auto path = "queryCatalogService/allRegisteredQueries";
     auto message = "";
 
     web::json::value jsonReturn;
