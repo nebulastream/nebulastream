@@ -31,7 +31,7 @@ namespace NES {
 
 RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
                        const NesCoordinatorWeakPtr& coordinator,
-                       const QueryCatalogPtr& queryCatalog,
+                       const QueryCatalogServicePtr& queryCatalogService,
                        const TopologyPtr& topology,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,
@@ -41,8 +41,8 @@ RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
                        const Runtime::BufferManagerPtr bufferManager) {
     sourceCatalogController = std::make_shared<SourceCatalogController>(sourceCatalog);
-    queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
-    queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
+    queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalogService, coordinator, globalQueryPlan);
+    queryController = std::make_shared<QueryController>(queryService, queryCatalogService, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
     monitoringController = std::make_shared<MonitoringController>(monitoringService, bufferManager);
     topologyController = std::make_shared<TopologyController>(topology);

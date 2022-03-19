@@ -106,7 +106,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     auto getExecutionPlanClient = createRestClient("query/execution-plan");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
@@ -202,7 +202,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     /* REGISTER QUERY */
     CSVSourceTypePtr sourceConfig;
@@ -256,10 +256,10 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(postJsonReturn.at("queryId").as_integer()));
+    EXPECT_TRUE(crd->getQueryCatalogService()->queryExists(postJsonReturn.at("queryId").as_integer()));
 
     auto insertedQueryPlan =
-        crd->getQueryCatalog()->getQueryCatalogEntry(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
+        crd->getQueryCatalogService()->getQueryCatalogEntry(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
@@ -310,7 +310,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     auto getExecutionPlanClient = createRestClient("queryCatalogService/allRegisteredQueries");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";

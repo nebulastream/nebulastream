@@ -127,7 +127,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
@@ -216,7 +216,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
@@ -315,7 +315,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
             + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
@@ -409,7 +409,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 

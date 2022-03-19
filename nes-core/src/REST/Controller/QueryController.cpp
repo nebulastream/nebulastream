@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
@@ -23,19 +21,20 @@
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryController.hpp>
 #include <SerializableQueryPlan.pb.h>
+#include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/http_msg.h>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+
 namespace NES {
 
 const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
 
 QueryController::QueryController(QueryServicePtr queryService,
-                                 QueryCatalogPtr queryCatalog,
-                                 TopologyPtr topology,
+                                 QueryCatalogServicePtr queryCatalogService,
                                  GlobalExecutionPlanPtr globalExecutionPlan)
-    : topology(std::move(topology)), queryService(std::move(queryService)), queryCatalog(std::move(queryCatalog)),
+    : queryService(std::move(queryService)), queryCatalogService(std::move(queryCatalogService)),
       globalExecutionPlan(std::move(globalExecutionPlan)) {}
 
 void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
@@ -56,13 +55,6 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         try {
             // get the queryId from user input
             QueryId queryId = std::stoi(queryParameter->second);
-            NES_DEBUG("Query Controller: Get the registered query");
-            if (!queryCatalog->queryExists(queryId)) {
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("Provided QueryId does not exist");
-                badRequestImpl(request, errorResponse);
-                return;
-            }
             NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
             // get the execution-plan for given query id
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
@@ -91,16 +83,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             QueryId queryId = std::stoi(param->second);
 
             //Call the service
-            NES_DEBUG("UtilityFunctions: Get the registered query");
-            if (!queryCatalog->queryExists(queryId)) {
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("Query Controller: Unable to find query with id "
-                                                                   + std::to_string(queryId) + " in query catalog.");
-                badRequestImpl(request, errorResponse);
-                return;
-            }
-
-            QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
 
             NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
             auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
@@ -133,14 +116,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             // get the queryId from user input
             QueryId queryId = std::stoi(param->second);
             NES_DEBUG("Query Controller: Get the registered query");
-            if (!queryCatalog->queryExists(queryId)) {
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("Provided QueryId does not exist");
-                badRequestImpl(request, errorResponse);
-                return;
-            }
-
-            QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
 
             NES_DEBUG("UtilityFunctions: Getting the json representation of the optimized query plans");
@@ -179,16 +155,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             // get the queryId from user input
             QueryId queryId = std::stoi(queryParameter->second);
             //Call the service
-            NES_DEBUG("Query Controller: Get the registered query");
-            if (!queryCatalog->queryExists(queryId)) {
-                web::json::value errorResponse{};
-                errorResponse["detail"] =
-                    web::json::value::string("QueryController: Provided QueryId does not exist: " + std::to_string(queryId));
-                badRequestImpl(request, errorResponse);
-                throw log4cxx::helpers::Exception("QueryController: Provided QueryId does not exist: " + std::to_string(queryId));
-            }
-
-            QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
 
             NES_DEBUG("QueryController:: Getting the json representation of status: queryId="
                       << queryId << " status=" << queryCatalogEntry->getQueryStatusAsString());
@@ -370,18 +337,9 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
         }
 
         try {
-            //Prepare Input query from user string
             QueryId queryId = std::stoi(param->second);
-            //Call the service
-            NES_DEBUG("Check whether query exists in query catalog");
-            if (!queryCatalog->queryExists(queryId)) {
-                NES_ERROR("QueryController: Unable to find query with provided query Id for the DEL request");
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("Parameter queryId does not exist");
-                errorResponse["queryId"] = web::json::value::number(queryId);
-                badRequestImpl(request, errorResponse);
-                return;
-            }
+            NES_DEBUG("QueryController: Prepare Input query from user string: " << std::to_string(queryId));
+
             bool success = queryService->validateAndQueueStopRequest(queryId);
             //Prepare the response
             web::json::value result{};

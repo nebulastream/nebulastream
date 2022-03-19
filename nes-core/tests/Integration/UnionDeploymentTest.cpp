@@ -89,7 +89,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("UnionDeploymentTest: Submit query");
     string query =
@@ -255,7 +255,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("UnionDeploymentTest: Submit query");
     string query =
@@ -418,7 +418,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
@@ -583,7 +583,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentSources) {
     NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
@@ -662,7 +662,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"
@@ -813,7 +813,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"
@@ -934,7 +934,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Submit query");
     string query = "Query::from(\"ruby\")"

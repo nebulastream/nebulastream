@@ -80,7 +80,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath =  getTestResourceFolder() / "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
     remove(outputFilePath.c_str());
@@ -228,7 +228,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "ysb.out";
 
@@ -476,7 +476,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -858,7 +858,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -939,7 +939,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -1011,7 +1011,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1088,7 +1088,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1276,7 +1276,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "

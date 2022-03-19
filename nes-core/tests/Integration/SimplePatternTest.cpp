@@ -92,7 +92,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithTestStream.out";
     remove(outputFilePath.c_str());
@@ -164,7 +164,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());

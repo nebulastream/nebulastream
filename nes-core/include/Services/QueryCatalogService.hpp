@@ -17,6 +17,7 @@
 
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Util/QueryStatus.hpp>
 #include <memory>
 #include <mutex>
 
@@ -37,7 +38,7 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 class QueryCatalogService {
 
   public:
-    QueryCatalogServicePtr create(QueryCatalogPtr queryCatalog);
+    static QueryCatalogServicePtr create(QueryCatalogPtr queryCatalog);
 
     /**
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
@@ -57,6 +58,12 @@ class QueryCatalogService {
      */
     void addSubQuery(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId);
 
+    /**
+     *
+     * @param queryId
+     * @param querySubPlanId
+     * @param subQueryStatus
+     */
     void updateQuerySubPlanStatus(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     /**
@@ -72,6 +79,12 @@ class QueryCatalogService {
      * @return
      */
     std::map<uint64_t, std::string> getAllEntriesInStatus(std::string queryStatus);
+
+    /**
+     *
+     * @return
+     */
+    std::map<uint64_t, QueryCatalogEntryPtr> getAllQueryCatalogEntries();
 
     /**
      *

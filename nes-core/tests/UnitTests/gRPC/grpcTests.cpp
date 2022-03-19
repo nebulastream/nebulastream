@@ -73,7 +73,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     NES_INFO("GrpcNotifyQueryFailureTest: Worker started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = "test1.out";
     NES_INFO("GrpcNotifyQueryFailureTest: Submit query");

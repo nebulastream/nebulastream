@@ -83,7 +83,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog(); /*register logical source qnv*/
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService(); /*register logical source qnv*/
 
     std::string outputFilePath = getTestResourceFolder() / "MultiThreadedTest_testFilterQuery.out";
 
@@ -159,7 +159,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog(); /*register logical source qnv*/
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService(); /*register logical source qnv*/
 
     std::string outputFilePath = getTestResourceFolder() / "MultiThreadedTest_testProjectQuery.out";
 
@@ -236,7 +236,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -316,7 +316,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -393,7 +393,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -482,7 +482,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("JoinDeploymentTest: Submit query");
     string query =
@@ -582,7 +582,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -699,7 +699,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -830,7 +830,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("JoinDeploymentTest: Submit query");
     string query =

@@ -12,22 +12,24 @@
     limitations under the License.
 */
 
-#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <Runtime/QueryStatistics.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/json.h>
 #include <utility>
 
 namespace NES {
 
-QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog,
+QueryCatalogController::QueryCatalogController(QueryCatalogServicePtr queryCatalogService,
                                                NesCoordinatorWeakPtr coordinator,
                                                GlobalQueryPlanPtr globalQueryPlan)
-    : queryCatalog(std::move(queryCatalog)), coordinator(std::move(coordinator)), globalQueryPlan(std::move(globalQueryPlan)) {
+    : queryCatalogService(std::move(queryCatalogService)), coordinator(std::move(coordinator)),
+      globalQueryPlan(std::move(globalQueryPlan)) {
     NES_DEBUG("QueryCatalogController()");
 }
 
@@ -52,7 +54,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
 
             //Prepare the response
             web::json::value result{};
-            std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus(queryStatus);
+            std::map<uint64_t, std::string> queries = queryCatalogService->getAllEntriesInStatus(queryStatus);
 
             for (auto [key, value] : queries) {
                 result[key] = web::json::value::string(value);
@@ -80,7 +82,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
         try {
             //Prepare the response
             web::json::value result{};
-            std::map<uint64_t, QueryCatalogEntryPtr> queryCatalogEntries = queryCatalog->getAllQueryCatalogEntries();
+            std::map<uint64_t, QueryCatalogEntryPtr> queryCatalogEntries = queryCatalogService->getAllQueryCatalogEntries();
 
             uint64_t index = 0;
             for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
@@ -167,7 +169,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
 
             //Prepare the response
             web::json::value result{};
-            const QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(std::stoi(queryId));
+            const QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(std::stoi(queryId));
             std::string currentQueryStatus = queryCatalogEntry->getQueryStatusAsString();
             NES_DEBUG("Current query status=" << currentQueryStatus);
 

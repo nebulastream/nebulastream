@@ -49,7 +49,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
@@ -148,7 +148,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {
@@ -249,7 +249,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
 
     struct Record {

@@ -23,11 +23,14 @@ std::string QueryStatus::toString(const Value queryStatus) {
         case Registered: return "REGISTERED";
         case Scheduling: return "SCHEDULING";
         case Running: return "RUNNING";
-        case MarkedForHardStop: return "MARKED-FOR-STOP";
         case Stopped: return "STOPPED";
         case Failed: return "FAILED";
         case Restarting: return "RESTARTING";
         case Migrating: return "MIGRATING";
+        case MarkedForHardStop: return "MARKED-FOR-HARD-STOP";
+        case MarkedForSoftStop: return "MARKED-FOR-SOFT-STOP";
+        case SoftStopTriggered: return "SOFT-STOP-TRIGGERED";
+        case SoftStopCompleted: return "SOFT-STOP-COMPLETED";
     }
 }
 
@@ -38,7 +41,7 @@ QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
         return Scheduling;
     } else if (queryStatus == "RUNNING") {
         return Running;
-    } else if (queryStatus == "MARKED-FOR-STOP") {
+    } else if (queryStatus == "MARKED-FOR-HARD-STOP") {
         return MarkedForHardStop;
     } else if (queryStatus == "STOPPED") {
         return Stopped;
@@ -46,6 +49,12 @@ QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
         return Failed;
     } else if (queryStatus == "MIGRATING") {
         return Migrating;
+    } else if (queryStatus == "SOFT-STOP-COMPLETED") {
+        return SoftStopCompleted;
+    } else if (queryStatus == "SOFT-STOP-TRIGGERED") {
+        return SoftStopTriggered;
+    } else if (queryStatus == "MARKED-FOR-SOFT-STOP") {
+        return MarkedForSoftStop;
     } else {
         NES_ERROR("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);

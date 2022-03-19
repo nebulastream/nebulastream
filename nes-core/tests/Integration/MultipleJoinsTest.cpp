@@ -114,7 +114,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -255,7 +255,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDis
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -400,7 +400,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -547,7 +547,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -681,7 +681,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -831,7 +831,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDist
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -985,7 +985,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 
@@ -1153,7 +1153,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     NES_INFO("MultipleJoinsTest: Submit query");
 

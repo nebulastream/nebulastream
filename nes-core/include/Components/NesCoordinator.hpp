@@ -16,12 +16,12 @@
 #define NES_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Plans/Query/QueryId.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-#include <Plans/Query/QuerySubPlanId.hpp>
 #include <future>
 #include <string>
 #include <thread>
@@ -43,17 +43,11 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class RestServer;
 using RestServerPtr = std::shared_ptr<RestServer>;
-
-class QueryDeployer;
-using QueryDeployerPtr = std::shared_ptr<QueryDeployer>;
 
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
@@ -70,6 +64,9 @@ using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
@@ -84,8 +81,6 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 class AbstractHealthCheckService;
 using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
-
-
 
 namespace Catalogs {
 
@@ -161,7 +156,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Get instance of query catalog
      * @return query catalog pointer
      */
-    QueryCatalogPtr getQueryCatalog();
+    QueryCatalogServicePtr getQueryCatalogService();
 
     /**
      * @brief Return the UDF catalog.
@@ -237,7 +232,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     SourceCatalogServicePtr sourceCatalogService;
     HealthCheckServicePtr healthCheckService;
     GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
     SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
     RestServerPtr restServer;

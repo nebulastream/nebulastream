@@ -85,10 +85,10 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     for (auto queryId : queryIds) {
         //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
         if (type == MigrationType::Value::RESTART) {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Restarting);
+            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Restarting, "");
             queryRequestQueue->add(RestartQueryRequest::create(queryId));
         } else {
-            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Migrating);
+            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Migrating, "");
             queryRequestQueue->add(MigrateQueryRequest::create(queryId, nodeId, type));
         }
     }

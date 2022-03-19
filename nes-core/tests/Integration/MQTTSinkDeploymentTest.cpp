@@ -77,7 +77,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorker.out";
     remove(outputFilePath.c_str());

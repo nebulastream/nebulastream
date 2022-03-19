@@ -94,7 +94,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
