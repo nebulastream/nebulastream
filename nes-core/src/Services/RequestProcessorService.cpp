@@ -157,7 +157,7 @@ void RequestProcessorService::start() {
                                 auto workerId = executionNode->getId();
                                 auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
                                 for (auto& subQueryPlan : subQueryPlans) {
-                                    QueryId querySubPlanId = subQueryPlan->getQueryId();
+                                    QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
                                     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                                         queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
                                     }
@@ -205,7 +205,7 @@ void RequestProcessorService::start() {
                                 auto workerId = executionNode->getId();
                                 auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
                                 for (auto& subQueryPlan : subQueryPlans) {
-                                    QueryId querySubPlanId = subQueryPlan->getQueryId();
+                                    QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
                                     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                                         queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
                                     }
