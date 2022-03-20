@@ -1,0 +1,107 @@
+name: NES Release
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+    paths-ignore:
+      - nes-core/include/Version/version.hpp
+      - README.md
+  pull_request:
+    branches:
+      - '*'
+#        tag_name=$GITHUB_REF_NAME
+jobs:
+  create-tag:
+    runs-on: [self-hosted, linux, X64, Build]
+    steps:
+     - uses: actions/checkout@v2
+       with:
+        ssh-strict: 'false'
+        fetch-depth: '0'
+        ssh-key: ${{ secrets.CI_SECRET }}
+        token: ${{ secrets.CI_TOKEN }}
+        repository: 'nebulastream/nebulastream-dev-builds'
+        path: nebulastream
+     - name: create tag
+       run: |
+         cd nebulastream
+
+         tag_name=v1
+         git config --global user.email "ciuser@tu-berlinde"
+         git config --global user.name "CIUser"         
+         git tag -fa "$tag_name" -m "$tag_name"
+         git push --force origin "$tag_name"
+  package-debian-package:
+#    if: github.ref == 'refs/heads/master'
+    needs: [create-tag]
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [X64, arm64]
+        osversion: [ubuntu-18_04, ubuntu-20_04, ubuntu-21_10]
+        exclude:
+          - arch: arm64
+            osversion: ubuntu-18_04
+          - arch: arm64
+            osversion: ubuntu-21_10
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.7.0
+        with:
+          access_token: ${{ github.token }}
+      - name: Build Docker
+        id: builddocker
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+      - name: Run tests
+        run: |
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_package_${{ matrix.osversion }}
+      - name: getFile
+        run: |
+          DEB_NAME=NebulaStream-$GITHUB_REF_NAME-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
+          mv $GITHUB_WORKSPACE/build/*deb $GITHUB_WORKSPACE/build/$DEB_NAME.deb
+          echo "DEB_FILE=$GITHUB_WORKSPACE/build/$DEB_NAME.deb" >> $GITHUB_ENV
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.DEB_FILE }}
+          repository: nebulastream/nebulastream-dev-builds
+          token: ${{ secrets.CI_TOKEN }}
+          tag_name: v1
+      - name: docker cleanup
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_package
+  build-docker:
+    needs: [package-debian-package]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    env:
+      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+    steps:
+    - name: Build and Release NES Executable Image
+      run: |
+        nes_version="$GITHUB_REF_NAME"          
+        echo "Preparing and Releasing new executable image with version $nes_version and latest"
+        echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
+        wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/v1/NebulaStream-$GITHUB_REF_NAME-ubuntu-20_04-Linux.X64.deb 
+        wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/v1/NebulaStream-$GITHUB_REF_NAME-ubuntu-20_04-Linux.arm64.deb 
+        docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:$nes_version --push
+        echo "Pushed the execution image"
+        docker logout
