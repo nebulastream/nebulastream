@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -414,7 +415,7 @@ class TestHarness {
         }
 
         QueryServicePtr queryService = nesCoordinator->getQueryService();
-        QueryCatalogPtr queryCatalog = nesCoordinator->getQueryCatalogService();
+        QueryCatalogServicePtr queryCatalogService = nesCoordinator->getQueryCatalogService();
 
         // local fs
         std::string filePath = testHarnessResourcePath / "testHarness.out";
@@ -436,7 +437,7 @@ class TestHarness {
                                                                    faultToleranceMode,
                                                                    lineageMode);
 
-        if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
+        if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
         }
 
@@ -444,12 +445,12 @@ class TestHarness {
         // Output struct might be padded, in this case the size is not equal to the total size of its field
         // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
         // (e.g., the size is multiple of 8)
-        uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)
+        uint64_t outputSchemaSizeInBytes = queryCatalogService->getEntryForQuery(queryId)
                                                ->getExecutedQueryPlan()
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
-        NES_DEBUG("TestHarness: outputSchema: " << queryCatalog->getQueryCatalogEntry(queryId)
+        NES_DEBUG("TestHarness: outputSchema: " << queryCatalogService->getEntryForQuery(queryId)
                                                        ->getInputQueryPlan()
                                                        ->getSinkOperators()[0]
                                                        ->getOutputSchema()
@@ -469,7 +470,7 @@ class TestHarness {
         if (!queryService->validateAndQueueStopRequest(queryId)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: cannot validateAndQueueStopRequest for query with id=" << queryId);
         }
-        if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalog)) {
+        if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
         }
 

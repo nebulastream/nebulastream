@@ -60,7 +60,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     NES_INFO("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
@@ -86,11 +86,11 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
 
     NES_INFO("MaterializedViewTupleViewSinkTest: queryId" << queryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleViewSinkTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleViewSinkTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -130,7 +130,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     Query adhoc_query = Query::from("stream").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
@@ -139,11 +139,11 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 
     NES_INFO("MaterializedViewTupleBufferSourceTest: queryId" << adhocQueryId);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleBufferSourceTest: Remove query");
     queryService->validateAndQueueStopRequest(adhocQueryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(adhocQueryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(adhocQueryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleBufferSourceTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -167,7 +167,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
@@ -200,7 +200,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId" << maintenanceQueryId);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(maintenanceQueryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(maintenanceQueryId, queryCatalogService));
 
     Query adhoc_query = Query::from("stream2").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
@@ -208,16 +208,16 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     auto adhocQueryId = queryService->addQueryRequest("", adhoc_queryPlan, "BottomUp");
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId" << adhocQueryId);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalogService));
 
     // Stop Queries
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Remove maintenance query");
     queryService->validateAndQueueStopRequest(maintenanceQueryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(maintenanceQueryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(maintenanceQueryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Remove ad hoc query");
     queryService->validateAndQueueStopRequest(adhocQueryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(adhocQueryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(adhocQueryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

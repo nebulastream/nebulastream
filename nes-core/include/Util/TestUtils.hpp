@@ -14,13 +14,14 @@
 
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
-#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
@@ -63,16 +64,21 @@ class TestUtils {
 
     [[nodiscard]] static std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
 
-    [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--physicalSources." + SOURCE_TYPE_CONFIG + "=" + sourceType; }
+    [[nodiscard]] static std::string sourceType(std::string sourceType) {
+        return "--physicalSources." + SOURCE_TYPE_CONFIG + "=" + sourceType;
+    }
 
-    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) { return "--physicalSources." + FILE_PATH_CONFIG + "=" + filePath; }
+    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) {
+        return "--physicalSources." + FILE_PATH_CONFIG + "=" + filePath;
+    }
 
     [[nodiscard]] static std::string dataPort(uint64_t dataPort) {
         return "--" + DATA_PORT_CONFIG + "=" + std::to_string(dataPort);
     }
 
     [[nodiscard]] static std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer) {
-        return "--physicalSources." + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + "=" + std::to_string(numberOfTuplesToProducePerBuffer);
+        return "--physicalSources." + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + "="
+            + std::to_string(numberOfTuplesToProducePerBuffer);
     }
 
     [[nodiscard]] static std::string physicalSourceName(std::string physicalSourceName) {
@@ -175,19 +181,19 @@ class TestUtils {
     /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
      * @param queryId : the query id to check for
-     * @param queryCatalog: the catalog to look into for status change
+     * @param queryCatalogService: the catalog to look into for status change
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
     static bool waitForQueryToStart(QueryId queryId,
-                                    const QueryCatalogPtr& queryCatalog,
+                                    const QueryCatalogServicePtr& queryCatalogService,
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultTimeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto start_timestamp = std::chrono::system_clock::now();
 
         NES_DEBUG("TestUtils: Keep checking the status of query " << queryId << " until a fixed time out");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-            auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             if (!queryCatalogEntry) {
                 NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
                 return false;
@@ -201,7 +207,7 @@ class TestUtils {
             }
 
             if (status == QueryStatus::Failed || status == QueryStatus::Stopped) {
-                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " +  QueryStatus::toString(status));
+                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
                 return false;
             }
 
@@ -317,20 +323,20 @@ class TestUtils {
     /**
      * @brief Check if the query is been stopped successfully within the timeout.
      * @param queryId: Id of the query to be stopped
-     * @param queryCatalog: the catalog containig the queries in the system
+     * @param queryCatalogService: the catalog containig the queries in the system
      * @return true if successful
      */
-    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogPtr& queryCatalog, uint64_t timeout = defaultTimeout) {
+    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, uint64_t timeout = defaultTimeout) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkStoppedOrTimeout: check query status");
-            if (queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatus() == QueryStatus::Stopped) {
+            if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Stopped) {
                 NES_DEBUG("checkStoppedOrTimeout: status reached stopped");
                 return true;
             }
             NES_DEBUG("checkStoppedOrTimeout: status not reached as status is="
-                      << queryCatalog->getQueryCatalogEntry(queryId)->getQueryStatusAsString());
+                      << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
         }
         NES_DEBUG("checkStoppedOrTimeout: expected status not reached within set timeout");
@@ -510,4 +516,4 @@ class TestUtils {
     static bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers);
 };
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_
