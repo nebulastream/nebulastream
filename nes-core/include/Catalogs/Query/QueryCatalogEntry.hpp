@@ -150,6 +150,8 @@ class QueryCatalogEntry {
      */
     std::vector<QuerySubPlanMetaDataPtr> getAllSubQueryPlanMetaData();
 
+    void removeAllQuerySubPlanMetaData();
+
   private:
     QueryId queryId;
     std::string queryString;

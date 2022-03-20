@@ -95,4 +95,6 @@ std::vector<QuerySubPlanMetaDataPtr> QueryCatalogEntry::getAllSubQueryPlanMetaDa
     return allQuerySubPlanMetaData;
 }
 
+void QueryCatalogEntry::removeAllQuerySubPlanMetaData() { querySubPlanMetaDataMap.clear(); }
+
 }// namespace NES

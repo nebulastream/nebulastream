@@ -113,6 +113,7 @@ class RequestProcessorService {
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
+    GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
 };

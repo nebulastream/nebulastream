@@ -30,6 +30,7 @@
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
@@ -55,7 +56,8 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration)
     : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalogService(queryCatalogService),
-      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
+      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan),
+      globalExecutionPlan(globalExecutionPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
@@ -67,7 +69,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3::config cfg;
-    cfg.set("timeout", 50000);
+    cfg.set("timeout", 1000);
     cfg.set("model", false);
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
@@ -144,7 +146,25 @@ void RequestProcessorService::start() {
                                         + std::to_string(sharedQueryId));
                             }
 
-                            //3.2.4. Mark all contained queries as running
+                            //3.3.4. Reset all sub query plans
+                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                                queryCatalogService->resetSubQueryMetaData(queryId);
+                            }
+
+                            //3.3.5. Add all sub query plans
+                            auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+                            for (auto& executionNode : executionNodes) {
+                                auto workerId = executionNode->getId();
+                                auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
+                                for (auto& subQueryPlan : subQueryPlans) {
+                                    QueryId querySubPlanId = subQueryPlan->getQueryId();
+                                    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                                        queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
+                                    }
+                                }
+                            }
+
+                            //3.2.6. Mark all contained queries as running
                             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                                 queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
                             }
@@ -174,7 +194,25 @@ void RequestProcessorService::start() {
                                         + std::to_string(sharedQueryId));
                             }
 
-                            //3.3.3. Mark all contained queries as running
+                            //3.3.3. Reset all sub query plans
+                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                                queryCatalogService->resetSubQueryMetaData(queryId);
+                            }
+
+                            //3.3.4. Add all sub query plans
+                            auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
+                            for (auto& executionNode : executionNodes) {
+                                auto workerId = executionNode->getId();
+                                auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
+                                for (auto& subQueryPlan : subQueryPlans) {
+                                    QueryId querySubPlanId = subQueryPlan->getQueryId();
+                                    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                                        queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
+                                    }
+                                }
+                            }
+
+                            //3.3.5. Mark all contained queries as running
                             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                                 queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
                             }

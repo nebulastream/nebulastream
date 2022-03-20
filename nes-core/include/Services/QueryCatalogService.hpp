@@ -59,7 +59,9 @@ class QueryCatalogService {
      * @param querySubPlanId
      * @param workerId
      */
-    void addSubQuery(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId);
+    void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId);
+
+    void resetSubQueryMetaData(QueryId queryId);
 
     /**
      *
