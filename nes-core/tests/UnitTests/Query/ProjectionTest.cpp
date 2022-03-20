@@ -58,7 +58,7 @@ class ProjectionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ProjectionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("ProjectionTest: Setup QueryCatalogTest test class.");
+        NES_DEBUG("ProjectionTest: Setup QueryCatalogServiceTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {

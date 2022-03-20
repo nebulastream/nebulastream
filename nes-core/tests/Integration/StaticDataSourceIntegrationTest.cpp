@@ -114,7 +114,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
 
@@ -143,13 +143,13 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -202,7 +202,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
 
@@ -231,13 +231,13 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -276,7 +276,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto sourceCatalog = crd->getSourceCatalog();
     sourceCatalog->addLogicalSource("tpch_customer", schema_customer);
     sourceCatalog->addLogicalSource("tpch_nation", schema_nation);
@@ -315,13 +315,13 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());

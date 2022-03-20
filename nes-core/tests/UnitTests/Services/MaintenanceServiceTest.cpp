@@ -13,16 +13,17 @@
 */
 
 #include "gtest/gtest.h"
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Phases/MigrationType.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Services/MaintenanceService.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Topology/Topology.hpp>
-#include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Services/MaintenanceService.hpp>
 #include <WorkQueues/RequestQueue.hpp>
-#include <Phases/MigrationType.hpp>
 #include <iostream>
 
 using namespace NES;
@@ -33,7 +34,7 @@ class MaintenanceServiceTest : public testing::Test {
     GlobalExecutionPlanPtr executionPlan;
     RequestQueuePtr nesRequestQueue;
     QueryCatalogPtr queryCatalog;
-
+    QueryCatalogServicePtr queryCatalogService;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup MaintenanceService test class." << std::endl; }
@@ -44,11 +45,12 @@ class MaintenanceServiceTest : public testing::Test {
         std::cout << "Setup MaintenanceService test case." << std::endl;
         topology = Topology::create();
         queryCatalog = std::make_shared<QueryCatalog>();
+        queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         executionPlan = GlobalExecutionPlan::create();
         nesRequestQueue = std::make_shared<RequestQueue>(1);
-        maintenanceService = std::make_shared<Experimental::MaintenanceService>(topology, queryCatalog, nesRequestQueue, executionPlan);
+        maintenanceService =
+            std::make_shared<Experimental::MaintenanceService>(topology, queryCatalogService, nesRequestQueue, executionPlan);
     }
-
 
     /* Will be called before a test is executed. */
     void TearDown() override { std::cout << "Tear down MaintenanceService test case." << std::endl; }
@@ -61,7 +63,6 @@ class MaintenanceServiceTest : public testing::Test {
     uint16_t resources = 1;
     uint32_t dataPort = 1;
     uint64_t id = 1;
-
 };
 
 TEST_F(MaintenanceServiceTest, testMaintenanceService) {
@@ -72,22 +73,27 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
     auto nonExistentType = Experimental::MigrationType::Value(4);
     //test no such Topology Node ID
     uint64_t nonExistentId = 0;
-    auto [result1, info1] = maintenanceService->submitMaintenanceRequest(nonExistentId,nonExistentType);
+    auto [result1, info1] = maintenanceService->submitMaintenanceRequest(nonExistentId, nonExistentType);
     EXPECT_FALSE(result1);
-    EXPECT_EQ(info1,"No Topology Node with ID 0");
+    EXPECT_EQ(info1, "No Topology Node with ID 0");
     //test pass no such Execution Node
-    auto [result2, info2] = maintenanceService->submitMaintenanceRequest(id,nonExistentType);
+    auto [result2, info2] = maintenanceService->submitMaintenanceRequest(id, nonExistentType);
     EXPECT_TRUE(result2);
-    EXPECT_EQ(info2,"No ExecutionNode for TopologyNode with ID: " + std::to_string(id) +". Node can be taken down for maintenance immediately");
+    EXPECT_EQ(info2,
+              "No ExecutionNode for TopologyNode with ID: " + std::to_string(id)
+                  + ". Node can be taken down for maintenance immediately");
     //add execution node
     executionPlan->addExecutionNode(ExecutionNode::createExecutionNode(node));
     //test no such MigrationType
-    auto [result3, info3] = maintenanceService->submitMaintenanceRequest(id,nonExistentType);
+    auto [result3, info3] = maintenanceService->submitMaintenanceRequest(id, nonExistentType);
     EXPECT_FALSE(result3);
-    EXPECT_EQ(info3, "MigrationType: " + std::to_string(nonExistentType) + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
+    EXPECT_EQ(info3,
+              "MigrationType: " + std::to_string(nonExistentType)
+                  + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
+                    "Buffering)");
     //pass valid TopologyNodeID with corresponding ExecutionNode and valid MigrationType
     auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, Experimental::MigrationType::Value::RESTART);
     EXPECT_TRUE(result4);
-    EXPECT_EQ(info4, "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(id));
-
+    EXPECT_EQ(info4,
+              "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(id));
 }

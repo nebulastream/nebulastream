@@ -299,8 +299,8 @@ std::string RemoteClient::getQueries() {
     return jsonReturn.serialize();
 }
 
-std::string RemoteClient::getQueries(const QueryStatus& status) {
-    std::string queryStatus = toString(status);
+std::string RemoteClient::getQueries(QueryStatus::Value status) {
+    std::string queryStatus = QueryStatus::toString(status);
 
     auto restMethod = web::http::methods::POST;
     auto path = "queries?status=" + queryStatus;

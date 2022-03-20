@@ -12,23 +12,23 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <NesBaseTest.hpp>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <thread>
 
 using namespace std;
@@ -94,7 +94,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
@@ -114,10 +114,9 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
-
 
     //get sink
     auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(2)->getSinks();
@@ -137,7 +136,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -148,4 +147,4 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("UpstreamBackupTest: Test finished");
 }
-}
+}// namespace NES

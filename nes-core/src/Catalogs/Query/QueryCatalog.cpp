@@ -25,7 +25,7 @@ namespace NES {
 std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryStatus::Value status) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog : fetching all queries with status " << status);
-    std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueries(status);
+    std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueryCatalogEntries(status);
     std::map<uint64_t, std::string> result;
     for (auto const& [key, value] : queries) {
         result[key] = value->getQueryString();
@@ -99,7 +99,7 @@ bool QueryCatalog::queryExists(QueryId queryId) {
     return false;
 }
 
-std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus::Value requestedStatus) {
+std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(QueryStatus::Value requestedStatus) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: getQueriesWithStatus() registered queries=" << printQueries());
     std::map<uint64_t, QueryCatalogEntryPtr> matchingQueries;

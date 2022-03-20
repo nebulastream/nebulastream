@@ -19,6 +19,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -31,31 +32,31 @@ using namespace std;
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
 
-class QueryCatalogTest : public testing::Test {
+class QueryCatalogServiceTest : public testing::Test {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup QueryCatalogTest test class." << std::endl; }
+    static void SetUpTestCase() { std::cout << "Setup QueryCatalogServiceTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("QueryCatalogTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("QueryCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
-        std::cout << "Setup QueryCatalogTest test case." << std::endl;
+        std::cout << "Setup QueryCatalogServiceTest test case." << std::endl;
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down QueryCatalogTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down QueryCatalogServiceTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down QueryCatalogTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down QueryCatalogServiceTest test class." << std::endl; }
 };
 
-TEST_F(QueryCatalogTest, testAddNewQuery) {
+TEST_F(QueryCatalogServiceTest, testAddNewQuery) {
 
     //Prepare
     std::string queryString =
@@ -65,17 +66,18 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalogService->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalogService->getAllEntriesInStatus("REGISTERED");
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryAndStop) {
 
     //Prepare
     std::string queryString =
@@ -85,28 +87,30 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
 
-    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalogService->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
+    std::map<uint64_t, QueryCatalogEntryPtr> registeredQueries = queryCatalogService->getAllEntriesInStatus("REGISTERED");
     EXPECT_TRUE(registeredQueries.size() == 1U);
 
     //SendStop request
-    catalogEntry = queryCatalog->markQueryForStop(queryId);
+    bool success = queryCatalogService->checkAndMarkForHardStop(queryId);
 
     //Assert
-    EXPECT_TRUE(catalogEntry);
-    registeredQueries = queryCatalog->getQueries(QueryStatus::Registered);
+    EXPECT_TRUE(success);
+    registeredQueries = queryCatalogService->getAllEntriesInStatus("REGISTERED");
     EXPECT_TRUE(registeredQueries.empty());
-    std::map<uint64_t, QueryCatalogEntryPtr> queriesMarkedForStop = queryCatalog->getQueries(QueryStatus::MarkedForHardStop);
+    std::map<uint64_t, QueryCatalogEntryPtr> queriesMarkedForStop =
+        queryCatalogService->getAllEntriesInStatus("MARKED-FOR-HARD-STOP");
     EXPECT_TRUE(queriesMarkedForStop.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testPrintQuery) {
+TEST_F(QueryCatalogServiceTest, testPrintQuery) {
 
     //Prepare
     std::string queryString =
@@ -116,26 +120,30 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
+    QueryCatalogServicePtr queryServiceCatalog = std::make_shared<QueryCatalogService>(queryCatalog);
+
+    auto catalogEntry = queryServiceCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryServiceCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::string ret = queryCatalog->printQueries();
-    cout << "ret=" << ret << endl;
 }
 
-TEST_F(QueryCatalogTest, getAllQueriesWithoutAnyQueryRegistration) {
+TEST_F(QueryCatalogServiceTest, getAllQueriesWithoutAnyQueryRegistration) {
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    std::map<uint64_t, std::string> allRegisteredQueries = queryCatalog->getAllQueries();
+    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+
+    auto allRegisteredQueries = queryCatalogService->getAllQueryCatalogEntries();
     EXPECT_TRUE(allRegisteredQueries.empty());
 }
 
-TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
+TEST_F(QueryCatalogServiceTest, getAllQueriesAfterQueryRegistration) {
 
     //Prepare
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
@@ -151,36 +159,32 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
 }
 
-TEST_F(QueryCatalogTest, getAllRunningQueries) {
+TEST_F(QueryCatalogServiceTest, getAllRunningQueries) {
 
     //Prepare
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
-    queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+    queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
+    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
 
     //Assert
-    std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus("running");
+    std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus("RUNNING");
     EXPECT_EQ(queries.size(), 1U);
     EXPECT_TRUE(queries.find(queryId) != queries.end());
 }
 
-TEST_F(QueryCatalogTest, throInvalidArgumentExceptionWhenQueryStatusIsUnknown) {
-    try {
-        //Prepare
-        QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-        std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus("something_random");
-        NES_WARNING("Should have thrown invalid argument exception");
-        //Assert for Failure
-        FAIL();
-    } catch (InvalidArgumentException& e) {
-        //Assert for Success
-        NES_INFO(e.what());
-        SUCCEED();
-    }
+TEST_F(QueryCatalogServiceTest, throInvalidArgumentExceptionWhenQueryStatusIsUnknown) {
+
+    //Prepare
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
+
+    EXPECT_THROW(queryCatalogService->getAllQueriesInStatus("something_random"), InvalidArgumentException);
 }

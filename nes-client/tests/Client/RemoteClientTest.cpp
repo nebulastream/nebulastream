@@ -83,8 +83,8 @@ class RemoteClientTest : public Testing::NESBaseTest {
         if (!!res) {
             while (true) {
                 auto statusStr = client->getQueryStatus(queryId);
-                auto status = stringToQueryStatusMap(statusStr);
-                if (status == Stopped) {
+                auto status = QueryStatus::getFromString(statusStr);
+                if (status == QueryStatus::Stopped) {
                     break;
                 }
                 NES_DEBUG("Query " << queryId << " not stopped yet but " << statusStr);
@@ -97,8 +97,8 @@ class RemoteClientTest : public Testing::NESBaseTest {
 
     void checkForQueryStart(int64_t queryId) {
         while (true) {
-            auto status = stringToQueryStatusMap(client->getQueryStatus(queryId));
-            if (status == Registered || status == Scheduling) {
+            auto status = QueryStatus::getFromString(client->getQueryStatus(queryId));
+            if (status == QueryStatus::Registered || status == QueryStatus::Scheduling) {
                 NES_DEBUG("Query " << queryId << " not started yet");
                 sleep(1);
             } else {
@@ -129,7 +129,7 @@ TEST_F(RemoteClientTest, DeployQueryTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
     int64_t queryId = client->submitQuery(query);
     checkForQueryStart(queryId);
-    ASSERT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
+    ASSERT_TRUE(crd->getQueryCatalogService()->getEntryForQuery(queryId));
     ASSERT_TRUE(stopQuery(queryId));
 }
 
@@ -142,8 +142,8 @@ TEST_F(RemoteClientTest, SubmitQueryTest) {
     auto queryPlan = query.getQueryPlan();
     int64_t queryId = client->submitQuery(queryPlan);
     checkForQueryStart(queryId);
-    ASSERT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
-    auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
+    ASSERT_TRUE(crd->getQueryCatalogService()->getEntryForQuery(queryId));
+    auto insertedQueryPlan = crd->getQueryCatalogService()->getEntryForQuery(queryId)->getInputQueryPlan();
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
@@ -156,8 +156,7 @@ TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest) {
     EXPECT_THROW(
         try { client->submitQuery(query); } catch (std::exception const& e) {
             std::string errorMessage = e.what();
-            constexpr auto expectedMessage =
-                "The logical source 'default_l' can not be found in the SourceCatalog";
+            constexpr auto expectedMessage = "The logical source 'default_l' can not be found in the SourceCatalog";
             ASSERT_NE(errorMessage.find(expectedMessage), std::string::npos);
             throw;
         },
@@ -217,7 +216,7 @@ TEST_F(RemoteClientTest, StopQueryTest) {
     checkForQueryStart(queryId);
     auto res = client->stopQuery(queryId);
     ASSERT_TRUE(!!res);
-    ASSERT_TRUE(!crd->getQueryCatalog()->isQueryRunning(queryId));
+    ASSERT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::Running);
 }
 
 /**

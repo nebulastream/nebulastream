@@ -93,12 +93,20 @@ QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
     return queryCatalog->getQueryCatalogEntry(queryId);
 }
 
-std::map<uint64_t, std::string> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
+std::map<uint64_t, std::string> QueryCatalogService::getAllQueriesInStatus(std::string queryStatus) {
     std::unique_lock lock(serviceMutex);
 
     QueryStatus::Value status = QueryStatus::getFromString(queryStatus);
     //return queries with status
     return queryCatalog->getQueriesWithStatus(status);
+}
+
+std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalogService::getAllEntriesInStatus(std::string queryStatus) {
+    std::unique_lock lock(serviceMutex);
+
+    QueryStatus::Value status = QueryStatus::getFromString(queryStatus);
+    //return queries with status
+    return queryCatalog->getQueryCatalogEntries(status);
 }
 
 bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation) {

@@ -69,21 +69,22 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     NES_INFO("RenameTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("RenameTest: Submit query");
     string query = "Query::from(\"default_logical\").project(Attribute(\"id\").as(\"NewName\")).sink(FileSinkDescriptor::"
-                   "create(\""s + getTestResourceFolder().c_str() + "/test.out\"));";
+                   "create(\""s
+        + getTestResourceFolder().c_str() + "/test.out\"));";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ifstream my_file(getTestResourceFolder() / "test.out");
     EXPECT_TRUE(my_file.good());
@@ -144,7 +145,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     NES_INFO("RenameTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     auto outputFile = getTestResourceFolder() / "test.out";
 
@@ -153,17 +154,18 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
                    ".project(Attribute(\"id\").as(\"NewName\"))"
                    ".map(Attribute(\"NewName\") = Attribute(\"NewName\") * 2u)"
                    ".project(Attribute(\"NewName\").as(\"id\"))"
-                   ".sink(FileSinkDescriptor::create(\""s + outputFile.c_str() + "\"));";
+                   ".sink(FileSinkDescriptor::create(\""s
+        + outputFile.c_str() + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     ifstream my_file(outputFile);
     EXPECT_TRUE(my_file.good());
@@ -224,7 +226,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     NES_INFO("RenameTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     auto outputFile = getTestResourceFolder() / "test.out";
 
@@ -236,13 +238,13 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent = "default_logical$NewName:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -266,7 +268,6 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("RenameTest: Test finished");
-
 }
 
 TEST_F(RenameTest, testCentralWindowEventTime) {
@@ -299,7 +300,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -316,7 +317,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
@@ -332,7 +333,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -397,7 +398,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("RenameTest: Submit query");
     string query =
@@ -412,7 +413,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
         queryService->validateAndQueueAddRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
@@ -429,7 +430,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
 
     NES_DEBUG("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

@@ -29,7 +29,7 @@
 #include <regex>
 #include "../util/NesBaseTest.hpp"
 
-//used tests: QueryCatalogTest, QueryTest
+//used tests: QueryCatalogServiceTest, QueryTest
 namespace fs = std::filesystem;
 namespace NES {
 
@@ -92,7 +92,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithTestStream.out";
     remove(outputFilePath.c_str());
@@ -105,11 +105,11 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent = "+----------------------------------------------------+\n"
                              "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
@@ -164,7 +164,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
@@ -181,12 +181,12 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -244,7 +244,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
@@ -261,12 +261,12 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -323,7 +323,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
@@ -340,12 +340,12 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -399,7 +399,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
@@ -416,12 +416,12 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -478,7 +478,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
@@ -495,12 +495,12 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"

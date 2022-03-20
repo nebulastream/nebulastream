@@ -83,7 +83,14 @@ class QueryCatalogService {
      * @param queryId
      * @return
      */
-    std::map<uint64_t, std::string> getAllEntriesInStatus(std::string queryStatus);
+    std::map<uint64_t, std::string> getAllQueriesInStatus(std::string queryStatus);
+
+    /**
+     *
+     * @param queryId
+     * @return
+     */
+    std::map<uint64_t, QueryCatalogEntryPtr> getAllEntriesInStatus(std::string queryStatus);
 
     /**
      *

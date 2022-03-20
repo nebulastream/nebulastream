@@ -57,7 +57,7 @@ class SeqOperatorTest : public Testing::NESBaseTest {
             // Replace this occurrence of Sub String
             contentString = contentString.replace(start, end, "");
             // Get the next occurrence from the current position
-            start = contentString.find("|QnV1QnV2$start:UINT64",end);
+            start = contentString.find("|QnV1QnV2$start:UINT64", end);
         }
 
         std::regex r3("\\+?[-]+\\+\\n?");
@@ -127,13 +127,13 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_NE(queryId, INVALID_QUERY_ID);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
@@ -143,7 +143,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -216,19 +216,19 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622880000|69.388885|7|1|\n"
@@ -312,21 +312,21 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
             .seqWith(Query::from("QnV2").filter(Attribute("velocity")>65))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(5),Minutes(1)))
             .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\"));";
+        + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("AndOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -409,19 +409,19 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -432,7 +432,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     NES_DEBUG("TUPLE NUMBER=" << n);
 
     string expectedContent =
-       "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n";
+        "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n";
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
@@ -531,19 +531,19 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622880000|69.388885|7|1|\n"

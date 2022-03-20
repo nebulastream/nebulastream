@@ -95,7 +95,7 @@ class QueryCatalog {
      * @param requestedStatus : desired query status
      * @return this will return a COPY of the queries in the catalog that are running
      */
-    std::map<uint64_t, QueryCatalogEntryPtr> getQueries(QueryStatus::Value requestedStatus);
+    std::map<uint64_t, QueryCatalogEntryPtr> getQueryCatalogEntries(QueryStatus::Value requestedStatus);
 
     /**
      * @brief method to reset the catalog
