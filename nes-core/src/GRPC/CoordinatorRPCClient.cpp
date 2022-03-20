@@ -539,7 +539,7 @@ bool CoordinatorRPCClient::sendErrors(uint64_t workerId, std::string errorMsg) {
     return false;
 }
 
-bool CoordinatorRPCClient::requestSoftStop(QueryId queryId) {
+bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId) {
 
     //Build request
     RequestSoftStopMessage requestSoftStopMessage;

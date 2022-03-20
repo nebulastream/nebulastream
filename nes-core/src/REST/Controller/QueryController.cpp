@@ -53,15 +53,22 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             badRequestImpl(request, errorResponse);
             return;
         }
+
+        // get the queryId from user input
+        QueryId queryId = std::stoi(queryParameter->second);
         try {
-            // get the queryId from user input
-            QueryId queryId = std::stoi(queryParameter->second);
             NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
             // get the execution-plan for given query id
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
             NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
             //Prepare the response
             successMessageImpl(request, executionPlanJson);
+            return;
+        } catch (const QueryNotFoundException& exc) {
+            web::json::value errorResponse{};
+            errorResponse["detail"] =
+                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
+            badRequestImpl(request, errorResponse);
             return;
         } catch (...) {
             NES_ERROR("RestServer: Unable to start REST server unknown exception.");
@@ -79,9 +86,10 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             return;
         }
 
+        // get the queryId from user input
+        QueryId queryId = std::stoi(param->second);
+
         try {
-            // get the queryId from user input
-            QueryId queryId = std::stoi(param->second);
 
             //Call the service
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
@@ -91,6 +99,12 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
 
             //Prepare the response
             successMessageImpl(request, basePlan);
+            return;
+        } catch (const QueryNotFoundException& exc) {
+            web::json::value errorResponse{};
+            errorResponse["detail"] =
+                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
+            badRequestImpl(request, errorResponse);
             return;
         } catch (const std::exception& exc) {
             NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user "
@@ -113,9 +127,9 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             return;
         }
 
+        // get the queryId from user input
+        QueryId queryId = std::stoi(param->second);
         try {
-            // get the queryId from user input
-            QueryId queryId = std::stoi(param->second);
             NES_DEBUG("Query Controller: Get the registered query");
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
             auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
@@ -129,6 +143,12 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
 
             //Prepare the response
             successMessageImpl(request, response);
+            return;
+        } catch (const QueryNotFoundException& exc) {
+            web::json::value errorResponse{};
+            errorResponse["detail"] =
+                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
+            badRequestImpl(request, errorResponse);
             return;
         } catch (const std::exception& exc) {
             NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user "
@@ -152,9 +172,10 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             badRequestImpl(request, errorResponse);
             return;
         }
+
+        // get the queryId from user input
+        QueryId queryId = std::stoi(queryParameter->second);
         try {
-            // get the queryId from user input
-            QueryId queryId = std::stoi(queryParameter->second);
             //Call the service
             QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
 
@@ -166,6 +187,12 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             node["status"] = web::json::value::string(queryCatalogEntry->getQueryStatusAsString());
             //Prepare the response
             successMessageImpl(request, node);
+            return;
+        } catch (const QueryNotFoundException& exc) {
+            web::json::value errorResponse{};
+            errorResponse["detail"] =
+                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
+            badRequestImpl(request, errorResponse);
             return;
         } catch (...) {
             NES_ERROR("RestServer: Unable to start REST server unknown exception.");
@@ -295,8 +322,11 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         throw log4cxx::helpers::Exception("QueryController: " + lineageString);
                     }
 
-                    QueryId queryId =
-                        queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceMode, lineageMode);
+                    QueryId queryId = queryService->addQueryRequest(*queryString,
+                                                                    queryPlan,
+                                                                    placementStrategy,
+                                                                    faultToleranceMode,
+                                                                    lineageMode);
 
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
@@ -337,8 +367,8 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             return;
         }
 
+        QueryId queryId = std::stoi(param->second);
         try {
-            QueryId queryId = std::stoi(param->second);
             NES_DEBUG("QueryController: Prepare Input query from user string: " << std::to_string(queryId));
 
             bool success = queryService->validateAndQueueStopRequest(queryId);
@@ -348,11 +378,12 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             result["queryId"] = web::json::value::number(queryId);
             successMessageImpl(request, result);
             return;
-        } catch (QueryNotFoundException const& exc) {
-            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
-                      "user request:"
-                      << exc.what());
-            handleException(request, exc);
+        } catch (const QueryNotFoundException& exc) {
+            web::json::value errorResponse{};
+            errorResponse["detail"] =
+                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
+            errorResponse["queryId"] = web::json::value::number(queryId);
+            badRequestImpl(request, errorResponse);
             return;
         } catch (InvalidQueryStatusException const& exc) {
             NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "

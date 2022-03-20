@@ -178,11 +178,11 @@ class CoordinatorRPCClient {
     bool sendErrors(uint64_t workerId, std::string errorMsg);
 
     /**
-     * Request if soft stop can be performed for the query
+     * Checks and mark the query for soft stop
      * @param queryId : the query id for which soft stop to be performed
-     * @return true if coordinator returns true else false
+     * @return true if coordinator marks the query for soft stop else false
      */
-    bool requestSoftStop(QueryId queryId);
+    bool checkAndMarkForSoftStop(QueryId queryId);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is triggered or not

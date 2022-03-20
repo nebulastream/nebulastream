@@ -201,7 +201,7 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
     std::string response = client->getQueryPlan(nonExistingQueryId);
 
     std::string expect =
-        "{\"detail\":\"Query Controller: Unable to find query with id " + to_string(nonExistingQueryId) + " in query catalog.\"}";
+        "{\"detail\":\"Unable to find query with id " + to_string(nonExistingQueryId) + " in query catalog.\"}";
     EXPECT_EQ(response, expect);
     ASSERT_TRUE(stopQuery(queryId));
 }
@@ -216,7 +216,7 @@ TEST_F(RemoteClientTest, StopQueryTest) {
     checkForQueryStart(queryId);
     auto res = client->stopQuery(queryId);
     ASSERT_TRUE(!!res);
-    ASSERT_EQ(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::Running);
+    ASSERT_NE(crd->getQueryCatalogService()->getEntryForQuery(queryId)->getQueryStatus(), QueryStatus::Running);
 }
 
 /**
