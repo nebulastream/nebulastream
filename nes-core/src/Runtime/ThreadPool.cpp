@@ -30,9 +30,8 @@
 
 #ifdef __linux__
 #include <Runtime/HardwareManager.hpp>
-#include <numa.h>
-#include <numaif.h>
 #endif
+
 
 #ifdef ENABLE_PAPI_PROFILER
 #include <Runtime/Profiler/PAPIProfiler.hpp>
