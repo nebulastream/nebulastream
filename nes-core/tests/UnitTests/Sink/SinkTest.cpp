@@ -60,9 +60,8 @@ class SinkTest : public Testing::NESBaseTest {
         path_to_csv_file = getTestResourceFolder() / "sink.csv";
         path_to_bin_file = getTestResourceFolder() / "sink.bin";
         path_to_osfile_file = getTestResourceFolder() / "testOs.txt";
-        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
         auto workerConfiguration  = WorkerConfiguration::create();
-        workerConfiguration->physicalSources.add(sourceConf);
+        workerConfiguration->physicalSources.add(PhysicalSource::create("x", "x1"));
         this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
 
         borrowedZmqPort = getAvailablePort();
