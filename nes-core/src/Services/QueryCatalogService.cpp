@@ -142,7 +142,7 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
     return false;
 }
 
-void QueryCatalogService::addSubQuery(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId) {
+void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId) {
     std::unique_lock lock(serviceMutex);
 
     //Check if query exists
@@ -279,6 +279,18 @@ std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalogService::getAllQueryCatalog
 void QueryCatalogService::clearQueries() {
     std::unique_lock lock(serviceMutex);
     queryCatalog->clearQueries();
+}
+
+void QueryCatalogService::resetSubQueryMetaData(QueryId queryId) {
+    std::unique_lock lock(serviceMutex);
+
+    //Check if query exists
+    if (!queryCatalog->queryExists(queryId)) {
+        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+    }
+
+    auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+    queryCatalogEntry->removeAllQuerySubPlanMetaData();
 }
 
 }// namespace NES
