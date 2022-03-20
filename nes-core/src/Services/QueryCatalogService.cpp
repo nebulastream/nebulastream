@@ -164,9 +164,7 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId qu
     queryEntry->addQuerySubPlanMetaData(querySubPlanId, workerId);
 }
 
-bool QueryCatalogService::handleSoftStopCompletion(QueryId queryId,
-                                                   QuerySubPlanId querySubPlanId,
-                                                   QueryStatus::Value subQueryStatus) {
+bool QueryCatalogService::handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus) {
 
     std::unique_lock lock(serviceMutex);
 
@@ -257,7 +255,7 @@ void QueryCatalogService::updateQuerySubPlanStatus(QueryId queryId,
 
     switch (subQueryStatus) {
         case QueryStatus::SoftStopTriggered:
-        case QueryStatus::SoftStopCompleted: handleSoftStopCompletion(queryId, querySubPlanId, subQueryStatus); break;
+        case QueryStatus::SoftStopCompleted: handleSoftStop(queryId, querySubPlanId, subQueryStatus); break;
         default:
             throw InvalidQueryStatusException({QueryStatus::SoftStopTriggered, QueryStatus::SoftStopCompleted}, subQueryStatus);
     }

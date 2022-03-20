@@ -54,96 +54,117 @@ class QueryCatalogService {
     createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
 
     /**
-     *
-     * @param queryId
-     * @param querySubPlanId
-     * @param workerId
+     * Add sub query meta data to the query
+     * @param queryId : query id to which sub query metadata to add
+     * @param querySubPlanId : the sub query plan id
+     * @param workerId : the topology node where the sub query plan is running
      */
     void addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId);
 
+    /**
+     * Reset all sub query plans added to the query
+     * @param queryId : the query id
+     */
     void resetSubQueryMetaData(QueryId queryId);
 
     /**
-     *
-     * @param queryId
-     * @param querySubPlanId
-     * @param subQueryStatus
+     * Update query sub plan status
+     * @param queryId : the query id to which sub plan is added
+     * @param querySubPlanId : the query sub plan id
+     * @param subQueryStatus : the new sub query status
      */
     void updateQuerySubPlanStatus(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     /**
-     *
-     * @param queryId
-     * @return
+     * Get the entry from the query catalog for the input query id
+     * @param queryId: the query id
+     * @return pointer to the query catalog entry
      */
     QueryCatalogEntryPtr getEntryForQuery(QueryId queryId);
 
     /**
-     *
-     * @param queryId
-     * @return
+     * Get a map of query id and query string that are in input query status
+     * @param queryStatus : the status to check
+     * @return map containing query id and query string
      */
     std::map<uint64_t, std::string> getAllQueriesInStatus(std::string queryStatus);
 
     /**
-     *
-     * @param queryId
-     * @return
+     * Get a map of query id and query catalog entry in input query status
+     * @param queryStatus : the status to check
+     * @return map containing query id and query catalog entry
      */
     std::map<uint64_t, QueryCatalogEntryPtr> getAllEntriesInStatus(std::string queryStatus);
 
     /**
-     *
-     * @return
+     * Get all query catalog entries
+     * @return map containing query id and query catalog entry
      */
     std::map<uint64_t, QueryCatalogEntryPtr> getAllQueryCatalogEntries();
 
     /**
-     *
-     * @param queryId
-     * @param queryStatus
-     * @return
+     * Update query entry with new status
+     * @param queryId : query id
+     * @param queryStatus : new status
+     * @param metaInformation : additional meta information
+     * @return true if updated successfully
      */
     bool updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation);
 
     /**
-     *
-     * @param queryId
-     * @return
+     * check and mark the query for soft stop
+     * @param queryId: the query which need to be stopped
+     * @return true if successful else false
      */
     bool checkAndMarkForSoftStop(QueryId queryId);
 
     /**
-     *
-     * @param queryId
-     * @return
+     * check and mark the query for hard stop
+     * @param queryId: the query which need to be stopped
+     * @return true if successful else false
      */
     bool checkAndMarkForHardStop(QueryId queryId);
 
     /**
-     *
-     * @param queryId
-     * @param querySubPlanId
-     * @param triggered
-     * @return
+     * register soft stop trigger
+     * @param queryId: the query id
+     * @param querySubPlanId : the sub query plan id
+     * @param triggered : if successfully triggered
+     * @return true if successful else false
      */
     bool registerSoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered);
 
     /**
-     *
-     * @param queryId
-     * @param querySubPlanId
-     * @param completed
-     * @return
+     * register soft stop completed
+     * @param queryId: the query id
+     * @param querySubPlanId : the sub query plan id
+     * @param triggered : if successfully triggered
+     * @return true if successful else false
      */
     bool registerSoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed);
 
+    /**
+     * Add update query plans to the query catalog
+     * @param queryId : the query id
+     * @param step : step that produced the updated plan
+     * @param updatedQueryPlan : the updated query plan
+     */
     void addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan);
 
+    /**
+     * Clear the query catalog
+     */
     void clearQueries();
 
   private:
-    bool handleSoftStopCompletion(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    /**
+     * Handle soft stop for sub query plans
+     * @param queryId: the query id
+     * @param querySubPlanId : query sub plan id
+     * @param subQueryStatus : the new status
+     * @return true if successful else false
+     */
+    bool handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;
