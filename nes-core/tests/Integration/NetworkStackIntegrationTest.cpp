@@ -150,7 +150,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort1);
     workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
     workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
@@ -183,12 +183,13 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
 }
 
 TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
-    auto defaultSourceType = DefaultSourceType::create();
-    auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
-    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, queryCompilerConfiguration);
-    NodeLocation nodeLocation{0, "127.0.0.1", 31337};
+    auto physicalSource = PhysicalSource::create("default_logical", "default", DefaultSourceType::create());
+    auto workerConfig = WorkerConfiguration::create();
+    workerConfig->dataPort = *dataPort1;
+    workerConfig->physicalSources.add(physicalSource);
+    auto nodeEngineBuilder = Runtime::NodeEngineBuilder::create(workerConfig);
+    auto nodeEngine = nodeEngineBuilder.build();
+    NodeLocation nodeLocation{0, "127.0.0.1", *dataPort1};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
@@ -365,8 +366,11 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
 
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-        auto nodeEngine2 =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort2, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
+        auto workerConfig2 = WorkerConfiguration::create();
+        workerConfig2->dataPort = *dataPort2;
+        workerConfig2->physicalSources.add(physicalSource);
+        auto nodeEngineBuilder2 = Runtime::NodeEngineBuilder::create(workerConfig2);
+        auto nodeEngine2 = nodeEngineBuilder2.build();
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -465,9 +469,9 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
     auto latch = std::make_shared<ThreadBarrier>(numQueries);
 
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort1);
-    for(auto source : physicalSources)
+    for (auto source : physicalSources)
         workerConfiguration->physicalSources.add(source);
     workerConfiguration->numWorkerThreads.setValue(numThreads);
     workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
@@ -478,9 +482,9 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
     auto netManagerSender = nodeEngineSender->getNetworkManager();
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
-    auto workerConfiguration1  = WorkerConfiguration::create();
+    auto workerConfiguration1 = WorkerConfiguration::create();
     workerConfiguration1->dataPort.setValue(*dataPort2);
-    for(auto source : physicalSources)
+    for (auto source : physicalSources)
         workerConfiguration1->physicalSources.add(source);
     workerConfiguration1->numWorkerThreads.setValue(numThreads);
     workerConfiguration1->bufferSizeInBytes.setValue(bufferSize);
@@ -700,7 +704,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
 
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort1);
     workerConfiguration->physicalSources.add(physicalSource);
     workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
@@ -709,7 +713,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
     auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-    auto workerConfiguration1  = WorkerConfiguration::create();
+    auto workerConfiguration1 = WorkerConfiguration::create();
     workerConfiguration1->dataPort.setValue(*dataPort2);
     workerConfiguration1->physicalSources.add(physicalSource);
     workerConfiguration1->bufferSizeInBytes.setValue(bufferSize);

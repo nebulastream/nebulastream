@@ -135,7 +135,8 @@ class NodeEngineBuilder {
     NodeEnginePtr build();
     
   private:
-    NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
+    explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
+
     std::shared_ptr<NesWorker> nesWorker;
     uint64_t nodeEngineId;
     Network::PartitionManagerPtr partitionManager;
