@@ -72,7 +72,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
                                     + std::to_string(querySubPlanId));
     }
 
-    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::Migrating, workerId);
+    auto subQueryMetaData = QuerySubPlanMetaData::create(querySubPlanId, QueryStatus::Running, workerId);
     querySubPlanMetaDataMap[querySubPlanId] = subQueryMetaData;
 }
 

@@ -15,7 +15,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
@@ -37,7 +37,8 @@ bool QueryCatalogService::checkAndMarkForSoftStop(QueryId queryId) {
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //Fetch the current entry for the query
@@ -64,7 +65,8 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
     auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
@@ -86,7 +88,8 @@ QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //return query catalog entry
@@ -113,7 +116,8 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //Handle new status of the query
@@ -135,7 +139,7 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
             }
             queryCatalogEntry->setQueryStatus(queryStatus);
             queryCatalogEntry->setMetaInformation(metaInformation);
-            break;
+            return true;
         }
         default:
             throw InvalidQueryStatusException({QueryStatus::Registered,
@@ -147,7 +151,6 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
                                                QueryStatus::Failed},
                                               queryStatus);
     }
-    return false;
 }
 
 void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId querySubPlanId, uint64_t workerId) {
@@ -155,7 +158,8 @@ void QueryCatalogService::addSubQueryMetaData(QueryId queryId, QuerySubPlanId qu
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //Fetch the current entry for the query
@@ -173,7 +177,8 @@ bool QueryCatalogService::handleSoftStop(QueryId queryId, QuerySubPlanId querySu
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     //Get the query catalog entry
@@ -266,7 +271,8 @@ void QueryCatalogService::addUpdatedQueryPlan(QueryId queryId, std::string step,
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
@@ -292,7 +298,8 @@ void QueryCatalogService::resetSubQueryMetaData(QueryId queryId) {
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
-        throw InvalidQueryException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
+        throw QueryNotFoundException("Query Catalog does not contains the input queryId " + std::to_string(queryId));
     }
 
     auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
