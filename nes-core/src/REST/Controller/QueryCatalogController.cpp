@@ -54,7 +54,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
 
             //Prepare the response
             web::json::value result{};
-            std::map<uint64_t, std::string> queries = queryCatalogService->getAllEntriesInStatus(queryStatus);
+            std::map<uint64_t, std::string> queries = queryCatalogService->getAllQueriesInStatus(queryStatus);
 
             for (auto [key, value] : queries) {
                 result[key] = web::json::value::string(value);

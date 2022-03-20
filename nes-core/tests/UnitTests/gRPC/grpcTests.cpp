@@ -73,7 +73,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     NES_INFO("GrpcNotifyQueryFailureTest: Worker started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath1 = "test1.out";
     NES_INFO("GrpcNotifyQueryFailureTest: Submit query");
@@ -82,7 +82,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     auto globalQueryPlan = crd->getGlobalQueryPlan();//necessary?
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     QueryId subQueryId = 1;
     uint64_t workerId = wrk->getWorkerId();

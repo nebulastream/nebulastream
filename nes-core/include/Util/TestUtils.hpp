@@ -26,6 +26,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <chrono>
 #include <fstream>
 #include <iostream>

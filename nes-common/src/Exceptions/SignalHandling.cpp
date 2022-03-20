@@ -24,7 +24,7 @@ namespace NES::Exceptions {
 
 /// this mutex protected the globalErrorListeners vector
 static std::recursive_mutex globalErrorListenerMutex;
-/// this vector contains system-wide error listeners, e.g., Runtime and ServiceTests
+/// this vector contains system-wide error listeners, e.g., Runtime and Services
 static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 
 void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&& stacktrace) {

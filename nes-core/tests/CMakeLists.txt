@@ -38,7 +38,7 @@ target_include_directories(nes-tests INTERFACE ${GTEST_INCLUDE_DIRS} "../include
 target_include_directories(nes-tests INTERFACE "${CMAKE_BINARY_DIR}")
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-tests INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/util/")
-target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util )
+target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
 
 
 #-------------------------------##############----------------------------------
@@ -106,8 +106,8 @@ add_test(NAME operator-code-generation-tests COMMAND operator-code-generation-te
 
 ### Query Compiler Tests ###
 add_executable(query-compiler-tests "UnitTests/QueryCompiler/QueryCompilerTest.cpp")
-target_link_libraries(query-compiler-tests  nes-tests)
-add_test(NAME query-compiler-tests  COMMAND query-compiler-tests )
+target_link_libraries(query-compiler-tests nes-tests)
+add_test(NAME query-compiler-tests COMMAND query-compiler-tests)
 
 ### NES Topology Tests ###
 add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
@@ -174,17 +174,17 @@ add_test(NAME sink-tests COMMAND sink-tests)
 if (NES_USE_KAFKA)
     add_executable(kafka-tests "UnitTests/Source/KafkaTest.cpp")
     message("libraies: ${LIBRARIES}")
-    target_link_libraries(kafka-tests  nes-tests)
+    target_link_libraries(kafka-tests nes-tests)
     add_test(NAME kafka-tests COMMAND kafka-tests)
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
 if (NES_USE_OPC)
     add_executable(opc-source-tests "UnitTests/Source/OPCSourceTest.cpp" UnitTests/Source/OPCSourceTest.cpp)
-    target_link_libraries(opc-source-tests  nes-tests)
+    target_link_libraries(opc-source-tests nes-tests)
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
     add_executable(opc-sink-tests "UnitTests/Sink/OPCSinkTest.cpp" UnitTests/Sink/OPCSinkTest.cpp)
-    target_link_libraries(opc-sink-tests  nes-tests)
+    target_link_libraries(opc-sink-tests nes-tests)
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif (NES_USE_OPC)
 
@@ -220,9 +220,9 @@ target_link_libraries(source-catalog-test nes-tests)
 add_test(NAME source-catalog-test COMMAND source-catalog-test)
 
 ### QueryCatalog Tests ###
-add_executable(query-catalog-tests "UnitTests/ServiceTests/QueryCatalogTest.cpp")
-target_link_libraries(query-catalog-tests nes-tests)
-add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
+add_executable(query-catalog-service-tests "UnitTests/Services/QueryCatalogServiceTest.cpp")
+target_link_libraries(query-catalog-service-tests nes-tests)
+add_test(NAME query-catalog-service-tests COMMAND query-catalog-service-tests)
 
 ### LogicalExpressionTest ###
 add_executable(logical-expression-test "UnitTests/Query/LogicalExpressionTest.cpp")
@@ -236,9 +236,9 @@ add_test(NAME query-execution-test COMMAND query-execution-test)
 
 ### GPUPipelineQueryExecutionTest ###
 if (NES_USE_GPU)
-add_executable(gpu-pipeline-query-execution-test "UnitTests/Query/GPUPipelineQueryExecutionTest.cpp")
-target_link_libraries(gpu-pipeline-query-execution-test nes-tests)
-add_test(NAME gpu-pipeline-query-execution-test COMMAND gpu-pipeline-query-execution-test)
+    add_executable(gpu-pipeline-query-execution-test "UnitTests/Query/GPUPipelineQueryExecutionTest.cpp")
+    target_link_libraries(gpu-pipeline-query-execution-test nes-tests)
+    add_test(NAME gpu-pipeline-query-execution-test COMMAND gpu-pipeline-query-execution-test)
 endif (NES_USE_GPU)
 
 ### ProjectionTest ###
@@ -252,10 +252,10 @@ target_link_libraries(tuple-buffer-test nes-tests)
 add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 
 if (CMAKE_USE_PAPI_PROFILER)
-add_executable(papi-profiler-test "UnitTests/Runtime/PAPIProfilerTest.cpp")
-target_link_libraries(papi-profiler-test nes-tests)
-add_test(NAME papi-profiler-test COMMAND papi-profiler-test)
-endif()
+    add_executable(papi-profiler-test "UnitTests/Runtime/PAPIProfilerTest.cpp")
+    target_link_libraries(papi-profiler-test nes-tests)
+    add_test(NAME papi-profiler-test COMMAND papi-profiler-test)
+endif ()
 
 # LogicalOperatorPlanNodeTest
 add_executable(logical-operator-node-tests "UnitTests/Operators/LogicalOperatorNodeTest.cpp")
@@ -313,18 +313,18 @@ target_link_libraries(serialize-operator-test nes-tests)
 add_test(NAME serialize-operator-test COMMAND serialize-operator-test)
 
 ### SourceCatalogService Tests ###
-add_executable(source-catalog-service-tests "UnitTests/ServiceTests/SourceCatalogServiceTest.cpp")
+add_executable(source-catalog-service-tests "UnitTests/Services/SourceCatalogServiceTest.cpp")
 target_link_libraries(source-catalog-service-tests nes-tests)
 add_test(NAME source-catalog-service-tests COMMAND source-catalog-service-tests)
 
 ### TopologyManagerService Tests ###
-add_executable(topology-manager-service-tests "UnitTests/ServiceTests/TopologyManagerServiceTest.cpp")
-target_link_libraries(topology-manager-service-tests  nes-tests)
+add_executable(topology-manager-service-tests "UnitTests/Services/TopologyManagerServiceTest.cpp")
+target_link_libraries(topology-manager-service-tests nes-tests)
 add_test(NAME topology-manager-service-tests COMMAND topology-manager-service-tests)
 
 ### MaintenanceService Tests ###
-add_executable(maintenance-service-tests "UnitTests/ServiceTests/MaintenanceServiceTest.cpp")
-target_link_libraries(maintenance-service-tests  nes-tests)
+add_executable(maintenance-service-tests "UnitTests/Services/MaintenanceServiceTest.cpp")
+target_link_libraries(maintenance-service-tests nes-tests)
 add_test(NAME maintenance-service-tests COMMAND maintenance-service-tests)
 
 ### Query Plan Tests ###

@@ -16,13 +16,13 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <string>
 
@@ -32,6 +32,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
 
@@ -175,7 +176,6 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     coordinatorConfig->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
-
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -203,7 +203,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     mqttSourceType->setQos(2);
     mqttSourceType->setCleanSession(true);
     mqttSourceType->setFlushIntervalMS(2000);
-    auto physicalSource = PhysicalSource::create("stream","test_stream", mqttSourceType);
+    auto physicalSource = PhysicalSource::create("stream", "test_stream", mqttSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -211,8 +211,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
-
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -221,11 +220,11 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     sleep(2);
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -235,7 +234,6 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
-
 }
 }// namespace NES
 #endif

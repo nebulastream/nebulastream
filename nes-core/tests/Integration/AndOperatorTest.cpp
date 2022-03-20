@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <regex>
+#include <NesBaseTest.hpp>
 
 namespace NES {
 
@@ -528,12 +529,12 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     std::string query = query2;
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 1));
@@ -541,7 +542,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
 
     NES_INFO("AndOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     //so far from join
     string expectedContent =

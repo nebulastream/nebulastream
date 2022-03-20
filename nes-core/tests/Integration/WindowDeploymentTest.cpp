@@ -14,9 +14,9 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include "../util/NesBaseTest.hpp"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -31,8 +31,8 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 
-#include <Common/ExecutableType/Array.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <iostream>
 
 using namespace std;
@@ -40,7 +40,6 @@ using namespace std;
 namespace NES {
 
 using namespace Configurations;
-
 
 class WindowDeploymentTest : public Testing::NESBaseTest {
   public:
@@ -80,9 +79,9 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    std::string outputFilePath =  getTestResourceFolder() / "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -95,7 +94,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     string expectedContent = "exdra$start:INTEGER,exdra$end:INTEGER,exdra$id:INTEGER,exdra$features_properties_capacity:INTEGER\n"
                              "1262343610000,1262343620000,1,736\n"
@@ -113,7 +112,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -228,7 +227,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "ysb.out";
 
@@ -242,12 +241,12 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(1, outputFilePath));
 
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     //here we can only check if the file exists and has some content
 
@@ -285,10 +284,10 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -338,10 +337,10 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -395,11 +394,10 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
 
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
-
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -476,7 +474,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -486,7 +484,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
@@ -499,7 +497,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -541,11 +539,11 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -594,11 +592,11 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -653,10 +651,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -701,10 +699,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -749,11 +747,11 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -798,11 +796,11 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -858,8 +856,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
-
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -873,13 +870,13 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -893,7 +890,6 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
 
 TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -939,7 +935,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -953,12 +949,12 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1011,7 +1007,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1025,12 +1021,12 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1088,7 +1084,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1102,12 +1098,12 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFileCreationOrTimeout(outputFilePath));
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1149,14 +1145,14 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    testHarness
-        .addLogicalSource("window", testSchema)
+    testHarness.addLogicalSource("window", testSchema)
         .attachWorkerToCoordinator()
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
         .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5UL);
 
@@ -1276,7 +1272,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -1286,7 +1282,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,68\n"
@@ -1296,7 +1292,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_INFO("WindowDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1342,9 +1338,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator,  *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-        .addLogicalSource("car", carSchema)
-        .attachWorkerWithMemorySourceToCoordinator("car");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1744,10 +1740,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setSkipHeader(false);
 
-    testHarness
-        .addLogicalSource("car", carSchema)
+    testHarness.addLogicalSource("car", carSchema)
         .attachWorkerWithCSVSourceToCoordinator("car", sourceConfig)
-        .validate().setupTopology();
+        .validate()
+        .setupTopology();
 
     struct Output {
         uint64_t start;

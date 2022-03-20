@@ -59,7 +59,7 @@ class QueryExecutionTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
+        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogServiceTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {

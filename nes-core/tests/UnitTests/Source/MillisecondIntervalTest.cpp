@@ -280,7 +280,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     //register query
     std::string queryString =
@@ -290,13 +290,13 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("MillisecondIntervalTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);

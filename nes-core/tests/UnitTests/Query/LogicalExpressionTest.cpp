@@ -32,7 +32,7 @@ class LogicalExpressionTest : public Testing::NESBaseTest {
     std::shared_ptr<QueryParsingService> queryParsingService;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("LogicalExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_DEBUG("LogicalExpressionTest: Setup QueryCatalogTest test class.");
+        NES_DEBUG("LogicalExpressionTest: Setup QueryCatalogServiceTest test class.");
     }
 
     void SetUp() override {

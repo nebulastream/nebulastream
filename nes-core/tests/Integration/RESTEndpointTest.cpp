@@ -12,15 +12,14 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include "../util/NesBaseTest.hpp"
+#include <gtest/gtest.h>
 
-#include <Util/TestHarness/TestHarness.hpp>
 #include "../util/ProtobufMessageFactory.hpp"
 #include "SerializableQueryPlan.pb.h"
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -28,6 +27,7 @@
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <iostream>
@@ -95,9 +95,7 @@ class RESTEndpointTest : public Testing::NESBaseTest {
         auto url = "http://127.0.0.1:" + std::to_string(*restPort) + "/v1/nes/" + restEndpoint;
         return web::http::client::http_client{url};
     }
-
 };
-
 
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
@@ -106,14 +104,14 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     auto getExecutionPlanClient = createRestClient("query/execution-plan");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     // get the execution plan
     std::stringstream getExecutionPlanStringSource;
@@ -152,7 +150,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
 
     NES_INFO("RESTEndpointTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     stopWorker(*wrk1);
     stopCoordinator(*crd);
@@ -202,7 +200,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     /* REGISTER QUERY */
     CSVSourceTypePtr sourceConfig;
@@ -253,13 +251,13 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
         .wait();
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
+    EXPECT_TRUE(queryCatalogService->getEntryForQuery(postJsonReturn.at("queryId").as_integer()));
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(crd->getQueryCatalogService()->queryExists(postJsonReturn.at("queryId").as_integer()));
+    EXPECT_TRUE(crd->getQueryCatalogService()->getEntryForQuery(postJsonReturn.at("queryId").as_integer()));
 
     auto insertedQueryPlan =
-        crd->getQueryCatalogService()->getQueryCatalogEntry(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
+        crd->getQueryCatalogService()->getEntryForQuery(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
@@ -310,14 +308,14 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     auto getExecutionPlanClient = createRestClient("queryCatalogService/allRegisteredQueries");
 
     QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalogService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     // get the execution plan
     web::json::value response;
@@ -347,7 +345,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
 
     NES_INFO("RESTEndpointTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     stopWorker(*wrk1);
     stopCoordinator(*crd);
@@ -586,7 +584,7 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
     missingIDRequest["migrationType"] = web::json::value::string("random");
     web::json::value missingIDResponse;
     int missingIDStatusCode = 0;
-    restClient.request(web::http::methods::POST, "maintenance/mark",missingIDRequest)
+    restClient.request(web::http::methods::POST, "maintenance/mark", missingIDRequest)
         .then([&missingIDStatusCode](const web::http::http_response& response) {
             missingIDStatusCode = response.status_code();
             NES_INFO("get first then");
@@ -605,13 +603,11 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
     EXPECT_TRUE(missingIDResponse.has_field("detail"));
     EXPECT_EQ(missingIDResponse["detail"].as_string(), "Field id must be provided");
 
-
-
     web::json::value missingMigrationTypeRequest;
     missingMigrationTypeRequest["id"] = web::json::value::number(1);
     web::json::value missingMigrationTypeResponse;
     int missingMigrationTypeStatusCode = 0;
-    restClient.request(web::http::methods::POST, "maintenance/mark",missingMigrationTypeRequest)
+    restClient.request(web::http::methods::POST, "maintenance/mark", missingMigrationTypeRequest)
         .then([&missingMigrationTypeStatusCode](const web::http::http_response& response) {
             missingMigrationTypeStatusCode = response.status_code();
             NES_INFO("get first then");
@@ -629,8 +625,6 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
     EXPECT_EQ(missingMigrationTypeStatusCode, 400);
     EXPECT_TRUE(missingMigrationTypeResponse.has_field("detail"));
     EXPECT_EQ(missingMigrationTypeResponse["detail"].as_string(), "Field migrationType must be provided");
-
-
 
     web::json::value validRequest;
     validRequest["id"] = web::json::value::number(1);

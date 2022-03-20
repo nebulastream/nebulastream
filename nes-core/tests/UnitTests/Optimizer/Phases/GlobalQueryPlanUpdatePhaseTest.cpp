@@ -14,18 +14,19 @@
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
@@ -39,6 +40,7 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
   public:
     SourceCatalogPtr sourceCatalog;
     QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -50,6 +52,7 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
     void SetUp() override {
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<QueryCatalog>();
+        queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         //Setup source catalog
         sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
@@ -82,12 +85,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
                                                                optimizerConfiguration);
-    auto catalogEntry1 = QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), Scheduling);
+    auto catalogEntry1 = QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), QueryStatus::Scheduling);
     auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
     //Assert
@@ -109,7 +112,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -140,7 +143,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -171,7 +174,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -203,11 +206,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto catalogEntry1 = queryCatalog->createNewEntry("", q1.getQueryPlan(), "topdown");
     //Explicitly fail the query
-    queryCatalog->setQueryFailureReason(queryId, "Random reason");
+    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, "Random reason");
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -238,7 +241,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
                                                                sourceCatalog,
                                                                globalQueryPlan,
                                                                context,
@@ -246,7 +249,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
-    queryCatalog->markQueryForStop(2);
+    queryCatalogService->checkAndMarkForHardStop(2);
     auto catalogEntry3 = queryCatalog->getQueryCatalogEntry(2);
 
     auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
@@ -288,12 +291,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase =
-        Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
-                                                      sourceCatalog,
-                                                      globalQueryPlan,
-                                                      context,
-                                                      optimizerConfiguration);
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+                                                               sourceCatalog,
+                                                               globalQueryPlan,
+                                                               context,
+                                                               optimizerConfiguration);
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
@@ -358,12 +360,11 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule;
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase =
-        Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
-                                                      sourceCatalog,
-                                                      globalQueryPlan,
-                                                      context,
-                                                      optimizerConfiguration);
+    auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalogService,
+                                                               sourceCatalog,
+                                                               globalQueryPlan,
+                                                               context,
+                                                               optimizerConfiguration);
 
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert

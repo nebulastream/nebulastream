@@ -54,7 +54,7 @@ class QueryService {
                           Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
-     * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
+     * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.
      * @param placementStrategyName : name of the placement strategy to be used.
      * @param faultTolerance : fault-tolerance guarantee for the given query.
@@ -69,37 +69,8 @@ class QueryService {
                                         const LineageType lineage = LineageType::NONE);
 
     /**
-     * @deprecated NOT TO BE USED
-     * @brief This method is used for submitting the queries directly to the system.
-     * @param queryString : Query string
-     * @param queryPtr : Query Object
-     * @param placementStrategyName : Name of the placement strategy
-     * @param faultTolerance : fault-tolerance guarantee for the given query.
-     * @param lineage : lineage type for the given query.
-     * @return query id
-     */
-    uint64_t addQueryRequest(const std::string& queryString,
-                             Query query,
-                             const std::string& placementStrategyName,
-                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                             const LineageType lineage = LineageType::NONE);
-
-    /**
-     * @brief This method is used for submitting the queries directly to the system.
-     * @param queryPlan : Query Plan Pointer Object
-     * @param placementStrategyName : Name of the placement strategy
-     * @param faultTolerance : fault-tolerance guarantee for the given query.
-     * @param lineage : lineage type for the given query.
-     * @return query id
-     */
-    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan,
-                             const std::string& placementStrategyName,
-                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                             const LineageType lineage = LineageType::NONE);
-
-    /**
-     * @brief
-     * @param queryString
+     * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
+     * @param queryString : queries in string format
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategyName : Name of the placement strategy
      * @param faultTolerance : fault-tolerance guarantee for the given query.
@@ -123,19 +94,12 @@ class QueryService {
 
   private:
     /**
-     * Assign unique query id and operator ids to the incoming query plan from a client.
+     * Assign unique operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process
-     */
-    void assignQueryAndOperatorIds(QueryPlanPtr queryPlan);
-
-    QueryCatalogServicePtr queryCatalogService;
-    /**
-     * Assign operator ids to the query plan
-     * @param queryPlan: the query plan to which operator ids need to be assigned
      */
     void assignOperatorIds(QueryPlanPtr queryPlan);
 
-    QueryCatalogPtr queryCatalog;
+    QueryCatalogServicePtr queryCatalogService;
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;

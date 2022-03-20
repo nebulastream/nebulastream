@@ -15,7 +15,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
@@ -26,7 +25,6 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/PlacementStrategy.hpp>
-#include <Util/QueryStatus.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
@@ -78,7 +76,8 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
-        QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+        QueryCatalogEntryPtr queryCatalogEntry =
+            queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);
@@ -121,7 +120,7 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
-        QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+        QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);
@@ -148,64 +147,6 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
         return queryRequestQueue->add(request);
     }
     return false;
-}
-
-uint64_t QueryService::addQueryRequest(const std::string& queryString,
-                                       Query query,
-                                       const std::string& placementStrategyName,
-                                       const FaultToleranceType faultTolerance,
-                                       const LineageType lineage) {
-    NES_INFO("QueryService: Queuing the query for the execution");
-    auto queryPlan = query.getQueryPlan();
-    queryPlan->setFaultToleranceType(faultTolerance);
-    queryPlan->setLineageType(lineage);
-    QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
-    if (queryCatalogEntry) {
-        PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
-        auto request = RunQueryRequest::create(queryPlan, placementStrategy);
-        queryRequestQueue->add(request);
-        return queryPlan->getQueryId();
-uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan,
-                                       const std::string& placementStrategyName,
-                                       const FaultToleranceType faultTolerance,
-                                       const LineageType lineage) {
-    try {
-        QueryCatalogEntryPtr entry = queryCatalogService->createNewEntry("", queryPlan, placementStrategyName);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
-        if (entry) {
-            PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
-            queryRequestQueue->add(request);
-            return queryPlan->getQueryId();
-        }
-    } catch (...) {
-        throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
-    }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog queryCatalogEntry");
-}
-
-uint64_t QueryService::addQueryRequest(const std::string& queryString,
-                                       const QueryPlanPtr& queryPlan,
-                                       const std::string& placementStrategyName,
-                                       const FaultToleranceType faultTolerance,
-                                       const LineageType lineage) {
-    try {
-        // assign the id for the query and individual operators
-        assignQueryAndOperatorIds(queryPlan);
-        QueryCatalogEntryPtr entry = queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
-        queryPlan->setFaultToleranceType(faultTolerance);
-        queryPlan->setLineageType(lineage);
-        if (entry) {
-            PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
-            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
-            queryRequestQueue->add(request);
-            return queryPlan->getQueryId();
-        }
-    } catch (...) {
-        throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
-    }
-    throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
 }
 
 void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
