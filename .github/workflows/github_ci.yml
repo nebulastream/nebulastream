@@ -27,14 +27,18 @@ jobs:
   validateTrigger:
     runs-on: ubuntu-latest
     steps:
-      - name: verify-run-privilage
-        if: ${{ github.event }} == "Push"
+      - name: verify-user
         uses: tspascoal/get-user-teams-membership@v1
         id: checkUserMember
         with:
             username: ${{ github.actor }}
             team: 'Admin'
             GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+      - name: verify-run-privilage
+        if: ${{ steps.checkUserMember.outputs.isTeamMember == 'false' }} && ${{ github.event }} == "Push"
+        run: |
+          echo "Unauthorized user triggering release"
+          exit 1
   
 
   build-x64-linux:
