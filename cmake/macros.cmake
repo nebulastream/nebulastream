@@ -114,11 +114,11 @@ macro(project_enable_release)
         add_custom_target(release COMMAND echo "Releasing NebulaStream")
         add_custom_command(TARGET release
                 COMMAND echo "GIT-CI: Updating NES version"
-                COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
+                COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
                 COMMAND echo "Push new tag to the repository"
-                COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/release/PushTag.cmake
+                COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/release/PushTag.cmake
                 COMMAND echo "Performing post tag release steps"
-                COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
+                COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
                 COMMAND echo "Pushing next snapshot"
                 COMMAND ${GIT_EXECUTABLE} commit -m "GIT-CI pushing next snapshot"
                 COMMAND ${GIT_EXECUTABLE} push origin
