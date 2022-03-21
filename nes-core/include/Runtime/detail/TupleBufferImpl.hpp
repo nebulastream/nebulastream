@@ -15,8 +15,6 @@
 #ifndef NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 #define NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
-#include <API/Schema.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <functional>
 

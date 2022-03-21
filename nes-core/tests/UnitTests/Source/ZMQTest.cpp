@@ -14,6 +14,7 @@
 
 #include <array>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -21,11 +22,14 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 using namespace NES;
 
@@ -33,11 +37,7 @@ using namespace NES;
 #define LOCAL_ADDRESS "127.0.0.1"
 #endif
 
-#ifndef LOCAL_PORT
-#define LOCAL_PORT 38938
-#endif
-
-class ZMQTest : public testing::Test {
+class ZMQTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -47,14 +47,17 @@ class ZMQTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         NES_DEBUG("Setup ZMQTest test case.");
-        PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+        PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
         auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->dataPort.setValue(3001);
         workerConfigurations->physicalSources.add(conf);
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
 
-        address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
+        zmqPort = getAvailablePort();
+        address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(*zmqPort);
 
         test_data = {{0, 100, 1, 99, 2, 98, 3, 97}};
         test_data_size = test_data.size() * sizeof(uint32_t);
@@ -67,10 +70,13 @@ class ZMQTest : public testing::Test {
     void TearDown() override {
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("Setup ZMQTest test case.");
+        Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down ZMQTest test class."); }
+
+    Testing::BorrowedPortPtr zmqPort;
 
     uint64_t tupleCnt{};
     std::string address;
@@ -90,7 +96,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
                                       nodeEngine->getBufferManager(),
                                       nodeEngine->getQueryManager(),
                                       LOCAL_ADDRESS,
-                                      LOCAL_PORT,
+                                      *zmqPort,
                                       1,
                                       12,
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());

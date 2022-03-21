@@ -24,16 +24,20 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -43,19 +47,15 @@
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
-
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/LocalBufferPool.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class QueryExecutionTest : public testing::Test {
+class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
@@ -74,10 +74,12 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$value", BasicType::INT64);
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(sourceConf);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
         // enable distributed window optimization
         auto optimizerConfiguration = Configurations::OptimizerConfiguration();
         optimizerConfiguration.performDistributedWindowOptimization = true;
@@ -333,7 +335,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
                     // id
                     EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
                 }
-
 
             } else {
                 FAIL();

@@ -39,6 +39,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
 
@@ -47,7 +48,7 @@ using namespace NES::Windowing;
 
 namespace NES {
 
-class TypeInferencePhaseTest : public testing::Test {
+class TypeInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

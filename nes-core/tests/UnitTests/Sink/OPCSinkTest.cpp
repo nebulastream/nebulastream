@@ -23,6 +23,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <open62541/plugin/pki_default.h>
 #include <open62541/server.h>
 #include <open62541/server_config_default.h>
@@ -40,7 +41,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSinkTest : public testing::Test {
+class OPCSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 
@@ -56,7 +57,7 @@ class OPCSinkTest : public testing::Test {
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     }
 
     /* Will be called after a test is executed. */

@@ -70,6 +70,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 #include <API/Windowing.hpp>
@@ -91,7 +92,7 @@ using namespace NES;
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class SerializationUtilTest : public testing::Test {
+class SerializationUtilTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     /* Will be called before any test in this class are executed. */

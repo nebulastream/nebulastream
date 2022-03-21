@@ -24,10 +24,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <log4cxx/helpers/exception.h>
+#include <NesBaseTest.hpp>
 
 using namespace NES;
 
-class GlobalQueryPlanTest : public testing::Test {
+class GlobalQueryPlanTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     static void SetUpTestCase() {

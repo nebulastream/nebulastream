@@ -53,7 +53,7 @@ target_link_libraries(udf-test nes-tests)
 add_test(NAME udf-test COMMAND udf-test)
 
 add_executable(hashmap-test "UnitTests/Util/HashMapTest.cpp")
-target_link_libraries(hashmap-test nes ${GTEST_LIBRARIES})
+target_link_libraries(hashmap-test nes nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME hashmap-test COMMAND hashmap-test)
 
 ### Node Engine Tests ###
@@ -66,7 +66,7 @@ target_link_libraries(watermark-manager-test nes-tests)
 add_test(NAME watermark-manager-test COMMAND watermark-manager-test)
 
 add_executable(lock-free-watermark-manager-test "UnitTests/Runtime/LockFreeWatermarkManagerTest.cpp")
-target_link_libraries(lock-free-watermark-manager-test nes ${GTEST_LIBRARIES})
+target_link_libraries(lock-free-watermark-manager-test nes nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME lock-free-watermark-manager-test COMMAND lock-free-watermark-manager-test)
 
 ### Code Generation Tests ###
@@ -331,6 +331,12 @@ add_test(NAME maintenance-service-tests COMMAND maintenance-service-tests)
 add_executable(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 target_link_libraries(query-plan-tests nes-tests)
 add_test(NAME query-plan-tests COMMAND query-plan-tests)
+
+
+# Lambda Source Integration tests
+add_executable(lambda-source-integration-test "Integration/LambdaSourceIntegrationTest.cpp")
+target_link_libraries(lambda-source-integration-test nes-tests)
+add_test(NAME lambda-source-integration-test COMMAND lambda-source-integration-test)
 
 # SimplePatternTest
 add_executable(simple-pattern-test "Integration/SimplePatternTest.cpp")

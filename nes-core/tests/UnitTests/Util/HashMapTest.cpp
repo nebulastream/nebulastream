@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
+#include <Util/Experimental/Hash.hpp>
+#include <Util/Experimental/HashMap.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Util/Experimental/HashMap.hpp>
-#include <Util/Experimental/Hash.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -27,7 +28,7 @@
 #endif
 
 namespace NES {
-class HashMapTest : public testing::Test {
+class HashMapTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashMapTest.log", NES::LogLevel::LOG_DEBUG);
@@ -36,7 +37,6 @@ class HashMapTest : public testing::Test {
     }
     static void TearDownTestCase() { NES_INFO("HashMapTest test class TearDownTestCase."); }
 };
-
 
 TEST_F(HashMapTest, putEntry) {
     auto bm = std::make_shared<Runtime::BufferManager>();

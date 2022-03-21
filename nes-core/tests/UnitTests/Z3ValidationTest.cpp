@@ -14,12 +14,13 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <memory>
 #include <z3++.h>
 
 using namespace z3;
 namespace NES {
-class Z3ValidationTest : public testing::Test {
+class Z3ValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     void SetUp() override {
         NES::Logger::setupLogging("Z3ValidationTest.log", NES::LogLevel::LOG_DEBUG);

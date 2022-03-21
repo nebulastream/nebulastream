@@ -15,13 +15,14 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <strstream>
 
 using namespace std;
 namespace NES {
 
-class PapiProfilerTest : public testing::Test {
+class PapiProfilerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

@@ -15,6 +15,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #pragma clang diagnostic pop
 
 #include <Common/DataTypes/DataTypeFactory.hpp>

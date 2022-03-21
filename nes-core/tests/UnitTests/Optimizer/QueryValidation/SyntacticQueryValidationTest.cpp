@@ -20,11 +20,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 
 namespace NES {
 
-class SyntacticQueryValidationTest : public testing::Test {
+class SyntacticQueryValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     void SetUp() override {

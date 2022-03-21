@@ -13,6 +13,7 @@
 */
 
 #include <API/Query.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -25,7 +26,7 @@
 
 using namespace NES;
 
-class GlobalExecutionPlanTest : public testing::Test {
+class GlobalExecutionPlanTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     /* Will be called before a test is executed. */

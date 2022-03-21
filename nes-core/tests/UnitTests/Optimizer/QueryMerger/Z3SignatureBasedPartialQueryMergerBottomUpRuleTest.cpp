@@ -14,6 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -43,7 +44,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public testing::Test {
+class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     SchemaPtr schema;

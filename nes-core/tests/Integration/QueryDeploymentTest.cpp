@@ -30,6 +30,7 @@
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

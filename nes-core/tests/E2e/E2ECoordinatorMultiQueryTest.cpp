@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include "../util/NesBaseTest.hpp"
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <string>
 #include <unistd.h>
 #define GetCurrentDir getcwd
@@ -63,7 +64,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::numberOfSlots(8)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
                                           TestUtils::dataPort(0),
@@ -139,9 +139,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
     NES_INFO(" start coordinator");
-    std::string pathQuery1 = getTestResourceFolder() /  "query1.out";
+    std::string pathQuery1 = getTestResourceFolder() / "query1.out";
     std::string pathQuery2 = getTestResourceFolder() / "query2.out";
-    std::string pathQuery3 = getTestResourceFolder() /  "query3.out";
+    std::string pathQuery3 = getTestResourceFolder() / "query3.out";
 
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
@@ -150,11 +150,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-            TestUtils::sourceType("DefaultSource"),
-            TestUtils::logicalSourceName("default_logical"),
-            TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -237,7 +238,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     NES_INFO(" start coordinator");
-    std::string Qpath1 = getTestResourceFolder() /  "QueryQnV1.out";
+    std::string Qpath1 = getTestResourceFolder() / "QueryQnV1.out";
     std::string Qpath2 = getTestResourceFolder() / "QueryQnV2.out";
     remove(Qpath1.c_str());
     remove(Qpath2.c_str());

@@ -13,6 +13,7 @@
 */
 
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>

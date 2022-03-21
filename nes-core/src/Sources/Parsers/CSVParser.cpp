@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>

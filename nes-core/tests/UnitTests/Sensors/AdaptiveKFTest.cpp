@@ -27,7 +27,7 @@
 #include <iostream>
 #include <vector>
 #include <NesBaseTest.hpp>
-
+#include <Util/TestUtils.hpp>
 namespace NES {
 
 class AdaptiveKFTest : public Testing::NESBaseTest {
@@ -59,7 +59,7 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-        auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
 
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
         // Fake measurements for y with noise

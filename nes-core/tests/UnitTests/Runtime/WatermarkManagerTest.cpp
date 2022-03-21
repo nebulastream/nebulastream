@@ -17,6 +17,7 @@
 #include <atomic>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <random>
 #include <thread>
@@ -24,7 +25,7 @@
 using namespace std;
 namespace NES {
 
-class WatermarkManagerTest : public testing::Test {
+class WatermarkManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup WatermarkManagerTest test class." << std::endl; }

@@ -16,8 +16,10 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
@@ -182,25 +184,27 @@ class CoordinatorRPCClient {
      * @param queryId : the query id for which soft stop to be performed
      * @return true if coordinator marks the query for soft stop else false
      */
-    bool checkAndMarkForSoftStop(QueryId queryId);
+    bool checkAndMarkForSoftStop(QueryId queryId, QuerySubPlanId subPlanId, OperatorId sourceId);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is triggered or not
      * @param queryId: the query id to which the subquery plan belongs to
      * @param querySubPlanId: the query sub plan id
-     * @param triggered: boolean value indicating if soft stop triggered or not
+     * @param sourceId: the source id
      * @return true if coordinator successfully recorded the information else false
      */
-    bool notifySoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered);
+    bool notifySourceStopTriggered(QueryId queryId,
+                                   QuerySubPlanId querySubPlanId,
+                                   OperatorId sourceId,
+                                   Runtime::QueryTerminationType queryTermination);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is completed or not
      * @param queryId: the query id to which the subquery plan belongs to
      * @param querySubPlanId: the query sub plan id
-     * @param completed: boolean value indicating if soft stop completed or not
      * @return true if coordinator successfully recorded the information else false
      */
-    bool notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed);
+    bool notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId);
 
   private:
     uint64_t workerId;

@@ -24,10 +24,11 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 namespace NES {
 
-class SemanticQueryValidationTest : public testing::Test {
+class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     std::shared_ptr<QueryParsingService> queryParsingService;

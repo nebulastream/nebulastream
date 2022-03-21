@@ -22,13 +22,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <string>
 
 namespace NES {
 
 using namespace Configurations;
 
-class ConfigTest : public testing::Test {
+class ConfigTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);

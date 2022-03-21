@@ -13,6 +13,7 @@
 */
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
@@ -21,7 +22,7 @@
 
 using namespace NES;
 
-class GlobalQueryNodeTest : public testing::Test {
+class GlobalQueryNodeTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     /* Will be called before a test is executed. */

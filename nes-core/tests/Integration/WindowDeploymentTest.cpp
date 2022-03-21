@@ -17,6 +17,7 @@
 #include "../util/NesBaseTest.hpp"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #pragma clang diagnostic pop
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

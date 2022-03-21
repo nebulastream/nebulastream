@@ -18,10 +18,7 @@
 
 #include <Monitoring/MonitoringCatalog.hpp>
 
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
-
+#include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
@@ -33,6 +30,9 @@
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 

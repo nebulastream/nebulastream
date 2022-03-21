@@ -29,6 +29,9 @@ static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 
 void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
+    if (globalErrorListeners.empty()) {
+        std::cerr << "No error listener is set" << std::endl;
+    }
     for (auto& listener : globalErrorListeners) {
         if (!listener.expired()) {
             listener.lock()->onFatalException(exception, stacktrace);
@@ -39,6 +42,9 @@ void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&
 
 void invokeErrorHandlers(int signal, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
+    if (globalErrorListeners.empty()) {
+        std::cerr << "No error listener is set" << std::endl;
+    }
     for (auto& listener : globalErrorListeners) {
         if (!listener.expired()) {
             listener.lock()->onFatalError(signal, stacktrace);

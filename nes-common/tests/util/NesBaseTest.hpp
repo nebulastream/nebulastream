@@ -91,8 +91,9 @@ class BorrowedPort {
 };
 using BorrowedPortPtr = std::shared_ptr<BorrowedPort>;
 
-class NESBaseTest : public testing::Test {
+class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
     friend class BorrowedPort;
+    using Base = TestWithErrorHandling<testing::Test>;
 
   protected:
     BorrowedPortPtr rpcCoordinatorPort{nullptr};

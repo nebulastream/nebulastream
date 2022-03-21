@@ -56,7 +56,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
         uint64_t port = crd->startCoordinator(false);
         EXPECT_NE(port, 0UL);
         NES_DEBUG("RemoteClientTest: Coordinator started successfully");
-        TestUtils::waitForWorkers(*restPort, 5, 0);
+        ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 0));
 
         NES_DEBUG("RemoteClientTest: Start worker 1");
         DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
@@ -66,7 +66,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
         bool retStart1 = wrk->start(false, true);
         ASSERT_TRUE(retStart1);
         NES_DEBUG("RemoteClientTest: Worker1 started successfully");
-        TestUtils::waitForWorkers(*restPort, 5, 1);
+        ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, 5, 1));
 
         client = std::make_shared<Client::RemoteClient>("localhost", *restPort, std::chrono::seconds(20), true);
     }
@@ -200,8 +200,7 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
     int64_t nonExistingQueryId = queryId + 1;
     std::string response = client->getQueryPlan(nonExistingQueryId);
 
-    std::string expect =
-        "{\"detail\":\"Unable to find query with id " + to_string(nonExistingQueryId) + " in query catalog.\"}";
+    std::string expect = "{\"detail\":\"Unable to find query with id " + to_string(nonExistingQueryId) + " in query catalog.\"}";
     EXPECT_EQ(response, expect);
     ASSERT_TRUE(stopQuery(queryId));
 }

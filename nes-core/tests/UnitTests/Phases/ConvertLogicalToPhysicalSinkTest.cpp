@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -26,9 +27,10 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 
 namespace NES {
-class ConvertLogicalToPhysicalSinkTest : public testing::Test {
+class ConvertLogicalToPhysicalSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ConvertLogicalToPhysicalSinkTest.log", NES::LogLevel::LOG_DEBUG);
@@ -40,10 +42,12 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     void SetUp() override {
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(physicalSource);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
 
         testPlan = QueryCompilation::PipelineQueryPlan::create(0, 0);
     }

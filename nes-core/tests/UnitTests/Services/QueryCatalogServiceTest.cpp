@@ -18,6 +18,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <NesBaseTest.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -32,7 +33,7 @@ using namespace std;
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
 
-class QueryCatalogServiceTest : public testing::Test {
+class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 

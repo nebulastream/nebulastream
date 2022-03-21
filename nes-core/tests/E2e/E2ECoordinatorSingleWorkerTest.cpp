@@ -19,6 +19,7 @@
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_client.h>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
 #include <sstream>
 #include <stdio.h>

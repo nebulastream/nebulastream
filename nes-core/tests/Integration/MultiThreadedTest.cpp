@@ -14,6 +14,7 @@
 
 #include "../util/NesBaseTest.hpp"
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>

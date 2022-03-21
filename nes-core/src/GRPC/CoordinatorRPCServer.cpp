@@ -269,16 +269,16 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
     return Status::OK;
 }
 
-Status CoordinatorRPCServer::NotifySoftStopTriggered(::grpc::ServerContext*,
+Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                      const ::SoftStopTriggeredMessage* request,
                                                      ::SoftStopTriggeredReply* response) {
     //Fetch the request
     auto queryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
-    auto requestTriggered = request->triggered();
+    auto sourceId = request->sourceid();
 
     //inform catalog service
-    bool success = queryCatalogService->registerSoftStopTriggered(queryId, querySubPlanId, requestTriggered);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopTriggered);
 
     //update response
     response->set_success(success);
@@ -291,10 +291,9 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
     //Fetch the request
     auto queryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
-    auto softStopCompleted = request->completed();
 
     //inform catalog service
-    bool success = queryCatalogService->registerSoftStopCompleted(queryId, querySubPlanId, softStopCompleted);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopCompleted);
 
     //update response
     response->set_success(success);

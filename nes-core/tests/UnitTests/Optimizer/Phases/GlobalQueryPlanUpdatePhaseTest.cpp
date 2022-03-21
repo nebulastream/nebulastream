@@ -32,11 +32,12 @@
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <z3++.h>
 
 namespace NES {
 
-class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
+class GlobalQueryPlanUpdatePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     SourceCatalogPtr sourceCatalog;
     QueryCatalogPtr queryCatalog;

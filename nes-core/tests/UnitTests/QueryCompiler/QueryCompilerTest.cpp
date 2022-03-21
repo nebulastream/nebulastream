@@ -52,8 +52,10 @@
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
+#include <Util/TestUtils.hpp>
 
 using namespace std;
 using namespace std;
@@ -115,7 +117,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -161,7 +163,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -206,7 +208,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -256,7 +258,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -307,7 +309,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -362,7 +364,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -421,7 +423,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);

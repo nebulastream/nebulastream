@@ -210,7 +210,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param response : that is sent back from the coordinator to the worker if request is processed
      * @return true if coordinator successfully recorded the information else false
      */
-    Status NotifySoftStopTriggered(::grpc::ServerContext* context,
+    Status notifySourceStopTriggered(::grpc::ServerContext* context,
                                    const ::SoftStopTriggeredMessage* request,
                                    ::SoftStopTriggeredReply* response) override;
 

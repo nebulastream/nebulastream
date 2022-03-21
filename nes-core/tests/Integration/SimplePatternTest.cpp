@@ -25,6 +25,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <regex>
 #include "../util/NesBaseTest.hpp"

@@ -14,6 +14,7 @@
 
 #include "gtest/gtest.h"
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <NesBaseTest.hpp>
 #include <Phases/MigrationType.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -27,7 +28,7 @@
 #include <iostream>
 
 using namespace NES;
-class MaintenanceServiceTest : public testing::Test {
+class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     Experimental::MaintenanceServicePtr maintenanceService;
     TopologyPtr topology;

@@ -42,7 +42,7 @@ class NodeEngineBuilder {
      * @param nesWorker
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setNesWorker(std::shared_ptr<NesWorker> nesWorker);
+    NodeEngineBuilder& setQueryStatusListener(AbstractQueryStatusListenerPtr nesWorker);
 
     /**
      * setter used to pass a NodeEngineId to NodeEngineBuilder. Optional
@@ -137,7 +137,7 @@ class NodeEngineBuilder {
   private:
     explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
 
-    std::shared_ptr<NesWorker> nesWorker;
+    std::shared_ptr<AbstractQueryStatusListener> nesWorker;
     uint64_t nodeEngineId;
     Network::PartitionManagerPtr partitionManager;
     HardwareManagerPtr hardwareManager;

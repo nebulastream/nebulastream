@@ -16,11 +16,11 @@
 include(ExternalProject)
 
 add_executable(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
-target_link_libraries(compiler-test ${GTEST_LIBRARIES} nes-compiler)
+target_link_libraries(compiler-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
 add_test(NAME compiler-test COMMAND compiler-test)
 
 add_executable(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
-target_link_libraries(compiler-sharedlibrary-test ${GTEST_LIBRARIES} nes-compiler)
+target_link_libraries(compiler-sharedlibrary-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
 add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)
 
 

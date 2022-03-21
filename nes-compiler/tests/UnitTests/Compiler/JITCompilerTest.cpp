@@ -20,10 +20,10 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/File.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
 namespace NES::Compiler {
 
 static constexpr auto TEST_FILE_BODY = "/*\n"
@@ -43,7 +43,7 @@ static constexpr auto TEST_FILE_BODY = "/*\n"
                                        "*/\n"
                                        "int mul(int x, int y) { return x * y; }";
 
-class JITCompilerTest : public testing::Test {
+class JITCompilerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     uint64_t waitForCompilation = 10;
     /* Will be called before any test in this class are executed. */

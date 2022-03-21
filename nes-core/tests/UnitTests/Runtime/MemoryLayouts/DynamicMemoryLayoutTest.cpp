@@ -27,6 +27,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <vector>
 

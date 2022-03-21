@@ -26,8 +26,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <ostream>
-
+#include <Util/TestUtils.hpp>
 using namespace std;
 
 /**
@@ -62,7 +63,7 @@ class SinkTest : public Testing::NESBaseTest {
         path_to_osfile_file = getTestResourceFolder() / "testOs.txt";
         auto workerConfiguration  = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(PhysicalSource::create("x", "x1"));
-        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
 
         borrowedZmqPort = getAvailablePort();
         zmqPort = *borrowedZmqPort;

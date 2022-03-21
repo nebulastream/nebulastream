@@ -12,22 +12,21 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkChannel.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -39,6 +38,8 @@
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <cstdlib>
+#include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <map>
 #include <utility>
@@ -51,9 +52,9 @@
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
 #include <Common/ExecutableType/Array.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <NesBaseTest.hpp>
 
 using namespace NES::Windowing;
 namespace NES {
@@ -65,7 +66,6 @@ class WindowManagerTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("WindowManagerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
     }
-
 
     const uint64_t buffers_managed = 10;
     const uint64_t buffer_size = 4 * 1024;
@@ -224,26 +224,27 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
     workerConfigurations->physicalSources.add(conf);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
-
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
 
     auto aggregation = Avg(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   1,
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        1,
+        trigger,
+        triggerAction,
+        0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -319,26 +320,27 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
     workerConfigurations->physicalSources.add(conf);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
-
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   1,
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        1,
+        trigger,
+        triggerAction,
+        0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -416,26 +418,27 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
     workerConfigurations->physicalSources.add(conf);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
-
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   1,
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        1,
+        trigger,
+        triggerAction,
+        0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -503,26 +506,27 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
     workerConfigurations->physicalSources.add(conf);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
-
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createSlicingWindowType(),
-                                                   1,
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createSlicingWindowType(),
+        1,
+        trigger,
+        triggerAction,
+        0);
 
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
@@ -587,24 +591,27 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto port = getAvailablePort();
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(*port);
     workerConfigurations->physicalSources.add(conf);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                     {aggregation},
-                                                     TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                     DistributionCharacteristic::createCombiningWindowType(),
-                                                     1,
-                                                     trigger,
-                                                     triggerAction,
-                                                     0);
+    auto windowDef =
+        LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                        {aggregation},
+                                        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+                                        DistributionCharacteristic::createCombiningWindowType(),
+                                        1,
+                                        trigger,
+                                        triggerAction,
+                                        0);
     auto exec = ExecutableSumAggregation<int64_t>::create();
 
     auto windowInputSchema = Schema::create();
@@ -676,24 +683,26 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->physicalSources.add(conf);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   1,
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        1,
+        trigger,
+        triggerAction,
+        0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
 
     auto windowInputSchema = Schema::create();
@@ -762,27 +771,28 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
-    PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+    PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
     auto workerConfigurations = WorkerConfiguration::create();
     workerConfigurations->dataPort.setValue(31341);
     workerConfigurations->physicalSources.add(conf);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
-
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
 
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowInputSchema = Schema::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createSlicingWindowType(),
-                                                   1,
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createSlicingWindowType(),
+        1,
+        trigger,
+        triggerAction,
+        0);
 
     auto windowOutputSchema = Schema::create()
                                   ->addField(createField("start", UINT64))

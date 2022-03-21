@@ -13,9 +13,10 @@
 */
 
 #include <API/Schema.hpp>
-#include <Views/TupleView.hpp>
-#include <Views/MaterializedView.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Views/MaterializedView.hpp>
+#include <Views/TupleView.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
@@ -28,7 +29,7 @@ MaterializedViewPtr MaterializedViewManager::getView(uint64_t viewId) {
     std::unique_lock<std::mutex> lock(mutex);
     MaterializedViewPtr view = nullptr;
     auto it = viewMap.find(viewId);
-    if (it != viewMap.end()){
+    if (it != viewMap.end()) {
         view = it->second;
     } else {
         NES_ERROR("MaterializedViewManager::getView: no view found with id " << viewId);
@@ -37,16 +38,17 @@ MaterializedViewPtr MaterializedViewManager::getView(uint64_t viewId) {
     return view;
 }
 
-MaterializedViewPtr MaterializedViewManager::createView(ViewType type){
+MaterializedViewPtr MaterializedViewManager::createView(ViewType type) {
     std::unique_lock<std::mutex> lock(mutex);
-    while (!containsView(nextViewId++)) {};
+    while (!containsView(nextViewId++)) {
+    };
     return createView(type, nextViewId);
 }
 
-MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t viewId){
+MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t viewId) {
     std::unique_lock<std::mutex> lock(mutex);
     MaterializedViewPtr view = nullptr;
-    if (!viewMap.contains(viewId)){
+    if (!viewMap.contains(viewId)) {
         if (type == TUPLE_VIEW) {
             view = TupleView::createTupleView(viewId);
             viewMap.insert(std::make_pair(viewId, view));
@@ -59,19 +61,18 @@ MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t 
     return view;
 }
 
-bool MaterializedViewManager::deleteView(uint64_t viewId){
+bool MaterializedViewManager::deleteView(uint64_t viewId) {
     std::unique_lock<std::mutex> lock(mutex);
     return viewMap.erase(viewId);
 }
 
-std::string MaterializedViewManager::to_string(){
+std::string MaterializedViewManager::to_string() {
     std::unique_lock<std::mutex> lock(mutex);
     std::string out = "";
-    for(const auto& elem : viewMap)
-    {
+    for (const auto& elem : viewMap) {
         out = out + "id: " + std::to_string(elem.first) + "\t";
     }
     return out;
 }
 
-} // namespace NES::Experimental::MaterializedView
+}// namespace NES::Experimental::MaterializedView

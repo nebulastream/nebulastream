@@ -225,14 +225,22 @@ void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this
 void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
 
 void DataSource::close() {
-    // inject reconfiguration task containing end of stream
-    std::unique_lock lock(startStopMutex);
-    NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
-    NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
-    endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);
-    NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
-    bufferManager->destroy();
-    queryManager->notifySourceCompletion(shared_from_base<DataSource>(), wasGracefullyStopped);
+    Runtime::QueryTerminationType queryTerminationType;
+    {
+        std::unique_lock lock(startStopMutex);
+        queryTerminationType = this->wasGracefullyStopped;
+    }
+    if (queryTerminationType != Runtime::QueryTerminationType::Graceful
+        || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType)) {
+        // inject reconfiguration task containing end of stream
+        std::unique_lock lock(startStopMutex);
+        NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
+        NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << queryTerminationType);
+        endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
+        NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
+        bufferManager->destroy();
+        queryManager->notifySourceCompletion(shared_from_base<DataSource>(), queryTerminationType);
+    }
 }
 
 void DataSource::runningRoutine() {

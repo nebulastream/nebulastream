@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
 
 #include <Catalogs/Source/PhysicalSource.hpp>

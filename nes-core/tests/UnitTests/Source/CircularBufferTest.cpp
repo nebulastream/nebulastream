@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 
 #include <Util/CircularBuffer.hpp>
 #include <Util/Logger/Logger.hpp>

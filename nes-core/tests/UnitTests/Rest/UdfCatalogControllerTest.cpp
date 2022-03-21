@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 
 #include "../../util/ProtobufMessageFactory.hpp"
 #include <Catalogs/UDF/UdfCatalog.hpp>

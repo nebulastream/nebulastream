@@ -55,7 +55,7 @@ class TestHarnessWorkerConfiguration {
                                                                                                workerId));
     }
 
-    void setNesWorker(const NesWorkerPtr& nesWorker) { this->nesWorker = nesWorker; }
+    void setQueryStatusListener(const NesWorkerPtr& nesWorker) { this->nesWorker = nesWorker; }
 
     const WorkerConfigurationPtr& getWorkerConfiguration() const { return workerConfiguration; }
     TestHarnessWorkerSourceType getSourceType() const { return sourceType; }

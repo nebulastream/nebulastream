@@ -49,9 +49,10 @@
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <random>
 #include <utility>
-
+#include <Util/TestUtils.hpp>
 using namespace std;
 
 namespace NES {
@@ -792,7 +793,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         workerConfiguration->numberOfBuffersPerWorker.setValue(64);
         workerConfiguration->physicalSources.add(sourceConf);
         auto nodeEngine =
-            Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+            Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,

@@ -24,7 +24,7 @@ const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t numberOfThreads = 5;
 
-class BufferStorageTest : public testing::Test {
+class BufferStorageTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     Runtime::BufferManagerPtr bufferManager;
     Runtime::BufferStoragePtr bufferStorage;

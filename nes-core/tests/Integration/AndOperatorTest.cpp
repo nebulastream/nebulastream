@@ -24,6 +24,7 @@
 #include <Util/TestUtils.hpp>
 #include <chrono>//for timing execution
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <regex>
 #include <NesBaseTest.hpp>

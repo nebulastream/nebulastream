@@ -219,6 +219,7 @@ NESBaseTest::NESBaseTest() : testResourcePath(std::filesystem::current_path() / 
 }
 
 void NESBaseTest::SetUp() {
+    Base::SetUp();
     restPort = portDispatcher.getNextPort();
     rpcCoordinatorPort = portDispatcher.getNextPort();
 }
@@ -231,6 +232,7 @@ void NESBaseTest::TearDown() {
     restPort.reset();
     rpcCoordinatorPort.reset();
     std::filesystem::remove_all(testResourcePath);
+    Base::TearDown();
 }
 
 BorrowedPort::~BorrowedPort() noexcept { parent->recyclePort(portIndex); }

@@ -22,6 +22,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
 
 using namespace std;

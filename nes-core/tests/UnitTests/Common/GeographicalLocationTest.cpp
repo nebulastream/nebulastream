@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <Exceptions/AccessingInvalidCoordinatesException.hpp>
+#include <Exceptions/CoordinatesOutOfRangeException.hpp>
+#include <Exceptions/InvalidCoordinateFormatException.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <Exceptions/CoordinatesOutOfRangeException.hpp>
-#include <Exceptions/InvalidCoordinateFormatException.hpp>
-#include <Exceptions/AccessingInvalidCoordinatesException.hpp>
-
 namespace NES {
 
-class GeographicalLocationTest : public testing::Test {
+class GeographicalLocationTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);
@@ -44,7 +44,5 @@ TEST_F(GeographicalLocationTest, testExceptionHandling) {
     double l;
     EXPECT_THROW(l = geoLoc.getLatitude(), NES::AccessingInvalidCoordinatesException);
     EXPECT_THROW(l = geoLoc.getLongitude(), NES::AccessingInvalidCoordinatesException);
-
-
 }
 }// namespace NES

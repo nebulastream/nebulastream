@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
 
 #include <map>
@@ -44,7 +45,7 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES {
-class JoinHandlerTest : public testing::Test {
+class JoinHandlerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     void SetUp() override {
         NES::Logger::setupLogging("JoinHandlerTest.log", NES::LogLevel::LOG_DEBUG);

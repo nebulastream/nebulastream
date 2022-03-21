@@ -26,13 +26,11 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Services/QueryCatalogService.hpp>
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <memory>
 
-using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
 using std::cout;
 using std::endl;
@@ -49,63 +47,63 @@ namespace NES {
 /**
  * @brief this is a util class for the tests
  */
-class TestUtils {
-  public:
+namespace TestUtils {
+
     static constexpr uint64_t defaultTimeout = 60;
     // in milliseconds
     static constexpr uint64_t sleepDuration = 250;
 
-    [[nodiscard]] static std::string coordinatorPort(uint64_t coordinatorPort) {
+    [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
         return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
     }
 
-    [[nodiscard]] static std::string numberOfSlots(uint64_t coordinatorPort) {
+    [[nodiscard]] std::string numberOfSlots(uint64_t coordinatorPort) {
         return "--" + NUMBER_OF_SLOTS_CONFIG + "=" + std::to_string(coordinatorPort);
     }
 
-    [[nodiscard]] static std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
+    [[nodiscard]] std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
 
-    [[nodiscard]] static std::string sourceType(std::string sourceType) {
+    [[nodiscard]] std::string sourceType(std::string sourceType) {
         return "--physicalSources." + SOURCE_TYPE_CONFIG + "=" + sourceType;
     }
 
-    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) {
+    [[nodiscard]] std::string csvSourceFilePath(std::string filePath) {
         return "--physicalSources." + FILE_PATH_CONFIG + "=" + filePath;
     }
 
-    [[nodiscard]] static std::string dataPort(uint64_t dataPort) {
+    [[nodiscard]] std::string dataPort(uint64_t dataPort) {
         return "--" + DATA_PORT_CONFIG + "=" + std::to_string(dataPort);
     }
 
-    [[nodiscard]] static std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer) {
+    [[nodiscard]] std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer) {
         return "--physicalSources." + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + "="
             + std::to_string(numberOfTuplesToProducePerBuffer);
     }
 
-    [[nodiscard]] static std::string physicalSourceName(std::string physicalSourceName) {
+    [[nodiscard]] std::string physicalSourceName(std::string physicalSourceName) {
         return "--physicalSources." + PHYSICAL_SOURCE_NAME_CONFIG + "=" + physicalSourceName;
     }
 
-    [[nodiscard]] static std::string logicalSourceName(std::string logicalSourceName) {
+    [[nodiscard]] std::string logicalSourceName(std::string logicalSourceName) {
         return "--physicalSources." + LOGICAL_SOURCE_NAME_CONFIG + "=" + logicalSourceName;
     }
 
-    [[nodiscard]] static std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce) {
+    [[nodiscard]] std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce) {
         return "--physicalSources." + NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + "=" + std::to_string(numberOfBuffersToProduce);
     }
 
-    [[nodiscard]] static std::string sourceGatheringInterval(uint64_t sourceGatheringInterval) {
+    [[nodiscard]] std::string sourceGatheringInterval(uint64_t sourceGatheringInterval) {
         return "--physicalSources." + SOURCE_GATHERING_INTERVAL_CONFIG + "=" + std::to_string(sourceGatheringInterval);
     }
 
-    [[nodiscard]] static std::string restPort(uint64_t restPort) { return "--restPort=" + std::to_string(restPort); }
+    [[nodiscard]] std::string restPort(uint64_t restPort) { return "--restPort=" + std::to_string(restPort); }
 
     /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
    * @param flags
    * @return coordinator process, which terminates if it leaves the scope
    */
-    [[nodiscard]] static Util::Subprocess startCoordinator(std::initializer_list<std::string> list) {
+    [[nodiscard]] Util::Subprocess startCoordinator(std::initializer_list<std::string> list) {
         NES_INFO("Start coordinator");
         return {std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesCoordinator", list};
     }
@@ -115,7 +113,7 @@ class TestUtils {
      * @param flags
      * @return worker process, which terminates if it leaves the scope
      */
-    [[nodiscard]] static Util::Subprocess startWorker(std::initializer_list<std::string> flags) {
+    [[nodiscard]] Util::Subprocess startWorker(std::initializer_list<std::string> flags) {
         NES_INFO("Start worker");
         return {std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesWorker", flags};
     }
@@ -127,7 +125,7 @@ class TestUtils {
      * @param expectedResult
      * @return bool indicating if the expected results are matched
      */
-    static bool checkCompleteOrTimeout(const Runtime::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult) {
+    [[nodiscard]] bool checkCompleteOrTimeout(const Runtime::NodeEnginePtr& ptr, QueryId queryId, uint64_t expectedResult) {
         if (ptr->getQueryStatistics(queryId).empty()) {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;
@@ -156,28 +154,28 @@ class TestUtils {
      * @param expectedResult: The expected value
      * @return true if matched the expected result within the timeout
      */
-    static bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, const std::string& restPort = "8081");
+    [[nodiscard]] bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, const std::string& restPort = "8081");
 
     /**
      * @brief This method is used for stop a query
      * @param queryId: Id of the query
      * @return if stopped
      */
-    static bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081");
+    [[nodiscard]] bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081");
 
     /**
      * @brief This method is used for executing a query
      * @param query string
      * @return if stopped
      */
-    static web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
+    [[nodiscard]] web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
 
     /**
    * @brief This method is used adding a logical source
    * @param query string
    * @return
    */
-    static bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081");
+    [[nodiscard]] bool addLogicalSource(const string& schemaString, const std::string& restPort = "8081");
 
     /**
      * @brief This method is used for waiting till the query gets into running status or a timeout occurs
@@ -186,7 +184,7 @@ class TestUtils {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId,
+    [[nodiscard]] bool waitForQueryToStart(QueryId queryId,
                                     const QueryCatalogServicePtr& queryCatalogService,
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultTimeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
@@ -227,7 +225,7 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<uint64_t>>
-    static bool checkCompleteOrTimeout(const NesWorkerPtr& nesWorker,
+    [[nodiscard]] bool checkCompleteOrTimeout(const NesWorkerPtr& nesWorker,
                                        QueryId queryId,
                                        const GlobalQueryPlanPtr& globalQueryPlan,
                                        uint64_t expectedResult) {
@@ -278,7 +276,7 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<uint64_t>>
-    static bool checkCompleteOrTimeout(const NesCoordinatorPtr& nesCoordinator,
+    [[nodiscard]] bool checkCompleteOrTimeout(const NesCoordinatorPtr& nesCoordinator,
                                        QueryId queryId,
                                        const GlobalQueryPlanPtr& globalQueryPlan,
                                        uint64_t expectedResult) {
@@ -327,7 +325,8 @@ class TestUtils {
      * @param queryCatalogService: the catalog containig the queries in the system
      * @return true if successful
      */
-    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, uint64_t timeout = defaultTimeout) {
+    [[nodiscard]] bool
+    checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, uint64_t timeout = defaultTimeout) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -350,7 +349,7 @@ class TestUtils {
    * @param outputFilePath
    * @return true if successful
    */
-    static bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeout = 0) {
+    [[nodiscard]] bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
         if (customTimeout == 0) {
             timeoutInSec = std::chrono::seconds(defaultTimeout);
@@ -407,7 +406,7 @@ class TestUtils {
    * @param outputFilePath
    * @return true if successful
    */
-    static bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0) {
+    [[nodiscard]] bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
         if (customTimeout == 0) {
             timeoutInSec = std::chrono::seconds(defaultTimeout);
@@ -447,7 +446,7 @@ class TestUtils {
   * @return true if successful
   */
     template<typename T>
-    static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent,
+    [[nodiscard]] bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent,
                                                         const string& outputFilePath,
                                                         uint64_t testTimeout = defaultTimeout) {
         auto timeoutInSec = std::chrono::seconds(testTimeout);
@@ -499,7 +498,7 @@ class TestUtils {
    * @param outputFilePath
    * @return true if successful
    */
-    static bool checkFileCreationOrTimeout(const string& outputFilePath) {
+    [[nodiscard]] bool checkFileCreationOrTimeout(const string& outputFilePath) {
         auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -514,7 +513,19 @@ class TestUtils {
         return false;
     }
 
-    static bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers);
+    [[nodiscard]] bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers);
 };
+
+class DummyQueryListener : public AbstractQueryStatusListener {
+  public:
+    virtual ~DummyQueryListener() {}
+
+    bool canTriggerEndOfStream(QueryId, QuerySubPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
+    bool notifySourceTermination(QueryId, QuerySubPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
+    bool notifyQueryFailure(QueryId, QuerySubPlanId, uint64_t, OperatorId, std::string) override { return true; }
+    bool notifyQueryStatusChange(QueryId, QuerySubPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override { return true; }
+    bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
+};
+
 }// namespace NES
 #endif// NES_INCLUDE_UTIL_TESTUTILS_HPP_

@@ -166,8 +166,8 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
                                                                                     << qep->getQueryId());
-//    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
-//               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+    //    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
+    //               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     // 5. start data sources
     for (const auto& source : qep->getSources()) {
@@ -195,6 +195,16 @@ bool AbstractQueryManager::deregisterQuery(const Execution::ExecutableQueryPlanP
         sourceToQEPMapping.erase(source->getOperatorId());
     }
     return true;
+}
+
+bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType) {
+    std::unique_lock lock(queryMutex);
+    auto qep = sourceToQEPMapping[source->getOperatorId()];
+    lock.unlock();
+    return queryStatusListener->canTriggerEndOfStream(qep->getQueryId(),
+                                                      qep->getQuerySubPlanId(),
+                                                      source->getOperatorId(),
+                                                      terminationType);
 }
 
 bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep) {

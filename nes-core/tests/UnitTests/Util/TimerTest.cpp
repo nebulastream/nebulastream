@@ -17,6 +17,7 @@
 #include <chrono>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <thread>
 #include <unistd.h>
 

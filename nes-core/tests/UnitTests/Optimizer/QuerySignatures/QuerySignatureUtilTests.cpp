@@ -20,6 +20,7 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
 #include <API/Windowing.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -36,7 +37,7 @@
 
 using namespace NES;
 
-class QuerySignatureUtilTests : public testing::Test {
+class QuerySignatureUtilTests : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     SchemaPtr schema;
