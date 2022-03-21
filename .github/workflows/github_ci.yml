@@ -235,6 +235,8 @@ jobs:
               echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
               docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
               echo "Pushed the build image"
+              docker buildx build . -f Dockerfile-NES-Build-alpine-3.15 -t nebulastream/nes-build-image:alpine --push
+              echo "Pushed the alpine image"
               docker logout
           else
               echo "No changes done in buildImage. Skipping the build and release phase."
@@ -248,6 +250,8 @@ jobs:
               echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
               docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --push
               echo "Pushed the dev image"
+              docker buildx build . -f Dockerfile-NES-Dev-alpine-3.15 -t nebulastream/nes-dev-image:alpine --push
+              echo "Pushed the alpine image"
               docker logout
           else
               echo "No changes done to devImage. Skipping the build and release phase."
