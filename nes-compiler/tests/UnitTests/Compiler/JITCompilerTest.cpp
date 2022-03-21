@@ -54,6 +54,7 @@ class JITCompilerTest : public Testing::TestWithErrorHandling<testing::Test> {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         std::cout << "Setup JITCompilerTest test case." << std::endl;
         auto cppCompiler = CPPCompiler::create();
         auto compilerBuilder = JITCompilerBuilder();

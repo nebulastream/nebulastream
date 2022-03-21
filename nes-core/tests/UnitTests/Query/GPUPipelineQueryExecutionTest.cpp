@@ -60,6 +60,7 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     static void SetUpTestCase() { NES::Logger::setupLogging("GPUQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
     /* Will be called before a test is executed. */
     void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
         testSchemaSimple = Schema::create()->addField("test$value", BasicType::INT32);
         testSchemaMultipleFields = Schema::create()
                                        ->addField("test$id", BasicType::INT64)

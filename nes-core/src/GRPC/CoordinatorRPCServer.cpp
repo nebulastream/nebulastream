@@ -262,7 +262,9 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
 
     //Check with query catalog service if the request possible
     auto queryId = request->queryid();
-    auto softStopPossible = queryCatalogService->checkAndMarkForSoftStop(queryId);
+    auto subQueryPlanId = request->subqueryid();
+    auto sourceId = request->sourceid();
+    auto softStopPossible = queryCatalogService->checkAndMarkForSoftStop(queryId, subQueryPlanId, sourceId);
 
     //Send response
     response->set_success(softStopPossible);
@@ -270,8 +272,8 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
 }
 
 Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
-                                                     const ::SoftStopTriggeredMessage* request,
-                                                     ::SoftStopTriggeredReply* response) {
+                                                       const ::SoftStopTriggeredMessage* request,
+                                                       ::SoftStopTriggeredReply* response) {
     //Fetch the request
     auto queryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();

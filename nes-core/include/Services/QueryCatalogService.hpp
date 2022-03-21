@@ -117,7 +117,7 @@ class QueryCatalogService {
      * @param queryId: the query which need to be stopped
      * @return true if successful else false
      */
-    bool checkAndMarkForSoftStop(QueryId queryId);
+    bool checkAndMarkForSoftStop(QueryId queryId, QuerySubPlanId subPlanId, OperatorId operatorId);
 
     /**
      * check and mark the query for hard stop

@@ -17,26 +17,32 @@
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <utility>
 namespace NES {
 
-QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient)
-    : workerRPCClient(std::move(workerRpcClient)), globalExecutionPlan(std::move(globalExecutionPlan)) {
-    NES_DEBUG("QueryDeploymentPhase()");
-}
+QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
+                                           WorkerRPCClientPtr workerRpcClient,
+                                           QueryCatalogServicePtr catalogService)
+    : workerRPCClient(std::move(workerRpcClient)), globalExecutionPlan(std::move(globalExecutionPlan)),
+      catalogService(std::move(catalogService)) {}
 
 QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                     WorkerRPCClientPtr workerRpcClient) {
+                                                     WorkerRPCClientPtr workerRpcClient,
+                                                     QueryCatalogServicePtr catalogService) {
     return std::make_shared<QueryDeploymentPhase>(
-        QueryDeploymentPhase(std::move(globalExecutionPlan), std::move(workerRpcClient)));
+        QueryDeploymentPhase(std::move(globalExecutionPlan), std::move(workerRpcClient), std::move(catalogService)));
 }
 
-bool QueryDeploymentPhase::execute(QueryId queryId) {
+bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
     NES_DEBUG("QueryDeploymentPhase: deploy the query");
+
+    auto queryId = sharedQueryPlan->getSharedQueryId();
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     if (executionNodes.empty()) {
@@ -52,6 +58,28 @@ bool QueryDeploymentPhase::execute(QueryId queryId) {
     } else {
         NES_ERROR("QueryDeploymentPhase: Failed to deploy query " << queryId);
         throw QueryDeploymentException(queryId, "QueryDeploymentPhase: Failed to deploy query " + std::to_string(queryId));
+    }
+
+    //3.3.4. Reset all sub query plans
+    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        catalogService->resetSubQueryMetaData(queryId);
+    }
+
+    //3.3.4. Add all sub query plans
+    for (auto& executionNode : executionNodes) {
+        auto workerId = executionNode->getId();
+        auto subQueryPlans = executionNode->getQuerySubPlans(queryId);
+        for (auto& subQueryPlan : subQueryPlans) {
+            QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
+            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                catalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
+            }
+        }
+    }
+
+    //                            //3.3.5. Mark all contained queries as running
+    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        catalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
     }
 
     NES_DEBUG("QueryService: start query");

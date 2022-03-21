@@ -49,9 +49,9 @@ namespace NES {
  */
 namespace TestUtils {
 
-    static constexpr uint64_t defaultTimeout = 60;
+    static constexpr auto defaultTimeout = std::chrono::seconds(60);
     // in milliseconds
-    static constexpr uint64_t sleepDuration = 250;
+    static constexpr auto sleepDuration = std::chrono::seconds(1);
 
     [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
         return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
@@ -142,7 +142,7 @@ namespace TestUtils {
             }
             NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr sleep because val="
                       << ptr->getQueryStatistics(queryId)[0]->getProcessedTuple() << " < " << expectedResult);
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
         }
         NES_DEBUG("checkCompleteOrTimeout: NodeEnginePtr expected results are not reached after timeout");
         return false;
@@ -205,12 +205,16 @@ namespace TestUtils {
                 return isQueryRunning;
             }
 
-            if (status == QueryStatus::Failed || status == QueryStatus::Stopped) {
+            if (status == QueryStatus::Stopped) {
+                return true; // was once running
+            }
+
+            if (status == QueryStatus::Failed) {
                 NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
                 return false;
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
         }
         NES_DEBUG("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
         return false;
@@ -245,7 +249,7 @@ namespace TestUtils {
             auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
             if (statistics.empty()) {
                 NES_DEBUG("checkCompleteOrTimeout: query=" << sharedQueryId << " stats size=" << statistics.size());
-                std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+                std::this_thread::sleep_for(sleepDuration);
                 continue;
             }
             uint64_t processed = statistics[0]->getProcessedBuffers();
@@ -258,7 +262,7 @@ namespace TestUtils {
             NES_DEBUG("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer="
                       << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
                       << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
         }
         auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
         uint64_t processed = statistics[0]->getProcessedBuffers();
@@ -308,7 +312,7 @@ namespace TestUtils {
                       << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
                       << " expected=" << expectedResult);
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
         }
         //FIXME: handle vector of statistics properly in #977
         NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result="
@@ -326,7 +330,7 @@ namespace TestUtils {
      * @return true if successful
      */
     [[nodiscard]] bool
-    checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, uint64_t timeout = defaultTimeout) {
+    checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& queryCatalogService, std::chrono::seconds timeout = defaultTimeout) {
         auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -337,7 +341,7 @@ namespace TestUtils {
             }
             NES_DEBUG("checkStoppedOrTimeout: status not reached as status is="
                       << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
         }
         NES_DEBUG("checkStoppedOrTimeout: expected status not reached within set timeout");
         return false;
@@ -362,7 +366,7 @@ namespace TestUtils {
         uint64_t found = 0;
         uint64_t count = 0;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
             found = 0;
             count = 0;
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
@@ -418,7 +422,7 @@ namespace TestUtils {
         auto start_timestamp = std::chrono::system_clock::now();
         uint64_t count = 0;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
             count = 0;
             NES_DEBUG("checkIfOutputFileIsNotEmtpy: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
@@ -448,11 +452,11 @@ namespace TestUtils {
     template<typename T>
     [[nodiscard]] bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent,
                                                         const string& outputFilePath,
-                                                        uint64_t testTimeout = defaultTimeout) {
+                                                        auto testTimeout = defaultTimeout) {
         auto timeoutInSec = std::chrono::seconds(testTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
             NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
@@ -502,7 +506,7 @@ namespace TestUtils {
         auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+            std::this_thread::sleep_for(sleepDuration);
             NES_DEBUG("checkFileCreationOrTimeout: for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
