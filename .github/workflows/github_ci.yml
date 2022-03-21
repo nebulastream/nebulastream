@@ -35,7 +35,7 @@ jobs:
             team: 'NebulaStream'
             GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - name: verify-run-privilage
-        if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == "Push"
+        if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == 'Push'
         run: |
           echo "Unauthorized user triggering release"
           exit 1
