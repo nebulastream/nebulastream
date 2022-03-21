@@ -125,7 +125,7 @@ macro(project_enable_release)
         add_custom_target(minor_release COMMAND echo "Releasing Minor Version of NebulaStream")
         add_custom_command(TARGET minor_release
                 COMMAND echo "GIT-CI: Updating NES version"
-                COMMAND ${CMAKE_COMMAND} -DRELEASE=MINOR -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
+                COMMAND ${CMAKE_COMMAND} -DMINOR_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
                 COMMAND echo "Push new tag to the repository"
                 COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/release/PushTag.cmake
                 COMMAND echo "Performing post tag release steps"
@@ -136,7 +136,7 @@ macro(project_enable_release)
         add_custom_target(major_release COMMAND echo "Releasing Major Version of NebulaStream")
         add_custom_command(TARGET major_release
                 COMMAND echo "GIT-CI: Updating NES version"
-                COMMAND ${CMAKE_COMMAND} -DRELEASE=MAJOR -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
+                COMMAND ${CMAKE_COMMAND} -DMAJOR_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
                 COMMAND echo "Push new tag to the repository"
                 COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/release/PushTag.cmake
                 COMMAND echo "Performing post tag release steps"
