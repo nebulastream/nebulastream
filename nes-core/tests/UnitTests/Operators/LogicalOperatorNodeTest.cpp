@@ -47,6 +47,7 @@ class LogicalOperatorNodeTest : public Testing::NESBaseTest {
     }
 
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 

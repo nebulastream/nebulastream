@@ -43,12 +43,6 @@ class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testin
         NES_INFO("Setup SignatureInferencePhaseTest test case.");
     }
 
-    /* Will be called before a  test is executed. */
-    void SetUp() override {}
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down SignatureInferencePhaseTest test case."); }
-
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down SignatureInferencePhaseTest test class."); }
 };

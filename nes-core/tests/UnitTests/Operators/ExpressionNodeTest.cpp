@@ -38,10 +38,6 @@ class ExpressionNodeTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 
-    void SetUp() override {}
-
-    void TearDown() override { NES_DEBUG("Tear down ExpressionNodeTest Test."); }
-
   protected:
     static void setupLogging() {
         NES::Logger::setupLogging("ExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);

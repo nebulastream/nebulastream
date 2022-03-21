@@ -1054,11 +1054,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId1);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, 5));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId2);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, 5));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -1378,11 +1378,11 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId1);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, 5));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId2);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, 5));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService, std::chrono::seconds(5)));
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

@@ -32,9 +32,10 @@ QueryCatalogEntryPtr QueryCatalogService::createNewEntry(const std::string& quer
     return queryCatalog->createNewEntry(queryString, queryPlan, placementStrategyName);
 }
 
-bool QueryCatalogService::checkAndMarkForSoftStop(QueryId queryId) {
+bool QueryCatalogService::checkAndMarkForSoftStop(QueryId queryId, QuerySubPlanId subPlanId, OperatorId operatorId) {
     std::unique_lock lock(serviceMutex);
 
+    NES_DEBUG("checkAndMarkForSoftStop queryId=" << queryId << " subQueryId=" << subPlanId << " source=" << operatorId);
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
         NES_ERROR("QueryCatalogService: Query Catalog does not contains the input queryId " + std::to_string(queryId));
@@ -55,6 +56,7 @@ bool QueryCatalogService::checkAndMarkForSoftStop(QueryId queryId) {
 
     //Mark query for soft stop and return
     queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForSoftStop);
+    NES_DEBUG("QueryCatalogService: Query Id " << queryId << " is marked as soft stopped");
     return true;
 }
 
@@ -78,7 +80,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
         throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running},
                                           currentStatus);
     }
-    NES_INFO("QueryCatalog: Changing query status to Mark query for stop.");
+    NES_DEBUG("QueryCatalog: Changing query status to Mark query for stop.");
     queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForHardStop);
     return true;
 }
@@ -172,8 +174,8 @@ bool QueryCatalogService::handleSoftStop(QueryId queryId, QuerySubPlanId querySu
 
     std::unique_lock lock(serviceMutex);
 
-    NES_INFO("QueryCatalogService: Updating the status of sub query with id " << querySubPlanId << " for query with id "
-                                                                              << queryId);
+    NES_DEBUG("QueryCatalogService: Updating the status of sub query (" << QueryStatus::toString(subQueryStatus) << ") with id "
+                                                                        << querySubPlanId << " for query with id " << queryId);
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {
@@ -187,8 +189,8 @@ bool QueryCatalogService::handleSoftStop(QueryId queryId, QuerySubPlanId querySu
     //Check if query is in correct status
     auto currentQueryStatus = queryCatalogEntry->getQueryStatus();
     if (currentQueryStatus != QueryStatus::MarkedForSoftStop) {
-        NES_ERROR("Found query in " << queryCatalogEntry->getQueryStatusAsString()
-                                    << " but received soft stop for the sub query with id " << querySubPlanId
+        NES_ERROR("Found query in " << queryCatalogEntry->getQueryStatusAsString() << " but received "
+                                    << QueryStatus::toString(subQueryStatus) << " for the sub query with id " << querySubPlanId
                                     << " for query with id " << queryId);
         return false;
     }
@@ -216,19 +218,18 @@ bool QueryCatalogService::handleSoftStop(QueryId queryId, QuerySubPlanId querySu
     querySubPlanMetaData->updateStatus(subQueryStatus);
 
     //Check if all sub queries are stopped when a sub query soft stop completes
-    bool stopQuery = false;
+    bool stopQuery = true;
     if (subQueryStatus == QueryStatus::SoftStopCompleted) {
         for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
             if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryStatus::SoftStopCompleted) {
+                stopQuery = false;
                 break;
             }
         }
-        stopQuery = true;
-    }
-
-    // Mark the query as stopped if all sub queries are stopped
-    if (stopQuery) {
-        queryCatalogEntry->setQueryStatus(QueryStatus::Stopped);
+        // Mark the query as stopped if all sub queries are stopped
+        if (stopQuery) {
+            queryCatalogEntry->setQueryStatus(QueryStatus::Stopped);
+        }
     }
     return true;
 }

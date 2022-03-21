@@ -34,6 +34,12 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 class QueryDeploymentPhase;
 using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class SharedQueryPlan;
+using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
+
 /**
  * @brief The query deployment phase is responsible for deploying the query plan for a query to respective worker nodes.
  */
@@ -45,17 +51,20 @@ class QueryDeploymentPhase {
      * @param workerRpcClient : rpc client to communicate with workers
      * @return shared pointer to the instance of QueryDeploymentPhase
      */
-    static QueryDeploymentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
+    static QueryDeploymentPhasePtr
+    create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient, QueryCatalogServicePtr);
 
     /**
      * @brief method for deploying and starting the query
      * @param queryId : the query Id of the query to be deployed and started
      * @return true if successful else false
      */
-    bool execute(QueryId queryId);
+    bool execute(SharedQueryPlanPtr sharedQueryPlan);
 
   private:
-    explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
+    explicit QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
+                                  WorkerRPCClientPtr workerRpcClient,
+                                  QueryCatalogServicePtr);
     /**
      * @brief method send query to nodes
      * @param queryId
@@ -72,6 +81,7 @@ class QueryDeploymentPhase {
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;
+    QueryCatalogServicePtr catalogService;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
+#endif// NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_

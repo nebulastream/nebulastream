@@ -432,7 +432,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     Status status = workerStub->Check(&context, request, &response);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::checkHealth: status ok return success=" << response.status());
+        NES_TRACE("WorkerRPCClient::checkHealth: status ok return success=" << response.status());
         return response.status();
     } else {
         NES_ERROR(" WorkerRPCClient::checkHealth error=" << status.error_code() << ": " << status.error_message());

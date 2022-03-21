@@ -256,10 +256,6 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
 }
 
 TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
-
-    coordinatorConfig->clear();
-    wrkConf->clear();
-
     NES_INFO("MillisecondIntervalTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
