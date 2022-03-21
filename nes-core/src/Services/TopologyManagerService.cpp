@@ -62,7 +62,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
     newTopologyNode->setSpatialNodeType(spatialType);
     newTopologyNode->setMobile(isMobile);
-    newTopologyNode->addNodeProperty("tfInstalled", tfInstalled);
+    newTopologyNode->addNodeProperty("tf_installed", tfInstalled);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
