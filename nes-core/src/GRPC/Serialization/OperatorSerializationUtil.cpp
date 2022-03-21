@@ -150,6 +150,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         serializedOperator.mutable_details()->PackFrom(mapDetails);
     } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
         // serialize infer model operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to InferModelLogicalOperatorNode");
         auto inferModelDetails = SerializableOperator_InferModelDetails();
         auto inferModelOperator = operatorNode->as<InferModelLogicalOperatorNode>();
 
