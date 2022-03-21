@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: verify-run-privilage
-        if: "contains(github.event.inputs.trigger-value, 'trigger benchmark')"
+        if: ${{ github.event }} == "Push"
         uses: tspascoal/get-user-teams-membership@v1
         id: checkUserMember
         with:
