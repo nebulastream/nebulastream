@@ -59,7 +59,7 @@ LambdaSource::LambdaSource(
 }
 
 std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
-    NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
+    NES_TRACE("LambdaSource::receiveData called on operatorId=" << operatorId);
     using namespace std::chrono_literals;
 
     auto buffer = bufferManager->getBufferBlocking();
@@ -76,7 +76,7 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
+    NES_TRACE("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
                                                                      << " outOrgID=" << buffer.getOriginId());
     if (buffer.getNumberOfTuples() == 0) {
         NES_ASSERT(false, "this should not happen");

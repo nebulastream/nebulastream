@@ -20,6 +20,7 @@
 #include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <limits>
 
 using namespace std;

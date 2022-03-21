@@ -18,6 +18,7 @@
 #include <chrono>
 
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 using namespace NES;
 using namespace Sensors;
@@ -36,7 +37,7 @@ namespace Sensors {
  * They are currently disabled but tested locally.
  * Ideally, these all should be mocked.
  */
-class SensorBusTest : public testing::Test {
+class SensorBusTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     std::string path_to_bus;

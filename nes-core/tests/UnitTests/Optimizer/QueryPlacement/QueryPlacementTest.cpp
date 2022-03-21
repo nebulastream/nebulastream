@@ -49,13 +49,14 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <utility>
 
 using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class QueryPlacementTest : public testing::Test {
+class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     z3::ContextPtr z3Context;
     SourceCatalogPtr sourceCatalog;

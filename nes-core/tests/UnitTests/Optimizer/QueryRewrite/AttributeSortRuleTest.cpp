@@ -14,6 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -27,7 +28,7 @@
 
 using namespace NES;
 
-class AttributeSortRuleTest : public testing::Test {
+class AttributeSortRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     SchemaPtr schema;

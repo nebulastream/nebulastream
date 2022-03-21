@@ -34,27 +34,31 @@ namespace NES::Runtime {
 
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
 
-AbstractQueryManager::AbstractQueryManager(std::vector<BufferManagerPtr> bufferManagers,
+AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+                                           std::vector<BufferManagerPtr> bufferManagers,
                                            uint64_t nodeEngineId,
                                            uint16_t numThreads,
                                            HardwareManagerPtr hardwareManager,
                                            const StateManagerPtr& stateManager,
                                            std::vector<uint64_t> workerToCoreMapping)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
-      hardwareManager(hardwareManager), workerToCoreMapping(workerToCoreMapping), stateManager(stateManager) {
+      hardwareManager(std::move(hardwareManager)), workerToCoreMapping(std::move(workerToCoreMapping)),
+      queryStatusListener(std::move(queryStatusListener)), stateManager(std::move(stateManager)) {
 
     tempCounterTasksCompleted.resize(numThreads);
 
-    asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(hardwareManager, 1);
+    asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(this->hardwareManager, 1);
 }
 
-DynamicQueryManager::DynamicQueryManager(std::vector<BufferManagerPtr> bufferManagers,
+DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+                                         std::vector<BufferManagerPtr> bufferManagers,
                                          uint64_t nodeEngineId,
                                          uint16_t numThreads,
                                          HardwareManagerPtr hardwareManager,
                                          const StateManagerPtr& stateManager,
                                          std::vector<uint64_t> workerToCoreMapping)
-    : AbstractQueryManager(std::move(bufferManagers),
+    : AbstractQueryManager(std::move(queryStatusListener),
+                           std::move(bufferManagers),
                            nodeEngineId,
                            numThreads,
                            std::move(hardwareManager),
@@ -64,7 +68,8 @@ DynamicQueryManager::DynamicQueryManager(std::vector<BufferManagerPtr> bufferMan
     NES_DEBUG("QueryManger: use dynamic mode with numThreads=" << numThreads);
 }
 
-MultiQueueQueryManager::MultiQueueQueryManager(std::vector<BufferManagerPtr> bufferManagers,
+MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+                                               std::vector<BufferManagerPtr> bufferManagers,
                                                uint64_t nodeEngineId,
                                                uint16_t numThreads,
                                                HardwareManagerPtr hardwareManager,
@@ -72,7 +77,8 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::vector<BufferManagerPtr> buf
                                                std::vector<uint64_t> workerToCoreMapping,
                                                uint64_t numberOfQueues,
                                                uint64_t numberOfThreadsPerQueue)
-    : AbstractQueryManager(std::move(bufferManagers),
+    : AbstractQueryManager(std::move(queryStatusListener),
+                           std::move(bufferManagers),
                            nodeEngineId,
                            numThreads,
                            std::move(hardwareManager),
@@ -272,7 +278,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
                 runningQEPs.erase(it);
             }
             // we need to think if we wanna remove this after a soft stop
-//            queryToStatisticsMap.erase(qepId);
+            //            queryToStatisticsMap.erase(qepId);
             NES_DEBUG("AbstractQueryManager: removed running QEP " << qepId);
             break;
         }

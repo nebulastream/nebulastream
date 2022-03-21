@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <Catalogs/PhysicalSourceConfig.hpp>
 #include <cstring>
@@ -38,7 +39,7 @@ static UA_Server* server = UA_Server_new();
 
 namespace NES {
 
-class OPCSourceTest : public testing::Test {
+class OPCSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -54,7 +55,7 @@ class OPCSourceTest : public testing::Test {
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();

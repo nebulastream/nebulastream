@@ -57,7 +57,7 @@ service CoordinatorRPCService {
 
   rpc RequestSoftStop (RequestSoftStopMessage) returns (StopRequestReply) {}
 
-  rpc NotifySoftStopTriggered (SoftStopTriggeredMessage) returns (SoftStopTriggeredReply) {}
+  rpc notifySourceStopTriggered (SoftStopTriggeredMessage) returns (SoftStopTriggeredReply) {}
 
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
 }
@@ -216,6 +216,8 @@ message ErrorReply{
 
 message RequestSoftStopMessage{
   uint64 queryId = 1;
+  uint64 subQueryId = 2;
+  uint64 sourceId = 3;
 }
 
 message StopRequestReply{
@@ -225,7 +227,7 @@ message StopRequestReply{
 message SoftStopTriggeredMessage{
   uint64 queryId = 1;
   uint64 querySubPlanId = 2;
-  bool triggered = 3;
+  uint64 sourceId = 3;
 }
 
 message SoftStopTriggeredReply{
@@ -235,7 +237,6 @@ message SoftStopTriggeredReply{
 message SoftStopCompletionMessage{
   uint64 queryId = 1;
   uint64 querySubPlanId = 2;
-  bool completed = 3;
 }
 
 message SoftStopCompletionReply{

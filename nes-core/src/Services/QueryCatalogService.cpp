@@ -15,8 +15,8 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Query/QuerySubPlanMetaData.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -233,27 +233,7 @@ bool QueryCatalogService::handleSoftStop(QueryId queryId, QuerySubPlanId querySu
     return true;
 }
 
-bool QueryCatalogService::registerSoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered) {
-
-    if (triggered) {
-        updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopTriggered);
-    }
-
-    //TODO: Ventura how to handle if soft stop didn't triggered?
-    return true;
-}
-
-bool QueryCatalogService::registerSoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed) {
-
-    if (completed) {
-        updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopTriggered);
-    }
-
-    //TODO: Ventura how to handle if soft stop didn't completed?
-    return true;
-}
-
-void QueryCatalogService::updateQuerySubPlanStatus(QueryId queryId,
+bool QueryCatalogService::updateQuerySubPlanStatus(QueryId queryId,
                                                    QuerySubPlanId querySubPlanId,
                                                    QueryStatus::Value subQueryStatus) {
     std::unique_lock lock(serviceMutex);
@@ -264,6 +244,7 @@ void QueryCatalogService::updateQuerySubPlanStatus(QueryId queryId,
         default:
             throw InvalidQueryStatusException({QueryStatus::SoftStopTriggered, QueryStatus::SoftStopCompleted}, subQueryStatus);
     }
+    return true;
 }
 
 void QueryCatalogService::addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan) {

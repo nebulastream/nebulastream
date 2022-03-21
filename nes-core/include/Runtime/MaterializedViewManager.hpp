@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 #define NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 
+#include <memory>
 #include <mutex>
 #include <unordered_map>
 
@@ -34,7 +35,7 @@ enum ViewType { TUPLE_VIEW };
  */
 class MaterializedViewManager {
 
-public:
+  public:
     /// @brief default constructor
     MaterializedViewManager() = default;
 
@@ -68,6 +69,6 @@ public:
     std::unordered_map<uint64_t, MaterializedViewPtr> viewMap;
     uint64_t nextViewId = 0;
 
-}; // class MaterializedViewManager
-} // namespace NES::Experimental::MaterializedView
-#endif  // NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
+};// class MaterializedViewManager
+}// namespace NES::Experimental::MaterializedView
+#endif// NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_

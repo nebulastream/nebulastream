@@ -12,21 +12,20 @@
     limitations under the License.
 */
 
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Views/MaterializedView.hpp>
 #include <Views/TupleView.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
-TupleViewPtr TupleView::createTupleView(uint64_t id){
-    return std::shared_ptr<TupleView>(new TupleView(id));
-};
+TupleViewPtr TupleView::createTupleView(uint64_t id) { return std::shared_ptr<TupleView>(new TupleView(id)); };
 
-std::optional<Runtime::TupleBuffer> TupleView::receiveData(){
+std::optional<Runtime::TupleBuffer> TupleView::receiveData() {
     // TODO: check performance of mutex since it could be a bottleneck. Replace with a workerContext
     std::unique_lock<std::mutex> lock(mutex);
-    if(consumePosition < vector.size()){
+    if (consumePosition < vector.size()) {
         NES_INFO("TupleView::receiveData: success. current consumePosition: " << consumePosition);
         return vector[consumePosition++];
     } else {
@@ -35,7 +34,7 @@ std::optional<Runtime::TupleBuffer> TupleView::receiveData(){
     }
 };
 
-bool TupleView::writeData(Runtime::TupleBuffer buffer){
+bool TupleView::writeData(Runtime::TupleBuffer buffer) {
     std::unique_lock<std::mutex> lock(mutex);
     if (!buffer) {
         NES_ERROR("TupleView::writeData: input buffer invalid");
@@ -46,7 +45,7 @@ bool TupleView::writeData(Runtime::TupleBuffer buffer){
     return true;
 };
 
-void TupleView::clear(){
+void TupleView::clear() {
     std::unique_lock<std::mutex> lock(mutex);
 
     // clear queue
@@ -55,4 +54,4 @@ void TupleView::clear(){
     consumePosition = 0;
 }
 
-} // namespace NES::Experimental::MaterializedView
+}// namespace NES::Experimental::MaterializedView

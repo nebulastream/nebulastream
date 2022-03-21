@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/BufferStorage.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime {
 void BufferStorageUnit::insert(Network::PartitionId nesPartitionId, TupleBuffer buffer) {

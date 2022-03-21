@@ -39,12 +39,13 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 using namespace NES;
 using namespace z3;
 using namespace Configurations;
 
-class ILPPlacementTest : public testing::Test {
+class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   protected:
     z3::ContextPtr z3Context;

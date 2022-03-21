@@ -497,7 +497,7 @@ bool CoordinatorRPCClient::checkCoordinatorHealth(std::string healthServiceName)
     Status status = workerStub->Check(&context, request, &response);
 
     if (status.ok()) {
-        NES_DEBUG("CoordinatorRPCClient::checkHealth: status ok return success=" << response.status());
+        NES_TRACE("CoordinatorRPCClient::checkHealth: status ok return success=" << response.status());
         return response.status();
     } else {
         NES_ERROR(" CoordinatorRPCClient::checkHealth error=" << status.error_code() << ": " << status.error_message());
@@ -539,11 +539,13 @@ bool CoordinatorRPCClient::sendErrors(uint64_t workerId, std::string errorMsg) {
     return false;
 }
 
-bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId) {
+bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId, QuerySubPlanId subPlanId, OperatorId sourceId) {
 
     //Build request
     RequestSoftStopMessage requestSoftStopMessage;
     requestSoftStopMessage.set_queryid(queryId);
+    requestSoftStopMessage.set_subqueryid(subPlanId);
+    requestSoftStopMessage.set_sourceid(sourceId);
 
     //Build response
     StopRequestReply stopRequestReply;
@@ -555,30 +557,33 @@ bool CoordinatorRPCClient::checkAndMarkForSoftStop(QueryId queryId) {
     return stopRequestReply.success();
 }
 
-bool CoordinatorRPCClient::notifySoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered) {
+bool CoordinatorRPCClient::notifySourceStopTriggered(QueryId queryId,
+                                                     QuerySubPlanId querySubPlanId,
+                                                     OperatorId sourceId,
+                                                     Runtime::QueryTerminationType queryTermination) {
+    NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful, "Wrong termination requested");
 
     //Build request
     SoftStopTriggeredMessage softStopTriggeredMessage;
     softStopTriggeredMessage.set_queryid(queryId);
     softStopTriggeredMessage.set_querysubplanid(querySubPlanId);
-    softStopTriggeredMessage.set_triggered(triggered);
+    softStopTriggeredMessage.set_sourceid(sourceId);
 
     //Build response
     SoftStopTriggeredReply softStopTriggeredReply;
 
     ClientContext context;
-    coordinatorStub->NotifySoftStopTriggered(&context, softStopTriggeredMessage, &softStopTriggeredReply);
+    coordinatorStub->notifySourceStopTriggered(&context, softStopTriggeredMessage, &softStopTriggeredReply);
 
     //return the response
     return softStopTriggeredReply.success();
 }
 
-bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed) {
+bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId) {
     //Build request
     SoftStopCompletionMessage softStopCompletionMessage;
     softStopCompletionMessage.set_queryid(queryId);
     softStopCompletionMessage.set_querysubplanid(querySubPlanId);
-    softStopCompletionMessage.set_completed(completed);
 
     //Build response
     SoftStopCompletionReply softStopCompletionReply;

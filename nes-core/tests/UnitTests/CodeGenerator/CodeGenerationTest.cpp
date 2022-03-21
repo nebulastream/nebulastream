@@ -19,9 +19,10 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
@@ -48,6 +49,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <cassert>
@@ -72,17 +74,15 @@ class CodeGenerationTest : public Testing::NESBaseTest {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CodeGenerationTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup CodeGenerationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        std::cout << "Setup CodeGenerationTest test case." << std::endl;
         Testing::NESBaseTest::SetUp();
         dataPort = Testing::NESBaseTest::getAvailablePort();
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSources.add(sourceConf);
         workerConfiguration->bufferSizeInBytes.setValue(4096);
@@ -90,22 +90,19 @@ class CodeGenerationTest : public Testing::NESBaseTest {
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        nodeEngine =
+            Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(dummyListener = std::make_shared<DummyQueryListener>()).build();
     }
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        std::cout << "Tear down CodeGenerationTest test case." << std::endl;
         dataPort.reset();
         Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
     }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down CodeGenerationTest test class." << std::endl; }
-
     Runtime::NodeEnginePtr nodeEngine;
-
+    std::shared_ptr<DummyQueryListener> dummyListener;
   protected:
     Testing::BorrowedPortPtr dataPort;
 };

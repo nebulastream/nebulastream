@@ -15,6 +15,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <log4cxx/appender.h>
 
 #include <State/StateManager.hpp>
@@ -23,7 +24,7 @@
 namespace NES {
 using Runtime::StateManager;
 using Runtime::StateVariable;
-class StateTest : public testing::Test {
+class StateTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("StateTest.log", NES::LogLevel::LOG_DEBUG);

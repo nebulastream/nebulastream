@@ -15,10 +15,11 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
 
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::MemoryLayouts {
 
@@ -111,4 +112,4 @@ inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_

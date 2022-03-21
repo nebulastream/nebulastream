@@ -14,6 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -38,7 +39,7 @@
 using namespace NES;
 using namespace Configurations;
 
-class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
+class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     SchemaPtr schema;

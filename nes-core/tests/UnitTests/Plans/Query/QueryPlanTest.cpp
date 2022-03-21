@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -24,7 +25,7 @@
 
 using namespace NES;
 
-class QueryPlanTest : public testing::Test {
+class QueryPlanTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     /* Will be called before a test is executed. */

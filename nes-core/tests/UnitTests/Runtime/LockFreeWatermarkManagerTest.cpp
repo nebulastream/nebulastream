@@ -11,9 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
+#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>
@@ -25,7 +26,7 @@
 using namespace std;
 namespace NES {
 
-class LockFreeWatermarkManagerTest : public testing::Test {
+class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup LockFreeWatermarkManagerTest test class." << std::endl; }
@@ -108,8 +109,7 @@ TEST_F(LockFreeWatermarkManagerTest, concurrentWatermarkUpdaterTest) {
 TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
     auto updates = 10000;
     auto origins = 10;
-    auto watermarkManager =
-        Experimental::LockFreeMultiOriginWatermarkProcessor::create(10);
+    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create(10);
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
@@ -165,7 +165,7 @@ TEST_F(LockFreeWatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTe
     const auto updates = 100000;
     const auto origins = 10;
     const auto threadsCount = 10;
-    auto watermarkManager =   Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
+    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
 
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;

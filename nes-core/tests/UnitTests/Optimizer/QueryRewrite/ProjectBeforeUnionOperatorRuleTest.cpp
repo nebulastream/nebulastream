@@ -14,6 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 // clang-format on
 #include <API/Query.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -30,7 +31,7 @@
 
 using namespace NES;
 
-class ProjectBeforeUnionOperatorRuleTest : public testing::Test {
+class ProjectBeforeUnionOperatorRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     SchemaPtr schema;

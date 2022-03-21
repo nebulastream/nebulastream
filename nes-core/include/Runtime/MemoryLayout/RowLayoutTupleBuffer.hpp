@@ -15,9 +15,11 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_
 
+#include <API/Schema.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <utility>
 
@@ -215,4 +217,4 @@ std::tuple<Types...> RowLayoutTupleBuffer::readRecord(uint64_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_

@@ -15,6 +15,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <thread>
 
 namespace NES {
@@ -24,7 +25,7 @@ const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t numberOfThreads = 21;
 
-class LineageManagerTest : public testing::Test {
+class LineageManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   protected:
     /* Will be called before any test in this class are executed. */

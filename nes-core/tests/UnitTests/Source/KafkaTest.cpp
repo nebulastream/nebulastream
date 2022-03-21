@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -29,7 +30,7 @@
 constexpr char* KAFKA_BROKER = "localhost:9092";
 createDefaultDataSourceWithSchemaForOneBuffer namespace NES {
 
-    class KafkaTest : public testing::Test {
+    class KafkaTest : public Testing::TestWithErrorHandling<testing::Test> {
       public:
         BufferManagerPtr bufferManager;
         QueryManagerPtr queryManager;

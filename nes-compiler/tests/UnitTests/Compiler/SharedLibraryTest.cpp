@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #include <Compiler/Util/SharedLibrary.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-
 namespace NES::Compiler {
-class SharedLibraryTest : public testing::Test {
+class SharedLibraryTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SharedLibraryTest.log", NES::LogLevel::LOG_DEBUG);

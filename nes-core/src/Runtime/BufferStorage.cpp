@@ -14,7 +14,9 @@
 
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <mutex>
+
 namespace NES::Runtime {
 
 void BufferStorage::insertBuffer(QueryId queryId, Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
@@ -22,11 +24,13 @@ void BufferStorage::insertBuffer(QueryId queryId, Network::PartitionId nesPartit
     auto iterator = this->buffers.find(queryId);
     if (iterator == this->buffers.end()) {
         auto queue = TupleBufferPriorityQueue();
-        NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId << " into buffer storage");
+        NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId
+                                                               << " into buffer storage");
         queue.push(buffer);
         this->buffers[queryId] = std::make_shared<BufferStorageUnit>(nesPartitionId, queue);
     } else {
-        NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId << " into buffer storage");
+        NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId
+                                                               << " into buffer storage");
         iterator->second->insert(nesPartitionId, buffer);
     }
 }

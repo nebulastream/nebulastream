@@ -15,6 +15,7 @@
 #ifndef NES_QUERYCATALOGSERVICE_HPP
 #define NES_QUERYCATALOGSERVICE_HPP
 
+#include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Util/QueryStatus.hpp>
@@ -73,7 +74,7 @@ class QueryCatalogService {
      * @param querySubPlanId : the query sub plan id
      * @param subQueryStatus : the new sub query status
      */
-    void updateQuerySubPlanStatus(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool updateQuerySubPlanStatus(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     /**
      * Get the entry from the query catalog for the input query id
@@ -124,24 +125,6 @@ class QueryCatalogService {
      * @return true if successful else false
      */
     bool checkAndMarkForHardStop(QueryId queryId);
-
-    /**
-     * register soft stop trigger
-     * @param queryId: the query id
-     * @param querySubPlanId : the sub query plan id
-     * @param triggered : if successfully triggered
-     * @return true if successful else false
-     */
-    bool registerSoftStopTriggered(QueryId queryId, QuerySubPlanId querySubPlanId, bool triggered);
-
-    /**
-     * register soft stop completed
-     * @param queryId: the query id
-     * @param querySubPlanId : the sub query plan id
-     * @param triggered : if successfully triggered
-     * @return true if successful else false
-     */
-    bool registerSoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId, bool completed);
 
     /**
      * Add update query plans to the query catalog

@@ -14,6 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -29,7 +30,7 @@
 
 using namespace NES;
 
-class BinaryOperatorSortRuleTest : public testing::Test {
+class BinaryOperatorSortRuleTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   public:
     /* Will be called before all tests in this class are started. */

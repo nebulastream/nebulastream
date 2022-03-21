@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -99,7 +100,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         PhysicalSourcePtr sourceConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(sourceConf);
-        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).build();
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
 
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;

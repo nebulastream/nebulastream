@@ -15,6 +15,7 @@
 #ifndef NES_NES_CORE_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 #define NES_NES_CORE_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
 
+#include <ostream>
 #include <stdint.h>
 
 namespace NES::Runtime {
@@ -23,9 +24,10 @@ enum class QueryTerminationType : uint8_t {
     /// means that
     Graceful = 0,
     HardStop,
-    Failure };
+    Failure
+};
 
-template <typename O = std::ostream>
+template<typename O = std::ostream>
 static O& operator<<(O& os, const QueryTerminationType& type) {
     switch (type) {
         case QueryTerminationType::Graceful: return os << "Graceful";

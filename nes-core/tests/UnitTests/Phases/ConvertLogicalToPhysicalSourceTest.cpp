@@ -17,6 +17,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -27,12 +28,13 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 
 namespace NES {
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class ConvertLogicalToPhysicalSourceTest : public testing::Test {
+class ConvertLogicalToPhysicalSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     Runtime::NodeEnginePtr engine;
 
@@ -46,12 +48,14 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(physicalSource);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-        engine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        engine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                     .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                     .build();
     }
 
     void TearDown() override {

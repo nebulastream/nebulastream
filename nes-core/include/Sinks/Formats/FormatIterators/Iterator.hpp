@@ -14,11 +14,12 @@
 #ifndef NES_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
 #define NES_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatType.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 class Iterator {
@@ -118,4 +119,4 @@ class Iterator {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
+#endif// NES_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_

@@ -51,7 +51,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
-                       std::weak_ptr<NesWorker>&& nesWorker,
+                       std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
                        Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
@@ -270,7 +270,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
                 }
             } catch (std::exception const& exception) {
                 NES_ERROR("Got exception while stopping query " << exception.what());
-                return false; // handle this better!
+                return false;// handle this better!
             }
         }
         return true;
@@ -345,6 +345,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         bufferManager->destroy();
     }
     stateManager->destroy();
+    nesWorker.reset(); // break cycle
     return !withError;
 }
 
@@ -373,7 +374,7 @@ uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 
-std::weak_ptr<NesWorker> NodeEngine::getNesWorker() { return nesWorker; }
+AbstractQueryStatusListenerPtr NodeEngine::getQueryStatusListener() { return nesWorker; }
 
 HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManager; }
 

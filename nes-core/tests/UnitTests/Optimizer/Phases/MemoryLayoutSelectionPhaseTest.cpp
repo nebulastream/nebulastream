@@ -39,13 +39,14 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 using namespace NES;
 using NES::Runtime::TupleBuffer;
 
 namespace NES {
 
-class MemoryLayoutSelectionPhaseTest : public testing::Test {
+class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

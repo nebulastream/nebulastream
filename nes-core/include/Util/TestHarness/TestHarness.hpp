@@ -386,7 +386,7 @@ class TestHarness {
 
             //Add Nes Worker to the configuration.
             //Note: this is required to stop the NesWorker at the end of the test
-            workerConf->setNesWorker(nesWorker);
+            workerConf->setQueryStatusListener(nesWorker);
         }
 
         topologySetupDone = true;
@@ -466,10 +466,6 @@ class TestHarness {
                                     << std::to_string(numberOfContentToExpect));
         }
 
-        NES_INFO("QueryDeploymentTest: Remove query");
-        if (!queryService->validateAndQueueStopRequest(queryId)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: cannot validateAndQueueStopRequest for query with id=" << queryId);
-        }
         if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
         }

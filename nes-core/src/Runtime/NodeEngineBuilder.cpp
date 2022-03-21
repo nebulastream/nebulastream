@@ -42,7 +42,7 @@ NodeEngineBuilder NodeEngineBuilder::create(Configurations::WorkerConfigurationP
     return NodeEngineBuilder(workerConfiguration);
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setNesWorker(std::shared_ptr<NesWorker> nesWorker) {
+NodeEngineBuilder& NodeEngineBuilder::setQueryStatusListener(AbstractQueryStatusListenerPtr nesWorker) {
     this->nesWorker = std::move(nesWorker);
     return *this;
 };
@@ -108,10 +108,7 @@ NodeEngineBuilder& NodeEngineBuilder::setCompiler(QueryCompilation::QueryCompile
 }
 
 NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
-    if (!nesWorker) {
-        this->nesWorker = std::shared_ptr<NesWorker>();
-    }
-
+    NES_ASSERT(nesWorker, "NesWorker is null");
     try {
         auto nodeEngineId = (this->nodeEngineId == 0) ? getNextNodeEngineId() : this->nodeEngineId;
         auto partitionManager =
@@ -170,7 +167,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             NES_WARNING("Numa flags " << int(!workerConfiguration->numaAwareness.getValue()) << " are ignored");
             bufferManagers.push_back(
                 std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-
                                                 workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
                                                 hardwareManager->getGlobalAllocator()));
         }
@@ -192,7 +188,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 NES_ASSERT(workerToCoreMappingVec.size() == numOfThreads, " we need one position for each thread in mapping");
                 switch (workerConfiguration->queryManagerMode.getValue()) {
                     case QueryExecutionMode::Dynamic: {
-                        queryManager = std::make_shared<DynamicQueryManager>(bufferManagers,
+                        queryManager = std::make_shared<DynamicQueryManager>(nesWorker,
+                                                                             bufferManagers,
                                                                              nodeEngineId,
                                                                              numOfThreads,
                                                                              hardwareManager,
@@ -202,7 +199,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                     }
                     case QueryExecutionMode::Static: {
                         queryManager =
-                            std::make_shared<MultiQueueQueryManager>(bufferManagers,
+                            std::make_shared<MultiQueueQueryManager>(nesWorker,
+                                                                     bufferManagers,
                                                                      nodeEngineId,
                                                                      numOfThreads,
                                                                      hardwareManager,
@@ -218,7 +216,8 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 }
 
             } else {
-                queryManager = std::make_shared<DynamicQueryManager>(bufferManagers,
+                queryManager = std::make_shared<DynamicQueryManager>(nesWorker,
+                                                                     bufferManagers,
                                                                      nodeEngineId,
                                                                      numOfThreads,
                                                                      hardwareManager,
@@ -272,7 +271,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         for (auto entry : workerConfiguration->physicalSources.getValues()) {
             physicalSources.push_back(entry.getValue());
         }
-        std::shared_ptr<NodeEngine> engine(new NodeEngine(
+        std::shared_ptr<NodeEngine> engine = std::make_shared<NodeEngine>(
             physicalSources,
             std::move(hardwareManager),
             std::move(bufferManagers),
@@ -294,7 +293,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             nodeEngineId,
             workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
-            workerConfiguration->numberOfBuffersPerWorker.getValue()));
+            workerConfiguration->numberOfBuffersPerWorker.getValue());
         Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {

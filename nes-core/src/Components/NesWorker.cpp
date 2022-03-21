@@ -150,7 +150,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->localWorkerIp.setValue(localWorkerIp);
         workerConfigurations->dataPort.setValue(localWorkerZmqPort);
-        for(auto source : physicalSources)
+        for (auto source : physicalSources)
             workerConfigurations->physicalSources.add(source);
         workerConfigurations->numWorkerThreads.setValue(numWorkerThreads);
         workerConfigurations->bufferSizeInBytes.setValue(bufferSizeInBytes);
@@ -158,7 +158,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         workerConfigurations->numberOfBuffersInSourceLocalBufferPool.setValue(numberOfBuffersInSourceLocalBufferPool);
         workerConfigurations->numberOfBuffersPerWorker.setValue(numberOfBuffersPerWorker);
         workerConfigurations->queryCompiler.compilationStrategy.setValue(queryCompilerConfiguration.compilationStrategy);
-        workerConfigurations->queryCompiler.outputBufferOptimizationLevel.setValue(queryCompilerConfiguration.outputBufferOptimizationLevel);
+        workerConfigurations->queryCompiler.outputBufferOptimizationLevel.setValue(
+            queryCompilerConfiguration.outputBufferOptimizationLevel);
         workerConfigurations->queryCompiler.pipeliningStrategy.setValue(queryCompilerConfiguration.pipeliningStrategy);
         workerConfigurations->queryCompiler.windowingStrategy.setValue(queryCompilerConfiguration.windowingStrategy);
         workerConfigurations->numaAwareness.setValue(enableNumaAwareness);
@@ -167,9 +168,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         workerConfigurations->numberOfThreadsPerQueue.setValue(numberOfThreadsPerQueue);
         workerConfigurations->queryManagerMode.setValue(queryManagerMode);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
-                     .setNesWorker(this->inherited0::shared_from_this())
-                     .build();
+        nodeEngine =
+            Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(this->inherited0::shared_from_this()).build();
 
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create(enableMonitoring);
@@ -293,7 +293,9 @@ bool NesWorker::connect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
-        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient, HEALTH_SERVICE_NAME, this->inherited0::shared_from_this());
+        healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
+                                                                        HEALTH_SERVICE_NAME,
+                                                                        this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
         return true;
@@ -388,6 +390,31 @@ bool NesWorker::waitForConnect() const {
     }
     NES_DEBUG("waitForConnect: not connected after timeout");
     return false;
+}
+
+bool NesWorker::notifyQueryStatusChange(QueryId queryId,
+                                        QuerySubPlanId subQueryId,
+                                        Runtime::Execution::ExecutableQueryPlanStatus newStatus) {
+    NES_ASSERT(waitForConnect(), "cannot connect");
+    NES_ASSERT(newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Stopped, "Only stopped is supported");
+    return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
+}
+
+bool NesWorker::canTriggerEndOfStream(QueryId queryId,
+                                      QuerySubPlanId subPlanId,
+                                      OperatorId sourceId,
+                                      Runtime::QueryTerminationType terminationType) {
+    NES_ASSERT(waitForConnect(), "cannot connect");
+    NES_ASSERT(terminationType == Runtime::QueryTerminationType::Graceful, "invalid termination type");
+    return coordinatorRpcClient->checkAndMarkForSoftStop(queryId, subPlanId, sourceId);
+}
+
+bool NesWorker::notifySourceTermination(QueryId queryId,
+                                        QuerySubPlanId subPlanId,
+                                        OperatorId sourceId,
+                                        Runtime::QueryTerminationType queryTermination) {
+    NES_ASSERT(waitForConnect(), "cannot connect");
+    return coordinatorRpcClient->notifySourceStopTriggered(queryId, subPlanId, sourceId, queryTermination);
 }
 
 bool NesWorker::notifyQueryFailure(uint64_t queryId,

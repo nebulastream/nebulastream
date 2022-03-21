@@ -14,6 +14,7 @@
 #ifndef NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 #define NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 
+#include <Listeners/QueryStatusListener.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -51,6 +52,7 @@
 #include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES {
+class NesWorker;
 namespace Runtime {
 
 class ThreadPool;
@@ -75,7 +77,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     * @brief
     * @param bufferManager
     */
-    explicit AbstractQueryManager(std::vector<BufferManagerPtr> bufferManagers,
+    explicit AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+                                  std::vector<BufferManagerPtr> bufferManagers,
                                   uint64_t nodeEngineId,
                                   uint16_t numThreads,
                                   HardwareManagerPtr hardwareManager,
@@ -148,12 +151,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QuerySubPlanId id) const;
 
+    [[nodiscard]] bool canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType);
+
     /**
      * @brief method to start a query
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(const Execution::ExecutableQueryPlanPtr& qep);
+    [[nodiscard]] bool startQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
     /**
      * @brief method to start a query
@@ -303,7 +308,9 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param pipeline the terminated pipeline
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifyPipelineCompletion(QuerySubPlanId subPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
+    void notifyPipelineCompletion(QuerySubPlanId subPlanId,
+                                  Execution::ExecutablePipelinePtr pipeline,
+                                  QueryTerminationType terminationType);
 
     /**
      * @brief Notifies that a sink operator is done with its execution
@@ -335,7 +342,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void completedWork(Task& task, WorkerContext& workerContext);
 
   protected:
-
     virtual void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext);
 
     /**
@@ -371,7 +377,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     uint64_t getNextTaskId();
 
-
   protected:
     uint64_t nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
@@ -401,7 +406,10 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     mutable std::recursive_mutex queryMutex;
 
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
+
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
+
+    std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
 
     StateManagerPtr stateManager;
 #ifdef ENABLE_PAPI_PROFILER
@@ -411,7 +419,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
 class DynamicQueryManager : public AbstractQueryManager {
   public:
-    explicit DynamicQueryManager(std::vector<BufferManagerPtr> bufferManager,
+    explicit DynamicQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+                                 std::vector<BufferManagerPtr> bufferManager,
                                  uint64_t nodeEngineId,
                                  uint16_t numThreads,
                                  HardwareManagerPtr hardwareManager,
@@ -453,7 +462,6 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param workerContext
      */
     void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
-
 
   private:
     /**
@@ -505,7 +513,8 @@ class DynamicQueryManager : public AbstractQueryManager {
 
 class MultiQueueQueryManager : public AbstractQueryManager {
   public:
-    explicit MultiQueueQueryManager(std::vector<BufferManagerPtr> bufferManager,
+    explicit MultiQueueQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+                                    std::vector<BufferManagerPtr> bufferManager,
                                     uint64_t nodeEngineId,
                                     uint16_t numThreads,
                                     HardwareManagerPtr hardwareManager,
@@ -550,7 +559,6 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param workerContext
      */
     void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
-
 
   private:
     /**

@@ -26,7 +26,7 @@ target_link_libraries(nes-tests-util PUBLIC ${GTEST_LIBRARIES} nes-common)
 
 ### Thread Naming Test ###
 add_executable(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
-target_link_libraries(thread-naming-tests nes-common ${GTEST_LIBRARIES})
+target_link_libraries(thread-naming-tests nes-common nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)

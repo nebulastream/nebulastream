@@ -11,12 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
+#define NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
 #include <string>
-
-#ifndef NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
-#define NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
 namespace NES {
 
@@ -25,7 +24,7 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 /**
  * @brief Base class for all input data parsers in NES
  */
-class Parser {//: public Runtime::Reconfigurable
+class Parser {
 
   public:
     /**

@@ -16,9 +16,10 @@
 #include <cstring>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 
 namespace NES {
-class UtilFunctionTest : public testing::Test {
+class UtilFunctionTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);

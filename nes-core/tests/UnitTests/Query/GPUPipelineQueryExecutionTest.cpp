@@ -55,7 +55,7 @@ using Runtime::TupleBuffer;
 
 #define NUMBER_OF_TUPLE 10
 
-class GPUQueryExecutionTest : public testing::Test {
+class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() { NES::Logger::setupLogging("GPUQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG); }
     /* Will be called before a test is executed. */
@@ -74,7 +74,7 @@ class GPUQueryExecutionTest : public testing::Test {
         auto workerConfiguration  = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(sourceConf);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     }
 
     /* Will be called before a test is executed. */

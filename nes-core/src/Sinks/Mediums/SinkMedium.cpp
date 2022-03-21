@@ -21,7 +21,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 
-
 namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
@@ -66,8 +65,8 @@ std::string SinkMedium::getAppendAsString() const {
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
     uint64_t queryId = nodeEngine->getQueryManager()->getQueryId(querySubPlanId);
     NES_ASSERT(queryId >= 0, "SinkMedium: no queryId found for querySubPlanId");
-    if (std::shared_ptr<NesWorker> nesWorker = this->nodeEngine->getNesWorker().lock()) {
-        bool success = nesWorker->notifyEpochTermination(epochBarrier, queryId);
+    if (auto listener = nodeEngine->getQueryStatusListener(); listener) {
+        bool success = listener->notifyEpochTermination(epochBarrier, queryId);
         if (success) {
             return true;
         }

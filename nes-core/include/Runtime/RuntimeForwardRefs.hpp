@@ -20,6 +20,8 @@
 #include <variant>
 
 namespace NES {
+class AbstractQueryStatusListener;
+using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 
 namespace Configurations {
 
@@ -152,4 +154,4 @@ using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
+#endif// NES_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_

@@ -32,6 +32,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

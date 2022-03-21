@@ -27,6 +27,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
 #include <stdint.h>

@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sensors/Values/SingleSensor.hpp>
 #include <Util/KalmanFilter.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cmath>
 #include <ctime>
 
 namespace NES {
-KalmanFilter::KalmanFilter(const uint64_t errorWindowSize)
-    : kfErrorWindow(errorWindowSize) {
-        this->calculateTotalEstimationErrorDivider(errorWindowSize);
+KalmanFilter::KalmanFilter(const uint64_t errorWindowSize) : kfErrorWindow(errorWindowSize) {
+    this->calculateTotalEstimationErrorDivider(errorWindowSize);
 };
 
 KalmanFilter::KalmanFilter(double timeStep,
@@ -31,7 +32,8 @@ KalmanFilter::KalmanFilter(double timeStep,
                            const Eigen::MatrixXd R,
                            const Eigen::MatrixXd P,
                            const uint64_t errorWindowSize)
-    : m(H.rows()), n(F.rows()), stateTransitionModel(F), observationModel(H), processNoiseCovariance(Q), measurementNoiseCovariance(R), initialEstimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
+    : m(H.rows()), n(F.rows()), stateTransitionModel(F), observationModel(H), processNoiseCovariance(Q),
+      measurementNoiseCovariance(R), initialEstimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
       timeStep(timeStep), kfErrorWindow(errorWindowSize) {
     this->calculateTotalEstimationErrorDivider(errorWindowSize);
     identityMatrix.setIdentity();
@@ -92,8 +94,9 @@ void KalmanFilter::setDefaultValues() {
 
 void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
     // simplified prediction phase
-    xHatNew = stateTransitionModel * xHat;           // no control unit (B*u), predicted a-priori state estimate
-    estimateCovariance = stateTransitionModel * estimateCovariance * stateTransitionModel.transpose() + processNoiseCovariance;// predicted a-priori estimate covariance
+    xHatNew = stateTransitionModel * xHat;// no control unit (B*u), predicted a-priori state estimate
+    estimateCovariance = stateTransitionModel * estimateCovariance * stateTransitionModel.transpose()
+        + processNoiseCovariance;// predicted a-priori estimate covariance
 
     /**
      * Simplified update phase, use the
@@ -103,16 +106,19 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
      * estimate. The updated state estimate
      * becomes the new xHat (current state).
      */
-    innovationError = measuredValues - (observationModel * xHatNew);             // update innovation error ψ_k, eq. 2 + 3
-    kalmanGain = estimateCovariance * observationModel.transpose() * (observationModel * estimateCovariance * observationModel.transpose() + measurementNoiseCovariance).inverse();// kalman gain
-    xHatNew += kalmanGain * (measuredValues - (observationModel * xHatNew));              // updated a-posteriori state estimate
-    estimateCovariance = (identityMatrix - kalmanGain * observationModel) * estimateCovariance;                                          // updated a-posteriori estimate covariance
-    xHat = xHatNew;                                               // updated xHat
+    innovationError = measuredValues - (observationModel * xHatNew);// update innovation error ψ_k, eq. 2 + 3
+    kalmanGain = estimateCovariance * observationModel.transpose()
+        * (observationModel * estimateCovariance * observationModel.transpose() + measurementNoiseCovariance)
+              .inverse();                                                   // kalman gain
+    xHatNew += kalmanGain * (measuredValues - (observationModel * xHatNew));// updated a-posteriori state estimate
+    estimateCovariance =
+        (identityMatrix - kalmanGain * observationModel) * estimateCovariance;// updated a-posteriori estimate covariance
+    xHat = xHatNew;                                                           // updated xHat
 
     // update estimation error, eq.8
     this->estimationError =
         std::sqrt(((innovationError * measuredValues.inverse()) * (innovationError * measuredValues.inverse())).trace());
-    this->kfErrorWindow.emplace(this->estimationError); // store result in error window
+    this->kfErrorWindow.emplace(this->estimationError);// store result in error window
     // update timestep
     currentTime += timeStep;
 }
@@ -128,9 +134,7 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeS
     this->update(measuredValues);
 }
 
-double KalmanFilter::getTotalEstimationError() {
-    return this->calculateTotalEstimationError();
-}
+double KalmanFilter::getTotalEstimationError() { return this->calculateTotalEstimationError(); }
 
 float KalmanFilter::calculateTotalEstimationError() {
     float j = 1;// eq. 9 iterator
@@ -155,7 +159,8 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
     auto powerOfEuler = (totalEstimationError + lambda) / lambda;
     auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
     auto newGatheringIntervalCandidate = this->gatheringInterval.count() + thetaPart;
-    if (newGatheringIntervalCandidate >= gatheringIntervalReceived.count() - (gatheringIntervalRange.count() / 2) && newGatheringIntervalCandidate <= gatheringIntervalReceived.count() + (gatheringIntervalRange.count() / 2)) { // eq. 7
+    if (newGatheringIntervalCandidate >= gatheringIntervalReceived.count() - (gatheringIntervalRange.count() / 2)
+        && newGatheringIntervalCandidate <= gatheringIntervalReceived.count() + (gatheringIntervalRange.count() / 2)) {// eq. 7
         // remove fractional part from double
         this->gatheringInterval = std::chrono::milliseconds((int) trunc(newGatheringIntervalCandidate));
     }
@@ -184,9 +189,7 @@ double KalmanFilter::getEstimationError() { return estimationError; }
 uint64_t KalmanFilter::getTheta() { return theta; }
 float KalmanFilter::getLambda() { return lambda; }
 
-void KalmanFilter::setLambda(float newLambda) {
-    this->lambda = newLambda;
-}
+void KalmanFilter::setLambda(float newLambda) { this->lambda = newLambda; }
 
 void KalmanFilter::setGatheringInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
     this->gatheringInterval = gatheringIntervalInMillis;
@@ -196,13 +199,11 @@ void KalmanFilter::setGatheringIntervalRange(std::chrono::milliseconds gathering
     this->gatheringIntervalRange = gatheringIntervalRange;
 }
 void KalmanFilter::setGatheringIntervalWithRange(std::chrono::milliseconds gatheringIntervalInMillis,
-                           std::chrono::milliseconds gatheringIntervalRange) {
+                                                 std::chrono::milliseconds gatheringIntervalRange) {
     this->setGatheringInterval(gatheringIntervalInMillis);
     this->setGatheringIntervalRange(gatheringIntervalRange);
 }
 
-std::chrono::milliseconds KalmanFilter::getCurrentGatheringInterval() {
-    return this->gatheringInterval;
-}
+std::chrono::milliseconds KalmanFilter::getCurrentGatheringInterval() { return this->gatheringInterval; }
 
 }// namespace NES

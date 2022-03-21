@@ -50,6 +50,7 @@
 #include <Runtime/LocalBufferPool.hpp>
 
 #include <NesBaseTest.hpp>
+#include <Util/TestUtils.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -94,7 +95,7 @@ class ProjectionTest : public Testing::NESBaseTest {
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
     }
 
     /* Will be called before a test is executed. */

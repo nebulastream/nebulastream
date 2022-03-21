@@ -14,6 +14,7 @@
 #ifdef ENABLE_MQTT_BUILD
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -30,7 +31,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
 #include <random>
-
+#include <Util/TestUtils.hpp>
 using namespace NES;
 /**
  * @brief this class implements tests for the MQTTSink class
@@ -72,7 +73,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         workerConfiguration->physicalSources.add(conf);
 
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
         testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 

@@ -17,15 +17,16 @@
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Listeners/QueryStatusListener.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/ReplicationService.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
-#include <vector>
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace grpc {
 class Server;
@@ -44,9 +45,12 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
 
-class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, public Exceptions::ErrorListener {
+class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
+                  public Exceptions::ErrorListener,
+                  public AbstractQueryStatusListener {
     using inherited0 = detail::virtual_enable_shared_from_this<NesWorker>;
     using inherited1 = ErrorListener;
+
   public:
     /**
      * @brief default constructor which creates a sensor node
@@ -145,7 +149,6 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      */
     bool hasLocation();
 
-
     /**
      * @brief returns an optional containing a GeographicalLocation object if the node has a fixed location or
      * containing a nullopt_t if the node does not have a location
@@ -183,7 +186,23 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      * @param errorMsg to describe the reason of the failure
      * @return true if Notification was successful, false otherwise
      */
-    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
+    bool notifyQueryFailure(QueryId queryId,
+                            QuerySubPlanId subQueryId,
+                            uint64_t workerId,
+                            OperatorId operatorId,
+                            std::string errorMsg) override;
+
+    bool notifySourceTermination(QueryId queryId,
+                                 QuerySubPlanId subPlanId,
+                                 OperatorId sourceId,
+                                 Runtime::QueryTerminationType) override;
+
+    bool
+    canTriggerEndOfStream(QueryId queryId, QuerySubPlanId subPlanId, OperatorId sourceId, Runtime::QueryTerminationType) override;
+
+    bool notifyQueryStatusChange(QueryId queryId,
+                                 QuerySubPlanId subQueryId,
+                                 Runtime::Execution::ExecutableQueryPlanStatus newStatus) override;
 
     /**
      * @brief Method to let the Coordinator know of errors and exceptions
@@ -203,7 +222,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
       * @param queryId: identifies what query sends punctuation
       * @return bool indicating success
       */
-    bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId);
+    bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) override;
 
     /**
       * @brief method that enables the worker to send errors to the Coordinator. Calls the notifyError method
@@ -257,7 +276,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     const Configurations::WorkerConfigurationPtr workerConfig;
-    bool connected{false};
+    std::atomic<bool> connected{false};
     bool withParent{false};
     uint32_t parentId;
     std::string rpcAddress;
@@ -289,4 +308,4 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_COMPONENTS_NESWORKER_HPP_
+#endif// NES_INCLUDE_COMPONENTS_NESWORKER_HPP_

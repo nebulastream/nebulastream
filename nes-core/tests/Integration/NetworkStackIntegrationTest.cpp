@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -45,9 +44,11 @@
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <random>
 #include <utility>
 
@@ -157,7 +158,9 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
     workerConfiguration->numberOfBuffersPerWorker.setValue(64);
     workerConfiguration->physicalSources.add(physicalSource);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -222,6 +225,22 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                      uint64_t numBuffers,
                                                      ExtraParameters&&... extraParams) {
     try {
+        class DummyQueryListener : public AbstractQueryStatusListener {
+          public:
+            virtual ~DummyQueryListener() {}
+
+            bool canTriggerEndOfStream(QueryId, QuerySubPlanId, OperatorId, Runtime::QueryTerminationType) override {
+                return true;
+            }
+            bool notifySourceTermination(QueryId, QuerySubPlanId, OperatorId, Runtime::QueryTerminationType) override {
+                return true;
+            }
+            bool notifyQueryFailure(QueryId, QuerySubPlanId, uint64_t, OperatorId, std::string) override { return true; }
+            bool notifyQueryStatusChange(QueryId, QuerySubPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
+                return true;
+            }
+            bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
+        };
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         std::vector<PhysicalSourcePtr> physicalSources{physicalSource};
@@ -229,7 +248,12 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto stateManager = std::make_shared<Runtime::StateManager>(0);
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
             std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
-        auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(bufferManagers, 0, 1, nullptr, stateManager);
+        auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(std::make_shared<DummyQueryListener>(),
+                                                                           bufferManagers,
+                                                                           0,
+                                                                           1,
+                                                                           nullptr,
+                                                                           stateManager);
         auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
             return Network::NetworkManager::create(0,
@@ -479,7 +503,9 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                                .build();
     auto netManagerSender = nodeEngineSender->getNetworkManager();
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto workerConfiguration1 = WorkerConfiguration::create();
@@ -712,7 +738,9 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                                .build();
     auto workerConfiguration1 = WorkerConfiguration::create();
     workerConfiguration1->dataPort.setValue(*dataPort2);
     workerConfiguration1->physicalSources.add(physicalSource);

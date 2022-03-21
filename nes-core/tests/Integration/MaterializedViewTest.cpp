@@ -33,6 +33,7 @@
 #include <Views/MaterializedView.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 class MaterializedViewTest : public Testing::NESBaseTest {

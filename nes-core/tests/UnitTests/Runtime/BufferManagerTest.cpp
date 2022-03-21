@@ -25,6 +25,7 @@
 #include <deque>
 #include <future>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <thread>
 
@@ -33,7 +34,7 @@ using Runtime::TupleBuffer;
 const size_t buffers_managed = 1024;
 const size_t buffer_size = 32 * 1024;
 
-class BufferManagerTest : public testing::Test {
+class BufferManagerTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("BufferManagerTest.log", NES::LogLevel::LOG_DEBUG); }

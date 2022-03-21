@@ -18,6 +18,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <utility>
 
@@ -229,4 +230,4 @@ std::tuple<Types...> ColumnLayoutTupleBuffer::readRecord(uint64_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTTUPLEBUFFER_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTTUPLEBUFFER_HPP_

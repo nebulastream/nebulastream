@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <NesBaseTest.hpp>
 
 #define _TURN_OFF_PLATFORM_STRING // undef U from cpprest
 #include <REST/Controller/TopologyController.hpp>

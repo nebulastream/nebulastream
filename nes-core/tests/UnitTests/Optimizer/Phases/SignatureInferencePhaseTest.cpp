@@ -30,11 +30,12 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-class SignatureInferencePhaseTest : public testing::Test {
+class SignatureInferencePhaseTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {

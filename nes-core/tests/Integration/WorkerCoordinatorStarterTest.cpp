@@ -20,6 +20,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
 
 using std::cout;
