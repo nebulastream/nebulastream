@@ -314,6 +314,16 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
 #ifdef ENABLE_MQTT_BUILD
         case MQTT_SOURCE: {
             auto mqttSourceType = physicalSourceType->as<MQTTSourceType>();
+            // TODO Viktor, 3.8.2022: This code is removed in current master. Keeping it here if we need.
+            //  However, the InputFormat parameter does not exist anymore for the create method.
+            //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
+//            SourceDescriptor::InputFormat inputFormatEnum = MQTTSourceDescriptor::JSON;
+//            if (strcasecmp(mqttSourceType->getInputFormat()->getValue().c_str(), "JSON") == 0) {
+//                inputFormatEnum = SourceDescriptor::InputFormat::CSV;
+//            } else if (strcasecmp(mqttSourceType->getInputFormat()->getValue().c_str(), "CSV") == 0) {
+//                inputFormatEnum = SourceDescriptor::InputFormat::CSV;
+//            }
+//            return MQTTSourceDescriptor::create(schema, mqttSourceType, inputFormatEnum);
             return MQTTSourceDescriptor::create(schema, mqttSourceType);
         }
 #endif

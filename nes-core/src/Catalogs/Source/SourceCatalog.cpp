@@ -59,6 +59,20 @@ void SourceCatalog::addDefaultSources() {
         NES_ERROR("SourceCatalog::addDefaultSources: error while adding exdra logical source");
         throw log4cxx::helpers::Exception("Error while addDefaultSources SourceCatalog");
     }
+
+    SchemaPtr iris = Schema::create()
+                            ->addField(createField("id", UINT64))
+                            ->addField(createField("SepalLengthCm", FLOAT32))
+                            ->addField(createField("SepalWidthCm", FLOAT32))
+                            ->addField(createField("PetalLengthCm", FLOAT32))
+                            ->addField(createField("PetalWidthCm", FLOAT32))
+                            ->addField(createField("SpeciesCode", UINT64))
+                            ->addField(createField("CreationTime", UINT64));
+    bool success3 = addLogicalSource("iris", iris);
+    if (!success3) {
+        NES_ERROR("SourceCatalog::addDefaultSources: error while adding iris logical source");
+        throw log4cxx::helpers::Exception("Error while addDefaultSources SourceCatalog");
+    }
 }
 SourceCatalog::SourceCatalog(QueryParsingServicePtr queryParsingService) : queryParsingService(queryParsingService) {
     NES_DEBUG("SourceCatalog: construct source catalog");
