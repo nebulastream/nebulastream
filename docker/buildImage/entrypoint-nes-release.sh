@@ -27,11 +27,16 @@ git config --global user.name "NES-CI"
 git config --global user.email "nebulastream@dima.tu-berlin.de"
 git config --local core.sshcommand "/usr/bin/ssh -i \"~/.ssh/id_rsa\" -o \"UserKnownHostsFile=~/.ssh/known_hosts\""
 
-# Performing Release and formatting
+# Performing Tag Release and formatting
 mkdir -p /nebulastream/build
 cd /nebulastream/build
 cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
-make version
 make format
 make nes-doc
-make release
+
+if
+  make major_release
+elif
+  make minor_release
+else
+  make release
