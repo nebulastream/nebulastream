@@ -15,8 +15,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Enter new version to release (major.minor.patch)'
-        required: true
+        description: 'Perform Major or Minor Release'
+        type: choice
+        options:
+          - Major
+          - Minor
 
 jobs:
   build-x64-linux:
@@ -34,6 +37,7 @@ jobs:
           - osversion: ubuntu-20_04
             require_build: "true"
             require_test: "true"
+          - baz
           - osversion: ubuntu-21_10
             require_build: "true"
             require_test: "true"
