@@ -47,4 +47,7 @@ execute_process(COMMAND bash -c "sed -i 's/@NES_VERSION_POST_FIX@/${POSTFIX_VERS
 
 set(${PROJECT_NAME}_VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}${POSTFIX_VERSION})
 
+execute_process(COMMAND ${GIT_EXECUTABLE} commit -am "GIT-CI: Updating NES version to ${${PROJECT_NAME}_VERSION}"
+                COMMAND ${GIT_EXECUTABLE} push)
+
 message(INFO "-- Releasing NebulaStream v${${PROJECT_NAME}_VERSION}")
