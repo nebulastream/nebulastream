@@ -884,7 +884,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
         bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
     };
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "BottomUp", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "MlHeuristic", "NONE", "IN_MEMORY");
 //    for (auto record : actualOutput){
 //        std::cout << record.id << ", " << record.value << ", " << record.iris0 << ", " << record.iris1 << ", " << record.iris2 << std::endl;
 //    }
