@@ -23,10 +23,29 @@ on:
           - Minor
 
 jobs:
+
+  validateTrigger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: tspascoal/get-user-teams-membership@v1
+        id: checkUserMember
+        with:
+          username: ${{ github.actor }}
+          team: 'NebulaStream'
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+      - name: testing-last-job
+        run: |
+          echo "${{ steps.checkUserMember.outputs.isTeamMember }}"
+      - name: testing
+        run: |
+          echo "${{ github.event_name }}"
+  
+
   build-x64-linux:
     if: >-
       ${{ github.event_name == 'workflow_dispatch' }} || !contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')
     runs-on: [self-hosted, linux, X64, Build]
+    needs: [validateTrigger]
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -52,18 +71,6 @@ jobs:
         uses: styfle/cancel-workflow-action@0.7.0
         with:
           access_token: ${{ github.token }}
-      - uses: tspascoal/get-user-teams-membership@v1
-        id: checkUserMember
-        with:
-          username: ${{ github.actor }}
-          team: 'NebulaStream'
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
-      - name: testing-last-job
-        run: |
-          echo "${{ steps.checkUserMember.outputs.isTeamMember }}"
-      - name: testing
-        run: |
-          echo "${{ github.event_name }}"
 #      - name: Build Docker
 #        id: builddocker
 #        continue-on-error: true
