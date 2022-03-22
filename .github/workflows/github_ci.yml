@@ -1,4 +1,4 @@
-name: Testing
+name: NES CI
 
 on:
   push:
