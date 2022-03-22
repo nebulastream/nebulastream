@@ -94,7 +94,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    NES_FATAL_ERROR("TopologyController: unknown exception.");
+                    NES_ERROR("TopologyController: unknown exception.");
                     internalServerErrorImpl(message);
                     return;
                 }
@@ -158,7 +158,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    NES_FATAL_ERROR("TopologyController: unknown exception.");
+                    NES_ERROR("TopologyController: unknown exception.");
                     internalServerErrorImpl(message);
                     return;
                 }

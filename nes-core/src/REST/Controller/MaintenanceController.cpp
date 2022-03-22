@@ -62,7 +62,7 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                   handleException(request, exc);
                   return;
               } catch (...) {
-                  NES_FATAL_ERROR("MaintenanceController: unknown exception.");
+                  NES_ERROR("MaintenanceController: unknown exception.");
                   internalServerErrorImpl(request);
                   return;
               }

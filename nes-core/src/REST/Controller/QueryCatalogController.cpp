@@ -73,7 +73,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
+            NES_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
     } else if (path[1] == "allRegisteredQueries") {
@@ -108,7 +108,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
+            NES_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
 
@@ -147,7 +147,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
+            NES_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
     } else if (path[1] == "status") {
@@ -180,7 +180,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
+            NES_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
     } else {
