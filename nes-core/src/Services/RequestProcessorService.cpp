@@ -96,8 +96,8 @@ void RequestProcessorService::start() {
             }
 
             try {
-//                NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
-//                globalQueryPlanUpdatePhase->execute(nesRequests);
+                NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
+                globalQueryPlanUpdatePhase->execute(nesRequests);
 //
 //                for (const auto& queryRequest : nesRequests) {
 //                    auto queryId = queryRequest->getQueryId();
