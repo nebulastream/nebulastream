@@ -220,7 +220,7 @@ jobs:
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
       - name: Set NebulaStream Version
-        run: echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')"
+        run: echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
       - name: Build and Release NES Build Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
