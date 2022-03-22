@@ -71,7 +71,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             successMessageImpl(request, executionPlanJson);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
             internalServerErrorImpl(request);
         }
 
@@ -115,7 +115,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
             internalServerErrorImpl(request);
         }
     } else if (path[1] == "optimization-phases") {
@@ -160,7 +160,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
             internalServerErrorImpl(request);
         }
     } else if (path[1] == "query-status") {
@@ -200,7 +200,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             successMessageImpl(request, node);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
             internalServerErrorImpl(request);
         }
     } else {
@@ -271,7 +271,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+                    NES_ERROR("RestServer: Unable to start REST server unknown exception.");
                     internalServerErrorImpl(message);
                 }
             })
@@ -341,7 +341,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+                    NES_ERROR("RestServer: Unable to start REST server unknown exception.");
                     internalServerErrorImpl(message);
                 }
             })
@@ -405,7 +405,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             badRequestImpl(request, errorResponse);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("QueryCatalogController: unknown exception.");
+            NES_ERROR("QueryCatalogController: unknown exception.");
             internalServerErrorImpl(request);
         }
     } else {

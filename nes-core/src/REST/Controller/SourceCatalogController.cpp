@@ -84,7 +84,7 @@ void SourceCatalogController::handleGet(const std::vector<utility::string_t>& pa
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("SourceCatalogController:unknown exception.");
+            NES_ERROR("SourceCatalogController:unknown exception.");
             internalServerErrorImpl(request);
             return;
         }
@@ -114,7 +114,7 @@ void SourceCatalogController::handleGet(const std::vector<utility::string_t>& pa
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("SourceCatalogController:unknown exception.");
+            NES_ERROR("SourceCatalogController:unknown exception.");
             internalServerErrorImpl(request);
             return;
         }
@@ -157,7 +157,7 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+                    NES_ERROR("RestServer: Unable to start REST server unknown exception.");
                     internalServerErrorImpl(message);
                     return;
                 }
@@ -206,7 +206,7 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+                    NES_ERROR("RestServer: Unable to start REST server unknown exception.");
                     internalServerErrorImpl(message);
                     return;
                 }
@@ -248,7 +248,7 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                     handleException(message, exc);
                     return;
                 } catch (...) {
-                    NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+                    NES_ERROR("RestServer: Unable to start REST server unknown exception.");
                     internalServerErrorImpl(message);
                     return;
                 }
@@ -297,7 +297,7 @@ void SourceCatalogController::handleDelete(const std::vector<utility::string_t>&
             handleException(request, exc);
             return;
         } catch (...) {
-            NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
             internalServerErrorImpl(request);
             return;
         }
