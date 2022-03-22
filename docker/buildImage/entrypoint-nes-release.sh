@@ -30,13 +30,18 @@ git config --local core.sshcommand "/usr/bin/ssh -i \"~/.ssh/id_rsa\" -o \"UserK
 # Performing Tag Release and formatting
 mkdir -p /nebulastream/build
 cd /nebulastream/build
+# build the project
 cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
+# fix format issues
 make format
+# build documentation
 make nes-doc
 
-if
+# release the tag and push next snapshot version
+if [[ $RELEASE_TYPE == 'Major' ]]; then
   make major_release
-elif
+elif [[ $RELEASE_TYPE == 'Minor' ]]; then
   make minor_release
 else
   make release
+fi

@@ -43,4 +43,6 @@ ENV ACTUAL_TRIPLE='cat /debian-triple'
 
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
 
+ENV RELEASE_TYPE='PATCH'
+
 ENTRYPOINT ["/entrypoint.sh"]

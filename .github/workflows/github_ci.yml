@@ -35,36 +35,10 @@ jobs:
             team: 'NebulaStream'
             GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - name: verify-run-privilage
-        if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == 'Push'
+        if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == 'workflow_dispatch'
         run: |
           echo "Unauthorized user triggering release"
           exit 1
-      - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v3
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: release
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/build
-          cd $GITHUB_WORKSPACE/build
-          # build the project
-          cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
-          # fix format issues
-          make format
-          # build documentation
-          make nes-doc
-          
-          # release the tag and push next snapshot version
-          if [[ $github.event_name == 'workflow_dispatch' && $github.event.inputs.version == 'Major' ]] then
-            make major_release
-          elif [[ $github.event_name == 'workflow_dispatch' && $github.event.inputs.version == 'Minor' ]] then
-            make minor_release
-          else
-            make release
-          fi
-          
 
   build-x64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
@@ -234,7 +208,7 @@ jobs:
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     steps:
       - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
@@ -245,6 +219,8 @@ jobs:
         uses: docker/setup-buildx-action@v1
       - id: file_changes
         uses: trilom/file-changes-action@v1.2.4
+      - name: Set NebulaStream Version
+        run: echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')"
       - name: Build and Release NES Build Image
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
@@ -275,33 +251,22 @@ jobs:
           fi
       - name: Build and Release NES Executable Image
         run: |
-          nes_version="$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')"
           cd $GITHUB_WORKSPACE
-          echo "Preparing and Releasing new executable image with version $nes_version and latest"
+          echo "Preparing and Releasing new executable image with version $NES_VERSION and latest"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --push
+          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$NES_VERSION --tag nebulastream/nes-executable-image:latest --push
           echo "Pushed the execution image"
           docker logout
       - name: Release new tag
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
-          mkdir -p $GITHUB_WORKSPACE/build
-          cd $GITHUB_WORKSPACE/build
-          # build the project
-          cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
-          # fix format issues
-          make format
-          # build documentation
-          make nes-doc
+          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
           
-          # release the tag and push next snapshot version
-          if [[ $github.event_name == 'workflow_dispatch' && $github.event.inputs.version == 'Major' ]] then
-            make major_release
-          elif [[ $github.event_name == 'workflow_dispatch' && $github.event.inputs.version == 'Minor' ]] then
-            make minor_release
+          if [[ $github.event_name == 'workflow_dispatch' ]]; then
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$github.event.inputs.version --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           else
-            make release
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           fi
       #Find the PR associated with this push, if there is one.
       - uses: jwalton/gh-find-current-pr@v1
