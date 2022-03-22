@@ -20,59 +20,45 @@ if (Git_FOUND)
             OUTPUT_VARIABLE IS_GIT_DIRECTORY
             OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_QUIET)
-endif ()
-
-if (IS_GIT_DIRECTORY)
-
-    # Get last tag from git
-    execute_process(COMMAND ${GIT_EXECUTABLE} describe --abbrev=0 --tags
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            OUTPUT_VARIABLE ${PROJECT_NAME}_VERSION_STRING
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    # Get partial versions into a list
-    string(REGEX MATCHALL "-.*$|[0-9]+" ${PROJECT_NAME}_PARTIAL_VERSION_LIST
-            ${${PROJECT_NAME}_VERSION_STRING})
-
-    # Set the last released version number
-    list(GET ${PROJECT_NAME}_PARTIAL_VERSION_LIST
-            0 ${PROJECT_NAME}_VERSION_MAJOR)
-    list(GET ${PROJECT_NAME}_PARTIAL_VERSION_LIST
-            1 ${PROJECT_NAME}_VERSION_MINOR)
-    list(GET ${PROJECT_NAME}_PARTIAL_VERSION_LIST
-            2 ${PROJECT_NAME}_VERSION_PATCH)
-
 
     # Get current branch name
     execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             OUTPUT_VARIABLE ${PROJECT_NAME}_BRANCH_NAME
             OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-    if (${${PROJECT_NAME}_BRANCH_NAME} STREQUAL "master" )
-        # Set project version string to snapshot
-        set(${PROJECT_NAME}_NES_VERSION_POST_FIX -SNAPSHOT)
-    else ()
-        #Increment patch number to indicate next free version
-        math(EXPR ${PROJECT_NAME}_VERSION_PATCH ${${PROJECT_NAME}_VERSION_PATCH}+1)
-
-        # Get current commit SHA from git
-        execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                OUTPUT_VARIABLE ${PROJECT_NAME}_VERSION_GIT_SHA
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-        # Set project version string with last commit hash
-        set(${PROJECT_NAME}_NES_VERSION_POST_FIX -${${PROJECT_NAME}_VERSION_GIT_SHA})
-    endif ()
-
-    set(${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}${${PROJECT_NAME}_NES_VERSION_POST_FIX})
-
-    # Unset the list
-    unset(${PROJECT_NAME}_PARTIAL_VERSION_LIST)
-else ()
-    message(AUTHOR_WARNING "-- Git not configured. Using UNKNOWN as version")
-    set(${PROJECT_NAME}_VERSION "UNKNOWN")
 endif ()
+
+# Read the version file into variable
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/nes-core/include/Version/version.hpp VERSION_INFO)
+
+# Find the Major version
+string(REGEX MATCH "\\NES_VERSION_MAJOR[^\n]*" ${PROJECT_NAME}_VERSION_MAJOR "${VERSION_INFO}")
+string(REPLACE "NES_VERSION_MAJOR" " " ${PROJECT_NAME}_VERSION_MAJOR "${${PROJECT_NAME}_VERSION_MAJOR}")
+string(STRIP "${${PROJECT_NAME}_VERSION_MAJOR}" ${PROJECT_NAME}_VERSION_MAJOR)
+message("${PROJECT_NAME}_VERSION_MAJOR ${${PROJECT_NAME}_VERSION_MAJOR}")
+
+#Find the Minor version
+string(REGEX MATCH "\\NES_VERSION_MINOR[^\n]*" ${PROJECT_NAME}_VERSION_MINOR "${VERSION_INFO}")
+string(REPLACE "NES_VERSION_MINOR" " " ${PROJECT_NAME}_VERSION_MINOR "${${PROJECT_NAME}_VERSION_MINOR}")
+string(STRIP "${${PROJECT_NAME}_VERSION_MINOR}" ${PROJECT_NAME}_VERSION_MINOR)
+message("MINOR_VERSION ${${PROJECT_NAME}_VERSION_MINOR}")
+
+#Find the patch version
+string(REGEX MATCH "\\NES_VERSION_PATCH[^\n]*" ${PROJECT_NAME}_VERSION_PATCH "${VERSION_INFO}")
+string(REPLACE "NES_VERSION_PATCH" " " ${PROJECT_NAME}_VERSION_PATCH "${${PROJECT_NAME}_VERSION_PATCH}")
+string(STRIP "${${PROJECT_NAME}_VERSION_PATCH}" ${PROJECT_NAME}_VERSION_PATCH)
+message("PATCH_VERSION ${${PROJECT_NAME}_VERSION_PATCH}")
+
+if (NOT(${${PROJECT_NAME}_BRANCH_NAME} STREQUAL "master"))
+    #Find version post fix
+    string(REGEX MATCH "\\NES_VERSION_POST_FIX[^\n]*" ${PROJECT_NAME}_NES_VERSION_POST_FIX "${VERSION_INFO}")
+    string(REPLACE "NES_VERSION_POST_FIX" " " ${PROJECT_NAME}_NES_VERSION_POST_FIX "${${PROJECT_NAME}_NES_VERSION_POST_FIX}")
+    string(STRIP "${${PROJECT_NAME}_NES_VERSION_POST_FIX}" ${PROJECT_NAME}_NES_VERSION_POST_FIX)
+    set(${PROJECT_NAME}_NES_VERSION_POST_FIX -${${PROJECT_NAME}_NES_VERSION_POST_FIX})
+    message("VERSION_POSTFIX ${${PROJECT_NAME}_NES_VERSION_POST_FIX}")
+endif()
+
+# Set version information
+set(${PROJECT_NAME}_VERSION ${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}${${PROJECT_NAME}_NES_VERSION_POST_FIX})
 
 message("NebulaStream Version: " ${${PROJECT_NAME}_VERSION})
