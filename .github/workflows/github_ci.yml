@@ -276,7 +276,7 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          token: ${{ secrets.CI_TOKEN }}
           repository: nebulastream/nebulastream-java-client
           event-type: nes-executable-image-update
           client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}"}'
@@ -284,12 +284,12 @@ jobs:
 #        uses: benc-uk/workflow-dispatch@v1
 #        with:
 #          workflow: NES Benchmark
-#          token: ${{ secrets.CI_PERSONAL_TOKEN }}
+#          token: ${{ secrets.CI_TOKEN }}
 #          inputs: '{ "trigger-value": "trigger benchmark"}'
       - name: Push Docs to pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          personal_token: ${{ secrets.CI_PERSONAL_TOKEN }}
+          personal_token: ${{ secrets.CI_TOKEN }}
           publish_dir: ./build/cmake/docs/html
           external_repository: nebulastream/nebulastream-docs
           publish_branch: master
