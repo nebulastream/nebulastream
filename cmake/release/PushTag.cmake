@@ -24,5 +24,5 @@ set(${PROJECT_NAME}_VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION})
 message(INFO "-- Pushing Tag NebulaStream v${${PROJECT_NAME}_VERSION}")
 
 # Push the version tag to repository
-execute_process(COMMAND ${GIT_EXECUTABLE} tag v${${PROJECT_NAME}_VERSION} -m "GIT-CI: Releasing New Tag v${${PROJECT_NAME}_VERSION}"
-                COMMAND ${GIT_EXECUTABLE} push origin v${${PROJECT_NAME}_VERSION})
+execute_process(COMMAND ${GIT_EXECUTABLE} tag v${${PROJECT_NAME}_VERSION} -m "GIT-CI: Releasing New Tag v${${PROJECT_NAME}_VERSION}")
+execute_process(COMMAND ${GIT_EXECUTABLE} push origin v${${PROJECT_NAME}_VERSION})
