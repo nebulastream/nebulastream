@@ -39,6 +39,17 @@ jobs:
         run: |
           echo "Unauthorized user triggering release"
           exit 1
+      - name: Release new tag
+        env:
+          CI_SECRET: ${{ secrets.CI_SECRET }}
+        run: |
+          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
+          
+          if [[ $github.event_name == 'workflow_dispatch' ]]; then
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$github.event.inputs.version --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          else
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          fi
 
   build-x64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
