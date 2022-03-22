@@ -39,6 +39,11 @@ jobs:
         run: |
           echo "Unauthorized user triggering release"
           exit 1
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
       - name: Release new tag
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}
@@ -187,7 +192,7 @@ jobs:
     timeout-minutes: 120
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
