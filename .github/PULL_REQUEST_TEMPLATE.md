@@ -1,34 +1,3 @@
-<!--
-*Thank you very much for contributing to NebulaStream - we are happy that you want to help us improve NebulaStream. To help the NES team review your contribution in the best possible way, please go through the checklist below, which will get the contribution into a shape in which it can be best reviewed.*
-
-*Please understand that we do not do this to make contributions to NES a hassle. In order to uphold a high standard of quality for code contributions, while at the same time managing a large number of contributions, we need contributors to prepare the contributions well, and give reviewers enough contextual information for the review. Please also understand that contributions that do not follow this guide will take longer to review and thus typically be picked up with lower priority by the NES team (and usually will be given to Steffen :D).*
-
-## Contribution Checklist
-
-  - Make sure that the pull request corresponds to a Github issues.
-  
-  - Name the pull request in the form "ISSUE: Title of the pull request", where *ISSUE* should be replaced by the actual issue number. 
-
-  - Fill out the template below to describe the changes contributed by the pull request. That will give reviewers the context they need to do the review.
-  
-  - Make sure that the change passes the automated tests, i.e., `make test` passes. 
-
-  - Each pull request should address only one issue, not mix up code from multiple issues.
-  
-  - Each commit in the pull request has a meaningful commit message (including the issue id)
-
-  - Once all items of the checklist are addressed, remove the above text and this checklist, leaving only the filled out template below.
-
-
-
-## Review Checklist
-- use meaningfully comments and variable names
-- no def in hpp => cpp (only for templates)
-- always comment hpp (e.g. by copy from parent class) => one large over the class which describes the class in detail and for each function
-- check to adhere to the logging guidelines: https://github.com/nebulastream/nebulastream/wiki/logging
-- no _
-- remove commented code
--->
 
 ## What is the purpose of the change
 
