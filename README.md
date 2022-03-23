@@ -1,23 +1,21 @@
 # NebulaStream ![NES CI](https://github.com/nebulastream/nebulastream/workflows/NES%20CI/badge.svg)
 
-NebulaStream is the first general purpose, end-to-end data management system for the IoT. It provides an out-of-the box experience with rich data processing functionalities and a high ease-of-use.
+NebulaStream is our attempt to develop a general purpose, end-to-end data management system for the IoT.
+It provides an out-of-the box experience with rich data processing functionalities and a high ease-of-use.
 
 NebulaStream is a joint research project between the DIMA group at TU Berlin and the DFKI IAM group.
 
-Learn more about Nebula Stream at https://www.nebula.stream/
+Learn more about Nebula Stream at https://www.nebula.stream
 
-Visit our wiki at http://iotdb.dfki.de/doku.php
+Visit our documentation at https://docs.nebula.stream
 
 ## Documentation
 - API:
-    - [Query API](https://github.com/nebulastream/nebulastream/wiki/Query-API) 
-    - [REST API](https://github.com/nebulastream/nebulastream/wiki/REST-API)     
+    - [Query API](https://docs.nebula.stream/docs/query-api/generalconcept/) 
+    - [REST API](https://docs.nebula.stream/docs/clients/rest-api/)     
+    - [JAVA Client](https://docs.nebula.stream/docs/clients/java-client/)
 - Development:
-    - [How to contribute](https://github.com/nebulastream/nebulastream/wiki/How-to-contribute-to-NES)
-    - [Building from Source](https://github.com/nebulastream/nebulastream/wiki/How-to-Build-and-Test) 
-    - [Code Style](https://github.com/nebulastream/code-style) 
-    - [Glossary](https://github.com/nebulastream/nebulastream/wiki/Glossary) 
-
+    - [Contribution-guidelines(https://docs.nebula.stream/docs/dev/contribution-guidelines/)
   
 ## Components:
 
