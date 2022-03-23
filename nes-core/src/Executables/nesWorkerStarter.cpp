@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     try {
         std::cout << logo << std::endl;
         std::cout << worker << "v" << NES_VERSION << std::endl;
-        NES::Logger::setupLogging("nesWorkerStarter.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("nesWorkerStarter.log", NES::LogLevel::LOG_TRACE);
         WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
         std::map<string, string> commandLineParams;
