@@ -20,6 +20,8 @@
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Optimizer/QueryRewrite/JoinOrderOptimizationRule.hpp>
+
 
 namespace NES::Optimizer {
 
@@ -34,6 +36,7 @@ QueryRewritePhase::QueryRewritePhase(bool applyRulesImprovingSharingIdentificati
     projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     attributeSortRule = AttributeSortRule::create();
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    joinOrderOptimizationRule = JoinOrderOptimizationRule::create();
 }
 
 QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
@@ -44,6 +47,7 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     }
     duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
+    duplicateQueryPlan = joinOrderOptimizationRule->apply(duplicateQueryPlan);
     return filterPushDownRule->apply(duplicateQueryPlan);
 }
 

@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_
 
 #include <memory>
+#include <Optimizer/QueryRewrite/JoinOrderOptimizationRule.hpp>
 
 namespace NES {
 
@@ -43,6 +44,11 @@ using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
 class BinaryOperatorSortRule;
 using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
 
+class JoinOrderOptimizationRule;
+using JoinOrderOptimizationRulePtr = std::shared_ptr<JoinOrderOptimizationRule>;
+
+
+
 /**
  * @brief This phase is responsible for re-writing the query plan
  */
@@ -65,6 +71,7 @@ class QueryRewritePhase {
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     AttributeSortRulePtr attributeSortRule;
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
+    JoinOrderOptimizationRulePtr joinOrderOptimizationRule;
 };
 }// namespace NES::Optimizer
 #endif  // NES_INCLUDE_OPTIMIZER_PHASES_QUERYREWRITEPHASE_HPP_
