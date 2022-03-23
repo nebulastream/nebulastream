@@ -61,7 +61,7 @@ install(TARGETS nes-grpc
 
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
-add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
+add_library(nes SHARED ${NES_CORE_SOURCE_FILES} src/Optimizer/QueryRewrite/JoinOrderOptimizationRule.cpp include/Optimizer/QueryRewrite/JoinOrderOptimizationRule.hpp src/Util/OptimizerPlanOperator.cpp include/Util/OptimizerPlanOperator.hpp src/Windowing/JoinEdge.cpp include/Windowing/JoinEdge.hpp src/Util/AbstractJoinPlanOperator.cpp include/Util/AbstractJoinPlanOperator.hpp)
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

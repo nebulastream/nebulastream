@@ -325,6 +325,11 @@ add_executable(filter-push-down-rule-test "UnitTests/Optimizer/QueryRewrite/Filt
 target_link_libraries(filter-push-down-rule-test nes-tests)
 add_test(NAME filter-push-down-rule-test COMMAND filter-push-down-rule-test)
 
+# JoinOrderOptimizationRuleTest
+add_executable(join-order-optimization-rule-test "UnitTests/Optimizer/QueryRewrite/JoinOrderOptimizationRuleTest.cpp")
+target_link_libraries(join-order-optimization-rule-test nes-tests)
+add_test(NAME join-order-optimization-rule-test COMMAND join-order-optimization-rule-test)
+
 # DistributeWindowRuleTest
 add_executable(distribute-window-rule-test "UnitTests/Optimizer/QueryRewrite/DistributeWindowRuleTest.cpp")
 target_link_libraries(distribute-window-rule-test nes-tests)
@@ -507,7 +512,7 @@ target_link_libraries(join-handler-tests nes-tests)
 add_test(NAME join-handler-tests COMMAND join-handler-tests)
 
 ### Attribute Sort Rule Test ###
-add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/AttributeSortRuleTest.cpp")
+add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/AttributeSortRuleTest.cpp" UnitTests/Optimizer/QueryRewrite/JoinOrderOptimizationRuleTest.cpp)
 target_link_libraries(attribute-sort-rule-test nes-tests)
 add_test(NAME attribute-sort-rule-test COMMAND attribute-sort-rule-test)
 
