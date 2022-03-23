@@ -83,7 +83,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
             return queryId;
         }
     } catch (const InvalidQueryException& exc) {
-        NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
+        NES_ERROR("QueryService: " + std::string(exc.what()));
         queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
         queryCatalog->setQueryFailureReason(queryId, exc.what());
         throw exc;
@@ -126,7 +126,7 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
             return queryPlan->getQueryId();
         }
     } catch (const InvalidQueryException& exc) {
-        NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
+        NES_ERROR("QueryService: " + std::string(exc.what()));
         queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
         queryCatalog->setQueryFailureReason(queryId, exc.what());
         throw exc;

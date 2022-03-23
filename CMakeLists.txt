@@ -40,7 +40,7 @@ option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
-set(NES_LOG_LEVEL "DEBUG" CACHE STRING "LogLevel")
+set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
 
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
@@ -170,7 +170,6 @@ if (NOT APPLE)
     endif ()
     # as per backward.h
     add_link_options("-ldw")
-    add_link_options("-lunwind")
 endif ()
 
 include(cmake/Sanitizers.cmake)

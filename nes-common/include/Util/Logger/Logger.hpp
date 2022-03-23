@@ -38,9 +38,9 @@ enum class LogLevel : uint8_t {
     // Indicates that all warnings and error messages will be logged.
     LOG_WARNING = 4,
     // Indicates that additional debug messages will be logged.
-    LOG_DEBUG = 5,
+    LOG_INFO = 5,
     // Indicates that additional information will be logged.
-    LOG_INFO = 6,
+    LOG_DEBUG = 6,
     // Indicates that all available information will be logged (can result in massive output).
     LOG_TRACE = 7
 };
@@ -50,9 +50,9 @@ enum class LogLevel : uint8_t {
 // elimination of log messages.
 #if defined(NES_LOGLEVEL_TRACE)
 #define NES_COMPILE_TIME_LOG_LEVEL 7
-#elif defined(NES_LOGLEVEL_INFO)
-#define NES_COMPILE_TIME_LOG_LEVEL 6
 #elif defined(NES_LOGLEVEL_DEBUG)
+#define NES_COMPILE_TIME_LOG_LEVEL 6
+#elif defined(NES_LOGLEVEL_INFO)
 #define NES_COMPILE_TIME_LOG_LEVEL 5
 #elif defined(NES_LOGLEVEL_WARN)
 #define NES_COMPILE_TIME_LOG_LEVEL 4
