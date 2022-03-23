@@ -1012,7 +1012,7 @@ TEST_F(SourceTest, testBinarySourceWrongPath) {
                                   this->wrong_filepath,
                                   this->operatorId,
                                   this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_FALSE(bDataSource.input.is_open());
 }
 
@@ -1120,7 +1120,7 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
                                      csvSourceType,
                                      this->operatorId,
                                      this->numSourceLocalBuffersDefault,
-                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1)});
+                                     {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
         ASSERT_FALSE(csvDataSource.input.is_open());
     } catch (std::exception const& err) {
         std::string msg = err.what();
