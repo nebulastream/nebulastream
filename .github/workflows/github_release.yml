@@ -14,7 +14,7 @@ jobs:
   create-tag:
     runs-on: [self-hosted, linux, X64, Build]
     steps:
-     - uses: actions/checkout@v2
+     - uses: actions/checkout@v3
        with:
         ssh-strict: 'false'
         fetch-depth: '0'
@@ -26,12 +26,13 @@ jobs:
        run: |
          cd nebulastream
          tag_name=$GITHUB_REF_NAME
-         git config --global user.email "ciuser@tu-berlinde"
+         git config --global user.email "${{ secrets.CI_EMAIL }}"
          git config --global user.name "CIUser"         
          git tag -fa "$tag_name" -m "$tag_name"
          git push --force origin "$tag_name"
+         
+
   package-debian-package:
-#    if: github.ref == 'refs/heads/master'
     needs: [create-tag]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
@@ -50,22 +51,17 @@ jobs:
             osversion: ubuntu-21_10
     steps:
       - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
           token: ${{ secrets.CI_TOKEN }}
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
-        with:
-          access_token: $${{ secrets.CI_TOKEN }}
       - name: Build Docker
         id: builddocker
-        continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-      - name: Run tests
+      - name: Build package
         run: |
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_package_${{ matrix.osversion }}
       - name: getFile
@@ -80,11 +76,11 @@ jobs:
             ${{ env.DEB_FILE }}
           repository: nebulastream/nebulastream-dev-builds
           token: ${{ secrets.CI_TOKEN }}
-          tag_name: v1
       - name: docker cleanup
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_package
+
 # TODO build executable image from released debian packages
 #  build-docker:
 #    needs: [package-debian-package]
