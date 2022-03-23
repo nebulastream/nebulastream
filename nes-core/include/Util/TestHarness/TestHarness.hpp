@@ -437,9 +437,9 @@ class TestHarness {
                                                                    faultToleranceMode,
                                                                    lineageMode);
 
-//        if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
-//            NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
-//        }
+        if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
+        }
 
         // Check if the size of output struct match with the size of output schema
         // Output struct might be padded, in this case the size is not equal to the total size of its field

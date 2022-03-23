@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <ostream>
 
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
 /// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.
@@ -254,4 +255,4 @@ class TupleBuffer {
 };
 
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
+#endif// NES_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
