@@ -270,7 +270,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           echo "Preparing and Releasing new executable image with version $NES_VERSION and latest and "
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$NES_VERSION --tag nebulastream/nes-executable-image:latest --push
+          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:0.2.0 --tag nebulastream/nes-executable-image:latest --push
           echo "Pushed the execution image"
           docker logout
       - name: Release new tag
