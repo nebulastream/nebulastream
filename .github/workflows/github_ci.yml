@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - nes-core/include/Version/version.hpp
       - README.md
+      - .github/*
   pull_request:
     branches:
       - '*'
@@ -220,8 +221,8 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - id: file_changes
-        uses: trilom/file-changes-action@v1.2.4
+      #- id: file_changes
+        #uses: trilom/file-changes-action@v1.2.4
       - name: Set NebulaStream Version
         run: echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
       - name: Build and Release NES Build Image
