@@ -279,8 +279,8 @@ jobs:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           
-          echo ${github.event.inputs.version}
-          echo ${github.event_name}
+          echo "${github.event.inputs.version}"
+          echo github.event_name
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
           
           if [[ ${github.event_name} == 'workflow_dispatch' ]]; then
