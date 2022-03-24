@@ -75,14 +75,16 @@ jobs:
           access_token: ${{ github.token }}
       - name: Build Docker
         id: builddocker
+        if: github.event_name != 'workflow_dispatch'
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Run tests
+        if: github.event_name != 'workflow_dispatch'
         run: |
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
-        if: ${{ always() }}
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
       - name: Notify Slack
@@ -96,7 +98,7 @@ jobs:
         if: always()
 
   build-x64-linux-parallel:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to') && github.event_name != 'workflow_dispatch'"
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [validateTrigger]
     timeout-minutes: 120
@@ -114,14 +116,15 @@ jobs:
           access_token: ${{ github.token }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build and test
+        if: github.event_name != 'workflow_dispatch'
         run: |
           docker run --name ${{ github.run_id }}_build_parallel -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" -eNesTestParallelism="8" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup build
-        if: ${{ always() }}
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_build_parallel
       - name: docker cleanup test
-        if: ${{ always() }}
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_test_parallel
       - name: Notify Slack
@@ -135,7 +138,7 @@ jobs:
         if: always()
 
   build-arm64-linux:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to') && github.event_name != 'workflow_dispatch'"
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [self-hosted, linux, arm64, Build]
     needs: [validateTrigger]
     timeout-minutes: 120
@@ -153,14 +156,15 @@ jobs:
           access_token: ${{ github.token }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build and test
+        if: github.event_name != 'workflow_dispatch'
         run: |
           docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup build
-        if: ${{ always() }}
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_build
       - name: docker cleanup test
-        if: ${{ always() }}
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_test
       - name: Notify Slack
@@ -191,6 +195,7 @@ jobs:
           access_token: ${{ github.token }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build
+        if: github.event_name != 'workflow_dispatch'
         run: |
           bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh
       - name: Notify Slack
