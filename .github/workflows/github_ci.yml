@@ -9,7 +9,7 @@ on:
     paths-ignore:
       - nes-core/include/Version/version.hpp
       - README.md
-      - .github/*
+      - '.github/**'
   pull_request:
     branches:
       - '*'
