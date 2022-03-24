@@ -266,6 +266,7 @@ jobs:
               echo "No changes done to devImage. Skipping the build and release phase."
           fi
       - name: Build and Release NES Executable Image
+        if: github.event_name != 'workflow_dispatch'
         run: |
           cd $GITHUB_WORKSPACE
           echo "Preparing and Releasing new executable image with version $NES_VERSION and latest and "
@@ -278,12 +279,12 @@ jobs:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           
-          echo "$github.event.inputs.version"
-          echo "$github.event.inputs.version"
+          echo ${github.event.inputs.version}
+          echo ${github.event_name}
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
           
-          if [[ $github.event_name == 'workflow_dispatch' ]]; then
-            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$github.event.inputs.version --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          if [[ ${github.event_name} == 'workflow_dispatch' ]]; then
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=${github.event.inputs.version} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           else
             docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           fi
