@@ -215,6 +215,8 @@ jobs:
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+      EVENT: ${{ github.event_name }}
+      DISPATCH_VERSION: ${{ github.event.inputs.version }}
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v3
@@ -279,12 +281,12 @@ jobs:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           
-          echo "${github.event.inputs.version}"
-          echo github.event_name
+          echo "Dispatch version : $DISPATCH_VERSION"
+          echo "DISPATCH EVENT: $EVENT"
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
           
-          if [[ ${github.event_name} == 'workflow_dispatch' ]]; then
-            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=${github.event.inputs.version} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          if [[ $EVENT == 'workflow_dispatch' ]]; then
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$DISPATCH_VERSION --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           else
             docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           fi
