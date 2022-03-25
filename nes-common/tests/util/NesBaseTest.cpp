@@ -207,19 +207,19 @@ class NesPortDispatcher {
     //        uint32_t numberOfPorts;
 };
 
-static NesPortDispatcher portDispatcher(8081, 10000);
+static NesPortDispatcher portDispatcher(8000, 10000);
 
 NESBaseTest::NESBaseTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID()) {
+}
+
+void NESBaseTest::SetUp() {
+    Base::SetUp();
     if (!std::filesystem::exists(testResourcePath)) {
         std::filesystem::create_directories(testResourcePath);
     } else {
         std::filesystem::remove_all(testResourcePath);
         std::filesystem::create_directories(testResourcePath);
     }
-}
-
-void NESBaseTest::SetUp() {
-    Base::SetUp();
     restPort = portDispatcher.getNextPort();
     rpcCoordinatorPort = portDispatcher.getNextPort();
 }

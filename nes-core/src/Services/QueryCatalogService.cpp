@@ -77,8 +77,9 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
         || currentStatus == QueryStatus::Stopped || currentStatus == QueryStatus::Failed) {
         NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
                   + ". Ignoring stop query request.");
-        throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running},
-                                          currentStatus);
+//        throw InvalidQueryStatusException({QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Running},
+//                                          currentStatus);
+        return true;
     }
     NES_DEBUG("QueryCatalog: Changing query status to Mark query for stop.");
     queryCatalogEntry->setQueryStatus(QueryStatus::MarkedForHardStop);
@@ -115,6 +116,7 @@ std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalogService::getAllEntriesInSta
 }
 
 bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value queryStatus, const std::string& metaInformation) {
+    std::unique_lock lock(serviceMutex);
 
     //Check if query exists
     if (!queryCatalog->queryExists(queryId)) {

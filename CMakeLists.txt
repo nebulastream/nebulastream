@@ -43,7 +43,7 @@ option(NES_USE_LLD "Use LLD" OFF)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
-set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
+set(NES_LOG_LEVEL "INFO" CACHE STRING "LogLevel")
 
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")

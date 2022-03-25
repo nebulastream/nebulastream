@@ -30,7 +30,8 @@ static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     if (globalErrorListeners.empty()) {
-        std::cerr << "No error listener is set" << std::endl;
+        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what() << "] with stacktrace=\n"
+                  << stacktrace << std::endl;
     }
     for (auto& listener : globalErrorListeners) {
         if (!listener.expired()) {
@@ -43,7 +44,8 @@ void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&
 void invokeErrorHandlers(int signal, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     if (globalErrorListeners.empty()) {
-        std::cerr << "No error listener is set" << std::endl;
+        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << strerror(errno) << "] with stacktrace=\n"
+                  << stacktrace << std::endl;
     }
     for (auto& listener : globalErrorListeners) {
         if (!listener.expired()) {
@@ -58,7 +60,6 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace) {
     auto exception = std::make_shared<RuntimeException>(buffer, stacktrace);
     invokeErrorHandlers(exception, std::move(stacktrace));
 }
-
 
 void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener) {
     NES_TRACE("installGlobalErrorListener");
@@ -78,4 +79,4 @@ void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener) {
         }
     }
 }
-}// namespace NES
+}// namespace NES::Exceptions

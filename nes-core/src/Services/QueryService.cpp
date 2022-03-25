@@ -47,10 +47,10 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                                                                          optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
-uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString,
-                                                  const std::string& placementStrategyName,
-                                                  const FaultToleranceType faultTolerance,
-                                                  const LineageType lineage) {
+QueryId QueryService::validateAndQueueAddRequest(const std::string& queryString,
+                                                              const std::string& placementStrategyName,
+                                                              const FaultToleranceType faultTolerance,
+                                                              const LineageType lineage) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -85,20 +85,22 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
         }
     } catch (const InvalidQueryException& exc) {
         NES_ERROR("QueryService: " + std::string(exc.what()));
-        queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
-        queryCatalog->setQueryFailureReason(queryId, exc.what());
+        queryCatalogService->createNewEntry(queryString, QueryPlan::create(), placementStrategyName);
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }
     throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
 }
 
-uint64_t QueryService::addQueryRequest(const std::string& queryString,
+QueryId QueryService::addQueryRequest(const std::string& queryString,
                                        const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName,
                                        const FaultToleranceType faultTolerance,
                                        const LineageType lineage) {
 
+
     QueryId queryId = PlanIdGenerator::getNextQueryId();
+    auto promise = std::make_shared<std::promise<QueryId>>();
     try {
 
         //Assign additional configurations
@@ -124,12 +126,12 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);
-            return queryPlan->getQueryId();
+            return queryId;
         }
     } catch (const InvalidQueryException& exc) {
         NES_ERROR("QueryService: " + std::string(exc.what()));
-        queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
-        queryCatalog->setQueryFailureReason(queryId, exc.what());
+        queryCatalogService->createNewEntry(queryString, QueryPlan::create(), placementStrategyName);
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }
     throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");

@@ -81,66 +81,68 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
             } else if (nesRequest->instanceOf<RunQueryRequest>()) {
-
                 auto runRequest = nesRequest->as<RunQueryRequest>();
                 auto queryPlan = runRequest->getQueryPlan();
+                try {
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
+                    NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Scheduling, "");
 
-                NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
-                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Scheduling, "");
+                    NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                    queryPlan = typeInferencePhase->execute(queryPlan);
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 1", queryPlan);
 
-                NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                queryPlan = typeInferencePhase->execute(queryPlan);
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 1", queryPlan);
+                    NES_DEBUG("QueryProcessingService: Performing query choose memory layout phase: " << queryId);
+                    setMemoryLayoutPhase->execute(queryPlan);
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Set Memory Layout Phase 1", queryPlan);
 
-                NES_DEBUG("QueryProcessingService: Performing query choose memory layout phase: " << queryId);
-                setMemoryLayoutPhase->execute(queryPlan);
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Set Memory Layout Phase 1", queryPlan);
+                    NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
+                    queryPlan = queryRewritePhase->execute(queryPlan);
 
-                NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
-                queryPlan = queryRewritePhase->execute(queryPlan);
+                    if (!queryPlan) {
+                        throw log4cxx::helpers::Exception("QueryProcessingService: Failed during query rewrite phase for query: "
+                                                          + std::to_string(queryId));
+                    }
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
-                if (!queryPlan) {
-                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during query rewrite phase for query: "
-                                                      + std::to_string(queryId));
+                    queryPlan = typeInferencePhase->execute(queryPlan);
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 2", queryPlan);
+
+                    NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
+                    signatureInferencePhase->execute(queryPlan);
+
+                    NES_INFO("Before " << queryPlan->toString());
+                    queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
+
+                    if (!queryPlan) {
+                        throw log4cxx::helpers::Exception(
+                            "QueryProcessingService: Failed during query topology specific rewrite phase for query: "
+                            + std::to_string(queryId));
+                    }
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
+
+                    queryPlan = typeInferencePhase->execute(queryPlan);
+                    if (!queryPlan) {
+                        throw log4cxx::helpers::Exception("QueryProcessingService: Failed during Type inference phase for query: "
+                                                          + std::to_string(queryId));
+                    }
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 3", queryPlan);
+
+                    queryPlan = setMemoryLayoutPhase->execute(queryPlan);
+                    if (!queryPlan) {
+                        throw log4cxx::helpers::Exception(
+                            "QueryProcessingService: Failed during Memory Layout Selection phase for query: "
+                            + std::to_string(queryId));
+                    }
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Set Memory Layout Phase 2", queryPlan);
+
+                    queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
+                    NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                    globalQueryPlan->addQueryPlan(queryPlan);
+                } catch (std::exception const& ex) {
+                    throw;
                 }
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
-
-                queryPlan = typeInferencePhase->execute(queryPlan);
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 2", queryPlan);
-
-                NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
-                signatureInferencePhase->execute(queryPlan);
-
-                NES_INFO("Before " << queryPlan->toString());
-                queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
-
-                if (!queryPlan) {
-                    throw log4cxx::helpers::Exception(
-                        "QueryProcessingService: Failed during query topology specific rewrite phase for query: "
-                        + std::to_string(queryId));
-                }
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
-
-                queryPlan = typeInferencePhase->execute(queryPlan);
-                if (!queryPlan) {
-                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during Type inference phase for query: "
-                                                      + std::to_string(queryId));
-                }
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 3", queryPlan);
-
-                queryPlan = setMemoryLayoutPhase->execute(queryPlan);
-                if (!queryPlan) {
-                    throw log4cxx::helpers::Exception(
-                        "QueryProcessingService: Failed during Memory Layout Selection phase for query: "
-                        + std::to_string(queryId));
-                }
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Set Memory Layout Phase 2", queryPlan);
-
-                queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
-                NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                globalQueryPlan->addQueryPlan(queryPlan);
             } else {
                 NES_ERROR("QueryProcessingService: Received unhandled request type " << nesRequest->toString());
                 NES_WARNING("QueryProcessingService: Skipping to process next request.");

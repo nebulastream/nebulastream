@@ -69,7 +69,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     //register logical source qnv
     //TODO: update CHAR (sensor id is in result set )
     std::string qnv =
@@ -89,7 +89,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -104,13 +104,13 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+//    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent = "+----------------------------------------------------+\n"
                              "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
@@ -120,18 +120,18 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
                              "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
     NES_DEBUG("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /* 2.Test
@@ -141,7 +141,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     //register logical source qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
@@ -161,7 +161,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -180,14 +180,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
-    NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+//    NES_INFO("SimplePatternTest: Remove query");
+//    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -200,18 +200,18 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
         "1543625400000|3|0|\n+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
     NES_DEBUG("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /* 3.Test
@@ -221,7 +221,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
@@ -241,7 +241,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -260,14 +260,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+//    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -279,18 +279,18 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
         "---------+";
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
     NES_DEBUG("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /* 4.Test
@@ -300,7 +300,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
@@ -320,7 +320,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -339,14 +339,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+//    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -355,18 +355,18 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
         "1|0|\n+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
     NES_DEBUG("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /* 5.Test
@@ -376,7 +376,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
@@ -396,7 +396,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -415,14 +415,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+//    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -434,18 +434,18 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
         "---------+";
 
     std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
     NES_DEBUG("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /* 6.Test
@@ -455,7 +455,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
@@ -475,7 +475,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -494,14 +494,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+//    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
         "+----------------------------------------------------+\n|QnV$start:UINT64|QnV$end:UINT64|QnV$Count:INT32|QnV$timestamp:"
@@ -514,17 +514,17 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
         "--+";
 
         std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_DEBUG("content=" << content);
     NES_DEBUG("expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_EQ(content, expectedContent);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 }// namespace NES

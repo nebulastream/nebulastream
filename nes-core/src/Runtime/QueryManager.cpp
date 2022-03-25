@@ -93,7 +93,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
 
     //create the actual task queues
     for (uint64_t i = 0; i < numberOfQueues; i++) {
-        taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
+        taskQueues.emplace_back(DEFAULT_QUEUE_INITIAL_CAPACITY);
     }
 }
 
