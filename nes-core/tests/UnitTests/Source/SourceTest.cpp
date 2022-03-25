@@ -55,7 +55,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 
@@ -1006,14 +1005,22 @@ TEST_F(SourceTest, testBinarySourceGetType) {
 }
 
 TEST_F(SourceTest, testBinarySourceWrongPath) {
-    BinarySourceProxy bDataSource(this->schema,
-                                  this->nodeEngine->getBufferManager(),
-                                  this->nodeEngine->getQueryManager(),
-                                  this->wrong_filepath,
-                                  this->operatorId,
-                                  this->numSourceLocalBuffersDefault,
-                                  {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_FALSE(bDataSource.input.is_open());
+    ASSERT_THROW(
+        try {
+            BinarySourceProxy bDataSource(this->schema,
+                                          this->nodeEngine->getBufferManager(),
+                                          this->nodeEngine->getQueryManager(),
+                                          this->wrong_filepath,
+                                          this->operatorId,
+                                          this->numSourceLocalBuffersDefault,
+                                          {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+            ASSERT_FALSE(bDataSource.input.is_open());
+        } catch (std::exception const& exception) {
+            auto msg = std::string(exception.what());
+            ASSERT_NE(msg.find(std::string("Binary input file is not valid")), std::string::npos);
+            throw;
+        },
+        Exceptions::RuntimeException);
 }
 
 TEST_F(SourceTest, testBinarySourceCorrectPath) {

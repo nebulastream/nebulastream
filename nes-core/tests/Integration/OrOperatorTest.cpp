@@ -51,8 +51,6 @@ class OrOperatorTest : public Testing::NESBaseTest {
         coordinatorConfiguration->rpcPort=(*rpcCoordinatorPort);
         coordinatorConfiguration->restPort = *restPort;
     }
-
-    void TearDown() override { std::cout << "Tear down OrOperatorTest class." << std::endl; }
 };
 
 /* 1.Test

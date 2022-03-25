@@ -17,6 +17,7 @@
 
 #include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
+#include <future>
 
 namespace NES {
 
@@ -30,7 +31,6 @@ using RunQueryRequestPtr = std::shared_ptr<RunQueryRequest>;
  * @brief This request is used for running a new query in NES cluster
  */
 class RunQueryRequest : public Request {
-
   public:
     /**
      * @brief Create instance of RunQueryRequest

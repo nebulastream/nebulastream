@@ -18,6 +18,7 @@
 #include <API/Query.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <future>
 
 namespace NES::Optimizer {
 class SyntacticQueryValidation;
@@ -63,10 +64,25 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    uint64_t validateAndQueueAddRequest(const std::string& queryString,
-                                        const std::string& placementStrategyName,
-                                        const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                                        const LineageType lineage = LineageType::NONE);
+    QueryId validateAndQueueAddRequest(const std::string& queryString,
+                                       const std::string& placementStrategyName,
+                                       const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                       const LineageType lineage = LineageType::NONE);
+
+    /**
+     * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
+     * @param queryString : query in string form.
+     * @param placementStrategyName : name of the placement strategy to be used.
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
+     * @return queryId : query id of the valid input query.
+     * @throws InvalidQueryException : when query string is not valid.
+     * @throws InvalidArgumentException : when the placement strategy is not valid.
+     */
+    std::future<QueryId> validateAndQueueAddRequestAsync(const std::string& queryString,
+                                                         const std::string& placementStrategyName,
+                                                         const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                                         const LineageType lineage = LineageType::NONE);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -77,11 +93,26 @@ class QueryService {
      * @param lineage : lineage type for the given query.
      * @return query id
      */
-    uint64_t addQueryRequest(const std::string& queryString,
-                             const QueryPlanPtr& queryPlan,
-                             const std::string& placementStrategyName,
-                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                             const LineageType lineage = LineageType::NONE);
+    QueryId addQueryRequest(const std::string& queryString,
+                            const QueryPlanPtr& queryPlan,
+                            const std::string& placementStrategyName,
+                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                            const LineageType lineage = LineageType::NONE);
+
+    /**
+     * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
+     * @param queryString : queries in string format
+     * @param queryPlan : Query Plan Pointer Object
+     * @param placementStrategyName : Name of the placement strategy
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
+     * @return query id
+     */
+    std::future<QueryId> addQueryRequestAsync(const std::string& queryString,
+                                              const QueryPlanPtr& queryPlan,
+                                              const std::string& placementStrategyName,
+                                              const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                              const LineageType lineage = LineageType::NONE);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
