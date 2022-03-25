@@ -268,23 +268,18 @@ jobs:
               echo "No changes done to devImage. Skipping the build and release phase."
           fi
       - name: Build and Release NES Executable Image
-        if: github.event_name != 'workflow_dispatch'
         run: |
           cd $GITHUB_WORKSPACE
           echo "Preparing and Releasing new executable image with version $NES_VERSION and latest and "
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:0.2.0 --tag nebulastream/nes-executable-image:latest --push
+          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$NES_VERSION --tag nebulastream/nes-executable-image:latest --push
           echo "Pushed the execution image"
           docker logout
       - name: Release new tag
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
-          
-          echo "Dispatch version : $DISPATCH_VERSION"
-          echo "DISPATCH EVENT: $EVENT"
-          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-          
+          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt     
           if [[ $EVENT == 'workflow_dispatch' ]]; then
             docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$DISPATCH_VERSION --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
           else
