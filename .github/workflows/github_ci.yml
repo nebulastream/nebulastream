@@ -231,8 +231,6 @@ jobs:
       - id: file_changes
         if: github.event_name != 'workflow_dispatch'
         uses: trilom/file-changes-action@v1.2.4
-      - name: Set NebulaStream Version
-        run: echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
       - name: Build and Release NES Build Image
         if: github.event_name != 'workflow_dispatch'
         run: |
@@ -267,14 +265,6 @@ jobs:
           else
               echo "No changes done to devImage. Skipping the build and release phase."
           fi
-      - name: Build and Release NES Executable Image
-        run: |
-          cd $GITHUB_WORKSPACE
-          echo "Preparing and Releasing new executable image with version $NES_VERSION and latest and "
-          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$NES_VERSION --tag nebulastream/nes-executable-image:latest --push
-          echo "Pushed the execution image"
-          docker logout
       - name: Release new tag
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}
