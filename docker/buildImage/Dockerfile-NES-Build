@@ -36,6 +36,7 @@ ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-b
 # more info: https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 ARG TARGETARCH
 ARG TARGETOS
+
 # Docker's architectures do not map to the Debian ones (amd64=x86_64, arm64=aarch64)
 # These are needed for defining lib paths later on CMake
 RUN [ "$TARGETARCH" = "amd64" ] && echo "x86_64-linux-gnu" > /debian-triple || echo "aarch64-linux-gnu" > /debian-triple
