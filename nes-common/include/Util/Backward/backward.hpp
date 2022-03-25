@@ -246,6 +246,9 @@
 #include <dwarf.h>
 #include <elfutils/libdw.h>
 #include <elfutils/libdwfl.h>
+#if !defined(__GLIBC__)
+#include <dlfcn.h>
+#endif
 #endif
 
 #if BACKWARD_HAS_DWARF == 1
