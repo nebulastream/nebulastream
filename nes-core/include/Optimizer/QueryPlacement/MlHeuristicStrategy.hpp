@@ -34,7 +34,7 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
   public:
     ~MlHeuristicStrategy() override = default;
 
-    static const bool DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION = false;
+    static const bool DEFAULT_ENABLE_OPERATOR_REDUNDANCY_ELIMINATION = true;
     static const bool DEFAULT_ENABLE_CPU_SAVER_MODE = true;
     static const int DEFAULT_MIN_RESOURCE_LIMIT = 5;
     static const bool DEFAULT_LOW_THROUGHPUT_SOURCE = false;
