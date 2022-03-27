@@ -99,15 +99,15 @@ void RequestProcessorService::start() {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(nesRequests);
 
-                for (const auto& queryRequest : nesRequests) {
-                    auto queryId = queryRequest->getQueryId();
-                    if (queryId == 1000) {
-                        readyForPlacementAndDeployment = true;
-                        break;
-                    }
-                }
+//                for (const auto& queryRequest : nesRequests) {
+//                    auto queryId = queryRequest->getQueryId();
+//                    if (queryId == 1000) {
+//                        readyForPlacementAndDeployment = true;
+//                        break;
+//                    }
+//                }
 
-                if (readyForPlacementAndDeployment) {
+//                if (readyForPlacementAndDeployment) {
                     NES_INFO(readyForPlacementAndDeployment);
                     auto sharedQueryPlanToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
                     for (const auto& sharedQueryPlan : sharedQueryPlanToDeploy) {
@@ -179,7 +179,7 @@ void RequestProcessorService::start() {
                         sharedQueryPlan->markAsDeployed();
                         sharedQueryPlan->setAsOld();
                     }
-                }
+//                }
 
                 for (const auto& queryRequest : nesRequests) {
                     auto queryId = queryRequest->getQueryId();
