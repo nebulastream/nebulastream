@@ -596,6 +596,8 @@ endif ()
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
+# Add target for the execution
+add_subdirectory(nes-execution)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
 # Add target for core, which contains the nes lib
