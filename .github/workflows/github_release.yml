@@ -95,7 +95,7 @@ jobs:
         echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
         wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/latest/download/NebulaStream-$nes_version-ubuntu-20_04-Linux.X64.deb
         wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/latest/download/NebulaStream-$nes_version-ubuntu-20_04-Linux.arm64.deb
-        docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-executable-image:$NES_VERSION --tag nebulastream/nes-executable-image:latest --push
+        docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --push
         rm -rf nes-amd64.deb nes-arm64.deb
         echo "Pushed the execution image"
         docker logout
