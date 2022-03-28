@@ -30,9 +30,6 @@ jobs:
          git config --global user.name "CIUser"         
          git tag -fa "$tag_name" -m "$tag_name"
          git push --force origin "$tag_name"
-     - name: Set NebulaStream Version
-       run: echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
-
 
   package-debian-package:
     needs: [create-tag]
@@ -68,7 +65,8 @@ jobs:
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_package_${{ matrix.osversion }}
       - name: getFile
         run: |
-          DEB_NAME=NebulaStream-$NES_VERSION-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
+          nes_version=${GITHUB_REF_NAME:1}
+          DEB_NAME=NebulaStream-$nes_version-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
           mv $GITHUB_WORKSPACE/build/*deb $GITHUB_WORKSPACE/build/$DEB_NAME.deb
           echo "DEB_FILE=$GITHUB_WORKSPACE/build/$DEB_NAME.deb" >> $GITHUB_ENV
       - name: Release
@@ -92,10 +90,11 @@ jobs:
     steps:
     - name: Build and Release NES Executable Image
       run: |
+        nes_version=${GITHUB_REF_NAME:1}
         echo "Preparing and Releasing new executable image with version $nes_version and latest"
         echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-        wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/latest/download/NebulaStream-$NES_VERSION-ubuntu-20_04-Linux.X64.deb
-        wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/latest/download/NebulaStream-$NES_VERSION-ubuntu-20_04-Linux.arm64.deb
+        wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/latest/download/NebulaStream-$nes_version-ubuntu-20_04-Linux.X64.deb
+        wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/latest/download/NebulaStream-$nes_version-ubuntu-20_04-Linux.arm64.deb
         docker buildx build . --build-arg WORKDIR=$GITHUB_WORKSPACE -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-executable-image:$NES_VERSION --tag nebulastream/nes-executable-image:latest --push
         rm -rf nes-amd64.deb nes-arm64.deb
         echo "Pushed the execution image"
