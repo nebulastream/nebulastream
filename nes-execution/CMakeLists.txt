@@ -14,13 +14,13 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
+
+get_source(nes-execution NES_COMPILER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-compiler SHARED ${NES_COMPILER_SOURCE_FILES})
-message(STATUS "Here: ${NES_COMPILER_SOURCE_FILES}")
-target_link_libraries(nes-compiler PUBLIC nes-common)
-target_include_directories(nes-compiler PUBLIC
+add_library(nes-execution SHARED ${NES_COMPILER_SOURCE_FILES})
+target_link_libraries(nes-execution PUBLIC nes-common nes nes-runtime-proxy)
+target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
@@ -31,29 +31,3 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-compiler
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
-
-# pre-pare clang plugin
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nes-clang-plugin)
-execute_process(
-        COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}/nes-compiler/clang-plugin
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/nes-clang-plugin
-        COMMAND_ECHO STDOUT
-)
-
-# Build external project
-execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/nes-clang-plugin
-        COMMAND_ECHO STDOUT
-)
-
-
-set_property(GLOBAL PROPERTY NES_CLANG_PLUGIN "${CMAKE_BINARY_DIR}/nes-clang-plugin/libnes-clang-plugin.so")
-
-
-
