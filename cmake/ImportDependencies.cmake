@@ -76,6 +76,7 @@ elseif (NES_BUILD_DEPENDENCIES_LOCAL)
             CACHE STRING "CMake toolchain file")
     set(VCPKG_MANIFEST_DIR ${nesdebs_SOURCE_DIR} CACHE STRING "vcpkg manifest dir")
     set(VCPKG_OVERLAY_TRIPLETS ${nesdebs_SOURCE_DIR}/custom-triplets/ CACHE STRING "CMake toolchain file")
+    set(VCPKG_OVERLAY_PORTS ${nesdebs_SOURCE_DIR}/vcpkg-registry/ports CACHE STRING "VCPKG overlay ports")
     set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
 else (NES_USE_PREBUILD_DEPENDENCIES)
     # Use the prebuild dependencies. To this end, we download the correct dependency file from our repository.
