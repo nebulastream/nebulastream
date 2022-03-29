@@ -32,4 +32,6 @@ bool DataType::isNumeric() const { return false; }
 
 bool DataType::isChar() const { return false; }
 
+bool DataType::isTensor() const { return false; }
+
 }// namespace NES

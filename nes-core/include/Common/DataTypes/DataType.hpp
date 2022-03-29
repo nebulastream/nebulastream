@@ -65,6 +65,11 @@ class DataType {
     [[nodiscard]] virtual bool isCharArray() const;
 
     /**
+    * @brief Checks if this data type is a Tensor.
+    */
+    [[nodiscard]] virtual bool isTensor() const;
+
+    /**
     * @brief Checks if this data type is Char.
     */
     [[nodiscard]] virtual bool isChar() const;

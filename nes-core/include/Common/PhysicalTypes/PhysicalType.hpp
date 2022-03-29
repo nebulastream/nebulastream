@@ -78,6 +78,12 @@ class PhysicalType {
     /// @brief true only for arrays which contain chars as their immediate child type.
     [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };
 
+    /**
+     * @brief Indicates whether or not this is a tensor data type
+     * @return True if Tensor data type
+     */
+    [[nodiscard]] virtual bool isTensorType() const noexcept { return false; };
+
     /// Type that is contained by this PhysicalType container
     DataTypePtr const type;
 };

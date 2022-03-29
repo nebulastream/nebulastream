@@ -87,6 +87,10 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& com
     return std::make_shared<ArrayType>(length, component);
 }
 
+DataTypePtr DataTypeFactory::createTensor(std::vector<uint16_t> shape, const DataTypePtr& component, TensorMemoryFormat tensorType){
+    return std::make_shared<TensorType>(shape, component, tensorType);
+}
+
 DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }
 
 DataTypePtr DataTypeFactory::createChar() { return std::make_shared<Char>(); }
