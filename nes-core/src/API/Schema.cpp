@@ -26,7 +26,7 @@
 
 namespace NES {
 
-Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType){};
+Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType) {};
 
 SchemaPtr Schema::create(MemoryLayoutType layoutType) { return std::make_shared<Schema>(layoutType); }
 

@@ -290,7 +290,8 @@ template<typename Predicate = std::equal_to<uint64_t>>
 [[nodiscard]] bool checkCompleteOrTimeout(const NesCoordinatorPtr& nesCoordinator,
                                           QueryId queryId,
                                           const GlobalQueryPlanPtr& globalQueryPlan,
-                                          uint64_t expectedResult) {
+                                          uint64_t expectedResult,
+                                          uint64_t timeoutSeconds = defaultTimeout) {
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         NES_ERROR("Unable to find global query Id for user query id " << queryId);
@@ -313,20 +314,23 @@ template<typename Predicate = std::equal_to<uint64_t>>
                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
 
-        // wait for another iteration if the last processed task was very recent.
-        if (statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown) {
-            NES_DEBUG("checkCompleteOrTimeout: Atask was processed within the last "
-            << defaultCooldown << "ms, the query may still be active. Restart the timeout period.");
-            start_timestamp = std::chrono::system_clock::now();
-        } else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
-            NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats="
+            // wait for another iteration if the last processed task was very recent.
+            if (statistics[0]->getTimestampLastProcessedTask() == 0
+                || statistics[0]->getTimestampFirstProcessedTask() == 0
+                || statistics[0]->getTimestampLastProcessedTask() > now - timeoutSeconds) {
+                NES_DEBUG("checkCompleteOrTimeout: A task was processed within the last "
+                            << defaultCooldown << "ms, the query may still be active. Restart the timeout period.");
+            }
+            // return if enough buffer have been received
+            else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
+                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats="
+                          << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
+                          << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+                return true;
+            }
+            NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
                       << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                      << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
-            return true;
-        }
-        NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
-                  << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                  << " expected=" << expectedResult);
+                      << " expected=" << expectedResult);
 
         std::this_thread::sleep_for(sleepDuration);
     }

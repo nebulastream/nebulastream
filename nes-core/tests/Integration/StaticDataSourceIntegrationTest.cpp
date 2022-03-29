@@ -204,8 +204,8 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     //register query
     std::string queryLogic = R"(Query::from("tpch_customer").filter(Attribute("C_CUSTKEY") < 10))";
     std::string querySink = benchmark
-        ?   ".sink(NullOutputSinkDescriptor::create())"
-        :   ".sink(FileSinkDescriptor::create(" + filePath
+        ?   ".sink(NullOutputSinkDescriptor::create());"
+        :   ".sink(FileSinkDescriptor::create(\"" + filePath
             + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryString = queryLogic + querySink;
 
@@ -309,6 +309,10 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
+    // extract total query runtime from statistics
+    auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
+    printTotalQueryRuntime(stats);
+
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -344,6 +348,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
 TEST_F(StaticDataSourceIntegrationTest, testCustomerTableProjection) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
 
     crdConf->rpcPort=(*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -377,18 +382,25 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableProjection) {
     std::string filePath = getTestResourceFolder() / "testCustomerTableProjectionOut.csv";
     remove(filePath.c_str());
 
+    bool benchmark = false;
+
     //register query
-    std::string queryString =
-            R"(Query::from("tpch_customer").project(Attribute("C_CUSTKEY"), Attribute("C_NATIONKEY"), Attribute("C_ACCTBAL"))
-        .sink(FileSinkDescriptor::create(")" + filePath
-        + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string queryLogic =
+            R"(Query::from("tpch_customer").project(Attribute("C_CUSTKEY"), Attribute("C_NATIONKEY"), Attribute("C_ACCTBAL")))";
+    std::string querySink = benchmark
+            ?   ".sink(NullOutputSinkDescriptor::create());"
+            :   ".sink(FileSinkDescriptor::create(\"" + filePath
+            + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string queryString = queryLogic + querySink;
+
     QueryId queryId =
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    uint64_t timeoutSeconds = 120;
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, timeoutSeconds));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
@@ -726,7 +738,11 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
 // Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create(10000);
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
+    wrkConf->numWorkerThreads = 8;
+
+    NES_DEBUG("num work " << wrkConf->numWorkerThreads.getValue() << " num buff " << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -771,7 +787,94 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
                 .equalsTo(Attribute("N_NATIONKEY")))";
     std::string querySink = benchmark
             ?   ".sink(NullOutputSinkDescriptor::create());"
-            :   ".sink(FileSinkDescriptor::create(" + filePath
+            :   ".sink(FileSinkDescriptor::create(\"" + filePath
+            + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string queryString = queryLogic + querySink;
+
+
+    QueryId queryId =
+            queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    int buffersToExpect = 1;
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+
+    // extract total query runtime from statistics
+    auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
+    printTotalQueryRuntime(stats);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    if (!benchmark) {
+        std::ifstream ifs(filePath.c_str());
+        std::ifstream ifsInputProbeSide(table_path_customer_s0001.c_str());
+        EXPECT_TRUE(ifs.good());
+        EXPECT_TRUE(ifsInputProbeSide.good());
+
+        int numResultTuples = std::count(std::istreambuf_iterator<char>(ifs),
+                                         std::istreambuf_iterator<char>(), '\n');
+        int numExpectedTuples = std::count(std::istreambuf_iterator<char>(ifsInputProbeSide),
+                                           std::istreambuf_iterator<char>(), '\n')
+                                                   + 1; // the .csv file contains a header, so we expect one more
+
+        NES_ASSERT(numResultTuples == numExpectedTuples,
+                  "The Join changed the number of tuples from " << numExpectedTuples << " in the probe table to " << numResultTuples);
+    }
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+
+
+// join two static data sources together with the batch join operator.
+// Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
+TEST_F(StaticDataSourceIntegrationTest, testBatchFilterCustomerFull) {
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
+    wrkConf->numWorkerThreads = 8;
+
+    NES_INFO("num work " << wrkConf->numWorkerThreads.getValue() << " num buff " << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
+
+    crdConf->rpcPort = (*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+    wrkConf->coordinatorPort = crdConf->rpcPort;
+
+    // use deprecated feature "logicalSources" to register logical streams before physical streams
+    crdConf->logicalSources.push_back(LogicalSource::create("tpch_customer", schema_customer));
+
+    PhysicalSourceTypePtr sourceType1 =
+            StaticDataSourceType::create(table_path_customer_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
+    auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_s0001_customer", sourceType1);
+    wrkConf->physicalSources.add(physicalSource1);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto streamCatalog = crd->getStreamCatalog();
+
+    // local fs
+    std::string filePath = getTestResourceFolder() / "foooo.csv";
+    remove(filePath.c_str());
+
+    bool benchmark = true;
+
+    //register query
+    std::string queryLogic =
+            R"(Query::from("tpch_customer").filter(Attribute("C_CUSTKEY") < 35))";
+    std::string querySink = benchmark
+            ?   ".sink(NullOutputSinkDescriptor::create());"
+            :   ".sink(FileSinkDescriptor::create(\"" + filePath
             + R"(" , "CSV_FORMAT", "APPEND"));)";
     std::string queryString = queryLogic + querySink;
 
@@ -1179,7 +1282,11 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create(10000);
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
+    wrkConf->numWorkerThreads = 8;
+
+    NES_DEBUG("StaticDataSourceIntegrationTest::testBatchJoinCustomerWithIntTable: num work " << wrkConf->numWorkerThreads.getValue() << " num buff " << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
 
     crdConf->rpcPort=(*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
@@ -1214,14 +1321,18 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     std::string filePath = getTestResourceFolder() / "testBatchJoinIntegersOut.csv";
     remove(filePath.c_str());
 
+    bool benchmark = false;
+
     //register query
-    std::string queryString =
-            R"(Query::from("static_integers_only_2")
-            .batchJoinWith(
-                Query::from("tpch_customer")
-                ).where(Attribute("tpch_customer$C_NATIONKEY")).equalsTo(Attribute("static_integers_only_2$id"))
-            .sink(FileSinkDescriptor::create(")"
-            + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string queryLogic = R"(Query::from("static_integers_only_2")
+        .batchJoinWith(Query::from("tpch_customer"))
+            .where(Attribute("tpch_customer$C_NATIONKEY")).equalsTo(Attribute("static_integers_only_2$id")))";
+    std::string querySink = benchmark
+            ?   ".sink(NullOutputSinkDescriptor::create());"
+            :   ".sink(FileSinkDescriptor::create(\"" + filePath
+            + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string queryString = queryLogic + querySink;
+
     QueryId queryId =
             queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -1238,47 +1349,192 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    // does the join result have same number of rows as the probe table?
-    std::ifstream ifs(filePath.c_str());
-    std::ifstream ifsInputProbeSide(table_path_customer_s0001.c_str());
-    EXPECT_TRUE(ifs.good());
-    EXPECT_TRUE(ifsInputProbeSide.good());
+    if (!benchmark) {
+        // does the join result have same number of rows as the probe table?
+        std::ifstream ifs(filePath.c_str());
+        std::ifstream ifsInputProbeSide(table_path_customer_s0001.c_str());
+        EXPECT_TRUE(ifs.good());
+        EXPECT_TRUE(ifsInputProbeSide.good());
 
-    int numResultTuples = std::count(std::istreambuf_iterator<char>(ifs),
-                                     std::istreambuf_iterator<char>(), '\n');
-    int numExpectedTuples = std::count(std::istreambuf_iterator<char>(ifsInputProbeSide),
-                                       std::istreambuf_iterator<char>(), '\n')
-                                               + 1; // the .csv file contains a header, so we expect one more
+        int numResultTuples = std::count(std::istreambuf_iterator<char>(ifs),
+                                         std::istreambuf_iterator<char>(), '\n');
+        int numExpectedTuples = std::count(std::istreambuf_iterator<char>(ifsInputProbeSide),
+                                           std::istreambuf_iterator<char>(), '\n')
+                                                   + 1; // the .csv file contains a header, so we expect one more
 
-    ifs.seekg(0, ifs.beg);
+        ifs.seekg(0, ifs.beg);
 
-    NES_DEBUG("numResultTuples: " << numResultTuples << ", numExpectedTuples: " << numExpectedTuples);
-    EXPECT_EQ(numResultTuples, numExpectedTuples);
+        NES_DEBUG("numResultTuples: " << numResultTuples << ", numExpectedTuples: " << numExpectedTuples);
+        EXPECT_EQ(numResultTuples, numExpectedTuples);
 
-   // extract and validate first 10 records
-   std::vector<std::string> content(11);
-   for (int i=0; i<11; ++i) {
-       std::getline(ifs, content[i], '\n');
-   }
-   const std::vector<std::string> expected = {
-           "static_integers_only_2$id:INTEGER,static_integers_only_2$value:INTEGER,tpch_customer$C_CUSTKEY:INTEGER,tpch_customer$C_NAME:ArrayType,"
-           "tpch_customer$C_ADDRESS:ArrayType,tpch_customer$C_NATIONKEY:INTEGER,tpch_customer$C_PHONE:ArrayType,"
-           "tpch_customer$C_ACCTBAL:(Float),tpch_customer$C_MKTSEGMENT:ArrayType,tpch_customer$C_COMMENT:ArrayType",
-           "15,150,1,Customer#000000001,IVhzIApeRb ot,c,E,15,25-989-741-2988,711.560000,BUILDING,to the even, regular platelets. regular, ironic epitaphs nag e",
-           "13,130,2,Customer#000000002,XSTf4,NCwDVaWNe6tEgvwfmRchLXak,13,23-768-687-3665,121.650000,AUTOMOBILE,l accounts. blithely ironic theodolites integrate boldly: caref",
-           "1,10,3,Customer#000000003,MG9kdTD2WBHm,1,11-719-748-3364,7498.120000,AUTOMOBILE, deposits eat slyly ironic, even instructions. express foxes detect slyly. blithely even accounts abov",
-           "4,40,4,Customer#000000004,XxVSJsLAGtn,4,14-128-190-5944,2866.830000,MACHINERY, requests. final, regular ideas sleep final accou",
-           "3,30,5,Customer#000000005,KvpyuHCplrB84WgAiGV6sYpZq7Tj,3,13-750-942-6364,794.470000,HOUSEHOLD,n accounts will have to unwind. foxes cajole accor",
-           "20,200,6,Customer#000000006,sKZz0CsnMD7mp4Xd0YrBvx,LREYKUWAh yVn,20,30-114-968-4951,7638.570000,AUTOMOBILE,tions. even deposits boost according to the slyly bold packages. final accounts cajole requests. furious",
-           "18,180,7,Customer#000000007,TcGe5gaZNgVePxU5kRrvXBfkasDTea,18,28-190-982-9759,9561.950000,AUTOMOBILE,ainst the ironic, express theodolites. express, even pinto beans among the exp",
-           "17,170,8,Customer#000000008,I0B10bB0AymmC, 0PrRYBCP1yGJ8xcBPmWhl5,17,27-147-574-9335,6819.740000,BUILDING,among the slyly regular theodolites kindle blithely courts. carefully even theodolites haggle slyly along the ide",
-           "8,80,9,Customer#000000009,xKiAFTjUsCuxfeleNqefumTrjS,8,18-338-906-3675,8324.070000,FURNITURE,r theodolites according to the requests wake thinly excuses: pending requests haggle furiousl",
-           "5,50,10,Customer#000000010,6LrEaV6KR6PLVcgl2ArL Q3rqzLzcT1 v2,5,15-741-346-9870,2753.540000,HOUSEHOLD,es regular deposits haggle. fur"
-   };
-    EXPECT_EQ(content, expected);
+       // extract and validate first 10 records
+       std::vector<std::string> content(11);
+       for (int i=0; i<11; ++i) {
+           std::getline(ifs, content[i], '\n');
+       }
+       const std::vector<std::string> expected = {
+               "static_integers_only_2$id:INTEGER,static_integers_only_2$value:INTEGER,tpch_customer$C_CUSTKEY:INTEGER,tpch_customer$C_NAME:ArrayType,"
+               "tpch_customer$C_ADDRESS:ArrayType,tpch_customer$C_NATIONKEY:INTEGER,tpch_customer$C_PHONE:ArrayType,"
+               "tpch_customer$C_ACCTBAL:(Float),tpch_customer$C_MKTSEGMENT:ArrayType,tpch_customer$C_COMMENT:ArrayType",
+               "15,150,1,Customer#000000001,IVhzIApeRb ot,c,E,15,25-989-741-2988,711.560000,BUILDING,to the even, regular platelets. regular, ironic epitaphs nag e",
+               "13,130,2,Customer#000000002,XSTf4,NCwDVaWNe6tEgvwfmRchLXak,13,23-768-687-3665,121.650000,AUTOMOBILE,l accounts. blithely ironic theodolites integrate boldly: caref",
+               "1,10,3,Customer#000000003,MG9kdTD2WBHm,1,11-719-748-3364,7498.120000,AUTOMOBILE, deposits eat slyly ironic, even instructions. express foxes detect slyly. blithely even accounts abov",
+               "4,40,4,Customer#000000004,XxVSJsLAGtn,4,14-128-190-5944,2866.830000,MACHINERY, requests. final, regular ideas sleep final accou",
+               "3,30,5,Customer#000000005,KvpyuHCplrB84WgAiGV6sYpZq7Tj,3,13-750-942-6364,794.470000,HOUSEHOLD,n accounts will have to unwind. foxes cajole accor",
+               "20,200,6,Customer#000000006,sKZz0CsnMD7mp4Xd0YrBvx,LREYKUWAh yVn,20,30-114-968-4951,7638.570000,AUTOMOBILE,tions. even deposits boost according to the slyly bold packages. final accounts cajole requests. furious",
+               "18,180,7,Customer#000000007,TcGe5gaZNgVePxU5kRrvXBfkasDTea,18,28-190-982-9759,9561.950000,AUTOMOBILE,ainst the ironic, express theodolites. express, even pinto beans among the exp",
+               "17,170,8,Customer#000000008,I0B10bB0AymmC, 0PrRYBCP1yGJ8xcBPmWhl5,17,27-147-574-9335,6819.740000,BUILDING,among the slyly regular theodolites kindle blithely courts. carefully even theodolites haggle slyly along the ide",
+               "8,80,9,Customer#000000009,xKiAFTjUsCuxfeleNqefumTrjS,8,18-338-906-3675,8324.070000,FURNITURE,r theodolites according to the requests wake thinly excuses: pending requests haggle furiousl",
+               "5,50,10,Customer#000000010,6LrEaV6KR6PLVcgl2ArL Q3rqzLzcT1 v2,5,15-741-346-9870,2753.540000,HOUSEHOLD,es regular deposits haggle. fur"
+       };
+        EXPECT_EQ(content, expected);
+    }
 
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
+
+
+// join two static data sources together with the batch join operator.
+// two artificial tabeles of the length of CUST and NATION (but with only two integers in schema)
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
+    std::string pathProbe = "./test_data/tmp_probe_table.tbl";
+    std::string pathBuild = "./test_data/tmp_build_table.tbl";
+
+    std::vector<int> sizeBuildTableVec = {250000};
+    std::vector<int> sizeProbeTableVec = {
+            50000,
+            150000,
+//            500000,
+//            1500000,
+//            5000000,
+//            15000000
+//            40000000,
+//            60000000
+    };
+    for (int sizeBuildTable : sizeBuildTableVec) {
+
+        {
+            std::ofstream myfile(pathBuild);
+            for (int i = 0; i < sizeBuildTable; ++i) {
+                myfile << i << '|' << i*10 << "|\n";
+            }
+            myfile.close();
+        }
+
+        for (int sizeProbeTable : sizeProbeTableVec) {
+            {
+                std::ofstream myfile(pathProbe);
+                for (int i = 0; i < sizeProbeTable; ++i) {
+                    myfile << (i%sizeBuildTable) << '|' << i << "|\n";
+                }
+                myfile.close();
+            }
+
+            CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+            // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
+            WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+            wrkConf->numberOfBuffersInGlobalBufferManager = 1000000;
+            wrkConf->numWorkerThreads = 2;
+
+            NES_INFO("num work " << wrkConf->numWorkerThreads.getValue() << " num buff " << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
+
+            crdConf->rpcPort=(*rpcCoordinatorPort);
+            crdConf->restPort = *restPort;
+            wrkConf->coordinatorPort = crdConf->rpcPort;
+
+            // use deprecated feature "logicalSources" to register logical streams before physical streams
+            crdConf->logicalSources.push_back(LogicalSource::create("build_side", schema_integers_0)); // (same schema as integers_only_0)
+            crdConf->logicalSources.push_back(LogicalSource::create("probe_side", schema_integers_0));
+
+            PhysicalSourceTypePtr sourceType0 =
+                    StaticDataSourceType::create(pathBuild, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
+            auto physicalSource0 = PhysicalSource::create("build_side", "build_side", sourceType0);
+            wrkConf->physicalSources.add(physicalSource0);
+
+            PhysicalSourceTypePtr sourceType1 =
+                    StaticDataSourceType::create(pathProbe, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
+            auto physicalSource1 = PhysicalSource::create("probe_side", "probe_side", sourceType1);
+            wrkConf->physicalSources.add(physicalSource1);
+
+            NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+
+            NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+            uint64_t port = crd->startCoordinator(/**blocking**/ false);
+            EXPECT_NE(port, 0UL);
+            NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+
+            QueryServicePtr queryService = crd->getQueryService();
+            QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+            auto streamCatalog = crd->getStreamCatalog();
+
+            // local fs
+            std::string filePath = getTestResourceFolder() / "testBatchJoinIntegersOut.csv";
+            remove(filePath.c_str());
+
+            bool benchmark = true;
+
+            //register query
+            std::string queryLogic = R"(Query::from("build_side")
+            .batchJoinWith(Query::from("probe_side"))
+            .where(Attribute("probe_side$id")).equalsTo(Attribute("build_side$id")))";
+            std::string querySink = benchmark
+                    ?   ".sink(NullOutputSinkDescriptor::create());"
+                    :   ".sink(FileSinkDescriptor::create(\"" + filePath
+                    + R"(" , "CSV_FORMAT", "APPEND"));)";
+            std::string queryString = queryLogic + querySink;
+
+            QueryId queryId =
+                    queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+            EXPECT_NE(queryId, INVALID_QUERY_ID);
+            auto globalQueryPlan = crd->getGlobalQueryPlan();
+            EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+            int buffersToExpect = 1;
+            EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+
+            // extract total query runtime from statistics
+            auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
+            NES_WARNING("sizeProbeTable: " << sizeProbeTable << "  sizeBuildTable: " << sizeBuildTable);
+            printTotalQueryRuntime(stats);
+
+            NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+            EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+            EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+            if (!benchmark) {
+                // does the join result have same number of rows as the probe table?
+                std::ifstream ifs(filePath.c_str());
+                std::ifstream ifsInputProbeSide(table_path_customer_s0001.c_str());
+                EXPECT_TRUE(ifs.good());
+                EXPECT_TRUE(ifsInputProbeSide.good());
+
+                int numResultTuples = std::count(std::istreambuf_iterator<char>(ifs),
+                                                 std::istreambuf_iterator<char>(), '\n');
+                int numExpectedTuples = std::count(std::istreambuf_iterator<char>(ifsInputProbeSide),
+                                                   std::istreambuf_iterator<char>(), '\n')
+                                                           + 1; // the .csv file contains a header, so we expect one more
+
+                                                           ifs.seekg(0, ifs.beg);
+
+                                                           NES_DEBUG("numResultTuples: " << numResultTuples << ", numExpectedTuples: " << numExpectedTuples);
+                                                           EXPECT_EQ(numResultTuples, numExpectedTuples);
+
+
+                                                           // extract and print first 10 records
+                                                           std::string content;
+                                                           for (int i=0; i<11; ++i) {
+                                                               std::getline(ifs, content, '\n');
+                                                               NES_INFO(content);
+                                                           }
+
+
+            }
+
+            bool retStopCord = crd->stopCoordinator(false);
+            EXPECT_TRUE(retStopCord);
+        }
+    }
+}
+
 
 }// namespace NES::Experimental
