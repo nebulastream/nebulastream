@@ -94,11 +94,12 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     std::string delimiter = "|";
     inputParser = std::make_shared<CSVParser>(this->schema->getSize(), physicalTypes, delimiter);
 
-    NES_DEBUG("StaticDataSource() eagerLoading=" << eagerLoading
-                << " numBuffersToProcess=" << numBuffersToProcess
-                << " numBuffersToProcess=" << numBuffersToProcess
-                << " numTuplesPerBuffer=" << numTuplesPerBuffer);
 
+    NES_DEBUG("StaticDataSource() operatorId: " << operatorId << ":\n"
+        "eagerLoading=" << eagerLoading
+    << " numTuplesToProcess=" << numTuples
+    << " numBuffersToProcess=" << numBuffersToProcess
+    << " numTuplesPerBuffer=" << numTuplesPerBuffer);
 
     if (eagerLoading) {
         this->numSourceLocalBuffers = this->numBuffersToProcess;
@@ -107,7 +108,8 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     auto now =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
             .count();
-    NES_WARNING("StaticDataSource created. (Eager loading: " << eagerLoading << ") Timestamp: " << now);
+
+    NES_DEBUG("StaticDataSource created. Timestamp: " << now);
 }
 
 bool StaticDataSource::start() {

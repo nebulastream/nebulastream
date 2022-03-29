@@ -174,7 +174,7 @@ void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipelinePlan,
 
     // Pipelining only works on physical operators.
     if (!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>()) {
-        throw QueryCompilationException("Pipelining can only be applyied to physical operator. But current operator was: "
+        throw QueryCompilationException("Pipelining can only be applied to physical operator. But current operator was: "
                                         + currentOperators->toString());
     }
 
