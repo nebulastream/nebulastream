@@ -58,7 +58,9 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationCoordinates(workerConfig->locationCoordinates.getValue()), queryCompilerConfiguration(workerConfig->queryCompiler),
+      locationCoordinates(workerConfig->locationCoordinates.getValue()),
+      isMobile(workerConfig->isMobile.getValue()),
+      queryCompilerConfiguration(workerConfig->queryCompiler),
       enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()),
       numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
@@ -288,7 +290,8 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  numberOfSlots,
                                                                  registrationMetrics,
-                                                                 locationCoordinates);
+                                                                 locationCoordinates,
+                                                                 isMobile);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
@@ -489,9 +492,14 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-bool NesWorker::hasLocation() { return locationCoordinates.isValid(); }
+bool NesWorker::isFieldNode() { return locationCoordinates.isValid() && !isMobile; }
+
+bool NesWorker::isMobileNode() const { return isMobile; };
 
 bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
+    if (isMobile) {
+        return false;
+    }
     locationCoordinates = geoLoc;
     return true;
 }

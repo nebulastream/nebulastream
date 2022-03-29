@@ -38,6 +38,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                               int64_t grpcPort,
                                               int64_t dataPort,
                                               uint16_t numberOfSlots,
+                                              bool isMobile,
                                               GeographicalLocation coordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
@@ -55,6 +56,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
     TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
+    newTopologyNode->setMobile(isMobile);
 
     if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
@@ -71,7 +73,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (coordinates.isValid()) {
+    if (coordinates.isValid() &&  !newTopologyNode->isMobileNode() ) {
         NES_DEBUG("added node with geographical location: " << coordinates.getLatitude() << ", " << coordinates.getLongitude());
         topology->setPhysicalNodePosition(newTopologyNode, coordinates, true);
     } else {

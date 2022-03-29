@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <vector>
 #ifdef S2DEF
 #include <s2/s2point_index.h>

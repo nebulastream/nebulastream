@@ -36,15 +36,17 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     if (request->has_coordinates()) {
         NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
         id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots(),
-                                                  GeographicalLocation(request->coordinates()));
+                                                           request->grpcport(),
+                                                           request->dataport(),
+                                                           request->numberofslots(),
+                                                           request->ismobile(),
+                                                           GeographicalLocation(request->coordinates()));
     } else {
         id = topologyManagerService->registerNode(request->address(),
-                                                  request->grpcport(),
-                                                  request->dataport(),
-                                                  request->numberofslots());
+                                                           request->grpcport(),
+                                                           request->dataport(),
+                                                           request->numberofslots(),
+                                                           request->ismobile());
     }
 
     auto registrationMetrics =

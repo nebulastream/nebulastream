@@ -381,13 +381,15 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         const RegistrationMetrics& registrationMetrics,
-                                        GeographicalLocation coordinates) {
+                                        GeographicalLocation coordinates,
+                                        bool isMobile) {
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
+    request.set_ismobile(isMobile);
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     request.set_allocated_coordinates(new Coordinates{coordinates});

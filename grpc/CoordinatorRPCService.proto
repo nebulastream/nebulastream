@@ -69,8 +69,7 @@ message RegisterNodeRequest {
   uint32 numberOfSlots = 4;
   SerializableRegistrationMetrics registrationMetrics = 5;
   Coordinates coordinates = 6;
-  //TODO #2474 also pass isMobile once it is implemented at Worker and Topology
-  //bool isMobile = 7;
+  bool isMobile = 7;
 }
 
 message RegisterNodeReply {
