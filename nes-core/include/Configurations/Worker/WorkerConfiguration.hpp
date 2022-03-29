@@ -166,6 +166,12 @@ class WorkerConfiguration : public BaseConfiguration {
                                                                                          "the physical location of the worker"};
 
     /**
+     * @brief specify if the worker is running on a mobile device. If this option is set, setting the locationCoordinates
+     * option as well will have no effect and the worker will be considered mobile and not a field node
+     */
+    BoolOption isMobile = {IS_MOBILE_CONFIG, false, "is this worker running on a mobile device?"};
+
+    /**
      * @brief Configuration yaml path.
      * @warning this is just a placeholder configuration
      */
@@ -219,6 +225,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queryCompiler,
                 &physicalSources,
                 &locationCoordinates,
+                &isMobile,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &queryManagerMode,

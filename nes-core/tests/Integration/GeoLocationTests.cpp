@@ -170,6 +170,76 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     EXPECT_TRUE(retStopWrk4);
 }
 
+TEST_F(GeoLocationTests, testMobileNodes) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    cout << "start coordinator" << endl;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    cout << "coordinator started successfully" << endl;
+
+    cout << "start worker 1" << endl;
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort = (port);
+    //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
+    wrkConf1->locationCoordinates.setValue(GeographicalLocation::fromString(location2));
+    wrkConf1->isMobile.setValue(true);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart1);
+
+    cout << "start worker 2" << endl;
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->coordinatorPort = (port);
+    wrkConf2->locationCoordinates.setValue(GeographicalLocation::fromString(location2));
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2);
+
+    cout << "worker1 started successfully" << endl;
+    bool retConWrk1 = wrk1->connect();
+    EXPECT_TRUE(retConWrk1);
+    cout << "worker 1 started connected " << endl;
+
+    TopologyPtr topology = crd->getTopology();
+    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 0);
+
+    bool retConWrk2 = wrk2->connect();
+    EXPECT_TRUE(retConWrk2);
+    cout << "worker 2 started connected " << endl;
+
+    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 1);
+
+    EXPECT_EQ(wrk1->isMobileNode(), true);
+    EXPECT_EQ(wrk2->isMobileNode(), false);
+
+    EXPECT_EQ(wrk1->isFieldNode(), false);
+    EXPECT_EQ(wrk2->isFieldNode(), true);
+
+    TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
+    TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
+
+    EXPECT_EQ(node1->isMobileNode(), true);
+    EXPECT_EQ(node2->isMobileNode(), false);
+
+    EXPECT_EQ(node1->isFieldNode(), false);
+    EXPECT_EQ(node2->isFieldNode(), true);
+
+    EXPECT_EQ(node1->getCoordinates(), nullopt);
+    EXPECT_EQ(node2->getCoordinates(), GeographicalLocation::fromString(location2));
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+}
+
 TEST_F(GeoLocationTests, testLocationFromCmd) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();

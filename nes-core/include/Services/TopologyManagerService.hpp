@@ -15,13 +15,13 @@
 #ifndef NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
-#include <Common/GeographicalLocation.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <vector>
+//#include <optional>
+#include <Common/GeographicalLocation.hpp>
+#include <Topology/TopologyNode.hpp>
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif
@@ -49,12 +49,14 @@ class TopologyManagerService {
      * @param cpu the cpu capacity of the worker
      * @param nodeProperties of the to be added sensor
      * @param coordinates: an optional containing either the node location in as a GeographicalLocation object if the node is a field node, or nullopt_t for non field nodes
+     * @param isMobile: indicates if this worker is running on a fixed location device or on a mobile device
      * @return id of node
      */
     uint64_t registerNode(const std::string& address,
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
+                          bool isMobile = false,
                           GeographicalLocation geoLoc = GeographicalLocation());
 
     /**

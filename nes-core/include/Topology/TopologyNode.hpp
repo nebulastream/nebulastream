@@ -150,16 +150,16 @@ class TopologyNode : public Node {
      * @brief indicates if the node has a location
      * @return true if a location is set
      */
-    bool hasLocation();
+    bool isFieldNode();
 
     /**
      * @brief get the geographical coordinates of this topology node
-     * @return The geographical coordinates of the node
+     * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
     std::optional<GeographicalLocation> getCoordinates();
 
     /**
-     * @brief set the goegraphical coordinates of a topology node
+     * @brief set the fixed geographical coordinates of this topology node, making it a field node
      * @param lat: geographical latitude in signed degrees [-90, 90]
      * @param lng: geographical longitude in signed degrees [-180, 180]
      * @return true on success
@@ -167,11 +167,24 @@ class TopologyNode : public Node {
     bool setCoordinates(double latitude, double longitude);
 
     /**
-     * @brief set the geographical coordinates of this topology node
+     * @brief set the fixed geographical coordinates of this topology node, making it a field node
      * @param geoLoc: the Geographical location of the node
      * @return true on success
      */
     bool setCoordinates(GeographicalLocation geoLoc);
+
+    /**
+     * @brief sets the status of the node as running on a mobile device or a fixed device
+     * to be run reight after node creation. Fixed nodes should not become mobile or vice versa at a later point
+     * @param isMobile
+     */
+    void setMobile(bool isMobile);
+
+    /**
+     *
+     * @return if true, the node is running on a mobile device
+     */
+    bool isMobileNode();
 
   private:
     uint64_t id;
@@ -182,6 +195,7 @@ class TopologyNode : public Node {
     uint16_t usedResources;
     bool maintenanceFlag;
     std::optional<GeographicalLocation> coordinates;
+    bool isMobile;
 
     /**
      * @brief A field to store a map of node properties

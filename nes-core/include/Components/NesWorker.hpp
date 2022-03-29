@@ -145,9 +145,14 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     TopologyNodeId getTopologyNodeId() const;
 
     /**
-     * @brief check if a location was set for this Node
+     * @brief checks if this Worker runs on a non-mobile device with a known location (Field Node)
      */
-    bool hasLocation();
+    bool isFieldNode();
+
+    /**
+     * @brief check if this worker runs on a mobile device
+     */
+     bool isMobileNode() const;
 
     /**
      * @brief returns an optional containing a GeographicalLocation object if the node has a fixed location or
@@ -291,6 +296,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     uint64_t bufferSizeInBytes;
 
     GeographicalLocation locationCoordinates;
+    bool isMobile;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;

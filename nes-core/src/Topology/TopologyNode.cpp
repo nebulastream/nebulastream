@@ -21,7 +21,7 @@ namespace NES {
 
 TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources)
     : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      maintenanceFlag(false) {}
+      maintenanceFlag(false), isMobile(false) {}
 
 TopologyNodePtr
 TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
@@ -126,9 +126,14 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-bool TopologyNode::hasLocation() { return coordinates.has_value(); }
+bool TopologyNode::isFieldNode() { return coordinates.has_value(); }
 
-std::optional<GeographicalLocation> TopologyNode::getCoordinates() { return coordinates; }
+std::optional<GeographicalLocation> TopologyNode::getCoordinates() {
+    if (isMobile) {
+        return {};
+    }
+    return coordinates;
+}
 
 bool TopologyNode::setCoordinates(double latitude, double longitude) {
     return setCoordinates(GeographicalLocation(latitude, longitude));
@@ -137,5 +142,13 @@ bool TopologyNode::setCoordinates(double latitude, double longitude) {
 bool TopologyNode::setCoordinates(GeographicalLocation geoLoc) {
     coordinates = geoLoc;
     return true;
+}
+
+void TopologyNode::setMobile(bool isMobile) {
+    this->isMobile = isMobile;
+}
+
+bool TopologyNode::isMobileNode() {
+    return isMobile;
 }
 }// namespace NES
