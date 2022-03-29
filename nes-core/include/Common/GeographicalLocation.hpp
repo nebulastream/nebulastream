@@ -21,6 +21,11 @@ class Coordinates;
 namespace NES {
 
 /**
+ * an object with this value as latitude and longitude is considered an intentionally invalid object
+ */
+const double kInvalidLocationDegrees = 200;
+
+/**
  * @brief a representation of geographical location used to specify the fixed location of field nodes
  * and the changing location of mobile devices
  */
@@ -87,9 +92,15 @@ class GeographicalLocation {
 
     /**
      * @brief checks if this objects represents valid coordinates or
-     * invalid coordinates represented by the coordinates 200, 200
+     * invalid coordinates represented by the Coordinates 200, 200
      */
     bool isValid() const;
+
+    /**
+     * @brief get a string representation of this object
+     * @return a string in the format "latitude, longitude"
+     */
+    std::string toString() const;
 
     /**
      * @brief Constructs a GeographicalLocation form a string.

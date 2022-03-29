@@ -375,10 +375,15 @@ set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 
 # s2 Library
 if (USE_S2)
-    find_package(s2)
+    message(STATUS "s2 is enabled")
+
+    if(NOT S2_ABSL_INCLUDE_PATH)
+        message(STATUS "s2 does not work with the absl version included in nes, please specify the path to the include directory containing the header folder of the absl files used to compile s2")
+    endif()
+    include_directories(${S2_ABSL_INCLUDE_PATH})
     set(LIBRARIES ${LIBRARIES} s2)
     add_compile_definitions(S2DEF)
-    message(STATUS "s2 is enabled")
+    include_directories(${S2_ABSL_INCLUDE_PATH})
 else ()
     message(STATUS "s2 is disabled")
 endif ()

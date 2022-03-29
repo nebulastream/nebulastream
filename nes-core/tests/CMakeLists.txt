@@ -544,6 +544,11 @@ add_executable(async-task-executor-ut "UnitTests/Runtime/AsyncTaskExecutorTest.c
 target_link_libraries(async-task-executor-ut nes-tests)
 add_test(NAME async-task-executor-ut COMMAND async-task-executor-ut)
 
+### Location Source CSV Tests ###
+add_executable(location-source-csv-unit-tests "UnitTests/Geolocation/LocationSourceCSVTest.cpp")
+target_link_libraries(location-source-csv-unit-tests nes-tests)
+add_test(NAME location-source-csv-unit-tests COMMAND location-source-csv-unit-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

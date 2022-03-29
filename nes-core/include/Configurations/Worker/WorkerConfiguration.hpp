@@ -166,10 +166,21 @@ class WorkerConfiguration : public BaseConfiguration {
                                                                                          "the physical location of the worker"};
 
     /**
-     * @brief specify if the worker is running on a mobile device. If this option is set, setting the locationCoordinates
+     * @brief specify if the worker is running on a mobile device. If this option is set, setting the fixedLocationCoordinates
      * option as well will have no effect and the worker will be considered mobile and not a field node
      */
     BoolOption isMobile = {IS_MOBILE_CONFIG, false, "is this worker running on a mobile device?"};
+
+    /**
+     * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
+     * a simulation
+     */
+    StringOption locationSourceType = {LOCATION_SOURCE_TYPE_CONFIG, "", "where does a mobile worker get its geolocationinfo from"};
+
+    /**
+     * @brief specify the config data specific to the source of location data which was specified in the locationSourceType option
+     */
+    StringOption locationSourceConfig = {LOCATION_SOURCE_CONFIG, "", "the configuration data for the location interface"};
 
     /**
      * @brief Configuration yaml path.

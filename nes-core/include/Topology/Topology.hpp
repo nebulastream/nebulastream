@@ -78,7 +78,7 @@ class Topology {
      * non field nodes to become field nodes
      * @return true if successful
      */
-    bool setPhysicalNodePosition(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init = false);
+    bool setPhysicalNodeFixedCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init = false);
 
     /**
      * @brief removes a node from the spatial index. This method is called if a node with a location is unregistered
@@ -89,7 +89,7 @@ class Topology {
 
     /**
      * @brief returns the closest field node to a certain geographical location
-     * @param geoLoc: coordinates of a location on the map
+     * @param geoLoc: Coordinates of a location on the map
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */

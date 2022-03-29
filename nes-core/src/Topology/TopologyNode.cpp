@@ -126,21 +126,21 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-bool TopologyNode::isFieldNode() { return coordinates.has_value(); }
+bool TopologyNode::isFieldNode() { return fixedCoordinates.has_value(); }
 
-std::optional<GeographicalLocation> TopologyNode::getCoordinates() {
+std::optional<GeographicalLocation> TopologyNode::getFixedCoordinates() {
     if (isMobile) {
         return {};
     }
-    return coordinates;
+    return fixedCoordinates;
 }
 
-bool TopologyNode::setCoordinates(double latitude, double longitude) {
-    return setCoordinates(GeographicalLocation(latitude, longitude));
+bool TopologyNode::setFixedCoordinates(double latitude, double longitude) {
+    return setFixedCoordinates(GeographicalLocation(latitude, longitude));
 }
 
-bool TopologyNode::setCoordinates(GeographicalLocation geoLoc) {
-    coordinates = geoLoc;
+bool TopologyNode::setFixedCoordinates(GeographicalLocation geoLoc) {
+    fixedCoordinates = geoLoc;
     return true;
 }
 

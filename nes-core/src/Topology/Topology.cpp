@@ -76,7 +76,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     return false;
 }
 
-bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init) {
+bool Topology::setPhysicalNodeFixedCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init) {
 #ifdef S2DEF
     double newLat = geoLoc.getLatitude();
     double newLng = geoLoc.getLongitude();
@@ -85,7 +85,7 @@ bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, Geographical
 
     //if this function was not called during the creation of the node (init != false), we need to delete the old entry
     if (!init) {
-        auto oldCoordOpt = node->getCoordinates();
+        auto oldCoordOpt = node->getFixedCoordinates();
         //a non field node cannot be given a position after its creation
         if (!oldCoordOpt.has_value() && !init) {
             NES_WARNING("Trying to set the Position of a non field node");
@@ -102,13 +102,13 @@ bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, Geographical
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
     NES_INFO("init = " << init);
 #endif
-    node->setCoordinates(geoLoc);
+    node->setFixedCoordinates(geoLoc);
     return true;
 }
 
 bool Topology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 #ifdef S2DEF
-    auto geoLocOpt = node->getCoordinates();
+    auto geoLocOpt = node->getFixedCoordinates();
     if (!geoLocOpt.has_value()) {
         NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
         return false;
@@ -144,7 +144,7 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const GeographicalLoca
 
 std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
-    auto GeoLocOpt = nodePtr->getCoordinates();
+    auto GeoLocOpt = nodePtr->getFixedCoordinates();
 
     if (!GeoLocOpt.has_value()) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");

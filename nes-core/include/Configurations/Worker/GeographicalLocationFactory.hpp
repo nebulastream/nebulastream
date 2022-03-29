@@ -30,7 +30,7 @@ class GeographicalLocationFactory {
     /**
      * @brief obtains a Geographical location objects by parsing string coordinates
      * @param str: Coordinate string in the format "<lat, lng>"
-     * @return A geographical location with the coordinates from the string, or <200, 200> (representing invalid coordinates)
+     * @return A geographical location with the coordinates from the string, or <200, 200> (representing invalid Coordinates)
      * if the string was empty
      */
 
@@ -38,7 +38,7 @@ class GeographicalLocationFactory {
 
     /**
      * @brief obtains a Geographical location objects from yaml config
-     * @param yamlConfig: a yaml config otained from a file containing "locationCoordinates: <lat, lng>"
+     * @param yamlConfig: a yaml config obtained from a file containing "fixedLocationCoordinates: <lat, lng>"
      * @return A geographical location with the coordinates from the config entry, or <200, 200> (representing invalid coordinates)
      * if the string was empty
      */

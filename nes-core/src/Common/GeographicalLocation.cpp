@@ -22,13 +22,13 @@
 namespace NES {
 
 GeographicalLocation::GeographicalLocation() {
-    latitude = 200;
-    longitude = 200;
+    latitude = kInvalidLocationDegrees;
+    longitude = kInvalidLocationDegrees;
 }
 
 GeographicalLocation::GeographicalLocation(double latitude, double longitude) {
-    //coordinates <200, 200> lead to the creation of an object which symbolizes an invalid location
-    if (!(latitude == 200 && longitude == 200) && !checkValidityOfCoordinates(latitude, longitude)) {
+    //Coordinates <kInvalidLocationDegrees, kInvalidLocationDegrees> lead to the creation of an object which symbolizes an invalid location
+    if (!(latitude == kInvalidLocationDegrees && longitude == kInvalidLocationDegrees) && !checkValidityOfCoordinates(latitude, longitude)) {
         NES_WARNING("Trying to create node with an invalid location");
         throw CoordinatesOutOfRangeException();
     }
@@ -88,6 +88,10 @@ double GeographicalLocation::getLongitude() const {
 }
 
 bool GeographicalLocation::isValid() const { return checkValidityOfCoordinates(latitude, longitude); }
+
+std::string GeographicalLocation::toString() const {
+    return std::to_string(latitude) + ", " + std::to_string(longitude);
+}
 
 bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);

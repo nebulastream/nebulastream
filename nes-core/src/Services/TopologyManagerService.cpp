@@ -39,7 +39,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                               int64_t dataPort,
                                               uint16_t numberOfSlots,
                                               bool isMobile,
-                                              GeographicalLocation coordinates) {
+                                              GeographicalLocation fixedCoordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -73,9 +73,9 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (coordinates.isValid() &&  !newTopologyNode->isMobileNode() ) {
-        NES_DEBUG("added node with geographical location: " << coordinates.getLatitude() << ", " << coordinates.getLongitude());
-        topology->setPhysicalNodePosition(newTopologyNode, coordinates, true);
+    if (fixedCoordinates.isValid() &&  !newTopologyNode->isMobileNode() ) {
+        NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", " << fixedCoordinates.getLongitude());
+        topology->setPhysicalNodeFixedCoordinates(newTopologyNode, fixedCoordinates, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }
