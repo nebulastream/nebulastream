@@ -156,7 +156,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    std::optional<GeographicalLocation> getCoordinates();
+    std::optional<GeographicalLocation> getFixedCoordinates();
 
     /**
      * @brief set the fixed geographical coordinates of this topology node, making it a field node
@@ -164,25 +164,25 @@ class TopologyNode : public Node {
      * @param lng: geographical longitude in signed degrees [-180, 180]
      * @return true on success
      */
-    bool setCoordinates(double latitude, double longitude);
+    bool setFixedCoordinates(double latitude, double longitude);
 
     /**
      * @brief set the fixed geographical coordinates of this topology node, making it a field node
      * @param geoLoc: the Geographical location of the node
      * @return true on success
      */
-    bool setCoordinates(GeographicalLocation geoLoc);
+    bool setFixedCoordinates(GeographicalLocation geoLoc);
 
     /**
-     * @brief sets the status of the node as running on a mobile device or a fixed device
-     * to be run reight after node creation. Fixed nodes should not become mobile or vice versa at a later point
+     * @brief sets the status of the node as running on a mobile device or a fixed location device.
+     * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
      * @param isMobile
      */
     void setMobile(bool isMobile);
 
     /**
      *
-     * @return if true, the node is running on a mobile device
+     * @return true if the node is running on a mobile device
      */
     bool isMobileNode();
 
@@ -194,7 +194,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
-    std::optional<GeographicalLocation> coordinates;
+    std::optional<GeographicalLocation> fixedCoordinates;
     bool isMobile;
 
     /**

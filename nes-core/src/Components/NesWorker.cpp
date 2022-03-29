@@ -37,6 +37,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+#include <Geolocation/LocationSourceCSV.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -58,7 +59,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationCoordinates(workerConfig->locationCoordinates.getValue()),
+      fixedLocationCoordinates(workerConfig->locationCoordinates.getValue()),
       isMobile(workerConfig->isMobile.getValue()),
       queryCompilerConfiguration(workerConfig->queryCompiler),
       enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()),
@@ -214,6 +215,16 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
+    if (isMobile) {
+        std::string locSourceTypeString = workerConfig->locationSourceType;
+        std::string locSourceConfigString = workerConfig->locationSourceConfig;
+        if (locSourceTypeString.empty() || locSourceConfigString.empty()) {
+            NES_WARNING("isMobile flag is set, but there is no proper configuration for the location source. exiting");
+            exit(EXIT_FAILURE);
+        }
+
+        locationSource = std::make_shared<LocationSourceCSV>(locSourceConfigString);
+    }
 
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
@@ -290,7 +301,7 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  numberOfSlots,
                                                                  registrationMetrics,
-                                                                 locationCoordinates,
+                                                                 fixedLocationCoordinates,
                                                                  isMobile);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
@@ -492,21 +503,24 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-bool NesWorker::isFieldNode() { return locationCoordinates.isValid() && !isMobile; }
+bool NesWorker::isFieldNode() { return fixedLocationCoordinates.isValid() && !isMobile; }
 
 bool NesWorker::isMobileNode() const { return isMobile; };
 
-bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
+bool NesWorker::setFixedLocationCoordinates(const GeographicalLocation& geoLoc) {
     if (isMobile) {
         return false;
     }
-    locationCoordinates = geoLoc;
+    fixedLocationCoordinates = geoLoc;
     return true;
 }
 
-//TODO #2475 check first if the node is mobile and if it is, then return a value from the gps/csv interface once the interface is implemented
-//TODO #2475 also add another function that will only return a position if the node is a mobile node
-std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() { return locationCoordinates; }
+GeographicalLocation NesWorker::getCurrentOrPermanentGeoLoc() {
+    if (isMobile) {
+        return locationSource->getLastKnownLocation().first;
+    }
+    return fixedLocationCoordinates;
+}
 
 std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
@@ -514,8 +528,8 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRa
 
 std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(double radius) {
     auto coord = getCurrentOrPermanentGeoLoc();
-    if (coord.has_value()) {
-        return getNodeIdsInRange(coord.value(), radius);
+    if (coord.isValid()) {
+        return getNodeIdsInRange(coord, radius);
     }
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};

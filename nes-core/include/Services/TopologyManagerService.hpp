@@ -19,7 +19,6 @@
 #include <memory>
 #include <mutex>
 #include <vector>
-//#include <optional>
 #include <Common/GeographicalLocation.hpp>
 #include <Topology/TopologyNode.hpp>
 #ifdef S2DEF
@@ -57,7 +56,7 @@ class TopologyManagerService {
                           int64_t dataPort,
                           uint16_t numberOfSlots,
                           bool isMobile = false,
-                          GeographicalLocation geoLoc = GeographicalLocation());
+                          GeographicalLocation fixedCoordinates = GeographicalLocation());
 
     /**
     * @brief unregister an existing node

@@ -381,7 +381,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         const RegistrationMetrics& registrationMetrics,
-                                        GeographicalLocation coordinates,
+                                        GeographicalLocation fixedCoordinates,
                                         bool isMobile) {
 
     RegisterNodeRequest request;
@@ -392,7 +392,15 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_ismobile(isMobile);
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
-    request.set_allocated_coordinates(new Coordinates{coordinates});
+    Coordinates* pCoordinates = request.mutable_coordinates();
+    if (fixedCoordinates.isValid()) {
+        pCoordinates->set_lat(fixedCoordinates.getLatitude());
+        pCoordinates->set_lng(fixedCoordinates.getLongitude());
+    } else {
+        pCoordinates->set_lat(kInvalidLocationDegrees);
+        pCoordinates->set_lng(kInvalidLocationDegrees);
+    }
+
 
     class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
       public:

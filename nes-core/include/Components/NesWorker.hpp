@@ -36,6 +36,9 @@ class ServerCompletionQueue;
 namespace NES {
 class GeographicalLocation;
 
+class LocationSource;
+using LocationSourcePtr = std::shared_ptr<LocationSource>;
+
 class WorkerRPCServer;
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
@@ -159,7 +162,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * containing a nullopt_t if the node does not have a location
      * @return optional containing the GeographicalLocation
      */
-    std::optional<GeographicalLocation> getCurrentOrPermanentGeoLoc();
+    GeographicalLocation getCurrentOrPermanentGeoLoc();
 
     /**
      * @brief Method to get all field nodes within a certain range around a geographical point
@@ -267,7 +270,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @param geoLoc: The new fixed GeographicalLocation to be set
      * @return success of operation
      */
-    bool setNodeLocationCoordinates(const GeographicalLocation& geoLoc);
+    bool setFixedLocationCoordinates(const GeographicalLocation& geoLoc);
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
@@ -295,8 +298,9 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
 
-    GeographicalLocation locationCoordinates;
+    GeographicalLocation fixedLocationCoordinates;
     bool isMobile;
+    LocationSourcePtr locationSource;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;

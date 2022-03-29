@@ -118,13 +118,13 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     TopologyNodePtr node3 = topology->findNodeWithId(wrk3->getWorkerId());
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
-    //checking coordinates
-    EXPECT_EQ(node2->getCoordinates().value(), GeographicalLocation(52.53736960143897, 13.299134894776092));
+    //checking fixedCoordinates
+    EXPECT_EQ(node2->getFixedCoordinates().value(), GeographicalLocation(52.53736960143897, 13.299134894776092));
     EXPECT_EQ(topology->getClosestNodeTo(node4), node3);
-    EXPECT_EQ(topology->getClosestNodeTo(node4->getCoordinates().value()).value(), node4);
-    topology->setPhysicalNodePosition(node2, GeographicalLocation(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ(topology->getClosestNodeTo(node4->getFixedCoordinates().value()).value(), node4);
+    topology->setPhysicalNodeFixedCoordinates(node2, GeographicalLocation(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(topology->getClosestNodeTo(node4), node2);
-    EXPECT_EQ(node2->getCoordinates().value(), GeographicalLocation(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ(node2->getFixedCoordinates().value(), GeographicalLocation(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
     auto inRange = topology->getNodesInRange(GeographicalLocation(52.53736960143897, 13.299134894776092), 50.0);
@@ -132,7 +132,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     auto inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //moving node 3 to hamburg (more than 100km away
-    topology->setPhysicalNodePosition(node3, GeographicalLocation(53.559524264262194, 10.039384739854102));
+    topology->setPhysicalNodeFixedCoordinates(node3, GeographicalLocation(53.559524264262194, 10.039384739854102));
 
     //node 3 should not have any nodes within a radius of 100km
     EXPECT_EQ(topology->getClosestNodeTo(node3, 100).has_value(), false);
@@ -141,7 +141,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
     EXPECT_EQ(inRangeAtWorker.at(1).first, wrk4->getWorkerId());
-    EXPECT_EQ(inRangeAtWorker.at(1).second, wrk4->getCurrentOrPermanentGeoLoc().value());
+    EXPECT_EQ(inRangeAtWorker.at(1).second, wrk4->getCurrentOrPermanentGeoLoc());
 
     //when looking within a radius of 500km we will find all nodes again
     inRangeAtWorker = wrk2->getNodeIdsInRange(500.0);
@@ -186,6 +186,8 @@ TEST_F(GeoLocationTests, testMobileNodes) {
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(GeographicalLocation::fromString(location2));
     wrkConf1->isMobile.setValue(true);
+    wrkConf1->locationSourceType.setValue("csv");
+    wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -218,6 +220,9 @@ TEST_F(GeoLocationTests, testMobileNodes) {
     EXPECT_EQ(wrk1->isFieldNode(), false);
     EXPECT_EQ(wrk2->isFieldNode(), true);
 
+    EXPECT_EQ(wrk1->getCurrentOrPermanentGeoLoc(), GeographicalLocation(52.55227464714949, 13.351743136322877));
+    EXPECT_EQ(wrk2->getCurrentOrPermanentGeoLoc(), GeographicalLocation::fromString(location2));
+
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
 
@@ -227,8 +232,8 @@ TEST_F(GeoLocationTests, testMobileNodes) {
     EXPECT_EQ(node1->isFieldNode(), false);
     EXPECT_EQ(node2->isFieldNode(), true);
 
-    EXPECT_EQ(node1->getCoordinates(), nullopt);
-    EXPECT_EQ(node2->getCoordinates(), GeographicalLocation::fromString(location2));
+    EXPECT_EQ(node1->getFixedCoordinates(), nullopt);
+    EXPECT_EQ(node2->getFixedCoordinates(), GeographicalLocation::fromString(location2));
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -243,7 +248,7 @@ TEST_F(GeoLocationTests, testMobileNodes) {
 TEST_F(GeoLocationTests, testLocationFromCmd) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {"--locationCoordinates=23.88,-3.4"};
+    std::string argv[] = {"--fixedLocationCoordinates=23.88,-3.4"};
     int argc = 1;
 
     std::map<string, string> commandLineParams;
@@ -260,7 +265,7 @@ TEST_F(GeoLocationTests, testLocationFromCmd) {
 
 TEST_F(GeoLocationTests, testInvalidLocationFromCmd) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {"--locationCoordinates=230.88,-3.4"};
+    std::string argv[] = {"--fixedLocationCoordinates=230.88,-3.4"};
     int argc = 1;
 
     std::map<string, string> commandLineParams;
