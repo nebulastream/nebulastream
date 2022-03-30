@@ -111,7 +111,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
 };
 
 /**
- * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with same queries
+ * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with same queryIdAndCatalogEntryMapping
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 
@@ -189,7 +189,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 }
 
 /**
- * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with partially same queries
+ * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with partially same queryIdAndCatalogEntryMapping
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries) {
 
@@ -273,7 +273,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different source
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
 

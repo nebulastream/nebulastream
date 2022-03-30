@@ -236,9 +236,9 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
 /**
  * @brief test for the engine
  * TODO: add more test cases
- *  - More complex queries
- *  - concurrent queries
- *  - long running queries
+ *  - More complex queryIdAndCatalogEntryMapping
+ *  - concurrent queryIdAndCatalogEntryMapping
+ *  - long running queryIdAndCatalogEntryMapping
  *
  */
 class NodeEngineTest : public Testing::NESBaseTest {

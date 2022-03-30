@@ -96,5 +96,5 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
     auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, Experimental::MigrationType::Value::RESTART);
     EXPECT_TRUE(result4);
     EXPECT_EQ(info4,
-              "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(id));
+              "Successfully submitted Query Migration Requests for all queryIdAndCatalogEntryMapping on Topology Node with ID: " + std::to_string(id));
 }

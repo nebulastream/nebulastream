@@ -282,7 +282,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
 QueryManagerPtr NodeEngine::getQueryManager() { return queryManager; }
 
 bool NodeEngine::stop(bool markQueriesAsFailed) {
-    //TODO: add check if still queries are running
+    //TODO: add check if still queryIdAndCatalogEntryMapping are running
     //TODO @Steffen: does it make sense to have force stop still?
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
     //TODO @all: error handling, e.g., is it an error if the query is stopped but not undeployed? @Steffen?
@@ -296,7 +296,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     std::unique_lock lock(engineMutex);
     bool withError = false;
 
-    // release all deployed queries
+    // release all deployed queryIdAndCatalogEntryMapping
     for (auto it = deployedQEPs.begin(); it != deployedQEPs.end();) {
         auto& [querySubPlanId, queryExecutionPlan] = *it;
         try {

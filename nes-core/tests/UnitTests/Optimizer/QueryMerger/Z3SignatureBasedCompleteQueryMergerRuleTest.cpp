@@ -73,7 +73,7 @@ class Z3SignatureBasedCompleteQueryMergerRuleTest : public Testing::TestWithErro
 };
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
@@ -139,7 +139,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with multiple same source
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with multiple same source
  */
 //FIXME: This required 1402 and 1378 to be fixed
 // We need to do the attribute name resolution just as done in SQL systems to identify or distinguish attribute names
@@ -217,7 +217,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different source
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
@@ -274,7 +274,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
     // Prepare
@@ -338,7 +338,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
     // Prepare
@@ -402,7 +402,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
     // Prepare
@@ -469,7 +469,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different filters
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
@@ -527,7 +527,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different filters
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
@@ -584,7 +584,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different map
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
@@ -642,7 +642,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different map
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
@@ -700,7 +700,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
 
@@ -775,7 +775,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
 
@@ -850,7 +850,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
 
@@ -926,7 +926,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
 
@@ -1002,7 +1002,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
 
@@ -1070,7 +1070,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operators
  * but different attribute names
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNames) {
@@ -1139,7 +1139,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operator
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operator
  * but different attribute names and additional filter operator
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNamesAndFilters) {
@@ -1208,7 +1208,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operator but in different order
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operator but in different order
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
 
@@ -1276,7 +1276,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different project operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different project operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
 
@@ -1343,7 +1343,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same watermark operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same watermark operators
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
 
@@ -1413,7 +1413,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWa
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different watermark operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different watermark operators.
  * One query with IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
@@ -1485,7 +1485,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queries with unionWith operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queryIdAndCatalogEntryMapping with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
@@ -1554,7 +1554,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queries with unionWith operator.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queryIdAndCatalogEntryMapping with unionWith operator.
  * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy.
  */
@@ -1635,7 +1635,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queries with unionWith operator.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queryIdAndCatalogEntryMapping with unionWith operator.
  * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
@@ -1712,7 +1712,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
 
@@ -1785,7 +1785,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
 
@@ -1858,7 +1858,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
 
@@ -1933,7 +1933,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 //NOTE: We do not support this sharing at present as Z3 takes too long if we compare columns individually.
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
@@ -2007,7 +2007,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesW
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 //FIXME: enable the test while solving #2228
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingQueriesWithMultipleJoinOperators) {

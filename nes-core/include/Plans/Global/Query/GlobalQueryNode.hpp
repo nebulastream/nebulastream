@@ -30,7 +30,7 @@ class GlobalQueryNode;
 using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
 
 /**
- * @brief This class encapsulates the logical operator shared by a set of queries.
+ * @brief This class encapsulates the logical operator shared by a set of queryIdAndCatalogEntryMapping.
  */
 class GlobalQueryNode : public Node {
 

@@ -16,6 +16,7 @@
 #define NES_QUERYCATALOGSERVICE_HPP
 
 #include <Operators/OperatorId.hpp>
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Util/QueryStatus.hpp>
@@ -70,11 +71,11 @@ class QueryCatalogService {
 
     /**
      * Update query sub plan status
-     * @param queryId : the query id to which sub plan is added
+     * @param sharedQueryId : the query id to which sub plan is added
      * @param querySubPlanId : the query sub plan id
      * @param subQueryStatus : the new sub query status
      */
-    bool updateQuerySubPlanStatus(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool updateQuerySubPlanStatus(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     /**
      * Get the entry from the query catalog for the input query id
@@ -114,10 +115,10 @@ class QueryCatalogService {
 
     /**
      * check and mark the query for soft stop
-     * @param queryId: the query which need to be stopped
+     * @param sharedQueryId: the query which need to be stopped
      * @return true if successful else false
      */
-    bool checkAndMarkForSoftStop(QueryId queryId, QuerySubPlanId subPlanId, OperatorId operatorId);
+    bool checkAndMarkForSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId subPlanId, OperatorId operatorId);
 
     /**
      * check and mark the query for hard stop
@@ -135,6 +136,13 @@ class QueryCatalogService {
     void addUpdatedQueryPlan(QueryId queryId, std::string step, QueryPlanPtr updatedQueryPlan);
 
     /**
+     * Mapping shard query plan id to the query id
+     * @param sharedQueryId : the shared query plan id
+     * @param queryId : the query id
+     */
+    void mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryId queryId);
+
+    /**
      * Clear the query catalog
      */
     void clearQueries();
@@ -142,12 +150,12 @@ class QueryCatalogService {
   private:
     /**
      * Handle soft stop for sub query plans
-     * @param queryId: the query id
+     * @param sharedQueryId: the query id
      * @param querySubPlanId : query sub plan id
      * @param subQueryStatus : the new status
      * @return true if successful else false
      */
-    bool handleSoftStop(QueryId queryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
+    bool handleSoftStop(SharedQueryId sharedQueryId, QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus);
 
     QueryCatalogPtr queryCatalog;
     std::recursive_mutex serviceMutex;

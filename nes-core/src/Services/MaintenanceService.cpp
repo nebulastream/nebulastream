@@ -94,7 +94,7 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     }
     result.first = true;
     result.second =
-        "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(nodeId);
+        "Successfully submitted Query Migration Requests for all queryIdAndCatalogEntryMapping on Topology Node with ID: " + std::to_string(nodeId);
     return result;
 }
 }//namespace NES::Experimental

@@ -26,7 +26,7 @@ using MaterializedViewPtr = std::shared_ptr<MaterializedView>;
 
 /**
  * @brief this class provides the interface for all materialized views.
- * Materialized views in NES 'materialize' the result of streaming queries for further processing.
+ * Materialized views in NES 'materialize' the result of streaming queryIdAndCatalogEntryMapping for further processing.
  */
 class MaterializedView {
 

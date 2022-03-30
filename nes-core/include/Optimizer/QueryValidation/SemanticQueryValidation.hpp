@@ -58,7 +58,7 @@ class SemanticQueryValidation {
     static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks);
 
     /**
-     * Performs advance semantic validation of the queries. For example, checking if the filters in the query are semantically valid.
+     * Performs advance semantic validation of the queryIdAndCatalogEntryMapping. For example, checking if the filters in the query are semantically valid.
      * @param queryPlan: query plan on which the semantic validation is to be applied
      */
     void advanceSemanticQueryValidation(const QueryPlanPtr& queryPlan);

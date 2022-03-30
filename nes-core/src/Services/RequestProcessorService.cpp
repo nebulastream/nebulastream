@@ -146,26 +146,6 @@ void RequestProcessorService::start() {
                                         + std::to_string(sharedQueryId));
                             }
 
-
-
-                            //3.3.5. Add all sub query plans
-//                            auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
-//                            for (auto& executionNode : executionNodes) {
-//                                auto workerId = executionNode->getId();
-//                                auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
-//                                for (auto& subQueryPlan : subQueryPlans) {
-//                                    QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
-//                                    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-//                                        queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
-//                                    }
-//                                }
-//                            }
-
-                            //3.2.6. Mark all contained queries as running
-//                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-//                                queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
-//                            }
-
                             // 3.3. Check if the shared query plan is newly constructed
                         } else if (sharedQueryPlan->isNew()) {
 
@@ -209,7 +189,7 @@ void RequestProcessorService::start() {
                                                                  + std::to_string(sharedQueryId));
                             }
 
-                            //3.4.2. Mark all contained queries as stopped
+                            //3.4.2. Mark all contained queryIdAndCatalogEntryMapping as stopped
                             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
                                 queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
                             }
@@ -226,7 +206,7 @@ void RequestProcessorService::start() {
 
                 //FIXME: This is a work-around for an edge case. To reproduce this:
                 // 1. The query merging feature is enabled.
-                // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queries (Case 3.1).
+                // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queryIdAndCatalogEntryMapping (Case 3.1).
                 // Expected Result:
                 //  - Query status of the removed query is marked as stopped.
                 // Actual Result:
@@ -269,13 +249,13 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
             } catch (log4cxx::helpers::Exception& ex) {
                 NES_FATAL_ERROR(
-                    "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
+                    "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: " << ex.what());
                 shutDown();
             }
         }
         NES_WARNING("QueryProcessingService: Terminated");
     } catch (std::exception& ex) {
-        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
+        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: " << ex.what());
         shutDown();
     }
     shutDown();

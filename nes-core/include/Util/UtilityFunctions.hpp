@@ -227,7 +227,7 @@ std::string replaceFirst(std::string origin, const std::string& search, const st
 
 /**
  *
- * @param queryPlan queries to which the properties are assigned
+ * @param queryPlan queryIdAndCatalogEntryMapping to which the properties are assigned
  * @param properties properties to assign
  * @return true if the assignment success, and false otherwise
  */

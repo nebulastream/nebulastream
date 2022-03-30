@@ -30,7 +30,7 @@ using HashSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<HashSignatu
  * only a single representative operator chain should exists in the Global Query Plan for all of them.
  * Effectively this rule will prune the global query plan for duplicate operators.
  *
- * Following are the conditions for the two queries to be equivalent:
+ * Following are the conditions for the two queryIdAndCatalogEntryMapping to be equivalent:
  *  - For each global query node for first query, there should exists an equal global query node in the other query (except for the node with the sink operator).
  *
  *

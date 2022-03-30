@@ -89,7 +89,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
 };
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
@@ -145,7 +145,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with multiple same source
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with multiple same source
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
@@ -210,7 +210,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithMultip
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different source
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
@@ -257,7 +257,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSo
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
     // Prepare
@@ -311,7 +311,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperat
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
     // Prepare
@@ -365,7 +365,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
     // Prepare
@@ -422,7 +422,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different filters
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
@@ -470,7 +470,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different filters
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
@@ -517,7 +517,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different map
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
@@ -565,7 +565,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different map
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
@@ -613,7 +613,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different windows
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different windows
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindows) {
 
@@ -667,7 +667,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different windows
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different windows
  */
 TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowsWithoutKeyBy) {
 

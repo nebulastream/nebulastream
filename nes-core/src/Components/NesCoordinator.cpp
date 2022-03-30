@@ -178,7 +178,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     }
     NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
-    //start the coordinator worker that is the sink for all queries
+    //start the coordinator worker that is the sink for all queryIdAndCatalogEntryMapping
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");
     if (workerConfig) {
         NES_DEBUG("Use provided external worker config");
@@ -204,7 +204,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES::Exceptions::installGlobalErrorListener(worker);
 
-    //Start rest that accepts queries form the outsides
+    //Start rest that accepts queryIdAndCatalogEntryMapping form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     restServer = std::make_shared<RestServer>(restIp,
                                               restPort,

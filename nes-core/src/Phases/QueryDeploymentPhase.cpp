@@ -30,7 +30,7 @@ QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutio
                                            WorkerRPCClientPtr workerRpcClient,
                                            QueryCatalogServicePtr catalogService)
     : workerRPCClient(std::move(workerRpcClient)), globalExecutionPlan(std::move(globalExecutionPlan)),
-      catalogService(std::move(catalogService)) {}
+      queryCatalogService(std::move(catalogService)) {}
 
 QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                      WorkerRPCClientPtr workerRpcClient,
@@ -52,17 +52,9 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
                                            + std::to_string(queryId));
     }
 
-    bool successDeploy = deployQuery(queryId, executionNodes);
-    if (successDeploy) {
-        NES_DEBUG("QueryDeploymentPhase: deployment for query " + std::to_string(queryId) + " successful");
-    } else {
-        NES_ERROR("QueryDeploymentPhase: Failed to deploy query " << queryId);
-        throw QueryDeploymentException(queryId, "QueryDeploymentPhase: Failed to deploy query " + std::to_string(queryId));
-    }
-
     //3.3.4. Reset all sub query plans
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        catalogService->resetSubQueryMetaData(queryId);
+        queryCatalogService->resetSubQueryMetaData(queryId);
     }
 
     //3.3.4. Add all sub query plans
@@ -72,14 +64,29 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
         for (auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-                catalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
+                queryCatalogService->addSubQueryMetaData(queryId, querySubPlanId, workerId);
             }
         }
     }
 
-    //                            //3.3.5. Mark all contained queries as running
+    //3.3.5. Mark all contained queryIdAndCatalogEntryMapping as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-        catalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Deployed, "");
+    }
+
+    bool successDeploy = deployQuery(queryId, executionNodes);
+    if (successDeploy) {
+        NES_DEBUG("QueryDeploymentPhase: deployment for query " + std::to_string(queryId) + " successful");
+    } else {
+        NES_ERROR("QueryDeploymentPhase: Failed to deploy query " << queryId);
+        throw QueryDeploymentException(queryId, "QueryDeploymentPhase: Failed to deploy query " + std::to_string(queryId));
+    }
+
+
+
+    //3.3.5. Mark all contained queryIdAndCatalogEntryMapping as running
+    for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+        queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
     }
 
     NES_DEBUG("QueryService: start query");

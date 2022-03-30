@@ -191,7 +191,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
 }
 
 /**
- * @brief This test is for validating behaviour for a global execution plan with single execution node with two plan for different queries
+ * @brief This test is for validating behaviour for a global execution plan with single execution node with two plan for different queryIdAndCatalogEntryMapping
  */
 TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWithTwoPlanForDifferentqueries) {
 
@@ -427,7 +427,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     ASSERT_EQ(expectedPlan, actualPlan);
 }
 /**
- * @brief This test is for validating behaviour for a global execution plan with nested execution node with one plan for different queries
+ * @brief This test is for validating behaviour for a global execution plan with nested execution node with one plan for different queryIdAndCatalogEntryMapping
  */
 TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEachWithOnePlanToString) {
 

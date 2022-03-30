@@ -72,7 +72,7 @@ class RequestQueue;
 using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
 /**
- * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queries requests.
+ * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queryIdAndCatalogEntryMapping requests.
  */
 class RequestProcessorService {
   public:

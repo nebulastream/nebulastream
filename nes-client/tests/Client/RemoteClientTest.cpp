@@ -98,7 +98,7 @@ class RemoteClientTest : public Testing::NESBaseTest {
     void checkForQueryStart(int64_t queryId) {
         while (true) {
             auto status = QueryStatus::getFromString(client->getQueryStatus(queryId));
-            if (status == QueryStatus::Registered || status == QueryStatus::Scheduling) {
+            if (status == QueryStatus::Registered || status == QueryStatus::Scheduling || status == QueryStatus::Deployed) {
                 NES_DEBUG("Query " << queryId << " not started yet");
                 sleep(1);
             } else {
@@ -271,7 +271,7 @@ TEST_F(RemoteClientTest, GetPhysicalSourceTest) {
 }
 
 /**
- * @brief Test getting queries works properly
+ * @brief Test getting queryIdAndCatalogEntryMapping works properly
  */
 TEST_F(RemoteClientTest, GetQueriesTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());
@@ -284,7 +284,7 @@ TEST_F(RemoteClientTest, GetQueriesTest) {
 }
 
 /**
- * @brief Test getting queries by status works properly
+ * @brief Test getting queryIdAndCatalogEntryMapping by status works properly
  */
 TEST_F(RemoteClientTest, GetQueriesWithStatusTest) {
     Query query = Query::from("default_logical").sink(NullOutputSinkDescriptor::create());

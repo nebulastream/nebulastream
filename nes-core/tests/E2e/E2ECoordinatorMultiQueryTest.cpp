@@ -135,7 +135,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 }
 
 /**
- * @brief This test starts two workers and a coordinator and submit too many queries such that we test if the error-prone process
+ * @brief This test starts two workers and a coordinator and submit too many queryIdAndCatalogEntryMapping such that we test if the error-prone process
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
     NES_INFO(" start coordinator");
@@ -234,7 +234,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 }
 
 /**
- * @brief This test starts two workers and a coordinator and submits two different queries
+ * @brief This test starts two workers and a coordinator and submits two different queryIdAndCatalogEntryMapping
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     NES_INFO(" start coordinator");

@@ -81,7 +81,7 @@ class QueryDeploymentPhase {
 
     WorkerRPCClientPtr workerRPCClient;
     GlobalExecutionPlanPtr globalExecutionPlan;
-    QueryCatalogServicePtr catalogService;
+    QueryCatalogServicePtr queryCatalogService;
 };
 }// namespace NES
 #endif// NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_

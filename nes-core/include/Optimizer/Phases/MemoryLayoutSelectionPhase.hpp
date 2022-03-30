@@ -41,7 +41,7 @@ using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase
  *      This policy enforces a column layout for all operators within an query.
  *
  * This phase can't guarantee that a selected layout is really executable, as currently not all data sources support the columnar layout.
- * This would result in failed queries at the worker side.
+ * This would result in failed queryIdAndCatalogEntryMapping at the worker side.
  * Therefore the column layout is currently only experimental.
  */
 class MemoryLayoutSelectionPhase {

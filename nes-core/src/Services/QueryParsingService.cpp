@@ -75,7 +75,7 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
 QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet) {
 
     if (queryCodeSnippet.find("Source(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
-        NES_ERROR("QueryCatalog: queries are not allowed to specify schemas anymore.");
+        NES_ERROR("QueryCatalog: queryIdAndCatalogEntryMapping are not allowed to specify schemas anymore.");
         throw InvalidQueryException("Queries are not allowed to define schemas anymore");
     }
 

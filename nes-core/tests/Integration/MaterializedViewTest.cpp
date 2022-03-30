@@ -152,7 +152,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     NES_INFO("MaterializedViewTupleBufferSourceTest: Test finished");
 }
 
-// @brief tests with two concurrent queries if writing and reading of MVs works properly
+// @brief tests with two concurrent queryIdAndCatalogEntryMapping if writing and reading of MVs works properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
