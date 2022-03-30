@@ -34,7 +34,7 @@ namespace NES::Join {
 
 
             void setLeftSource(const SourceLogicalOperatorNodePtr& leftSubPlan);
-            const SourceLogicalOperatorNodePtr& getLeftSource() const;
+            const OptimizerPlanOperator getLeftSource() const;
             /*
              * in case the left structure is more complex than just a source (e.g. joined sources)
              */

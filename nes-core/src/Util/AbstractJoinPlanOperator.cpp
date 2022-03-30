@@ -14,8 +14,8 @@ limitations under the License.
 
 #include <Util/AbstractJoinPlanOperator.hpp>
 
-NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperator leftChild,
-                                                        OptimizerPlanOperator rightChild,
+NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(const OptimizerPlanOperator &leftChild,
+                                                        const OptimizerPlanOperator &rightChild,
                                                         Join::LogicalJoinDefinitionPtr joinPredicate){
         this->leftChild = leftChild;
         this->rightChild = rightChild;

@@ -30,8 +30,8 @@ namespace NES {
             /**
      * @brief - constructor for building a OptimizerPlanOperator that is essentially just one logical stream
      */
-            AbstractJoinPlanOperator(OptimizerPlanOperator leftChild,
-                                     OptimizerPlanOperator rightChild,
+            AbstractJoinPlanOperator(const OptimizerPlanOperator &leftChild,
+                                     const OptimizerPlanOperator &rightChild,
                                      Join::LogicalJoinDefinitionPtr joinPredicate);
 
           private:
