@@ -1284,7 +1284,7 @@ TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
     uint64_t workerId = wrk1->getWorkerId();
     uint64_t operatorId = 1;
     std::string errormsg = "Query failed.";
-    bool successOfNotifyingQueryFailure = wrk1->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errormsg);
+    bool successOfNotifyingQueryFailure = wrk1->notifyQueryFailure(queryId, subQueryId, errormsg);
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
 

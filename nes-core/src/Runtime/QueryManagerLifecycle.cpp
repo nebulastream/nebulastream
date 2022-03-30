@@ -209,7 +209,7 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
 
 bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     bool ret = true;
-    NES_DEBUG("AbstractQueryManager::failQuery: query" << qep->getQueryId());
+    NES_DEBUG("AbstractQueryManager::failQuery: query=" << qep->getQueryId());
     switch (qep->getStatus()) {
         case Execution::ExecutableQueryPlanStatus::ErrorState:
         case Execution::ExecutableQueryPlanStatus::Finished:
@@ -226,7 +226,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
     }
     for (const auto& source : qep->getSources()) {
         NES_ASSERT2_FMT(source->fail(),
-                        "Cannot fail source " << source->getOperatorId() << " beloning to " << qep->getQuerySubPlanId());
+                        "Cannot fail source " << source->getOperatorId() << " belonging to query plan=" << qep->getQuerySubPlanId());
     }
 
     auto terminationFuture = qep->getTerminationFuture();
@@ -470,6 +470,9 @@ bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTe
         case Runtime::QueryTerminationType::Failure: {
             success = addFailureEndOfStream(source);
             break;
+        }
+        default: {
+            NES_ASSERT2_FMT(false, "Invalid termination type");
         }
     }
 

@@ -145,12 +145,15 @@ bool DataSource::start() {
 
 bool DataSource::fail() {
     bool isStopped = stop(Runtime::QueryTerminationType::Failure);// this will block until the thread is stopped
+    NES_DEBUG("Source " << operatorId << " stop executed=" << (isStopped ? "stopped" : "cannot stop"));
     {
         // it may happen that the source failed prior of sending its eos
         std::unique_lock lock(startStopMutex);// do not call stop if holding this mutex
+        auto self = shared_from_base<DataSource>();
         if (!this->endOfStreamSent) {
-            endOfStreamSent =
-                queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
+            queryManager->notifySourceCompletion(self, Runtime::QueryTerminationType::Failure);
+            endOfStreamSent = queryManager->addEndOfStream(self, Runtime::QueryTerminationType::Failure);
+            NES_DEBUG("Source " << operatorId << " injecting failure " << (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
         }
         return isStopped && endOfStreamSent;
     }
@@ -204,7 +207,6 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
             return true;
         }
     } catch (...) {
-        NES_ERROR("DataSource::stop error IN CATCH");
         auto expPtr = std::current_exception();
         wasGracefullyStopped = Runtime::QueryTerminationType::Failure;
         try {
@@ -212,8 +214,8 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
                 std::rethrow_exception(expPtr);
             }
         } catch (std::exception const& e) {// it would not work if you pass by value
-            NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
             queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
+            return true;
         }
     }
 

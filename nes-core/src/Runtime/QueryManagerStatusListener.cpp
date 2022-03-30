@@ -35,10 +35,7 @@ namespace NES::Runtime {
 void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
                                                    Execution::ExecutableQueryPlanStatus status) {
     NES_ASSERT(qep, "Invalid query plan object");
-    if (status == Execution::ExecutableQueryPlanStatus::Stopped) {
-        // if we got here it means the query gracefully stopped
-        // we need to go to each source and terminate their threads
-        // alternatively, we need to detach source threads
+    if (status == Execution::ExecutableQueryPlanStatus::Finished) {
         for (const auto& source : qep->getSources()) {
             if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
                 NES_ASSERT2_FMT(source->stop(Runtime::QueryTerminationType::Graceful),
@@ -54,26 +51,41 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
         queryStatusListener->notifyQueryStatusChange(qep->getQueryId(),
                                                      qep->getQuerySubPlanId(),
                                                      Execution::ExecutableQueryPlanStatus::Stopped);
+    } else if (status == Execution::ExecutableQueryPlanStatus::ErrorState) {
+        addReconfigurationMessage(
+            qep->getQueryId(),
+            qep->getQuerySubPlanId(),
+            ReconfigurationMessage(qep->getQueryId(), qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
+            false);
+
+        queryStatusListener->notifyQueryStatusChange(qep->getQueryId(),
+                                                     qep->getQuerySubPlanId(),
+                                                     Execution::ExecutableQueryPlanStatus::ErrorState);
     }
 }
-void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string) {
+void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason) {
     std::unique_lock lock(queryMutex);
     auto qepToFail = sourceToQEPMapping[failedSource->getOperatorId()];
     lock.unlock();
     // we cant fail a query from a source because failing a query eventually calls stop on the failed query
     // this means we are going to call join on the source thread
     // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
-    auto future = asyncTaskExecutor
-                      ->runAsync(
-                          [this](auto qepToFail) {
-                              return failQuery(qepToFail);
-                          },
-                          std::move(qepToFail))
-                      .thenAsync([](bool stopped) {
-                          // TODO make rpc call to coordinator to fail the qep globally
-                          NES_ASSERT(stopped, "Cannot stop query");
-                          return true;
-                      });
+    auto future =
+        asyncTaskExecutor
+            ->runAsync(
+                [this](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
+                    if (failQuery(qepToFail)) {
+                        return qepToFail;
+                    }
+                    return nullptr;
+                },
+                std::move(qepToFail))
+            .thenAsync([this, reason](Execution::ExecutableQueryPlanPtr failedQep) {
+                if (failedQep && failedQep->getStatus() == Execution::ExecutableQueryPlanStatus::ErrorState) {
+                    queryStatusListener->notifyQueryFailure(failedQep->getQueryId(), failedQep->getQuerySubPlanId(), reason);
+                }
+                return true;
+            });
 }
 
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline, const std::string& errorMessage) {

@@ -197,6 +197,7 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
     NES_DEBUG("NetworkSource: postReconfigurationCallback() called " << nesPartition.toString());
     NES::DataSource::postReconfigurationCallback(task);
     switch (task.getType()) {
+        case Runtime::FailEndOfStream: { NES_NOT_IMPLEMENTED(); }
         case Runtime::Destroy:
         case Runtime::HardEndOfStream:
         case Runtime::SoftEndOfStream: {

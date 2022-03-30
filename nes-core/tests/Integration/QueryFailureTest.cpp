@@ -45,7 +45,7 @@ class QueryFailureTest : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(QueryFailureTest, DISABLED_failQueryUponSubmission) {
+TEST_F(QueryFailureTest, failQueryFaultySource) {
     struct Test {
         uint32_t id;
         uint32_t value;

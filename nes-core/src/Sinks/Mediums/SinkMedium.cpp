@@ -79,23 +79,32 @@ void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::
 }
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
+    Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (message.getType()) {
-        case Runtime::SoftEndOfStream:
+        case Runtime::FailEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::Failure;
+            break;
+        }
+        case Runtime::SoftEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            break;
+        }
         case Runtime::HardEndOfStream: {
-            NES_DEBUG("Got EoS on Sink " << toString());
-            if (activeProducers.fetch_sub(1) == 1) {
-                shutdown();
-                nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
-                                                                    std::static_pointer_cast<SinkMedium>(shared_from_this()),
-                                                                    message.getType() == Runtime::SoftEndOfStream
-                                                                        ? Runtime::QueryTerminationType::Graceful
-                                                                        : Runtime::QueryTerminationType::HardStop);
-                NES_DEBUG("Sink " << toString() << " is terminated");
-            }
+            terminationType = Runtime::QueryTerminationType::HardStop;
             break;
         }
         default: {
             break;
+        }
+    }
+    if (terminationType != Runtime::QueryTerminationType::Invalid) {
+        NES_DEBUG("Got EoS on Sink " << toString());
+        if (activeProducers.fetch_sub(1) == 1) {
+            shutdown();
+            nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
+                                                                std::static_pointer_cast<SinkMedium>(shared_from_this()),
+                                                                terminationType);
+            NES_DEBUG("Sink " << toString() << " is " << terminationType);
         }
     }
 }

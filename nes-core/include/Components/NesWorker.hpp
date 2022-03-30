@@ -188,8 +188,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     bool notifyQueryFailure(QueryId queryId,
                             QuerySubPlanId subQueryId,
-                            uint64_t workerId,
-                            OperatorId operatorId,
                             std::string errorMsg) override;
 
     bool notifySourceTermination(QueryId queryId,

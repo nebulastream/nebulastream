@@ -186,6 +186,9 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                                                                                                   << " stage id: " << pipelineId);
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
+        case FailEndOfStream: {
+            NES_NOT_IMPLEMENTED();
+        }
         case HardEndOfStream:
         case SoftEndOfStream: {
             //we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
@@ -204,10 +207,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                                                            : Runtime::QueryTerminationType::HardStop);
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-                        auto newReconf = ReconfigurationMessage(queryId,
-                                                                querySubPlanId,
-                                                                task.getType(),
-                                                                *pipe);
+                        auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, task.getType(), *pipe);
                         queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
                         NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: "
                                   << querySubPlanId << " stage id: " << (*pipe)->getPipelineId()

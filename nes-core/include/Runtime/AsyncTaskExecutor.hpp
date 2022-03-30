@@ -155,20 +155,22 @@ class AsyncTaskExecutor {
          * @param asyncTaskPtr
          */
         explicit AsyncTaskWrapper(std::function<void(void)>&& func, std::function<void(void)>&& releaseCallback)
-            : func(std::move(func)), releaseCallback(std::move(releaseCallback)) {
+            : func(std::move(func)), gc(std::move(releaseCallback)) {
             NES_VERIFY(!!this->func, "Invalid callback");
-            NES_VERIFY(!!this->releaseCallback, "Invalid gc callback");
+            NES_VERIFY(!!this->gc, "Invalid gc callback");
         }
 
-        /// deallocates the internal AsyncTask for garbage collection
-        ~AsyncTaskWrapper() noexcept { releaseCallback(); }
+        ~AsyncTaskWrapper() noexcept = default;
 
         /// executes the inner AsyncTask
-        inline void operator()() { func(); }
+        inline void operator()() {
+            func();
+            gc();// deallocates the internal AsyncTask for garbage collection
+        }
 
       private:
         std::function<void(void)> func;
-        std::function<void(void)> releaseCallback;
+        std::function<void(void)> gc;
     };
 
   public:

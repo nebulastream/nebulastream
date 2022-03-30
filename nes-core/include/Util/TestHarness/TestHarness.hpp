@@ -20,8 +20,8 @@
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Services/QueryService.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Services/QueryService.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -410,7 +410,7 @@ class TestHarness {
                              uint64_t testTimeout = 60) {
 
         if (!topologySetupDone || !validationDone) {
-            throw log4cxx::helpers::Exception(
+            throw Exceptions::RuntimeException(
                 "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
         }
 
@@ -460,7 +460,11 @@ class TestHarness {
                    " Output struct:"
                        << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
 
-        if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath, testTimeout)) {
+        if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(queryId,
+                                                                   queryCatalogService,
+                                                                   numberOfContentToExpect,
+                                                                   filePath,
+                                                                   testTimeout)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false, "
                                     "number of buffers to expect="
                                     << std::to_string(numberOfContentToExpect));

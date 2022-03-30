@@ -294,7 +294,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
             workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue(),
             workerConfiguration->numberOfBuffersPerWorker.getValue());
-        Exceptions::installGlobalErrorListener(engine);
+//        Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());

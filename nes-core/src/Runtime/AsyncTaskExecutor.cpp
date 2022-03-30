@@ -56,9 +56,10 @@ void AsyncTaskExecutor::runningRoutine() {
             cv.wait(lock);
         }
         if (running) {
-            auto& taskWrapper = asyncTaskQueue.front();
+            AsyncTaskWrapper taskWrapper = asyncTaskQueue.front();
+            asyncTaskQueue.pop_front();
+            lock.unlock();
             taskWrapper();
-            asyncTaskQueue.pop_front();// task is invalid after this call
         } else {
             break;
         }
