@@ -121,6 +121,10 @@ message(STATUS "NES_DEPENDENCIES_BINARY_ROOT: ${NES_DEPENDENCIES_BINARY_ROOT}.")
 # NES supports self hosting its compilation with the local clang binary.
 if (NES_SELF_HOSTING)
     message(STATUS "Self-host compilation of NES from ${NES_DEPENDENCIES_BINARY_ROOT}")
+    # CMAKE_<LANG>_COMPILER are only set the first time a build tree is configured.
+    # Setting it afterwards has no effect. It will be reset to a previously set value
+    # when executing the PROJECT directive.
+    # See: https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html
     set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang")
     set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang++")
 else ()
