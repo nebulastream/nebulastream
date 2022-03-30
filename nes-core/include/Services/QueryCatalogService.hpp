@@ -143,6 +143,12 @@ class QueryCatalogService {
     void mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryId queryId);
 
     /**
+     * Remove mapping of the shared query plan
+     * @param sharedQueryId : the shared query plan id
+     */
+    void removeSharedQueryPlanMapping(SharedQueryId sharedQueryId);
+
+    /**
      * Clear the query catalog
      */
     void clearQueries();

@@ -42,25 +42,31 @@ QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr glob
 bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
     NES_DEBUG("QueryDeploymentPhase: deploy the query");
 
-    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
     if (executionNodes.empty()) {
-        NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query " << queryId);
-        throw QueryDeploymentException(queryId,
-                                       "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query "
-                                           + std::to_string(queryId));
+        NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query " << sharedQueryId);
+        throw QueryDeploymentException(sharedQueryId,
+                                       "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the shared query "
+                                           + std::to_string(sharedQueryId));
     }
 
-    //3.3.4. Reset all sub query plans
+    //Remove the old mapping of the shared query plan
+    if(!sharedQueryPlan->isNew()){
+        queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
+    }
+
+    //Reset all sub query plan metadata in the catalog
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         queryCatalogService->resetSubQueryMetaData(queryId);
+        queryCatalogService->mapSharedQueryPlanId(sharedQueryId, queryId);
     }
 
-    //3.3.4. Add all sub query plans
+    //Add sub query plan metadata in the catalog
     for (auto& executionNode : executionNodes) {
         auto workerId = executionNode->getId();
-        auto subQueryPlans = executionNode->getQuerySubPlans(queryId);
+        auto subQueryPlans = executionNode->getQuerySubPlans(sharedQueryId);
         for (auto& subQueryPlan : subQueryPlans) {
             QueryId querySubPlanId = subQueryPlan->getQuerySubPlanId();
             for (auto& queryId : sharedQueryPlan->getQueryIds()) {
@@ -69,33 +75,33 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
         }
     }
 
-    //3.3.5. Mark all contained queryIdAndCatalogEntryMapping as running
+    //Mark query as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Deployed, "");
     }
 
-    bool successDeploy = deployQuery(queryId, executionNodes);
+    bool successDeploy = deployQuery(sharedQueryId, executionNodes);
     if (successDeploy) {
-        NES_DEBUG("QueryDeploymentPhase: deployment for query " + std::to_string(queryId) + " successful");
+        NES_DEBUG("QueryDeploymentPhase: deployment for shared query " + std::to_string(sharedQueryId) + " successful");
     } else {
-        NES_ERROR("QueryDeploymentPhase: Failed to deploy query " << queryId);
-        throw QueryDeploymentException(queryId, "QueryDeploymentPhase: Failed to deploy query " + std::to_string(queryId));
+        NES_ERROR("QueryDeploymentPhase: Failed to deploy shared query " << sharedQueryId);
+        throw QueryDeploymentException(sharedQueryId,
+                                       "QueryDeploymentPhase: Failed to deploy shared query " + std::to_string(sharedQueryId));
     }
 
-
-
-    //3.3.5. Mark all contained queryIdAndCatalogEntryMapping as running
+    //Mark query as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
     }
 
     NES_DEBUG("QueryService: start query");
-    bool successStart = startQuery(queryId, executionNodes);
+    bool successStart = startQuery(sharedQueryId, executionNodes);
     if (successStart) {
-        NES_DEBUG("QueryDeploymentPhase: Successfully started deployed query " << queryId);
+        NES_DEBUG("QueryDeploymentPhase: Successfully started deployed shared query " << sharedQueryId);
     } else {
-        NES_ERROR("QueryDeploymentPhase: Failed to start the deployed query " << queryId);
-        throw QueryDeploymentException(queryId, "QueryDeploymentPhase: Failed to deploy query " + std::to_string(queryId));
+        NES_ERROR("QueryDeploymentPhase: Failed to start the deployed shared query " << sharedQueryId);
+        throw QueryDeploymentException(sharedQueryId,
+                                       "QueryDeploymentPhase: Failed to deploy query " + std::to_string(sharedQueryId));
     }
     return true;
 }
