@@ -21,10 +21,10 @@
 namespace NES::Runtime {
 
 enum class QueryTerminationType : uint8_t {
-    /// means that
     Graceful = 0,
     HardStop,
-    Failure
+    Failure,
+    Invalid
 };
 
 template<typename O = std::ostream>

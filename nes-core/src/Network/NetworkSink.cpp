@@ -86,8 +86,7 @@ std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartitio
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << querySubPlanId);
     inherited0::reconfigure(task, workerContext);
-    bool isTermination = false;
-    Runtime::QueryTerminationType terminationType;
+    Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
         case Runtime::Initialize: {
             auto channel =
@@ -102,24 +101,21 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
-            isTermination = true;
             break;
         }
         case Runtime::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
-            isTermination = true;
             break;
         }
         case Runtime::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
-            isTermination = true;
             break;
         }
         default: {
             break;
         }
     }
-    if (isTermination) {
+    if (terminationType != Runtime::QueryTerminationType::Invalid) {
         if (workerContext.decreaseObjectRefCnt(this) == 1) {
             networkManager->unregisterSubpartitionProducer(nesPartition);
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(nesPartition.getOperatorId(), terminationType),

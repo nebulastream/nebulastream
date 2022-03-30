@@ -88,7 +88,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     uint64_t workerId = wrk->getWorkerId();
     uint64_t operatorId = 1;
     std::string errormsg = "Query failed.";
-    bool successOfNotifyingQueryFailure = wrk->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errormsg);
+    bool successOfNotifyingQueryFailure = wrk->notifyQueryFailure(queryId, subQueryId, errormsg);
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
 

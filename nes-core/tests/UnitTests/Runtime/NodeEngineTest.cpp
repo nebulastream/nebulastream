@@ -132,7 +132,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
             bool notifySourceTermination(QueryId, QuerySubPlanId, OperatorId, Runtime::QueryTerminationType) override {
                 return true;
             }
-            bool notifyQueryFailure(QueryId, QuerySubPlanId, uint64_t, OperatorId, std::string) override { return true; }
+            bool notifyQueryFailure(QueryId, QuerySubPlanId, std::string) override { return true; }
             bool notifyQueryStatusChange(QueryId, QuerySubPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
                 return true;
             }

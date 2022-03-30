@@ -168,8 +168,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         workerConfigurations->numberOfThreadsPerQueue.setValue(numberOfThreadsPerQueue);
         workerConfigurations->queryManagerMode.setValue(queryManagerMode);
 
-        nodeEngine =
-            Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(this->inherited0::shared_from_this()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                         .setQueryStatusListener(this->inherited0::shared_from_this())
+                         .build();
 
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create(enableMonitoring);
@@ -396,8 +397,14 @@ bool NesWorker::notifyQueryStatusChange(QueryId queryId,
                                         QuerySubPlanId subQueryId,
                                         Runtime::Execution::ExecutableQueryPlanStatus newStatus) {
     NES_ASSERT(waitForConnect(), "cannot connect");
-    NES_ASSERT(newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Stopped, "Only stopped is supported");
-    return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
+    if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        NES_DEBUG("NesWorker " << getWorkerId() << " about to notify soft stop completion for query " << queryId << " subPlan "
+                               << subQueryId);
+        return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
+    } else if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::ErrorState) {
+        return coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, 0, 0, ""s);
+    }
+    return false;
 }
 
 bool NesWorker::canTriggerEndOfStream(QueryId queryId,
@@ -417,15 +424,11 @@ bool NesWorker::notifySourceTermination(QueryId queryId,
     return coordinatorRpcClient->notifySourceStopTriggered(queryId, subPlanId, sourceId, queryTermination);
 }
 
-bool NesWorker::notifyQueryFailure(uint64_t queryId,
-                                   uint64_t subQueryId,
-                                   uint64_t workerId,
-                                   uint64_t operatorId,
-                                   std::string errorMsg) {
+bool NesWorker::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errorMsg);
+    bool success = coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, getWorkerId(), 0, errorMsg);
     NES_DEBUG("NesWorker::notifyQueryFailure success=" << success);
     return success;
 }

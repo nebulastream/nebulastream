@@ -296,6 +296,7 @@ class JoinHandler : public AbstractJoinHandler {
         };
 
         switch (message.getType()) {
+            case Runtime::FailEndOfStream: { NES_NOT_IMPLEMENTED(); }
             case Runtime::SoftEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
                     NES_DEBUG("SoftEndOfStream received on join handler " << toString()

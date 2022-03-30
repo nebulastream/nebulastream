@@ -330,6 +330,7 @@ std::string RemoteClient::getQueries(QueryStatus::Value status) {
 
 std::string RemoteClient::getPhysicalSources(std::string logicalSourceName) {
     auto restMethod = web::http::methods::GET;
+    NES_ASSERT2_FMT(!logicalSourceName.empty(), "Empty logicalSourceName");
     auto path = "sourceCatalog/allPhysicalSource?logicalSourceName=" + logicalSourceName;
     auto message = "";
 

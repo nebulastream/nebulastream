@@ -32,8 +32,6 @@ class AbstractQueryStatusListener {
 
     virtual bool notifyQueryFailure(QueryId queryId,
                                     QuerySubPlanId subQueryId,
-                                    uint64_t workerId,
-                                    OperatorId operatorId,
                                     std::string errorMsg) = 0;
 
     virtual bool notifyQueryStatusChange(QueryId queryId,
