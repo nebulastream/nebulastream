@@ -50,16 +50,14 @@ void SourceCatalogController::handleGet(const std::vector<utility::string_t>& pa
         //Check if the path contains the query id
         auto param = parameters.find("logicalSourceName");
         if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            NES_ERROR("QueryController: Unable to find logicalSourceName for the GET allPhysicalSource request");
             web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
+            errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
             badRequestImpl(request, errorResponse);
         }
 
         try {
-            //Prepare Input query from user string
             std::string logicalSourceName = param->second;
-
             const std::vector<SourceCatalogEntryPtr>& allPhysicalSource = sourceCatalog->getPhysicalSources(logicalSourceName);
 
             //Prepare the response

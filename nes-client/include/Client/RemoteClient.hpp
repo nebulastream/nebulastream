@@ -126,9 +126,10 @@ class RemoteClient {
 
     /**
      * @brief get physical sources
+     * @param logicalSourceName: name of the logical source for which physical source is required
      * @return physical sources
      */
-    std::string getPhysicalSources();
+    std::string getPhysicalSources(std::string logicalSourceName);
 
   private:
     const std::string coordinatorHost;

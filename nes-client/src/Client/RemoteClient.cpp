@@ -328,9 +328,9 @@ std::string RemoteClient::getQueries(QueryStatus::Value status) {
     return jsonReturn.serialize();
 }
 
-std::string RemoteClient::getPhysicalSources() {
+std::string RemoteClient::getPhysicalSources(std::string logicalSourceName) {
     auto restMethod = web::http::methods::GET;
-    auto path = "sourceCatalog/allPhysicalSource";
+    auto path = "sourceCatalog/allPhysicalSource?logicalSourceName=" + logicalSourceName;
     auto message = "";
 
     web::json::value jsonReturn;

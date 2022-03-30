@@ -263,7 +263,7 @@ TEST_F(RemoteClientTest, GetLogicalSourceTest) {
  * @note we assume that default_logical is predefined
  */
 TEST_F(RemoteClientTest, GetPhysicalSourceTest) {
-    std::string physicaSources = client->getPhysicalSources();
+    std::string physicaSources = client->getPhysicalSources("default_logical");
     NES_DEBUG("GetPhysicalSourceTest " + physicaSources);
     // Check only for default source
     std::string expect = "{\"default_logical\":\"id:INTEGER value:INTEGER";

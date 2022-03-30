@@ -302,4 +302,9 @@ void QueryCatalogService::mapSharedQueryPlanId(SharedQueryId sharedQueryId, Quer
     queryCatalog->mapSharedQueryPlanId(sharedQueryId, catalogEntry);
 }
 
+void QueryCatalogService::removeSharedQueryPlanMapping(SharedQueryId sharedQueryId) {
+    std::unique_lock lock(serviceMutex);
+    queryCatalog->removeSharedQueryPlanIdMappings(sharedQueryId);
+}
+
 }// namespace NES
