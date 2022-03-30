@@ -17,6 +17,7 @@
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <Util/QueryStatus.hpp>
 #include <condition_variable>
@@ -30,10 +31,8 @@
 namespace NES {
 
 /**
- * @brief catalog class to handle the queries in the system
- * @limitations:
- *  - TODO: does not differ between deployed and started
- *
+ * @brief catalog class to handle the queryIdAndCatalogEntryMapping in the system
+ * @note: This class is not thread safe. Please use QueryCatalogService to access this object.
  */
 class QueryCatalog {
   public:
@@ -50,29 +49,9 @@ class QueryCatalog {
     createNewEntry(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
 
     /**
-     * @brief Register invalid query received for processing
-     * @param queryString : the query string
-     * @param queryId : the query id
-     * @param queryPlan : the query plan
-     * @param placementStrategyName : the placement strategy name
-     * @return pointer to query catalog entry
-     */
-    QueryCatalogEntryPtr recordInvalidQuery(std::string const& queryString,
-                                            QueryId queryId,
-                                            QueryPlanPtr const& queryPlan,
-                                            std::string const& placementStrategyName);
-
-    /**
-     * @brief method to test if a query is started
-     * @param id of the query to stop
-     * @note this will set the running bool to false in the QueryCatalogEntry
-     */
-    bool isQueryRunning(QueryId queryId);
-
-    /**
-     * @brief method to get the registered queries
-     * @note this contain all queries running/not running
-     * @return this will return a COPY of the queries in the catalog
+     * @brief method to get the registered queryIdAndCatalogEntryMapping
+     * @note this contain all queryIdAndCatalogEntryMapping running/not running
+     * @return this will return a COPY of the queryIdAndCatalogEntryMapping in the catalog
      */
     std::map<uint64_t, QueryCatalogEntryPtr> getAllQueryCatalogEntries();
 
@@ -91,9 +70,9 @@ class QueryCatalog {
     bool queryExists(QueryId queryId);
 
     /**
-     * @brief method to get the queries in a specific state
+     * @brief method to get the queryIdAndCatalogEntryMapping in a specific state
      * @param requestedStatus : desired query status
-     * @return this will return a COPY of the queries in the catalog that are running
+     * @return this will return a COPY of the queryIdAndCatalogEntryMapping in the catalog that are running
      */
     std::map<uint64_t, QueryCatalogEntryPtr> getQueryCatalogEntries(QueryStatus::Value requestedStatus);
 
@@ -109,7 +88,7 @@ class QueryCatalog {
     std::string printQueries();
 
     /**
-    * @brief Get the queries in the user defined status
+    * @brief Get the queryIdAndCatalogEntryMapping in the user defined status
     * @param status : query status
     * @return returns map of query Id and query string
     * @throws exception in case of invalid status
@@ -117,16 +96,35 @@ class QueryCatalog {
     std::map<uint64_t, std::string> getQueriesWithStatus(QueryStatus::Value status);
 
     /**
-     * @brief Get all queries registered in the system
+     * @brief Get all queryIdAndCatalogEntryMapping registered in the system
      * @return map of query ids and query string with query status
      */
     std::map<uint64_t, std::string> getAllQueries();
 
+    /**
+     * map shared query plan id to the query catalog entry
+     * @param sharedQueryId : the shared query id
+     * @param queryCatalogEntry : the query catalog entry
+     */
+    void mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryCatalogEntryPtr queryCatalogEntry);
+
+    /**
+     * @brief Get all query catalog entries mapped to the shared query plan
+     * @param sharedQueryId : the shared query plan id
+     * @return vector of query catalog entries
+     */
+    std::vector<QueryCatalogEntryPtr> getQueryCatalogEntriesForSharedQueryId(SharedQueryId sharedQueryId);
+
+    /**
+     * map shared query plan id to the input query id
+     * @param sharedQueryId : the shared query id
+     * @param queryId : the query id
+     */
+    void removeSharedQueryPlanIdMappings(SharedQueryId sharedQueryId);
+
   private:
-    // TODO this is a temp fix, please look at issue
-    // TODO 890 to have a proper fix
-    std::recursive_mutex catalogMutex;
-    std::map<uint64_t, QueryCatalogEntryPtr> queries;
+    std::map<uint64_t, QueryCatalogEntryPtr> queryIdAndCatalogEntryMapping;
+    std::map<SharedQueryId, std::vector<QueryCatalogEntryPtr>> sharedQueryIdAndCatalogEntryMapping;
 };
 
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;

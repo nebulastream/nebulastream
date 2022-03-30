@@ -39,7 +39,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
             return false;
         }
 
-        //Check the number of columns extracted by both queries
+        //Check the number of columns extracted by both queryIdAndCatalogEntryMapping
         auto otherColumns = signature2->getColumns();
         auto columns = signature1->getColumns();
         if (columns.size() != otherColumns.size()) {
@@ -47,7 +47,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
             return false;
         }
 
-        //Check the number of window expressions extracted from both queries
+        //Check the number of window expressions extracted from both queryIdAndCatalogEntryMapping
         auto otherWindowExpressions = signature2->getWindowsExpressions();
         auto windowsExpressions = signature1->getWindowsExpressions();
         if (windowsExpressions.size() != otherWindowExpressions.size()) {
@@ -140,7 +140,7 @@ bool SignatureEqualityUtil::checkEquality(const QuerySignaturePtr& signature1, c
         try {
             std::rethrow_exception(eptr);
         } catch (const std::exception& e) {
-            //            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queries " << e.what());
+            //            NES_ERROR("SignatureEqualityUtil: Exception occurred while performing equality check among queryIdAndCatalogEntryMapping " << e.what());
         }
         return false;
     }

@@ -37,9 +37,9 @@ class OptimizerConfiguration : public BaseConfiguration {
     OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
 
     /**
-     * @brief The number of queries to be processed together.
+     * @brief The number of queryIdAndCatalogEntryMapping to be processed together.
      */
-    IntOption queryBatchSize = {QUERY_BATCH_SIZE_CONFIG, 1, "The number of queries to be processed together"};
+    IntOption queryBatchSize = {QUERY_BATCH_SIZE_CONFIG, 1, "The number of queryIdAndCatalogEntryMapping to be processed together"};
 
     /**
      * @brief The rule to be used for performing query merging.
@@ -103,14 +103,14 @@ class OptimizerConfiguration : public BaseConfiguration {
                                                     "Threshold for the insertion of pre-aggregation operators."};
 
     /**
-     * @brief Perform advance semantic validation on the incoming queries.
+     * @brief Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping.
      * @warning This option is set to false by default as currently not all operators are supported by Z3 based signature generator.
      * Because of this, in some cases, enabling this check may result in a crash or incorrect behavior.
      */
     BoolOption performAdvanceSemanticValidation = {
         PERFORM_ADVANCE_SEMANTIC_VALIDATION,
         false,
-        "Perform advance semantic validation on the incoming queries. (Default: false)"};
+        "Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping. (Default: false)"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

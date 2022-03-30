@@ -260,8 +260,8 @@ std::string keyAssignmentRight();
 }//namespace CEPOperatorBuilder
 
 /**
- * User interface to create stream processing queries.
- * The current api exposes method to create queries using all currently supported operators.
+ * User interface to create stream processing queryIdAndCatalogEntryMapping.
+ * The current api exposes method to create queryIdAndCatalogEntryMapping using all currently supported operators.
  */
 class Query {
   public:

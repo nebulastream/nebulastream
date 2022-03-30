@@ -123,7 +123,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     /**
      * @brief method to stop coordinator
-     * @param force the shutdown even when queries are running
+     * @param force the shutdown even when queryIdAndCatalogEntryMapping are running
      * @return bool indicating success
      */
     bool stopCoordinator(bool force);

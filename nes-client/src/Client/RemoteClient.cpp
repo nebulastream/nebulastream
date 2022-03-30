@@ -303,7 +303,7 @@ std::string RemoteClient::getQueries(QueryStatus::Value status) {
     std::string queryStatus = QueryStatus::toString(status);
 
     auto restMethod = web::http::methods::POST;
-    auto path = "queries?status=" + queryStatus;
+    auto path = "queryIdAndCatalogEntryMapping?status=" + queryStatus;
     auto message = "";
 
     web::json::value jsonReturn;

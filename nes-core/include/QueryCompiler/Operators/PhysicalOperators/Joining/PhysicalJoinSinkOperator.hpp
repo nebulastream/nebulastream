@@ -22,7 +22,7 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 /**
  * @brief Physical operator for the join sink.
- * This operator queries the operator state and computes final join results.
+ * This operator queryIdAndCatalogEntryMapping the operator state and computes final join results.
  */
 class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
   public:

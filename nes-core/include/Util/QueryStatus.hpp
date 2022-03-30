@@ -37,16 +37,17 @@ class QueryStatus {
      */
     enum Value : uint8_t {
         Registered = 0,
-        Scheduling = 1,
-        Running = 2,
-        MarkedForHardStop = 3,
-        MarkedForSoftStop = 4,
-        SoftStopTriggered = 5,
-        SoftStopCompleted = 6,
-        Stopped = 7,
-        Failed = 8,
-        Restarting = 9,
-        Migrating = 10
+        Scheduling,
+        Deployed,
+        Running,
+        MarkedForHardStop,
+        MarkedForSoftStop,
+        SoftStopTriggered,
+        SoftStopCompleted,
+        Stopped,
+        Failed,
+        Restarting,
+        Migrating
     };
 
     /**

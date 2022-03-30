@@ -389,7 +389,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     /// worker threads running compute tasks
     ThreadPoolPtr threadPool{nullptr};
 
-    /// worker thread for async maintenance task, e.g., fail queries
+    /// worker thread for async maintenance task, e.g., fail queryIdAndCatalogEntryMapping
     AsyncTaskExecutorPtr asyncTaskExecutor;
 
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;

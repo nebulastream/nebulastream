@@ -14,6 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -23,75 +24,51 @@
 namespace NES {
 
 std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(QueryStatus::Value status) {
-    std::unique_lock lock(catalogMutex);
-    NES_INFO("QueryCatalog : fetching all queries with status " << status);
+    NES_INFO("QueryCatalog : fetching all queryIdAndCatalogEntryMapping with status " << status);
     std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueryCatalogEntries(status);
     std::map<uint64_t, std::string> result;
     for (auto const& [key, value] : queries) {
         result[key] = value->getQueryString();
     }
-    NES_INFO("QueryCatalog : found " << result.size() << " all queries with status " << status);
+    NES_INFO("QueryCatalog : found " << result.size() << " all queryIdAndCatalogEntryMapping with status " << status);
     return result;
 }
 
 std::map<uint64_t, std::string> QueryCatalog::getAllQueries() {
-    std::unique_lock lock(catalogMutex);
-    NES_INFO("QueryCatalog : get all queries");
+    NES_INFO("QueryCatalog : get all queryIdAndCatalogEntryMapping");
     std::map<uint64_t, QueryCatalogEntryPtr> registeredQueries = getAllQueryCatalogEntries();
     std::map<uint64_t, std::string> result;
     for (auto [key, value] : registeredQueries) {
         result[key] = value->getQueryString();
     }
-    NES_INFO("QueryCatalog : found " << result.size() << " queries in catalog.");
+    NES_INFO("QueryCatalog : found " << result.size() << " queryIdAndCatalogEntryMapping in catalog.");
     return result;
 }
 
 QueryCatalogEntryPtr QueryCatalog::createNewEntry(const std::string& queryString,
                                                   const QueryPlanPtr& queryPlan,
                                                   const std::string& placementStrategyName) {
-    std::unique_lock lock(catalogMutex);
     QueryId queryId = queryPlan->getQueryId();
     NES_INFO("QueryCatalog: Creating query catalog entry for query with id " << queryId);
     QueryCatalogEntryPtr queryCatalogEntry =
         std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan, QueryStatus::Registered);
-    queries[queryId] = queryCatalogEntry;
+    queryIdAndCatalogEntryMapping[queryId] = queryCatalogEntry;
     return queryCatalogEntry;
-}
-
-QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& queryString,
-                                                      const QueryId queryId,
-                                                      const QueryPlanPtr& queryPlan,
-                                                      const std::string& placementStrategyName) {
-    std::unique_lock lock(catalogMutex);
-    NES_INFO("QueryCatalog: Creating query catalog entry for invalid query with id " << queryId);
-    QueryCatalogEntryPtr queryCatalogEntry =
-        std::make_shared<QueryCatalogEntry>(queryId, queryString, placementStrategyName, queryPlan, QueryStatus::Failed);
-    queries[queryId] = queryCatalogEntry;
-    return queryCatalogEntry;
-}
-
-bool QueryCatalog::isQueryRunning(QueryId queryId) {
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("QueryCatalog: test if query started with id " << queryId << " running=" << queries[queryId]->getQueryStatus());
-    return queries[queryId]->getQueryStatus() == QueryStatus::Running;
 }
 
 std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getAllQueryCatalogEntries() {
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("QueryCatalog: return registered queries=" << printQueries());
-    return queries;
+    NES_DEBUG("QueryCatalog: return registered queryIdAndCatalogEntryMapping=" << printQueries());
+    return queryIdAndCatalogEntryMapping;
 }
 
 QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(QueryId queryId) {
-    std::unique_lock lock(catalogMutex);
     NES_TRACE("QueryCatalog: getQueryCatalogEntry with id " << queryId);
-    return queries[queryId];
+    return queryIdAndCatalogEntryMapping[queryId];
 }
 
 bool QueryCatalog::queryExists(QueryId queryId) {
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("QueryCatalog: queryExists with id=" << queryId << " registered queries=" << printQueries());
-    if (queries.count(queryId) > 0) {
+    NES_DEBUG("QueryCatalog: queryExists with id=" << queryId << " registered queryIdAndCatalogEntryMapping=" << printQueries());
+    if (queryIdAndCatalogEntryMapping.count(queryId) > 0) {
         NES_DEBUG("QueryCatalog: query with id " << queryId << " exists");
         return true;
     }
@@ -100,10 +77,9 @@ bool QueryCatalog::queryExists(QueryId queryId) {
 }
 
 std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(QueryStatus::Value requestedStatus) {
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("QueryCatalog: getQueriesWithStatus() registered queries=" << printQueries());
+    NES_DEBUG("QueryCatalog: getQueriesWithStatus() registered queryIdAndCatalogEntryMapping=" << printQueries());
     std::map<uint64_t, QueryCatalogEntryPtr> matchingQueries;
-    for (auto const& q : queries) {
+    for (auto const& q : queryIdAndCatalogEntryMapping) {
         if (q.second->getQueryStatus() == requestedStatus) {
             matchingQueries.insert(q);
         }
@@ -111,19 +87,46 @@ std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(Qu
     return matchingQueries;
 }
 
-void QueryCatalog::clearQueries() {
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("QueryCatalog: clear query catalog");
-    queries.clear();
-}
-
 std::string QueryCatalog::printQueries() {
-    std::unique_lock lock(catalogMutex);
     std::stringstream ss;
-    for (const auto& q : queries) {
+    for (const auto& q : queryIdAndCatalogEntryMapping) {
         ss << "queryID=" << q.first << " running=" << q.second->getQueryStatus() << std::endl;
     }
     return ss.str();
+}
+
+void QueryCatalog::mapSharedQueryPlanId(SharedQueryId sharedQueryId, QueryCatalogEntryPtr queryCatalogEntry) {
+    // Find the shared query plan for mapping
+    if (sharedQueryIdAndCatalogEntryMapping.find(sharedQueryId) == sharedQueryIdAndCatalogEntryMapping.end()) {
+        sharedQueryIdAndCatalogEntryMapping[sharedQueryId] = {queryCatalogEntry};
+        return;
+    }
+
+    // Add the shared query id
+    auto queryCatalogEntries = sharedQueryIdAndCatalogEntryMapping[sharedQueryId];
+    queryCatalogEntries.emplace_back(queryCatalogEntry);
+    sharedQueryIdAndCatalogEntryMapping[sharedQueryId] = queryCatalogEntries;
+    return;
+}
+
+std::vector<QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntriesForSharedQueryId(SharedQueryId sharedQueryId) {
+    if (sharedQueryIdAndCatalogEntryMapping.find(sharedQueryId) == sharedQueryIdAndCatalogEntryMapping.end()) {
+        throw QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id " + std::to_string(sharedQueryId));
+    }
+    return sharedQueryIdAndCatalogEntryMapping[sharedQueryId];
+}
+
+void QueryCatalog::removeSharedQueryPlanIdMappings(SharedQueryId sharedQueryId) {
+    if (sharedQueryIdAndCatalogEntryMapping.find(sharedQueryId) == sharedQueryIdAndCatalogEntryMapping.end()) {
+        throw QueryNotFoundException("QueryCatalog: Unable to find shared query plan with id " + std::to_string(sharedQueryId));
+    }
+    sharedQueryIdAndCatalogEntryMapping.erase(sharedQueryId);
+}
+
+void QueryCatalog::clearQueries() {
+    NES_DEBUG("QueryCatalog: clear query catalog");
+    queryIdAndCatalogEntryMapping.clear();
+
 }
 
 }// namespace NES

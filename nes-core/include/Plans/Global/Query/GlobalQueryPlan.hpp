@@ -48,7 +48,7 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 /**
  * @brief This class is responsible for storing all currently running and to be deployed QueryPlans in the NES system.
  * The QueryPlans included in the GlobalQueryPlan can be fused together and therefore each operator in GQP contains
- * information about the set of queries it belongs to. The QueryPlans are bound together by a dummy logical root operator.
+ * information about the set of queryIdAndCatalogEntryMapping it belongs to. The QueryPlans are bound together by a dummy logical root operator.
  */
 class GlobalQueryPlan {
   public:
@@ -99,6 +99,13 @@ class GlobalQueryPlan {
     SharedQueryId getSharedQueryId(QueryId queryId);
 
     /**
+     * @brief Get all query ids associated with the shared query plan id
+     * @param sharedQueryPlanId : the id of the shared query plan
+     * @return vector of query ids associated to the input shared query plan id
+     */
+    std::vector<QueryId> getQueryIds(SharedQueryId sharedQueryPlanId);
+
+    /**
      * @brief Get the shared query metadata information for given shared query id
      * @param sharedQueryId : the shared query id
      * @return SharedQueryPlan or nullptr
@@ -118,10 +125,11 @@ class GlobalQueryPlan {
      */
     const std::vector<QueryPlanPtr>& getQueryPlansToAdd() const;
 
+    /**
+     * Clear all query plans that need to be added to the global query plan
+     * @return true if successfully cleared else false
+     */
     bool clearQueryPlansToAdd();
-
-    std::vector<SharedQueryPlanPtr> getAllNewSharedQueryPlans();
-    std::vector<SharedQueryPlanPtr> getAllOldSharedQueryPlans();
 
     /**
      * Fetch the Shared query plan consuming the sources with the input source names
@@ -130,13 +138,13 @@ class GlobalQueryPlan {
      */
     std::vector<SharedQueryPlanPtr> getSharedQueryPlansConsumingSources(std::string sourceNames);
 
-    std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesToSharedQueryPlanMap;
-
   private:
     GlobalQueryPlan();
+
+    std::map<std::string, std::vector<SharedQueryPlanPtr>> sourceNamesToSharedQueryPlanMap;
     std::vector<QueryPlanPtr> queryPlansToAdd;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
+#endif// NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_

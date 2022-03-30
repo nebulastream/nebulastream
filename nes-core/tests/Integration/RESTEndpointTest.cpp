@@ -327,7 +327,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
         })
         .then([&response](const pplx::task<web::json::value>& task) {
             try {
-                NES_INFO("get all registered queries: set return");
+                NES_INFO("get all registered queryIdAndCatalogEntryMapping: set return");
                 response = task.get();
             } catch (const web::http::http_exception& e) {
                 NES_ERROR("Error while setting return. " << e.what());

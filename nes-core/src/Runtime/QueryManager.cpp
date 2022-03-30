@@ -192,7 +192,7 @@ void AbstractQueryManager::destroy() {
             successful &= stopQuery(qep, Runtime::QueryTerminationType::HardStop);
         }
     }
-    NES_ASSERT2_FMT(successful, "Cannot stop running queries upon query manager destruction");
+    NES_ASSERT2_FMT(successful, "Cannot stop running queryIdAndCatalogEntryMapping upon query manager destruction");
     // 2. attempt transition from Stopped -> Destroyed
     expected = Stopped;
     if (queryManagerStatus.compare_exchange_strong(expected, Destroyed)) {

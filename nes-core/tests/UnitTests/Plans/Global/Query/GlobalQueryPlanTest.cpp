@@ -250,7 +250,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 }
 
 /**
- * @brief This test is for updating Meta Data information after applying Syntax Based Equal Query Merger merging on 3 queries where 2 are identical
+ * @brief This test is for updating Meta Data information after applying Syntax Based Equal Query Merger merging on 3 queryIdAndCatalogEntryMapping where 2 are identical
  */
 TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithMixedQueriesAfterApplyingMergeRules) {
 

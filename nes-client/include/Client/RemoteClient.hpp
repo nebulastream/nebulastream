@@ -25,7 +25,7 @@ class Query;
 }
 namespace NES::Client {
 /**
- * @brief Remote client to deploy queries over the REST API
+ * @brief Remote client to deploy queryIdAndCatalogEntryMapping over the REST API
  */
 class RemoteClient {
   public:
@@ -71,14 +71,14 @@ class RemoteClient {
     [[nodiscard]] QueryStopResult stopQuery(uint64_t queryId);
 
     /**
-     * @brief get a queries query plan
+     * @brief get a queryIdAndCatalogEntryMapping query plan
      * @param uint64_t query id
      * @return query plan
      */
     std::string getQueryPlan(uint64_t queryId);
 
     /**
-     * @brief get a queries execution plan
+     * @brief get a queryIdAndCatalogEntryMapping execution plan
      * @param uint64_t query id
      * @return execution plan
      */
@@ -98,13 +98,13 @@ class RemoteClient {
     std::string getTopology();
 
     /**
-     * @brief get all registered queries
+     * @brief get all registered queryIdAndCatalogEntryMapping
      * @return query information
      */
     std::string getQueries();
 
     /**
-     * @brief get all registered queries in the given status
+     * @brief get all registered queryIdAndCatalogEntryMapping in the given status
      * @param QueryStatus query status, i.e. registered
      * @return query information
      */

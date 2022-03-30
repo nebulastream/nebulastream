@@ -326,7 +326,7 @@ namespace TestUtils {
     /**
      * @brief Check if the query is been stopped successfully within the timeout.
      * @param queryId: Id of the query to be stopped
-     * @param queryCatalogService: the catalog containig the queries in the system
+     * @param queryCatalogService: the catalog containig the queryIdAndCatalogEntryMapping in the system
      * @return true if successful
      */
     [[nodiscard]] bool

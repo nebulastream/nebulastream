@@ -106,7 +106,7 @@ void BaseController::handleException(const web::http::http_request& message, con
                 errorResponse["detail"] = web::json::value::string("Parameter userQuery must be provided");
             }
         } else if (paths[0] == "queryCatalogService") {
-            if (paths[1] == "queries") {
+            if (paths[1] == "queryIdAndCatalogEntryMapping") {
                 errorResponse["detail"] = web::json::value::string("Parameter status must be provided");
             } else if (paths[1] == "query") {
                 errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");

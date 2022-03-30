@@ -32,7 +32,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         uint8_t retryTimes) {
     // TODO create issue to make the network channel allocation async
     // TODO currently, we stall the worker threads
-    // TODO as a result, this kills performance of running queries if we submit a new query
+    // TODO as a result, this kills performance of running queryIdAndCatalogEntryMapping if we submit a new query
     std::chrono::milliseconds backOffTime = waitTime;
     constexpr auto nameHelper = []() {
         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {

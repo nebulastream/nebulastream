@@ -73,7 +73,7 @@ class StringSignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithE
 };
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
@@ -140,7 +140,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) 
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with multiple same source
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with multiple same source
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
@@ -216,7 +216,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueriesWi
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different source
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different source
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
@@ -274,7 +274,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedPartialQueryMergerRule on Global query plan with same queries with unionWith operators
+ * @brief Test applying SignatureBasedPartialQueryMergerRule on Global query plan with same queryIdAndCatalogEntryMapping with unionWith operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
     // Prepare
@@ -339,7 +339,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with different order of unionWith operator children
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
     // Prepare
@@ -401,7 +401,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queryIdAndCatalogEntryMapping with unionWith operators but different children
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
     // Prepare
@@ -469,7 +469,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different filters
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
@@ -522,7 +522,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different filters
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different filters
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
@@ -574,7 +574,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different map
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
@@ -627,7 +627,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different map
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different map
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
@@ -680,7 +680,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
 
@@ -750,7 +750,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different window operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
 
@@ -820,7 +820,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
 
@@ -897,7 +897,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same window operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same window operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
 
@@ -967,7 +967,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
 
@@ -1036,7 +1036,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operator but in different order
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same project operator but in different order
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
 
@@ -1098,7 +1098,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different project operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different project operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
 
@@ -1160,7 +1160,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same watermark operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same watermark operators
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
 
@@ -1231,7 +1231,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithSam
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different watermark operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with different watermark operators.
  * One query with IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
@@ -1298,7 +1298,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDif
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queries with unionWith operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queryIdAndCatalogEntryMapping with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
@@ -1366,7 +1366,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithUni
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queries with unionWith operator.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queryIdAndCatalogEntryMapping with unionWith operator.
  * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy.
  */
@@ -1442,7 +1442,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queries with unionWith operator.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queryIdAndCatalogEntryMapping with unionWith operator.
  * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
@@ -1510,7 +1510,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest,
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
 
@@ -1584,7 +1584,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentSourceOrder) {
 
@@ -1655,7 +1655,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
 
@@ -1726,7 +1726,7 @@ TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoi
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queryIdAndCatalogEntryMapping with same join operators.
  */
 TEST_F(StringSignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
 

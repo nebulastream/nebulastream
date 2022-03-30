@@ -34,7 +34,7 @@ using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
 
 /**
  * @brief class to handle the entry in the query catalog
- * @param queryId: id of the query (is also the key in the queries map)
+ * @param queryId: id of the query (is also the key in the queryIdAndCatalogEntryMapping map)
  * @param queryString: string representation of the query
  * @param QueryPtr: a pointer to the query
  * @param schema: the schema of this query

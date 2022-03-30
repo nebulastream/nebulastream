@@ -60,7 +60,7 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
                 NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryPlan->addQueryIdAndSinkOperators(targetQueryPlan);
 
-                // As we merge partially equivalent queries, we can potentially find matches across multiple operators.
+                // As we merge partially equivalent queryIdAndCatalogEntryMapping, we can potentially find matches across multiple operators.
                 // As upstream matched operators are covered by downstream matched operators. We need to retain only the
                 // downstream matched operator containing any upstream matched operator. This will prevent in computation
                 // of inconsistent shared query plans.

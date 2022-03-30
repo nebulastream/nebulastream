@@ -249,7 +249,7 @@ void DynamicQueryManager::updateStatistics(const Task& task,
 #ifndef LIGHT_WEIGHT_STATISTICS
     if (queryToStatisticsMap.contains(querySubPlanId)) {
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
-        // with multiple queries this wont be correct
+        // with multiple queryIdAndCatalogEntryMapping this wont be correct
         auto qSize = taskQueue.size();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
     }

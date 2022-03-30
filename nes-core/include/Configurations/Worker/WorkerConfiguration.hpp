@@ -87,7 +87,7 @@ class WorkerConfiguration : public BaseConfiguration {
 
     /**
      * @brief Number of Slots define the amount of computing resources that are usable at the coordinator.
-     * This enables the restriction of the amount of concurrently deployed queries and operators.
+     * This enables the restriction of the amount of concurrently deployed queryIdAndCatalogEntryMapping and operators.
      */
     UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for the NES Worker."};
 

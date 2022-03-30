@@ -30,12 +30,10 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     if (inputQueryPlanId == INVALID_QUERY_ID) {
         throw log4cxx::helpers::Exception("GlobalQueryPlan: Can not add query plan with invalid id.");
     }
-
     if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
         throw log4cxx::helpers::Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId)
                                           + " already present.");
     }
-
     queryPlansToAdd.emplace_back(queryPlan);
     return true;
 }
@@ -122,32 +120,6 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllSharedQueryPlans() {
     return sharedQueryPlans;
 }
 
-std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllNewSharedQueryPlans() {
-    NES_INFO("GlobalQueryPlan: Get all metadata information");
-    std::vector<SharedQueryPlanPtr> newSharedQueryMetaData;
-    NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
-        if (sharedQueryMetaData->isNew()) {
-            newSharedQueryMetaData.emplace_back(sharedQueryMetaData);
-        }
-    }
-    NES_TRACE("GlobalQueryPlan: Found " << newSharedQueryMetaData.size() << "  Shared Query MetaData.");
-    return newSharedQueryMetaData;
-}
-
-std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getAllOldSharedQueryPlans() {
-    NES_INFO("GlobalQueryPlan: Get all metadata information");
-    std::vector<SharedQueryPlanPtr> oldSharedQueryMetaData;
-    NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
-        if (!sharedQueryMetaData->isNew()) {
-            oldSharedQueryMetaData.emplace_back(sharedQueryMetaData);
-        }
-    }
-    NES_TRACE("GlobalQueryPlan: Found " << oldSharedQueryMetaData.size() << "  Shared Query MetaData.");
-    return oldSharedQueryMetaData;
-}
-
 SharedQueryPlanPtr GlobalQueryPlan::getSharedQueryPlan(SharedQueryId sharedQueryId) {
     auto found = sharedQueryIdToPlanMap.find(sharedQueryId);
     if (found == sharedQueryIdToPlanMap.end()) {
@@ -189,6 +161,12 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansConsumingSou
         return item->second;
     }
     return {};
+}
+
+std::vector<QueryId> GlobalQueryPlan::getQueryIds(SharedQueryId sharedQueryPlanId) {
+    NES_TRACE("Fetch query ids associated to the shared query plan id");
+    auto sharedQueryPlan = getSharedQueryPlan(sharedQueryPlanId);
+    return sharedQueryPlan->getQueryIds();
 }
 
 }// namespace NES

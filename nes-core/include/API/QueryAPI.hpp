@@ -33,8 +33,8 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 
 /**
- * @brief This header includes all headers that are necessary to formulate queries in CPP.
- * This enables users to only include a single header for formulating own queries.
+ * @brief This header includes all headers that are necessary to formulate queryIdAndCatalogEntryMapping in CPP.
+ * This enables users to only include a single header for formulating own queryIdAndCatalogEntryMapping.
  * Furthermore, it enables the system to precompile this header, which could speed up compilation time.
  */
 using namespace NES;

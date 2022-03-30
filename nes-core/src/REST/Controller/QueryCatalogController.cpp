@@ -38,7 +38,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
     //Extract parameters if any
     auto parameters = getParameters(request);
 
-    if (path[1] == "queries") {
+    if (path[1] == "queryIdAndCatalogEntryMapping") {
         //Check if the path contains the query id
         auto param = parameters.find("status");
         if (param == parameters.end()) {
@@ -61,7 +61,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             }
 
             if (queries.empty()) {
-                NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query with status " + queryStatus
+                NES_DEBUG("QueryCatalogController: handleGet -queryIdAndCatalogEntryMapping: no registered query with status " + queryStatus
                           + " was found.");
                 noContentImpl(request);
             } else {
@@ -69,7 +69,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             }
             return;
         } catch (const std::exception& exc) {
-            NES_ERROR("QueryCatalogController: handleGet -queries: Exception occurred while building the query plan for "
+            NES_ERROR("QueryCatalogController: handleGet -queryIdAndCatalogEntryMapping: Exception occurred while building the query plan for "
                       "user request:"
                       << exc.what());
             handleException(request, exc);
@@ -97,7 +97,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             }
 
             if (queryCatalogEntries.empty()) {
-                NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.");
+                NES_DEBUG("QueryCatalogController: handleGet -queryIdAndCatalogEntryMapping: no registered query was found.");
                 noContentImpl(request);
             } else {
                 successMessageImpl(request, result);

@@ -75,7 +75,7 @@ class GlobalQueryPlanUpdatePhase {
   public:
     /**
      * @brief Create an instance of the GlobalQueryPlanUpdatePhase
-     * @param queryCatalogService: the catalog of queries
+     * @param queryCatalogService: the catalog of queryIdAndCatalogEntryMapping
      * @param sourceCatalog: the catalog of sources
      * @param globalQueryPlan: the input global query plan
      * @param optimizerConfiguration: configuration for the optimizer

@@ -43,7 +43,7 @@ class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 /**
- * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queries.
+ * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping.
  */
 class QueryService {
 
@@ -86,7 +86,7 @@ class QueryService {
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryString : queries in string format
+     * @param queryString : queryIdAndCatalogEntryMapping in string format
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategyName : Name of the placement strategy
      * @param faultTolerance : fault-tolerance guarantee for the given query.
@@ -101,7 +101,7 @@ class QueryService {
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryString : queries in string format
+     * @param queryString : queryIdAndCatalogEntryMapping in string format
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategyName : Name of the placement strategy
      * @param faultTolerance : fault-tolerance guarantee for the given query.

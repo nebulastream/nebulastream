@@ -40,7 +40,7 @@ class UdfCatalog {
 
     /**
      * @brief Register the descriptor data of a Java UDF.
-     * @param name The name of the UDF as it is used in queries.
+     * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @param descriptor The implementation data of the UDF.
      * @throws UdfException If descriptor is nullptr or if a UDF under the name is already registered.
      */
@@ -49,14 +49,14 @@ class UdfCatalog {
 
     /**
      * @brief Retrieve the implementation data for a Java UDF.
-     * @param name The name of the UDF as it is used in queries.
+     * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @return The implementation data of the UDF, or nullptr if the UDF is not registered.
      */
     JavaUdfDescriptorPtr getUdfDescriptor(const std::string& name);
 
     /**
      * @brief Remove the UDF from the catalog.
-     * @param name The name of the UDF as it is used in queries.
+     * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @return True, if the UDF was registered in the catalog; otherwise, False.
      *
      * Removing an unregistered UDF is not an error condition because it could have been removed by another user.
