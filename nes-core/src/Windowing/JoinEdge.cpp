@@ -83,7 +83,7 @@ JoinEdge::JoinEdge(SourceLogicalOperatorNodePtr leftSource, SourceLogicalOperato
         leftOperator.setOperatorCosts(0);
         leftOperator.setCumulativeCosts(leftOperator.getCardinality());
     }
-    const SourceLogicalOperatorNodePtr& JoinEdge::getLeftSource() const { return leftSource; }
+    const OptimizerPlanOperator JoinEdge::getLeftSource() const { return leftSource; }
     const OptimizerPlanOperator& JoinEdge::getLeftOperator() const { return leftOperator; }
     const SourceLogicalOperatorNodePtr& JoinEdge::getRightSource() const { return rightSource; }
     const LogicalJoinDefinitionPtr& JoinEdge::getJoinDefinition() const { return joinDefinition; }

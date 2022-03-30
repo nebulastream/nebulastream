@@ -54,10 +54,10 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @brief Checks which join connections between sources are possible in a query plan and returns a list of all possible connections (edges)
      * e.g. if there are three streams: Cars, Trucks, Bikes all have common attributes which allow arbitrary join orders.
      * This function would in this case return a list with Cars |><| Trucks |><| Bikes, Cars |><| Bikes |><| Trucks and Trucks |><| Bikes |><| Cars...
-     * @param queryPlan: pointer to the query plan build for the query, joinOperators of the query
+     * @param sources a vector of OptimizerPlanOperators - which are logical streams with some join optimization relevant information, joinOperators of the query
      * @return list of source connections
      */
-    std::vector<Join::JoinEdge> retrieveJoinEdges(QueryPlanPtr queryPlan, std::vector<JoinLogicalOperatorNodePtr> joinOperators);
+    std::vector<Join::JoinEdge> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<OptimizerPlanOperator> sources);
 
     /**
      * @brief Optimize order of join operators according to cost-model
@@ -77,7 +77,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
 
     /**
      * @brief provides a string that lists all join edges to ease readability
-     * @param joinEdgegs
+     * @param joinEdges
      */
     std::string listJoinEdges(std::vector<Join::JoinEdge> joinEdges);
 

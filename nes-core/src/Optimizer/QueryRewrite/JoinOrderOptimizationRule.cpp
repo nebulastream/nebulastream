@@ -52,14 +52,14 @@ namespace NES::Optimizer {
             }
 
             //  Derive a join graph by getting all the join edges between the sources (logical streams)
-            const auto joinEdges = retrieveJoinEdges(queryPlan, joinOperators);
+            const auto joinEdges = retrieveJoinEdges(joinOperators, sources);
 
             // print joinEdges
             NES_DEBUG(listJoinEdges(joinEdges));
 
+            // JVS: Step 5: Derive the best order of joins
             OptimizerPlanOperator finalPlan = optimizeJoinOrder(sources,joinEdges);
 
-            // JVS: Step 5: Derive the best order of joins
 
             // JVS: Step 6 Rewrite the query according to the best order
 
@@ -72,7 +72,9 @@ namespace NES::Optimizer {
         }
     }
 
-    std::vector<Join::JoinEdge> JoinOrderOptimizationRule::retrieveJoinEdges(QueryPlanPtr queryPlan, std::vector<JoinLogicalOperatorNodePtr> joinOperators){
+    // we need to make sure, that, when we deriveSourceName, we do not query the sourceOperators again, but rather query our list of OptimizerPlanOperators for that exact object
+    // with that log. streamName. This would then allows us to use to declare it only once and don't screw up lvl 2.
+    std::vector<Join::JoinEdge> JoinOrderOptimizationRule::retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<OptimizerPlanOperator> sources){
 
         // Iterate over joinOperators and detect all JoinEdges
         std::vector<Join::JoinEdge> joinEdges;
@@ -89,13 +91,17 @@ namespace NES::Optimizer {
             // FIXME improve safety here => what if there are no nodes corresponding to the source names?
             SourceLogicalOperatorNodePtr leftSourceNode;
             SourceLogicalOperatorNodePtr rightSourceNode;
-            for (auto sourceOperator : queryPlan->getSourceOperators()){
-                if(leftSource == sourceOperator->getSourceDescriptor()->getLogicalSourceName()){
-                    leftSourceNode = sourceOperator;
+            // JVS loop over OptimizerPlanOperators instead of sourceOperators.
+            // JVS get rid of queryPlanPtr
+            for (auto optimizerPlanOperator : sources){
+
+                if(leftSource == optimizerPlanOperator.getSourceNode()->getSourceDescriptor()->getLogicalSourceName()){
+                    leftSourceNode = optimizerPlanOperator.getSourceNode();
                 }
-                if (rightSource == sourceOperator->getSourceDescriptor()->getLogicalSourceName()){
-                    rightSourceNode = sourceOperator;
+                if (rightSource == optimizerPlanOperator.getSourceNode()->getSourceDescriptor()->getLogicalSourceName()){
+                    rightSourceNode = optimizerPlanOperator.getSourceNode();
                 }
+                NES_DEBUG("ds");
             }
 
             NES_DEBUG("Found the following corresponding SourceLogicalOperatorNodes: " << leftSourceNode->toString() << " and " << rightSourceNode->toString());
@@ -124,7 +130,8 @@ namespace NES::Optimizer {
         NES_DEBUG("Setting the base logical streams for Optimization table: ")
         //int counter = 0;
         for (auto source : sources){
-            source.setOperatorCosts(0);
+            source.setOperatorCosts(-100);
+            // source.setOperatorCosts(0);
             source.setCumulativeCosts(source.getCardinality()); // JVS provide getCardinality
 
             // insert rows into first level of hashmap
