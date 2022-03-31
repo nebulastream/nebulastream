@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include "../util/NesBaseTest.hpp"
-#include "Exceptions/InvalidQueryException.hpp"
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -762,7 +761,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     EXPECT_THROW(queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY),
-                 InvalidQueryException);
+                 QueryNotFoundException);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

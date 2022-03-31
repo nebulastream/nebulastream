@@ -445,7 +445,6 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source) {
                                              << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
                                              << executableQueryPlan->getQueryId());
     }
-    executableQueryPlan->fail();
     return true;
 }
 
