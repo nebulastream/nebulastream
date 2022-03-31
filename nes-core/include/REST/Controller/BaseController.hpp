@@ -97,10 +97,17 @@ class BaseController {
     static void resourceNotFoundImpl(const web::http::http_request& message);
     static void noContentImpl(const web::http::http_request& message);
 
+    /**
+     * @brief Used to create and return a http_response to a user request.
+     * @tparam T the type of result message. Supported types are std::string and web::json::value.
+     * @param request The HTTP request
+     * @param result a detailed messsage
+     * @param statusCode  2XX status code
+     */
     template<typename T,
              std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
-    static void successMessageImpl(const web::http::http_request& request, const T& result) {
-        web::http::http_response response(web::http::status_codes::OK);
+    static void successMessageImpl(const web::http::http_request& request, const T& result, const web::http::status_code& statusCode = web::http::status_codes::OK) {
+        web::http::http_response response(statusCode);
         response.headers().add("Access-Control-Allow-Origin", "*");
         response.headers().add("Access-Control-Allow-Headers", "Content-Type");
         response.set_body(result);
@@ -108,16 +115,17 @@ class BaseController {
     }
 
     /**
-     * @brief Return a 400 Bad Request response with a detailed error message.
+     * @brief Return a 4XX response with a detailed error message.
      * @tparam T The type of the error message. Supported types are std::string and web::json::value.
      * @param request The HTTP request.
      * @param detail The detailed error message.
+     * @param statusCode 4XX status code
      */
     template<typename T,
              std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
-    static void badRequestImpl(const web::http::http_request& request, const T& detail) {
-        // Returns error with http code 400 to indicate bad user request
-        web::http::http_response response(web::http::status_codes::BadRequest);
+    static void errorMessageImpl(const web::http::http_request& request, const T& detail, const web::http::status_code& statusCode = web::http::status_codes::BadRequest) {
+        // Returns error with a specific error code
+        web::http::http_response response(statusCode);
         response.headers().add("Access-Control-Allow-Origin", "*");
         response.headers().add("Access-Control-Allow-Headers", "Content-Type");
 
