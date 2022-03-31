@@ -36,14 +36,14 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                         NES_ERROR("MaintenanceController: Unable to find Field: id ");
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("Field id must be provided");
-                        badRequestImpl(request, errorResponse);
+                        errorMessageImpl(request, errorResponse);
                         return;
                     }
                     if (!req.has_field("migrationType")) {
                         NES_ERROR("MaintenanceController: Unable to find Field: migrationType ");
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("Field migrationType must be provided");
-                        badRequestImpl(request, errorResponse);
+                        errorMessageImpl(request, errorResponse);
                         return;
                     }
                     uint64_t id = req.at("id").as_integer();

@@ -116,31 +116,31 @@ void BaseController::handleException(const web::http::http_request& message, con
                 errorResponse["detail"] = web::json::value::string("Parameter childId and parentId must be provided");
             }
         }
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("does not contain a valid sink operator as root") != std::string::npos) {
         errorResponse["message"] = web::json::value::string("Semantic error");
         errorResponse["detail"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("Syntax error: Malformed object literal") != std::string::npos) {
         // handle error caused by syntax error in input body
         errorResponse["message"] = web::json::value::string("Syntax error");
         errorResponse["detail"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
 
     } else if (std::string(exceptionMsg).find("Could not remove logical source") != std::string::npos) {
         // handle error caused by failure to remove logical source
         errorResponse["message"] = web::json::value::string(exceptionMsg);
         // TODO: Add possible cause of failure (source not exists, source attached to physical sources, etc)
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("The logical source") != std::string::npos) {
         errorResponse["message"] = web::json::value::string("Logical source error");
         errorResponse["detail"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("Unable to update logical source") != std::string::npos) {
         // handle error caused by invalid code (query or schema) submitted by the user
         errorResponse["message"] = web::json::value::string(exceptionMsg);
         // TODO: Add possible cause of failure (source not exists, source attached to physical sources, etc)
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
 
     } else if (strcmp(exceptionMsg, "Compilation failed") == 0) {
         // handle error caused by invalid code (query or schema) submitted by the user
@@ -156,42 +156,42 @@ void BaseController::handleException(const web::http::http_request& message, con
                 errorResponse["detail"] = web::json::value::string("Unable to compile the submitted query");
             }
         }
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("Required source does not exists") != std::string::npos) {
         // handle error caused by invalid submitting a query on a source that does not exist
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
 
     } else if (std::string(exceptionMsg).find("Unknown placement strategy name") != std::string::npos) {
         // handle error caused by invalid submitting a query using a strategy that does not exist
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
 
     } else if (std::string(exceptionMsg).find("Unknown query status") != std::string::npos) {
         // handle error caused by invalid submitting a query listing request with unknown status
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
 
     } else if (std::string(exceptionMsg).find("Could not delete query with id") != std::string::npos) {
         // handle error caused by failure in deleting a query
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("SyntacticQueryValidation") != std::string::npos) {
         // handle error caused by Syntactic Query Validation
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("SemanticQueryValidation") != std::string::npos) {
         // handle error caused by Semantic Query Validation
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("Could not add parent for node in topology") != std::string::npos) {
         // handle error caused by failure in adding a parent for a node in topology
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else if (std::string(exceptionMsg).find("Could not remove parent for node in topology") != std::string::npos) {
         // handle error caused by failure in removed a parent for a node in topology
         errorResponse["message"] = web::json::value::string(exceptionMsg);
-        this->badRequestImpl(message, errorResponse);
+        this->errorMessageImpl(message, errorResponse);
     } else {
         this->internalServerErrorImpl(message);
     }

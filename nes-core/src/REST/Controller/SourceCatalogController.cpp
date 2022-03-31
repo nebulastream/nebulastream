@@ -53,7 +53,7 @@ void SourceCatalogController::handleGet(const std::vector<utility::string_t>& pa
             NES_ERROR("QueryController: Unable to find logicalSourceName for the GET allPhysicalSource request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
         }
 
         try {
@@ -93,7 +93,7 @@ void SourceCatalogController::handleGet(const std::vector<utility::string_t>& pa
             NES_ERROR("QueryController: Unable to find logical source name for the GET schema request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
         }
         try {
             //Prepare Input query from user string
@@ -176,7 +176,7 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                         NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: invalid Protobuf message");
                         web::json::value errorResponse{};
                         errorResponse["detail"] = web::json::value::string("Invalid Protobuf message");
-                        badRequestImpl(message, errorResponse);
+                        errorMessageImpl(message, errorResponse);
                         return;
                     }
 
@@ -269,7 +269,7 @@ void SourceCatalogController::handleDelete(const std::vector<utility::string_t>&
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
         }
 
         try {

@@ -45,7 +45,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
         }
 
         try {
@@ -122,7 +122,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
         }
 
         try {
@@ -160,7 +160,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
         }
 
         try {

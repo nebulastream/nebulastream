@@ -47,7 +47,7 @@ bool UdfCatalogController::verifyCorrectEndpoints(const std::vector<std::string>
         ss << "HTTP request with unknown path: /";
         std::copy(path.begin(), path.end(), std::ostream_iterator<std::string>(ss, "/"));
         NES_WARNING(ss.str());
-        badRequestImpl(request, ss.str());
+        errorMessageImpl(request, ss.str());
         return false;
     }
     return true;
@@ -65,7 +65,7 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter
     // Verify that the udfName parameter exists.
     if (query == queries.end()) {
         NES_DEBUG("Request does not contain the udfName parameter");
-        badRequestImpl(request, "udfName parameter is missing"s);
+        errorMessageImpl(request, "udfName parameter is missing"s);
         return {false, ""};
     }
     // Make sure that the URL contains only the udfName parameter and no others.
@@ -81,7 +81,7 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter
                                                      return tmpString;
                                                  });
         NES_DEBUG("Request contains unknown parameters: " << unknownParameters);
-        badRequestImpl(request, "Request contains unknown parameters: "s + unknownParameters);
+        errorMessageImpl(request, "Request contains unknown parameters: "s + unknownParameters);
         return {false, ""};
     }
     return {true, query->second};
@@ -175,7 +175,7 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
             } catch (const UdfException& e) {
                 NES_WARNING("Exception occurred during UDF registration: " << e.what());
                 // Just return the exception message to the client, not the stack trace.
-                badRequestImpl(request, e.getMessage());
+                errorMessageImpl(request, e.getMessage());
                 return;
             }
             successMessageImpl(request, "Registered Java UDF"s);
