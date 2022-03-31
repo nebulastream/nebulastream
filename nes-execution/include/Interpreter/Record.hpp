@@ -10,18 +10,20 @@
 #include <ostream>
 #include <vector>
 
-namespace NES {
+namespace NES::Interpreter {
 
 class Record {
   public:
-    explicit Record(std::vector<ValuePtr> records);
+    explicit Record(std::vector<AnyPtr> records);
     virtual ~Record() = default;
-    virtual ValuePtr read(std::string fieldName);
-    virtual void write(std::string fieldName, ValuePtr value);
+  //  virtual Value<AnyPtr> read(std::string fieldName);
+  //  virtual Value<AnyPtr> read(uint64_t fieldIndex);
+   // virtual void write(std::string fieldName, Value<AnyPtr> value);
+   // virtual void write(uint64_t fieldIndex, Value<AnyPtr> value);
     friend std::ostream& operator<<(std::ostream&, const RecordPtr&);
 
   private:
-    std::vector<ValuePtr> records;
+    std::vector<AnyPtr> records;
 };
 
 using RecordPtr = std::shared_ptr<Record>;

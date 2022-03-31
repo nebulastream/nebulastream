@@ -1,10 +1,10 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_EXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_EXPRESSION_HPP_
 #include <memory>
-namespace NES {
+#include <Interpreter/DataValue/Value.hpp>
+namespace NES::Interpreter {
 
-class Value;
-using ValuePtr = std::unique_ptr<Value>;
+class Any;
 
 class Record;
 using RecordPtr = std::shared_ptr<Record>;
@@ -15,7 +15,7 @@ using ExpressionPtr = std::shared_ptr<Expression>;
 
 class Expression {
   public:
-    virtual ValuePtr execute(RecordPtr record) = 0;
+    virtual Value execute(RecordPtr record) = 0;
     virtual ~Expression() = default;
 };
 

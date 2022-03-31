@@ -3,16 +3,17 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_ADDEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_ADDEXPRESSION_HPP_
 
-namespace NES {
+namespace NES::Interpreter {
 
-class AddExpression : Expression {
+class AddExpression : public Expression {
+  private:
     ExpressionPtr leftSubExpression;
     ExpressionPtr rightSubExpression;
 
   public:
-    ValuePtr execute(RecordPtr record) override {
-        auto leftValue = leftSubExpression->execute(record);
-        auto rightValue = rightSubExpression->execute(record);
+    Value execute(RecordPtr record) override {
+        Value leftValue = leftSubExpression->execute(record);
+        Value rightValue = rightSubExpression->execute(record);
         return leftValue + rightValue;
     }
 };
