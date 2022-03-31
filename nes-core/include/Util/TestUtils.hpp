@@ -358,12 +358,12 @@ template<typename Predicate = std::equal_to<uint64_t>>
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG("checkStoppedOrTimeout: check query status");
+        NES_DEBUG("checkFailedOrTimeout: check query status");
         if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
             NES_DEBUG("checkStoppedOrTimeout: status reached failed");
             return true;
         }
-        NES_DEBUG("checkStoppedOrTimeout: status not reached as status is="
+        NES_DEBUG("checkFailedOrTimeout: status not reached as status is="
                   << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
@@ -485,7 +485,7 @@ template<typename T>
         std::this_thread::sleep_for(sleepDuration);
         NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file " << outputFilePath);
         std::ifstream ifs(outputFilePath);
-        if (TestUtils::checkFailedOrTimeout(queryId, queryCatalogService)) {
+        if (TestUtils::checkFailedOrTimeout(queryId, queryCatalogService, std::chrono::seconds(1))) {
             throw Exceptions::RuntimeException("Query "s + std::to_string(queryId) + " is failed");
         } else if (ifs.good() && ifs.is_open()) {
             NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: file " << outputFilePath << " open and good");

@@ -397,6 +397,9 @@ bool NesWorker::notifyQueryStatusChange(QueryId queryId,
                                         QuerySubPlanId subQueryId,
                                         Runtime::Execution::ExecutableQueryPlanStatus newStatus) {
     NES_ASSERT(waitForConnect(), "cannot connect");
+    NES_ASSERT2_FMT(newStatus != Runtime::Execution::ExecutableQueryPlanStatus::Stopped,
+                    "Hard Stop called for query=" << queryId << " subQueryId=" << subQueryId
+                                                  << " should not call notifyQueryStatusChange");
     if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
         NES_DEBUG("NesWorker " << getWorkerId() << " about to notify soft stop completion for query " << queryId << " subPlan "
                                << subQueryId);
