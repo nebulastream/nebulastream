@@ -20,9 +20,9 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cpprest/json.h>
 
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 
@@ -43,7 +43,6 @@ using MetricPtr = std::shared_ptr<Metric>;
 void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void writeToBuffer(const std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-
 
 /**
  * @brief class specific readFromBuffer()

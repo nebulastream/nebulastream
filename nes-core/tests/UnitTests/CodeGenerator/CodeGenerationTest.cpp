@@ -55,7 +55,6 @@
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <utility>
 
@@ -72,9 +71,7 @@ using namespace QueryCompilation;
 class CodeGenerationTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("CodeGenerationTest.log", NES::LogLevel::LOG_DEBUG);
-    }
+    static void SetUpTestCase() { NES::Logger::setupLogging("CodeGenerationTest.log", NES::LogLevel::LOG_DEBUG); }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -90,8 +87,9 @@ class CodeGenerationTest : public Testing::NESBaseTest {
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-        nodeEngine =
-            Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(dummyListener = std::make_shared<DummyQueryListener>()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                         .setQueryStatusListener(dummyListener = std::make_shared<DummyQueryListener>())
+                         .build();
     }
 
     /* Will be called before a test is executed. */
@@ -103,6 +101,7 @@ class CodeGenerationTest : public Testing::NESBaseTest {
 
     Runtime::NodeEnginePtr nodeEngine;
     std::shared_ptr<DummyQueryListener> dummyListener;
+
   protected:
     Testing::BorrowedPortPtr dataPort;
 };

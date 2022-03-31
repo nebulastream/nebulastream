@@ -40,7 +40,6 @@ const string worker = "\n"
                       "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
                       "▒█▄▀▄█ ▀▀▀▀ ▀░▀▀ ▀░▀ ▀▀▀ ▀░▀▀";
 
-
 extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 int main(int argc, char** argv) {

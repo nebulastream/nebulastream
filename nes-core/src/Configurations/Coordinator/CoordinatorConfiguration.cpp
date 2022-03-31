@@ -23,7 +23,5 @@
 
 namespace NES {
 
-namespace Configurations {
-
-}// namespace Configurations
+namespace Configurations {}// namespace Configurations
 }// namespace NES

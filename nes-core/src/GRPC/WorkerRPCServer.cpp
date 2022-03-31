@@ -119,12 +119,10 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::InjectEpochBarrier(ServerContext*,
-                                           const EpochBarrierNotification* request,
-                                           EpochBarrierReply* reply) {
+Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
     try {
         NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
-          << request->timestamp() << " and a queryId " << request->queryid());
+                  << request->timestamp() << " and a queryId " << request->queryid());
         reply->set_success(true);
         nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
         return Status::OK;

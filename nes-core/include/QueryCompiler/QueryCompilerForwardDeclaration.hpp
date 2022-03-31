@@ -88,10 +88,10 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 class AbstractWindowHandler;
 using AbstractWindowHandlerPtr = std::shared_ptr<AbstractWindowHandler>;
 
-namespace Experimental{
+namespace Experimental {
 class KeyedEventTimeWindowHandler;
 using KeyedEventTimeWindowHandlerPtr = std::shared_ptr<KeyedEventTimeWindowHandler>;
-}
+}// namespace Experimental
 
 }// namespace Windowing
 
@@ -205,4 +205,4 @@ using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_

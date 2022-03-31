@@ -107,4 +107,4 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_
+#endif// NES_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_

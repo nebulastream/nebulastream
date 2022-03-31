@@ -13,10 +13,10 @@
 */
 #ifndef NES_GEOGRAPHICALLOCATIONFACTORY_HPP
 #define NES_GEOGRAPHICALLOCATIONFACTORY_HPP
-#include <string>
-#include <memory>
-#include <map>
 #include <Util/yaml/Yaml.hpp>
+#include <map>
+#include <memory>
+#include <string>
 
 namespace NES {
 
@@ -34,7 +34,7 @@ class GeographicalLocationFactory {
      * if the string was empty
      */
 
-    static GeographicalLocation createFromString(std::string , std::map<std::string, std::string>& commandLineParams);
+    static GeographicalLocation createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief obtains a Geographical location objects from yaml config
@@ -44,6 +44,6 @@ class GeographicalLocationFactory {
      */
     static GeographicalLocation createFromYaml(Yaml::Node& yamlConfig);
 };
-}
-}
+}// namespace Configurations
+}// namespace NES
 #endif//NES_GEOGRAPHICALLOCATIONFACTORY_HPP

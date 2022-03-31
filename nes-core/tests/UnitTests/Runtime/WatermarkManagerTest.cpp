@@ -11,13 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <random>
 #include <thread>

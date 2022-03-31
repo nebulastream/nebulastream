@@ -27,7 +27,7 @@ namespace PhysicalOperators {
 /**
  * @brief The keyed tumbling window sink directly emits the final aggregates for a merged slice.
  */
-class PhysicalKeyedTumblingWindowSink : public PhysicalUnaryOperator{
+class PhysicalKeyedTumblingWindowSink : public PhysicalUnaryOperator {
   public:
     PhysicalKeyedTumblingWindowSink(
         OperatorId id,

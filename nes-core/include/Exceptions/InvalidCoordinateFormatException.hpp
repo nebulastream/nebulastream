@@ -21,8 +21,8 @@ namespace NES {
  * @brief an exception indicating that the entered string is not of the format "<double>, <double>"
  */
 class InvalidCoordinateFormatException : public std::exception {
-    const char* what () const noexcept;
+    const char* what() const noexcept;
 };
 
-}// namespase NES
+}// namespace NES
 #endif//NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP

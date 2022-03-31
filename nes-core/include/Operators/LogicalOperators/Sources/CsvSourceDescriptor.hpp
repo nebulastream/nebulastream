@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
 
-#include <Configurations/ConfigurationOption.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <chrono>
 
@@ -49,4 +49,4 @@ using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_

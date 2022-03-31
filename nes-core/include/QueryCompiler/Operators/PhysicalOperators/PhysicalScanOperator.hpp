@@ -52,4 +52,4 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_

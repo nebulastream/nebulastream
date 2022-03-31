@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Common/GeographicalLocation.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
@@ -19,11 +20,10 @@
 #include <algorithm>
 #include <deque>
 #include <utility>
-#include <Common/GeographicalLocation.hpp>
 #ifdef S2DEF
-#include <s2/s2latlng.h>
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
+#include <s2/s2latlng.h>
 #endif
 
 namespace NES {
@@ -109,7 +109,7 @@ bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, Geographical
 bool Topology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 #ifdef S2DEF
     auto geoLocOpt = node->getCoordinates();
-    if(!geoLocOpt.has_value()) {
+    if (!geoLocOpt.has_value()) {
         NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
         return false;
     }
@@ -128,7 +128,8 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const GeographicalLoca
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude())));
+    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
+        S2Point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude())));
     S2ClosestPointQuery<TopologyNodePtr>::Result queryResult = query.FindClosestPoint(&target);
     if (queryResult.is_empty()) {
         return {};
@@ -154,7 +155,8 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr&
 
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude())));
+    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
+        S2Point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude())));
     auto queryResult = query.FindClosestPoint(&target);
     //if we cannot find any node within the radius return an empty optional
     if (queryResult.is_empty()) {
@@ -179,15 +181,17 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr&
 #endif
 }
 
-std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> Topology::getNodesInRange(GeographicalLocation center, double radius) {
+std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> Topology::getNodesInRange(GeographicalLocation center,
+                                                                                        double radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
 
-    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(center.getLatitude(), center.getLongitude())));
+    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
+        S2Point(S2LatLng::FromDegrees(center.getLatitude(), center.getLongitude())));
     auto result = query.FindClosestPoints(&target);
     std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> closestNodeList;
-    for ( auto r : result) {
+    for (auto r : result) {
         auto latLng = S2LatLng(r.point());
         closestNodeList.emplace_back(r.data(), GeographicalLocation(latLng.lat().degrees(), latLng.lng().degrees()));
     }

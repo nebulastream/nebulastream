@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
 #include "gtest/gtest.h"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -20,6 +19,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>

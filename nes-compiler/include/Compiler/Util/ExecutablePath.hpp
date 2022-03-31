@@ -15,8 +15,8 @@
 #define NES_NES_CORE_INCLUDE_UTIL_EXECUTABLEPATH_HPP_
 
 #include <filesystem>
-#include <vector>
 #include <ostream>
+#include <vector>
 namespace NES::Compiler::ExecutablePath {
 
 /**
@@ -30,7 +30,6 @@ class RuntimePathConfig {
     std::vector<std::string> libs;
     friend std::ostream& operator<<(std::ostream& os, const RuntimePathConfig& config);
 };
-
 
 bool isInInstallDir();
 

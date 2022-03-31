@@ -72,4 +72,4 @@ class QueryController : public BaseController {
 using QueryControllerPtr = std::shared_ptr<QueryController>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#endif// NES_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_

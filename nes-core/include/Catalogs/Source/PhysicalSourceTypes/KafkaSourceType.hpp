@@ -131,4 +131,4 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption connectionTimeout;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

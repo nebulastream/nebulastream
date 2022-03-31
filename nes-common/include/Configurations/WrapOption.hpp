@@ -19,8 +19,7 @@
 namespace NES::Configurations {
 
 template<class Type, class Factory>
-concept IsFactory = requires(std::string identifier,
-                             std::map<std::string, std::string>& inputParams, Yaml::Node node) {
+concept IsFactory = requires(std::string identifier, std::map<std::string, std::string>& inputParams, Yaml::Node node) {
     {Factory::createFromString(identifier, inputParams)};
     {Factory::createFromYaml(node)};
 };
@@ -49,8 +48,8 @@ class WrapOption : public TypedBaseOption<Type> {
 
   protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(std::string identifier,
-                         std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+
   private:
     template<class X>
     requires std::is_base_of_v<BaseOption, X>
@@ -59,27 +58,21 @@ class WrapOption : public TypedBaseOption<Type> {
 };
 
 template<class Type, class Factory>
-requires IsFactory<Type, Factory>
-WrapOption<Type, Factory>::WrapOption(const std::string& name, const std::string& description) : TypedBaseOption<Type>(name, description) {}
+requires IsFactory<Type, Factory> WrapOption<Type, Factory>::WrapOption(const std::string& name, const std::string& description)
+    : TypedBaseOption<Type>(name, description) {}
 
 template<class Type, class Factory>
 requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromString(std::string identifier,
-                                                std::map<std::string, std::string>& inputParams) {
+void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     this->value = Factory::createFromString(identifier, inputParams);
 }
 
-template<class Type,class Factory>
-requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) {
-    this->value = Factory::createFromYaml(node);
-}
-
 template<class Type, class Factory>
 requires IsFactory<Type, Factory>
-std::string Configurations::WrapOption<Type, Factory>::toString() {
-    return "";
-}
+void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) { this->value = Factory::createFromYaml(node); }
+
+template<class Type, class Factory>
+requires IsFactory<Type, Factory> std::string Configurations::WrapOption<Type, Factory>::toString() { return ""; }
 
 }// namespace NES::Configurations
 

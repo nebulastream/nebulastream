@@ -41,8 +41,8 @@ class GeneratableAvgAggregation : public GeneratableWindowAggregation {
                             BinaryOperatorStatement partialRef,
                             RecordHandlerPtr recordHandler) override;
 
-    void compileCombine(CompoundStatementPtr currentCode,
-                        VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) override;
+    void
+    compileCombine(CompoundStatementPtr currentCode, VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) override;
 
     ExpressionStatementPtr lower(ExpressionStatementPtr partialValue) override;
     VariableDeclarationPtr getPartialAggregate() override;
@@ -52,4 +52,4 @@ class GeneratableAvgAggregation : public GeneratableWindowAggregation {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEAVGAGGREGATION_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEAVGAGGREGATION_HPP_

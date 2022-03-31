@@ -73,4 +73,4 @@ class Integer final : public Numeric {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_
+#endif// NES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_

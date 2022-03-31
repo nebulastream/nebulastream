@@ -48,4 +48,4 @@ class CSVParser : public Parser {
     std::string delimiter;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#endif// NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_

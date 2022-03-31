@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
@@ -39,7 +40,6 @@
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <cstdlib>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <map>
 #include <utility>

@@ -14,8 +14,8 @@
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SCALAROPTION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SCALAROPTION_HPP_
 
-#include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
 #include <ostream>
 namespace NES::Configurations {
 

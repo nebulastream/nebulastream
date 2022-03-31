@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Util/StacktraceLoader.hpp>
 #include <Util/Backward/backward.hpp>
+#include <Util/StacktraceLoader.hpp>
 
 #define CALLSTACK_MAX_SIZE 32
 
@@ -36,4 +36,4 @@ std::string collectAndPrintStacktrace() {
 
 void nesErrorHandler() { collectAndPrintStacktrace(); }
 
-}// namespace NES::Runtime
+}// namespace NES

@@ -189,8 +189,10 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
  * @brief create a print that does not output something
  * @return a data sink pointer
  */
-DataSinkPtr
-createNullOutputSink(QueryId queryId, QuerySubPlanId querySubPlanId, const Runtime::NodeEnginePtr& nodeEngine, uint32_t activeProducers);
+DataSinkPtr createNullOutputSink(QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 const Runtime::NodeEnginePtr& nodeEngine,
+                                 uint32_t activeProducers);
 
 /**
  * @brief create a print test sink with a schema

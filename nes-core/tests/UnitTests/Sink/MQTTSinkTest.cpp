@@ -12,9 +12,8 @@
     limitations under the License.
 */
 #ifdef ENABLE_MQTT_BUILD
+#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -28,10 +27,10 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
 #include <random>
-#include <Util/TestUtils.hpp>
 using namespace NES;
 /**
  * @brief this class implements tests for the MQTTSink class
@@ -68,12 +67,13 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         dataPort = Testing::NESBaseTest::getAvailablePort();
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalSourcePtr conf = PhysicalSource::create("x", "x1");
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSources.add(conf);
 
-
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
         testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 

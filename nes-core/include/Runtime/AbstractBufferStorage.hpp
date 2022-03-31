@@ -15,10 +15,10 @@
 #ifndef NES_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
 #define NES_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/BufferSequenceNumber.hpp>
 #include <Network/NesPartition.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/BufferSequenceNumber.hpp>
 #include <cstddef>
 
 namespace NES::Runtime {
@@ -53,4 +53,4 @@ class AbstractBufferStorage {
     virtual size_t getStorageSize() const = 0;
 };
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
+#endif// NES_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_

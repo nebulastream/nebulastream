@@ -40,9 +40,7 @@ using namespace Configurations;
 
 class QueryFailureTest : public Testing::NESBaseTest {
   public:
-    static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG);
-    }
+    static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
 TEST_F(QueryFailureTest, failQueryFaultySource) {
@@ -75,7 +73,7 @@ TEST_F(QueryFailureTest, failQueryFaultySource) {
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("test", cfg);
 
-//    testHarness = testHarness.pushElement<Test>({1, 1}, 2);
+    //    testHarness = testHarness.pushElement<Test>({1, 1}, 2);
 
     try {
         testHarness.validate().setupTopology();
@@ -87,7 +85,6 @@ TEST_F(QueryFailureTest, failQueryFaultySource) {
         NES_ERROR("Error: " << ex.what());
         FAIL();
     }
-
 }
 
 TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {}

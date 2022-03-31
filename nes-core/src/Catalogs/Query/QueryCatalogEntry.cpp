@@ -41,9 +41,7 @@ QueryStatus::Value QueryCatalogEntry::getQueryStatus() const { return queryStatu
 
 std::string QueryCatalogEntry::getQueryStatusAsString() const { return QueryStatus::toString(queryStatus); }
 
-void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) {
-    this->queryStatus = queryStatus;
-}
+void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) { this->queryStatus = queryStatus; }
 
 void QueryCatalogEntry::setMetaInformation(std::string metaInformation) { this->metaInformation = std::move(metaInformation); }
 

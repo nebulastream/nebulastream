@@ -18,9 +18,9 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <any>
 #include <functional>
 #include <map>
-#include <any>
 #include <set>
 #include <string>
 
@@ -182,7 +182,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 * @brief this method checks if the object is null
 * @return pointer to the object
 */
-template <typename T>
+template<typename T>
 std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& errorMessage) {
     NES_ASSERT(ptr, errorMessage);
     return ptr;

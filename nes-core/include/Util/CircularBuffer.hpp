@@ -229,4 +229,4 @@ class CircularBuffer {
 
 };// class CircularBuffer
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_CIRCULARBUFFER_HPP_
+#endif// NES_INCLUDE_UTIL_CIRCULARBUFFER_HPP_

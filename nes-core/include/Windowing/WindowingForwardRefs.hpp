@@ -135,4 +135,4 @@ using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescript
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWINGFORWARDREFS_HPP_

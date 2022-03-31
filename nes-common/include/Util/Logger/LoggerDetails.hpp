@@ -16,8 +16,8 @@
 #define NES_NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGERDETAILS_HPP_
 
 #include <Util/Logger/Logger.hpp>
-#include <log4cxx/logger.h>
 #include <atomic>
+#include <log4cxx/logger.h>
 
 namespace NES::detail {
 

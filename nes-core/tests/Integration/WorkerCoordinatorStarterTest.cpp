@@ -14,14 +14,14 @@
 
 #include <iostream>
 
+#include "../util/NesBaseTest.hpp"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 
 using std::cout;
 using std::endl;

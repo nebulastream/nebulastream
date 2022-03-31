@@ -15,6 +15,9 @@
 #ifdef ENABLE_OPC_BUILD
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalSourceConfig.hpp>
+#include <NesBaseTest.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -23,14 +26,11 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <open62541/plugin/pki_default.h>
 #include <open62541/server.h>
 #include <open62541/server_config_default.h>
 #include <string>
 #include <thread>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/NodeEngine.hpp>
 
 #include <future>
 
@@ -57,7 +57,9 @@ class OPCSinkTest : public Testing::TestWithErrorHandling<testing::Test> {
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
     }
 
     /* Will be called after a test is executed. */

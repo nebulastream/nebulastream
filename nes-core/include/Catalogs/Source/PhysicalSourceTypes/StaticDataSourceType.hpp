@@ -29,7 +29,7 @@ using StaticDataSourceTypePtr = std::shared_ptr<StaticDataSourceType>;
  */
 class StaticDataSourceType : public PhysicalSourceType {
 
-public:
+  public:
     /**
      * @brief Factory method of StaticDataSourceType
       * @param sourceType the type of the source
@@ -70,9 +70,9 @@ public:
                                   uint64_t taskQueueId);
 
     std::string pathTableFile;
-    uint64_t numBuffersToProcess;   // todo not used right now [#2493]
+    uint64_t numBuffersToProcess;// todo not used right now [#2493]
     SourceMode::Value sourceMode;
-    uint64_t taskQueueId;            // todo not used right now [#2493]
+    uint64_t taskQueueId;// todo not used right now [#2493]
 };
-}// namespace NES
+}// namespace NES::Experimental
 #endif// NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_

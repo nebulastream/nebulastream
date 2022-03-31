@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -44,7 +44,7 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         coConf = CoordinatorConfiguration::create();
         wrkConf = WorkerConfiguration::create();
-        coConf->rpcPort=(*rpcCoordinatorPort);
+        coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;
         wrkConf->coordinatorPort = *rpcCoordinatorPort;
     }

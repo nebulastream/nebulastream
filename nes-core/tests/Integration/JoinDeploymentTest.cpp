@@ -14,10 +14,10 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -48,7 +48,6 @@ class JoinDeploymentTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("JoinDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup JoinDeploymentTest test class.");
     }
-
 };
 
 /**

@@ -18,8 +18,7 @@
 
 namespace NES::Experimental::MaterializedView {
 
-MaterializedViewSinkDescriptor::MaterializedViewSinkDescriptor(uint64_t viewId)
-    : viewId(viewId) {
+MaterializedViewSinkDescriptor::MaterializedViewSinkDescriptor(uint64_t viewId) : viewId(viewId) {
     NES_ASSERT(this->viewId > 0, "invalid materialized view id");
 }
 

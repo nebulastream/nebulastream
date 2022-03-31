@@ -108,8 +108,8 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @param operatorNode current operator
     */
     OperatorNodePtr getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
-                                                     SchemaPtr schema,
-                                                     std::vector<OperatorNodePtr> children);
+                                              SchemaPtr schema,
+                                              std::vector<OperatorNodePtr> children);
 
     /**
     * @brief Lowers a cep iteration operator
@@ -122,4 +122,4 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_

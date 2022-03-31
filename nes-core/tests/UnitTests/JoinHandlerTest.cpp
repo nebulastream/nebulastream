@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 #include <map>
 #include <vector>

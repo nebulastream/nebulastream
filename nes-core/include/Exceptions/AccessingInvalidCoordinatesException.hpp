@@ -20,9 +20,9 @@ namespace NES {
  * @brief this exception is thrown in case of an attempt to access the coordinates of a GeographicalLocation object which does
  * not represent a valid location
  */
-class AccessingInvalidCoordinatesException : public std::exception{
-    const char* what () const noexcept;
+class AccessingInvalidCoordinatesException : public std::exception {
+    const char* what() const noexcept;
 };
-}
+}// namespace NES
 
 #endif//NES_ACCESSINGINVALIDCOORDINATESEXCEPTION_H

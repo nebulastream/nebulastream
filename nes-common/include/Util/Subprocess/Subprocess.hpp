@@ -47,7 +47,7 @@ class Subprocess {
      * Method to get the pid of a process
      * @retun pid
      */
-    uint64_t getPid(){return pid;};
+    uint64_t getPid() { return pid; };
 
   private:
     /**
@@ -71,4 +71,4 @@ class Subprocess {
 
 }// namespace NES::Util
 
-#endif  // NES_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
+#endif// NES_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_

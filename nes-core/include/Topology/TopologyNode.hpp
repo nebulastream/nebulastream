@@ -15,12 +15,12 @@
 #ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 #define NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
+#include <Common/GeographicalLocation.hpp>
 #include <Nodes/Node.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <any>
-#include <optional>
-#include <Common/GeographicalLocation.hpp>
 #include <map>
+#include <optional>
 
 namespace NES {
 class TopologyNode;
@@ -195,4 +195,4 @@ class TopologyNode : public Node {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
+#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_

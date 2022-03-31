@@ -30,15 +30,15 @@ using MaterializedViewPtr = std::shared_ptr<MaterializedView>;
  */
 class MaterializedView {
 
-public:
+  public:
     /// @brief constructor
-    MaterializedView(uint64_t id) : id(id) {};
+    MaterializedView(uint64_t id) : id(id){};
 
     /// @brief default deconstructor
     virtual ~MaterializedView() = default;
 
     /// @brief returns the materialized view id
-    uint64_t getId() {return id;}
+    uint64_t getId() { return id; }
 
     /// @brief writes a data tuple to the view
     virtual bool writeData(Runtime::TupleBuffer buffer) = 0;
@@ -49,9 +49,9 @@ public:
     // @brief clear the materialized view
     virtual void clear() = 0;
 
-protected:
+  protected:
     uint64_t id;
 
-}; // class MaterializedView
-} // namespace NES::Experimental::MaterializedView
-#endif  // NES_INCLUDE_VIEWS_MATERIALIZEDVIEW_HPP_
+};// class MaterializedView
+}// namespace NES::Experimental::MaterializedView
+#endif// NES_INCLUDE_VIEWS_MATERIALIZEDVIEW_HPP_

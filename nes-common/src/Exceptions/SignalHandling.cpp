@@ -30,7 +30,8 @@ static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     if (globalErrorListeners.empty()) {
-        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what() << "] with stacktrace=\n"
+        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what()
+                  << "] with stacktrace=\n"
                   << stacktrace << std::endl;
     }
     for (auto& listener : globalErrorListeners) {
@@ -44,7 +45,8 @@ void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&
 void invokeErrorHandlers(int signal, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     if (globalErrorListeners.empty()) {
-        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << strerror(errno) << "] with stacktrace=\n"
+        std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << strerror(errno)
+                  << "] with stacktrace=\n"
                   << stacktrace << std::endl;
     }
     for (auto& listener : globalErrorListeners) {

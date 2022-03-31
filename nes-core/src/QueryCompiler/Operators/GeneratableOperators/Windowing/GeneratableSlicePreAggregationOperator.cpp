@@ -20,11 +20,12 @@
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId id,
-                                                                      SchemaPtr inputSchema,
-                                                                      SchemaPtr outputSchema,
-                                                                      Windowing::WindowOperatorHandlerPtr operatorHandler,
-                                                                      std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::WindowOperatorHandlerPtr operatorHandler,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableSlicePreAggregationOperator>(
         GeneratableSlicePreAggregationOperator(id,
                                                std::move(inputSchema),
@@ -33,10 +34,11 @@ GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId
                                                std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(SchemaPtr inputSchema,
-                                                                      SchemaPtr outputSchema,
-                                                                      Windowing::WindowOperatorHandlerPtr operatorHandler,
-                                                                      std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::WindowOperatorHandlerPtr operatorHandler,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),

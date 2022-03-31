@@ -21,13 +21,13 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/LambdaSource.hpp>
+#include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
-#include <Sources/StaticDataSource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
+#include <Sources/StaticDataSource.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Sources/MaterializedViewSource.hpp>
 #include <chrono>
 
 #ifdef ENABLE_OPC_BUILD
@@ -147,20 +147,21 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                           successors);
 }
 
-DataSourcePtr Experimental::createStaticDataSource(const SchemaPtr& schema,
-                                 const std::string pathTableFile,
-                                 const Runtime::BufferManagerPtr& bufferManager,
-                                 const Runtime::QueryManagerPtr& queryManager,
-                                 OperatorId operatorId,
-                                 size_t numSourceLocalBuffers,
-                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+DataSourcePtr
+Experimental::createStaticDataSource(const SchemaPtr& schema,
+                                     const std::string pathTableFile,
+                                     const Runtime::BufferManagerPtr& bufferManager,
+                                     const Runtime::QueryManagerPtr& queryManager,
+                                     OperatorId operatorId,
+                                     size_t numSourceLocalBuffers,
+                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<Experimental::StaticDataSource>(schema,
-                                         pathTableFile,
-                                          bufferManager,
-                                          queryManager,
-                                          operatorId,
-                                          numSourceLocalBuffers,
-                                          successors);
+                                                            pathTableFile,
+                                                            bufferManager,
+                                                            queryManager,
+                                                            operatorId,
+                                                            numSourceLocalBuffers,
+                                                            successors);
 }
 
 DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
@@ -302,7 +303,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     view);
 }
 
-} // namespace Experimental::MaterializedView
+}// namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema,

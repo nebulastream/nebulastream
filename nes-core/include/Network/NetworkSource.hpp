@@ -100,9 +100,7 @@ class NetworkSource : public DataSource {
 
     bool bind();
 
-    friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) {
-        return lhs.nesPartition < rhs.nesPartition;
-    }
+    friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
     NetworkManagerPtr networkManager;
@@ -115,4 +113,4 @@ class NetworkSource : public DataSource {
 
 }// namespace NES::Network
 
-#endif  // NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#endif// NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_

@@ -345,7 +345,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         bufferManager->destroy();
     }
     stateManager->destroy();
-    nesWorker.reset(); // break cycle
+    nesWorker.reset();// break cycle
     return !withError;
 }
 

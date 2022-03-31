@@ -20,12 +20,12 @@
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr
-GeneratableKeyedSliceMergingOperator::create(OperatorId id,
-                                             SchemaPtr inputSchema,
-                                             SchemaPtr outputSchema,
-                                             Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                             std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+GeneratableOperatorPtr GeneratableKeyedSliceMergingOperator::create(
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableKeyedSliceMergingOperator>(
         GeneratableKeyedSliceMergingOperator(id,
                                              std::move(inputSchema),
@@ -34,11 +34,11 @@ GeneratableKeyedSliceMergingOperator::create(OperatorId id,
                                              std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr
-GeneratableKeyedSliceMergingOperator::create(SchemaPtr inputSchema,
-                                             SchemaPtr outputSchema,
-                                             Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                             std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+GeneratableOperatorPtr GeneratableKeyedSliceMergingOperator::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),

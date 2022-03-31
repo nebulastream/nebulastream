@@ -63,4 +63,4 @@ class SliceMetaData {
 };
 
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_RUNTIME_SLICEMETADATA_HPP_
+#endif// NES_INCLUDE_WINDOWING_RUNTIME_SLICEMETADATA_HPP_

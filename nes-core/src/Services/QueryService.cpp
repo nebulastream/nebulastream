@@ -48,9 +48,9 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
 }
 
 QueryId QueryService::validateAndQueueAddRequest(const std::string& queryString,
-                                                              const std::string& placementStrategyName,
-                                                              const FaultToleranceType faultTolerance,
-                                                              const LineageType lineage) {
+                                                 const std::string& placementStrategyName,
+                                                 const FaultToleranceType faultTolerance,
+                                                 const LineageType lineage) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -93,11 +93,10 @@ QueryId QueryService::validateAndQueueAddRequest(const std::string& queryString,
 }
 
 QueryId QueryService::addQueryRequest(const std::string& queryString,
-                                       const QueryPlanPtr& queryPlan,
-                                       const std::string& placementStrategyName,
-                                       const FaultToleranceType faultTolerance,
-                                       const LineageType lineage) {
-
+                                      const QueryPlanPtr& queryPlan,
+                                      const std::string& placementStrategyName,
+                                      const FaultToleranceType faultTolerance,
+                                      const LineageType lineage) {
 
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     auto promise = std::make_shared<std::promise<QueryId>>();
@@ -122,7 +121,8 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
             throw InvalidArgumentException("placementStrategyName", placementStrategyName);
         }
 
-        QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
+        QueryCatalogEntryPtr queryCatalogEntry =
+            queryCatalogService->createNewEntry(queryString, queryPlan, placementStrategyName);
         if (queryCatalogEntry) {
             auto request = RunQueryRequest::create(queryPlan, placementStrategy);
             queryRequestQueue->add(request);

@@ -42,7 +42,9 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
         NES_INFO("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest class." << std::endl; }
+    static void TearDownTestCase() {
+        std::cout << "UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest class." << std::endl;
+    }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
@@ -54,7 +56,9 @@ class UserDefinedMonitoringTest : public Testing::NESBaseTest {
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() override { std::cout << "UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest test case." << std::endl; }
+    void TearDown() override {
+        std::cout << "UserDefinedMonitoringTest: Tear down UserDefinedMonitoringTest test case." << std::endl;
+    }
 };
 
 TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {

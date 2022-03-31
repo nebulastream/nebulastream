@@ -70,4 +70,4 @@ class Request : public std::enable_shared_from_this<Request> {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_
+#endif// NES_INCLUDE_WORKQUEUES_REQUESTTYPES_REQUEST_HPP_

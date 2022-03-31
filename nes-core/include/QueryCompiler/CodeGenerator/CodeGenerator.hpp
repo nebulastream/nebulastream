@@ -150,13 +150,13 @@ class CodeGenerator {
      * @param aggregationFunctions the aggregation functions
      * @return
      */
-    virtual uint64_t
-    generateKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                SchemaPtr windowOutputSchema,
-                                                PipelineContextPtr context,
-                                                uint64_t id,
-                                                uint64_t windowOperatorIndex,
-                                                std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregationFunctions) = 0;
+    virtual uint64_t generateKeyedThreadLocalPreAggregationSetup(
+        Windowing::LogicalWindowDefinitionPtr window,
+        SchemaPtr windowOutputSchema,
+        PipelineContextPtr context,
+        uint64_t id,
+        uint64_t windowOperatorIndex,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregationFunctions) = 0;
 
     /**
      * @brief Code generation for the thread local pre aggregation for keyed windows.
@@ -186,7 +186,6 @@ class CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
-
     /**
      * @brief Function to append a slice to the slice store.
      * @param context The context of the current pipeline.
@@ -194,7 +193,6 @@ class CodeGenerator {
      * @return
      */
     virtual bool generateCodeForSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
-
 
     /**
      * @brief Code generation for the emitting of keyed tumbling windows.

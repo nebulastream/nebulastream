@@ -41,12 +41,12 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      * @param operatorId the valid id of the source
      */
     explicit StaticDataSource(SchemaPtr schema,
-                          std::string pathTableFile,
-                          ::NES::Runtime::BufferManagerPtr bufferManager,
-                          ::NES::Runtime::QueryManagerPtr queryManager,
-                          OperatorId operatorId,
-                          size_t numSourceLocalBuffers,
-                          std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
+                              std::string pathTableFile,
+                              ::NES::Runtime::BufferManagerPtr bufferManager,
+                              ::NES::Runtime::QueryManagerPtr queryManager,
+                              OperatorId operatorId,
+                              size_t numSourceLocalBuffers,
+                              std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
@@ -81,9 +81,9 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
     uint64_t currentPositionInBytes;
     uint64_t tupleSizeInBytes;
     uint64_t bufferSize;
-    size_t numTuples; // in table
+    size_t numTuples;// in table
 
-    void fillBuffer(::NES::Runtime::TupleBuffer &buffer);
+    void fillBuffer(::NES::Runtime::TupleBuffer& buffer);
 };
 
 using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;

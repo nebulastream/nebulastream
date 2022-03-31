@@ -39,16 +39,16 @@ class GeneratableMaxAggregation : public GeneratableWindowAggregation {
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,
                             RecordHandlerPtr recordHandler) override;
-   /**
+    /**
      * @brief Generate code for combine function to combine multiple pre-aggregates to each other
      * @param currentCode
      * @param partialValueRef1
      * @param partialValueRef2
      */
-    void compileCombine(CompoundStatementPtr currentCode,
-                        VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) override;
+    void
+    compileCombine(CompoundStatementPtr currentCode, VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) override;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_

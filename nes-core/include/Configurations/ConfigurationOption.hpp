@@ -17,10 +17,10 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <any>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <typeinfo>
-#include <memory>
 #include <utility>
 
 namespace NES {
@@ -167,7 +167,6 @@ const std::string PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION = "performDistributedW
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD = "distributedWindowChildThreshold";
 const std::string DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD = "distributedWindowCombinerThreshold";
 
-
 //Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
@@ -246,4 +245,4 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 }// namespace Configurations
 }// namespace NES
 
-#endif  // NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
+#endif// NES_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_

@@ -69,4 +69,4 @@ enum BinaryOperatorType {
 const std::string toString(const BinaryOperatorType& type);
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_OPERATORTYPES_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_OPERATORTYPES_HPP_

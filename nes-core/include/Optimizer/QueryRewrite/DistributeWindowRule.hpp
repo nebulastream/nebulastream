@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
 
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES {
 class QueryPlan;
@@ -108,7 +108,6 @@ class DistributeWindowRule : public BaseRewriteRule {
     uint64_t windowDistributionChildrenThreshold;
     // The number of child nodes from which on we will introduce combiner
     uint64_t windowDistributionCombinerThreshold;
-
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_

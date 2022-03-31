@@ -18,11 +18,11 @@
 
 namespace NES::Client {
 
-    class ClientException : public Exceptions::RuntimeException {
-      public:
-        explicit ClientException(const std::string& message);
-    };
+class ClientException : public Exceptions::RuntimeException {
+  public:
+    explicit ClientException(const std::string& message);
+};
 
-}
+}// namespace NES::Client
 
 #endif//NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_

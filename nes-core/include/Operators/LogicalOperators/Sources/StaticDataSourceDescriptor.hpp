@@ -63,10 +63,10 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      */
     std::string getPathTableFile() const;
 
-
     SourceDescriptorPtr copy() override;
+
   private:
     std::string pathTableFile;
 };
-}// namespace NES
+}// namespace NES::Experimental
 #endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_TABLE_SOURCE_DESCRIPTOR_HPP_

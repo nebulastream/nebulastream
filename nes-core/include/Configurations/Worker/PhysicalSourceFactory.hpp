@@ -38,8 +38,7 @@ class PhysicalSourceFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static PhysicalSourcePtr createFromString(std::string identifier,
-                                              std::map<std::string, std::string>& inputParams);
+    static PhysicalSourcePtr createFromString(std::string identifier, std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief create physical source config with yaml file
@@ -47,8 +46,6 @@ class PhysicalSourceFactory {
      * @return physical source config object
      */
     static PhysicalSourcePtr createFromYaml(Yaml::Node& yamlConfig);
-
-
 
   private:
     /**

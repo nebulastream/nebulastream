@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <CoordinatorRPCService.pb.h>
 #include <Common/GeographicalLocation.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <CoordinatorRPCService.pb.h>
+#include <Exceptions/AccessingInvalidCoordinatesException.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
-#include <Exceptions/AccessingInvalidCoordinatesException.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -87,9 +87,7 @@ double GeographicalLocation::getLongitude() const {
     return longitude;
 }
 
-bool GeographicalLocation::isValid() const{
-    return checkValidityOfCoordinates(latitude, longitude);
-}
+bool GeographicalLocation::isValid() const { return checkValidityOfCoordinates(latitude, longitude); }
 
 bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);

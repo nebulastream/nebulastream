@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -22,8 +23,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

@@ -164,4 +164,4 @@ class MQTTSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption inputFormat;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_

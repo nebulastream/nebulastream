@@ -92,7 +92,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, const std::vector<Execut
         auto grpcPort = nesNode->getGrpcPort();
         std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("QueryUndeploymentPhase::markQueryForStop at execution node with id=" << executionNode->getId()
-                                                                                 << " and IP=" << rpcAddress);
+                                                                                        << " and IP=" << rpcAddress);
         bool success = workerRPCClient->stopQueryAsync(rpcAddress, queryId, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryUndeploymentPhase::markQueryForStop " << queryId << " to " << rpcAddress << " successful");

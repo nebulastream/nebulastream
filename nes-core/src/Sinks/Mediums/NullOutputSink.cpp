@@ -30,9 +30,7 @@ NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) {
-    return true;
-}
+bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) { return true; }
 
 std::string NullOutputSink::toString() const {
     std::stringstream ss;

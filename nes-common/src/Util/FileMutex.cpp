@@ -14,8 +14,8 @@
 
 #include <Util/FileMutex.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <errno.h>
 #include <cstring>
+#include <errno.h>
 #include <unistd.h>
 #if defined(linux) || defined(__APPLE__)
 #include <fcntl.h>

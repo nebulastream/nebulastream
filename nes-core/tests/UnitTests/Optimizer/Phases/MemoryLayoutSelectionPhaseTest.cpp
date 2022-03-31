@@ -16,8 +16,9 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -39,7 +40,6 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 using namespace NES;
 using NES::Runtime::TupleBuffer;
@@ -75,8 +75,12 @@ class MemoryLayoutSelectionPhaseTest : public Testing::TestWithErrorHandling<tes
 
 class TestSink : public SinkMedium {
   public:
-    TestSink(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager, uint32_t numOfProducers = 1)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, numOfProducers, 0, 0), expectedBuffer(expectedBuffer){};
+    TestSink(uint64_t expectedBuffer,
+             const SchemaPtr& schema,
+             const Runtime::BufferManagerPtr& bufferManager,
+             uint32_t numOfProducers = 1)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nullptr, numOfProducers, 0, 0),
+          expectedBuffer(expectedBuffer){};
 
     static std::shared_ptr<TestSink>
     create(uint64_t expectedBuffer, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager) {

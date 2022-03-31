@@ -16,6 +16,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
@@ -33,7 +34,6 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

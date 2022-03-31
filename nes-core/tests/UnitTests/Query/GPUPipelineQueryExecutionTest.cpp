@@ -72,10 +72,12 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
                                      ->addField("test$value", BasicType::INT64);
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr sourceConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(sourceConf);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
     }
 
     /* Will be called before a test is executed. */

@@ -22,12 +22,12 @@
 #include <Eigen/Dense>
 #include <gtest/gtest.h>
 
+#include <NesBaseTest.hpp>
+#include <Util/TestUtils.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <NesBaseTest.hpp>
-#include <Util/TestUtils.hpp>
 namespace NES {
 
 class AdaptiveKFTest : public Testing::NESBaseTest {
@@ -52,14 +52,15 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
         dataPort = Testing::NESBaseTest::getAvailablePort();
         sourceConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", UINT32);
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->dataPort.setValue(*dataPort);
         workerConfiguration->physicalSources.add(sourceConf);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
-        auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                              .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                              .build();
 
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
         // Fake measurements for y with noise

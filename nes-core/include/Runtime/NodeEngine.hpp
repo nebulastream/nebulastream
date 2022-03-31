@@ -298,20 +298,20 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * and initialize QueryManager, BufferManager and ThreadPool
      */
     explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
-               HardwareManagerPtr&&,
-               std::vector<BufferManagerPtr>&&,
-               QueryManagerPtr&&,
-               BufferStoragePtr&&,
-               std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
-               Network::PartitionManagerPtr&&,
-               QueryCompilation::QueryCompilerPtr&&,
-               StateManagerPtr&&,
-               std::weak_ptr<AbstractQueryStatusListener>&&,
-               NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
-               uint64_t nodeEngineId,
-               uint64_t numberOfBuffersInGlobalBufferManager,
-               uint64_t numberOfBuffersInSourceLocalBufferPool,
-               uint64_t numberOfBuffersPerWorker);
+                        HardwareManagerPtr&&,
+                        std::vector<BufferManagerPtr>&&,
+                        QueryManagerPtr&&,
+                        BufferStoragePtr&&,
+                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+                        Network::PartitionManagerPtr&&,
+                        QueryCompilation::QueryCompilerPtr&&,
+                        StateManagerPtr&&,
+                        std::weak_ptr<AbstractQueryStatusListener>&&,
+                        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
+                        uint64_t nodeEngineId,
+                        uint64_t numberOfBuffersInGlobalBufferManager,
+                        uint64_t numberOfBuffersInSourceLocalBufferPool,
+                        uint64_t numberOfBuffersPerWorker);
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;

@@ -53,9 +53,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     struct Deleter {
-        void operator()(const char* ptr) {
-            std::free(const_cast<char*>(ptr));
-        }
+        void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
 
     auto path =
@@ -66,11 +64,11 @@ CSVSource::CSVSource(SchemaPtr schema,
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
     }
 
-    input.open(path);
+    input.open(path.get());
     if(!(input.is_open() && input.good())) {
-        throw Exceptions::RuntimeException("Cannot open file: " + std::string(path));
+        throw Exceptions::RuntimeException("Cannot open file: " + std::string(path.get()));
     }
-    NES_DEBUG("CSVSource: Opening path " << path);
+    NES_DEBUG("CSVSource: Opening path " << path.get());
     input.seekg(0, std::ifstream::end);
     if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1) {
         throw Exceptions::RuntimeException("CSVSource::CSVSource File " + filePath + " is corrupted");

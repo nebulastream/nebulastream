@@ -11,11 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
 #include <Runtime/InMemoryLineageManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <thread>
 
 namespace NES {

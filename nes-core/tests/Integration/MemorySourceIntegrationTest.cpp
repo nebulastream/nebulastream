@@ -12,20 +12,20 @@
     limitations under the License.
 */
 
+#include "../util/NesBaseTest.hpp"
 #include <API/QueryAPI.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 #include <iostream>
 
 namespace NES {
@@ -283,7 +283,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect+1, 0, "interval");
+    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, "interval");
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

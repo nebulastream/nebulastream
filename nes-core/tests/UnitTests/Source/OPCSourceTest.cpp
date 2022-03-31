@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 #ifdef ENABLE_OPC_BUILD
 #include <Catalogs/PhysicalSourceConfig.hpp>
 #include <cstring>
@@ -55,7 +55,9 @@ class OPCSourceTest : public Testing::TestWithErrorHandling<testing::Test> {
         PhysicalSourceConfigPtr conf = PhysicalSourceConfig::createEmpty();
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(conf);
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();

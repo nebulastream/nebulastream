@@ -14,7 +14,6 @@
 
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 #include "../../tests/util/MetricValidator.hpp"
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>

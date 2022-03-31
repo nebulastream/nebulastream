@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 #define NES_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
 
+#include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationType.hpp>
@@ -23,7 +24,6 @@
 #include <any>
 #include <atomic>
 #include <memory>
-#include <Plans/Query/QueryId.hpp>
 namespace NES::Runtime {
 
 class Reconfigurable;
@@ -49,8 +49,8 @@ class ReconfigurationMessage {
                                     ReconfigurationType type,
                                     ReconfigurablePtr instance = nullptr,
                                     std::any&& userdata = nullptr)
-        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), queryId(queryId), parentPlanId(parentPlanId),
-          userdata(std::move(userdata)) {
+        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), queryId(queryId),
+          parentPlanId(parentPlanId), userdata(std::move(userdata)) {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
@@ -70,7 +70,7 @@ class ReconfigurationMessage {
                                     ReconfigurablePtr instance,
                                     std::any&& userdata = nullptr,
                                     bool blocking = false)
-        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), queryId(queryId),parentPlanId(parentPlanId),
+        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), queryId(queryId), parentPlanId(parentPlanId),
           userdata(std::move(userdata)) {
         NES_ASSERT(this->instance, "invalid instance");
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
@@ -102,8 +102,8 @@ class ReconfigurationMessage {
      * @param that
      */
     ReconfigurationMessage(const ReconfigurationMessage& that)
-        : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr),
-          queryId(that.queryId), parentPlanId(that.parentPlanId), userdata(that.userdata) {
+        : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr), queryId(that.queryId),
+          parentPlanId(that.parentPlanId), userdata(that.userdata) {
         // nop
     }
 

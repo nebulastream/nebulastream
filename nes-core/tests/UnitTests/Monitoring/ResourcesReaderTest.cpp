@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 

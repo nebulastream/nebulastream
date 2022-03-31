@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_
 #define NES_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_
 
-#include <memory>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -52,7 +52,8 @@ class TopologySpecificQueryRewritePhase {
      * @param configuration for the optimizer
      * @return TopologySpecificQueryRewritePhasePtr
      */
-    static TopologySpecificQueryRewritePhasePtr create(SourceCatalogPtr sourceCatalog, Configurations::OptimizerConfiguration configuration);
+    static TopologySpecificQueryRewritePhasePtr create(SourceCatalogPtr sourceCatalog,
+                                                       Configurations::OptimizerConfiguration configuration);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -62,10 +63,11 @@ class TopologySpecificQueryRewritePhase {
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
   private:
-    explicit TopologySpecificQueryRewritePhase(SourceCatalogPtr sourceCatalog,  Configurations::OptimizerConfiguration configuration);
+    explicit TopologySpecificQueryRewritePhase(SourceCatalogPtr sourceCatalog,
+                                               Configurations::OptimizerConfiguration configuration);
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     DistributeWindowRulePtr distributeWindowRule;
     DistributeJoinRulePtr distributeJoinRule;
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_

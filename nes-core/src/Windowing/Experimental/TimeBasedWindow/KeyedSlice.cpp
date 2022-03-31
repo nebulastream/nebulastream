@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <Util/Experimental/HashMap.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
 namespace NES::Windowing::Experimental {

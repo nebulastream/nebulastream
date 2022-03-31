@@ -18,13 +18,13 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 
@@ -126,7 +126,8 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Unatisfiable Query with later added filters");
 
-    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 100).filter(Attribute("value") < 10).filter(Attribute("id") == 42).filter(Attribute("value") < 42); )";
+    std::string queryString =
+        R"(Query::from("default_logical").filter(Attribute("id") > 100).filter(Attribute("value") < 10).filter(Attribute("id") == 42).filter(Attribute("value") < 42); )";
     TestForException(queryString);
 }
 

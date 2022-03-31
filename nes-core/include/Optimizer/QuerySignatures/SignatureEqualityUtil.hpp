@@ -63,4 +63,4 @@ class SignatureEqualityUtil {
     uint64_t counter;
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_UTILS_SIGNATUREEQUALITYUTIL_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_UTILS_SIGNATUREEQUALITYUTIL_HPP_

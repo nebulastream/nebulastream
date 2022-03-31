@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -38,8 +38,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

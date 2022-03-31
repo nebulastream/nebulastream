@@ -23,4 +23,4 @@
 using QuerySubPlanId = uint64_t;
 static constexpr uint64_t INVALID_QUERY_SUB_PLAN_ID = 0;
 
-#endif  // NES_INCLUDE_PLANS_QUERY_QUERYSUBPLANID_HPP_
+#endif// NES_INCLUDE_PLANS_QUERY_QUERYSUBPLANID_HPP_

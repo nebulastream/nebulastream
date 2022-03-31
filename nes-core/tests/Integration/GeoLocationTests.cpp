@@ -14,19 +14,19 @@
 
 #include <iostream>
 
+#include <../util/NesBaseTest.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/GeographicalLocation.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
+#include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <../util/NesBaseTest.hpp>
-#include <Common/GeographicalLocation.hpp>
-#include <Exceptions/CoordinatesOutOfRangeException.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 
 using namespace std;
 namespace NES {
@@ -58,14 +58,14 @@ TEST_F(GeoLocationTests, testFieldNodes) {
 
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    wrkConf1->coordinatorPort=(port);
+    wrkConf1->coordinatorPort = (port);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
 
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
-    wrkConf2->coordinatorPort=(port);
+    wrkConf2->coordinatorPort = (port);
     wrkConf2->locationCoordinates.setValue(GeographicalLocation::fromString(location2));
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
@@ -73,7 +73,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
 
     cout << "start worker 3" << endl;
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
-    wrkConf3->coordinatorPort=(port);
+    wrkConf3->coordinatorPort = (port);
     wrkConf3->locationCoordinates.setValue(GeographicalLocation::fromString(location3));
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
@@ -81,7 +81,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
 
     cout << "start worker 4" << endl;
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
-    wrkConf4->coordinatorPort=(port);
+    wrkConf4->coordinatorPort = (port);
     wrkConf4->locationCoordinates.setValue(GeographicalLocation::fromString(location4));
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ false);
@@ -117,7 +117,6 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
     TopologyNodePtr node3 = topology->findNodeWithId(wrk3->getWorkerId());
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
-
 
     //checking coordinates
     EXPECT_EQ(node2->getCoordinates().value(), GeographicalLocation(52.53736960143897, 13.299134894776092));
@@ -174,9 +173,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
 TEST_F(GeoLocationTests, testLocationFromCmd) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {
-        "--locationCoordinates=23.88,-3.4"
-    };
+    std::string argv[] = {"--locationCoordinates=23.88,-3.4"};
     int argc = 1;
 
     std::map<string, string> commandLineParams;
@@ -193,9 +190,7 @@ TEST_F(GeoLocationTests, testLocationFromCmd) {
 
 TEST_F(GeoLocationTests, testInvalidLocationFromCmd) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {
-        "--locationCoordinates=230.88,-3.4"
-    };
+    std::string argv[] = {"--locationCoordinates=230.88,-3.4"};
     int argc = 1;
 
     std::map<string, string> commandLineParams;
@@ -214,7 +209,5 @@ TEST_F(GeoLocationTests, DISABLED_testLocationFromConfig) {
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyFieldNode.yaml");
     EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), GeographicalLocation(45, -30));
 }
-
-
 
 }// namespace NES

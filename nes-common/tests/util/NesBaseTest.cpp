@@ -17,12 +17,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <fcntl.h>
 #include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <random>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <fstream>
 
 namespace NES::Testing {
 
@@ -208,8 +208,7 @@ class NesPortDispatcher {
 
 static NesPortDispatcher portDispatcher(8000, 10000);
 
-NESBaseTest::NESBaseTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID()) {
-}
+NESBaseTest::NESBaseTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID()) {}
 
 void NESBaseTest::SetUp() {
     Base::SetUp();

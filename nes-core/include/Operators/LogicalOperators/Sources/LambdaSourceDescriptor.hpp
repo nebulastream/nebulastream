@@ -110,6 +110,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     * @return
     */
     uint64_t getTaskQueueId() const;
+
   private:
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
@@ -120,4 +121,4 @@ class LambdaSourceDescriptor : public SourceDescriptor {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_

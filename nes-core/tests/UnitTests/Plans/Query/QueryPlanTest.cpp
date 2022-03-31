@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -43,8 +43,7 @@ class QueryPlanTest : public Testing::TestWithErrorHandling<testing::Test> {
 
 TEST_F(QueryPlanTest, testHasOperator) {
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorNodePtr op1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
+    LogicalOperatorNodePtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
     bool exists = queryPlan->hasOperatorWithId(op1->getId());
     EXPECT_FALSE(exists);
 
@@ -54,8 +53,7 @@ TEST_F(QueryPlanTest, testHasOperator) {
 }
 
 TEST_F(QueryPlanTest, testLeafOperators) {
-    LogicalOperatorNodePtr op1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
+    LogicalOperatorNodePtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
     QueryPlanPtr queryPlan = QueryPlan::create(op1);
     LogicalOperatorNodePtr op2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(op2);

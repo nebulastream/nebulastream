@@ -14,10 +14,10 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -29,11 +29,11 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <Services/QueryCatalogService.hpp>
 
 #include <iostream>
 
@@ -60,7 +60,6 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -271,7 +270,6 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
-
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -472,10 +470,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     NES_DEBUG("wakeup");
 
-    ifstream my_file(getTestResourceFolder() /  "outputLog.out");
+    ifstream my_file(getTestResourceFolder() / "outputLog.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs(getTestResourceFolder() /  "outputLog.out");
+    std::ifstream ifs(getTestResourceFolder() / "outputLog.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
@@ -766,10 +764,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    ifstream my_file(getTestResourceFolder() /  "outputLog.out");
+    ifstream my_file(getTestResourceFolder() / "outputLog.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs(getTestResourceFolder() /  "outputLog.out");
+    std::ifstream ifs(getTestResourceFolder() / "outputLog.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
@@ -933,10 +931,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    ifstream my_file(getTestResourceFolder() /  "outputLog.out");
+    ifstream my_file(getTestResourceFolder() / "outputLog.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs(getTestResourceFolder() /  "outputLog.out");
+    std::ifstream ifs(getTestResourceFolder() / "outputLog.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
@@ -981,7 +979,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->numWorkerThreads = workerThreads;
-    workerConfig1->coordinatorPort = *rpcCoordinatorPort;;
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    ;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setGatheringInterval(0);

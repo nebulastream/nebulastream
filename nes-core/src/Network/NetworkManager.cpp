@@ -26,8 +26,7 @@ NetworkManager::NetworkManager(uint64_t nodeEngineId,
                                ExchangeProtocol&& exchangeProtocol,
                                const Runtime::BufferManagerPtr& bufferManager,
                                uint16_t numServerThread)
-    : nodeLocation(),
-      server(std::make_unique<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
+    : nodeLocation(), server(std::make_unique<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
       exchangeProtocol(std::move(exchangeProtocol)), partitionManager(this->exchangeProtocol.getPartitionManager()) {
 
     if (bool const success = server->start(); success) {
@@ -64,13 +63,9 @@ PartitionRegistrationStatus NetworkManager::isPartitionProducerRegistered(const 
     return partitionManager->getProducerRegistrationStatus(nesPartition);
 }
 
-NodeLocation NetworkManager::getServerLocation() const {
-    return nodeLocation;
-}
+NodeLocation NetworkManager::getServerLocation() const { return nodeLocation; }
 
-uint16_t NetworkManager::getServerDataPort() const {
-    return server->getServerPort();
-}
+uint16_t NetworkManager::getServerDataPort() const { return server->getServerPort(); }
 
 bool NetworkManager::registerSubpartitionConsumer(const NesPartition& nesPartition,
                                                   const NodeLocation& senderLocation,

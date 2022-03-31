@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <thread>
 #include <unistd.h>
 

@@ -32,7 +32,6 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
  */
 class LogicalSource {
   public:
-
     static LogicalSourcePtr create(const std::string& logicalSourceName, const SchemaPtr& schema);
 
     /**
@@ -52,4 +51,4 @@ class LogicalSource {
     SchemaPtr schema;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_

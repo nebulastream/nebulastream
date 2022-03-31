@@ -82,7 +82,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                    << " check key=" << rightHashTable.first
                                                                    << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
-                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN){
+                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN) {
                         if (leftHashTable.first == rightHashTable.first) {
 
                             NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
@@ -316,4 +316,4 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     uint64_t id;
 };
 }// namespace NES::Join
-#endif  // NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_

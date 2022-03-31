@@ -30,6 +30,6 @@ class SystemResourcesReaderFactory {
     static AbstractSystemResourcesReaderPtr getSystemResourcesReader();
 };
 
-}
+}// namespace NES
 
 #endif//NES_SYSTEMRESOURCESREADERFACTORY_HPP

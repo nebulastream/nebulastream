@@ -28,8 +28,8 @@ namespace NES::Client {
 class QueryConfig {
   public:
     explicit QueryConfig(NES::FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                LineageType lineageType = LineageType::NONE,
-                PlacementStrategy::Value placementType = PlacementStrategy::BottomUp);
+                         LineageType lineageType = LineageType::NONE,
+                         PlacementStrategy::Value placementType = PlacementStrategy::BottomUp);
 
     /**
      * @brief Returns the level of fault tolerance.
@@ -72,6 +72,6 @@ class QueryConfig {
     LineageType lineageType;
     PlacementStrategy::Value placementType;
 };
-}// namespace NES
+}// namespace NES::Client
 
 #endif//NES_INCLUDE_CLIENT_QUERYCONFIG_HPP_

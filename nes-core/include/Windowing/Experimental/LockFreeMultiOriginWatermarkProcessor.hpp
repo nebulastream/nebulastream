@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_
 #define NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
@@ -81,6 +80,6 @@ class LockFreeMultiOriginWatermarkProcessor {
     uint64_t currentOrigins = 0;
 };
 
-}
+}// namespace NES::Experimental
 
 #endif//NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_

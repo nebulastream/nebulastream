@@ -85,4 +85,4 @@ class JoinOperatorHandler : public Runtime::Execution::OperatorHandler {
 };
 }// namespace NES::Join
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINOPERATORHANDLER_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINOPERATORHANDLER_HPP_

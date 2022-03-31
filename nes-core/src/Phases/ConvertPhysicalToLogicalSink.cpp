@@ -15,20 +15,20 @@
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSink.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
+#include <Sinks/Mediums/MaterializedViewSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
-#include <Sinks/Mediums/MaterializedViewSink.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -80,10 +80,10 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(const DataS
         NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppendAsBool() << " format "
                                                                                      << fileSink->getSinkFormat());
         return FileSinkDescriptor::create(fileSink->getFilePath(), fileSink->getSinkFormat(), fileSink->getAppendAsString());
-    } else if (sinkType == "MATERIALIZED_VIEW_SINK"){
+    } else if (sinkType == "MATERIALIZED_VIEW_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating materialized view sink");
         Experimental::MaterializedView::MaterializedViewSinkPtr materializedViewSink =
-                std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSink>(dataSink);
+            std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSink>(dataSink);
         return Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(materializedViewSink->getViewId());
     } else {
         NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");

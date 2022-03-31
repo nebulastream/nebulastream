@@ -74,4 +74,4 @@ class PlanJsonGenerator {
     static std::string getOperatorType(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES
-#endif  // NES_INCLUDE_PLANS_UTILS_PLANJSONGENERATOR_HPP_
+#endif// NES_INCLUDE_PLANS_UTILS_PLANJSONGENERATOR_HPP_

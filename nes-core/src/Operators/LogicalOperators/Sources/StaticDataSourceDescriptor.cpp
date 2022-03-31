@@ -19,15 +19,14 @@
 namespace NES::Experimental {
 
 StaticDataSourceDescriptor::StaticDataSourceDescriptor(SchemaPtr schema, std::string pathTableFile)
-: SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)) {}
+    : SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)) {}
 
-std::shared_ptr<StaticDataSourceDescriptor> StaticDataSourceDescriptor::create(const SchemaPtr& schema, std::string pathTableFile) {
+std::shared_ptr<StaticDataSourceDescriptor> StaticDataSourceDescriptor::create(const SchemaPtr& schema,
+                                                                               std::string pathTableFile) {
     NES_ASSERT(schema, "StaticDataSourceDescriptor: Invalid schema passed.");
     return std::make_shared<StaticDataSourceDescriptor>(schema, pathTableFile);
 }
-std::string StaticDataSourceDescriptor::toString() {
-    return "StaticDataSourceDescriptor. pathTableFile: " + pathTableFile;
-}
+std::string StaticDataSourceDescriptor::toString() { return "StaticDataSourceDescriptor. pathTableFile: " + pathTableFile; }
 
 bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<StaticDataSourceDescriptor>()) {
@@ -44,4 +43,4 @@ SourceDescriptorPtr StaticDataSourceDescriptor::copy() {
 }
 
 std::string StaticDataSourceDescriptor::getPathTableFile() const { return pathTableFile; }
-}// namespace NES
+}// namespace NES::Experimental

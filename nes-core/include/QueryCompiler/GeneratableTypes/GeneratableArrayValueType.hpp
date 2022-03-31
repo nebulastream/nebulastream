@@ -52,4 +52,4 @@ class GeneratableArrayValueType final : public GeneratableValueType {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLEARRAYVALUETYPE_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_GENERATABLEARRAYVALUETYPE_HPP_

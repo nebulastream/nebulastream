@@ -23,7 +23,7 @@ bool MigrationType::isValidMigrationType(Value migrationType) {
         case MigrationType::RESTART: return true;
         case MigrationType::MIGRATION_WITH_BUFFERING: return true;
         case MigrationType::MIGRATION_WITHOUT_BUFFERING: return true;
-        default:  return false;
+        default: return false;
     }
 }
 std::string MigrationType::toString(MigrationType::Value migrationType) {
@@ -40,7 +40,7 @@ MigrationType::Value MigrationType::getFromString(const std::string migrationTyp
         return MigrationType::RESTART;
     } else if (migrationType == "migration with buffering") {
         return MigrationType::MIGRATION_WITH_BUFFERING;
-    }   else if (migrationType == "migration without buffering") {
+    } else if (migrationType == "migration without buffering") {
         return MigrationType::MIGRATION_WITHOUT_BUFFERING;
     } else {
         return MigrationType::INVALID;

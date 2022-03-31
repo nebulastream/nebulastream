@@ -55,7 +55,6 @@ class BenchmarkSourceType : public PhysicalSourceType {
 
     uint64_t getGatheringValue() const;
 
-
     GatheringMode::Value getGatheringMode() const;
 
     SourceMode::Value getSourceMode() const;
@@ -103,4 +102,4 @@ class BenchmarkSourceType : public PhysicalSourceType {
     uint64_t taskQueueId;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_

@@ -13,9 +13,9 @@
 */
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <utility>
@@ -47,8 +47,6 @@ std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() 
 
 std::string PipelineExecutionContext::toString() const { return "PipelineContext(queryID:" + std::to_string(queryId); }
 uint64_t PipelineExecutionContext::getNumberOfWorkerThreads() const { return queryManager.lock()->getNumberOfWorkerThreads(); }
-Runtime::BufferManagerPtr PipelineExecutionContext::getBufferManager() const {
-    return queryManager.lock()->getBufferManager();
-}
+Runtime::BufferManagerPtr PipelineExecutionContext::getBufferManager() const { return queryManager.lock()->getBufferManager(); }
 
 }// namespace NES::Runtime::Execution

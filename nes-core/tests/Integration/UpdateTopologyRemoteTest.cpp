@@ -66,18 +66,17 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     auto node1DataPort = getAvailablePort();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->rpcPort = (*node1RpcPort);
-    workerConfig1->dataPort=(*node1DataPort);
+    workerConfig1->dataPort = (*node1DataPort);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
-
     auto node2RpcPort = getAvailablePort();
     auto node2DataPort = getAvailablePort();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig2->rpcPort=(*node2RpcPort);
-    workerConfig2->dataPort=(*node2DataPort);
+    workerConfig2->rpcPort = (*node2RpcPort);
+    workerConfig2->dataPort = (*node2DataPort);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -85,12 +84,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     TopologyPtr topology = crd->getTopology();
 
-//    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // this is the worker inside the coordinator
+    //    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // this is the worker inside the coordinator
     EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node1RpcPort));
     EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-//    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
+    //    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     EXPECT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
@@ -148,7 +147,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     auto node1DataPort = getAvailablePort();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->rpcPort = (*node1RpcPort);
-    workerConfig1->dataPort=(*node1DataPort);
+    workerConfig1->dataPort = (*node1DataPort);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
@@ -157,8 +156,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     auto node2RpcPort = getAvailablePort();
     auto node2DataPort = getAvailablePort();
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
-    workerConfig2->rpcPort=(*node2RpcPort);
-    workerConfig2->dataPort=(*node2DataPort);
+    workerConfig2->rpcPort = (*node2RpcPort);
+    workerConfig2->dataPort = (*node2DataPort);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -166,12 +165,12 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     TopologyPtr topology = crd->getTopology();
 
-//    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // worker inside the coordinator
+    //    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // worker inside the coordinator
     EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node1RpcPort));
     EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-//    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
+    //    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
     EXPECT_TRUE(node1->getGrpcPort() == *node1RpcPort);

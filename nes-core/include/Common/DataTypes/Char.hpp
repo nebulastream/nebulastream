@@ -53,4 +53,4 @@ class Char final : public DataType {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_COMMON_DATATYPES_CHAR_HPP_
+#endif// NES_INCLUDE_COMMON_DATATYPES_CHAR_HPP_

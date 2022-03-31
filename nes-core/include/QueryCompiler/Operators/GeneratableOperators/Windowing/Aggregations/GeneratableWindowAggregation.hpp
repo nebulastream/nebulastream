@@ -59,16 +59,13 @@ class GeneratableWindowAggregation {
      * @param partialValue
      * @return ExpressionStatementPtr
      */
-    virtual ExpressionStatementPtr lower(ExpressionStatementPtr partialValue){
-        return partialValue;
-    };
+    virtual ExpressionStatementPtr lower(ExpressionStatementPtr partialValue) { return partialValue; };
 
     virtual ~GeneratableWindowAggregation() noexcept = default;
 
     virtual NES::QueryCompilation::VariableDeclarationPtr getPartialAggregate();
 
     Windowing::WindowAggregationDescriptorPtr getAggregationDescriptor();
-
 
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
@@ -80,4 +77,4 @@ class GeneratableWindowAggregation {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_

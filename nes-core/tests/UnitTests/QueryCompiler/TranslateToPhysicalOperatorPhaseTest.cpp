@@ -14,6 +14,7 @@
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
@@ -27,8 +28,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -41,7 +40,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
@@ -51,6 +49,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

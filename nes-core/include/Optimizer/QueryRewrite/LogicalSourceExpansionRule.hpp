@@ -130,4 +130,4 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     bool isBlockingOperator(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_

@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <API/Schema.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
-#include <GRPC/CoordinatorRPCServer.hpp>
-#include <Services/ReplicationService.hpp>
-#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <GRPC/CoordinatorRPCServer.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Services/ReplicationService.hpp>
+#include <Topology/TopologyNode.hpp>
+#include <cstdint>
 
 namespace NES {
 
@@ -34,8 +34,7 @@ EpochId ReplicationService::getCurrentEpochBarrier(uint64_t queryId, uint64_t ep
     auto pairEpochTimestamp = this->queryIdToCurrentEpochBarrierMap.at(queryId);
     if (pairEpochTimestamp.first == epoch) {
         return pairEpochTimestamp.second;
-    }
-    else {
+    } else {
         return -1;
     }
 }
@@ -45,8 +44,7 @@ void ReplicationService::saveEpochBarrier(uint64_t queryId, uint64_t epochBarrie
     auto iterator = queryIdToCurrentEpochBarrierMap.find(queryId);
     if (iterator != queryIdToCurrentEpochBarrierMap.end()) {
         newPairEpochTimestamp = std::pair(iterator->first + 1, epochBarrier);
-    }
-    else {
+    } else {
         newPairEpochTimestamp = std::pair(0, epochBarrier);
     }
     queryIdToCurrentEpochBarrierMap[queryId] = newPairEpochTimestamp;
@@ -56,7 +54,7 @@ std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(
     auto globalQueryPlan = this->coordinatorPtr->getGlobalQueryPlan();
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(queryId);
     if (!sharedQueryPlan) {
-        return  sharedQueryPlan->getQueryPlan()->getSourceOperators();
+        return sharedQueryPlan->getQueryPlan()->getSourceOperators();
     }
     NES_ERROR("ReplicationService: no shared query plan found for the queryId " << queryId);
     return {};
@@ -80,8 +78,7 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
                 bool success = false;
                 for (auto& sourceLocation : sourceLocations) {
                     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-                    success =
-                        workerRpcClient->injectEpochBarrier(epochBarrier, queryId, sourceLocation->getIpAddress());
+                    success = workerRpcClient->injectEpochBarrier(epochBarrier, queryId, sourceLocation->getIpAddress());
                     NES_ASSERT(success, false);
                     NES_DEBUG("ReplicationService: success=" << success);
                 }
@@ -96,4 +93,4 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
     return false;
 }
 
-}
+}// namespace NES

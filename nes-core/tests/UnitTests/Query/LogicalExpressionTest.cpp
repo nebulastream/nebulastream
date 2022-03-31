@@ -19,9 +19,8 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 

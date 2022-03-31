@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "../util/NesBaseTest.hpp"
 #include <../util/NesBaseTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -19,16 +20,15 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <regex>
-#include "../util/NesBaseTest.hpp"
 
 //used tests: QueryCatalogServiceTest, QueryTest
 namespace fs = std::filesystem;
@@ -109,7 +109,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestSourceSingleOutput) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
-//    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    //    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent = "+----------------------------------------------------+\n"
@@ -185,8 +185,8 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
-//    NES_INFO("SimplePatternTest: Remove query");
-//    queryService->validateAndQueueStopRequest(queryId);
+    //    NES_INFO("SimplePatternTest: Remove query");
+    //    queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -266,7 +266,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorExactOccurance) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-//    queryService->validateAndQueueStopRequest(queryId);
+    //    queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -345,7 +345,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorUnbounded) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-//    queryService->validateAndQueueStopRequest(queryId);
+    //    queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -421,7 +421,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator0Max) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-//    queryService->validateAndQueueStopRequest(queryId);
+    //    queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -500,7 +500,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
-//    queryService->validateAndQueueStopRequest(queryId);
+    //    queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -513,7 +513,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperatorMin0) {
         "1543624440000|1543625040000|5|0|\n|1543624560000|1543625160000|5|0|\n+--------------------------------------------------"
         "--+";
 
-        std::ifstream ifs(outputFilePath.c_str());
+    std::ifstream ifs(outputFilePath.c_str());
     ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 

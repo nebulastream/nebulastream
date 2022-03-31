@@ -58,7 +58,6 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
  */
 class QueryPlacementPhase {
   public:
-
     /**
      * This method creates an instance of query placement phase
      * @param globalExecutionPlan : an instance of global execution plan

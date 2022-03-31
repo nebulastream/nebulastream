@@ -36,8 +36,6 @@ Windowing::WindowAggregationDescriptorPtr GeneratableWindowAggregation::getAggre
     return aggregationDescriptor;
 }
 
-NES::QueryCompilation::VariableDeclarationPtr GeneratableWindowAggregation::getPartialAggregate() {
-    return partialAggregate;
-}
+NES::QueryCompilation::VariableDeclarationPtr GeneratableWindowAggregation::getPartialAggregate() { return partialAggregate; }
 
 }// namespace NES::QueryCompilation::GeneratableOperators

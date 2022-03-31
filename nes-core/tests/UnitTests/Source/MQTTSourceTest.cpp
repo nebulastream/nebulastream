@@ -23,7 +23,6 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <string>
 
@@ -70,7 +69,9 @@ class MQTTSourceTest : public Testing::NESBaseTest {
         test_schema = Schema::create()->addField("var", UINT32);
         mqttSourceType = MQTTSourceType::create();
         auto workerConfigurations = WorkerConfiguration::create();
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
     }

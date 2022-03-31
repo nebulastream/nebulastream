@@ -62,4 +62,4 @@ using DebugDumpHandlerPtr = std::shared_ptr<DumpHandler>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
+#endif// NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_

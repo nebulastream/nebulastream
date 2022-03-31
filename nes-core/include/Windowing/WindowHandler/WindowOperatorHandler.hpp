@@ -109,4 +109,4 @@ class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_

@@ -19,8 +19,8 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>

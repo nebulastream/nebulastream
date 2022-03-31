@@ -14,13 +14,13 @@
 
 #ifndef NES_NODEENGINEBUILDER_HPP
 #define NES_NODEENGINEBUILDER_HPP
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Network/NetworkForwardRefs.hpp>
+#include <Compiler/LanguageCompiler.hpp>
+#include <Components/NesWorker.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Compiler/LanguageCompiler.hpp>
+#include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
-#include <Components/NesWorker.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 namespace NES::Runtime {
 /**
  * This class is used to create instances of NodeEngine using the builder pattern.
@@ -28,7 +28,6 @@ namespace NES::Runtime {
 class NodeEngineBuilder {
 
   public:
-
     NodeEngineBuilder() = delete;
     /**
      * Creates a default NodeEngineBuilder
@@ -98,7 +97,8 @@ class NodeEngineBuilder {
      * @param materializedViewManager
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setMaterializedViewManager(NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager);
+    NodeEngineBuilder&
+    setMaterializedViewManager(NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager);
 
     /**
      * setter used to pass a language compiler to NodeEngineBuilder. Optional
@@ -112,7 +112,7 @@ class NodeEngineBuilder {
      * @param jitCompiler
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setJITCompiler(Compiler::JITCompilerPtr jitCompiler );
+    NodeEngineBuilder& setJITCompiler(Compiler::JITCompilerPtr jitCompiler);
 
     /**
      * setter used to pass a language a phase factory to NodeEngineBuilder. Optional
@@ -133,7 +133,7 @@ class NodeEngineBuilder {
      * @return NodeEnginePtr
      */
     NodeEnginePtr build();
-    
+
   private:
     explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
 

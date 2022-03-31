@@ -32,7 +32,6 @@ using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 class CSVSourceType : public PhysicalSourceType {
 
   public:
-
     ~CSVSourceType() noexcept override = default;
 
     /**
@@ -154,4 +153,4 @@ class CSVSourceType : public PhysicalSourceType {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_

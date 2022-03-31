@@ -98,4 +98,4 @@ class DataType {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_
+#endif// NES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_

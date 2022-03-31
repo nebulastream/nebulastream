@@ -36,4 +36,4 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_

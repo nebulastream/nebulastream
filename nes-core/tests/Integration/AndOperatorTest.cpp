@@ -17,6 +17,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,10 +25,8 @@
 #include <Util/TestUtils.hpp>
 #include <chrono>//for timing execution
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <regex>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 
@@ -67,7 +66,7 @@ class AndOperatorTest : public Testing::NESBaseTest {
             // Replace this occurrence of Sub String
             contentString = contentString.replace(start, end, "");
             // Get the next occurrence from the current position
-            start = contentString.find("|QnV1QnV2$start:UINT64",end);
+            start = contentString.find("|QnV1QnV2$start:UINT64", end);
         }
 
         std::regex r3("\\+?[-]+\\+\\n?");

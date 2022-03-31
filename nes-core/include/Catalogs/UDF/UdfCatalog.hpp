@@ -80,4 +80,4 @@ class UdfCatalog {
 };
 
 }// namespace NES::Catalogs
-#endif  // NES_INCLUDE_CATALOGS_UDF_UDFCATALOG_HPP_
+#endif// NES_INCLUDE_CATALOGS_UDF_UDFCATALOG_HPP_

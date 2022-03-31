@@ -54,4 +54,4 @@ struct __attribute__((packed)) SingleSensor {
 }// namespace Sensors
 }// namespace NES
 
-#endif  // NES_INCLUDE_SENSORS_VALUES_SINGLESENSOR_HPP_
+#endif// NES_INCLUDE_SENSORS_VALUES_SINGLESENSOR_HPP_

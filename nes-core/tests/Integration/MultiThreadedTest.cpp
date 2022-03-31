@@ -13,8 +13,8 @@
 */
 
 #include "../util/NesBaseTest.hpp"
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>

@@ -14,10 +14,10 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 
 #include <Catalogs/Query/QueryCatalog.hpp>
@@ -46,14 +46,12 @@ using namespace Configurations;
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
 
-
 class ContinuousSourceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("ContinuousSourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
-
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
@@ -396,7 +394,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    std::string outputFilePath = getTestResourceFolder() / "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
+    std::string outputFilePath =
+        getTestResourceFolder() / "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();

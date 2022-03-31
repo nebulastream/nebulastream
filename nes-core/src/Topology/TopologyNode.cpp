@@ -12,15 +12,16 @@
     limitations under the License.
 */
 
+#include <Common/GeographicalLocation.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
-#include <Common/GeographicalLocation.hpp>
 
 namespace NES {
 
 TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources)
-    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0), maintenanceFlag(false) {}
+    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
+      maintenanceFlag(false) {}
 
 TopologyNodePtr
 TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
@@ -125,13 +126,9 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-bool TopologyNode::hasLocation() {
-    return coordinates.has_value();
-}
+bool TopologyNode::hasLocation() { return coordinates.has_value(); }
 
-std::optional<GeographicalLocation> TopologyNode::getCoordinates() {
-    return coordinates;
-}
+std::optional<GeographicalLocation> TopologyNode::getCoordinates() { return coordinates; }
 
 bool TopologyNode::setCoordinates(double latitude, double longitude) {
     return setCoordinates(GeographicalLocation(latitude, longitude));

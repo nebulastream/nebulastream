@@ -13,6 +13,7 @@
 */
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -20,7 +21,6 @@
 #include <cpprest/http_client.h>
 #include <cstdio>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <sstream>
 #include <string>
 #include <unistd.h>

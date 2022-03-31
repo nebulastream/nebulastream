@@ -17,8 +17,8 @@
 #include <NesBaseTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -67,17 +67,20 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
 
         auto logicalSourceCar = sourceCatalog->getSourceForLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        SourceCatalogEntryPtr sourceCatalogEntry1 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
 
         auto logicalSourceBike = sourceCatalog->getSourceForLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
+        SourceCatalogEntryPtr sourceCatalogEntry2 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry2);
 
         auto logicalSourceTruck = sourceCatalog->getSourceForLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
-        SourceCatalogEntryPtr sourceCatalogEntry3 = std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        SourceCatalogEntryPtr sourceCatalogEntry3 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("truck", sourceCatalogEntry3);
     }
 
@@ -643,7 +646,8 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     queryPlan1 = rewriteRule->execute(queryPlan1);
     queryPlan2 = rewriteRule->execute(queryPlan2);
 
-    auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topoSpecificRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 
@@ -697,7 +701,8 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     queryPlan1 = rewriteRule->execute(queryPlan1);
     queryPlan2 = rewriteRule->execute(queryPlan2);
 
-    auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    auto topoSpecificRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 

@@ -13,10 +13,10 @@
 */
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -66,28 +66,28 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin
             .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(2))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
     auto testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window1", window1Schema)
-                                  .addLogicalSource("window2", window2Schema)
-                                  .attachWorkerWithMemorySourceToCoordinator("window1")//2
-                                  .attachWorkerWithMemorySourceToCoordinator("window2")//3
-                                  // Source1
-                                  .pushElement<Window1>({1u, 1000u}, 2)
-                                  .pushElement<Window2>({12u, 1001u}, 2)
-                                  .pushElement<Window2>({4u, 1002u}, 2)
-                                  .pushElement<Window2>({1u, 2000u}, 2)
-                                  .pushElement<Window2>({11u, 2001u}, 2)
-                                  .pushElement<Window2>({16u, 2002u}, 2)
-                                  .pushElement<Window2>({1u, 3000u}, 2)
-                                  //source2
-                                  .pushElement<Window2>({21u, 1003u}, 3)
-                                  .pushElement<Window2>({12u, 1011u}, 3)
-                                  .pushElement<Window2>({4u, 1102u}, 3)
-                                  .pushElement<Window2>({4u, 1112u}, 3)
-                                  .pushElement<Window2>({1u, 2010u}, 3)
-                                  .pushElement<Window2>({11u, 2301u}, 3)
-                                  .pushElement<Window2>({33u, 3100u}, 3)
-                                  .validate()
-                                  .setupTopology();
+                           .addLogicalSource("window1", window1Schema)
+                           .addLogicalSource("window2", window2Schema)
+                           .attachWorkerWithMemorySourceToCoordinator("window1")//2
+                           .attachWorkerWithMemorySourceToCoordinator("window2")//3
+                           // Source1
+                           .pushElement<Window1>({1u, 1000u}, 2)
+                           .pushElement<Window2>({12u, 1001u}, 2)
+                           .pushElement<Window2>({4u, 1002u}, 2)
+                           .pushElement<Window2>({1u, 2000u}, 2)
+                           .pushElement<Window2>({11u, 2001u}, 2)
+                           .pushElement<Window2>({16u, 2002u}, 2)
+                           .pushElement<Window2>({1u, 3000u}, 2)
+                           //source2
+                           .pushElement<Window2>({21u, 1003u}, 3)
+                           .pushElement<Window2>({12u, 1011u}, 3)
+                           .pushElement<Window2>({4u, 1102u}, 3)
+                           .pushElement<Window2>({4u, 1112u}, 3)
+                           .pushElement<Window2>({1u, 2010u}, 3)
+                           .pushElement<Window2>({11u, 2301u}, 3)
+                           .pushElement<Window2>({33u, 3100u}, 3)
+                           .validate()
+                           .setupTopology();
 
     struct Output {
         uint64_t window1window2$start;
@@ -146,30 +146,30 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
             .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(1))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
     auto testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window1", window1Schema)
-                                  .addLogicalSource("window2", window2Schema)
-                                  .attachWorkerToCoordinator()                             //2
-                                  .attachWorkerToCoordinator()                             //3
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window1", 2)//4
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//5
-                                  //Source1
-                                  .pushElement<Window1>({1UL, 1000UL}, 4)
-                                  .pushElement<Window2>({12UL, 1001UL}, 4)
-                                  .pushElement<Window2>({4UL, 1002UL}, 4)
-                                  .pushElement<Window2>({1UL, 2000UL}, 4)
-                                  .pushElement<Window2>({11UL, 2001UL}, 4)
-                                  .pushElement<Window2>({16UL, 2002UL}, 4)
-                                  .pushElement<Window2>({1UL, 3000UL}, 4)
-                                  //Source2
-                                  .pushElement<Window2>({21UL, 1003UL}, 5)
-                                  .pushElement<Window2>({12UL, 1011UL}, 5)
-                                  .pushElement<Window2>({4UL, 1102UL}, 5)
-                                  .pushElement<Window2>({4UL, 1112UL}, 5)
-                                  .pushElement<Window2>({1UL, 2010UL}, 5)
-                                  .pushElement<Window2>({11UL, 2301UL}, 5)
-                                  .pushElement<Window2>({33UL, 3100UL}, 5)
-                                  .validate()
-                                  .setupTopology();
+                           .addLogicalSource("window1", window1Schema)
+                           .addLogicalSource("window2", window2Schema)
+                           .attachWorkerToCoordinator()                             //2
+                           .attachWorkerToCoordinator()                             //3
+                           .attachWorkerWithMemorySourceToWorkerWithId("window1", 2)//4
+                           .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//5
+                           //Source1
+                           .pushElement<Window1>({1UL, 1000UL}, 4)
+                           .pushElement<Window2>({12UL, 1001UL}, 4)
+                           .pushElement<Window2>({4UL, 1002UL}, 4)
+                           .pushElement<Window2>({1UL, 2000UL}, 4)
+                           .pushElement<Window2>({11UL, 2001UL}, 4)
+                           .pushElement<Window2>({16UL, 2002UL}, 4)
+                           .pushElement<Window2>({1UL, 3000UL}, 4)
+                           //Source2
+                           .pushElement<Window2>({21UL, 1003UL}, 5)
+                           .pushElement<Window2>({12UL, 1011UL}, 5)
+                           .pushElement<Window2>({4UL, 1102UL}, 5)
+                           .pushElement<Window2>({4UL, 1112UL}, 5)
+                           .pushElement<Window2>({1UL, 2010UL}, 5)
+                           .pushElement<Window2>({11UL, 2301UL}, 5)
+                           .pushElement<Window2>({33UL, 3100UL}, 5)
+                           .validate()
+                           .setupTopology();
 
     // Check if the topology matches the expected hierarchy
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 2ULL);
@@ -270,48 +270,48 @@ TEST_F(ComplexSequenceTest, DISABLED_ComplexTestSingleNodeMultipleWindowsMultipl
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     auto testHarness = TestHarness(queryWithJoinAndWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window1", window1Schema)
-                                  .addLogicalSource("window2", window2Schema)
-                                  .addLogicalSource("window3", window3Schema)
-                                  .attachWorkerWithMemorySourceToCoordinator("window1")//2
-                                  .attachWorkerWithMemorySourceToCoordinator("window2")//3
-                                  .attachWorkerWithMemorySourceToCoordinator("window3")//4
-                                  //Source1
-                                  .pushElement<Window1>({1UL, 1000UL}, 2)
-                                  .pushElement<Window2>({12UL, 1001UL}, 2)
-                                  .pushElement<Window2>({4UL, 1002UL}, 2)
-                                  .pushElement<Window2>({4UL, 1005UL}, 2)
-                                  .pushElement<Window2>({4UL, 1006UL}, 2)
-                                  .pushElement<Window2>({1UL, 2000UL}, 2)
-                                  .pushElement<Window2>({11UL, 2001UL}, 2)
-                                  .pushElement<Window2>({16UL, 2002UL}, 2)
-                                  .pushElement<Window2>({4UL, 2802UL}, 2)
-                                  .pushElement<Window2>({4UL, 3642UL}, 2)
-                                  .pushElement<Window2>({1UL, 3000UL}, 2)
-                                  //Source2
-                                  .pushElement<Window2>({21UL, 1003UL}, 3)
-                                  .pushElement<Window2>({12UL, 1011UL}, 3)
-                                  .pushElement<Window2>({12UL, 1013UL}, 3)
-                                  .pushElement<Window2>({12UL, 1015UL}, 3)
-                                  .pushElement<Window2>({4UL, 1102UL}, 3)
-                                  .pushElement<Window2>({4UL, 1112UL}, 3)
-                                  .pushElement<Window2>({1UL, 2010UL}, 3)
-                                  .pushElement<Window2>({11UL, 2301UL}, 3)
-                                  .pushElement<Window2>({4UL, 2022UL}, 3)
-                                  .pushElement<Window2>({4UL, 3012UL}, 3)
-                                  .pushElement<Window2>({33UL, 3100UL}, 3)
-                                  //Source3
-                                  .pushElement<Window3>({4UL, 1013UL}, 4)
-                                  .pushElement<Window3>({12UL, 1010UL}, 4)
-                                  .pushElement<Window3>({8UL, 1105UL}, 4)
-                                  .pushElement<Window3>({76UL, 1132UL}, 4)
-                                  .pushElement<Window3>({19UL, 2210UL}, 4)
-                                  .pushElement<Window3>({1UL, 2501UL}, 4)
-                                  .pushElement<Window2>({4UL, 2432UL}, 4)
-                                  .pushElement<Window2>({4UL, 3712UL}, 4)
-                                  .pushElement<Window3>({45UL, 3120UL}, 4)
-                                  .validate()
-                                  .setupTopology();
+                           .addLogicalSource("window1", window1Schema)
+                           .addLogicalSource("window2", window2Schema)
+                           .addLogicalSource("window3", window3Schema)
+                           .attachWorkerWithMemorySourceToCoordinator("window1")//2
+                           .attachWorkerWithMemorySourceToCoordinator("window2")//3
+                           .attachWorkerWithMemorySourceToCoordinator("window3")//4
+                           //Source1
+                           .pushElement<Window1>({1UL, 1000UL}, 2)
+                           .pushElement<Window2>({12UL, 1001UL}, 2)
+                           .pushElement<Window2>({4UL, 1002UL}, 2)
+                           .pushElement<Window2>({4UL, 1005UL}, 2)
+                           .pushElement<Window2>({4UL, 1006UL}, 2)
+                           .pushElement<Window2>({1UL, 2000UL}, 2)
+                           .pushElement<Window2>({11UL, 2001UL}, 2)
+                           .pushElement<Window2>({16UL, 2002UL}, 2)
+                           .pushElement<Window2>({4UL, 2802UL}, 2)
+                           .pushElement<Window2>({4UL, 3642UL}, 2)
+                           .pushElement<Window2>({1UL, 3000UL}, 2)
+                           //Source2
+                           .pushElement<Window2>({21UL, 1003UL}, 3)
+                           .pushElement<Window2>({12UL, 1011UL}, 3)
+                           .pushElement<Window2>({12UL, 1013UL}, 3)
+                           .pushElement<Window2>({12UL, 1015UL}, 3)
+                           .pushElement<Window2>({4UL, 1102UL}, 3)
+                           .pushElement<Window2>({4UL, 1112UL}, 3)
+                           .pushElement<Window2>({1UL, 2010UL}, 3)
+                           .pushElement<Window2>({11UL, 2301UL}, 3)
+                           .pushElement<Window2>({4UL, 2022UL}, 3)
+                           .pushElement<Window2>({4UL, 3012UL}, 3)
+                           .pushElement<Window2>({33UL, 3100UL}, 3)
+                           //Source3
+                           .pushElement<Window3>({4UL, 1013UL}, 4)
+                           .pushElement<Window3>({12UL, 1010UL}, 4)
+                           .pushElement<Window3>({8UL, 1105UL}, 4)
+                           .pushElement<Window3>({76UL, 1132UL}, 4)
+                           .pushElement<Window3>({19UL, 2210UL}, 4)
+                           .pushElement<Window3>({1UL, 2501UL}, 4)
+                           .pushElement<Window2>({4UL, 2432UL}, 4)
+                           .pushElement<Window2>({4UL, 3712UL}, 4)
+                           .pushElement<Window3>({45UL, 3120UL}, 4)
+                           .validate()
+                           .setupTopology();
 
     // output 2 join 1 window
     struct Output {
@@ -390,51 +390,51 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     auto testHarness = TestHarness(queryWithJoinAndWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window1", window1Schema)
-                                  .addLogicalSource("window2", window2Schema)
-                                  .addLogicalSource("window3", window3Schema)
-                                  .attachWorkerToCoordinator()                             //2
-                                  .attachWorkerToCoordinator()                             //3
-                                  .attachWorkerToCoordinator()                             //4
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window1", 2)//5
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//6
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window3", 4)//7
-                                  //Source1
-                                  .pushElement<Window1>({1ULL, 1000ULL}, 5)
-                                  .pushElement<Window1>({12ULL, 1001ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 1002ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 1005ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 1006ULL}, 5)
-                                  .pushElement<Window1>({1ULL, 2000ULL}, 5)
-                                  .pushElement<Window1>({11ULL, 2001ULL}, 5)
-                                  .pushElement<Window1>({16ULL, 2002ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 2802ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 3642ULL}, 5)
-                                  .pushElement<Window1>({1ULL, 3000ULL}, 5)
-                                  //Source2
-                                  .pushElement<Window2>({21ULL, 1003ULL}, 6)
-                                  .pushElement<Window2>({12ULL, 1011ULL}, 6)
-                                  .pushElement<Window2>({12ULL, 1013ULL}, 6)
-                                  .pushElement<Window2>({12ULL, 1015ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 1102ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 1112ULL}, 6)
-                                  .pushElement<Window2>({1ULL, 2010ULL}, 6)
-                                  .pushElement<Window2>({11ULL, 2301ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 2022ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 3012ULL}, 6)
-                                  .pushElement<Window2>({33ULL, 3100ULL}, 6)
-                                  //Source3
-                                  .pushElement<Window3>({4ULL, 1013ULL}, 7)
-                                  .pushElement<Window3>({12ULL, 1010ULL}, 7)
-                                  .pushElement<Window3>({8ULL, 1105ULL}, 7)
-                                  .pushElement<Window3>({76ULL, 1132ULL}, 7)
-                                  .pushElement<Window3>({19ULL, 2210ULL}, 7)
-                                  .pushElement<Window3>({1ULL, 2501ULL}, 7)
-                                  .pushElement<Window3>({4ULL, 2432ULL}, 7)
-                                  .pushElement<Window3>({4ULL, 3712ULL}, 7)
-                                  .pushElement<Window3>({45ULL, 3120ULL}, 7)
-                                  .validate()
-                                  .setupTopology();
+                           .addLogicalSource("window1", window1Schema)
+                           .addLogicalSource("window2", window2Schema)
+                           .addLogicalSource("window3", window3Schema)
+                           .attachWorkerToCoordinator()                             //2
+                           .attachWorkerToCoordinator()                             //3
+                           .attachWorkerToCoordinator()                             //4
+                           .attachWorkerWithMemorySourceToWorkerWithId("window1", 2)//5
+                           .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//6
+                           .attachWorkerWithMemorySourceToWorkerWithId("window3", 4)//7
+                           //Source1
+                           .pushElement<Window1>({1ULL, 1000ULL}, 5)
+                           .pushElement<Window1>({12ULL, 1001ULL}, 5)
+                           .pushElement<Window1>({4ULL, 1002ULL}, 5)
+                           .pushElement<Window1>({4ULL, 1005ULL}, 5)
+                           .pushElement<Window1>({4ULL, 1006ULL}, 5)
+                           .pushElement<Window1>({1ULL, 2000ULL}, 5)
+                           .pushElement<Window1>({11ULL, 2001ULL}, 5)
+                           .pushElement<Window1>({16ULL, 2002ULL}, 5)
+                           .pushElement<Window1>({4ULL, 2802ULL}, 5)
+                           .pushElement<Window1>({4ULL, 3642ULL}, 5)
+                           .pushElement<Window1>({1ULL, 3000ULL}, 5)
+                           //Source2
+                           .pushElement<Window2>({21ULL, 1003ULL}, 6)
+                           .pushElement<Window2>({12ULL, 1011ULL}, 6)
+                           .pushElement<Window2>({12ULL, 1013ULL}, 6)
+                           .pushElement<Window2>({12ULL, 1015ULL}, 6)
+                           .pushElement<Window2>({4ULL, 1102ULL}, 6)
+                           .pushElement<Window2>({4ULL, 1112ULL}, 6)
+                           .pushElement<Window2>({1ULL, 2010ULL}, 6)
+                           .pushElement<Window2>({11ULL, 2301ULL}, 6)
+                           .pushElement<Window2>({4ULL, 2022ULL}, 6)
+                           .pushElement<Window2>({4ULL, 3012ULL}, 6)
+                           .pushElement<Window2>({33ULL, 3100ULL}, 6)
+                           //Source3
+                           .pushElement<Window3>({4ULL, 1013ULL}, 7)
+                           .pushElement<Window3>({12ULL, 1010ULL}, 7)
+                           .pushElement<Window3>({8ULL, 1105ULL}, 7)
+                           .pushElement<Window3>({76ULL, 1132ULL}, 7)
+                           .pushElement<Window3>({19ULL, 2210ULL}, 7)
+                           .pushElement<Window3>({1ULL, 2501ULL}, 7)
+                           .pushElement<Window3>({4ULL, 2432ULL}, 7)
+                           .pushElement<Window3>({4ULL, 3712ULL}, 7)
+                           .pushElement<Window3>({45ULL, 3120ULL}, 7)
+                           .validate()
+                           .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 6U);
 
@@ -554,50 +554,50 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     auto testHarness = TestHarness(queryWithJoinAndWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window1", window1Schema)
-                                  .addLogicalSource("window2", window2Schema)
-                                  .addLogicalSource("window3", window3Schema)
-                                  .attachWorkerToCoordinator()                             //2
-                                  .attachWorkerToWorkerWithId(2)                           //3
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window3", 2)//4
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window1", 3)//5
-                                  .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//6
-                                  //Source5
-                                  .pushElement<Window1>({1ULL, 1000ULL}, 5)
-                                  .pushElement<Window1>({12ULL, 1001ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 1002ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 1005ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 1006ULL}, 5)
-                                  .pushElement<Window1>({1ULL, 2000ULL}, 5)
-                                  .pushElement<Window1>({11ULL, 2001ULL}, 5)
-                                  .pushElement<Window1>({16ULL, 2002ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 2802ULL}, 5)
-                                  .pushElement<Window1>({4ULL, 3642ULL}, 5)
-                                  .pushElement<Window1>({1ULL, 3000ULL}, 5)
-                                  //Source6
-                                  .pushElement<Window2>({21ULL, 1003ULL}, 6)
-                                  .pushElement<Window2>({12ULL, 1011ULL}, 6)
-                                  .pushElement<Window2>({12ULL, 1013ULL}, 6)
-                                  .pushElement<Window2>({12ULL, 1015ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 1102ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 1112ULL}, 6)
-                                  .pushElement<Window2>({1ULL, 2010ULL}, 6)
-                                  .pushElement<Window2>({11ULL, 2301ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 2022ULL}, 6)
-                                  .pushElement<Window2>({4ULL, 3012ULL}, 6)
-                                  .pushElement<Window2>({33ULL, 3100ULL}, 6)
-                                  //Source4
-                                  .pushElement<Window3>({4ULL, 1013ULL}, 4)
-                                  .pushElement<Window3>({12ULL, 1010ULL}, 4)
-                                  .pushElement<Window3>({8ULL, 1105ULL}, 4)
-                                  .pushElement<Window3>({76ULL, 1132ULL}, 4)
-                                  .pushElement<Window3>({19ULL, 2210ULL}, 4)
-                                  .pushElement<Window3>({1ULL, 2501ULL}, 4)
-                                  .pushElement<Window3>({4ULL, 2432ULL}, 4)
-                                  .pushElement<Window3>({4ULL, 3712ULL}, 4)
-                                  .pushElement<Window3>({45ULL, 3120ULL}, 4)
-                                  .validate()
-                                  .setupTopology();
+                           .addLogicalSource("window1", window1Schema)
+                           .addLogicalSource("window2", window2Schema)
+                           .addLogicalSource("window3", window3Schema)
+                           .attachWorkerToCoordinator()                             //2
+                           .attachWorkerToWorkerWithId(2)                           //3
+                           .attachWorkerWithMemorySourceToWorkerWithId("window3", 2)//4
+                           .attachWorkerWithMemorySourceToWorkerWithId("window1", 3)//5
+                           .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//6
+                           //Source5
+                           .pushElement<Window1>({1ULL, 1000ULL}, 5)
+                           .pushElement<Window1>({12ULL, 1001ULL}, 5)
+                           .pushElement<Window1>({4ULL, 1002ULL}, 5)
+                           .pushElement<Window1>({4ULL, 1005ULL}, 5)
+                           .pushElement<Window1>({4ULL, 1006ULL}, 5)
+                           .pushElement<Window1>({1ULL, 2000ULL}, 5)
+                           .pushElement<Window1>({11ULL, 2001ULL}, 5)
+                           .pushElement<Window1>({16ULL, 2002ULL}, 5)
+                           .pushElement<Window1>({4ULL, 2802ULL}, 5)
+                           .pushElement<Window1>({4ULL, 3642ULL}, 5)
+                           .pushElement<Window1>({1ULL, 3000ULL}, 5)
+                           //Source6
+                           .pushElement<Window2>({21ULL, 1003ULL}, 6)
+                           .pushElement<Window2>({12ULL, 1011ULL}, 6)
+                           .pushElement<Window2>({12ULL, 1013ULL}, 6)
+                           .pushElement<Window2>({12ULL, 1015ULL}, 6)
+                           .pushElement<Window2>({4ULL, 1102ULL}, 6)
+                           .pushElement<Window2>({4ULL, 1112ULL}, 6)
+                           .pushElement<Window2>({1ULL, 2010ULL}, 6)
+                           .pushElement<Window2>({11ULL, 2301ULL}, 6)
+                           .pushElement<Window2>({4ULL, 2022ULL}, 6)
+                           .pushElement<Window2>({4ULL, 3012ULL}, 6)
+                           .pushElement<Window2>({33ULL, 3100ULL}, 6)
+                           //Source4
+                           .pushElement<Window3>({4ULL, 1013ULL}, 4)
+                           .pushElement<Window3>({12ULL, 1010ULL}, 4)
+                           .pushElement<Window3>({8ULL, 1105ULL}, 4)
+                           .pushElement<Window3>({76ULL, 1132ULL}, 4)
+                           .pushElement<Window3>({19ULL, 2210ULL}, 4)
+                           .pushElement<Window3>({1ULL, 2501ULL}, 4)
+                           .pushElement<Window3>({4ULL, 2432ULL}, 4)
+                           .pushElement<Window3>({4ULL, 3712ULL}, 4)
+                           .pushElement<Window3>({45ULL, 3120ULL}, 4)
+                           .validate()
+                           .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5ULL);
 

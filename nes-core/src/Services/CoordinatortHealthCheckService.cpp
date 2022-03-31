@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Services/TopologyManagerService.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES {
 
 CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
-                                                             WorkerRPCClientPtr workerRPCClient, std::string healthServiceName)
+                                                             WorkerRPCClientPtr workerRPCClient,
+                                                             std::string healthServiceName)
     : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient) {
     id = 9999;
     this->healthServiceName = healthServiceName;

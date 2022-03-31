@@ -26,8 +26,7 @@ LambdaSourceType::LambdaSourceType(std::function<void(NES::Runtime::TupleBuffer&
                                    uint64_t taskQueueId)
     : PhysicalSourceType(LAMBDA_SOURCE), generationFunction(std::move(generationFunction)),
       numBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(std::move(gatheringMode)),
-                                                                                              sourceAffinity(sourceAffinity),
-                                                                                              taskQueueId(taskQueueId) {}
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
 LambdaSourceTypePtr LambdaSourceType::create(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
@@ -38,8 +37,12 @@ LambdaSourceTypePtr LambdaSourceType::create(
     uint64_t taskQueueId) {
 
     auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
-    return std::make_shared<LambdaSourceType>(
-        LambdaSourceType(std::move(generationFunction), numBuffersToProcess, gatheringValue, gatheringModeEnum, sourceAffinity, taskQueueId));
+    return std::make_shared<LambdaSourceType>(LambdaSourceType(std::move(generationFunction),
+                                                               numBuffersToProcess,
+                                                               gatheringValue,
+                                                               gatheringModeEnum,
+                                                               sourceAffinity,
+                                                               taskQueueId));
 }
 
 std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> LambdaSourceType::getGenerationFunction() const {

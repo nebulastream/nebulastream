@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <NesBaseTest.hpp>
 #include <thread>
 
 namespace NES {

@@ -15,11 +15,11 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_EVENTTIMEWINDOW_PHYSICALKEYEDSLIDINGWINDOWSINK_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_EVENTTIMEWINDOW_PHYSICALKEYEDSLIDINGWINDOWSINK_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
 #include <memory>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -41,9 +41,9 @@ class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public Abst
            SchemaPtr outputSchema,
            std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler) {
         return std::make_shared<PhysicalKeyedSlidingWindowSink>(Util::getNextOperatorId(),
-                                                                 inputSchema,
-                                                                 outputSchema,
-                                                                 keyedEventTimeWindowHandler);
+                                                                inputSchema,
+                                                                outputSchema,
+                                                                keyedEventTimeWindowHandler);
     }
 
     std::string toString() const override;

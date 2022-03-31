@@ -15,12 +15,12 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 #define NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 
+#include <Monitoring/Metrics/MetricType.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <Monitoring/Metrics/MetricType.hpp>
 
 namespace NES {
 class Schema;
@@ -47,6 +47,6 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 namespace web::json {
 class value;
-}// namespace web
+}// namespace web::json
 
-#endif  // NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
+#endif// NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

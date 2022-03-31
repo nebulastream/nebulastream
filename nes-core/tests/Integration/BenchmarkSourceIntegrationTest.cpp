@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "../util/NesBaseTest.hpp"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -21,12 +22,11 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 #include <iostream>
 
 namespace NES {
@@ -37,7 +37,6 @@ class BenchmarkSourceIntegrationTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("BenchmarkSourceIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BenchmarkSourceIntegrationTest test class.");
     }
-
 };
 
 /// This test checks that a deployed BenchmarkSource can write M records spanning exactly N records

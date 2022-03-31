@@ -22,7 +22,7 @@ namespace NES {
 /**
  * @brief this alias represent a locally running query execution plan
  */
-using QueryId = uint64_t; // TODO make this a class
+using QueryId = uint64_t;// TODO make this a class
 static constexpr QueryId INVALID_QUERY_ID = 0;
 }// namespace NES
 #endif// NES_INCLUDE_PLANS_QUERY_QUERYID_HPP_

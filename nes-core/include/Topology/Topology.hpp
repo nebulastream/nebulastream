@@ -86,7 +86,7 @@ class Topology {
      * @param node: a pointer to the topology node whose entry is to be removed from the spatial index
      * @returns true on success, false if the node in question does not have a location
      */
-     bool removeNodeFromSpatialIndex(const TopologyNodePtr& node);
+    bool removeNodeFromSpatialIndex(const TopologyNodePtr& node);
 
     /**
      * @brief returns the closest field node to a certain geographical location
@@ -270,4 +270,4 @@ class Topology {
 #endif
 };
 }// namespace NES
-#endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
+#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

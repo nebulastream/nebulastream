@@ -17,10 +17,10 @@
 
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
+#include <map>
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include <map>
 
 namespace NES::Runtime {
 
@@ -155,4 +155,4 @@ class HardwareManager {
 
 }// namespace NES::Runtime
 
-#endif  // NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_
+#endif// NES_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_

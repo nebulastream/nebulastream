@@ -38,7 +38,7 @@ BinarySource::BinarySource(const SchemaPtr& schema,
                  gatheringMode,
                  std::move(successors)),
       input(std::ifstream(_file_path.c_str())), filePath(_file_path) {
-    if(!(input.is_open() && input.good())) {
+    if (!(input.is_open() && input.good())) {
         NES_THROW_RUNTIME_ERROR("Binary input file is not valid");
     }
     input.seekg(0, std::ifstream::end);

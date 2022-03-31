@@ -14,9 +14,9 @@
 
 #ifndef NES_MIGRATIONTYPE_HPP
 #define NES_MIGRATIONTYPE_HPP
-#include <vector>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace NES::Experimental {
 
@@ -55,5 +55,5 @@ class MigrationType {
     static std::string toString(MigrationType::Value migrationType);
 };
 
-} //namespace NES::Experimental
+}//namespace NES::Experimental
 #endif//NES_MIGRATIONTYPE_HPP

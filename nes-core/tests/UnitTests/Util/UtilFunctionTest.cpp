@@ -11,12 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 class UtilFunctionTest : public Testing::TestWithErrorHandling<testing::Test> {
