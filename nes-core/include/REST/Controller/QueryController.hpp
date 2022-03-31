@@ -17,6 +17,8 @@
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/CpprestForwardedRefs.hpp>
+#include <Services/QueryService.hpp>
+#include <SerializableQueryPlan.pb.h>
 
 namespace NES {
 
@@ -63,6 +65,48 @@ class QueryController : public BaseController {
     void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
 
   private:
+    /**
+     * Checks if provided lineage mode is valid. If not valid, create appropriate reply to http req
+     * @param lineageMode
+     * @param request
+     * @return true if provided lineage mode is valid, else false
+     */
+    bool validateLineageMode(const std::string& lineageModeString, const web::http::http_request& request);
+
+    /**
+     * Checks if provided fault tolerance mode is valid. If not valid, create appropriate reply to http req
+     * @param faultToleranceString
+     * @param request
+     * @return true if provided fault tolerance mode is valid, else false
+     */
+    bool validateFaultToleranceType(const std::string& faultToleranceString, const web::http::http_request& request);
+
+    /**
+     * Validates protobuf message. If not valid, creates appropriate reply to http req.
+     * Used only if user submitted a protobuf message
+     * @param protobufMessage
+     * @param request : used to reply to httpRequest in case protobufMessage is invalid
+     * @param body :
+     * @return true if protobuf message is valid, else false
+     */
+    bool validateProtobufMessage(std::shared_ptr<SubmitQueryRequest> protobufMessage, const web::http::http_request& request, const utility::string_t& body);
+
+    /**
+     * Validates user request for post requests to 'execute-query' endpoint. If not valid, creates appropriate reply to http request
+     * @param userRequest : string representation of http request
+     * @param httpRequest : used to reply to httpRequest in case userRequest is invalid
+     * @return true if request is valid, else false
+     */
+    bool validateUserRequest(web::json::value userRequest, const web::http::http_request& httpRequest);
+
+    /**
+     * Validates placement Strategy. If not valid, creates appropriate reply to http request
+     * @param placementStrategy
+     * @param httpRequest
+     * @return true if valid, else false
+     */
+    bool validatePlacementStrategy(const std::string& placementStrategy, const web::http::http_request& httpRequest);
+
     TopologyPtr topology;
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;

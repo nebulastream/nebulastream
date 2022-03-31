@@ -114,6 +114,11 @@ add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes-tests)
 add_test(NAME topology-tests COMMAND topology-tests)
 
+### NES Query Controller Tests ###
+add_executable(query-controller-test "UnitTests/Rest/QueryControllerTest.cpp")
+target_link_libraries(query-controller-test nes-tests)
+add_test(NAME query-controller-test COMMAND query-controller-test)
+
 ### NES Topology Controller Tests ###
 add_executable(topology-controller-tests "UnitTests/Rest/TopologyControllerTest.cpp")
 target_link_libraries(topology-controller-tests nes-tests)
