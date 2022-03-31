@@ -25,7 +25,6 @@ namespace NES::Network {
  */
 class NodeLocation {
   public:
-
     explicit NodeLocation() = default;
 
     explicit NodeLocation(NodeId nodeId, std::string hostname, uint32_t port)
@@ -42,9 +41,7 @@ class NodeLocation {
         return *this;
     }
 
-    [[nodiscard]] constexpr auto operator!() const noexcept -> bool {
-        return hostname.empty() && port == 0 && nodeId == 0;
-    }
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool { return hostname.empty() && port == 0 && nodeId == 0; }
 
     /**
      * @brief Returns the zmq uri for connection
@@ -86,4 +83,4 @@ class NodeLocation {
     uint32_t port;
 };
 }// namespace NES::Network
-#endif  // NES_INCLUDE_NETWORK_NODELOCATION_HPP_
+#endif// NES_INCLUDE_NETWORK_NODELOCATION_HPP_

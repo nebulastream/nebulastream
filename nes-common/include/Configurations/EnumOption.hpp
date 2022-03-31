@@ -13,8 +13,8 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_ENUMOPTION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_ENUMOPTION_HPP_
-#include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <string>
 #include <type_traits>
@@ -84,10 +84,7 @@ EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::stri
 }
 
 template<class EnumType>
-requires std::is_enum<EnumType>::value
-    std::string EnumOption<EnumType>::toString() {
-    return "";
-}
+requires std::is_enum<EnumType>::value std::string EnumOption<EnumType>::toString() { return ""; }
 
 }// namespace NES::Configurations
 

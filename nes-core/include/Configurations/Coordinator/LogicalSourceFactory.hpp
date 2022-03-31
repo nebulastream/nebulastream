@@ -36,14 +36,12 @@ namespace Configurations {
 
 class LogicalSourceFactory {
   public:
-
     /**
      * Create logical source config from string parameters (yaml/cli)
      * @param identifier
      * @param inputParams
      */
-    static LogicalSourcePtr createFromString(std::string identifier,
-                                 std::map<std::string, std::string>& inputParams);
+    static LogicalSourcePtr createFromString(std::string identifier, std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief create logical stream config with yaml file

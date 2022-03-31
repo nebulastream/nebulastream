@@ -169,4 +169,4 @@ class WindowManager {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_
+#endif// NES_INCLUDE_WINDOWING_RUNTIME_WINDOWMANAGER_HPP_

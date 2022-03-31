@@ -20,6 +20,7 @@
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -39,7 +40,6 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 using namespace NES;
 using namespace z3;
@@ -260,7 +260,8 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -321,7 +322,8 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -383,7 +385,8 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 

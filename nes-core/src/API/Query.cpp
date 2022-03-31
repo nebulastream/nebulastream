@@ -55,13 +55,9 @@ CEPOperatorBuilder::Times Query::times(const uint64_t minOccurrences, const uint
     return CEPOperatorBuilder::Times(minOccurrences, maxOccurrences, *this);
 }
 
-CEPOperatorBuilder::Times Query::times(const uint64_t maxOccurrences) {
-    return CEPOperatorBuilder::Times(maxOccurrences, *this);
-}
+CEPOperatorBuilder::Times Query::times(const uint64_t maxOccurrences) { return CEPOperatorBuilder::Times(maxOccurrences, *this); }
 
-CEPOperatorBuilder::Times Query::times() {
-    return CEPOperatorBuilder::Times(*this);
-}
+CEPOperatorBuilder::Times Query::times() { return CEPOperatorBuilder::Times(*this); }
 
 namespace JoinOperatorBuilder {
 
@@ -135,10 +131,10 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     if (sourceNameRight.find("_") != std::string::npos) {
         // we find the most left source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameRight.find("_");
-        uint64_t posEnd = sourceNameRight.find("_",posStart + 1);
-        sourceNameRight = sourceNameRight.substr(posStart + 1,posEnd - 2) + "$" + timestamp;
-    } // in case the right branch only contains 1 source we can just use it
-    else{
+        uint64_t posEnd = sourceNameRight.find("_", posStart + 1);
+        sourceNameRight = sourceNameRight.substr(posStart + 1, posEnd - 2) + "$" + timestamp;
+    }// in case the right branch only contains 1 source we can just use it
+    else {
         sourceNameRight = sourceNameRight + "$" + timestamp;
     }
     // in case of composed sources on the left branch
@@ -146,8 +142,8 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
         // we find the most right source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameLeft.find_last_of("_");
         sourceNameLeft = sourceNameLeft.substr(posStart + 1) + "$" + timestamp;
-    } // in case the left branch only contains 1 source we can just use it
-    else{
+    }// in case the left branch only contains 1 source we can just use it
+    else {
         sourceNameLeft = sourceNameLeft + "$" + timestamp;
     }
     NES_DEBUG("ExpressionItem for Left Source " << sourceNameLeft);
@@ -174,8 +170,7 @@ std::string keyAssignmentLeft() {
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
-    : originalQuery(originalQuery), minOccurrences(minOccurrences),
-      maxOccurrences(maxOccurrences),bounded(true){
+    : originalQuery(originalQuery), minOccurrences(minOccurrences), maxOccurrences(maxOccurrences), bounded(true) {
     // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
@@ -186,8 +181,7 @@ Times::Times(const uint64_t occurrences, Query& originalQuery)
     originalQuery.map(Attribute("Count") = 1);
 }
 
-Times::Times(Query& originalQuery)
-    : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(0), bounded(false) {
+Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(0), bounded(false) {
     // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
@@ -195,12 +189,10 @@ Times::Times(Query& originalQuery)
 Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
     auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
     // if no min and max occurrence is defined, apply count without filter
-    if(!bounded){
-        return originalQuery.window(windowType)
-                .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));
-    }
-    else{
-    // if min and/or max occurrence are defined, apply count without filter
+    if (!bounded) {
+        return originalQuery.window(windowType).apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));
+    } else {
+        // if min and/or max occurrence are defined, apply count without filter
         if (maxOccurrences == 0) {
             return originalQuery.window(windowType)
                 .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
@@ -351,9 +343,10 @@ Query& Query::join(const Query& subQueryRhs,
     sourceNames.emplace_back(queryPlan->getSourceConsumed());
     std::sort(sourceNames.begin(), sourceNames.end());
     // accumulating sourceNames with delimiters _ between all sourceNames to enable backtracking of origin
-    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"),[](std::string a, std::string b){
-        return a + "_" + b;
-    });
+    auto updatedSourceName =
+        std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) {
+            return a + "_" + b;
+        });
     queryPlan->setSourceConsumed(updatedSourceName);
 
     return *this;

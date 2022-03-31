@@ -23,6 +23,7 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
@@ -69,8 +70,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <iostream>
 
 #include <API/Windowing.hpp>

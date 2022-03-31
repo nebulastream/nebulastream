@@ -18,9 +18,7 @@
 
 namespace NES {
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema) {
-    this->schema = schema->copy();
-}
+SourceDescriptor::SourceDescriptor(SchemaPtr schema) { this->schema = schema->copy(); }
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName)
     : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)) {}

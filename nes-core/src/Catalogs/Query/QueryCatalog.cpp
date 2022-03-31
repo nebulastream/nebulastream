@@ -128,7 +128,6 @@ void QueryCatalog::removeSharedQueryPlanIdMappings(SharedQueryId sharedQueryId) 
 void QueryCatalog::clearQueries() {
     NES_DEBUG("QueryCatalog: clear query catalog");
     queryIdAndCatalogEntryMapping.clear();
-
 }
 
 }// namespace NES

@@ -117,14 +117,16 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerKeyedThreadLocalSlicePreAggregation(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerKeyedThreadLocalSlicePreAggregation(const QueryPlanPtr& queryPlan,
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers the thread local slice merge operator for keyed windows.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerKeyedSliceMergingOperator(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerKeyedSliceMergingOperator(const QueryPlanPtr& queryPlan,
+                                        const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers the window sink for keyed tumbling windows.
@@ -145,7 +147,8 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerPhysicalKeyedGlobalSliceStoreAppendOperator(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerPhysicalKeyedGlobalSliceStoreAppendOperator(const QueryPlanPtr& queryPlan,
+                                                          const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a join build operator.
@@ -179,4 +182,4 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_

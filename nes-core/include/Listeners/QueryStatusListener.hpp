@@ -30,9 +30,7 @@ class AbstractQueryStatusListener {
     virtual bool
     notifySourceTermination(QueryId queryId, QuerySubPlanId subPlanId, OperatorId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifyQueryFailure(QueryId queryId,
-                                    QuerySubPlanId subQueryId,
-                                    std::string errorMsg) = 0;
+    virtual bool notifyQueryFailure(QueryId queryId, QuerySubPlanId subQueryId, std::string errorMsg) = 0;
 
     virtual bool notifyQueryStatusChange(QueryId queryId,
                                          QuerySubPlanId subQueryId,

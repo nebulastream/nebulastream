@@ -34,9 +34,10 @@ DefaultSourceType::DefaultSourceType()
                                               Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                               1,
                                               "Number of buffers to produce.")),
-      sourceGatheringInterval(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
-                                                                            1,
-                                                                            "Gathering interval of the source.")) {
+      sourceGatheringInterval(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
+                                                                1,
+                                                                "Gathering interval of the source.")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -67,6 +68,8 @@ void DefaultSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToPr
     this->numberOfBuffersToProduce->setValue(numberOfBuffersToProduce);
 }
 
-void DefaultSourceType::setSourceGatheringInterval(uint32_t sourceGatheringInterval) { this->sourceGatheringInterval->setValue(sourceGatheringInterval); }
+void DefaultSourceType::setSourceGatheringInterval(uint32_t sourceGatheringInterval) {
+    this->sourceGatheringInterval->setValue(sourceGatheringInterval);
+}
 
 }// namespace NES

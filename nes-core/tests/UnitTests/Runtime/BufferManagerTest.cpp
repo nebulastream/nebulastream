@@ -15,6 +15,7 @@
 #include <map>
 #include <vector>
 
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
@@ -25,7 +26,6 @@
 #include <deque>
 #include <future>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <thread>
 

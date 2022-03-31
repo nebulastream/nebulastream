@@ -154,4 +154,4 @@ class VizDumpHandler : public DumpHandler {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_
+#endif// NES_INCLUDE_NODES_UTIL_VIZDUMPHANDLER_HPP_

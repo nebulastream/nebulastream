@@ -55,7 +55,7 @@ class UlimitNumFdChanger {
     int oldHardNumFileLimit;
 };
 static UlimitNumFdChanger ulimitChanger;
-}
+}// namespace detail
 
 ZmqServer::ZmqServer(std::string hostname,
                      uint16_t requestedPort,

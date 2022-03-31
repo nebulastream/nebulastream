@@ -22,8 +22,8 @@
 #include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <Sources/MemorySource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
+#include <Sources/MemorySource.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -219,13 +219,13 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
  * @return
  */
 namespace Experimental {
-    DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
-                                    const std::string pathTableFile,
-                                    const Runtime::BufferManagerPtr& bufferManager,
-                                    const Runtime::QueryManagerPtr& queryManager,
-                                    OperatorId operatorId,
-                                    size_t numSourceLocalBuffers,
-                                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
+                                     const std::string pathTableFile,
+                                     const Runtime::BufferManagerPtr& bufferManager,
+                                     const Runtime::QueryManagerPtr& queryManager,
+                                     OperatorId operatorId,
+                                     size_t numSourceLocalBuffers,
+                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 }// namespace Experimental
 /**
  * @brief create a benchmark source
@@ -295,7 +295,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                            const Experimental::MaterializedView::MaterializedViewPtr view);
 
-} // namespace Experimental::MaterializedView
+}// namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD
 /**
@@ -364,4 +364,4 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 #endif
 
 }// namespace NES
-#endif  // NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_
+#endif// NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_

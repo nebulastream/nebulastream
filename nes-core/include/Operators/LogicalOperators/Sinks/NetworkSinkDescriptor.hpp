@@ -39,8 +39,11 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @param uniqueNetworkSinkDescriptorId : unique ID of NetworkSinkDescriptor
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr
-    create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::milliseconds waitTime, uint32_t retryTimes, uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
+    static SinkDescriptorPtr create(NodeLocation nodeLocation,
+                                    NesPartition nesPartition,
+                                    std::chrono::milliseconds waitTime,
+                                    uint32_t retryTimes,
+                                    uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
 
     /**
      * @brief returns the string representation of the network sink
@@ -104,4 +107,4 @@ using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NETWORKSINKDESCRIPTOR_HPP_

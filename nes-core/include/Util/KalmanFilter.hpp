@@ -93,7 +93,7 @@ class KalmanFilter {
      * 3rd - values + timestem + dynamics matrix
      * @param measuredValues
      */
-    void update(const Eigen::VectorXd& measuredValues); // same timestep
+    void update(const Eigen::VectorXd& measuredValues);                    // same timestep
     void update(const Eigen::VectorXd& measuredValues, double newTimeStep);// update with timestep
     void update(const Eigen::VectorXd& measuredValues,
                 double newTimeStep,
@@ -122,7 +122,7 @@ class KalmanFilter {
     void setGatheringInterval(std::chrono::milliseconds gatheringIntervalInMillis);
     void setGatheringIntervalRange(std::chrono::milliseconds gatheringIntervalRange);
     void setGatheringIntervalWithRange(std::chrono::milliseconds gatheringIntervalInMillis,
-                               std::chrono::milliseconds gatheringIntervalRange);
+                                       std::chrono::milliseconds gatheringIntervalRange);
 
     /**
      * Get current gathering interval.
@@ -136,7 +136,7 @@ class KalmanFilter {
      * has to stay inside the original gathering interval range.
      * @return a new gathering interval that we can sleep on
      */
-    std::chrono::milliseconds getNewGatheringInterval(); // eq. 7 and 10
+    std::chrono::milliseconds getNewGatheringInterval();// eq. 7 and 10
 
     /**
      * @return the total estimation error, calculated
@@ -154,7 +154,7 @@ class KalmanFilter {
      * them by the totalEstimationErrorDivider.
      * @return the total error over the history window
      */
-    float calculateTotalEstimationError(); // eq. 9
+    float calculateTotalEstimationError();// eq. 9
 
     /**
      * Calculate the divider of the total estimation
@@ -220,17 +220,17 @@ class KalmanFilter {
      * Paper is not clear on the magnitude (size) of
      * the range, this can be determined in tests later.
      */
-    std::chrono::milliseconds gatheringIntervalRange{8000}; // allowed to change by +4s/-4s
-    std::chrono::milliseconds gatheringInterval{1000}; // currently in use
-    std::chrono::milliseconds gatheringIntervalReceived{1000}; // from coordinator
+    std::chrono::milliseconds gatheringIntervalRange{8000};   // allowed to change by +4s/-4s
+    std::chrono::milliseconds gatheringInterval{1000};        // currently in use
+    std::chrono::milliseconds gatheringIntervalReceived{1000};// from coordinator
 
     /**
      * @brief control units for changing the new
      * gathering interval. Theta (θ) is static according
      * to the paper in Jain et al.
      */
-    const uint64_t theta = 2; // θ = 2 in all experiments
-    float lambda = 0.6; // λ = 0.6 in most experiments
+    const uint64_t theta = 2;// θ = 2 in all experiments
+    float lambda = 0.6;      // λ = 0.6 in most experiments
 
     /**
      * @brief _e_ constant, used to calculate
@@ -248,4 +248,4 @@ class KalmanFilter {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_UTIL_KALMANFILTER_HPP_
+#endif// NES_INCLUDE_UTIL_KALMANFILTER_HPP_

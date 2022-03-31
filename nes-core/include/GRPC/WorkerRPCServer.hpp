@@ -44,15 +44,11 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
 
     Status
-    RegisterMonitoringPlan(ServerContext*,
-                              const MonitoringRegistrationRequest* request,
-                              MonitoringRegistrationReply*) override;
+    RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
-    Status InjectEpochBarrier(ServerContext*,
-                                const EpochBarrierNotification* request,
-                              EpochBarrierReply* reply) override;
+    Status InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) override;
 
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
 
@@ -65,4 +61,4 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
+#endif// NES_INCLUDE_GRPC_WORKERRPCSERVER_HPP_

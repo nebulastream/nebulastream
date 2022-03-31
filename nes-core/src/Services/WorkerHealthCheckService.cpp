@@ -22,7 +22,7 @@ namespace NES {
 WorkerHealthCheckService::WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient,
                                                    std::string healthServiceName,
                                                    NesWorkerPtr worker)
-    : coordinatorRpcClient(coordinatorRpcClient), worker(worker){
+    : coordinatorRpcClient(coordinatorRpcClient), worker(worker) {
     id = coordinatorRpcClient->getId();
     this->healthServiceName = healthServiceName;
 }

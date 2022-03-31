@@ -39,4 +39,4 @@ class QueryCompiler {
 
 }// namespace NES::QueryCompilation
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

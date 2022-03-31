@@ -17,8 +17,8 @@
 
 #include <chrono>
 
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 using namespace NES;
 using namespace Sensors;

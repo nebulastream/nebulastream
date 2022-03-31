@@ -116,4 +116,4 @@ inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_

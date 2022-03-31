@@ -56,8 +56,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                                              GatheringMode::Value gatheringMode,
                                                              SourceMode::Value sourceMode,
                                                              uint64_t sourceAffinity = 0,
-                                                             uint64_t taskQueueId = 0
-                                                             );
+                                                             uint64_t taskQueueId = 0);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -133,4 +132,4 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     uint64_t taskQueueId;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_

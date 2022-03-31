@@ -39,6 +39,6 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
     virtual void onFatalException(std::shared_ptr<std::exception>, std::string) = 0;
 };
 
-}// namespace NES
+}// namespace NES::Exceptions
 
-#endif  // NES_INCLUDE_RUNTIME_ERRORLISTENER_HPP_
+#endif// NES_INCLUDE_RUNTIME_ERRORLISTENER_HPP_

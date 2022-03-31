@@ -23,7 +23,6 @@ namespace NES::Configurations {
 template<class T>
 class TypedBaseOption : public BaseOption {
   public:
-
     /**
      * @brief Constructor to create a new option without initializing any members.
      * This is required to create nested options, e.g., a IntOption  that is part of a sequence.
@@ -107,8 +106,6 @@ template<class T>
 void TypedBaseOption<T>::clear() {
     this->value = defaultValue;
 }
-
-
 
 }// namespace NES::Configurations
 

@@ -54,11 +54,12 @@ class GeneratableKeyedGlobalSliceStoreAppendOperator : public GeneratableOperato
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableKeyedGlobalSliceStoreAppendOperator(OperatorId id,
-                                         SchemaPtr inputSchema,
-                                         SchemaPtr outputSchema,
-                                         Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                                   std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+    GeneratableKeyedGlobalSliceStoreAppendOperator(
+        OperatorId id,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
     Windowing::Experimental::KeyedEventTimeWindowHandlerPtr windowHandler;
 };

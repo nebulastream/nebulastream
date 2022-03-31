@@ -127,4 +127,4 @@ class QueryCompilerOptions {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_

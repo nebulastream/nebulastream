@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NesBaseTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
+#include "../util/NesBaseTest.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -22,7 +23,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include "../util/NesBaseTest.hpp"
 
 using namespace std;
 
@@ -125,7 +125,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     std::string query = R"(Query::from("test"))";
-    auto testHarness = TestHarness(query,*restPort, *rpcCoordinatorPort, getTestResourceFolder())
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //id=2
                            .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //id=3
@@ -664,10 +664,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
-                           .attachWorkerToCoordinator()                     //2
+                           .attachWorkerToCoordinator()                                        //2
                            .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//3
                            .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//4
-                           .attachWorkerToCoordinator()                     //5
+                           .attachWorkerToCoordinator()                                        //5
                            .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 5)//6
                            .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 5)//7
                            .validate()

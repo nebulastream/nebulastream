@@ -43,4 +43,4 @@ namespace utility {
 using string_t = std::string;
 }// namespace utility
 
-#endif  // NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_HPP_
+#endif// NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_HPP_

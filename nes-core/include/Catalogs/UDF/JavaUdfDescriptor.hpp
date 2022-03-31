@@ -101,4 +101,4 @@ class JavaUdfDescriptor {
 };
 
 }// namespace NES::Catalogs
-#endif  // NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_CATALOGS_UDF_JAVAUDFDESCRIPTOR_HPP_

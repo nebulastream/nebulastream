@@ -23,22 +23,22 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -1009,7 +1009,8 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
             csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
         csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
             csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
-        csvSerializedSourceConfig.set_sourcegatheringinterval(csvSourceDescriptor->getSourceConfig()->getGatheringInterval()->getValue());
+        csvSerializedSourceConfig.set_sourcegatheringinterval(
+            csvSourceDescriptor->getSourceConfig()->getGatheringInterval()->getValue());
         csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
         csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
         csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
@@ -1037,8 +1038,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor");
         auto logicalSourceDescriptor = sourceDescriptor->as<LogicalSourceDescriptor>();
-        auto logicalSourceSerializedSourceDescriptor =
-            SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
+        auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         logicalSourceSerializedSourceDescriptor.set_logicalsourcename(logicalSourceDescriptor->getLogicalSourceName());
         logicalSourceSerializedSourceDescriptor.set_physicalsourcename(logicalSourceDescriptor->getPhysicalSourceName());
 
@@ -1173,8 +1173,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
         sourceConfig->setGatheringInterval(csvSourceConfig->sourcegatheringinterval());
         sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(
-            csvSourceConfig->numberoftuplestoproduceperbuffer());
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(csvSourceConfig->numberoftuplestoproduceperbuffer());
         auto ret = CsvSourceDescriptor::create(schema, sourceConfig);
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
@@ -1188,8 +1187,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor>()) {
         // de-serialize logical source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalSourceDescriptor");
-        auto logicalSourceSerializedSourceDescriptor =
-            SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
+        auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalSourceSerializedSourceDescriptor);
 
         // de-serialize source schema
@@ -1330,7 +1328,8 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
         NES_TRACE("OperatorSerializationUtil:: serialized MaterializedViewSinkDescriptor as "
                   "SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor");
-        auto materializedViewSinkDescriptor = sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
+        auto materializedViewSinkDescriptor =
+            sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();
         serializedSinkDescriptor.set_viewid(materializedViewSinkDescriptor->getViewId());
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);

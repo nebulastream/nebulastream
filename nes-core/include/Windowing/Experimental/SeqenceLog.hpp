@@ -64,7 +64,7 @@ class SequenceLog {
 
     uint64_t getLogIndex(uint64_t sequenceNumber) { return sequenceNumber % logSize; }
 
-    std::array<uint64_t ,logSize> log;
+    std::array<uint64_t, logSize> log;
     std::atomic<uint64_t> currentSequenceNumber = 0;
 };
 

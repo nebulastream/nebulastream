@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 #include "../util/NesBaseTest.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>

@@ -29,7 +29,7 @@ using MaterializedViewSourcePtr = std::shared_ptr<MaterializedViewSource>;
  */
 class MaterializedViewSource : public DataSource {
 
-public:
+  public:
     /// @brief constructor
     MaterializedViewSource(SchemaPtr schema,
                            Runtime::BufferManagerPtr bufferManager,
@@ -64,9 +64,9 @@ public:
      */
     uint64_t getViewId() const;
 
-private:
+  private:
     MaterializedViewPtr view;
 
-}; // class MaterializedViewSource
-} // namespace NES::Experimental::MaterializedView
-#endif  // NES_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_
+};// class MaterializedViewSource
+}// namespace NES::Experimental::MaterializedView
+#endif// NES_INCLUDE_SOURCES_MATERIALIZEDVIEWSOURCE_HPP_

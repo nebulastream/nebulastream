@@ -31,4 +31,4 @@ std::string toString(const FaultToleranceType faultToleranceMode);
 FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranceMode);
 }// namespace NES
 
-#endif  // NES_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
+#endif// NES_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_

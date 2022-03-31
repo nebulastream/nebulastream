@@ -14,7 +14,6 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
-#include <health.grpc.pb.h>
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
@@ -23,6 +22,7 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
 
 namespace NES {

@@ -49,9 +49,10 @@ CSVSourceType::CSVSourceType()
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
                                                                 1,
                                                                 "Number of tuples to produce per buffer.")),
-      sourceGatheringInterval(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
-                                                                            1,
-                                                                            "Gathering interval of the source.")) {
+      sourceGatheringInterval(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
+                                                                1,
+                                                                "Gathering interval of the source.")) {
     NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
@@ -78,7 +79,8 @@ CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap)
             std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
     }
     if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG) != sourceConfigMap.end()) {
-        sourceGatheringInterval->setValue(std::stoi(sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG)->second));
+        sourceGatheringInterval->setValue(
+            std::stoi(sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG)->second));
     }
 }
 
@@ -161,7 +163,9 @@ void CSVSourceType::setFilePath(std::string filePathValue) { filePath->setValue(
 
 void CSVSourceType::setDelimiter(std::string delimiterValue) { delimiter->setValue(std::move(delimiterValue)); }
 
-void CSVSourceType::setGatheringInterval(uint32_t sourceGatheringIntervalValue) { sourceGatheringInterval->setValue(sourceGatheringIntervalValue); }
+void CSVSourceType::setGatheringInterval(uint32_t sourceGatheringIntervalValue) {
+    sourceGatheringInterval->setValue(sourceGatheringIntervalValue);
+}
 
 void CSVSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue) {
     numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);

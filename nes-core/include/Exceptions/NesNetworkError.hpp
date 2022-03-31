@@ -25,7 +25,8 @@ namespace NES {
 
 class NesNetworkException : public Exceptions::RuntimeException {
   public:
-    explicit NesNetworkException(NES::Network::Messages::ErrMessage& msg) : msg(msg), Exceptions::RuntimeException("Network error") {}
+    explicit NesNetworkException(NES::Network::Messages::ErrMessage& msg)
+        : msg(msg), Exceptions::RuntimeException("Network error") {}
 
     const NES::Network::Messages::ErrMessage& getErrorMessage() const { return msg; }
 
@@ -34,4 +35,4 @@ class NesNetworkException : public Exceptions::RuntimeException {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_

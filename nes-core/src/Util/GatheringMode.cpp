@@ -31,7 +31,7 @@ GatheringMode::Value GatheringMode::getFromString(const std::string gatheringMod
         return GatheringMode::INTERVAL_MODE;
     } else if (gatheringMode == "ingestionrate") {
         return GatheringMode::INGESTION_RATE_MODE;
-    }   else if (gatheringMode == "adaptive") {
+    } else if (gatheringMode == "adaptive") {
         return GatheringMode::ADAPTIVE_MODE;
     } else {
         NES_THROW_RUNTIME_ERROR("gatheringMode not supported " << gatheringMode);

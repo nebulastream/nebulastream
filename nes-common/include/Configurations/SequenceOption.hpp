@@ -74,7 +74,6 @@ class SequenceOption : public BaseOption {
     std::vector<T> options;
 };
 
-
 template<class T>
 requires std::is_base_of_v<BaseOption, T> SequenceOption<T>::SequenceOption(const std::string& name,
                                                                             const std::string& description)
@@ -123,8 +122,7 @@ requires std::is_base_of_v<BaseOption, T>
 bool SequenceOption<T>::empty() const { return options.empty(); }
 
 template<class T>
-requires std::is_base_of_v<BaseOption, T>
-std::string SequenceOption<T>::toString() {
+requires std::is_base_of_v<BaseOption, T> std::string SequenceOption<T>::toString() {
     std::stringstream os;
     os << "Name: " << name << "\n";
     os << "Description: " << description << "\n";

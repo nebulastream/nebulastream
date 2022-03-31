@@ -36,7 +36,6 @@ class TestHarnessUtilTest : public Testing::NESBaseTest {
     }
 
     static void TearDownTestCase() { NES_INFO("TestHarnessUtilTest test class TearDownTestCase."); }
-
 };
 
 /*
@@ -627,7 +626,9 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
 
-    EXPECT_THROW(TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(), log4cxx::helpers::Exception);
+    EXPECT_THROW(
+        TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(),
+        log4cxx::helpers::Exception);
 }
 
 /*
@@ -679,9 +680,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .addLogicalSource("truck", truckSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car")  //2
+                                  .attachWorkerWithMemorySourceToCoordinator("car")   //2
                                   .attachWorkerWithMemorySourceToCoordinator("truck");//3
-
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 

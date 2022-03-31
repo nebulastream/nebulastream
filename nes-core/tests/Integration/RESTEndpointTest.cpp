@@ -13,8 +13,8 @@
 */
 
 #include "../util/NesBaseTest.hpp"
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 #include "../util/ProtobufMessageFactory.hpp"
 #include "SerializableQueryPlan.pb.h"

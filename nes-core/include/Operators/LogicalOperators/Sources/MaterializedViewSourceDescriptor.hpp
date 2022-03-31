@@ -30,8 +30,7 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
      * @param materialized view id
      * @return SourceDescriptorPtr
      */
-    static SourceDescriptorPtr create(const SchemaPtr& schema,
-                                      uint64_t mViewId);
+    static SourceDescriptorPtr create(const SchemaPtr& schema, uint64_t mViewId);
 
     /**
      * @brief Provides the string representation of the materialized view source
@@ -61,4 +60,4 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
 };
 using MaterializedViewSourceDescriptorPtr = std::shared_ptr<MaterializedViewSourceDescriptor>;
 }// namespace NES::Experimental::MaterializedView
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MATERIALIZEDVIEWSOURCEDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MATERIALIZEDVIEWSOURCEDESCRIPTOR_HPP_

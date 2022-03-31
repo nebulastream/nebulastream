@@ -18,12 +18,12 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
@@ -31,11 +31,11 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/MQTTSource.hpp>
+#include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/ZmqSource.hpp>
-#include <Sources/MaterializedViewSource.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -119,10 +119,10 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
         case MATERIALIZEDVIEW_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating materialized view source");
             const Experimental::MaterializedView::MaterializedViewSourcePtr materializedViewSourcePtr =
-                    std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSource>(dataSource);
+                std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSource>(dataSource);
             const SourceDescriptorPtr materializedViewSourceDescriptor =
-                    Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(materializedViewSourcePtr->getSchema(),
-                                                             materializedViewSourcePtr->getViewId());
+                Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(materializedViewSourcePtr->getSchema(),
+                                                                                         materializedViewSourcePtr->getViewId());
             return materializedViewSourceDescriptor;
         }
         case MEMORY_SOURCE: {

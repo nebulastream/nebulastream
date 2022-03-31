@@ -186,9 +186,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @param errorMsg to describe the reason of the failure
      * @return true if Notification was successful, false otherwise
      */
-    bool notifyQueryFailure(QueryId queryId,
-                            QuerySubPlanId subQueryId,
-                            std::string errorMsg) override;
+    bool notifyQueryFailure(QueryId queryId, QuerySubPlanId subQueryId, std::string errorMsg) override;
 
     bool notifySourceTermination(QueryId queryId,
                                  QuerySubPlanId subPlanId,

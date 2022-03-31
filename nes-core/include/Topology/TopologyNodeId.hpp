@@ -23,4 +23,4 @@
 using TopologyNodeId = uint64_t;
 static constexpr uint64_t INVALID_TOPOLOGY_NODE_ID = 0;
 
-#endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGYNODEID_HPP_
+#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGYNODEID_HPP_

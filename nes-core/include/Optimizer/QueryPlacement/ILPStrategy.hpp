@@ -50,9 +50,9 @@ class ILPStrategy : public BasePlacementStrategy {
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
 
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                               TopologyPtr topology,
-                                               TypeInferencePhasePtr typeInferencePhase,
-                                               z3::ContextPtr z3Context);
+                                           TopologyPtr topology,
+                                           TypeInferencePhasePtr typeInferencePhase,
+                                           z3::ContextPtr z3Context);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
      * @param weight the relative weight
@@ -145,4 +145,4 @@ class ILPStrategy : public BasePlacementStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_

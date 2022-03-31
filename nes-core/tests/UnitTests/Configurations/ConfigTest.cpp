@@ -19,10 +19,10 @@
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <string>
 
 namespace NES {
@@ -71,7 +71,8 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
 TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile) {
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "coordinatorLogicalSourceAndSchema.yaml");
+    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY)
+                                                           + "coordinatorLogicalSourceAndSchema.yaml");
     EXPECT_FALSE(coordinatorConfigPtr->logicalSources.empty());
     EXPECT_EQ(coordinatorConfigPtr->logicalSources.size(), 2);
     auto logicalSources = coordinatorConfigPtr->logicalSources.getValues();
@@ -180,22 +181,20 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {
-        "--localWorkerIp=localhost",
-        "--coordinatorPort=5000",
-        "--numWorkerThreads=5",
-        "--numberOfBuffersInGlobalBufferManager=2048",
-        "--numberOfBuffersInSourceLocalBufferPool=128",
-        "--queryCompiler.compilationStrategy=FAST",
-        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-        "--physicalSources.type=DefaultSource",
-        "--physicalSources.numberOfBuffersToProduce=5",
-        "--physicalSources.rowLayout=false",
-        "--physicalSources.physicalSourceName=x",
-        "--physicalSources.logicalSourceName=default",
-        "--locationCoordinates=23.88,-3.4"
-    };
+    std::string argv[] = {"--localWorkerIp=localhost",
+                          "--coordinatorPort=5000",
+                          "--numWorkerThreads=5",
+                          "--numberOfBuffersInGlobalBufferManager=2048",
+                          "--numberOfBuffersInSourceLocalBufferPool=128",
+                          "--queryCompiler.compilationStrategy=FAST",
+                          "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+                          "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+                          "--physicalSources.type=DefaultSource",
+                          "--physicalSources.numberOfBuffersToProduce=5",
+                          "--physicalSources.rowLayout=false",
+                          "--physicalSources.physicalSourceName=x",
+                          "--physicalSources.logicalSourceName=default",
+                          "--locationCoordinates=23.88,-3.4"};
     int argc = 14;
 
     std::map<string, string> commandLineParams;
@@ -234,21 +233,19 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = {
-        "--localWorkerIp=localhost",
-        "--coordinatorPort=5000",
-        "--numWorkerThreads=5",
-        "--numberOfBuffersInGlobalBufferManager=2048",
-        "--numberOfBuffersInSourceLocalBufferPool=128",
-        "--queryCompiler.compilationStrategy=FAST",
-        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-        "--physicalSources.type=CSVSource",
-        "--physicalSources.filePath=fileLoc",
-        "--physicalSources.rowLayout=false",
-        "--physicalSources.physicalSourceName=x",
-        "--physicalSources.logicalSourceName=default"
-    };
+    std::string argv[] = {"--localWorkerIp=localhost",
+                          "--coordinatorPort=5000",
+                          "--numWorkerThreads=5",
+                          "--numberOfBuffersInGlobalBufferManager=2048",
+                          "--numberOfBuffersInSourceLocalBufferPool=128",
+                          "--queryCompiler.compilationStrategy=FAST",
+                          "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+                          "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+                          "--physicalSources.type=CSVSource",
+                          "--physicalSources.filePath=fileLoc",
+                          "--physicalSources.rowLayout=false",
+                          "--physicalSources.physicalSourceName=x",
+                          "--physicalSources.logicalSourceName=default"};
     int argc = 13;
 
     std::map<string, string> commandLineParams;

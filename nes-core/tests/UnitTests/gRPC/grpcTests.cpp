@@ -20,6 +20,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -29,7 +30,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;
@@ -102,7 +102,6 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("GrpcNotifyQueryFailureTest: Test finished");
 }
-
 
 /**
 * Test if errors are transferred from Worker to Coordinator.

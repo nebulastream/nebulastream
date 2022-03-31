@@ -89,4 +89,4 @@ class DefaultSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption sourceGatheringInterval;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_

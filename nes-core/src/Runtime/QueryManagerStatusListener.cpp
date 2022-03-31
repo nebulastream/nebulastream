@@ -51,7 +51,7 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
         queryStatusListener->notifyQueryStatusChange(qep->getQueryId(),
                                                      qep->getQuerySubPlanId(),
                                                      Execution::ExecutableQueryPlanStatus::Finished);
-        
+
     } else if (status == Execution::ExecutableQueryPlanStatus::ErrorState) {
         addReconfigurationMessage(
             qep->getQueryId(),

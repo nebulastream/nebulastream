@@ -49,4 +49,4 @@ class JITCompiler {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
+#endif// NES_INCLUDE_COMPILER_JITCOMPILER_HPP_

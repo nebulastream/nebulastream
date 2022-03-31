@@ -33,4 +33,4 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperatorNode 
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_

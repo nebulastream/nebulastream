@@ -41,11 +41,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSlidingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSlidingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
@@ -54,8 +52,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -264,7 +264,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
         if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
             NES_DEBUG("Create Thread local window aggregation");
 
-            if(!windowDefinition->isKeyed()){
+            if (!windowDefinition->isKeyed()) {
                 NES_ERROR("Currently the THEAD_LOCAL window implementations only supports keyed sources");
             }
 
@@ -290,13 +290,14 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
                 return;
             } else {
 
-                auto globalSliceStoreAppend = PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
-                                                                                            windowOutputSchema,
-                                                                                            windowHandler);
+                auto globalSliceStoreAppend =
+                    PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
+                                                                                           windowOutputSchema,
+                                                                                           windowHandler);
                 operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
                 auto windowSink = PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
-                                                                                             windowOutputSchema,
-                                                                                             windowHandler);
+                                                                                            windowOutputSchema,
+                                                                                            windowHandler);
                 operatorNode->replace(windowSink);
             }
         } else {

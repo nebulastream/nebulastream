@@ -16,8 +16,8 @@
 #define NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>

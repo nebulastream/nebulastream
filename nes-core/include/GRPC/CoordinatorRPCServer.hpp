@@ -211,8 +211,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @return true if coordinator successfully recorded the information else false
      */
     Status notifySourceStopTriggered(::grpc::ServerContext* context,
-                                   const ::SoftStopTriggeredMessage* request,
-                                   ::SoftStopTriggeredReply* response) override;
+                                     const ::SoftStopTriggeredMessage* request,
+                                     ::SoftStopTriggeredReply* response) override;
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is completed or not

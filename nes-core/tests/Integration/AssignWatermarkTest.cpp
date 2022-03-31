@@ -12,20 +12,20 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include "../util/NesBaseTest.hpp"
 #include "Catalogs/Source/PhysicalSource.hpp"
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <gtest/gtest.h>
 #include <iostream>
 
 using namespace std;

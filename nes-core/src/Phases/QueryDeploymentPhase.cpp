@@ -53,7 +53,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
     }
 
     //Remove the old mapping of the shared query plan
-    if(!sharedQueryPlan->isNew()){
+    if (!sharedQueryPlan->isNew()) {
         queryCatalogService->removeSharedQueryPlanMapping(sharedQueryId);
     }
 

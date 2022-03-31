@@ -19,13 +19,13 @@
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 
 #include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -234,23 +234,25 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getSourceAffinity(),
                                   lambdaSourceDescriptor->getTaskQueueId(),
                                   successors);
-    } else if (sourceDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSourceDescriptor>()){
+    } else if (sourceDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
-        auto materializedViewSourceDescriptor = sourceDescriptor->as<Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
+        auto materializedViewSourceDescriptor =
+            sourceDescriptor->as<Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
         auto viewId = materializedViewSourceDescriptor->getViewId();
         Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
-        if (nodeEngine->getMaterializedViewManager()->containsView(viewId)){
+        if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
             view = nodeEngine->getMaterializedViewManager()->getView(viewId);
         } else {
-            view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_VIEW, viewId);
+            view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_VIEW,
+                                                                        viewId);
         }
         return Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
-                bufferManager,
-                queryManager,
-                operatorId,
-                numSourceLocalBuffers,
-                successors,
-                std::move(view));
+                                                                            bufferManager,
+                                                                            queryManager,
+                                                                            operatorId,
+                                                                            numSourceLocalBuffers,
+                                                                            successors,
+                                                                            std::move(view));
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

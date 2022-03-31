@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "../util/NesBaseTest.hpp"
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -24,7 +25,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
-#include "../util/NesBaseTest.hpp"
 
 using namespace std;
 namespace NES {
@@ -37,7 +37,6 @@ class SourceCatalogRemoteTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("SourceCatalogRemoteTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SourceCatalogRemoteTest test class.");
     }
-
 };
 
 TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {

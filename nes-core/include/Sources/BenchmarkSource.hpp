@@ -18,8 +18,8 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <Util/SourceMode.hpp>
 #include <Util/GatheringMode.hpp>
+#include <Util/SourceMode.hpp>
 
 namespace NES {
 namespace Runtime {
@@ -35,7 +35,6 @@ class MemorySegment;
  */
 class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-
     /**
      * @brief The constructor of a BenchmarkSource
      * @param schema the schema of the source
@@ -99,7 +98,6 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
     void close() override;
 
   private:
-
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
@@ -114,4 +112,4 @@ using BenchmarkSourcePtr = std::shared_ptr<BenchmarkSource>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_

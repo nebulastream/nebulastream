@@ -46,16 +46,15 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
-#include <Util/TestUtils.hpp>
 
 using namespace std;
 using namespace std;
@@ -111,13 +110,14 @@ TEST_F(QueryCompilerTest, filterQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -157,13 +157,14 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -202,13 +203,14 @@ TEST_F(QueryCompilerTest, windowQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -252,13 +254,14 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -303,13 +306,14 @@ TEST_F(QueryCompilerTest, unionQuery) {
     sourceCatalog->addLogicalSource(logicalSourceName, schema);
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -357,14 +361,15 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf1 = PhysicalSource::create(leftSourceLogicalSourceName, "x1", defaultSourceType);
     auto sourceConf2 = PhysicalSource::create(rightSourceLogicalSourceName, "x1", defaultSourceType);
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf1);
     workerConfiguration->physicalSources.add(sourceConf2);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -418,12 +423,14 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto sourceConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
 
-    auto workerConfiguration  = WorkerConfiguration::create();
+    auto workerConfiguration = WorkerConfiguration::create();
     workerConfiguration->physicalSources.add(sourceConf);
     workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);

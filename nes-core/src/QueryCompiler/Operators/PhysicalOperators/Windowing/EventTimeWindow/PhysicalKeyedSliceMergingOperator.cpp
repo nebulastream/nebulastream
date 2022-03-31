@@ -25,9 +25,7 @@ PhysicalKeyedSliceMergingOperator::PhysicalKeyedSliceMergingOperator(
     std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
-std::string PhysicalKeyedSliceMergingOperator::toString() const {
-    return "PhysicalKeyedSliceMergingOperator";
-}
+std::string PhysicalKeyedSliceMergingOperator::toString() const { return "PhysicalKeyedSliceMergingOperator"; }
 
 OperatorNodePtr PhysicalKeyedSliceMergingOperator::copy() {
     return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);

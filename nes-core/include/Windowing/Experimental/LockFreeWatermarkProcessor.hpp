@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Util/Logger/Logger.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <algorithm>
 #include <assert.h>
 #include <atomic>
@@ -100,7 +100,6 @@ class LockFreeWatermarkProcessor {
     std::atomic<uint64_t> currentSequenceNumber = 0;
     std::atomic<uint64_t> currentWatermarkTs = 0;
 };
-
 
 }// namespace NES::Experimental
 

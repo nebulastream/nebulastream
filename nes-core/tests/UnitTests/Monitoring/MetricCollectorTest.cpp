@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+// clang-format: off
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
+// clang-format: on
+
 #include "../../../tests/util/MetricValidator.hpp"
-
-#include <Monitoring/MonitoringCatalog.hpp>
-
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
@@ -29,6 +29,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
+#include <Monitoring/MonitoringCatalog.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>

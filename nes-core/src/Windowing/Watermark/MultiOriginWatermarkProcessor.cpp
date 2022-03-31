@@ -19,9 +19,7 @@ namespace NES::Windowing {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {}
 
-MultiOriginWatermarkProcessor::~MultiOriginWatermarkProcessor() {
-    localWatermarkProcessor.clear();
-}
+MultiOriginWatermarkProcessor::~MultiOriginWatermarkProcessor() { localWatermarkProcessor.clear(); }
 
 std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const uint64_t numberOfOrigins) {
     return std::make_shared<MultiOriginWatermarkProcessor>(numberOfOrigins);

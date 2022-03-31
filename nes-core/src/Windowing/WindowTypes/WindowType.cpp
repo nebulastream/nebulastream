@@ -38,7 +38,7 @@ bool WindowType::inferStamp(const SchemaPtr& schema) {
         if (existingField) {
             timeCharacteristic->getField()->setName(existingField->getName());
             return false;
-        }else if(fieldName == "creationTS"){
+        } else if (fieldName == "creationTS") {
             timeCharacteristic->getField()->setName("creationTS");
             return false;
         }

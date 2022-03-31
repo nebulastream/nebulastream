@@ -68,7 +68,7 @@ struct StateVariableDestroyerHelper<Key, T*> {
 
 class Destroyable {
   public:
-    virtual ~Destroyable() { }
+    virtual ~Destroyable() {}
 };
 }// namespace detail
 
@@ -273,9 +273,7 @@ class StateVariable : public detail::Destroyable {
     /**
      * @brief Destructor of a state variable. It frees all allocated resources.
      */
-    virtual ~StateVariable() override {
-        detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend);
-    }
+    virtual ~StateVariable() override { detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend); }
 
     /**
      * @brief Copy assignment operator
@@ -333,4 +331,4 @@ class StateVariable : public detail::Destroyable {
 };
 }// namespace Runtime
 }// namespace NES
-#endif  // NES_INCLUDE_STATE_STATEVARIABLE_HPP_
+#endif// NES_INCLUDE_STATE_STATEVARIABLE_HPP_

@@ -14,9 +14,9 @@
 #ifndef NES_REPLICATIONSERVICE_H
 #define NES_REPLICATIONSERVICE_H
 #include <Components/NesCoordinator.hpp>
+#include <mutex>
 #include <unordered_map>
 #include <utility>
-#include <mutex>
 
 namespace NES {
 
@@ -48,7 +48,6 @@ class ReplicationService {
     EpochId getCurrentEpochBarrier(uint64_t queryId, uint64_t epoch) const;
 
   private:
-
     /**
      * @brief saves current epoch barrier for a given query id and epoch
      * @param queryId current query id
@@ -75,5 +74,5 @@ class ReplicationService {
     mutable std::unordered_map<uint64_t, std::pair<uint64_t, uint64_t>> queryIdToCurrentEpochBarrierMap;
 };
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
-}
+}// namespace NES
 #endif//NES_REPLICATIONSERVICE_H

@@ -51,14 +51,14 @@ class RunQueryRequest : public Request {
      * @brief Get query placement strategy
      * @return query placement strategy
      */
-    PlacementStrategy::Value  getQueryPlacementStrategy();
+    PlacementStrategy::Value getQueryPlacementStrategy();
 
     std::string toString() override;
 
   private:
-    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy::Value  queryPlacementStrategy);
+    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy::Value queryPlacementStrategy);
     QueryPlanPtr queryPlan;
-    PlacementStrategy::Value  queryPlacementStrategy;
+    PlacementStrategy::Value queryPlacementStrategy;
 };
 }// namespace NES
 

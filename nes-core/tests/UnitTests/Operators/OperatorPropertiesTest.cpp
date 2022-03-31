@@ -13,14 +13,13 @@
 */
 
 #include <API/QueryAPI.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 

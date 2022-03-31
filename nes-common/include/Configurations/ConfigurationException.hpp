@@ -29,9 +29,10 @@ class ConfigurationException : public Exceptions::RuntimeException {
      * @brief Construct a configuration exception from a message and include the current stack trace.
      * @param message The exception message.
      */
-    explicit ConfigurationException(
-        const std::string& message, std::string&& stacktrace= collectAndPrintStacktrace(), std::source_location location = std::source_location::current());
+    explicit ConfigurationException(const std::string& message,
+                                    std::string&& stacktrace = collectAndPrintStacktrace(),
+                                    std::source_location location = std::source_location::current());
 };
 
-}// namespace NES
+}// namespace NES::Configurations
 #endif// NES_INCLUDE_EXCEPTIONS_CONFIGURATIONEXCEPTION_HPP_

@@ -18,6 +18,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -38,8 +39,6 @@
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
 
@@ -1139,16 +1138,21 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
  */
 TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto inputSchema =
-        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+    auto inputSchema = Schema::create()
+                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                           ->addField(createField("timestamp", UINT64))
+                           ->addField(createField("velocity", FLOAT32))
+                           ->addField(createField("quantity", UINT64));
 
     streamCatalog->addLogicalSource("QnV1", inputSchema);
     streamCatalog->addLogicalSource("QnV2", inputSchema);
     streamCatalog->addLogicalSource("QnV3", inputSchema);
 
-   auto query = Query::from("QnV1").filter(Attribute("velocity")>50)
-                     .orWith(Query::from("QnV2").filter(Attribute("quantity")>5)
-                     .orWith(Query::from("QnV3").filter(Attribute("quantity")>7)))
+    auto query = Query::from("QnV1")
+                     .filter(Attribute("velocity") > 50)
+                     .orWith(Query::from("QnV2")
+                                 .filter(Attribute("quantity") > 5)
+                                 .orWith(Query::from("QnV3").filter(Attribute("quantity") > 7)))
                      .sink(FileSinkDescriptor::create(""));
 
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -1173,19 +1177,23 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto inputSchema =
-        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+    auto inputSchema = Schema::create()
+                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                           ->addField(createField("timestamp", UINT64))
+                           ->addField(createField("velocity", FLOAT32))
+                           ->addField(createField("quantity", UINT64));
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
     streamCatalog->addLogicalSource("QnV2", inputSchema);
 
-    auto query = Query::from("QnV").filter(Attribute("velocity")>50)
-                        .andWith(Query::from("QnV1").filter(Attribute("quantity")>50))
-                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
-                        .andWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
-                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
-                        .sink(FileSinkDescriptor::create(""));
+    auto query = Query::from("QnV")
+                     .filter(Attribute("velocity") > 50)
+                     .andWith(Query::from("QnV1").filter(Attribute("quantity") > 50))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
+                     .andWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
+                     .sink(FileSinkDescriptor::create(""));
 
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
@@ -1223,18 +1231,22 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto inputSchema =
-        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+    auto inputSchema = Schema::create()
+                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                           ->addField(createField("timestamp", UINT64))
+                           ->addField(createField("velocity", FLOAT32))
+                           ->addField(createField("quantity", UINT64));
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
     streamCatalog->addLogicalSource("QnV2", inputSchema);
 
-    auto query = Query::from("QnV").filter(Attribute("velocity")>50)
-                     .seqWith(Query::from("QnV1").filter(Attribute("quantity")>50))
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+    auto query = Query::from("QnV")
+                     .filter(Attribute("velocity") > 50)
+                     .seqWith(Query::from("QnV1").filter(Attribute("quantity") > 50))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
                      .seqWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
                      .sink(FileSinkDescriptor::create(""));
 
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -1273,16 +1285,20 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    auto inputSchema =
-        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+    auto inputSchema = Schema::create()
+                           ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
+                           ->addField(createField("timestamp", UINT64))
+                           ->addField(createField("velocity", FLOAT32))
+                           ->addField(createField("quantity", UINT64));
 
     streamCatalog->addLogicalSource("QnV", inputSchema);
     streamCatalog->addLogicalSource("QnV1", inputSchema);
     streamCatalog->addLogicalSource("QnV2", inputSchema);
 
-    auto query = Query::from("QnV").filter(Attribute("velocity")>50)
-                     .seqWith(Query::from("QnV1").filter(Attribute("quantity")>50))
-                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+    auto query = Query::from("QnV")
+                     .filter(Attribute("velocity") > 50)
+                     .seqWith(Query::from("QnV1").filter(Attribute("quantity") > 50))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Minutes(2)))
                      .sink(FileSinkDescriptor::create(""));
 
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);

@@ -104,9 +104,7 @@ std::string QueryPlan::toString() {
     return ss.str();
 }
 
-std::vector<OperatorNodePtr> QueryPlan::getRootOperators() {
-    return rootOperators;
-}
+std::vector<OperatorNodePtr> QueryPlan::getRootOperators() { return rootOperators; }
 
 std::vector<OperatorNodePtr> QueryPlan::getLeafOperators() {
     // Find all the leaf nodes in the query plan

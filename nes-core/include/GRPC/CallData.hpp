@@ -55,4 +55,4 @@ class CallData {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_GRPC_CALLDATA_HPP_
+#endif// NES_INCLUDE_GRPC_CALLDATA_HPP_

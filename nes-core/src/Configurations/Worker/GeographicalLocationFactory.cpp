@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Configurations/Worker/GeographicalLocationFactory.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Common/GeographicalLocation.hpp>
-#include <map>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/GeographicalLocationFactory.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <map>
 
 namespace NES {
 
 namespace Configurations {
 
 GeographicalLocation GeographicalLocationFactory::createFromString(std::string,
-                                                                      std::map<std::string, std::string>& commandLineParams) {
+                                                                   std::map<std::string, std::string>& commandLineParams) {
     std::string coordStr;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
         if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
@@ -43,7 +43,6 @@ GeographicalLocation GeographicalLocationFactory::createFromYaml(Yaml::Node& yam
         return GeographicalLocation::fromString(configString);
     }
     return GeographicalLocation(200, 200);
-
 }
-}
+}// namespace Configurations
 }//namespace NES

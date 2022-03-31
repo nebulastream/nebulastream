@@ -70,4 +70,4 @@ class ThreadBarrier {
 };
 using ThreadBarrierPtr = std::shared_ptr<ThreadBarrier>;
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_THREADBARRIER_HPP_
+#endif// NES_INCLUDE_UTIL_THREADBARRIER_HPP_

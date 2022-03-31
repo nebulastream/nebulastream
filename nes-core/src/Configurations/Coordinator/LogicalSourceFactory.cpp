@@ -23,10 +23,8 @@ namespace NES {
 
 namespace Configurations {
 
-LogicalSourcePtr LogicalSourceFactory::createFromString(std::string ,
-                                            std::map<std::string, std::string>& commandLineParams) {
-    std::string logicalSourceName, fieldNodeName,
-        fieldNodeType, fieldNodeNesType, fieldNodeLength;
+LogicalSourcePtr LogicalSourceFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
+    std::string logicalSourceName, fieldNodeName, fieldNodeType, fieldNodeNesType, fieldNodeLength;
     for (auto parameter : commandLineParams) {
         if (parameter.first == LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG && !parameter.second.empty()) {
             logicalSourceName = parameter.second;
@@ -55,7 +53,7 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
     if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
         && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n") {
         logicalSourceName = yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>();
-    }else {
+    } else {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
     }
 
@@ -86,8 +84,7 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
 }
 
 // TODO: ask in review if this can be moved elsewhere
-DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType,
-                                                    std::string fieldNodeLength) {
+DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType, std::string fieldNodeLength) {
     if (fieldNodeType == "CHAR") {
         if (fieldNodeLength.empty() || fieldNodeLength == "\n" || fieldNodeLength == "0") {
             NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length properly.");
@@ -139,7 +136,8 @@ DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType,
         return DataTypeFactory::createDouble();
     }
 
-    NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. " << fieldNodeType << " is not a proper Schema Field Type.");
+    NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. " << fieldNodeType
+                                                                           << " is not a proper Schema Field Type.");
 }
 
 }// namespace Configurations

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
 
@@ -33,27 +32,23 @@ KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uin
     //    slice->reset(startTs, endTs, sliceIndex);
     //    return slice;
     //} else {
-        return std::make_unique<KeyedSlice>(hashMapFactory, startTs, endTs, sliceIndex);
+    return std::make_unique<KeyedSlice>(hashMapFactory, startTs, endTs, sliceIndex);
     //}
 }
 
 void KeyedThreadLocalSliceStore::dropFirstSlice() {
     // if the first index reaches the last index, we create a dummy slice at the end.
     if (slices.contains(firstIndex)) {
-       // auto slice = std::move(slices[firstIndex]);
-       // preallocatedSlices.emplace_back(std::move(slice));
+        // auto slice = std::move(slices[firstIndex]);
+        // preallocatedSlices.emplace_back(std::move(slice));
         slices.erase(firstIndex);
     }
     this->firstIndex++;
 }
 
-uint64_t KeyedThreadLocalSliceStore::getLastWatermark() {
-    return lastWatermarkTs;
-}
+uint64_t KeyedThreadLocalSliceStore::getLastWatermark() { return lastWatermarkTs; }
 
-void KeyedThreadLocalSliceStore::setLastWatermark(uint64_t watermarkTs) {
-    lastWatermarkTs = watermarkTs;
-}
+void KeyedThreadLocalSliceStore::setLastWatermark(uint64_t watermarkTs) { lastWatermarkTs = watermarkTs; }
 
 KeyedSlicePtr& KeyedThreadLocalSliceStore::insertSlice(uint64_t sliceIndex) {
     // slices are always pre-initialized. Thus, we can just call reset.
@@ -72,8 +67,6 @@ KeyedSlicePtr& KeyedThreadLocalSliceStore::insertSlice(uint64_t sliceIndex) {
         return slices[sliceIndex];
     }
 }
-void KeyedThreadLocalSliceStore::setFirstSliceIndex(uint64_t i) {
-    firstIndex = i;
-}
+void KeyedThreadLocalSliceStore::setFirstSliceIndex(uint64_t i) { firstIndex = i; }
 
 }// namespace NES::Windowing::Experimental

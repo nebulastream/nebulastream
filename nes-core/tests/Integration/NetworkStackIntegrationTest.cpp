@@ -18,6 +18,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -48,7 +49,6 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <random>
 #include <utility>
 

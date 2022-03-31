@@ -55,9 +55,9 @@ class GeneratableKeyedSlidingWindowSink : public GeneratableOperator {
 
   private:
     GeneratableKeyedSlidingWindowSink(OperatorId id,
-                                         SchemaPtr inputSchema,
-                                         SchemaPtr outputSchema,
-                                         Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
+                                      Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
                                       std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
     Windowing::Experimental::KeyedEventTimeWindowHandlerPtr windowHandler;

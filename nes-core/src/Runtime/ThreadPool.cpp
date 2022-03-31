@@ -33,7 +33,6 @@
 #include <Runtime/HardwareManager.hpp>
 #endif
 
-
 #ifdef ENABLE_PAPI_PROFILER
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif

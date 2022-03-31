@@ -15,15 +15,15 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
+#include <Common/GeographicalLocation.hpp>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/GeographicalLocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
-#include <Configurations/Worker/GeographicalLocationFactory.hpp>
 #include <map>
 #include <string>
-#include <Common/GeographicalLocation.hpp>
 
 namespace NES {
 
@@ -162,7 +162,8 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<GeographicalLocation, GeographicalLocationFactory> locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
+    WrapOption<GeographicalLocation, GeographicalLocationFactory> locationCoordinates = {LOCATION_COORDINATES_CONFIG,
+                                                                                         "the physical location of the worker"};
 
     /**
      * @brief Configuration yaml path.

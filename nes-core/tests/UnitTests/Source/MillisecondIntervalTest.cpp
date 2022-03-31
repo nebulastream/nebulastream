@@ -15,9 +15,8 @@
 #include <chrono>
 #include <thread>
 
+#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -100,7 +99,9 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         PhysicalSourcePtr sourceConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
         auto workerConfigurations = WorkerConfiguration::create();
         workerConfigurations->physicalSources.add(sourceConf);
-        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                               .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                               .build();
 
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -292,7 +293,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("MillisecondIntervalTest: Remove query");
-//    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    //    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     bool retStopWrk = wrk1->stop(false);

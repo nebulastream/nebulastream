@@ -41,7 +41,8 @@ void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentC
 }
 
 void GeneratableMaxAggregation::compileCombine(CompoundStatementPtr currentCode,
-                                               VarRefStatement globalPartial, VarRefStatement localPartial) {
+                                               VarRefStatement globalPartial,
+                                               VarRefStatement localPartial) {
     auto partial1 = globalPartial.accessPtr(VarRef(getPartialAggregate()));
     auto partial2 = localPartial.accessPtr(VarRef(getPartialAggregate()));
     auto ifStatement = IF(partial1 < partial2, partial1.assign(partial2));

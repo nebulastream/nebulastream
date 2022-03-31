@@ -18,8 +18,8 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <string>
 #include <chrono>
+#include <string>
 namespace NES {
 namespace Network {
 
@@ -95,4 +95,4 @@ using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_NETWORKSOURCEDESCRIPTOR_HPP_

@@ -37,4 +37,4 @@ class BufferAccessException : public Exceptions::RuntimeException {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_EXCEPTIONS_BUFFERACCESSEXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_BUFFERACCESSEXCEPTION_HPP_

@@ -129,7 +129,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         // TODO switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
-            case Runtime::FailEndOfStream: { NES_NOT_IMPLEMENTED(); }
+            case Runtime::FailEndOfStream: {
+                NES_NOT_IMPLEMENTED();
+            }
             case Runtime::SoftEndOfStream: {
                 break;
             }
@@ -250,4 +252,4 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_

@@ -17,21 +17,18 @@
 
 namespace NES::Experimental {
 
-
 MigrateQueryRequestPtr MigrateQueryRequest::create(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType) {
     return std::make_shared<MigrateQueryRequest>(MigrateQueryRequest(queryId, nodeId, migrationType));
-
 }
 
-MigrateQueryRequest::MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType) :
-                              Request(queryId), nodeId(nodeId), migrationType(migrationType) {};
-
+MigrateQueryRequest::MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType)
+    : Request(queryId), nodeId(nodeId), migrationType(migrationType){};
 
 MigrationType::Value MigrateQueryRequest::getMigrationType() { return migrationType; }
 
 std::string MigrateQueryRequest::toString() {
     return "MigrateQueryRequest { QueryId: " + std::to_string(getQueryId()) + ", Topology Node: " + std::to_string(nodeId)
-           + ", withBuffer: " + std::to_string(migrationType) + "}";
+        + ", withBuffer: " + std::to_string(migrationType) + "}";
 }
 TopologyNodeId MigrateQueryRequest::getTopologyNode() { return nodeId; }
-}// namespace NES
+}// namespace NES::Experimental

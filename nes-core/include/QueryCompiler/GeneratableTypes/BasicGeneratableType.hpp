@@ -53,4 +53,4 @@ class BasicGeneratableType final : public GeneratableDataType {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_BASICGENERATABLETYPE_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_BASICGENERATABLETYPE_HPP_

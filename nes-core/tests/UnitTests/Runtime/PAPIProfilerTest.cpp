@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <strstream>
 

@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 
@@ -131,8 +130,8 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     sourceNode->removeLinkProperty(destinationNode);
     destinationNode->removeLinkProperty(sourceNode);
 
-    EXPECT_THROW(sourceNode->getLinkProperty(destinationNode),  Exceptions::RuntimeException);
-    EXPECT_THROW(destinationNode->getLinkProperty(sourceNode),  Exceptions::RuntimeException);
+    EXPECT_THROW(sourceNode->getLinkProperty(destinationNode), Exceptions::RuntimeException);
+    EXPECT_THROW(destinationNode->getLinkProperty(sourceNode), Exceptions::RuntimeException);
 }
 
 }// namespace NES

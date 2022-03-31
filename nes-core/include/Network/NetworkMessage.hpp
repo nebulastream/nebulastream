@@ -17,10 +17,10 @@
 
 #include <Network/ChannelId.hpp>
 #include <Runtime/Events.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
-#include <Runtime/QueryTerminationType.hpp>
 
 namespace NES {
 namespace Network {
@@ -243,4 +243,4 @@ class EventBufferMessage {
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
+#endif// NES_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_

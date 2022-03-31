@@ -66,4 +66,4 @@ class Parser {
     std::vector<PhysicalTypePtr> physicalTypes;
 };
 }//namespace NES
-#endif  // NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
+#endif// NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_

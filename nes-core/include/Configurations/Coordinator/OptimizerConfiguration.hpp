@@ -39,7 +39,9 @@ class OptimizerConfiguration : public BaseConfiguration {
     /**
      * @brief The number of queryIdAndCatalogEntryMapping to be processed together.
      */
-    IntOption queryBatchSize = {QUERY_BATCH_SIZE_CONFIG, 1, "The number of queryIdAndCatalogEntryMapping to be processed together"};
+    IntOption queryBatchSize = {QUERY_BATCH_SIZE_CONFIG,
+                                1,
+                                "The number of queryIdAndCatalogEntryMapping to be processed together"};
 
     /**
      * @brief The rule to be used for performing query merging.

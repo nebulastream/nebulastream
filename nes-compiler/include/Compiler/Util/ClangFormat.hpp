@@ -41,4 +41,4 @@ class ClangFormat {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_
+#endif// NES_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_

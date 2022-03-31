@@ -15,11 +15,11 @@
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATION_HPP_
 #include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
 #include <Configurations/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <Configurations/WrapOption.hpp>
-#include <Configurations/ConfigurationException.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
@@ -69,8 +69,7 @@ class BaseConfiguration : public BaseOption {
 
   protected:
     void parseFromYAMLNode(const Yaml::Node config) override;
-    void parseFromString(std::string identifier,
-                         std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
     virtual std::vector<Configurations::BaseOption*> getOptions() = 0;
     std::map<std::string, Configurations::BaseOption*> getOptionMap();
 };

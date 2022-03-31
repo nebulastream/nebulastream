@@ -58,11 +58,12 @@ class GeneratableKeyedThreadLocalPreAggregationOperator : public GeneratableOper
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableKeyedThreadLocalPreAggregationOperator(OperatorId id,
-                                                      SchemaPtr inputSchema,
-                                                      SchemaPtr outputSchema,
-                                                      Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                                      std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+    GeneratableKeyedThreadLocalPreAggregationOperator(
+        OperatorId id,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
     Windowing::Experimental::KeyedEventTimeWindowHandlerPtr windowHandler;

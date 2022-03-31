@@ -35,6 +35,7 @@ namespace Network {
 class ZmqServer {
   private:
     static constexpr const char* dispatcherPipe = "inproc://dispatcher";
+
   public:
     /**
      * Create a ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in
@@ -140,4 +141,4 @@ class ZmqServer {
 
 }// namespace Network
 }// namespace NES
-#endif  // NES_INCLUDE_NETWORK_ZMQSERVER_HPP_
+#endif// NES_INCLUDE_NETWORK_ZMQSERVER_HPP_

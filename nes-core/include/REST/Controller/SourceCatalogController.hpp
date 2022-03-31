@@ -38,4 +38,4 @@ using SourceCatalogControllerPtr = std::shared_ptr<SourceCatalogController>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_
+#endif// NES_INCLUDE_REST_CONTROLLER_STREAMCATALOGCONTROLLER_HPP_

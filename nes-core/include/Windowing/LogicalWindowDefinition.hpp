@@ -113,7 +113,6 @@ class LogicalWindowDefinition {
      */
     void setNumberOfInputEdges(uint64_t numberOfInputEdges);
 
-
     /**
      * @brief Getter for the aggregation functions.
      * @return Vector of WindowAggregations.
@@ -148,7 +147,6 @@ class LogicalWindowDefinition {
      * @param keys
      */
     void setOnKey(std::vector<FieldAccessExpressionNodePtr> keys);
-
 
     /**
      * @brief Getter for the allowed lateness. The allowed lateness defines,
@@ -221,4 +219,4 @@ class LogicalWindowDefinition {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_
+#endif// NES_INCLUDE_WINDOWING_LOGICALWINDOWDEFINITION_HPP_

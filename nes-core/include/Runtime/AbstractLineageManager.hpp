@@ -49,4 +49,4 @@ class AbstractLineageManager {
     virtual size_t getLineageSize() const = 0;
 };
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
+#endif// NES_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_

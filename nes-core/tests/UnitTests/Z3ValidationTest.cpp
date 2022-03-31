@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <memory>
 #include <z3++.h>
 

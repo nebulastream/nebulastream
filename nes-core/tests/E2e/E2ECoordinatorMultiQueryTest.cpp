@@ -13,10 +13,10 @@
 */
 
 #include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <string>
 #include <unistd.h>
 #define GetCurrentDir getcwd

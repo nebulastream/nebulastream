@@ -50,7 +50,6 @@ class KeyedSlice {
      */
     inline uint64_t getEnd() const { return end; }
 
-
     /**
      * @brief Index of the slice.
      * @return uint64_t
@@ -61,9 +60,7 @@ class KeyedSlice {
      * @brief State of the slice.
      * @return uint64_t
      */
-    inline NES::Experimental::Hashmap& getState(){
-        return state;
-    }
+    inline NES::Experimental::Hashmap& getState() { return state; }
 
     /**
      * @brief Reinitialize slice.

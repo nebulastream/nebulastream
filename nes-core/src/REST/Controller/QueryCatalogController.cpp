@@ -61,15 +61,16 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             }
 
             if (queries.empty()) {
-                NES_DEBUG("QueryCatalogController: handleGet -queryIdAndCatalogEntryMapping: no registered query with status " + queryStatus
-                          + " was found.");
+                NES_DEBUG("QueryCatalogController: handleGet -queryIdAndCatalogEntryMapping: no registered query with status "
+                          + queryStatus + " was found.");
                 noContentImpl(request);
             } else {
                 successMessageImpl(request, result);
             }
             return;
         } catch (const std::exception& exc) {
-            NES_ERROR("QueryCatalogController: handleGet -queryIdAndCatalogEntryMapping: Exception occurred while building the query plan for "
+            NES_ERROR("QueryCatalogController: handleGet -queryIdAndCatalogEntryMapping: Exception occurred while building the "
+                      "query plan for "
                       "user request:"
                       << exc.what());
             handleException(request, exc);

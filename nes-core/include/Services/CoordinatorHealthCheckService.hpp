@@ -16,8 +16,8 @@
 #define NES_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 
 #include <Services/AbstractHealthCheckService.hpp>
-#include <stdint.h>
 #include <Util/libcuckoo/cuckoohash_map.hh>
+#include <stdint.h>
 namespace NES {
 
 /**
@@ -25,7 +25,9 @@ namespace NES {
  */
 class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
   public:
-    CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService, WorkerRPCClientPtr workerRPCClient, std::string healthServiceName);
+    CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
+                                  WorkerRPCClientPtr workerRPCClient,
+                                  std::string healthServiceName);
 
     /**
      * Method to start the health checking

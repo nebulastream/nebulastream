@@ -34,7 +34,10 @@ class CUDAKernelWrapper {
      * @param bufferSize size of the gpu buffer pool to be allocated
      * @param headers header to use in the kernel (e.g., defined in a .jit file)
      */
-    void setup(const char* const kernelCode, uint64_t bufferSize, jitify::detail::vector<std::string> headers = 0, jitify::file_callback_type callback = 0) {
+    void setup(const char* const kernelCode,
+               uint64_t bufferSize,
+               jitify::detail::vector<std::string> headers = 0,
+               jitify::file_callback_type callback = 0) {
         gpuBufferSize = bufferSize;
 
         cudaMalloc(&deviceInputBuffer, gpuBufferSize);
@@ -50,7 +53,11 @@ class CUDAKernelWrapper {
      * @param numberOfInputTuples number of tuple to be processed in this kernel call
      * @param kernelName name of the kernel function
      */
-    void execute(InputRecord* hostInputBuffer, uint64_t numberOfInputTuples, OutputRecord* hostOutputBuffer, uint64_t numberOfOutputTuples, std::string kernelName ) {
+    void execute(InputRecord* hostInputBuffer,
+                 uint64_t numberOfInputTuples,
+                 OutputRecord* hostOutputBuffer,
+                 uint64_t numberOfOutputTuples,
+                 std::string kernelName) {
         if (gpuBufferSize < numberOfInputTuples * sizeof(InputRecord)) {
             NES_ERROR("Tuples to process exceed the allocated GPU buffer.");
             throw std::runtime_error("Tuples to process exceed the allocated GPU buffer.");
@@ -67,7 +74,7 @@ class CUDAKernelWrapper {
         using jitify::reflection::type_of;
         kernelProgramPtr->kernel(std::move(kernelName))
             .instantiate()
-            .configure(grid, block)                                        // the configuration
+            .configure(grid, block)                                             // the configuration
             .launch(deviceInputBuffer, numberOfInputTuples, deviceOutputBuffer);// the parameter of the kernel program
 
         // copy the result of kernel execution back to the cpu
@@ -82,9 +89,7 @@ class CUDAKernelWrapper {
         cudaFree(deviceOutputBuffer);
     }
 
-    virtual ~CUDAKernelWrapper() {
-        clean();
-    }
+    virtual ~CUDAKernelWrapper() { clean(); }
 
   private:
     InputRecord* deviceInputBuffer; // device memory for kernel input

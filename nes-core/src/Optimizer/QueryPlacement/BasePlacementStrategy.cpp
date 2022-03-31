@@ -28,9 +28,9 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <log4cxx/helpers/exception.h>
 #include <stack>
 #include <utility>
-#include <log4cxx/helpers/exception.h>
 
 namespace NES::Optimizer {
 

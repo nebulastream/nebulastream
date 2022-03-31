@@ -48,4 +48,4 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_JOINLOGICALOPERATORNODE_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_JOINLOGICALOPERATORNODE_HPP_

@@ -15,9 +15,8 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES::Client {
 
-ClientException::ClientException(const std::string& message)
-    : RuntimeException(message, NES::collectAndPrintStacktrace()) {
+ClientException::ClientException(const std::string& message) : RuntimeException(message, NES::collectAndPrintStacktrace()) {
     NES_ERROR(message);
 }
 
-}// namespace NES::Compiler
+}// namespace NES::Client

@@ -13,14 +13,14 @@
 */
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
+#include "../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_client.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include "../util/NesBaseTest.hpp"
 #include <sstream>
 #include <stdio.h>
 #include <string>
@@ -55,11 +55,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -87,11 +88,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -146,11 +148,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -469,17 +472,17 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 }
 
-
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid=" << worker.getPid());
     sleep(5);
@@ -487,17 +490,17 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 }
 
-
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid=" << worker.getPid());
 
@@ -527,11 +530,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid=" << worker.getPid());
 
@@ -557,7 +561,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 }
 
-
 TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     remove("nesWorkerStarter.log");
 
@@ -565,17 +568,17 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid=" << worker.getPid());
     sleep(5);
     coordinator.kill();
     sleep(5);
-
 
     string searchStr = "coordinator went down so shutting down the worker";
     ifstream inFile;
@@ -583,20 +586,18 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
 
     inFile.open("nesWorkerStarter.log");
 
-    if(!inFile){
+    if (!inFile) {
         cout << "Unable to open file" << endl;
         exit(1);
     }
 
     size_t pos;
     bool found = false;
-    while(inFile.good())
-    {
-        getline(inFile,line);
-        pos=line.find(searchStr);
-        if(pos!=string::npos)
-        {
-            cout <<"Found line";
+    while (inFile.good()) {
+        getline(inFile, line);
+        pos = line.find(searchStr);
+        if (pos != string::npos) {
+            cout << "Found line";
             found = true;
             break;
         }
@@ -611,14 +612,14 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid=" << coordinator.getPid());
 
-    auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
-         TestUtils::sourceType("DefaultSource"),
-         TestUtils::logicalSourceName("default_logical"),
-         TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalSourceName("default_logical"),
+                                          TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid=" << worker.getPid());
-
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -637,33 +638,29 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     coordinator.kill();
     sleep(5);
 
-
     string searchStr = "coordinator went down so shutting down the worker";
     ifstream inFile;
     string line;
 
     inFile.open("nesWorkerStarter.log");
 
-    if(!inFile){
+    if (!inFile) {
         cout << "Unable to open file" << endl;
         exit(1);
     }
 
     size_t pos;
     bool found = false;
-    while(inFile.good())
-    {
-        getline(inFile,line);
-        pos=line.find(searchStr);
-        if(pos!=string::npos)
-        {
-            cout <<"Found line";
+    while (inFile.good()) {
+        getline(inFile, line);
+        pos = line.find(searchStr);
+        if (pos != string::npos) {
+            cout << "Found line";
             found = true;
             break;
         }
     }
     ASSERT_TRUE(found);
 }
-
 
 }// namespace NES

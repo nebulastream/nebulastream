@@ -13,6 +13,7 @@
 */
 
 #include "gtest/gtest.h"
+#include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -20,12 +21,11 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <iostream>
 #include <NesBaseTest.hpp>
-#include <API/Schema.hpp>
+#include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <iostream>
 
 #include <Util/Logger/Logger.hpp>
 

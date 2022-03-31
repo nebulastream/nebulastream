@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <array>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -29,7 +29,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 using namespace NES;
 

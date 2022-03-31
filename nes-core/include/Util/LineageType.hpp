@@ -31,4 +31,4 @@ enum class LineageType : std::int8_t {
 std::string toString(const LineageType lineageMode);
 LineageType stringToLineageTypeMap(const std::string lineageMode);
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#endif// NES_INCLUDE_UTIL_LINEAGETYPE_HPP_

@@ -136,4 +136,4 @@ class BaseController {
     static std::map<utility::string_t, utility::string_t> getParameters(web::http::http_request& request);
 };
 }// namespace NES
-#endif  // NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_
+#endif// NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_

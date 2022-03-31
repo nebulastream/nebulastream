@@ -95,7 +95,7 @@ bool NetworkSource::start() {
 
             auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, Runtime::Initialize, shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);
-            break; // hack as currently we assume only one executableSuccessor
+            break;// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on " << nesPartition);
         return true;
@@ -110,8 +110,7 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
                     "NetworkSource::stop only supports HardStop :: partition " << nesPartition);
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NetworkSource: stop called on " << nesPartition << " sending hard eos");
-        auto newReconf =
-            ReconfigurationMessage(-1, -1, Runtime::HardEndOfStream, DataSource::shared_from_base<DataSource>());
+        auto newReconf = ReconfigurationMessage(-1, -1, Runtime::HardEndOfStream, DataSource::shared_from_base<DataSource>());
         queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         for (const auto& successor : executableSuccessors) {
@@ -197,7 +196,9 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
     NES_DEBUG("NetworkSource: postReconfigurationCallback() called " << nesPartition.toString());
     NES::DataSource::postReconfigurationCallback(task);
     switch (task.getType()) {
-        case Runtime::FailEndOfStream: { NES_NOT_IMPLEMENTED(); }
+        case Runtime::FailEndOfStream: {
+            NES_NOT_IMPLEMENTED();
+        }
         case Runtime::Destroy:
         case Runtime::HardEndOfStream:
         case Runtime::SoftEndOfStream: {

@@ -61,7 +61,6 @@ class QuerySubPlanMetaData {
     QuerySubPlanMetaData(QuerySubPlanId querySubPlanId, QueryStatus::Value subQueryStatus, uint64_t workerId);
 
   private:
-
     /**
      * Id of the subquery plan
      */

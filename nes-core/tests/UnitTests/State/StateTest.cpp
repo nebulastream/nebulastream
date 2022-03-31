@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <NesBaseTest.hpp>
 #include <log4cxx/appender.h>
 
 #include <State/StateManager.hpp>

@@ -24,11 +24,10 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <ostream>
-#include <Util/TestUtils.hpp>
 using namespace std;
 
 /**
@@ -61,9 +60,11 @@ class SinkTest : public Testing::NESBaseTest {
         path_to_csv_file = getTestResourceFolder() / "sink.csv";
         path_to_bin_file = getTestResourceFolder() / "sink.bin";
         path_to_osfile_file = getTestResourceFolder() / "testOs.txt";
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(PhysicalSource::create("x", "x1"));
-        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                               .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                               .build();
 
         borrowedZmqPort = getAvailablePort();
         zmqPort = *borrowedZmqPort;
@@ -438,9 +439,9 @@ TEST_F(SinkTest, testBinaryZMQSink) {
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
         //cout << "rec buffer tups=" << bufData.getNumberOfTuples()
-//        << " content=" << Util::prettyPrintTupleBuffer(bufData, test_schema) << endl;
+        //        << " content=" << Util::prettyPrintTupleBuffer(bufData, test_schema) << endl;
         //cout << "ref buffer tups=" << buffer.getNumberOfTuples()
-//        << " content=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+        //        << " content=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
         EXPECT_EQ(Util::prettyPrintTupleBuffer(bufData, test_schema), Util::prettyPrintTupleBuffer(buffer, test_schema));
     });
 

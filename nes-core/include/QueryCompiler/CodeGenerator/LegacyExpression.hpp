@@ -211,4 +211,4 @@ Predicate operator<<(const PredicateItem& lhs, const PredicateItem& rhs);
 Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs);
 }// namespace QueryCompilation
 }//end of namespace NES
-#endif  // NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_LEGACYEXPRESSION_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_LEGACYEXPRESSION_HPP_

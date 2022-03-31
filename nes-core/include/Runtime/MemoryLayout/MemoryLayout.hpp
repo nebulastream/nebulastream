@@ -106,4 +106,4 @@ class MemoryLayout {
 };
 
 }// namespace NES::Runtime::MemoryLayouts
-#endif  // NES_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_

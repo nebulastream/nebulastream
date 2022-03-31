@@ -121,4 +121,4 @@ using GenericBusPtr = std::shared_ptr<GenericBus>;
 
 }//namespace Sensors
 }//namespace NES
-#endif  // NES_INCLUDE_SENSORS_GENERICBUS_HPP_
+#endif// NES_INCLUDE_SENSORS_GENERICBUS_HPP_

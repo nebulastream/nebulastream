@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -36,10 +36,10 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <NesBaseTest.hpp>
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <NesBaseTest.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -48,11 +48,10 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 #include <random>
 #include <utility>
-#include <Util/TestUtils.hpp>
 using namespace std;
 
 namespace NES {
@@ -121,7 +120,6 @@ class TestSink : public SinkMedium {
     void shutdown() override{};
 
     ~TestSink() override = default;
-
 
     std::mutex m;
     std::promise<uint64_t> completed;
@@ -294,7 +292,7 @@ TEST_F(NetworkStackTest, startCloseMaxChannel) {
                 auto nesPartition = NesPartition(i, 0, 0, 0);
                 ASSERT_TRUE(netManagerReceiver->registerSubpartitionConsumer(nesPartition,
                                                                              netManagerSender->getServerLocation(),
-                                                                     std::make_shared<DataEmitterImpl>()));
+                                                                             std::make_shared<DataEmitterImpl>()));
             }
 
             auto v1 = completed.get_future().get();
@@ -318,7 +316,6 @@ TEST_F(NetworkStackTest, startCloseMaxChannel) {
             }
         }
         ASSERT_EQ(maxExpectedConnections, channels.size());
-
 
         int i = 0;
         for (auto&& senderChannel : channels) {
@@ -786,25 +783,18 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         });
 
         PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
         workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
         workerConfiguration->numberOfBuffersPerWorker.setValue(64);
         workerConfiguration->physicalSources.add(sourceConf);
-        auto nodeEngine =
-            Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                              .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                              .build();
 
-        auto networkSink = std::make_shared<NetworkSink>(schema,
-                                                         0,
-                                                         0,
-                                                         0,
-                                                         nodeLocation,
-                                                         nesPartition,
-                                                         nodeEngine,
-                                                         1,
-                                                         NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES);
+        auto networkSink = std::make_shared<
+            NetworkSink>(schema, 0, 0, 0, nodeLocation, nesPartition, nodeEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel

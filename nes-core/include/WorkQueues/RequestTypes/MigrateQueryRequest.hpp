@@ -14,46 +14,44 @@
 
 #ifndef NES_MIGRATEQUERYREQUEST_HPP
 #define NES_MIGRATEQUERYREQUEST_HPP
-#include <WorkQueues/RequestTypes/Request.hpp>
-#include <Topology/TopologyNodeId.hpp>
 #include <Phases/MigrationType.hpp>
+#include <Topology/TopologyNodeId.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 #include <memory>
 #include <string>
 
 namespace NES::Experimental {
 
-    class MigrateQueryRequest;
-    typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
+class MigrateQueryRequest;
+typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
 
-    /**
+/**
      * @breif this request is used to migrate a query sub plan
      */
-    class MigrateQueryRequest : public Request{
+class MigrateQueryRequest : public Request {
 
-    public:
+  public:
+    static MigrateQueryRequestPtr create(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType);
 
-        static MigrateQueryRequestPtr create(QueryId queryId,TopologyNodeId nodeId, MigrationType::Value migrationType);
+    std::string toString() override;
 
-         std::string toString() override;
-
-        /**
+    /**
          * @brief gets the Migration Type for this Query Migration Request
          * @return MigrationType
          */
-        MigrationType::Value getMigrationType();
+    MigrationType::Value getMigrationType();
 
-        /**
+    /**
          * @brief gets the topology node on which the query can be found
          * @return topology node id
          */
-        TopologyNodeId getTopologyNode();
+    TopologyNodeId getTopologyNode();
 
-    private:
-        explicit MigrateQueryRequest(QueryId queryId,TopologyNodeId nodeId, MigrationType::Value migrationType);
+  private:
+    explicit MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType);
 
-        TopologyNodeId nodeId;
-        MigrationType::Value migrationType;
-
-    };
-} // namespace NES
-#endif //NES_MIGRATEQUERYREQUEST_HPP
+    TopologyNodeId nodeId;
+    MigrationType::Value migrationType;
+};
+}// namespace NES::Experimental
+#endif//NES_MIGRATEQUERYREQUEST_HPP

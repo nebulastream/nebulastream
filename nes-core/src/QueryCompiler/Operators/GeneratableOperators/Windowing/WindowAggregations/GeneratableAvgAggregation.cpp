@@ -16,10 +16,10 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableAvgAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
-#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
@@ -50,7 +50,8 @@ void GeneratableAvgAggregation::compileLiftCombine(CompoundStatementPtr currentC
 }
 
 void GeneratableAvgAggregation::compileCombine(CompoundStatementPtr currentCode,
-                                               VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) {
+                                               VarRefStatement partialValueRef1,
+                                               VarRefStatement partialValueRef2) {
     auto updatedPartial = partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
                               .assign(partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
                                       + partialValueRef2.accessPtr(VarRef(getPartialAggregate())));
@@ -58,7 +59,8 @@ void GeneratableAvgAggregation::compileCombine(CompoundStatementPtr currentCode,
 }
 VariableDeclarationPtr GeneratableAvgAggregation::getPartialAggregate() {
     auto tf = GeneratableTypesFactory();
-    return std::make_shared<VariableDeclaration>(VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::AVGDouble"), "partial"));
+    return std::make_shared<VariableDeclaration>(
+        VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::AVGDouble"), "partial"));
 }
 ExpressionStatementPtr GeneratableAvgAggregation::lower(ExpressionStatementPtr partialValue) {
     auto tf = GeneratableTypesFactory();

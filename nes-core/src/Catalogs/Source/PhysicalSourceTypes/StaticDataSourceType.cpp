@@ -50,22 +50,16 @@ StaticDataSourceType::StaticDataSourceType(const std::string& pathTableFile,
                                            uint64_t numBuffersToProcess,
                                            SourceMode::Value sourceMode,
                                            uint64_t taskQueueId)
-   : PhysicalSourceType(STATIC_DATA_SOURCE),
-   pathTableFile(std::move(pathTableFile)),
-   numBuffersToProcess(numBuffersToProcess),
-   sourceMode(sourceMode),
-   taskQueueId(taskQueueId) {}
+    : PhysicalSourceType(STATIC_DATA_SOURCE), pathTableFile(std::move(pathTableFile)), numBuffersToProcess(numBuffersToProcess),
+      sourceMode(sourceMode), taskQueueId(taskQueueId) {}
 
-   StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTableFile,
-                                                        uint64_t numBuffersToProcess,
-                                                        const std::string& sourceMode,
-                                                        uint64_t taskQueueId) {
+StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTableFile,
+                                                     uint64_t numBuffersToProcess,
+                                                     const std::string& sourceMode,
+                                                     uint64_t taskQueueId) {
     // todo check validity of path
     SourceMode::Value sourceModeEnum = SourceMode::getFromString(sourceMode);
-    return std::make_shared<StaticDataSourceType>(pathTableFile,
-                                                                       numBuffersToProcess,
-                                                                       sourceModeEnum,
-                                                                       taskQueueId);
+    return std::make_shared<StaticDataSourceType>(pathTableFile, numBuffersToProcess, sourceModeEnum, taskQueueId);
 }
 
 SourceMode::Value StaticDataSourceType::getSourceMode() const { return sourceMode; }
@@ -92,11 +86,8 @@ bool StaticDataSourceType::equal(const PhysicalSourceTypePtr& other) {
         return false;
     }
     auto otherSourceConfig = other->as<StaticDataSourceType>();
-    return pathTableFile == otherSourceConfig->pathTableFile
-    && numBuffersToProcess == otherSourceConfig->numBuffersToProcess
-    && sourceMode == otherSourceConfig->sourceMode
-    && taskQueueId == otherSourceConfig->taskQueueId;
+    return pathTableFile == otherSourceConfig->pathTableFile && numBuffersToProcess == otherSourceConfig->numBuffersToProcess
+        && sourceMode == otherSourceConfig->sourceMode && taskQueueId == otherSourceConfig->taskQueueId;
 }
 
-
-}// namespace NES
+}// namespace NES::Experimental

@@ -39,7 +39,8 @@ void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr curren
 }
 
 void GeneratableCountAggregation::compileCombine(CompoundStatementPtr currentCode,
-                                                 VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) {
+                                                 VarRefStatement partialValueRef1,
+                                                 VarRefStatement partialValueRef2) {
     auto updatedPartial = partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
                               .assign(partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
                                       + partialValueRef2.accessPtr(VarRef(getPartialAggregate())));

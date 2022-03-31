@@ -27,7 +27,7 @@ namespace PhysicalOperators {
 /**
  * @brief Appends the final slices to the global slice store.
  */
-class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator , public AbstractEmitOperator {
+class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     PhysicalKeyedGlobalSliceStoreAppendOperator(
         OperatorId id,
@@ -40,9 +40,9 @@ class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator
            SchemaPtr outputSchema,
            std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler) {
         return std::make_shared<PhysicalKeyedGlobalSliceStoreAppendOperator>(Util::getNextOperatorId(),
-                                                                 inputSchema,
-                                                                 outputSchema,
-                                                                 keyedEventTimeWindowHandler);
+                                                                             inputSchema,
+                                                                             outputSchema,
+                                                                             keyedEventTimeWindowHandler);
     }
 
     std::string toString() const override;

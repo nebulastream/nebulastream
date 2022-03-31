@@ -14,6 +14,7 @@
 
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
@@ -24,7 +25,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <log4cxx/helpers/exception.h>
-#include <NesBaseTest.hpp>
 
 using namespace NES;
 

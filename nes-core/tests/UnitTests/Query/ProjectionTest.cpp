@@ -89,13 +89,15 @@ class ProjectionTest : public Testing::NESBaseTest {
                            ->addField("test$value", BasicType::INT64)
                            ->addField("test$ts", BasicType::UINT64);
 
-        auto sourceConf = PhysicalSource::create("x","x1");
-        auto workerConfiguration  = WorkerConfiguration::create();
+        auto sourceConf = PhysicalSource::create("x", "x1");
+        auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->physicalSources.add(sourceConf);
         workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(12);
         workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                         .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                         .build();
     }
 
     /* Will be called before a test is executed. */

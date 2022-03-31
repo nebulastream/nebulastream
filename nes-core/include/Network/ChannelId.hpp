@@ -41,4 +41,4 @@ class ChannelId {
 };
 }// namespace Network
 }// namespace NES
-#endif  // NES_INCLUDE_NETWORK_CHANNELID_HPP_
+#endif// NES_INCLUDE_NETWORK_CHANNELID_HPP_

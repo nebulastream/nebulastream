@@ -173,7 +173,7 @@ bool PartitionManager::registerSubpartitionProducer(NesPartition partition, Node
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
     }
     NES_DEBUG("PartitionManager: Registering Subpartition Producer " << partition.toString() << "=" << (*it).second.count());
-    return (*it).second.count() == 1; // first time
+    return (*it).second.count() == 1;// first time
 }
 
 bool PartitionManager::addSubpartitionEventListener(NesPartition partition,

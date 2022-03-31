@@ -23,8 +23,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
-#include <sstream>
 #include <log4cxx/helpers/exception.h>
+#include <sstream>
 
 namespace NES {
 

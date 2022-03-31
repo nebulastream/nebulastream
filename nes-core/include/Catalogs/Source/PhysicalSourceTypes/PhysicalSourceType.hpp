@@ -46,26 +46,28 @@ enum SourceType {
 /**
  * enum string mapping for source type
  */
-static std::map<std::string, SourceType> stringToSourceType{{Configurations::SENSE_SOURCE_CONFIG, SENSE_SOURCE},
-                                                            {Configurations::CSV_SOURCE_CONFIG, CSV_SOURCE},
-                                                            {Configurations::BINARY_SOURCE_CONFIG, BINARY_SOURCE},
-                                                            {Configurations::MQTT_SOURCE_CONFIG, MQTT_SOURCE},
-                                                            {Configurations::KAFKA_SOURCE_CONFIG, KAFKA_SOURCE},
-                                                            {Configurations::OPC_SOURCE_CONFIG, OPC_SOURCE},
-                                                            {Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG, MATERIALIZEDVIEW_SOURCE},
-                                                            {Configurations::DEFAULT_SOURCE_CONFIG, DEFAULT_SOURCE}};
+static std::map<std::string, SourceType> stringToSourceType{
+    {Configurations::SENSE_SOURCE_CONFIG, SENSE_SOURCE},
+    {Configurations::CSV_SOURCE_CONFIG, CSV_SOURCE},
+    {Configurations::BINARY_SOURCE_CONFIG, BINARY_SOURCE},
+    {Configurations::MQTT_SOURCE_CONFIG, MQTT_SOURCE},
+    {Configurations::KAFKA_SOURCE_CONFIG, KAFKA_SOURCE},
+    {Configurations::OPC_SOURCE_CONFIG, OPC_SOURCE},
+    {Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG, MATERIALIZEDVIEW_SOURCE},
+    {Configurations::DEFAULT_SOURCE_CONFIG, DEFAULT_SOURCE}};
 
 /**
  * enum source type to string
  */
-static std::map<SourceType, std::string> sourceTypeToString{{SENSE_SOURCE, Configurations::SENSE_SOURCE_CONFIG},
-                                                            {CSV_SOURCE, Configurations::CSV_SOURCE_CONFIG},
-                                                            {BINARY_SOURCE, Configurations::BINARY_SOURCE_CONFIG},
-                                                            {MQTT_SOURCE, Configurations::MQTT_SOURCE_CONFIG},
-                                                            {KAFKA_SOURCE, Configurations::KAFKA_SOURCE_CONFIG},
-                                                            {OPC_SOURCE, Configurations::OPC_SOURCE_CONFIG},
-                                                            {MATERIALIZEDVIEW_SOURCE, Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG},
-                                                            {DEFAULT_SOURCE, Configurations::DEFAULT_SOURCE_CONFIG}};
+static std::map<SourceType, std::string> sourceTypeToString{
+    {SENSE_SOURCE, Configurations::SENSE_SOURCE_CONFIG},
+    {CSV_SOURCE, Configurations::CSV_SOURCE_CONFIG},
+    {BINARY_SOURCE, Configurations::BINARY_SOURCE_CONFIG},
+    {MQTT_SOURCE, Configurations::MQTT_SOURCE_CONFIG},
+    {KAFKA_SOURCE, Configurations::KAFKA_SOURCE_CONFIG},
+    {OPC_SOURCE, Configurations::OPC_SOURCE_CONFIG},
+    {MATERIALIZEDVIEW_SOURCE, Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG},
+    {DEFAULT_SOURCE, Configurations::DEFAULT_SOURCE_CONFIG}};
 
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
@@ -142,4 +144,4 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
+#endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_

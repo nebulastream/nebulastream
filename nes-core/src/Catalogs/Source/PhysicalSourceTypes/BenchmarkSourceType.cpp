@@ -63,7 +63,6 @@ size_t BenchmarkSourceType::getMemoryAreaSize() const { return memoryAreaSize; }
 
 uint64_t BenchmarkSourceType::getGatheringValue() const { return gatheringValue; }
 
-
 GatheringMode::Value BenchmarkSourceType::getGatheringMode() const { return gatheringMode; }
 
 SourceMode::Value BenchmarkSourceType::getSourceMode() const { return sourceMode; }
@@ -72,7 +71,6 @@ uint64_t BenchmarkSourceType::getNumberOfBuffersToProduce() const { return numbe
 
 uint64_t BenchmarkSourceType::getSourceAffinity() const { return sourceAffinity; }
 uint64_t BenchmarkSourceType::getTaskQueueId() const { return taskQueueId; }
-
 
 std::string BenchmarkSourceType::toString() {
     std::stringstream ss;

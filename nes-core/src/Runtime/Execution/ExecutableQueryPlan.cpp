@@ -183,8 +183,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             NES_DEBUG("Executing FailEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             NES_ASSERT2_FMT((numOfTerminationTokens.fetch_sub(1) == 1),
                             "Invalid FailEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
-            NES_ASSERT2_FMT(fail(),
-                            "Cannot fail queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
+            NES_ASSERT2_FMT(fail(), "Cannot fail queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
                                                         << " is marked as failed now");
             queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
@@ -195,8 +194,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             NES_DEBUG("Executing HardEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             NES_ASSERT2_FMT((numOfTerminationTokens.fetch_sub(1) == 1),
                             "Invalid HardEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
-            NES_ASSERT2_FMT(stop(),
-                            "Cannot hard stop qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
+            NES_ASSERT2_FMT(stop(), "Cannot hard stop qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             break;
         }
         case SoftEndOfStream: {

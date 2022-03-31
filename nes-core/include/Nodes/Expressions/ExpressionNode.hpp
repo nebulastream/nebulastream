@@ -80,4 +80,4 @@ class ExpressionNode : public Node {
 };
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 }// namespace NES
-#endif  // NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSIONNODE_HPP_

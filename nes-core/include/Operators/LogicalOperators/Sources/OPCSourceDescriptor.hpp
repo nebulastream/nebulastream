@@ -33,8 +33,12 @@ class OPCSourceDescriptor : public SourceDescriptor {
     static SourceDescriptorPtr
     create(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user, std::string password);
 
-    static SourceDescriptorPtr
-    create(SchemaPtr schema, std::string logicalSourceName, std::string url, UA_NodeId nodeId, std::string user, std::string password);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      std::string logicalSourceName,
+                                      std::string url,
+                                      UA_NodeId nodeId,
+                                      std::string user,
+                                      std::string password);
 
     /**
      * @brief get OPC server url
@@ -82,4 +86,4 @@ typedef std::shared_ptr<OPCSourceDescriptor> OPCSourceDescriptorPtr;
 }// namespace NES
 
 #endif
-#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_OPCSOURCEDESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_OPCSOURCEDESCRIPTOR_HPP_

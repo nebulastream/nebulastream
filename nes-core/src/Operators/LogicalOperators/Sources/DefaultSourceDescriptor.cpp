@@ -49,13 +49,13 @@ bool DefaultSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         return false;
     }
     auto otherSource = other->as<DefaultSourceDescriptor>();
-    return numbersOfBufferToProduce == otherSource->getNumbersOfBufferToProduce() && sourceGatheringInterval == otherSource->getSourceGatheringInterval()
-        && getSchema()->equals(otherSource->getSchema());
+    return numbersOfBufferToProduce == otherSource->getNumbersOfBufferToProduce()
+        && sourceGatheringInterval == otherSource->getSourceGatheringInterval() && getSchema()->equals(otherSource->getSchema());
 }
 
 std::string DefaultSourceDescriptor::toString() {
-    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(sourceGatheringInterval.count())
-        + "ms)";
+    return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", "
+        + std::to_string(sourceGatheringInterval.count()) + "ms)";
 }
 SourceDescriptorPtr DefaultSourceDescriptor::copy() {
     auto copy = DefaultSourceDescriptor::create(schema->copy(),

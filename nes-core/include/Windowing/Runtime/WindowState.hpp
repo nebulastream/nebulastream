@@ -45,4 +45,4 @@ class WindowState {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSTATE_HPP_
+#endif// NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSTATE_HPP_

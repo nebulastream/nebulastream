@@ -12,37 +12,33 @@
     limitations under the License.
 */
 
-
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASH_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASH_HPP_
 
+#include <cstdint>
 #include <functional>
 #include <tuple>
 #include <utility>
-#include <cstdint>
 namespace NES::Experimental {
 
-
-template <class F, class... Ts, std::size_t... Is>
-void forEachInTuple(const std::tuple<Ts...>& tuple, F func,
-                       std::index_sequence<Is...>) {
+template<class F, class... Ts, std::size_t... Is>
+void forEachInTuple(const std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
     using expander = int[];
-    (void)expander{0, ((void)func(std::get<Is>(tuple)), 0)...};
+    (void) expander{0, ((void) func(std::get<Is>(tuple)), 0)...};
 }
 
-template <class F, class... Ts>
+template<class F, class... Ts>
 void forEachInTuple(const std::tuple<Ts...>& tuple, F func) {
     forEachInTuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
 }
 
-template <class F, class... Ts, std::size_t... Is>
-void forEachInTuple(const std::tuple<Ts...>&& tuple, F func,
-                       std::index_sequence<Is...>) {
+template<class F, class... Ts, std::size_t... Is>
+void forEachInTuple(const std::tuple<Ts...>&& tuple, F func, std::index_sequence<Is...>) {
     using expander = int[];
-    (void)expander{0, ((void)func(std::forward(std::get<Is>(tuple))), 0)...};
+    (void) expander{0, ((void) func(std::forward(std::get<Is>(tuple))), 0)...};
 }
 
-template <class F, class... Ts>
+template<class F, class... Ts>
 void forEachInTuple(const std::tuple<Ts...>&& tuple, F func) {
     forEachInTuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
 }

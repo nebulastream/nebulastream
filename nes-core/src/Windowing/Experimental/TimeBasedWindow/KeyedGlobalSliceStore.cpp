@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #include "Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp"
 #include "Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp"
 
@@ -31,7 +30,7 @@ KeyedGlobalSliceStore::addSlice(uint64_t sequenceNumber, uint64_t sliceIndex, Ke
 
 KeyedSliceSharedPtr KeyedGlobalSliceStore::getSlice(uint64_t sliceIndex) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    NES_ASSERT(sliceMap.contains(sliceIndex),"slice is not contained");
+    NES_ASSERT(sliceMap.contains(sliceIndex), "slice is not contained");
     return sliceMap[sliceIndex];
 }
 

@@ -15,13 +15,13 @@
 #ifndef NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
+#include <Common/GeographicalLocation.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <vector>
 #include <optional>
-#include <Common/GeographicalLocation.hpp>
-#include <Topology/TopologyNode.hpp>
+#include <vector>
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif
@@ -39,7 +39,6 @@ using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 class TopologyManagerService {
 
   public:
-
     TopologyManagerService(TopologyPtr topology);
 
     /**
@@ -52,7 +51,11 @@ class TopologyManagerService {
      * @param coordinates: an optional containing either the node location in as a GeographicalLocation object if the node is a field node, or nullopt_t for non field nodes
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, GeographicalLocation geoLoc = GeographicalLocation());
+    uint64_t registerNode(const std::string& address,
+                          int64_t grpcPort,
+                          int64_t dataPort,
+                          uint16_t numberOfSlots,
+                          GeographicalLocation geoLoc = GeographicalLocation());
 
     /**
     * @brief unregister an existing node
@@ -84,7 +87,6 @@ class TopologyManagerService {
      */
     TopologyNodePtr findNodeWithId(uint64_t nodeId);
 
-
     /**
      * @brief query for topology pointers of the field nodes (non mobile nodes with a known location)
      * within a certain radius around a geographical location
@@ -92,7 +94,7 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing a pointer to the topology node and the nodes location
      */
-    std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> getNodesInRange(GeographicalLocation center, double radius) ;
+    std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> getNodesInRange(GeographicalLocation center, double radius);
 
     /**
      * @brief query for the ids of field nodes within a certain radius around a geographical location
@@ -100,7 +102,7 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location
      */
-    std::vector<std::pair<uint64_t , GeographicalLocation>> getNodesIdsInRange(GeographicalLocation center, double radius);
+    std::vector<std::pair<uint64_t, GeographicalLocation>> getNodesIdsInRange(GeographicalLocation center, double radius);
 
     /**
      * Method to return the root node
@@ -114,7 +116,6 @@ class TopologyManagerService {
      * @return true if successful
      */
     bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
-
 
     /**
      * Sets the health service
@@ -140,4 +141,4 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 }//namespace NES
 
-#endif  // NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_

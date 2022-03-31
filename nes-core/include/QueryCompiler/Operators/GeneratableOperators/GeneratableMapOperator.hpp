@@ -61,4 +61,4 @@ class GeneratableMapOperator : public GeneratableOperator {
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEMAPOPERATOR_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEMAPOPERATOR_HPP_

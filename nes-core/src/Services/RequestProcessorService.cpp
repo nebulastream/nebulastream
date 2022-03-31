@@ -171,10 +171,10 @@ void RequestProcessorService::start() {
                                         + std::to_string(sharedQueryId));
                             }
 
-//                            //3.3.3. Reset all sub query plans
-//                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
-//                                queryCatalogService->resetSubQueryMetaData(queryId);
-//                            }
+                            //                            //3.3.3. Reset all sub query plans
+                            //                            for (auto& queryId : sharedQueryPlan->getQueryIds()) {
+                            //                                queryCatalogService->resetSubQueryMetaData(queryId);
+                            //                            }
 
                             // 3.4. Check if the shared query plan is empty and already running
                         } else if (sharedQueryPlan->isEmpty() && !sharedQueryPlan->isNew()) {
@@ -249,13 +249,16 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
             } catch (log4cxx::helpers::Exception& ex) {
                 NES_FATAL_ERROR(
-                    "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: " << ex.what());
+                    "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: "
+                    << ex.what());
                 shutDown();
             }
         }
         NES_WARNING("QueryProcessingService: Terminated");
     } catch (std::exception& ex) {
-        NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: " << ex.what());
+        NES_FATAL_ERROR(
+            "QueryProcessingService: Received unexpected exception while scheduling the queryIdAndCatalogEntryMapping: "
+            << ex.what());
         shutDown();
     }
     shutDown();

@@ -226,7 +226,8 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
     }
     for (const auto& source : qep->getSources()) {
         NES_ASSERT2_FMT(source->fail(),
-                        "Cannot fail source " << source->getOperatorId() << " belonging to query plan=" << qep->getQuerySubPlanId());
+                        "Cannot fail source " << source->getOperatorId()
+                                              << " belonging to query plan=" << qep->getQuerySubPlanId());
     }
 
     auto terminationFuture = qep->getTerminationFuture();

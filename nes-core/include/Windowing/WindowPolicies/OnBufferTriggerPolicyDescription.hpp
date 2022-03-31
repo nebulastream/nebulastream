@@ -29,4 +29,4 @@ class OnBufferTriggerPolicyDescription : public BaseWindowTriggerPolicyDescripto
     OnBufferTriggerPolicyDescription();
 };
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONBUFFERTRIGGERPOLICYDESCRIPTION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWPOLICIES_ONBUFFERTRIGGERPOLICYDESCRIPTION_HPP_

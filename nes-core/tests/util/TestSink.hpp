@@ -33,7 +33,7 @@ class TestSink : public SinkMedium {
   public:
     TestSink(uint64_t expectedBuffer,
              const SchemaPtr& schema,
-             const Runtime::NodeEnginePtr & nodeEngine,
+             const Runtime::NodeEnginePtr& nodeEngine,
              uint32_t numOfProducers = 1)
         : SinkMedium(std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager(0)), nodeEngine, numOfProducers, 0, 0),
           expectedBuffer(expectedBuffer){};
@@ -45,7 +45,7 @@ class TestSink : public SinkMedium {
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
-//        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(inputBuffer, getSchemaPtr()));
+        //        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(inputBuffer, getSchemaPtr()));
 
         resultBuffers.emplace_back(std::move(inputBuffer));
         if (resultBuffers.size() == expectedBuffer) {

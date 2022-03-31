@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <NesBaseTest.hpp>//
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
@@ -21,7 +22,6 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>//
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>

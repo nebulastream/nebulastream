@@ -119,4 +119,4 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
+#endif// NES_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
