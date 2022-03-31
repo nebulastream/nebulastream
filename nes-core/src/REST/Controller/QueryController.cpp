@@ -41,28 +41,39 @@ QueryController::QueryController(QueryServicePtr queryService,
 void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     auto parameters = getParameters(request);
-
-    if (path[1] == "execution-plan") {
-        NES_INFO("QueryController:: GET execution-plan");
-
-        auto const queryParameter = parameters.find("queryId");
-        if (queryParameter == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+    auto const queryParameter = parameters.find("queryId");
+    if (queryParameter == parameters.end()) {
+        NES_ERROR("QueryController: Unable to find query ID for the GET request");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Parameter queryId must be provided");
+        errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
+        errorMessageImpl(request, errorResponse, statusCode);
+        return;
+    }
+    try {
+        // get the queryId from user input
+        QueryId queryId = std::stoi(queryParameter->second);
+        NES_DEBUG("Query Controller: Get the registered query");
+        if (!queryCatalog->queryExists(queryId)) {
             web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
+            auto statusCode = web::http::status_codes::NotFound;
+            errorResponse["code"] = web::json::value(statusCode);
+            errorResponse["message"] = web::json::value::string("Provided QueryId does not exist");
+            errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
+            errorMessageImpl(request, errorResponse, web::http::status_codes::NotFound);
             return;
         }
 
-        // get the queryId from user input
-        QueryId queryId = std::stoi(queryParameter->second);
-        try {
+        if (path[1] == "execution-plan") {
+            NES_INFO("QueryController:: GET execution-plan");
             NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
             // get the execution-plan for given query id
             auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
             NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
             //Prepare the response
-            successMessageImpl(request, executionPlanJson);
+            successMessageImpl(request, executionPlanJson, web::http::status_codes::OK);
             return;
         } catch (const QueryNotFoundException& exc) {
             web::json::value errorResponse{};
@@ -70,147 +81,81 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
                 web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
             badRequestImpl(request, errorResponse);
             return;
-        } catch (...) {
-            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
-            internalServerErrorImpl(request);
-        }
-
-    } else if (path[1] == "query-plan") {
-        //Check if the path contains the query id
-        auto param = parameters.find("queryId");
-        if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET query-plan request");
-            web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
-            return;
-        }
-
-        // get the queryId from user input
-        QueryId queryId = std::stoi(param->second);
-
-        try {
-
-            //Call the service
-            QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-
-            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
-            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
-
-            //Prepare the response
-            successMessageImpl(request, basePlan);
-            return;
-        } catch (const QueryNotFoundException& exc) {
-            web::json::value errorResponse{};
-            errorResponse["detail"] =
-                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
-            badRequestImpl(request, errorResponse);
-            return;
-        } catch (const std::exception& exc) {
-            NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user "
-                      "request:"
-                      << exc.what());
-            handleException(request, exc);
-            return;
-        } catch (...) {
-            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
-            internalServerErrorImpl(request);
-        }
-    } else if (path[1] == "optimization-phases") {
-        //Check if the path contains the query id
-        auto param = parameters.find("queryId");
-        if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET optimization-phases request");
-            web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
-            return;
-        }
-
-        // get the queryId from user input
-        QueryId queryId = std::stoi(param->second);
-        try {
-            NES_DEBUG("Query Controller: Get the registered query");
-            QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-            auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
-
-            NES_DEBUG("UtilityFunctions: Getting the json representation of the optimized query plans");
-            auto response = web::json::value::object();
-            for (auto const& [phaseName, queryPlan] : optimizationPhases) {
-                auto queryPlanJson = PlanJsonGenerator::getQueryPlanAsJson(queryPlan);
-                response[phaseName] = queryPlanJson;
+        } else if (path[1] == "query-plan") {
+            NES_INFO("QueryController:: GET query-plan");
+            try {
+                QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+                auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
+                //Prepare the response
+                successMessageImpl(request, basePlan, web::http::status_codes::OK);
+                return;
+            } catch (const std::exception& exc) {
+                NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan"
+                          "request:"
+                          << exc.what());
+                handleException(request, exc);
+                return;
             }
 
-            //Prepare the response
-            successMessageImpl(request, response);
-            return;
-        } catch (const QueryNotFoundException& exc) {
-            web::json::value errorResponse{};
-            errorResponse["detail"] =
-                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
-            badRequestImpl(request, errorResponse);
-            return;
-        } catch (const std::exception& exc) {
-            NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user "
-                      "request:"
-                      << exc.what());
-            handleException(request, exc);
-            return;
-        } catch (...) {
-            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
-            internalServerErrorImpl(request);
+        } else if (path[1] == "optimization-phases") {
+            NES_INFO("QueryController:: GET query-phases");
+            try {
+                QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
+                NES_DEBUG("UtilityFunctions: Getting the json representation of the optimized query plans");
+                auto response = web::json::value::object();
+                for (auto const& [phaseName, queryPlan] : optimizationPhases) {
+                    auto queryPlanJson = PlanJsonGenerator::getQueryPlanAsJson(queryPlan);
+                    response[phaseName] = queryPlanJson;
+                }
+                //Prepare the response
+                successMessageImpl(request, response, web::http::status_codes::OK);
+                return;
+            } catch (const std::exception& exc) {
+                NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while retreiving optimization phases"
+                          "request:"
+                          << exc.what());
+                handleException(request, exc);
+                return;
+            }
+
+        } else if (path[1] == "query-status") {
+            NES_INFO("QueryController:: GET query-status");
+            try {
+                QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                NES_DEBUG("QueryController:: Getting the json representation of status: queryId="
+                          << queryId << " status=" << queryCatalogEntry->getQueryStatusAsString());
+                web::json::value result{};
+                auto node = web::json::value::object();
+                // use the id of the root operator to fill the id field
+                node["status"] = web::json::value::string(queryCatalogEntry->getQueryStatusAsString());
+                //Prepare the response
+                successMessageImpl(request, node, web::http::status_codes::OK);
+                return;
+            } catch (const std::exception& exc) {
+                NES_ERROR("QueryController: handleGet -query-status: Exception occurred while retreiving query status"
+                          "request:"
+                          << exc.what());
+                handleException(request, exc);
+            }
+        } else {
+            resourceNotFoundImpl(request);
         }
-    } else if (path[1] == "query-status") {
-        NES_INFO("QueryController:: GET query-status");
-
-        auto const queryParameter = parameters.find("queryId");
-
-        if (queryParameter == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query ID for the GET query-status request");
-            web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            badRequestImpl(request, errorResponse);
-            return;
-        }
-
-        // get the queryId from user input
-        QueryId queryId = std::stoi(queryParameter->second);
-        try {
-            //Call the service
-            QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
-
-            NES_DEBUG("QueryController:: Getting the json representation of status: queryId="
-                      << queryId << " status=" << queryCatalogEntry->getQueryStatusAsString());
-            web::json::value result{};
-            auto node = web::json::value::object();
-            // use the id of the root operator to fill the id field
-            node["status"] = web::json::value::string(queryCatalogEntry->getQueryStatusAsString());
-            //Prepare the response
-            successMessageImpl(request, node);
-            return;
-        } catch (const QueryNotFoundException& exc) {
-            web::json::value errorResponse{};
-            errorResponse["detail"] =
-                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
-            badRequestImpl(request, errorResponse);
-            return;
-        } catch (...) {
-            NES_ERROR("RestServer: Unable to start REST server unknown exception.");
-            internalServerErrorImpl(request);
-        }
-    } else {
-        resourceNotFoundImpl(request);
+    } catch (...) {
+        NES_ERROR("RestServer: Unable to start REST server unknown exception.");
+        internalServerErrorImpl(request);
     }
 }
 
-void QueryController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) {
+void QueryController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     if (path[1] == "execute-query") {
 
         NES_DEBUG(" QueryController: Trying to execute query");
 
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
+        request.extract_string(true)
+            .then([this, request](utility::string_t body) {
                 try {
                     //Prepare Input query from user string
                     std::string userRequest(body.begin(), body.end());
@@ -218,134 +163,105 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                                                                                            << "try to parse query");
                     web::json::value req = web::json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
-                    std::string userQuery;
-                    if (req.has_field("userQuery")) {
-                        userQuery = req.at("userQuery").as_string();
-                    } else {
-                        NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
-                    }
-                    std::string optimizationStrategyName = req.at("strategyName").as_string();
+                    if(!validateUserRequest(req, request))
+                        return;
+                    std::string userQuery = req.at("userQuery").as_string();
+                    std::string placementStrategyName = req.at("strategyName").as_string();
                     std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
                     std::string lineageString = DEFAULT_TOLERANCE_TYPE;
                     if (req.has_field("faultTolerance")) {
-                        std::string faultToleranceString = req.at("faultTolerance").as_string();
+                        if(!validateFaultToleranceType(req.at("faultTolerance").as_string(),request))
+                            return;
+                        else
+                            faultToleranceString = req.at("faultTolerance").as_string();
                     }
                     if (req.has_field("lineage")) {
-                        lineageString = req.at("lineage").as_string();
+                        if(!validateLineageMode(req["lineage"].as_string(), request))
+                            return;
+                        else
+                            lineageString = req.at("lineage").as_string();
                     }
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-                    if (faultToleranceMode == FaultToleranceType::INVALID) {
-                        web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: " + faultToleranceString);
-                        badRequestImpl(message, errorResponse);
-                        throw log4cxx::helpers::Exception("QueryController: " + faultToleranceString);
-                    }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
-                    if (lineageMode == LineageType::INVALID) {
-                        web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: " + lineageString);
-                        badRequestImpl(message, errorResponse);
-                        throw log4cxx::helpers::Exception("QueryController: " + lineageString);
-                    }
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
-                                                                                                << optimizationStrategyName);
+                                                                                                << placementStrategyName <<
+                                                                                                ", faultTolerance= " << faultToleranceString <<
+                                                                                                ", lineage= " << lineageString
+                                                                                                );
                     QueryId queryId = queryService->validateAndQueueAddRequest(userQuery,
-                                                                               optimizationStrategyName,
+                                                                               placementStrategyName,
                                                                                faultToleranceMode,
                                                                                lineageMode);
 
                     //Prepare the response
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
-                    successMessageImpl(message, restResponse);
+                    successMessageImpl(request, restResponse,web::http::status_codes::Created);
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for "
+                    NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
                               "user request:"
                               << exc.what());
-                    handleException(message, exc);
-                    return;
+                    handleException(request, exc);
+                    //return;
                 } catch (...) {
                     NES_ERROR("RestServer: Unable to start REST server unknown exception.");
-                    internalServerErrorImpl(message);
+                    internalServerErrorImpl(request);
                 }
             })
             .wait();
-    } else if (path[1] == "execute-query-ex") {
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
+    } else if (path[1] == "execute-query-ex") { //why is this called like this? why ex if we submit protobuf message?
+        request.extract_string(true)
+            .then([this, request](utility::string_t body) {
                 try {
                     NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << body);
                     // decode string into protobuf message
                     std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
-
-                    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
-                        web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: Invalid Protobuf message");
-                        badRequestImpl(message, errorResponse);
-                        throw log4cxx::helpers::Exception("QueryController: Invalid Protobuf message");
-                    }
+                    if(!validateProtobufMessage(protobufMessage, request, body))
+                        return;
                     // decode protobuf message into c++ obj repr
                     SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
                     QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(queryPlanSerialized));
-
-                    std::string* queryString = protobufMessage->mutable_querystring();
                     auto* context = protobufMessage->mutable_context();
-                    if (!context->contains("placement")) {
-                        web::json::value errorResponse{};
-                        errorResponse["detail"] =
-                            web::json::value::string("QueryController: No placement strategy found in query string");
-                        badRequestImpl(message, errorResponse);
-                        throw log4cxx::helpers::Exception("QueryController: No placement strategy found in query string");
-                    }
-                    std::string placementStrategy = context->at("placement").value();
                     std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
                     std::string lineageString = DEFAULT_TOLERANCE_TYPE;
                     if (context->contains("faultTolerance")) {
-                        faultToleranceString = context->at("faultTolerance").value();
+                        if(!validateFaultToleranceType(context->at("faultTolerance").value(), request))
+                            return;
+                        else
+                            faultToleranceString = context->at("faultTolerance").value();
                     }
                     if (context->contains("lineage")) {
-                        lineageString = context->at("lineage").value();
+                        if(!validateLineageMode(lineageString = context->at("lineage").value(), request))
+                            return;
+                        else
+                            lineageString = context->at("lineage").value();
                     }
+                    std::string* queryString = protobufMessage->mutable_querystring();
+                    std::string placementStrategy = context->at("placementStrategy").value();
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
-                    if (faultToleranceMode == FaultToleranceType::INVALID) {
-                        web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: " + faultToleranceString);
-                        badRequestImpl(message, errorResponse);
-                        throw log4cxx::helpers::Exception("QueryController: " + faultToleranceString);
-                    }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
-                    if (lineageMode == LineageType::INVALID) {
-                        web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("QueryController: " + lineageString);
-                        badRequestImpl(message, errorResponse);
-                        throw log4cxx::helpers::Exception("QueryController: " + lineageString);
-                    }
-
-                    QueryId queryId = queryService->addQueryRequest(*queryString,
-                                                                    queryPlan,
-                                                                    placementStrategy,
-                                                                    faultToleranceMode,
-                                                                    lineageMode);
+                    QueryId queryId =
+                        queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceMode, lineageMode);
 
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
-                    successMessageImpl(message, restResponse);
+                    successMessageImpl(request, restResponse,web::http::status_codes::Created);
                     return;
                 } catch (const std::exception& exc) {
                     NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for "
                               "user request:"
                               << exc.what());
-                    handleException(message, exc);
+                    handleException(request, exc);
                     return;
                 } catch (...) {
                     NES_ERROR("RestServer: Unable to start REST server unknown exception.");
-                    internalServerErrorImpl(message);
+                    internalServerErrorImpl(request);
                 }
             })
             .wait();
     } else {
-        resourceNotFoundImpl(message);
+        resourceNotFoundImpl(request);
     }
 }// namespace NES
 
@@ -363,27 +279,37 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             errorResponse["queryId"] = web::json::value::null();
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
             return;
         }
 
-        QueryId queryId = std::stoi(param->second);
         try {
-            NES_DEBUG("QueryController: Prepare Input query from user string: " << std::to_string(queryId));
-
+            //Prepare Input query from user string
+            QueryId queryId = std::stoi(param->second);
+            //Call the service
+            NES_DEBUG("Check whether query exists in query catalog");
+            if (!queryCatalog->queryExists(queryId)) {
+                NES_ERROR("QueryController: Unable to find query with provided query Id for the DEL request");
+                web::json::value errorResponse{};
+                errorResponse["detail"] = web::json::value::string("Parameter queryId does not exist"); //this needs to change, not correct
+                errorResponse["queryId"] = web::json::value::number(queryId);
+                //change to 404
+                errorMessageImpl(request, errorResponse);
+                return;
+            }
             bool success = queryService->validateAndQueueStopRequest(queryId);
             //Prepare the response
             web::json::value result{};
             result["success"] = web::json::value::boolean(success);
             result["queryId"] = web::json::value::number(queryId);
+            //return a 202, it has been added, not yet stopped //also makes success true not accurate
             successMessageImpl(request, result);
             return;
-        } catch (const QueryNotFoundException& exc) {
-            web::json::value errorResponse{};
-            errorResponse["detail"] =
-                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
-            errorResponse["queryId"] = web::json::value::number(queryId);
-            badRequestImpl(request, errorResponse);
+        } catch (QueryNotFoundException const& exc) {
+            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
+                      "user request:"
+                      << exc.what());
+            handleException(request, exc);
             return;
         } catch (InvalidQueryStatusException const& exc) {
             NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
@@ -392,7 +318,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string(exc.what());
             errorResponse["queryId"] = web::json::value::number(std::stoi(param->second));
-            badRequestImpl(request, errorResponse);
+            errorMessageImpl(request, errorResponse);
             return;
         } catch (...) {
             NES_ERROR("QueryCatalogController: unknown exception.");
@@ -401,6 +327,99 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
     } else {
         resourceNotFoundImpl(request);
     }
+}
+bool QueryController::validateLineageMode(const std::string& lineageModeString, const web::http::http_request& request) {
+    auto lineageMode = stringToLineageTypeMap(lineageModeString);
+    if (lineageMode == LineageType::INVALID) {
+        NES_ERROR("QueryController: handlePost -execute-query: Invalid Lineage Type provided: " + lineageModeString);
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Invalid Lineage Mode Type provided: "+ lineageModeString +
+                                                            ". Valid Lineage Modes are: 'IN_MEMORY', 'PERSISTENT', 'REMOTE', 'NONE'.");
+        errorMessageImpl(request, errorResponse, statusCode);
+        return false;
+    }
+    return true;
+}
+bool QueryController::validateFaultToleranceType(const std::string& faultToleranceString, const web::http::http_request& request) {
+    auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+    if (faultToleranceMode == FaultToleranceType::INVALID) {
+        NES_ERROR("QueryController: handlePost -execute-query: Invalid Fault Tolerance Type provided: " + faultToleranceString);
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Invalid Fault Tolerance Type provided: "+ faultToleranceString +
+                                                            ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.");
+        errorMessageImpl(request, errorResponse, statusCode);
+        return false;
+    }
+    return true;
+}
+
+bool QueryController::validateProtobufMessage(std::shared_ptr<SubmitQueryRequest> protobufMessage, const web::http::http_request& request, const utility::string_t& body) {
+    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Invalid Protobuf Message");
+        errorMessageImpl(request, errorResponse, statusCode);
+        return false;
+    }
+    auto* context = protobufMessage->mutable_context();
+    if (!context->contains("placementStrategy")) {
+        NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+        errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html");
+        errorMessageImpl(request, errorResponse, statusCode);
+        return false;
+    }
+    std::string placementStrategy = context->at("placement").value();
+    return validatePlacementStrategy(placementStrategy, request);
+}
+bool QueryController::validateUserRequest(web::json::value userRequest, const web::http::http_request& httpRequest) {
+    if (!userRequest.has_field("userQuery")) {
+        NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Wrong key word for user query, use 'userQuery'.");
+        errorResponse["more_info"] =
+            web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
+        errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return false;
+    }
+    if(!userRequest.has_field("placementStrategy")){
+        NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+
+        errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html");
+        errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return false;
+    }
+    std::string placementStrategy = userRequest["placementStrategy"].as_string();
+    return validatePlacementStrategy(placementStrategy, httpRequest);
+}
+bool QueryController::validatePlacementStrategy(const std::string& placementStrategy, const web::http::http_request& httpRequest) {
+    try{
+        PlacementStrategy::getFromString(placementStrategy);
+    }
+    catch(Exceptions::RuntimeException exc){
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Invalid Placement Strategy: " + placementStrategy);
+        errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html");
+        errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return false;
+    }
+    return true;
 }
 
 }// namespace NES

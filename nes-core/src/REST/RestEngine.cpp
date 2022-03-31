@@ -241,7 +241,7 @@ web::json::value RestEngine::responseNotImpl(const web::http::method& method, ut
 void RestEngine::returnDefaultUnknownEndpointResponse(web::http::http_request request) {
     web::json::value response{};
     response["detail"] = web::json::value::string("Unknown endpoint");
-    BaseController::badRequestImpl(request, response);
+    BaseController::errorMessageImpl(request, response);
 }
 
 }// namespace NES
