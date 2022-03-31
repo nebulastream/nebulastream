@@ -57,7 +57,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @param sources a vector of OptimizerPlanOperators - which are logical streams with some join optimization relevant information, joinOperators of the query
      * @return list of source connections
      */
-    std::vector<Join::JoinEdge> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<OptimizerPlanOperator> sources);
+    std::vector<Join::JoinEdge> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<OptimizerPlanOperatorPtr> sources);
 
     /**
      * @brief Optimize order of join operators according to cost-model
@@ -65,7 +65,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @return OptimizerPlanOperator that is the optimal join order according to cost-model
      */
 
-    OptimizerPlanOperator optimizeJoinOrder(std::vector<OptimizerPlanOperator> sources, std::vector<Join::JoinEdge> joins);
+    OptimizerPlanOperatorPtr optimizeJoinOrder(std::vector<OptimizerPlanOperatorPtr> sources, std::vector<Join::JoinEdge> joins);
 
     /**
      * @brief Filters out the substring that determines the logical source of a join partner.
@@ -88,12 +88,12 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @param joins joinEdges giving information about the possible joins.
      * @return updated join table
      */
-    std::map<int, std::map<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>> createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>> subs, int level, std::vector<Join::JoinEdge> joins);
+    std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>> createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>> subs, int level, std::vector<Join::JoinEdge> joins);
 
     /**
      * @brief sets operator and cumulative costs for a joinStep on level 2 or above.
      */
-    void setCosts(AbstractJoinPlanOperator plan);
+    void setCosts(AbstractJoinPlanOperatorPtr plan);
 
     // TODO write description once you have better understanding
     /**
@@ -110,7 +110,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @param joins - all "allowed" join edges, that won't result in a cartesian product
      * @return joined AbstractJoinPlanOperator resulting from joining left and right.
      */
-    std::optional<AbstractJoinPlanOperator> join(OptimizerPlanOperator left, OptimizerPlanOperator right, std::vector<Join::JoinEdge> joins);
+    std::optional<AbstractJoinPlanOperatorPtr> join(OptimizerPlanOperatorPtr left, OptimizerPlanOperatorPtr right, std::vector<Join::JoinEdge> joins);
 
     /**
      * @brief checks whether the involved logical streams of left plan and right plan have a potential join candidate.
@@ -119,7 +119,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @param edge
      * @return true if there is an edge indicating a possible join and that join did not already happen
      */
-    bool isIn(std::set<OptimizerPlanOperator> leftInvolved, std::set<OptimizerPlanOperator> rightInvolved, Join::JoinEdge edge);
+    bool isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved, std::set<OptimizerPlanOperatorPtr> rightInvolved, Join::JoinEdge edge);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_

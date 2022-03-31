@@ -17,43 +17,20 @@ limitations under the License.
 #include <sstream>
 
 namespace NES::Join {
-// TODO: Setting Cardinality somehow.
-JoinEdge::JoinEdge(SourceLogicalOperatorNodePtr leftSource, SourceLogicalOperatorNodePtr rightSource, LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition){
-    setLeftSource(leftSource);
-    setRightSource(rightSource);
-    setJoinDefinition(joinDefinition);
-    // TODO: Check the real heuristic here
-    setSelectivity(0.5);
-    deriveAndSetLeftOperator();
-    }
 
-    JoinEdge::JoinEdge(SourceLogicalOperatorNodePtr leftSource, SourceLogicalOperatorNodePtr rightSource, LogicalJoinDefinitionPtr joinDefinition, float selectivity): joinDefinition(joinDefinition){
-        setLeftSource(leftSource);
-        setRightSource(rightSource);
-        setJoinDefinition(joinDefinition);
-        setSelectivity(selectivity);
-        deriveAndSetLeftOperator();
-    }
-
-    JoinEdge::JoinEdge(OptimizerPlanOperator leftOperator, SourceLogicalOperatorNodePtr rightSource){
+    JoinEdge::JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition){
         setLeftOperator(leftOperator);
-        setRightSource(rightSource);
+        setRightOperator(rightOperator);
         setJoinDefinition(joinDefinition);
-        // TODO: Check the real heuristic here
+        // JVS: Check the real heuristic here
         setSelectivity(0.5);
     }
-    JoinEdge::JoinEdge(OptimizerPlanOperator leftOperator, SourceLogicalOperatorNodePtr rightSource, float selectivity){
+    JoinEdge::JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition, float selectivity){
         setLeftOperator(leftOperator);
-        setRightSource(rightSource);
+        setRightOperator(rightOperator);
         setJoinDefinition(joinDefinition);
         setSelectivity(selectivity);
     }
-
-
-
-    void JoinEdge::setLeftSource(const SourceLogicalOperatorNodePtr& leftSource) { JoinEdge::leftSource = leftSource; }
-
-    void JoinEdge::setRightSource(const SourceLogicalOperatorNodePtr& rightSource) { JoinEdge::rightSource = rightSource; }
 
     void JoinEdge::setJoinDefinition(const LogicalJoinDefinitionPtr& joinDefinition) { JoinEdge::joinDefinition = joinDefinition; }
 
@@ -64,10 +41,10 @@ JoinEdge::JoinEdge(SourceLogicalOperatorNodePtr leftSource, SourceLogicalOperato
         // Just printing the sources that are to be joined, which keys and a proposed selectivity.
         // if selectivity == default ==> make sure to communicate this.
 
-        ss << "Join Edge between: " << leftSource->toString() << " (left) and " << rightSource->toString() << " (right)";
+        ss << "Join Edge between: " << leftOperator->getSourceNode()->toString() << " (left) and " << rightOperator->getSourceNode()->toString() << " (right)";
         ss << "\n Joining on keys: " << joinDefinition->getLeftJoinKey()->getFieldName() << " (left-key) and " << joinDefinition->getRightJoinKey()->getFieldName() << "(right-key)" ;
 
-        // TODO this has to be done at some point more carefully. What is really the default selectivity?
+        // JVS this has to be done at some point more carefully. What is really the default selectivity?
         if (selectivity == 0.5){
             ss << "\n Join with an expected default selectivity of 0.5 NOTE: This is a heuristic.";
         } else {
@@ -77,17 +54,11 @@ JoinEdge::JoinEdge(SourceLogicalOperatorNodePtr leftSource, SourceLogicalOperato
         return ss.str();
     }
 
-    // TODO implement ID generator.
-    void JoinEdge::deriveAndSetLeftOperator(){
-        auto leftOperator = OptimizerPlanOperator(leftSource);
-        leftOperator.setOperatorCosts(0);
-        leftOperator.setCumulativeCosts(leftOperator.getCardinality());
-    }
-    const OptimizerPlanOperator JoinEdge::getLeftSource() const { return leftSource; }
-    const OptimizerPlanOperator& JoinEdge::getLeftOperator() const { return leftOperator; }
-    const SourceLogicalOperatorNodePtr& JoinEdge::getRightSource() const { return rightSource; }
     const LogicalJoinDefinitionPtr& JoinEdge::getJoinDefinition() const { return joinDefinition; }
     float JoinEdge::getSelectivity() const { return selectivity; }
-    void JoinEdge::setLeftOperator(const OptimizerPlanOperator& leftOperator) { JoinEdge::leftOperator = leftOperator; }
+    const OptimizerPlanOperatorPtr& JoinEdge::getLeftOperator() const { return leftOperator; }
+    void JoinEdge::setLeftOperator(const OptimizerPlanOperatorPtr& leftOperator) { JoinEdge::leftOperator = leftOperator; }
+    const OptimizerPlanOperatorPtr& JoinEdge::getRightOperator() const { return rightOperator; }
+    void JoinEdge::setRightOperator(const OptimizerPlanOperatorPtr& rightOperator) { JoinEdge::rightOperator = rightOperator; }
 
     };// namespace NES::Join

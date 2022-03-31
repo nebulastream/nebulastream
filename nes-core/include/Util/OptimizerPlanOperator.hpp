@@ -26,6 +26,9 @@ limitations under the License.
  */
 namespace NES {
 
+class OptimizerPlanOperator;
+using OptimizerPlanOperatorPtr = std::shared_ptr<OptimizerPlanOperator>;
+
 class OptimizerPlanOperator {
 
   public:
@@ -71,7 +74,7 @@ class OptimizerPlanOperator {
       * Operators below this operator.
       * i.e. if there was a join already covered, this would name the respective join partners.
       */
-    std::set<OptimizerPlanOperator> involvedOptimizerPlanOperators;
+    std::set<OptimizerPlanOperatorPtr> involvedOptimizerPlanOperators;
 
     /**
      * Logical Source Operator
@@ -87,8 +90,8 @@ class OptimizerPlanOperator {
     void setCardinality(long cardinality);
     int getId() const;
 
-    const std::set<OptimizerPlanOperator>& getInvolvedOptimizerPlanOperators() const;
-    void setInvolvedOptimizerPlanOperators(const std::set<OptimizerPlanOperator>& involvedOptimizerPlanOperators);
+    const std::set<OptimizerPlanOperatorPtr>& getInvolvedOptimizerPlanOperators() const;
+    void setInvolvedOptimizerPlanOperators(const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators);
 
     const SourceLogicalOperatorNodePtr& getSourceNode() const;
     void setSourceNode(const SourceLogicalOperatorNodePtr& sourceNode);

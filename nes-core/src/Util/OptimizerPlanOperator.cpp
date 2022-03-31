@@ -54,11 +54,11 @@ int NES::OptimizerPlanOperator::current_id = 0;
     long NES::OptimizerPlanOperator::getCardinality() const { return cardinality; }
     void NES::OptimizerPlanOperator::setCardinality(long cardinality) { OptimizerPlanOperator::cardinality = cardinality; }
     int NES::OptimizerPlanOperator::getId() const { return id; }
-    const std::set<NES::OptimizerPlanOperator>& NES::OptimizerPlanOperator::getInvolvedOptimizerPlanOperators() const {
+    const std::set<NES::OptimizerPlanOperatorPtr>& NES::OptimizerPlanOperator::getInvolvedOptimizerPlanOperators() const {
         return involvedOptimizerPlanOperators;
     }
     void NES::OptimizerPlanOperator::setInvolvedOptimizerPlanOperators(
-        const std::set<OptimizerPlanOperator>& involvedOptimizerPlanOperators) {
+        const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators) {
         OptimizerPlanOperator::involvedOptimizerPlanOperators = involvedOptimizerPlanOperators;
     }
     const NES::SourceLogicalOperatorNodePtr& NES::OptimizerPlanOperator::getSourceNode() const { return sourceNode; }
