@@ -27,25 +27,12 @@ namespace NES::Join {
         class JoinEdge {
 
           public:
-            JoinEdge(SourceLogicalOperatorNodePtr leftSource, SourceLogicalOperatorNodePtr rightSource, LogicalJoinDefinitionPtr joinDefinition);
-            JoinEdge(SourceLogicalOperatorNodePtr leftSource, SourceLogicalOperatorNodePtr rightSource, LogicalJoinDefinitionPtr joinDefinition, float selectivity);
-            JoinEdge(OptimizerPlanOperator leftOperator, SourceLogicalOperatorNodePtr rightSource);
-            JoinEdge(OptimizerPlanOperator leftOperator, SourceLogicalOperatorNodePtr rightSource, float selectivity);
+            JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightSource, LogicalJoinDefinitionPtr joinDefinition);
+            JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightSource, LogicalJoinDefinitionPtr joinDefinition ,float selectivity);
 
 
-            void setLeftSource(const SourceLogicalOperatorNodePtr& leftSubPlan);
-            const OptimizerPlanOperator getLeftSource() const;
-            /*
-             * in case the left structure is more complex than just a source (e.g. joined sources)
-             */
-            const OptimizerPlanOperator& getLeftOperator() const;
-            const SourceLogicalOperatorNodePtr& getRightSource() const;
             const LogicalJoinDefinitionPtr& getJoinDefinition() const;
             float getSelectivity() const;
-
-
-
-            void setRightSource(const SourceLogicalOperatorNodePtr& rightSubPlan);
 
 
             void setJoinDefinition(const LogicalJoinDefinitionPtr& joinDefinition);
@@ -55,13 +42,14 @@ namespace NES::Join {
 
             std::string toString();
 
-            void deriveAndSetLeftOperator();
-            void setLeftOperator(const OptimizerPlanOperator& leftOperator);
+            const OptimizerPlanOperatorPtr& getLeftOperator() const;
+            void setLeftOperator(const OptimizerPlanOperatorPtr& leftOperator);
+            const OptimizerPlanOperatorPtr& getRightOperator() const;
+            void setRightOperator(const OptimizerPlanOperatorPtr& rightOperator);
 
           private:
-            SourceLogicalOperatorNodePtr leftSource;
-            OptimizerPlanOperator leftOperator;
-            SourceLogicalOperatorNodePtr rightSource;
+            OptimizerPlanOperatorPtr leftOperator;
+            OptimizerPlanOperatorPtr rightOperator;
             LogicalJoinDefinitionPtr joinDefinition;
             float selectivity = 0.5;
         };

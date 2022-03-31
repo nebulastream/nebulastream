@@ -24,14 +24,17 @@ limitations under the License.
 
 namespace NES {
 
+class AbstractJoinPlanOperator;
+using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
+
         class AbstractJoinPlanOperator : public OptimizerPlanOperator {
 
           public:
             /**
      * @brief - constructor for building a OptimizerPlanOperator that is essentially just one logical stream
      */
-            AbstractJoinPlanOperator(const OptimizerPlanOperator &leftChild,
-                                     const OptimizerPlanOperator &rightChild,
+            AbstractJoinPlanOperator(OptimizerPlanOperatorPtr leftChild,
+                                     OptimizerPlanOperatorPtr rightChild,
                                      Join::LogicalJoinDefinitionPtr joinPredicate);
 
           private:
@@ -39,12 +42,12 @@ namespace NES {
             /**
 	 * The left child.
 	 */
-            OptimizerPlanOperator leftChild;
+            OptimizerPlanOperatorPtr leftChild;
 
             /**
 	 * The right child.
 	 */
-            OptimizerPlanOperator rightChild;
+            OptimizerPlanOperatorPtr rightChild;
 
             /**
 	 * The join predicate applied during this join.
@@ -54,7 +57,7 @@ namespace NES {
             /**
 	 * An array of tables that are involved in the plans below this join.
 	 */
-            std::set<OptimizerPlanOperator> involvedOptimizerPlanOperators;
+            std::set<OptimizerPlanOperatorPtr> involvedOptimizerPlanOperators;
 
             /**
 	 * The cardinality of the operator.
@@ -62,22 +65,25 @@ namespace NES {
             long cardinality;
 
           public:
-            const OptimizerPlanOperator& getLeftChild() const;
-            void setLeftChild(const OptimizerPlanOperator& leftChild);
-            const OptimizerPlanOperator& getRightChild() const;
-            void setRightChild(const OptimizerPlanOperator& rightChild);
+
             const Join::LogicalJoinDefinitionPtr& getJoinPredicate() const;
             void setJoinPredicate(const Join::LogicalJoinDefinitionPtr joinPredicate);
-            const std::set<OptimizerPlanOperator> getInvolvedOptimizerPlanOperators();
-            void setInvolvedOptimizerPlanOperators1(const std::set<OptimizerPlanOperator>& involvedOptimizerPlanOperators);
-            long getCardinality1() const;
-            void setCardinality1(long cardinality);
             AbstractJoinPlanOperator();
 
             bool operator<(const AbstractJoinPlanOperator& abstractJoinPlanOperator2) const
             {
                 return this->getId() < abstractJoinPlanOperator2.getId();
             }
+
+            const OptimizerPlanOperatorPtr& getLeftChild() const;
+            void setLeftChild(const OptimizerPlanOperatorPtr& leftChild);
+            const OptimizerPlanOperatorPtr& getRightChild() const;
+            void setRightChild(const OptimizerPlanOperatorPtr& rightChild);
+
+            const std::set<NES::OptimizerPlanOperatorPtr>& getInvolvedOptimizerPlanOperators1();
+            void setInvolvedOptimizerPlanOperators1(const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators);
+            long getCardinality1() const;
+            void setCardinality1(long cardinality);
         };
 
     } // namespace NES

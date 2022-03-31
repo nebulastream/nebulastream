@@ -46,9 +46,9 @@ namespace NES::Optimizer {
             // SourceOperators are the logical data streams that are similar to relations in DBMS
             const auto sourceOperators = queryPlan->getSourceOperators();
 
-            std::vector<OptimizerPlanOperator> sources;
-            for (auto source : sourceOperators){
-                sources.push_back(OptimizerPlanOperator(source));
+            std::vector<OptimizerPlanOperatorPtr> sources;
+            for (const auto &source : sourceOperators){
+                sources.push_back(std::make_shared<OptimizerPlanOperator>(source));
             }
 
             //  Derive a join graph by getting all the join edges between the sources (logical streams)
@@ -58,7 +58,7 @@ namespace NES::Optimizer {
             NES_DEBUG(listJoinEdges(joinEdges));
 
             // JVS: Step 5: Derive the best order of joins
-            OptimizerPlanOperator finalPlan = optimizeJoinOrder(sources,joinEdges);
+            OptimizerPlanOperatorPtr finalPlan = optimizeJoinOrder(sources,joinEdges);
 
 
             // JVS: Step 6 Rewrite the query according to the best order
@@ -74,7 +74,7 @@ namespace NES::Optimizer {
 
     // we need to make sure, that, when we deriveSourceName, we do not query the sourceOperators again, but rather query our list of OptimizerPlanOperators for that exact object
     // with that log. streamName. This would then allows us to use to declare it only once and don't screw up lvl 2.
-    std::vector<Join::JoinEdge> JoinOrderOptimizationRule::retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<OptimizerPlanOperator> sources){
+    std::vector<Join::JoinEdge> JoinOrderOptimizationRule::retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<OptimizerPlanOperatorPtr> sources){
 
         // Iterate over joinOperators and detect all JoinEdges
         std::vector<Join::JoinEdge> joinEdges;
@@ -88,27 +88,26 @@ namespace NES::Optimizer {
 
             //NES_DEBUG("We derived the following leftSource: " << leftSource << " and rightSource: " << rightSource);
 
-            // FIXME improve safety here => what if there are no nodes corresponding to the source names?
-            SourceLogicalOperatorNodePtr leftSourceNode;
-            SourceLogicalOperatorNodePtr rightSourceNode;
-            // JVS loop over OptimizerPlanOperators instead of sourceOperators.
-            // JVS get rid of queryPlanPtr
+            OptimizerPlanOperatorPtr leftOperatorNode;
+            OptimizerPlanOperatorPtr rightOperatorNode;
+
             for (auto optimizerPlanOperator : sources){
 
-                if(leftSource == optimizerPlanOperator.getSourceNode()->getSourceDescriptor()->getLogicalSourceName()){
-                    leftSourceNode = optimizerPlanOperator.getSourceNode();
+                if(leftSource == optimizerPlanOperator->getSourceNode()->getSourceDescriptor()->getLogicalSourceName()){
+                    leftOperatorNode = optimizerPlanOperator;
                 }
-                if (rightSource == optimizerPlanOperator.getSourceNode()->getSourceDescriptor()->getLogicalSourceName()){
-                    rightSourceNode = optimizerPlanOperator.getSourceNode();
+                if (rightSource == optimizerPlanOperator->getSourceNode()->getSourceDescriptor()->getLogicalSourceName()){
+                    rightOperatorNode = optimizerPlanOperator;
                 }
-                NES_DEBUG("ds");
             }
 
-            NES_DEBUG("Found the following corresponding SourceLogicalOperatorNodes: " << leftSourceNode->toString() << " and " << rightSourceNode->toString());
+            NES_DEBUG("Found the following corresponding SourceLogicalOperatorNodes: " << leftOperatorNode->getSourceNode()->toString() << " and " << rightOperatorNode->getSourceNode()->toString());
 
             // FIXME at some point selectivity has to be correctly assigned.
             // JVS Hier kannst du Selektivitäten von Joins setzen also diese SF :)
-            Join::JoinEdge joinEdge = Join::JoinEdge(leftSourceNode, rightSourceNode, join->getJoinDefinition(), 0.5);
+
+            // JVS I changed OptimizerPlanOperator to a pointer -- see if now the object still gets copied or we are manipulating one instance only.
+            Join::JoinEdge joinEdge = Join::JoinEdge(leftOperatorNode, rightOperatorNode, join->getJoinDefinition(), 0.5);
             joinEdges.push_back(joinEdge);
         }
 
@@ -117,29 +116,28 @@ namespace NES::Optimizer {
     }
 
     // optimizing the join order given the join graph
-    // FIXME change signature to Relations instead of sources
-    // JVS provide NES DEBUGS
-    OptimizerPlanOperator JoinOrderOptimizationRule::optimizeJoinOrder(std::vector<OptimizerPlanOperator> sources, std::vector<Join::JoinEdge> joins){
+    OptimizerPlanOperatorPtr JoinOrderOptimizationRule::optimizeJoinOrder(std::vector<OptimizerPlanOperatorPtr> sources, std::vector<Join::JoinEdge> joins){
         //For each key (number of joined relations) the HashMap includes a HashMap where for each possible sub-combination of joins
         // The optimal one is stored (exists only if it is possible using JoinPredicates)
-        std::map<int, std::map<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>> subs;
+        std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>> subs;
 
         //Estimate the cardinality for all relations and add them in the HashMap
         // adding empty map for int 1
-        subs[1] = std::map<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>();
+        subs[1] = std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>();
         NES_DEBUG("Setting the base logical streams for Optimization table: ")
         //int counter = 0;
         for (auto source : sources){
-            source.setOperatorCosts(-100);
+            source->setOperatorCosts(-100);
             // source.setOperatorCosts(0);
-            source.setCumulativeCosts(source.getCardinality()); // JVS provide getCardinality
+            source->setCumulativeCosts(source->getCardinality()); // JVS provide getCardinality
 
             // insert rows into first level of hashmap
             // the key is a set of already joined relations (involvedOptimizerPlanOperators) and the value is the to be joined source.
-            std::set<OptimizerPlanOperator> key;
+            std::set<OptimizerPlanOperatorPtr> key;
             key.insert(source);
-            source.setInvolvedOptimizerPlanOperators(key);
-            subs[1].insert(std::pair<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>(key, source));
+            source->setInvolvedOptimizerPlanOperators(key);
+//            subs[1][key] = source;
+            subs[1].insert(std::pair<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>(key, source));
         }
         NES_DEBUG("For level 1 we are dealing with " << subs[1].size() << " base logical stream(s), while we should have: " << sources.size())
 
@@ -154,27 +152,34 @@ namespace NES::Optimizer {
 
         //Select the plan in which all relations are involved
         //Already optimal plan
-        std::set<OptimizerPlanOperator> sourceSet(sources.begin(), sources.end());
-        OptimizerPlanOperator finalPlan = subs[sources.size()][sourceSet];
+        std::set<OptimizerPlanOperatorPtr> sourceSet(sources.begin(), sources.end());
+        OptimizerPlanOperatorPtr finalPlan = subs[sources.size()][sourceSet];
         // JVS Build OptimizerPlanOperator to String method.
         //NES_DEBUG("Optimal Plan received " << finalPlan.toString())
         return finalPlan;
 
     }
 
-    std::map<int, std::map<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>> JoinOrderOptimizationRule::createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>> subs, int level, std::vector<Join::JoinEdge> joins){
+    std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>> JoinOrderOptimizationRule::createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>> subs, int level, std::vector<Join::JoinEdge> joins){
         //Add HashMap for current level (number of involved relations)
         // für das nächste Level eine Schicht
-        subs[level] = std::map<std::set<OptimizerPlanOperator>, OptimizerPlanOperator>();
+        subs[level] = std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>();
 
         //Create relation pairs and add them into the 2-level HashMap
         //(initial step therefore special case)
+        /**
+         * std::vector<OptimizerPlanOperatorPtr> sources;
+for (const auto &source : sourceOperators){
+    sources.push_back(std::make_shared<OptimizerPlanOperator>(source));
+}
+         */
         if (level == 2) {
             for (auto graphEdge : joins) {
                 // as these are two regular streams that are being joint, getting leftSource instead of leftOperator is fine.
-                AbstractJoinPlanOperator plan = AbstractJoinPlanOperator(graphEdge.getLeftSource(), graphEdge.getRightSource(), graphEdge.getJoinDefinition());
+                // JVS lokales Problem gelöst, aber plan->getInvolvedOptimizerPlanOperators geht immer noch nicht.
+                AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(graphEdge.getLeftOperator(), graphEdge.getRightOperator(), graphEdge.getJoinDefinition());
                 setCosts(plan);
-                subs[2][plan.getInvolvedOptimizerPlanOperators()] = plan;
+                subs[2][plan->getInvolvedOptimizerPlanOperators1()] = plan; // JVS test if this works with pointers as set. might need the actual values here.
             }
             return subs;
         }
@@ -189,14 +194,14 @@ namespace NES::Optimizer {
             for(auto left : subs[comb[0]]){
                 for (auto right : subs[comb[1]]){
                     // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
-                    std::optional<AbstractJoinPlanOperator> newPlan = join(left.second, right.second, joins);
+                    std::optional<AbstractJoinPlanOperatorPtr> newPlan = join(left.second, right.second, joins);
                     if (newPlan){
                         setCosts(newPlan.value());
                         // check if newPlan is currently the best
                         // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
-                        OptimizerPlanOperator oldPlan = subs[level][newPlan.value().getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
-                        if (oldPlan.getOperatorCosts() == -1  || oldPlan.getCumulativeCosts() > newPlan.value().getCumulativeCosts()){
-                            subs[level][newPlan.value().getInvolvedOptimizerPlanOperators()] = newPlan.value();
+                        OptimizerPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
+                        if (oldPlan->getOperatorCosts() == -1  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
+                            subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
                         }
                     }
                 }
@@ -223,19 +228,12 @@ namespace NES::Optimizer {
         return ss.str();
     }
 
-    void JoinOrderOptimizationRule::setCosts(AbstractJoinPlanOperator plan){
+    void JoinOrderOptimizationRule::setCosts(AbstractJoinPlanOperatorPtr plan){
         // JVS hier müsste der globale Card. Estimator greifen.
-
-
-        OptimizerPlanOperator leftOperator = plan.getLeftChild();
-        OptimizerPlanOperator rightOperator = plan.getRightChild();
-        plan.setOperatorCosts(leftOperator.getCardinality() + rightOperator.getCardinality());
-        plan.setCumulativeCosts(plan.getOperatorCosts() + leftOperator.getCumulativeCosts() + rightOperator.getCumulativeCosts());
-        // if id is not set, set it.
-        if(plan.getId() == 0){
-            // JVS
-          //  plan.setId();
-        }
+        OptimizerPlanOperatorPtr leftOperator = plan->getLeftChild();
+        OptimizerPlanOperatorPtr rightOperator = plan->getRightChild();
+        plan->setOperatorCosts(leftOperator->getCardinality() + rightOperator->getCardinality());
+        plan->setCumulativeCosts(plan->getOperatorCosts() + leftOperator->getCumulativeCosts() + rightOperator->getCumulativeCosts());
     }
 
     std::vector<std::vector<int>> JoinOrderOptimizationRule::getCountCombs(int level){
@@ -253,10 +251,10 @@ namespace NES::Optimizer {
         return combs;
     }
     // JVS test this method. I need to know whether this is a good/working way to construct the join tree.
-    std::optional<AbstractJoinPlanOperator> JoinOrderOptimizationRule::join(OptimizerPlanOperator left, OptimizerPlanOperator right, std::vector<Join::JoinEdge> joins){
+    std::optional<AbstractJoinPlanOperatorPtr> JoinOrderOptimizationRule::join(OptimizerPlanOperatorPtr left, OptimizerPlanOperatorPtr right, std::vector<Join::JoinEdge> joins){
         //Get for left and right the involved OptimizerPlanOperators (logical data streams, potentially joined)
-        std::set<OptimizerPlanOperator> leftInvolved = left.getInvolvedOptimizerPlanOperators();
-        std::set<OptimizerPlanOperator> rightInvolved = right.getInvolvedOptimizerPlanOperators();
+        std::set<OptimizerPlanOperatorPtr> leftInvolved = left->getInvolvedOptimizerPlanOperators();
+        std::set<OptimizerPlanOperatorPtr> rightInvolved = right->getInvolvedOptimizerPlanOperators();
 
 
         //Initialize finalPred which is used to combine multiple join predicates together
@@ -283,19 +281,18 @@ namespace NES::Optimizer {
             // JVS also das ist jetzt denke ich sicher falsch gelöst.
             // Müsste mir das nochmal anschauen, sobald ich joinOrderTesten kann.
             AbstractJoinPlanOperator x = AbstractJoinPlanOperator(left, right, finalPred[0]);
-            return std::optional<AbstractJoinPlanOperator>(x);
+            AbstractJoinPlanOperatorPtr xptr = static_cast<const std::shared_ptr<AbstractJoinPlanOperator>>(&x);
+
+            return std::optional<AbstractJoinPlanOperatorPtr>(xptr);
         }
     }
 
-    bool JoinOrderOptimizationRule::isIn(std::set<OptimizerPlanOperator> leftInvolved,
-                                         std::set<OptimizerPlanOperator> rightInvolved,
+    // JVS see if this works as we are only doing this with pointers instead of the real objects.
+    bool JoinOrderOptimizationRule::isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved,
+                                         std::set<OptimizerPlanOperatorPtr> rightInvolved,
                                          Join::JoinEdge edge) {
-        // note: different datatypes, as we are doing left-deep trees here. the right side is always just a simple logical stream
         auto leftChild = edge.getLeftOperator();
-        auto rightChild = edge.getRightSource();
-
-        // JVS check if this conversion is really working out the way it should.
-        auto rightOperator = OptimizerPlanOperator(rightChild);
+        auto rightChild = edge.getRightOperator();
 
         // check if edge left or right is equal to leftChild/rightChild -- need to transform rightChild to OptimizerPlanOperator mb.
         const bool inLeft = (leftInvolved.find(leftChild) != leftInvolved.end()) || (leftInvolved.find(rightChild) != leftInvolved.end());
