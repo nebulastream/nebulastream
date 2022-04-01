@@ -385,6 +385,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     uint64_t getNextTaskId();
 
+    /**
+     * @brief injects epoch barrier in all network sinks
+     * @param epochBarrier max timestamp of current epoch
+     * @param queryId query id
+     * @param source current operator
+     */
+    void injectEpochMarker(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
+
   protected:
     uint64_t nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
