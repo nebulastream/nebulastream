@@ -108,10 +108,17 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     uint64_t getUniqueNetworkSinkDescriptorId();
 
+    /**
+     * @brief method to return the node engine pointer
+     * @return node engine pointer
+     */
+    Runtime::NodeEnginePtr getNodeEngine();
+
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
     uint64_t uniqueNetworkSinkDescriptorId;
+    Runtime::NodeEnginePtr nodeEngine;
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
     const NodeLocation receiverLocation;
