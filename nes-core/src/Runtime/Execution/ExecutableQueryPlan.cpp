@@ -20,6 +20,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Network/NetworkSink.hpp>
 
 namespace NES::Runtime::Execution {
 
