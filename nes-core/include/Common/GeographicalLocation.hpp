@@ -18,7 +18,7 @@
 
 class Coordinates;
 
-namespace NES {
+namespace NES::Experimental::Mobility {
 
 /**
  * an object with this value as latitude and longitude is considered an intentionally invalid object

@@ -59,7 +59,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      fixedLocationCoordinates(workerConfig->locationCoordinates.getValue()),
+      fixedLocationCoordinates(std::make_shared<NES::Experimental::Mobility::GeographicalLocation>(workerConfig->locationCoordinates.getValue())),
       isMobile(workerConfig->isMobile.getValue()),
       queryCompilerConfiguration(workerConfig->queryCompiler),
       enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()),
@@ -216,14 +216,11 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
     if (isMobile) {
-        std::string locSourceTypeString = workerConfig->locationSourceType;
-        std::string locSourceConfigString = workerConfig->locationSourceConfig;
-        if (locSourceTypeString.empty() || locSourceConfigString.empty()) {
-            NES_WARNING("isMobile flag is set, but there is no proper configuration for the location source. exiting");
-            exit(EXIT_FAILURE);
-        }
+        NES_DEBUG("Creating location source");
+        bool success = createLocationSource(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
+        NES_DEBUG("create location source= " << success);
+        NES_ASSERT(success, "cannot create location source");
 
-        locationSource = std::make_shared<LocationSourceCSV>(locSourceConfigString);
     }
 
     if (blocking) {
@@ -301,7 +298,7 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  numberOfSlots,
                                                                  registrationMetrics,
-                                                                 fixedLocationCoordinates,
+                                                                 *fixedLocationCoordinates,
                                                                  isMobile);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
@@ -503,31 +500,50 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-bool NesWorker::isFieldNode() { return fixedLocationCoordinates.isValid() && !isMobile; }
-
-bool NesWorker::isMobileNode() const { return isMobile; };
-
-bool NesWorker::setFixedLocationCoordinates(const GeographicalLocation& geoLoc) {
-    if (isMobile) {
-        return false;
+bool NesWorker::createLocationSource(NES::Experimental::Mobility::LocationSource::Type type, std::string config) {
+    if (config.empty()) {
+        NES_FATAL_ERROR("isMobile flag is set, but there is no proper configuration for the location source. exiting");
+        exit(EXIT_FAILURE);
     }
-    fixedLocationCoordinates = geoLoc;
+
+    switch (type) {
+        case NES::Experimental::Mobility::LocationSource::csv:
+            locationSource = std::make_shared<NES::Experimental::Mobility::LocationSourceCSV>(config);
+            break;
+    }
+
     return true;
 }
 
-GeographicalLocation NesWorker::getCurrentOrPermanentGeoLoc() {
+bool NesWorker::isFieldNode() { return fixedLocationCoordinates->isValid() && !isMobile; }
+
+bool NesWorker::isMobileNode() const { return isMobile; };
+
+bool NesWorker::setFixedLocationCoordinates(const NES::Experimental::Mobility::GeographicalLocation& geoLoc) {
     if (isMobile) {
-        return locationSource->getLastKnownLocation().first;
+        return false;
     }
-    return fixedLocationCoordinates;
+    fixedLocationCoordinates = std::make_shared<NES::Experimental::Mobility::GeographicalLocation>(geoLoc);
+    return true;
 }
 
-std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius) {
+NES::Experimental::Mobility::GeographicalLocation NesWorker::getGeoLoc() {
+    if (isMobile) {
+        if (locationSource) {
+            return locationSource->getCurrentLocation().first;
+        }
+        //if the node is mobile, but there is no location Source, return invalid
+        return {};
+    }
+    return *fixedLocationCoordinates;
+}
+
+std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> NesWorker::getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 
-std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(double radius) {
-    auto coord = getCurrentOrPermanentGeoLoc();
+std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> NesWorker::getNodeIdsInRange(double radius) {
+    auto coord = getGeoLoc();
     if (coord.isValid()) {
         return getNodeIdsInRange(coord, radius);
     }

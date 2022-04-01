@@ -32,14 +32,14 @@ class GeographicalLocationTest : public Testing::TestWithErrorHandling<testing::
 };
 
 TEST_F(GeographicalLocationTest, testExceptionHandling) {
-    EXPECT_THROW(GeographicalLocation(200, 0), NES::CoordinatesOutOfRangeException);
-    EXPECT_THROW(GeographicalLocation::fromString("200, 0"), NES::CoordinatesOutOfRangeException);
-    EXPECT_THROW(GeographicalLocation::fromString("200. 0"), NES::InvalidCoordinateFormatException);
+    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation(200, 0), NES::CoordinatesOutOfRangeException);
+    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200, 0"), NES::CoordinatesOutOfRangeException);
+    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200. 0"), NES::InvalidCoordinateFormatException);
 
-    auto geoLoc = GeographicalLocation::fromString("23, 110");
+    auto geoLoc = NES::Experimental::Mobility::GeographicalLocation::fromString("23, 110");
     EXPECT_EQ(geoLoc.getLatitude(), 23);
     EXPECT_TRUE(geoLoc.isValid());
-    geoLoc = GeographicalLocation(200, 200);
+    geoLoc = NES::Experimental::Mobility::GeographicalLocation(200, 200);
     EXPECT_FALSE(geoLoc.isValid());
     double l;
     EXPECT_THROW(l = geoLoc.getLatitude(), NES::AccessingInvalidCoordinatesException);

@@ -18,7 +18,8 @@
 #include <Common/GeographicalLocation.hpp>
 #include <vector>
 
-namespace NES {
+namespace NES::Experimental::Mobility {
+
 /**
  * @brief this class reads locations and timestamps from a csv file and simulates the behaviour of a geolocation interface
  * of a mobile device
@@ -43,7 +44,7 @@ class LocationSourceCSV : public LocationSource {
      * most recent of the timestamps lying in the past
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    std::pair<GeographicalLocation, Timestamp> getLastKnownLocation() override;
+    std::pair<GeographicalLocation, Timestamp> getCurrentLocation() override;
 
     /**
      *

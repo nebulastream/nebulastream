@@ -39,7 +39,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                               int64_t dataPort,
                                               uint16_t numberOfSlots,
                                               bool isMobile,
-                                              GeographicalLocation fixedCoordinates) {
+                                              Experimental::Mobility::GeographicalLocation fixedCoordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -75,7 +75,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
 
     if (fixedCoordinates.isValid() &&  !newTopologyNode->isMobileNode() ) {
         NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", " << fixedCoordinates.getLongitude());
-        topology->setPhysicalNodeFixedCoordinates(newTopologyNode, fixedCoordinates, true);
+        topology->setFieldNodeCoordinates(newTopologyNode, fixedCoordinates, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }
@@ -203,15 +203,15 @@ uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNode
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of furture movement
 
-std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> TopologyManagerService::getNodesInRange(GeographicalLocation center,
+std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> TopologyManagerService::getNodesInRange(Experimental::Mobility::GeographicalLocation center,
                                                                                                       double radius) {
     return topology->getNodesInRange(center, radius);
 }
 
-std::vector<std::pair<uint64_t, GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(GeographicalLocation center,
+std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(Experimental::Mobility::GeographicalLocation center,
                                                                                                   double radius) {
     auto list = getNodesInRange(center, radius);
-    std::vector<std::pair<uint64_t, GeographicalLocation>> nodeIDsInRange{};
+    std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> nodeIDsInRange{};
     nodeIDsInRange.reserve(list.size());
     for (auto elem : list) {
         nodeIDsInRange.emplace_back(std::pair(elem.first->getId(), elem.second));

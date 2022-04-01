@@ -65,6 +65,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
+        //TODO Issue #2497: move this into a separate class dealing with geolocation
         if (nodeToRemove->isFieldNode()) {
             removeNodeFromSpatialIndex(nodeToRemove);
         }
@@ -76,7 +77,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     return false;
 }
 
-bool Topology::setPhysicalNodeFixedCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init) {
+bool Topology::setFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc, bool init) {
 #ifdef S2DEF
     double newLat = geoLoc.getLatitude();
     double newLng = geoLoc.getLongitude();
@@ -85,7 +86,7 @@ bool Topology::setPhysicalNodeFixedCoordinates(const TopologyNodePtr& node, Geog
 
     //if this function was not called during the creation of the node (init != false), we need to delete the old entry
     if (!init) {
-        auto oldCoordOpt = node->getFixedCoordinates();
+        auto oldCoordOpt = node->getCoordinates();
         //a non field node cannot be given a position after its creation
         if (!oldCoordOpt.has_value() && !init) {
             NES_WARNING("Trying to set the Position of a non field node");
@@ -108,7 +109,7 @@ bool Topology::setPhysicalNodeFixedCoordinates(const TopologyNodePtr& node, Geog
 
 bool Topology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 #ifdef S2DEF
-    auto geoLocOpt = node->getFixedCoordinates();
+    auto geoLocOpt = node->getCoordinates();
     if (!geoLocOpt.has_value()) {
         NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
         return false;
@@ -124,7 +125,7 @@ bool Topology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 #endif
 }
 
-std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const GeographicalLocation& geoLoc, int radius) {
+std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const Experimental::Mobility::GeographicalLocation& geoLoc, int radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -144,7 +145,7 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const GeographicalLoca
 
 std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
-    auto GeoLocOpt = nodePtr->getFixedCoordinates();
+    auto GeoLocOpt = nodePtr->getCoordinates();
 
     if (!GeoLocOpt.has_value()) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");
@@ -181,8 +182,8 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr&
 #endif
 }
 
-std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> Topology::getNodesInRange(GeographicalLocation center,
-                                                                                        double radius) {
+std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> Topology::getNodesInRange(Experimental::Mobility::GeographicalLocation center,
+                                                                                                                double radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -190,10 +191,10 @@ std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> Topology::getNodes
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
         S2Point(S2LatLng::FromDegrees(center.getLatitude(), center.getLongitude())));
     auto result = query.FindClosestPoints(&target);
-    std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> closestNodeList;
+    std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> closestNodeList;
     for (auto r : result) {
         auto latLng = S2LatLng(r.point());
-        closestNodeList.emplace_back(r.data(), GeographicalLocation(latLng.lat().degrees(), latLng.lng().degrees()));
+        closestNodeList.emplace_back(r.data(), Experimental::Mobility::GeographicalLocation(latLng.lat().degrees(), latLng.lng().degrees()));
     }
     return closestNodeList;
 

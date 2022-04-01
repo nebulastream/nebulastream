@@ -200,10 +200,10 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   memorySourceDescriptor->getSourceAffinity(),
                                   memorySourceDescriptor->getTaskQueueId(),
                                   successors);
-    } else if (sourceDescriptor->instanceOf<Experimental::StaticDataSourceDescriptor>()) {
+    } else if (sourceDescriptor->instanceOf<NES::Experimental::StaticDataSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating static data source");
-        auto staticDataSourceDescriptor = sourceDescriptor->as<Experimental::StaticDataSourceDescriptor>();
-        return Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
+        auto staticDataSourceDescriptor = sourceDescriptor->as<NES::Experimental::StaticDataSourceDescriptor>();
+        return NES::Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
                                                     staticDataSourceDescriptor->getPathTableFile(),
                                                     bufferManager,
                                                     queryManager,
@@ -245,19 +245,19 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   lambdaSourceDescriptor->getSourceAffinity(),
                                   lambdaSourceDescriptor->getTaskQueueId(),
                                   successors);
-    } else if (sourceDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSourceDescriptor>()) {
+    } else if (sourceDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
         auto materializedViewSourceDescriptor =
-            sourceDescriptor->as<Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
+            sourceDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
         auto viewId = materializedViewSourceDescriptor->getViewId();
-        Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
+        NES::Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
         if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
             view = nodeEngine->getMaterializedViewManager()->getView(viewId);
         } else {
-            view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_VIEW,
+            view = nodeEngine->getMaterializedViewManager()->createView(NES::Experimental::MaterializedView::ViewType::TUPLE_VIEW,
                                                                         viewId);
         }
-        return Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
+        return NES::Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
                                                                             bufferManager,
                                                                             queryManager,
                                                                             operatorId,

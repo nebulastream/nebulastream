@@ -17,12 +17,10 @@
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 
-namespace NES {
+namespace NES::Configurations::Experimental::Mobility {
 
-namespace Configurations {
-
-GeographicalLocation GeographicalLocationFactory::createFromString(std::string,
-                                                                   std::map<std::string, std::string>& commandLineParams) {
+::NES::Experimental::Mobility::GeographicalLocation GeographicalLocationFactory::createFromString(std::string,
+                                                                      std::map<std::string, std::string>& commandLineParams) {
     std::string coordStr;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
         if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
@@ -31,18 +29,18 @@ GeographicalLocation GeographicalLocationFactory::createFromString(std::string,
     }
     //if the input string is empty, construct an invalid location
     if (coordStr.empty()) {
-        return GeographicalLocation(200, 200);
+        return {200, 200};
     }
-    return GeographicalLocation::fromString(coordStr);
+    return ::NES::Experimental::Mobility::GeographicalLocation::fromString(coordStr);
 }
 
 //TODO 2655 make this function work. it currently returns the standard value even if another value is supplied via yaml
-GeographicalLocation GeographicalLocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
+::NES::Experimental::Mobility::GeographicalLocation GeographicalLocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
     auto configString = yamlConfig[LOCATION_COORDINATES_CONFIG].As<std::string>();
     if (!configString.empty() && configString != "\n") {
-        return GeographicalLocation::fromString(configString);
+        return ::NES::Experimental::Mobility::GeographicalLocation::fromString(configString);
     }
-    return GeographicalLocation(200, 200);
+    return {200, 200};
+
 }
-}// namespace Configurations
-}//namespace NES
+}//namespace NES::Configurations::Experimental::Mobility

@@ -17,17 +17,20 @@
 #include <cstdint>
 #include <utility>
 
-namespace NES {
 
+namespace NES::Experimental::Mobility {
 class GeographicalLocation;
 using Timestamp = uint64_t;
 
-
 /**
- * @brief this class represents an interface to obtain a mobile devices real or simulated position
+ * @brief this class represents an interface to obtain a mobile devices current position
  */
 class LocationSource {
   public:
+
+    enum Type {
+        csv
+    };
 
     /**
      * @brief default destructor
@@ -38,7 +41,7 @@ class LocationSource {
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual std::pair<GeographicalLocation, Timestamp> getLastKnownLocation() = 0;
+    virtual std::pair<GeographicalLocation, Timestamp> getCurrentLocation() = 0;
 };
 }
 

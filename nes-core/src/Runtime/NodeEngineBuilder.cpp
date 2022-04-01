@@ -226,7 +226,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         }
         auto bufferStorage = (!this->bufferStorage) ? std::make_shared<BufferStorage>() : this->bufferStorage;
         auto materializedViewManager = (!this->materializedViewManager)
-            ? std::make_shared<Experimental::MaterializedView::MaterializedViewManager>()
+            ? std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>()
             : this->materializedViewManager;
         if (!partitionManager) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating PartitionManager");

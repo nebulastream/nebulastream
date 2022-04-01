@@ -305,7 +305,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            OriginId originId,
                                            const size_t numSourceLocalBuffers,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                                           const Experimental::MaterializedView::MaterializedViewPtr view);
+                                           const NES::Experimental::MaterializedView::MaterializedViewPtr view);
 
 }// namespace Experimental::MaterializedView
 
