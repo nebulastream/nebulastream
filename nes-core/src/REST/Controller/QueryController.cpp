@@ -41,31 +41,10 @@ QueryController::QueryController(QueryServicePtr queryService,
 void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     auto parameters = getParameters(request);
-    auto const queryParameter = parameters.find("queryId");
-    if (queryParameter == parameters.end()) {
-        NES_ERROR("QueryController: Unable to find query ID for the GET request");
-        web::json::value errorResponse{};
-        auto statusCode = web::http::status_codes::BadRequest;
-        errorResponse["code"] = web::json::value(statusCode);
-        errorResponse["message"] = web::json::value::string("Parameter queryId must be provided");
-        errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
-        errorMessageImpl(request, errorResponse, statusCode);
-        return;
-    }
+    if(!validateURIParametersAndQueryId(parameters, request))
+       return;
+    QueryId queryId = std::stoi(parameters.find("queryId")->second);
     try {
-        // get the queryId from user input
-        QueryId queryId = std::stoi(queryParameter->second);
-        NES_DEBUG("Query Controller: Get the registered query");
-        if (!queryCatalog->queryExists(queryId)) {
-            web::json::value errorResponse{};
-            auto statusCode = web::http::status_codes::NotFound;
-            errorResponse["code"] = web::json::value(statusCode);
-            errorResponse["message"] = web::json::value::string("Provided QueryId does not exist");
-            errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
-            errorMessageImpl(request, errorResponse, web::http::status_codes::NotFound);
-            return;
-        }
-
         if (path[1] == "execution-plan") {
             NES_INFO("QueryController:: GET execution-plan");
             NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
@@ -151,9 +130,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
 void QueryController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     if (path[1] == "execute-query") {
-
         NES_DEBUG(" QueryController: Trying to execute query");
-
         request.extract_string(true)
             .then([this, request](utility::string_t body) {
                 try {
@@ -198,12 +175,17 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     restResponse["queryId"] = web::json::value::number(queryId);
                     successMessageImpl(request, restResponse,web::http::status_codes::Created);
                     return;
-                } catch (const std::exception& exc) {
+                } catch (const InvalidQueryException& exc) { //test that submits broken query(not sink/no source etc
                     NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
                               "user request:"
                               << exc.what());
-                    handleException(request, exc);
-                    //return;
+                    web::json::value errorResponse{};
+                    auto statusCode = web::http::status_codes::BadRequest;
+                    errorResponse["code"] = web::json::value(statusCode);
+                    errorResponse["message"] = web::json::value::string(exc.what());
+                    errorMessageImpl(request, errorResponse, statusCode);
+                    return;
+                    //handleException(request, exc);
                 } catch (...) {
                     NES_ERROR("RestServer: Unable to start REST server unknown exception.");
                     internalServerErrorImpl(request);
@@ -213,7 +195,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
     } else if (path[1] == "execute-query-ex") { //why is this called like this? why ex if we submit protobuf message?
         request.extract_string(true)
             .then([this, request](utility::string_t body) {
-                try {
+                try{
                     NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << body);
                     // decode string into protobuf message
                     std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
@@ -238,7 +220,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                             lineageString = context->at("lineage").value();
                     }
                     std::string* queryString = protobufMessage->mutable_querystring();
-                    std::string placementStrategy = context->at("placementStrategy").value();
+                    std::string placementStrategy = context->at("strategyName").value();
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     QueryId queryId =
@@ -249,10 +231,14 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     successMessageImpl(request, restResponse,web::http::status_codes::Created);
                     return;
                 } catch (const std::exception& exc) {
-                    NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for "
+                    NES_ERROR("QueryController: handlePost -execute-query-ex: Exception occurred while building the query plan for "
                               "user request:"
                               << exc.what());
-                    handleException(request, exc);
+                    web::json::value errorResponse{};
+                    auto statusCode = web::http::status_codes::BadRequest;
+                    errorResponse["code"] = web::json::value(statusCode);
+                    errorResponse["message"] = web::json::value::string(exc.what());
+                    errorMessageImpl(request, errorResponse, statusCode);
                     return;
                 } catch (...) {
                     NES_ERROR("RestServer: Unable to start REST server unknown exception.");
@@ -269,55 +255,33 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
 
     //Extract parameters if any
     auto parameters = getParameters(request);
-
+    if(!validateURIParametersAndQueryId(parameters, request))
+        return;
+    QueryId queryId = std::stoi(parameters.find("queryId")->second);
     if (path[1] == "stop-query") {
         NES_DEBUG("QueryController: Request received for stoping a query");
-        //Check if the path contains the query id
-        auto param = parameters.find("queryId");
-        if (param == parameters.end()) {
-            NES_ERROR("QueryController: Unable to find query Id for the stop-query request");
-            web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
-            errorResponse["queryId"] = web::json::value::null();
-            errorMessageImpl(request, errorResponse);
-            return;
-        }
-
-        try {
-            //Prepare Input query from user string
-            QueryId queryId = std::stoi(param->second);
-            //Call the service
-            NES_DEBUG("Check whether query exists in query catalog");
-            if (!queryCatalog->queryExists(queryId)) {
-                NES_ERROR("QueryController: Unable to find query with provided query Id for the DEL request");
-                web::json::value errorResponse{};
-                errorResponse["detail"] = web::json::value::string("Parameter queryId does not exist"); //this needs to change, not correct
-                errorResponse["queryId"] = web::json::value::number(queryId);
-                //change to 404
-                errorMessageImpl(request, errorResponse);
-                return;
-            }
+       try{
             bool success = queryService->validateAndQueueStopRequest(queryId);
             //Prepare the response
             web::json::value result{};
             result["success"] = web::json::value::boolean(success);
             result["queryId"] = web::json::value::number(queryId);
-            //return a 202, it has been added, not yet stopped //also makes success true not accurate
-            successMessageImpl(request, result);
+            successMessageImpl(request, result, web::http::status_codes::Created);
             return;
         } catch (QueryNotFoundException const& exc) {
-            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
-                      "user request:"
-                      << exc.what());
-            handleException(request, exc);
-            return;
-        } catch (InvalidQueryStatusException const& exc) {
-            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
-                      "user request:"
+            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while stoping the query "
                       << exc.what());
             web::json::value errorResponse{};
             errorResponse["detail"] = web::json::value::string(exc.what());
-            errorResponse["queryId"] = web::json::value::number(std::stoi(param->second));
+            errorResponse["queryId"] = web::json::value::number(queryId);
+            errorMessageImpl(request, errorResponse, web::http::status_codes::NotFound);
+            return;
+        } catch (InvalidQueryStatusException const& exc) {
+            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while stoping the query "
+                      << exc.what());
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Query status was either failed or already stopped: " + std::string(exc.what()));
+            errorResponse["queryId"] = web::json::value::number(queryId);
             errorMessageImpl(request, errorResponse);
             return;
         } catch (...) {
@@ -328,6 +292,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
         resourceNotFoundImpl(request);
     }
 }
+
 bool QueryController::validateLineageMode(const std::string& lineageModeString, const web::http::http_request& request) {
     auto lineageMode = stringToLineageTypeMap(lineageModeString);
     if (lineageMode == LineageType::INVALID) {
@@ -367,7 +332,7 @@ bool QueryController::validateProtobufMessage(std::shared_ptr<SubmitQueryRequest
         return false;
     }
     auto* context = protobufMessage->mutable_context();
-    if (!context->contains("placementStrategy")) {
+    if (!context->contains("strategyName")) {
         NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
@@ -377,7 +342,7 @@ bool QueryController::validateProtobufMessage(std::shared_ptr<SubmitQueryRequest
         errorMessageImpl(request, errorResponse, statusCode);
         return false;
     }
-    std::string placementStrategy = context->at("placement").value();
+    std::string placementStrategy = context->at("strategyName").value();
     return validatePlacementStrategy(placementStrategy, request);
 }
 bool QueryController::validateUserRequest(web::json::value userRequest, const web::http::http_request& httpRequest) {
@@ -386,13 +351,13 @@ bool QueryController::validateUserRequest(web::json::value userRequest, const we
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
         errorResponse["code"] = web::json::value(statusCode);
-        errorResponse["message"] = web::json::value::string("Wrong key word for user query, use 'userQuery'.");
+        errorResponse["message"] = web::json::value::string("Incorrect or missing key word for user query, use 'userQuery'.");
         errorResponse["more_info"] =
             web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
         errorMessageImpl(httpRequest, errorResponse, statusCode);
         return false;
     }
-    if(!userRequest.has_field("placementStrategy")){
+    if(!userRequest.has_field("strategyName")){
         NES_ERROR("QueryController: handlePost -execute-query: No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::BadRequest;
@@ -403,7 +368,7 @@ bool QueryController::validateUserRequest(web::json::value userRequest, const we
         errorMessageImpl(httpRequest, errorResponse, statusCode);
         return false;
     }
-    std::string placementStrategy = userRequest["placementStrategy"].as_string();
+    std::string placementStrategy = userRequest["strategyName"].as_string();
     return validatePlacementStrategy(placementStrategy, httpRequest);
 }
 bool QueryController::validatePlacementStrategy(const std::string& placementStrategy, const web::http::http_request& httpRequest) {
@@ -417,6 +382,33 @@ bool QueryController::validatePlacementStrategy(const std::string& placementStra
         errorResponse["message"] = web::json::value::string("Invalid Placement Strategy: " + placementStrategy);
         errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/cpp/class_n_e_s_1_1_placement_strategy.html");
         errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return false;
+    }
+    return true;
+}
+bool QueryController::validateURIParametersAndQueryId(std::map<utility::string_t, utility::string_t> parameters,
+                                                      const web::http::http_request& httpRequest) {
+    auto const queryParameter = parameters.find("queryId");
+    if (queryParameter == parameters.end()) {
+        NES_ERROR("QueryController: Unable to find query ID for the GET request");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Parameter queryId must be provided");
+        errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
+        errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return false;
+    }
+    // get the queryId from user input
+    QueryId queryId = std::stoi(queryParameter->second);
+    NES_DEBUG("Query Controller: Get the registered query");
+    if (!queryCatalog->queryExists(queryId)) {
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::NotFound;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Provided QueryId: " + std::to_string(queryId) + " does not exist");
+        errorResponse["more_info"] = web::json::value::string("https://docs.nebula.stream/docs/clients/rest-api/");
+        errorMessageImpl(httpRequest, errorResponse, web::http::status_codes::NotFound);
         return false;
     }
     return true;
