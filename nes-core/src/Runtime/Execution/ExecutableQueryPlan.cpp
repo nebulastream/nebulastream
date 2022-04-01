@@ -14,10 +14,12 @@
 
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Network/NetworkSink.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -179,6 +181,14 @@ bool ExecutableQueryPlan::stop() {
 void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
+        case PropagateEpoch: {
+            auto networkSinks = getSinks();
+            for (const DataSinkPtr& sink: networkSinks) {
+                Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+                networkSink->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, task.getUserData<uint64_t>());
+            }
+            break;
+        }
         case FailEndOfStream: {
             NES_DEBUG("Executing FailEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             NES_ASSERT2_FMT((numOfTerminationTokens.fetch_sub(1) == 1),

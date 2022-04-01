@@ -37,7 +37,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                  numOfProducers,
                  queryId,
                  querySubPlanId),
-      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
@@ -143,5 +143,8 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
 }
 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
+
+Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
+
 
 }// namespace NES::Network
