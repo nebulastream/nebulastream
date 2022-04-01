@@ -34,7 +34,9 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+namespace Experimental::Mobility {
 class GeographicalLocation;
+}
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
@@ -70,6 +72,7 @@ class Topology {
     bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
 
     /**
+     * Experimental
      * @brief This method sets the location of a new node (making it a field node) or updates the position of an existing field node
      * @param node: a pointer to the topology node
      * @param geoLoc: the (new) location of the field node
@@ -78,9 +81,10 @@ class Topology {
      * non field nodes to become field nodes
      * @return true if successful
      */
-    bool setPhysicalNodeFixedCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init = false);
+    bool setFieldNodeCoordinates(const TopologyNodePtr& node, NES::Experimental::Mobility::GeographicalLocation geoLoc, bool init = false);
 
     /**
+     * Experimental
      * @brief removes a node from the spatial index. This method is called if a node with a location is unregistered
      * @param node: a pointer to the topology node whose entry is to be removed from the spatial index
      * @returns true on success, false if the node in question does not have a location
@@ -88,14 +92,16 @@ class Topology {
     bool removeNodeFromSpatialIndex(const TopologyNodePtr& node);
 
     /**
+     * Experimental
      * @brief returns the closest field node to a certain geographical location
      * @param geoLoc: Coordinates of a location on the map
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const GeographicalLocation& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const NES::Experimental::Mobility::GeographicalLocation& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
+     * Experimental
      * @brief returns the closest field node to a certain node (which does not equal the node passed as an argument)
      * @param nodePtr: pointer to a field node
      * @param radius the maximum distance in kilometres which the returned node can have from the specified node
@@ -104,14 +110,16 @@ class Topology {
     std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
+     * Experimental
      * @brief get a list of all the nodes within a certain radius around a location
      * @param center: a location around which we look for nodes
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
-    std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> getNodesInRange(GeographicalLocation center, double radius);
+    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>> getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
 
     /**
+     * Experimental
      * @return the amount of field nodes (non mobile nodes with a known location) in the system
      */
     size_t getSizeOfPointIndex();

@@ -55,8 +55,8 @@ class TopologyManagerService {
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          bool isMobile = false,
-                          GeographicalLocation fixedCoordinates = GeographicalLocation());
+                          bool isMobile,
+                          NES::Experimental::Mobility::GeographicalLocation fixedCoordinates);
 
     /**
     * @brief unregister an existing node
@@ -89,21 +89,23 @@ class TopologyManagerService {
     TopologyNodePtr findNodeWithId(uint64_t nodeId);
 
     /**
+     * Experimental
      * @brief query for topology pointers of the field nodes (non mobile nodes with a known location)
      * within a certain radius around a geographical location
      * @param center: the center of the query area represented as a GeographicalLocation object
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing a pointer to the topology node and the nodes location
      */
-    std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> getNodesInRange(GeographicalLocation center, double radius);
+    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>> getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
 
     /**
+     * Experimental
      * @brief query for the ids of field nodes within a certain radius around a geographical location
      * @param center: the center of the query area represented as a GeographicalLocation object
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location
      */
-    std::vector<std::pair<uint64_t, GeographicalLocation>> getNodesIdsInRange(GeographicalLocation center, double radius);
+    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodesIdsInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
 
     /**
      * Method to return the root node

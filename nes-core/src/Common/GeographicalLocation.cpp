@@ -19,7 +19,7 @@
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES::Experimental::Mobility {
 
 GeographicalLocation::GeographicalLocation() {
     latitude = kInvalidLocationDegrees;

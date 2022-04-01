@@ -30,7 +30,7 @@
 using namespace NES;
 class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    Experimental::MaintenanceServicePtr maintenanceService;
+    NES::Experimental::MaintenanceServicePtr maintenanceService;
     TopologyPtr topology;
     GlobalExecutionPlanPtr executionPlan;
     RequestQueuePtr nesRequestQueue;
@@ -50,7 +50,7 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
         executionPlan = GlobalExecutionPlan::create();
         nesRequestQueue = std::make_shared<RequestQueue>(1);
         maintenanceService =
-            std::make_shared<Experimental::MaintenanceService>(topology, queryCatalogService, nesRequestQueue, executionPlan);
+            std::make_shared<NES::Experimental::MaintenanceService>(topology, queryCatalogService, nesRequestQueue, executionPlan);
     }
 
     /* Will be called before a test is executed. */
@@ -71,7 +71,7 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
     //Prepare
     TopologyNodePtr node = TopologyNode::create(id, ip, grpcPort, dataPort, resources);
     topology->setAsRoot(node);
-    auto nonExistentType = Experimental::MigrationType::Value(4);
+    auto nonExistentType = NES::Experimental::MigrationType::Value(4);
     //test no such Topology Node ID
     uint64_t nonExistentId = 0;
     auto [result1, info1] = maintenanceService->submitMaintenanceRequest(nonExistentId, nonExistentType);
@@ -93,7 +93,7 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
                   + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without "
                     "Buffering)");
     //pass valid TopologyNodeID with corresponding ExecutionNode and valid MigrationType
-    auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, Experimental::MigrationType::Value::RESTART);
+    auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, NES::Experimental::MigrationType::Value::RESTART);
     EXPECT_TRUE(result4);
     EXPECT_EQ(info4,
               "Successfully submitted Query Migration Requests for all queryIdAndCatalogEntryMapping on Topology Node with ID: "

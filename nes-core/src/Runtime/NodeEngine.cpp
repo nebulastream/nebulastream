@@ -52,7 +52,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
                        std::weak_ptr<AbstractQueryStatusListener>&& nesWorker,
-                       Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
+                       NES::Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -378,7 +378,7 @@ AbstractQueryStatusListenerPtr NodeEngine::getQueryStatusListener() { return nes
 
 HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManager; }
 
-Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const {
+NES::Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const {
     return materializedViewManager;
 }
 

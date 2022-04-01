@@ -34,8 +34,10 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 class RegistrationMetrics;
 
+namespace Experimental::Mobility {
 class GeographicalLocation;
 using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
+}
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
@@ -123,7 +125,7 @@ class CoordinatorRPCClient {
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       const RegistrationMetrics& registrationMetrics,
-                      GeographicalLocation fixedCoordinates,
+                      NES::Experimental::Mobility::GeographicalLocation fixedCoordinates,
                       bool isMobile);
 
     /**
@@ -165,12 +167,13 @@ class CoordinatorRPCClient {
     bool notifyEpochTermination(uint64_t timestamp, uint64_t queryId);
 
     /**
+     * Experimental
      * @brief Method to get all field nodes (field nodes = non-mobile nodes with a specified geographical location) within a certain range around a geographical point
      * @param coord: center of the query area
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding fixed coordinates as GeographicalLocation objects
      */
-    std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(GeographicalLocation coord, double radius);
+    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions

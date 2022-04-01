@@ -21,7 +21,7 @@
 #include <s2/s2polyline.h>
 #endif
 
-namespace NES {
+namespace NES::Experimental::Mobility {
 
 LocationSourceCSV::LocationSourceCSV(std::string csvPath) {
     std::string csvLine;
@@ -30,64 +30,80 @@ LocationSourceCSV::LocationSourceCSV(std::string csvPath) {
     std::string timeString;
 
     startTime = getTimestamp();
+    NES_DEBUG("Started csv location source at " << startTime)
 
-    //read locations and time offsets from csv
+    //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {
         std::stringstream stringStream(csvLine);
             getline(stringStream, locString, ';');
             getline(stringStream, timeString, ';');
             Timestamp time = std::stoul(timeString);
-            NES_DEBUG("Read from csv: " << locString << ", " << time);
+            NES_TRACE("Read from csv: " << locString << ", " << time);
 
             //add startTime to the offset obtained from csv to get absolute timestamp
             time += startTime;
 
+            //construct a pair containing a location and the time at which the device is at exactly that point
+            // and sve it to a vector containing all waypoints
             std::pair waypoint(GeographicalLocation::fromString(locString), time);
             waypoints.push_back(waypoint);
         }
-        //set first csv entry as next waypoint
+        NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
+        NES_DEBUG("first timestamp is " << waypoints.front().second << ", last timestamp is " << waypoints.back().second)
+        //set first csv entry as the next wypoint
         nextWaypoint = waypoints.begin();
 }
 
-std::pair<GeographicalLocation, Timestamp> LocationSourceCSV::getLastKnownLocation() {
+std::pair<GeographicalLocation, Timestamp> LocationSourceCSV::getCurrentLocation() {
+    //get the time the request is made so we can compare it to the timestamps in the list of waypoints
     Timestamp requestTime = getTimestamp();
 
-    //find the waypoint with the lowest timestamp greater than requestTime
+    //find the waypoint with the smallest timestamp greater than requestTime
+    //this point is the next waypoint on the way ahead of us
     while (nextWaypoint->second < requestTime && nextWaypoint != waypoints.end()) {
         nextWaypoint = std::next(nextWaypoint);
     }
+    //find the last point behind us on the way
     auto prevWaypoint = std::prev(nextWaypoint);
 
 #ifdef S2DEF
-    //if we already reached the last position in the file, our location will fixed at that point for all future requests
+    //if we already reached the last position in the file, we assume that the device stays in that location and does not move further
+    //we therefore keep returning the location of the last timestamp, without looking at the request time
     if (nextWaypoint == waypoints.end()) {
         NES_DEBUG("Last waypoint reached, do not interpolate, node will stay in this position for the rest of the simulation");
         return {prevWaypoint->first, requestTime};
     }
 
-    //we interpolate the position where the device would be at requestTime if it moved with unchanging velocity between the 2 points
+    //if we have not reached the final position yet, we draw the path between the last waypoint we passed and the next waypoint ahead of us
+    //as an s2 polyline
     S2Point prev(S2LatLng::FromDegrees(prevWaypoint->first.getLatitude(), prevWaypoint->first.getLongitude()));
     S2Point post(S2LatLng::FromDegrees(nextWaypoint->first.getLatitude(), nextWaypoint->first.getLongitude()));
     std::vector<S2Point> pointVec;
     pointVec.push_back(prev);
     pointVec.push_back(post);
-
     S2Polyline path(pointVec);
 
+    //calculate the time that passed since visiting the last waypoint
     Timestamp requestOffset = requestTime - prevWaypoint->second;
+    //calculate the complete travel time between that last visited waypoint and the waypoint ahead of us
     Timestamp nextPointOffset = nextWaypoint->second - prevWaypoint->second;
+    //we want to simulate the device to be traveling at constant speed between prevWaypoint and nextWaypoint
+    //and calculate the fraction of the complete distance between the points which was already traveled at requestTime
     double fraction = (double) requestOffset / (double) nextPointOffset;
 
+    //we use the fraction to interpolate the point on path where the device is located if it
+    //travels at constant speed from prevWaypoint to nextWaypoint
     S2LatLng resultS2(path.Interpolate(fraction));
     GeographicalLocation result(resultS2.lat().degrees(), resultS2.lng().degrees());
 
-    NES_DEBUG("Retrieving s2-interpolated location");
-    NES_DEBUG("Location: " << result.toString() << "; Time: " << prevWaypoint->second)
+    NES_TRACE("Retrieving s2-interpolated location");
+    NES_TRACE("Location: " << result.toString() << "; Time: " << prevWaypoint->second)
 
     return {result, requestTime};
 #else
-    NES_DEBUG("S2 not used, returning most recently passed waypoint from csv")
-    NES_DEBUG("Location: " << prevWaypoint->first.toString() << "; Time: " << prevWaypoint->second)
+    //if the s2 library is not available we return the time and place of the previous waypoint as our last known position.
+    NES_TRACE("S2 not used, returning most recently passed waypoint from csv")
+    NES_TRACE("Location: " << prevWaypoint->first.toString() << "; Time: " << prevWaypoint->second)
     return *prevWaypoint;
 #endif
 }

@@ -128,20 +128,20 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
 
 bool TopologyNode::isFieldNode() { return fixedCoordinates.has_value(); }
 
-std::optional<GeographicalLocation> TopologyNode::getFixedCoordinates() {
+std::optional<Experimental::Mobility::GeographicalLocation> TopologyNode::getCoordinates() {
     if (isMobile) {
+        //todo issue #2722: return the current location of the mobile node
         return {};
     }
     return fixedCoordinates;
 }
 
-bool TopologyNode::setFixedCoordinates(double latitude, double longitude) {
-    return setFixedCoordinates(GeographicalLocation(latitude, longitude));
+void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
+    setFixedCoordinates(Experimental::Mobility::GeographicalLocation(latitude, longitude));
 }
 
-bool TopologyNode::setFixedCoordinates(GeographicalLocation geoLoc) {
+void TopologyNode::setFixedCoordinates(Experimental::Mobility::GeographicalLocation geoLoc) {
     fixedCoordinates = geoLoc;
-    return true;
 }
 
 void TopologyNode::setMobile(bool isMobile) {

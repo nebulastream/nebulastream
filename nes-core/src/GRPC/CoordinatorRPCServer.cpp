@@ -40,13 +40,16 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                            request->dataport(),
                                                            request->numberofslots(),
                                                            request->ismobile(),
-                                                           GeographicalLocation(request->coordinates()));
+                                                           NES::Experimental::Mobility::GeographicalLocation(request->coordinates()));
     } else {
+        /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
+        of geographical location */
         id = topologyManagerService->registerNode(request->address(),
                                                            request->grpcport(),
                                                            request->dataport(),
                                                            request->numberofslots(),
-                                                           request->ismobile());
+                                                           request->ismobile(),
+                                                           NES::Experimental::Mobility::GeographicalLocation());
     }
 
     auto registrationMetrics =
@@ -234,8 +237,8 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
-    std::vector<std::pair<uint64_t, GeographicalLocation>> inRange =
-        topologyManagerService->getNodesIdsInRange(GeographicalLocation(request->coord()), request->radius());
+    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> inRange =
+        topologyManagerService->getNodesIdsInRange(NES::Experimental::Mobility::GeographicalLocation(request->coord()), request->radius());
 
     for (auto elem : inRange) {
         NodeGeoInfo* nodeInfo = reply->add_nodes();

@@ -194,7 +194,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
         "--physicalSources.rowLayout=false",
         "--physicalSources.physicalSourceName=x",
         "--physicalSources.logicalSourceName=default",
-        "--fixedLocationCoordinates=23.88,-3.4"};
+        "--fieldNodeLocationCoordinates=23.88,-3.4"};
     int argc = 14;
 
     std::map<string, string> commandLineParams;

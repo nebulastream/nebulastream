@@ -381,7 +381,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         const RegistrationMetrics& registrationMetrics,
-                                        GeographicalLocation fixedCoordinates,
+                                        Experimental::Mobility::GeographicalLocation fixedCoordinates,
                                         bool isMobile) {
 
     RegisterNodeRequest request;
@@ -397,8 +397,8 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
         pCoordinates->set_lat(fixedCoordinates.getLatitude());
         pCoordinates->set_lng(fixedCoordinates.getLongitude());
     } else {
-        pCoordinates->set_lat(kInvalidLocationDegrees);
-        pCoordinates->set_lng(kInvalidLocationDegrees);
+        pCoordinates->set_lat(Experimental::Mobility::kInvalidLocationDegrees);
+        pCoordinates->set_lng(Experimental::Mobility::kInvalidLocationDegrees);
     }
 
 
@@ -479,7 +479,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(GeographicalLocation coord,
+std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::GeographicalLocation coord,
                                                                                                double radius) {
     GetNodesInRangeRequest request;
     request.set_allocated_coord(new Coordinates{coord});
@@ -489,7 +489,7 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::get
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    std::vector<std::pair<uint64_t, GeographicalLocation>> nodesInRange;
+    std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> nodesInRange;
     for (NodeGeoInfo nodeInfo : *reply.mutable_nodes()) {
         nodesInRange.emplace_back(nodeInfo.id(), nodeInfo.coord());
     }

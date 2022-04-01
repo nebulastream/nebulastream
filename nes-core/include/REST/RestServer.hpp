@@ -80,7 +80,7 @@ class RestServer {
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
-               const Experimental::MaintenanceServicePtr& maintenanceService,
+               const NES::Experimental::MaintenanceServicePtr& maintenanceService,
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr& bufferManager);
