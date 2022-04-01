@@ -479,7 +479,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
 
 bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const {
     NES_DEBUG("DataSource::injectEpochBarrier received timestamp " << epochBarrier << "with queryId " << queryId);
-    //create reconfig task
+    queryManager->injectEpochBarrier(epochBarrier, queryId, this->operatorId);
     return true;
 }
 
