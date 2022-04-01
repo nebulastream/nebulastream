@@ -117,16 +117,54 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     EXPECT_EQ(getExecutionPlanResponse2.at("message").as_string(), "Provided QueryId does not exist");
     EXPECT_EQ(getExecutionPlanResponse2.at("code").as_integer(),
               httpResponse2.status_code());
-
-
-
 }
 
-TEST_F(QueryControllerTest, testExecuteQuery) {
+TEST_F(QueryControllerTest, testCorrectExecuteQuery) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     TopologyNodePtr  topologyNode = TopologyNode::create(1,"0",0,0,1);
     SourceCatalogEntryPtr entry = SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
     ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
+    web::http::http_request msg(web::http::methods::POST);
+    //set query string
+    std::string queryString =
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    web::json::value messageContent{};
+    messageContent["userQuery"] = web::json::value::string(queryString);
+    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    messageContent["faultTolerance"] = web::json::value::string("AT_MOST_ONCE");
+    messageContent["lineage"] = web::json::value::string("IN_MEMORY");
+    msg.set_body(messageContent);
+
+    web::http::http_response httpResponse;
+    web::json::value response;
+
+    queryController->handlePost(std::vector<utility::string_t>{"query", "execute-query"}, msg);
+    msg.get_response()
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+            try {
+                httpResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    httpResponse.extract_json()
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+
+    auto result = response.as_object();
+    auto queryId = response.at("queryId");
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_TRUE(web::http::status_codes::Created == httpResponse.status_code());
+}
+
+TEST_F(QueryControllerTest, testExecuteQueryNoPhyiscalSource) {
     web::http::http_request msg(web::http::methods::POST);
     //set query string
     std::string queryString =
@@ -158,19 +196,98 @@ TEST_F(QueryControllerTest, testExecuteQuery) {
             }
         })
         .wait();
-
     auto result = response.as_object();
-    auto queryId = response.at("queryId");
-    EXPECT_TRUE(web::http::status_codes::Created == httpResponse.status_code());
+    auto message = response.at("message").as_string();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_EQ(message, "Logical source(s) [default_logical] are found to have no physical source(s) defined.");
+    EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
 }
 
-TEST_F(QueryControllerTest, testExecuteQueryNoPhyiscalSource) {
+TEST_F(QueryControllerTest, testExecuteQueryNoPlacementStrategyProvided) {
     web::http::http_request msg(web::http::methods::POST);
     //set query string
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     web::json::value messageContent{};
     messageContent["userQuery"] = web::json::value::string(queryString);
+    msg.set_body(messageContent);
+
+    web::http::http_response httpResponse;
+    web::json::value response;
+
+    queryController->handlePost(std::vector<utility::string_t>{"query", "execute-query"}, msg);
+    msg.get_response()
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+            try {
+                httpResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    httpResponse.extract_json()
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    auto result = response.as_object();
+    auto message = response.at("message").as_string();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_EQ(message, "No placement strategy specified. Specify a placement strategy using 'placementStrategy'.");
+    EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
+}
+
+TEST_F(QueryControllerTest, testExecuteQueryInvalidPlacementStrategyProvided) {
+    web::http::http_request msg(web::http::methods::POST);
+    //set query string
+    std::string queryString =
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    web::json::value messageContent{};
+    messageContent["userQuery"] = web::json::value::string(queryString);
+    std::string invalidPlacementStrategy = "MumboJumbo";
+    messageContent["strategyName"] = web::json::value::string(invalidPlacementStrategy);
+    msg.set_body(messageContent);
+
+    web::http::http_response httpResponse;
+    web::json::value response;
+
+    queryController->handlePost(std::vector<utility::string_t>{"query", "execute-query"}, msg);
+    msg.get_response()
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+            try {
+                httpResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    httpResponse.extract_json()
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    auto result = response.as_object();
+    auto message = response.at("message").as_string();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_EQ(message, "Invalid Placement Strategy: " + invalidPlacementStrategy);
+    EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
+}
+
+TEST_F(QueryControllerTest, testExecuteQueryIncorrectOrMissingUserQuery) {
+    web::http::http_request msg(web::http::methods::POST);
+    //set query string
+    std::string queryString =
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    web::json::value messageContent{};
+    messageContent["wrongKeyword"] = web::json::value::string(queryString);
     messageContent["strategyName"] = web::json::value::string("BottomUp");
     msg.set_body(messageContent);
 
@@ -187,7 +304,122 @@ TEST_F(QueryControllerTest, testExecuteQueryNoPhyiscalSource) {
             }
         })
         .wait();
-
-    EXPECT_TRUE(web::http::status_codes::InternalError == httpResponse.status_code());
+    httpResponse.extract_json()
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    auto result = response.as_object();
+    auto message = response.at("message").as_string();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_EQ(message, "Incorrect or missing key word for user query, use 'userQuery'.");
+    EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
 }
+
+TEST_F(QueryControllerTest, testExecuteQueryInvalidFaultToleranceType) {
+    web::http::http_request msg(web::http::methods::POST);
+    //set query string
+    std::string queryString =
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    web::json::value messageContent{};
+    messageContent["userQuery"] = web::json::value::string(queryString);
+    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    std::string invalidFaultToleranceType = "EXACTLY_TWICE";
+    messageContent["faultTolerance"] = web::json::value::string(invalidFaultToleranceType);
+    msg.set_body(messageContent);
+
+    web::http::http_response httpResponse;
+    web::json::value response;
+
+    queryController->handlePost(std::vector<utility::string_t>{"query", "execute-query"}, msg);
+    msg.get_response()
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+            try {
+                httpResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    httpResponse.extract_json()
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    auto result = response.as_object();
+    auto message = response.at("message").as_string();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_EQ(message, "Invalid Fault Tolerance Type provided: "+ invalidFaultToleranceType + ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.");
+    EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
+}
+
+TEST_F(QueryControllerTest, testStopQueryInvalidParameterOrNoQueryIdProvided) {
+    web::http::http_request msg1(web::http::methods::DEL);
+    //set query string
+    msg1.set_request_uri(web::http::uri(""));
+
+    web::http::http_response httpResponse1;
+    web::json::value response1;
+
+
+    queryController->handleGet(std::vector<utility::string_t>{"query", "stop-query"}, msg1);
+    msg1.get_response()
+        .then([&httpResponse1](const pplx::task<web::http::http_response>& task) {
+            try {
+                httpResponse1 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    httpResponse1.extract_json()
+        .then([&response1](const pplx::task<web::json::value>& task) {
+            response1 = task.get();
+        })
+        .wait();
+    auto getExecutionPlanResponse1 = response1.as_object();
+    NES_DEBUG("Response: " << response1.serialize());
+    EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse1.status_code());
+    EXPECT_EQ(getExecutionPlanResponse1.at("message").as_string(), "Parameter queryId must be provided");
+
+    web::http::http_request msg2(web::http::methods::GET);
+    //set query string
+    msg2.set_request_uri(web::http::uri("?queryId=1"));
+
+    web::http::http_response httpResponse2;
+    web::json::value response2;
+
+
+    queryController->handleGet(std::vector<utility::string_t>{"query", "execution-plan"}, msg2);
+    msg2.get_response()
+        .then([&httpResponse2](const pplx::task<web::http::http_response>& task) {
+            try {
+                httpResponse2 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    httpResponse2.extract_json()
+        .then([&response2](const pplx::task<web::json::value>& task) {
+            response2 = task.get();
+        })
+        .wait();
+    auto getExecutionPlanResponse2 = response2.as_object();
+    NES_DEBUG("Response: " << response2.serialize());
+    EXPECT_TRUE(web::http::status_codes::NotFound == httpResponse2.status_code());
+    EXPECT_EQ(getExecutionPlanResponse2.at("message").as_string(), "Provided QueryId: " + std::to_string(1) + " does not exist");
+    EXPECT_EQ(getExecutionPlanResponse2.at("code").as_integer(),
+              httpResponse2.status_code());
+}
+
+
 }

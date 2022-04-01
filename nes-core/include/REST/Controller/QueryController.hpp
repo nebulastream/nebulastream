@@ -107,6 +107,14 @@ class QueryController : public BaseController {
      */
     bool validatePlacementStrategy(const std::string& placementStrategy, const web::http::http_request& httpRequest);
 
+    /**
+     * validates that the URI parameters contains 'queryId' field and that the given queryId exists
+     * @param parameters
+     * @param httpRequest
+     * @return true if 'queryId' parameter exists and query with queryId exists else false
+     */
+    bool validateURIParametersAndQueryId(std::map<utility::string_t, utility::string_t> parameters ,const web::http::http_request& httpRequest);
+
     TopologyPtr topology;
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
