@@ -188,6 +188,7 @@ const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
+const std::string WORKER_HEALTH_CHECK_WAIT_TIME = "workerHealthCheckWaitTime";
 
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";

@@ -35,6 +35,7 @@ void WorkerHealthCheckService::startHealthCheck() {
         setThreadName("nesHealth");
 
         NES_TRACE("NesWorker: start health checking");
+        auto waitTime = std::chrono::seconds(worker->getWorkerConfiguration()->workerHealthCheckWaitTime.getValue());
         while (isRunning) {
             NES_TRACE("NesWorker::healthCheck for worker id= " << coordinatorRpcClient->getId());
 
@@ -46,7 +47,7 @@ void WorkerHealthCheckService::startHealthCheck() {
                             << coordinatorRpcClient->getId() << " coordinator went down so shutting down the worker with ip");
                 worker->stop(true);
             }
-            std::this_thread::sleep_for(std::chrono::seconds(waitTimeInSeconds));
+            std::this_thread::sleep_for(waitTime);
         }
         //        we have to wait until the code above terminates to proceed afterwards with shutdown of the rpc server (can be delayed due to sleep)
         shutdownRPC->set_value(true);
