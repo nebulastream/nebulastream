@@ -223,6 +223,12 @@ class WorkerConfiguration : public BaseConfiguration {
         Runtime::QueryExecutionMode::Dynamic,
         "Which mode the query manager is running in. (Dynamic, Static, NumaAware, Invalid)"};
 
+    /**
+     * @brief Configuration of waiting time of the worker health check.
+     * Set the number of seconds waiting to perform health checks
+     */
+    UIntOption workerHealthCheckWaitTime = {WORKER_HEALTH_CHECK_WAIT_TIME, 60, "Number of seconds to wait between health checks"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&localWorkerIp,
@@ -253,6 +259,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfThreadsPerQueue,
                 &queryManagerMode,
                 &configPath,
+                &workerHealthCheckWaitTime,
                 &enableStatisticOuput};
     }
 };
