@@ -200,8 +200,9 @@ for (const auto &source : sourceOperators){
                         // check if newPlan is currently the best
                         // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
                         OptimizerPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
-                        if (oldPlan->getOperatorCosts() == -1  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
-                            subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
+
+                        if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
+                            subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators1()] = newPlan.value();
                         }
                     }
                 }
@@ -280,10 +281,7 @@ for (const auto &source : sourceOperators){
 
             // JVS also das ist jetzt denke ich sicher falsch gelöst.
             // Müsste mir das nochmal anschauen, sobald ich joinOrderTesten kann.
-            AbstractJoinPlanOperator x = AbstractJoinPlanOperator(left, right, finalPred[0]);
-            AbstractJoinPlanOperatorPtr xptr = static_cast<const std::shared_ptr<AbstractJoinPlanOperator>>(&x);
-
-            return std::optional<AbstractJoinPlanOperatorPtr>(xptr);
+            return std::optional<AbstractJoinPlanOperatorPtr>(std::make_shared<AbstractJoinPlanOperator>(AbstractJoinPlanOperator(left, right, finalPred[0])));
         }
     }
 
