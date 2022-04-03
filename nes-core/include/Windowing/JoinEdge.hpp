@@ -22,8 +22,6 @@ namespace NES::Join {
         /**
  * @brief Defines left stream, right stream, joinDefinition (to check joining attributes) and optionally selectivity of a join
  */
-        //TODO Implement
-        // TODO find out what is a heuristic for join selectivity.
         class JoinEdge {
 
           public:
@@ -51,7 +49,7 @@ namespace NES::Join {
             OptimizerPlanOperatorPtr leftOperator;
             OptimizerPlanOperatorPtr rightOperator;
             LogicalJoinDefinitionPtr joinDefinition;
-            float selectivity = 0.5;
+            float selectivity = 1;
         };
 
 

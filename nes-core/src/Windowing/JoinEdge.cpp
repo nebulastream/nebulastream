@@ -23,7 +23,7 @@ namespace NES::Join {
         setRightOperator(rightOperator);
         setJoinDefinition(joinDefinition);
         // JVS: Check the real heuristic here
-        setSelectivity(0.5);
+        setSelectivity(1);
     }
     JoinEdge::JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition, float selectivity){
         setLeftOperator(leftOperator);
@@ -46,7 +46,7 @@ namespace NES::Join {
 
         // JVS this has to be done at some point more carefully. What is really the default selectivity?
         if (selectivity == 0.5){
-            ss << "\n Join with an expected default selectivity of 0.5 NOTE: This is a heuristic.";
+            ss << "\n Join with an expected default selectivity of 1 NOTE: This is a heuristic.";
         } else {
             ss << "\n Join with a predicted selectivity of " << selectivity;
         }
