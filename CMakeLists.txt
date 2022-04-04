@@ -467,11 +467,8 @@ if (NES_ENABLES_TESTS)
 endif ()
 
 # Antlr
+# Currently antlr dose not come with an own cmake file
 message(STATUS  Antlr ${_VCPKG_INSTALLED_DIR} )
-#find_package(antlr4-runtime CONFIG REQUIRED)
-#if (NOT ${ANTLR_FOUND})
-#    message(FATAL_ERROR "Unable to find antlr")
-#endif ()
 include_directories(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/include/antlr4-runtime)
 set(LIBRARIES ${LIBRARIES} ${ANTLR4_INCLUDE_DIR})
 link_libraries(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libantlr4-runtime.a)
