@@ -10,46 +10,61 @@
 #include <Interpreter/Operations/NegateOp.hpp>
 #include <Interpreter/Operations/OrOp.hpp>
 #include <Interpreter/Operations/SubOp.hpp>
+#include <Interpreter/Tracer.hpp>
 #include <Interpreter/Util/Casting.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <execinfo.h>
+
 #include <memory>
 namespace NES::Interpreter {
 
-void Trace() {
-    std::cout << "Trace" << std::endl;
-    void* buffer[20];
-    // First add the RIP pointers
-    int backtrace_size = backtrace(buffer, 20);
-    std::cout << buffer[0] << ";" << buffer[1] << ";" << buffer[2] << ";" << buffer[3] << ";" << buffer[4] << ";" << buffer[5]
-              << ";" << buffer[6] << ";" << buffer[7] << ";" << buffer[8] <<";" << buffer[9] <<";" << buffer[10] << std::endl;
-}
-
-
 class Value {
   public:
-    Value(std::unique_ptr<Any>& wrappedValue) : value(std::move(wrappedValue)){};
-    Value(int64_t value) : value(std::make_unique<Integer>(value)){};
+    //Value(std::unique_ptr<Any>& wrappedValue, TraceContext* traceContext)
+    //    : value(std::move(wrappedValue)), traceContext(traceContext), ref(traceContext->createNextRef()){};
+    Value(std::unique_ptr<Any> wrappedValue, TraceContext* traceContext)
+        : value(std::move(wrappedValue)), traceContext(traceContext), ref(traceContext->createNextRef()), srcRef(ref){
+
+                                                                      };
+
+    Value(std::unique_ptr<Any>& wrappedValue) : value(std::move(wrappedValue)), ref(0, 0), srcRef(ref){};
+    Value(int value, TraceContext* traceContext) : Value(std::make_unique<Integer>(value), traceContext) {
+        traceContext->trace(CONST, *this, *this);
+    };
+    Value(bool value, TraceContext* traceContext) : Value(std::make_unique<Boolean>(value), traceContext) {
+        traceContext->trace(CONST, *this, *this);
+    };
+    Value(int64_t value, TraceContext* traceContext) : Value(std::make_unique<Integer>(value), traceContext) {
+        traceContext->trace(CONST, *this, *this);
+    };
 
     // copy constructor
-    Value(const Value& other) : value(other.value->copy()) {}
+    Value(const Value& other) : value(other.value->copy()), traceContext(other.traceContext), ref(other.ref), srcRef(other.ref){}
 
     // move constructor
-    Value(Value&& other) noexcept : value(std::exchange(other.value, nullptr)) {}
+    Value(Value&& other) noexcept
+        : value(std::exchange(other.value, nullptr)), traceContext(other.traceContext), ref(other.ref), srcRef(other.ref) {}
 
     // copy assignment
-    Value& operator=(const Value& other) { return *this = Value(other); }
+    Value& operator=(const Value& other) {
+        return *this = Value(other);
+    }
 
     // move assignment
     Value& operator=(Value&& other) noexcept {
+        if(traceContext){
+            traceContext->getExecutionTrace().traceAssignment(srcRef, other.ref);
+        }
         std::swap(value, other.value);
+        std::swap(ref, other.ref);
         return *this;
     }
 
-    operator bool() const {
+    operator bool()  {
         std::cout << "trace bool eval" << std::endl;
         if (instanceOf<Boolean>(value)) {
-            return cast<Boolean>(value)->value;
+            auto boolValue = cast<Boolean>(value);
+            Trace(traceContext, OpCode::CMP, *this, *this);
+            return boolValue->value;
         }
         return false;
     };
@@ -59,227 +74,261 @@ class Value {
 
   public:
     std::unique_ptr<Any> value;
+    TraceContext* traceContext;
+    ValueRef ref;
+    ValueRef srcRef;
 };
 
 template<class T>
-requires(std::is_fundamental<T>::value == true) inline auto toValue(T t) -> Value { return Value(t); }
+concept IsValueType = std::is_same<Value, T>::value;
 
 template<class T>
-requires(std::is_same<std::decay_t<T>, Value>::value == true) inline auto toValue(T& t) -> const Value& { return t; }
+concept IsNotValueType = !std::is_same<Value, T>::value;
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator+(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+template<class T>
+requires(std::is_fundamental<T>::value == true) inline auto toValue(T&& t, TraceContext* traceContext) -> Value {
+    return Value{std::forward<T>(t), traceContext};
+}
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator+(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue + right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator+(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator+(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left + rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator+(const LHS& left, const RHS& right) {
-    std::cout << "Trace plus " << std::endl;
-    Trace();
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator+(const LHS& left, const RHS& right) {
     auto result = Operations::AddOp(left.value, right.value);
-    return Value(result);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::ADD, left, right, resValue);
+    return resValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator-(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator-(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue - right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator-(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator-(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left - rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator-(const LHS& left, const RHS& right) {
-    std::cout << "Trace sub " << std::endl;
-    Trace();
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator-(const LHS& left, const RHS& right) {
     auto result = Operations::SubOp(left.value, right.value);
-    return Value(result);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::SUB, left, right, resValue);
+    return resValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator*(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator*(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue * right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator*(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator*(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left * rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator*(const LHS& left, const RHS& right) {
-    std::cout << "Trace mul " << std::endl;
-    Trace();
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator*(const LHS& left, const RHS& right) {
     auto result = Operations::MulOp(left.value, right.value);
-    return Value(result);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::MUL, left, right, resValue);
+    return resValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator/(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator/(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue / right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator/(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator/(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left / rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator/(const LHS& left, const RHS& right) {
-    std::cout << "Trace div " << std::endl;
-    Trace();
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator/(const LHS& left, const RHS& right) {
     auto result = Operations::DivOp(left.value, right.value);
-    return Value(result);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::DIV, left, right, resValue);
+    return resValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator==(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+// --- logical operations ----
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator==(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue == right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator==(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator==(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left == rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator==(const LHS& left, const RHS& right) {
-    std::cout << "Trace equals " << std::endl;
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator==(const LHS& left, const RHS& right) {
     auto result = Operations::EqualsOp(left.value, right.value);
-    return Value(result);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::EQUALS, left, right, resValue);
+    return resValue;
 };
 
-template<typename LHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator!(const LHS& left) { return !toValue(left); };
-
-template<typename LHS>
-requires(std::is_same<LHS, Value>::value == true) auto inline operator!(const LHS& left) {
-    std::cout << "Trace negate " << std::endl;
-    Trace();
+template<IsValueType LHS>
+auto inline operator!(const LHS& left) {
     auto result = Operations::NegateOp(left.value);
-    return Value(result);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::NEGATE, left, resValue);
+    return resValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator!=(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator!=(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue != right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator!=(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator!=(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left != rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator!=(const LHS& left, const RHS& right) {
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator!=(const LHS& left, const RHS& right) {
     return !(left == right);
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator<(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator<(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue < right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator<(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator<(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left < rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator<(const LHS& left, const RHS& right) {
-    std::cout << "Trace less then " << std::endl;
-    Trace();
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator<(const LHS& left, const RHS& right) {
     auto result = Operations::LessThan(left.value, right.value);
-    return Value(result);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::LESS_THAN, left, right, resValue);
+    return resValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator&&(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
-    return leftValue && right;
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator>(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
+    return leftValue > right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator&&(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
-    return left && rightValue;
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator>(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
+    return left > rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator&&(const LHS& left, const RHS& right) {
-    std::cout << "Trace and " << std::endl;
-    Trace();
-    auto result = Operations::AndOp(left.value, right.value);
-    return Value(result);
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator>(const LHS& left, const RHS& right) {
+    return !(left <= right);
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator||(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
-    return leftValue || right;
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator>=(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
+    return leftValue >= right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator||(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
-    return left || rightValue;
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator>=(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
+    return left >= rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator||(const LHS& left, const RHS& right) {
-    std::cout << "Trace or " << std::endl;
-    Trace();
-    auto result = Operations::OrOp(left.value, right.value);
-    return Value(result);
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator>=(const LHS& left, const RHS& right) {
+    return !(left < right);
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<LHS, Value>::value == false) auto inline operator<=(const LHS& left, const RHS& right) {
-    auto leftValue = toValue(left);
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator<=(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
     return leftValue <= right;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == false) auto inline operator<=(const LHS& left, const RHS& right) {
-    auto rightValue = toValue(right);
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator<=(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
     return left <= rightValue;
 };
 
-template<typename LHS, typename RHS>
-requires(std::is_same<RHS, Value>::value == true && std::is_same<RHS, Value>::value == true) auto inline
-operator<=(const LHS& left, const RHS& right) {
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator<=(const LHS& left, const RHS& right) {
     return (left < right) || (left == right);
 };
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator&&(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
+    return leftValue && right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator&&(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
+    return left && rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator&&(const LHS& left, const RHS& right) {
+    auto result = Operations::AndOp(left.value, right.value);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::AND, left, right, resValue);
+    return resValue;
+};
+
+template<IsNotValueType LHS, IsValueType RHS>
+auto inline operator||(const LHS& left, const RHS& right) {
+    auto leftValue = toValue(std::forward<const LHS>(left), right.traceContext);
+    return leftValue || right;
+};
+
+template<IsValueType LHS, IsNotValueType RHS>
+auto inline operator||(const LHS& left, const RHS& right) {
+    auto rightValue = toValue(std::forward<const RHS>(right), left.traceContext);
+    return left || rightValue;
+};
+
+template<IsValueType LHS, IsValueType RHS>
+auto inline operator||(const LHS& left, const RHS& right) {
+    auto result = Operations::OrOp(left.value, right.value);
+    auto resValue = Value(std::move(result), left.traceContext);
+    Trace(left.traceContext, OpCode::OR, left, right, resValue);
+    return resValue;
+};
+
+
 
 }// namespace NES::Interpreter
 

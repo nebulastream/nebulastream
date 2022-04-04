@@ -15,6 +15,7 @@
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/Value.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
+#include <Interpreter/Tracer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <execinfo.h>
 #include <gtest/gtest.h>
@@ -40,58 +41,262 @@ class InterpreterTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down InterpreterTest test class." << std::endl; }
 };
 
+void assignmentOperator(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    Value iw2 = Value(2, &tracer);
+    iw = iw2 + iw;
+}
+
+TEST_F(InterpreterTest, assignmentOperatorTest) {
+    auto tracer = TraceContext();
+    assignmentOperator(tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+
+
+
+
+    // ASSERT_EQ(cast<Integer>(result)->getValue(), 3);
+}
+
+void arithmeticExpression(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    Value iw2 = Value(2, &tracer);
+    Value iw3 = Value(3, &tracer);
+    auto result = iw - iw3 + 2 * iw2 / iw;
+}
+
 /**
  * @brief This test compiles a test CPP File
  */
-TEST_F(InterpreterTest, valueTest) {
-    std::unique_ptr<Any> i1 = Integer::create<Integer>(1);
-    std::unique_ptr<Any> i2 = Integer::create<Integer>(2);
+TEST_F(InterpreterTest, arithmeticExpressionTest) {
+    auto tracer = TraceContext();
+    arithmeticExpression(tracer);
 
-    // auto t1 = TraceValue::create<TraceValue>(std::move(i1));
-    // auto t2 = TraceValue::create<TraceValue>(std::move(i2));
-    Value iw = Value(i1);
-    Value iw2 = Value(i2);
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, CONST);
+
+    ASSERT_EQ(block0.operations[3].op, SUB);
+    ASSERT_EQ(block0.operations[4].op, CONST);
+    ASSERT_EQ(block0.operations[5].op, MUL);
+    ASSERT_EQ(block0.operations[6].op, DIV);
+    ASSERT_EQ(block0.operations[7].op, ADD);
+
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+
+    // ASSERT_EQ(cast<Integer>(result)->getValue(), 3);
+}
+
+void logicalExpressionLessThan(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    auto result = iw < 2;
+}
+
+TEST_F(InterpreterTest, logicalExpressionLessThanTest) {
+    auto tracer = TraceContext();
+    logicalExpressionLessThan(tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, LESS_THAN);
+
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+}
+
+void logicalExpressionEquals(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    auto result = iw == 2;
+}
+
+TEST_F(InterpreterTest, logicalExpressionEqualsTest) {
+    auto tracer = TraceContext();
+    logicalExpressionEquals(tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, EQUALS);
+
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+}
+
+void logicalExpressionLessEquals(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    auto result = iw <= 2;
+}
+
+TEST_F(InterpreterTest, logicalExpressionLessEqualsTest) {
+    auto tracer = TraceContext();
+    logicalExpressionLessEquals(tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, LESS_THAN);
+    ASSERT_EQ(block0.operations[3].op, EQUALS);
+    ASSERT_EQ(block0.operations[4].op, OR);
+}
+
+void logicalExpressionGreater(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    auto result = iw > 2;
+}
+
+TEST_F(InterpreterTest, logicalExpressionGreaterTest) {
+    auto tracer = TraceContext();
+    logicalExpressionGreater(tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, LESS_THAN);
+    ASSERT_EQ(block0.operations[3].op, EQUALS);
+    ASSERT_EQ(block0.operations[4].op, OR);
+    ASSERT_EQ(block0.operations[5].op, NEGATE);
+}
+
+void logicalExpressionGreaterEquals(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    auto result = iw >= 2;
+}
+
+TEST_F(InterpreterTest, logicalExpressionGreaterEqualsTest) {
+    auto tracer = TraceContext();
+    logicalExpressionGreaterEquals(tracer);
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, LESS_THAN);
+    ASSERT_EQ(block0.operations[3].op, NEGATE);
+}
+
+void logicalExpression(TraceContext& tracer) {
+    Value iw = Value(1, &tracer);
+    auto result = iw == 2 && iw < 1 || true;
+}
+
+TEST_F(InterpreterTest, logicalExpressionTest) {
+    auto tracer = TraceContext();
+    logicalExpression(tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 1);
+    auto block0 = basicBlocks[0];
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, EQUALS);
+    ASSERT_EQ(block0.operations[3].op, CONST);
+    ASSERT_EQ(block0.operations[4].op, LESS_THAN);
+    ASSERT_EQ(block0.operations[5].op, AND);
+    ASSERT_EQ(block0.operations[6].op, CONST);
+    ASSERT_EQ(block0.operations[7].op, OR);
+}
+
+void ifCondition(bool flag, TraceContext* tracer) {
+    Value boolFlag = Value(flag, tracer);
+    Value iw = Value(1, tracer);
+    if (boolFlag) {
+        iw = iw - 1;
+    }
+    iw + 1;
+}
+
+/**
+ * @brief This test compiles a test CPP File
+ */
+TEST_F(InterpreterTest, ifConditionTest) {
+    auto tracer = TraceContext();
+    ifCondition(true, &tracer);
+    tracer.reset();
+    ifCondition(false, &tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 4);
+    auto block0 = basicBlocks[0];
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, CMP);
+
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 0);
+    ASSERT_EQ(block1.operations[0].op, CONST);
+    ASSERT_EQ(block1.operations[1].op, SUB);
+    ASSERT_EQ(block1.operations[2].op, JMP);
+    auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(blockref.block, 3);
+    ASSERT_EQ(blockref.arguments[0],  std::get<ValueRef>(block1.operations[1].result));
+
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 0);
+    ASSERT_EQ(block2.operations[0].op, JMP);
+    auto blockref2 = std::get<BlockRef>(block2.operations[0].input[0]);
+    ASSERT_EQ(blockref2.block, 3);
+    ASSERT_EQ(blockref2.arguments.size(), 1);
+}
+
+void loop(TraceContext* tracer) {
+    Value iw = Value(1, tracer);
+    Value iw2 = Value(2, tracer);
 
     //auto result = t1 + t2;
 
-    //auto res = (iw + iw2);
-    auto res2 = (iw + iw2) + iw2 + 2;
-
-    if (res2 <= 7) {
-        std::cout << "go in" << std::endl;
-    } else {
-        std::cout << "go out" << std::endl;
+    //auto res = (iw + icw2);
+    for (auto start = iw; start < 2; start = start + 1) {
+        std::cout << "loop" << std::endl;
+        //iw2 = iw2 + 1;
     }
-
-    // ASSERT_EQ(cast<Integer>(result)->getValue(), 3);
+    auto iw3 = iw2 - 5;
 }
 
 TEST_F(InterpreterTest, valueTestLoop) {
     std::unique_ptr<Any> i1 = Integer::create<Integer>(1);
     std::unique_ptr<Any> i2 = Integer::create<Integer>(2);
 
-    // auto t1 = TraceValue::create<TraceValue>(std::move(i1));
-    // auto t2 = TraceValue::create<TraceValue>(std::move(i2));
-    Value iw = Value(i1);
-    Value iw2 = Value(i2);
-
-    void *buffer[20];
-    // First add the RIP pointers
-    int backtrace_size = backtrace(buffer, 20);
-
-    auto res = __builtin_return_address(0);
-    auto res1 = __builtin_return_address(1);
-    auto sp = reinterpret_cast<void**>(__builtin_frame_address(0));
-
-
-    //auto result = t1 + t2;
-
-    //auto res = (iw + icw2);
-    for (auto start = iw; start < 10; start = start + 1) {
-        std::cout << "loop" << std::endl;
-    }
-
-
+    auto tracer = TraceContext();
+    loop(&tracer);
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
 
     // ASSERT_EQ(cast<Integer>(result)->getValue(), 3);
 }

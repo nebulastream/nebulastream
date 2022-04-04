@@ -12,3 +12,7 @@
 # limitations under the License.
 
 add_subdirectory(Expressions)
+
+add_source_files(nes-execution
+        Tracer.cpp
+        )
