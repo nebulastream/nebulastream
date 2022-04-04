@@ -140,6 +140,12 @@ class CoordinatorConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
+    /**
+     * @brief Configuration of waiting time of the coordinator health check.
+     * Set the number of seconds waiting to perform health checks
+     */
+    UIntOption coordinatorHealthCheckWaitTime = {COORDINATOR_HEALTH_CHECK_WAIT_TIME, 60, "Number of seconds to wait between health checks"};
+
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
   private:
@@ -162,6 +168,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
             &configPath,
             &optimizer,
             &logicalSources,
+            &coordinatorHealthCheckWaitTime
         };
     }
 };

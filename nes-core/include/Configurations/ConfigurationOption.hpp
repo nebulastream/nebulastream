@@ -156,6 +156,7 @@ const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string CONFIG_PATH = "configPath";
+const std::string COORDINATOR_HEALTH_CHECK_WAIT_TIME = "coordinatorHealthCheckWaitTime";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
