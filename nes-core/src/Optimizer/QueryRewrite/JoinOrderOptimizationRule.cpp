@@ -170,12 +170,14 @@ namespace NES::Optimizer {
             }
             return subs;
         }
-        //Case for all levels>2
+
         //Get possible combinations (for a join of 3 relations => only 1 Relation joins 2 already Joined relations possible)
-        std::vector<std::vector<int>> combs = getCountCombs(level - 1); // TEST!!!!
-                                                                       //Create for each possible combination of joins an AbstractJoinPlanOperator
+        std::vector<std::vector<int>> combs = getCountCombs(level - 1);
+
+        //Create for each possible combination of joins an AbstractJoinPlanOperator
         //Should a plan with an identical relation combination already exists the cost-efficient
         //plan is added to the level-HashMap
+        // JVS Somewhere inside here is an error!
         for (auto comb : combs) {
             // left side of comb is comb[0] and right side is comb[1] as we are dealing with pairs.
             for(auto left : subs[comb[0]]){
@@ -186,7 +188,7 @@ namespace NES::Optimizer {
                         setCosts(newPlan.value());
                         // check if newPlan is currently the best
                         // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
-                        OptimizerPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
+                        OptimizerPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators1()]; // this returns for the very same logicalStreams the current best plan
 
                         if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
                             subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators1()] = newPlan.value();
@@ -229,15 +231,22 @@ namespace NES::Optimizer {
         plan->setCardinality1(plan->getOperatorCosts()); // JVS not sure which one then eventually counts in the end so I set base cardinality and specific. mb remove specific later and setter for it
         plan->setCumulativeCosts(plan->getOperatorCosts() + leftOperator->getCumulativeCosts() + rightOperator->getCumulativeCosts());
     }
-
+/*
+  private ArrayList<Integer[]> getCountCombs(int level) {
+        ArrayList<Integer[]> combs = new ArrayList<>();
+        for (int i = 0; (2 * i) <= (level + 1); i++) {
+            combs.add(new Integer[]{i + 1, level - i});
+        }
+        combs.remove(combs.get(combs.size() - 1));
+        return combs;
+    }
+*/
     std::vector<std::vector<int>> JoinOrderOptimizationRule::getCountCombs(int level){
-        // try with level 4 --> 4-1 = 3
-        // level == 3
         std::vector<std::vector<int>> combs;
         for (int i = 0; (2 * i) <= (level + 1); i++)  { // 0, 1, 2
             std::vector<int> combination;
             combination.push_back(i + 1); // 1, 2, 3
-            combination.push_back(level - 1); // 2, 2, 2
+            combination.push_back(level - i); // 3, 2, 1
             combs.push_back(combination); // [1, 2], [2, 2], [3,2]
         }
         // remove combs and return
