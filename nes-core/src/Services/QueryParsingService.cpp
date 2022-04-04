@@ -25,6 +25,7 @@
 #include <iostream>
 #include <log4cxx/helpers/exception.h>
 #include <sstream>
+#include <Services/PatternParsingService.h>
 
 namespace NES {
 
@@ -73,6 +74,12 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
 }
 
 QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet) {
+
+    if(queryCodeSnippet.starts_with("PATTERN")){
+        NES::PatternParsingService patternParsingService;
+        NES_DEBUG("QueryCatalog: parse pattern query.");
+        return patternParsingService.createPatternFromCodeString(queryCodeSnippet);
+    }
 
     if (queryCodeSnippet.find("Source(") != std::string::npos || queryCodeSnippet.find("Schema::create()") != std::string::npos) {
         NES_ERROR("QueryCatalog: queryIdAndCatalogEntryMapping are not allowed to specify schemas anymore.");

@@ -25,4 +25,5 @@ add_source_files(nes-core
         WorkerHealthCheckService.cpp
         QueryCatalogService.cpp
         LocationService.cpp
-        )
+        PatternParsingService.cpp
+)
