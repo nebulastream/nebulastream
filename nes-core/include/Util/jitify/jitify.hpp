@@ -65,17 +65,17 @@
  *  \brief The Jitify library header
  */
 
-/*! \mainpage Jitify - A C++ library that simplifies the use of NVRTC
- *  \p Use class jitify::JitCache to manage and launch JIT-compiled CUDA
+/*! Jitify - A C++ library that simplifies the use of NVRTC
+ *  Use class jitify::JitCache to manage and launch JIT-compiled CUDA
  *    kernels.
  *
- *  \p Use namespace jitify::reflection to reflect types and values into
+ *  Use namespace jitify::reflection to reflect types and values into
  *    code-strings.
  *
- *  \p Use JITIFY_INCLUDE_EMBEDDED_FILE() to declare files that have been
+ *  Use JITIFY_INCLUDE_EMBEDDED_FILE() to declare files that have been
  *  embedded into the executable using the GCC linker.
  *
- *  \p Use jitify::parallel_for and JITIFY_LAMBDA() to generate and launch
+ *  Use jitify::parallel_for and JITIFY_LAMBDA() to generate and launch
  *  simple kernels.
  */
 
