@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-add_source_nes(
+add_source_files(nes-core
         NesCEPParser.cpp
         NesCEPListener.cpp
         NesCEPLexer.cpp

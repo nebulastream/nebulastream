@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <string>
 #include <queue>
-#include <../nes-core/include/API/Query.hpp>
+#include <API/Query.hpp>
 #include <list>
 
 class NePSLPattern {

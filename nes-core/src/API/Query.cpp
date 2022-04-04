@@ -495,6 +495,7 @@ Query& Query::multipleSink(const SinkDescriptorPtr sinkDescriptor, std::vector<O
     return *this;
 }
 
+
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
