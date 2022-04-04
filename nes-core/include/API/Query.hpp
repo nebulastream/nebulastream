@@ -367,8 +367,8 @@ class Query {
     Query& as(std::string const& newSourceName);
 
     /**
-     * @brief: Filter records according to the predicate.
-     * @example filter(Attribute("f1" < 10))
+     * @brief: Filter records according to the predicate. An
+     * examplary usage would be: filter(Attribute("f1" < 10))
      * @param predicate as expression node
      * @return the query
      */
@@ -383,8 +383,8 @@ class Query {
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
     /**
-     * @brief: Map records according to a map expression.
-     * @example map(Attribute("f2") = Attribute("f1") * 42 )
+     * @brief: Map records according to a map expression. An
+     * examplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
      * @param map expression
      * @return query
      */
