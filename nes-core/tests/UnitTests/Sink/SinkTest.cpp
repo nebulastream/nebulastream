@@ -34,7 +34,6 @@ using namespace std;
 
 /**
  * @brief tests for sinks
- * @todo add tests for processing multiple buffers in a row
  */
 namespace NES {
 using Runtime::TupleBuffer;
