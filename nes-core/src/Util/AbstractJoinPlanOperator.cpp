@@ -16,10 +16,12 @@ limitations under the License.
 
 NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr leftChild,
                                                         OptimizerPlanOperatorPtr rightChild,
-                                                        Join::LogicalJoinDefinitionPtr joinPredicate){
+                                                        Join::LogicalJoinDefinitionPtr joinPredicate,
+                                                        float selectivity){
         this->leftChild = leftChild;
         this->rightChild = rightChild;
         this->joinPredicate = joinPredicate;
+        this->selectivity = selectivity;
     }
 
 
@@ -61,3 +63,5 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
     void NES::AbstractJoinPlanOperator::setRightChild(const NES::OptimizerPlanOperatorPtr& rightChild) {
         AbstractJoinPlanOperator::rightChild = rightChild;
     }
+    float NES::AbstractJoinPlanOperator::getSelectivity() const { return selectivity; }
+    void NES::AbstractJoinPlanOperator::setSelectivity(float selectivity) { AbstractJoinPlanOperator::selectivity = selectivity; }

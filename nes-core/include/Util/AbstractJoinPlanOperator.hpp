@@ -35,7 +35,8 @@ using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
      */
             AbstractJoinPlanOperator(OptimizerPlanOperatorPtr leftChild,
                                      OptimizerPlanOperatorPtr rightChild,
-                                     Join::LogicalJoinDefinitionPtr joinPredicate);
+                                     Join::LogicalJoinDefinitionPtr joinPredicate,
+                                     float selectivity);
 
           private:
 
@@ -54,6 +55,16 @@ using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
 	 */
             Join::LogicalJoinDefinitionPtr joinPredicate;
 
+            /**
+             * The selectivity of a join between left and rightChild.
+             */
+            float selectivity;
+
+          public:
+            float getSelectivity() const;
+            void setSelectivity(float selectivity);
+
+          private:
             /**
 	 * An array of tables that are involved in the plans below this join.
 	 */
