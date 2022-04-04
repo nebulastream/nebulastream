@@ -124,7 +124,7 @@ namespace NES::Optimizer {
 
         for (auto source : sources){
             source->setOperatorCosts(0);
-            //source->setCumulativeCosts(source->getCardinality());
+            source->setCumulativeCosts(source->getCardinality());
             // insert rows into first level of hashmap
             // the key is a set of already joined relations (involvedOptimizerPlanOperators) and the value is the to be joined source.
             std::set<OptimizerPlanOperatorPtr> key;
@@ -164,7 +164,7 @@ namespace NES::Optimizer {
         if (level == 2) {
             for (auto graphEdge : joins) {
                 // as these are two regular streams that are being joint, getting leftSource instead of leftOperator is fine.
-                AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(graphEdge->getLeftOperator(), graphEdge->getRightOperator(), graphEdge->getJoinDefinition());
+                AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(graphEdge->getLeftOperator(), graphEdge->getRightOperator(), graphEdge->getJoinDefinition(), graphEdge->getSelectivity());
                 setCosts(plan);
                 subs[2][plan->getInvolvedOptimizerPlanOperators1()] = plan; // JVS test if this works with pointers as set. might need the actual values here.
             }
@@ -217,10 +217,16 @@ namespace NES::Optimizer {
     }
 
     void JoinOrderOptimizationRule::setCosts(AbstractJoinPlanOperatorPtr plan){
-        // JVS hier müsste der globale Card. Estimator greifen.
         OptimizerPlanOperatorPtr leftOperator = plan->getLeftChild();
         OptimizerPlanOperatorPtr rightOperator = plan->getRightChild();
-        plan->setOperatorCosts(leftOperator->getCardinality() + rightOperator->getCardinality());
+
+        // Operator Cost : Cardinality after Join
+        // CumulativeCosts : OP Cost + children's cumulative costs.
+
+        // JVS multiply by selectivity factor of joinEdge
+        plan->setOperatorCosts((leftOperator->getCardinality() * rightOperator->getCardinality()) * plan->getSelectivity());
+        plan->setCardinality(plan->getOperatorCosts());
+        plan->setCardinality1(plan->getOperatorCosts()); // JVS not sure which one then eventually counts in the end so I set base cardinality and specific. mb remove specific later and setter for it
         plan->setCumulativeCosts(plan->getOperatorCosts() + leftOperator->getCumulativeCosts() + rightOperator->getCumulativeCosts());
     }
 
@@ -248,11 +254,14 @@ namespace NES::Optimizer {
         //Initialize finalPred which is used to combine multiple join predicates together
         //Important as plans may be joined with multiple possible join graph edges
         std::vector<Join::LogicalJoinDefinitionPtr> finalPred;
+        float finalSelectivity;
 
         //Iterates over all join edges and updates the finalPred
         for (Join::JoinEdgePtr edge : joins) {
             if (isIn(leftInvolved, rightInvolved, edge)) {
                 finalPred.push_back(edge->getJoinDefinition());
+                finalSelectivity = finalSelectivity * edge->getSelectivity(); // JVS try this out.
+
             }
         }
 
@@ -268,7 +277,7 @@ namespace NES::Optimizer {
 
             // JVS also das ist jetzt denke ich sicher falsch gelöst.
             // Müsste mir das nochmal anschauen, sobald ich joinOrderTesten kann.
-            return std::optional<AbstractJoinPlanOperatorPtr>(std::make_shared<AbstractJoinPlanOperator>(AbstractJoinPlanOperator(left, right, finalPred[0])));
+            return std::optional<AbstractJoinPlanOperatorPtr>(std::make_shared<AbstractJoinPlanOperator>(AbstractJoinPlanOperator(left, right, finalPred[0], finalSelectivity)));
         }
     }
 
