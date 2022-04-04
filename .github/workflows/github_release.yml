@@ -31,8 +31,28 @@ jobs:
          git tag -fa "$tag_name" -m "$tag_name"
          git push --force origin "$tag_name"
 
+  create-tag-tutorial:
+    runs-on: [self-hosted, linux, X64, Build]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-strict: 'false'
+          fetch-depth: '0'
+          ssh-key: ${{ secrets.CI_SECRET }}
+          token: ${{ secrets.CI_TOKEN }}
+          repository: 'nebulastream/nebulastream-tutorial'
+          path: nebulastream-tutorial
+      - name: create tag
+        run: |
+          cd nebulastream-tutorial
+          tag_name=$GITHUB_REF_NAME
+          git config --global user.email "${{ secrets.CI_EMAIL }}"
+          git config --global user.name "CIUser"         
+          git tag -fa "$tag_name" -m "$tag_name"
+          git push --force origin "$tag_name"
+
   package-debian-package:
-    needs: [create-tag]
+    needs: [create-tag, create-tag-tutorial]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
