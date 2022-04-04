@@ -1,3 +1,4 @@
+
 /*
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,66 +33,66 @@ limitations under the License.
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 class NesCEPQueryPlanCreator: public NesCEPBaseListener {
-  private:
-    int direction=-1; // -1 for right 0 for op 1 for left
-    int currentPointer=-1;
-    int currentParent=-1;
-    int id=0;
-    std::list< NePSLPattern* > patterns;
-    std::list<NePSLPattern*>::iterator it = patterns.begin();
-    NES::Query query=NES::Query(NULL);
-    std::list<std::shared_ptr<NES::SinkDescriptor>> sinks;
-    bool inWhere=false;
-    bool leftFilter= true   ;
-    std::string currentLeftExp;
-    std::string currentRightExp;
+      private:
+        int direction=-1; // -1 for right 0 for op 1 for left
+        int currentPointer=-1;
+        int currentParent=-1;
+        int id=0;
+        std::list< NePSLPattern* > patterns;
+        std::list<NePSLPattern*>::iterator it = patterns.begin();
+        NES::Query query=NES::Query(NULL);
+        std::list<std::shared_ptr<NES::SinkDescriptor>> sinks;
+        bool inWhere=false;
+        bool leftFilter= true   ;
+        std::string currentLeftExp;
+        std::string currentRightExp;
 
-  public:
-    int getDirection();
-    void setDirection(int direction);
-    int getCurrentPointer();
-    void setCurrentPointer(int currentPointer) ;
-    int getCurrentParent() ;
-    void setCurrentParent(int currentParent) ;
-    int getId();
-    void setId(int id);
-    const NES::Query& getQuery() ;
+      public:
+        int getDirection();
+        void setDirection(int direction);
+        int getCurrentPointer();
+        void setCurrentPointer(int currentPointer) ;
+        int getCurrentParent() ;
+        void setCurrentParent(int currentParent) ;
+        int getId();
+        void setId(int id);
+        const NES::Query& getQuery() ;
 
-    /*----------------------------------------*/
+        /*----------------------------------------*/
 
-    void enterListEvents(NesCEPParser::ListEventsContext* context) override;
+        void enterListEvents(NesCEPParser::ListEventsContext* context) override;
 
-    void enterEventElem(NesCEPParser::EventElemContext* context) override ;
-
-
-    void exitInputStreams(NesCEPParser::InputStreamsContext* context) override ;
-
-    void exitInputStream(NesCEPParser::InputStreamContext* context) override ;
+        void enterEventElem(NesCEPParser::EventElemContext* context) override ;
 
 
-    void enterWhereExp(NesCEPParser::WhereExpContext* context) override ;
+        void exitInputStreams(NesCEPParser::InputStreamsContext* context) override ;
 
-    void exitWhereExp(NesCEPParser::WhereExpContext* context) override ;
+        void exitInputStream(NesCEPParser::InputStreamContext* context) override ;
 
-    void enterOutAttribute(NesCEPParser::OutAttributeContext* context) override;
 
-    void exitSinkList(NesCEPParser::SinkListContext* context) override ;
+        void enterWhereExp(NesCEPParser::WhereExpContext* context) override ;
 
-    void enterSink(NesCEPParser::SinkContext* context) override;
+        void exitWhereExp(NesCEPParser::WhereExpContext* context) override ;
 
-    void exitEventElem(NesCEPParser::EventElemContext* context) override ;
+        void enterOutAttribute(NesCEPParser::OutAttributeContext* context) override;
 
-    void enterEvent(NesCEPParser::EventContext* context) override ;
+        void exitSinkList(NesCEPParser::SinkListContext* context) override ;
 
-    void enterQuantifiers(NesCEPParser::QuantifiersContext* context) override ;
+        void enterSink(NesCEPParser::SinkContext* context) override;
 
-    void enterOperatorRule(NesCEPParser::OperatorRuleContext* context) override ;
+        void exitEventElem(NesCEPParser::EventElemContext* context) override ;
 
-    void exitOperatorRule(NesCEPParser::OperatorRuleContext* context) override;
+        void enterEvent(NesCEPParser::EventContext* context) override ;
 
-    void exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) override ;
+        void enterQuantifiers(NesCEPParser::QuantifiersContext* context) override ;
 
-      void enterAttribute(NesCEPParser::AttributeContext* context) override ;
-   };
+        void enterOperatorRule(NesCEPParser::OperatorRuleContext* context) override ;
+
+        void exitOperatorRule(NesCEPParser::OperatorRuleContext* context) override;
+
+        void exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) override ;
+
+        void enterAttribute(NesCEPParser::AttributeContext* context) override ;
+    };
 
 #endif//NES_NESCEPQUERYPLANCREATOR_H

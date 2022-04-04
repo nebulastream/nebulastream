@@ -472,6 +472,8 @@ class Query {
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
 
+    Query& multipleSink(const SinkDescriptorPtr sinkDescriptor, std::vector<OperatorNodePtr> rootOperators);
+
   protected:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
