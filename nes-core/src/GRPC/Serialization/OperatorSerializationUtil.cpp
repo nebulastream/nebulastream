@@ -251,7 +251,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor);
         operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor,
                                                                     Util::getNextOperatorId(),
-                                                                    serializedSourceDescriptor.originid());
+                                                                    serializedSourceDescriptor.sourceoriginid());
     } else if (details.Is<SerializableOperator_SinkDetails>()) {
         // de-serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to SinkLogicalOperator");
@@ -903,7 +903,7 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
 SerializableOperator_SourceDetails
 OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator, bool isClientOriginated) {
     auto sourceDetails = SerializableOperator_SourceDetails();
-    sourceDetails.set_originid(sourceOperator->getOriginId());
+    sourceDetails.set_sourceoriginid(sourceOperator->getOriginId());
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     serializeSourceDescriptor(sourceDescriptor, &sourceDetails, isClientOriginated);
     return sourceDetails;
