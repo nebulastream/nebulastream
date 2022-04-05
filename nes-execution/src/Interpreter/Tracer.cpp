@@ -65,41 +65,51 @@ void ExecutionTrace::checkInputReference(uint32_t currentBlockIndex, ValueRef in
     }
     for (auto predecessorIds : currentBlock.predecessors) {
         auto& preBlock = getBlock(predecessorIds);
-        if (preBlock.isLocalValueRef(inputReference)) {
+        if (preBlock.isLocalValueRef(currentInput)) {
+            auto& arguments = currentBlock.arguments;
+            for (auto& input : preBlock.operations.back().input) {
+                if (auto* ref = get_if<BlockRef>(&input)) {
+                    if (ref->block == currentBlockIndex) {
+                        if (std::find(ref->arguments.begin(), ref->arguments.end(), currentInput) == ref->arguments.end()) {
+                            ref->arguments.emplace_back(currentInput);
+                        }
+                    }
+                }
+            }
+            if (std::find(arguments.begin(), arguments.end(), inputReference) == arguments.end()) {
+                // value ref is an input
+                arguments.push_back(inputReference);
+            }
+            // the ref is defined locally
+            continue;
+        } else if (preBlock.isLocalValueRef(inputReference)) {
             // the ref is defined locally
             auto& arguments = currentBlock.arguments;
             if (std::find(arguments.begin(), arguments.end(), inputReference) == arguments.end()) {
                 // value ref is an input
                 auto& jump = preBlock.operations[preBlock.operations.size() - 1].input[0];
                 auto& blockRef = get<BlockRef>(jump);
-                blockRef.arguments.emplace_back(currentInput);
-            }
-            continue;
-        } else if (preBlock.isLocalValueRef(currentInput)) {
-            auto& arguments = currentBlock.arguments;
-            if (std::find(arguments.begin(), arguments.end(), currentInput) == arguments.end()) {
-                // value ref is an input
-                arguments.push_back(currentInput);
-                for(auto& input: preBlock.operations.back().input){
-                    if(auto* ref = get_if<BlockRef>(&input)){
-                        if(ref->block == currentBlockIndex){
-                            ref->arguments.emplace_back(currentInput);
-                        }
-                    }
+                if (std::find(blockRef.arguments.begin(), blockRef.arguments.end(), currentInput) == blockRef.                arguments.end()) {
+                    blockRef.arguments.emplace_back(currentInput);
                 }
             }
-            // the ref is defined locally
             continue;
         } else {
             checkInputReference(predecessorIds, inputReference, currentInput);
-            if(preBlock.isLocalValueRef(inputReference)){
-
+            if (preBlock.isLocalValueRef(inputReference)) {
+                for (auto& input : preBlock.operations.back().input) {
+                    if (auto* ref = get_if<BlockRef>(&input)) {
+                        if (ref->block == currentBlockIndex) {
+                            ref->arguments.emplace_back(inputReference);
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightInput,  Value& result) {
+void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightInput, Value& result) {
     if (executionTrace.getCurrentBlock().operations.size() > currentOperationCounter) {
         // we should contain this operation
         auto operation = executionTrace.getCurrentBlock().operations[currentOperationCounter];
@@ -107,11 +117,11 @@ void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightIn
             std::cout << "Trace: handle same instruction " << std::endl;
             std::cout << executionTrace << std::endl;
             if (auto* valueRef = get_if<ValueRef>(&operation.input[0])) {
-                executionTrace.checkInputReference(executionTrace.getCurrentBlockIndex(), *valueRef, leftInput.srcRef);
+                executionTrace.checkInputReference(executionTrace.getCurrentBlockIndex(), *valueRef, leftInput.ref);
             }
             std::cout << executionTrace << std::endl;
             if (auto* valueRef = get_if<ValueRef>(&operation.input[1])) {
-                executionTrace.checkInputReference(executionTrace.getCurrentBlockIndex(), *valueRef, rightInput.srcRef);
+                executionTrace.checkInputReference(executionTrace.getCurrentBlockIndex(), *valueRef, rightInput.ref);
             }
             std::cout << executionTrace << std::endl;
             currentOperationCounter++;
@@ -131,8 +141,8 @@ void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightIn
         auto& mergeBlock = executionTrace.processControlFlowMerge(blockId, opId);
         currentOperationCounter = mergeBlock.operations.size() - 1;
     } else {
-        auto leftInputRef = executionTrace.findReference(leftInput.ref);
-        auto rightInputRef = executionTrace.findReference(rightInput.ref);
+        auto leftInputRef = executionTrace.findReference(leftInput.ref, leftInput.srcRef);
+        auto rightInputRef = executionTrace.findReference(rightInput.ref, rightInput.srcRef);
         auto operation = Operation(op, result.ref, {leftInputRef, rightInputRef});
         executionTrace.addOperation(operation);
         executionTrace.localTagMap.emplace(
@@ -210,20 +220,28 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     return mergeBlock;
 }
 
-void TraceContext::trace(OpCode op, const Value& input,  Value& result) {
+void TraceContext::trace(OpCode op, const Value& input, Value& result) {
 
     if (executionTrace.getCurrentBlock().operations.size() > currentOperationCounter) {
         // we should contain this operation
         auto operation = executionTrace.getCurrentBlock().operations[currentOperationCounter];
+        // pull next operation;
+        if (operation.op == JMP) {
+            executionTrace.setCurrentBloc(std::get<BlockRef>(operation.input[0]).block);
+            currentOperationCounter = 0;
+            operation = executionTrace.getCurrentBlock().operations[currentOperationCounter];
+        }
         if (operation.op == op) {
             std::cout << "Trace: handle same instruction " << std::endl;
             if (op == CMP) {
                 if (cast<Boolean>(input.value)->value) {
                     executionTrace.setCurrentBloc(std::get<BlockRef>(operation.input[0]).block);
                     currentOperationCounter = 0;
+                    return;
                 } else {
                     executionTrace.setCurrentBloc(std::get<BlockRef>(operation.input[1]).block);
                     currentOperationCounter = 0;
+                    return;
                 }
             }
             result.ref = std::get<ValueRef>(operation.result);
@@ -242,9 +260,12 @@ void TraceContext::trace(OpCode op, const Value& input,  Value& result) {
         std::cout << executionTrace << std::endl;
         auto res = executionTrace.localTagMap.find(tag);
         auto [blockId, opId] = res->second;
-        executionTrace.processControlFlowMerge(blockId, opId);
+        auto& mergeBlock = executionTrace.processControlFlowMerge(blockId, opId);
+        auto mergeOperation = mergeBlock.operations.front();
+        result.ref = std::get<ValueRef>(mergeOperation.result);
         std::cout << executionTrace << std::endl;
         currentOperationCounter = 1;
+
     } else if (executionTrace.tagMap.contains(tag) && op != CMP) {
         std::cout << "Control-flow merge" << result.value << std::endl;
         auto res = executionTrace.tagMap.find(tag);
@@ -252,6 +273,7 @@ void TraceContext::trace(OpCode op, const Value& input,  Value& result) {
         auto& mergeBlock = executionTrace.processControlFlowMerge(blockId, opId);
         auto mergeOperation = mergeBlock.operations.front();
         result.ref = std::get<ValueRef>(mergeOperation.result);
+        std::cout << "Control-flow merge" << result.value << std::endl;
         currentOperationCounter = 1;
     } else if (op == CMP) {
         std::cout << "Trace: handle control-flow split. Current case: " << result.value << std::endl;
@@ -304,15 +326,15 @@ void Block::addArgument(ValueRef ref) {
     }
 }
 
-ValueRef ExecutionTrace::findReference(ValueRef ref) {
-    if (getCurrentBlock().isLocalValueRef(ref)) {
+ValueRef ExecutionTrace::findReference(ValueRef ref, ValueRef srcRef) {
+    if (getCurrentBlock().isLocalValueRef(ref) || getCurrentBlock().isLocalValueRef(srcRef)) {
         // reference to local variable;
         return ref;
     }
-    return ExecutionTrace::createBlockArgument(currentBlock, ref);
+    return ExecutionTrace::createBlockArgument(currentBlock, ref, srcRef);
 }
 
-ValueRef ExecutionTrace::createBlockArgument(uint32_t blockIndex, ValueRef ref) {
+ValueRef ExecutionTrace::createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef srcRef) {
     auto& block = getBlock(blockIndex);
     for (auto predecessor : block.predecessors) {
         auto& predecessorBlock = getBlock(predecessor);
@@ -330,7 +352,7 @@ ValueRef ExecutionTrace::createBlockArgument(uint32_t blockIndex, ValueRef ref) 
             }
         } else {
             // we have to check the parents and pass the variable as an argument
-            ValueRef parentRef = createBlockArgument(predecessor, ref);
+            ValueRef parentRef = createBlockArgument(predecessor, ref, srcRef);
             auto& lastOperation = predecessorBlock.operations.back();
             for (auto& opInputs : lastOperation.input) {
                 if (auto blockRef = get_if<BlockRef>(&opInputs)) {

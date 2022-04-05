@@ -128,9 +128,9 @@ class ExecutionTrace {
     bool hasNextOperation() { return currentBlock; }
 
     void setCurrentBloc(uint32_t index) { currentBlock = index; }
-    ValueRef findReference(ValueRef ref);
+    ValueRef findReference(ValueRef ref, const ValueRef value);
     void checkInputReference(uint32_t currentBlock, ValueRef inputReference, ValueRef currentInput);
-    ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref);
+    ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef value);
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 

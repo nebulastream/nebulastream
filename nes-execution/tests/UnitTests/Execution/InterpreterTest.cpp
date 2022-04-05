@@ -58,9 +58,6 @@ TEST_F(InterpreterTest, assignmentOperatorTest) {
     auto execution = tracer.getExecutionTrace();
     std::cout << execution << std::endl;
 
-
-
-
     // ASSERT_EQ(cast<Integer>(result)->getValue(), 3);
 }
 
@@ -264,18 +261,86 @@ TEST_F(InterpreterTest, ifConditionTest) {
     ASSERT_EQ(block1.operations[2].op, JMP);
     auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
-    ASSERT_EQ(blockref.arguments[0],  std::get<ValueRef>(block1.operations[1].result));
-
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 0);
+    ASSERT_EQ(block2.arguments.size(), 1);
     ASSERT_EQ(block2.operations[0].op, JMP);
     auto blockref2 = std::get<BlockRef>(block2.operations[0].input[0]);
     ASSERT_EQ(blockref2.block, 3);
     ASSERT_EQ(blockref2.arguments.size(), 1);
+    ASSERT_EQ(blockref2.arguments[0], block2.arguments[0]);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 1);
+    ASSERT_EQ(block3.predecessors[1], 2);
+    ASSERT_EQ(block3.arguments.size(), 1);
+    ASSERT_EQ(block3.operations[0].op, CONST);
+    ASSERT_EQ(block3.operations[1].op, ADD);
 }
 
-void loop(TraceContext* tracer) {
+void ifElseCondition(bool flag, TraceContext* tracer) {
+    Value boolFlag = Value(flag, tracer);
+    Value iw = Value(1, tracer);
+    Value iw2 = Value(1, tracer);
+    if (boolFlag) {
+        iw = iw - 1;
+    } else {
+        iw = iw * iw2;
+    }
+    iw + 1;
+}
+
+/**
+ * @brief This test compiles a test CPP File
+ */
+TEST_F(InterpreterTest, ifElseConditionTest) {
+    auto tracer = TraceContext();
+    ifElseCondition(true, &tracer);
+    tracer.reset();
+    ifElseCondition(false, &tracer);
+
+    auto executionTrace = tracer.getExecutionTrace();
+    auto basicBlocks = executionTrace.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 4);
+    auto block0 = basicBlocks[0];
+    auto execution = tracer.getExecutionTrace();
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, CONST);
+    ASSERT_EQ(block0.operations[3].op, CMP);
+
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 0);
+    ASSERT_EQ(block1.operations[0].op, CONST);
+    ASSERT_EQ(block1.operations[1].op, SUB);
+    ASSERT_EQ(block1.operations[2].op, JMP);
+    auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(blockref.block, 3);
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 0);
+    ASSERT_EQ(block2.arguments.size(), 2);
+    ASSERT_EQ(block2.operations[0].op, MUL);
+    ASSERT_EQ(block2.operations[1].op, JMP);
+    auto blockref2 = std::get<BlockRef>(block2.operations[1].input[0]);
+    ASSERT_EQ(blockref2.block, 3);
+    ASSERT_EQ(blockref2.arguments.size(), 1);
+    auto resultRef = std::get<ValueRef>(block2.operations[0].result);
+    ASSERT_EQ(blockref2.arguments[0], resultRef);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 1);
+    ASSERT_EQ(block3.predecessors[1], 2);
+    ASSERT_EQ(block3.arguments.size(), 1);
+    ASSERT_EQ(block3.operations[0].op, CONST);
+    ASSERT_EQ(block3.operations[1].op, ADD);
+}
+
+void emptyLoop(TraceContext* tracer) {
     Value iw = Value(1, tracer);
     Value iw2 = Value(2, tracer);
 
@@ -289,16 +354,183 @@ void loop(TraceContext* tracer) {
     auto iw3 = iw2 - 5;
 }
 
-TEST_F(InterpreterTest, valueTestLoop) {
-    std::unique_ptr<Any> i1 = Integer::create<Integer>(1);
-    std::unique_ptr<Any> i2 = Integer::create<Integer>(2);
-
+TEST_F(InterpreterTest, emptyLoopTest) {
     auto tracer = TraceContext();
-    loop(&tracer);
+    emptyLoop(&tracer);
     auto execution = tracer.getExecutionTrace();
+    auto basicBlocks = execution.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 4);
+    auto block0 = basicBlocks[0];
     std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, JMP);
 
-    // ASSERT_EQ(cast<Integer>(result)->getValue(), 3);
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 3);
+    ASSERT_EQ(block1.operations[0].op, CONST);
+    ASSERT_EQ(block1.operations[1].op, ADD);
+    ASSERT_EQ(block1.operations[2].op, JMP);
+    auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(blockref.block, 3);
+    ASSERT_EQ(blockref.arguments.size(), 2);
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 3);
+    ASSERT_EQ(block2.arguments.size(), 1);
+    ASSERT_EQ(block2.operations[0].op, CONST);
+    ASSERT_EQ(block2.operations[1].op, SUB);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 0);
+    ASSERT_EQ(block3.predecessors[1], 1);
+    ASSERT_EQ(block3.arguments.size(), 2);
+    ASSERT_EQ(block3.operations[0].op, CONST);
+    ASSERT_EQ(block3.operations[1].op, LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, CMP);
+}
+
+void longEmptyLoop(TraceContext* tracer) {
+    Value iw = Value(1, tracer);
+    Value iw2 = Value(2, tracer);
+    for (auto start = iw; start < 20; start = start + 1) {
+        std::cout << "loop" << std::endl;
+    }
+    auto iw3 = iw2 - 5;
+}
+
+TEST_F(InterpreterTest, longEmptyLoopTest) {
+    auto tracer = TraceContext();
+    longEmptyLoop(&tracer);
+    auto execution = tracer.getExecutionTrace();
+    auto basicBlocks = execution.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 4);
+    auto block0 = basicBlocks[0];
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, JMP);
+
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 3);
+    ASSERT_EQ(block1.operations[0].op, CONST);
+    ASSERT_EQ(block1.operations[1].op, ADD);
+    ASSERT_EQ(block1.operations[2].op, JMP);
+    auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
+    ASSERT_EQ(blockref.block, 3);
+    ASSERT_EQ(blockref.arguments.size(), 2);
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 3);
+    ASSERT_EQ(block2.arguments.size(), 1);
+    ASSERT_EQ(block2.operations[0].op, CONST);
+    ASSERT_EQ(block2.operations[1].op, SUB);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 0);
+    ASSERT_EQ(block3.predecessors[1], 1);
+    ASSERT_EQ(block3.arguments.size(), 2);
+    ASSERT_EQ(block3.operations[0].op, CONST);
+    ASSERT_EQ(block3.operations[1].op, LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, CMP);
+}
+
+void sumLoop(TraceContext* tracer) {
+    Value agg = Value(1, tracer);
+    for (auto start = Value(0, tracer); start < 10; start = start + 1) {
+        agg = agg + 1;
+    }
+    auto res = agg == 10;
+}
+
+TEST_F(InterpreterTest, sumLoopTest) {
+    auto tracer = TraceContext();
+    sumLoop(&tracer);
+    auto execution = tracer.getExecutionTrace();
+    auto basicBlocks = execution.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 4);
+    auto block0 = basicBlocks[0];
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, JMP);
+
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 3);
+    ASSERT_EQ(block1.operations[0].op, CONST);
+    ASSERT_EQ(block1.operations[1].op, ADD);
+    ASSERT_EQ(block1.operations[2].op, CONST);
+    ASSERT_EQ(block1.operations[3].op, ADD);
+    ASSERT_EQ(block1.operations[4].op, JMP);
+    auto blockref = std::get<BlockRef>(block1.operations[4].input[0]);
+    ASSERT_EQ(blockref.block, 3);
+    ASSERT_EQ(blockref.arguments.size(), 2);
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[3].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[1].result));
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 3);
+    ASSERT_EQ(block2.arguments.size(), 1);
+    ASSERT_EQ(block2.operations[0].op, CONST);
+    ASSERT_EQ(block2.operations[1].op, EQUALS);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 0);
+    ASSERT_EQ(block3.predecessors[1], 1);
+    ASSERT_EQ(block3.arguments.size(), 2);
+    ASSERT_EQ(block3.operations[0].op, CONST);
+    ASSERT_EQ(block3.operations[1].op, LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, CMP);
+}
+
+void sumWhileLoop(TraceContext* tracer) {
+    Value agg = Value(1, tracer);
+    while (agg < 2) {
+        agg = agg + 1;
+    }
+    auto res = agg == 10;
+}
+
+TEST_F(InterpreterTest, sumWhileLoopTest) {
+    auto tracer = TraceContext();
+    sumWhileLoop(&tracer);
+    auto execution = tracer.getExecutionTrace();
+    auto basicBlocks = execution.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 4);
+    auto block0 = basicBlocks[0];
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, JMP);
+
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 3);
+    ASSERT_EQ(block1.operations[0].op, CONST);
+    ASSERT_EQ(block1.operations[1].op, ADD);
+    ASSERT_EQ(block1.operations[2].op, CONST);
+    ASSERT_EQ(block1.operations[3].op, ADD);
+    ASSERT_EQ(block1.operations[4].op, JMP);
+    auto blockref = std::get<BlockRef>(block1.operations[4].input[0]);
+    ASSERT_EQ(blockref.block, 3);
+    ASSERT_EQ(blockref.arguments.size(), 2);
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[3].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[1].result));
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 3);
+    ASSERT_EQ(block2.arguments.size(), 1);
+    ASSERT_EQ(block2.operations[0].op, CONST);
+    ASSERT_EQ(block2.operations[1].op, EQUALS);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 0);
+    ASSERT_EQ(block3.predecessors[1], 1);
+    ASSERT_EQ(block3.arguments.size(), 2);
+    ASSERT_EQ(block3.operations[0].op, CONST);
+    ASSERT_EQ(block3.operations[1].op, LESS_THAN);
+    ASSERT_EQ(block3.operations[2].op, CMP);
 }
 
 }// namespace NES::Interpreter
