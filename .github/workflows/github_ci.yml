@@ -10,9 +10,14 @@ on:
       - nes-core/include/Version/version.hpp
       - README.md
       - '.github/**'
-  pull_request:
+  pull_request_target:
+    types: [ ready_for_review, synchronize ]
     branches:
       - '*'
+    paths-ignore:
+      - nes-core/include/Version/version.hpp
+      - README.md
+      - '.github/**'
   workflow_dispatch:
     inputs:
       version:
@@ -26,15 +31,16 @@ on:
 jobs:
 
   validateTrigger:
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
       - name: verify-user
         uses: tspascoal/get-user-teams-membership@v1
         id: checkUserMember
         with:
-            username: ${{ github.actor }}
-            team: 'NebulaStream'
-            GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          username: ${{ github.actor }}
+          team: 'NebulaStream'
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - name: verify-run-privilage
         if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == 'workflow_dispatch'
         run: |
@@ -43,8 +49,8 @@ jobs:
 
   build-x64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-    runs-on: [self-hosted, linux, X64, Build]
-    needs: [validateTrigger]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    needs: [ validateTrigger ]
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -100,7 +106,7 @@ jobs:
   build-x64-linux-parallel:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [ self-hosted, linux, X64, Build ]
-    needs: [validateTrigger]
+    needs: [ validateTrigger ]
     timeout-minutes: 120
     continue-on-error: true
     steps:
@@ -139,8 +145,8 @@ jobs:
 
   build-arm64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-    runs-on: [self-hosted, linux, arm64, Build]
-    needs: [validateTrigger]
+    runs-on: [ self-hosted, linux, arm64, Build ]
+    needs: [ validateTrigger ]
     timeout-minutes: 120
     continue-on-error: true
     steps:
@@ -179,8 +185,8 @@ jobs:
 
   build-x64-macos:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-    runs-on: [self-hosted, macos, X64 ]
-    needs: [validateTrigger]
+    runs-on: [ self-hosted, macos, X64 ]
+    needs: [ validateTrigger ]
     timeout-minutes: 120
     continue-on-error: true
     steps:
@@ -209,9 +215,9 @@ jobs:
         if: always()
 
   release:
-    runs-on: [self-hosted, linux, X64, Build]
+    runs-on: [ self-hosted, linux, X64, Build ]
     if: github.ref == 'refs/heads/master'
-    needs: [build-x64-linux, build-arm64-linux, build-x64-macos, build-x64-linux-parallel]
+    needs: [ build-x64-linux, build-arm64-linux, build-x64-macos, build-x64-linux-parallel ]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
@@ -287,12 +293,12 @@ jobs:
           repository: nebulastream/nebulastream-java-client
           event-type: nes-executable-image-update
           client-payload: '{"prtitle": "${{ steps.findPr.outputs.title }}", "prnumber": "${{ steps.findPr.outputs.pr }}"}'
-#      - name: Invoke Benchmark Workflow
-#        uses: benc-uk/workflow-dispatch@v1
-#        with:
-#          workflow: NES Benchmark
-#          token: ${{ secrets.CI_TOKEN }}
-#          inputs: '{ "trigger-value": "trigger benchmark"}'
+      #      - name: Invoke Benchmark Workflow
+      #        uses: benc-uk/workflow-dispatch@v1
+      #        with:
+      #          workflow: NES Benchmark
+      #          token: ${{ secrets.CI_TOKEN }}
+      #          inputs: '{ "trigger-value": "trigger benchmark"}'
       - name: Push Docs to pages
         uses: peaceiris/actions-gh-pages@v3
         with:
