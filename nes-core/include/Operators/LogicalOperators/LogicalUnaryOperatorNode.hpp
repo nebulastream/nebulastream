@@ -34,6 +34,9 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
     */
     bool inferSchema() override;
 
+    /**
+     * @brief infers the origin id from the child operator.
+     */
     void inferInputOrigins() override;
 };
 }// namespace NES
