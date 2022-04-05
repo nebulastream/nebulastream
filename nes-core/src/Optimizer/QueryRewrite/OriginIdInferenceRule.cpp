@@ -26,7 +26,7 @@ OriginIdInferenceRulePtr OriginIdInferenceRule::create() {
 }
 
 QueryPlanPtr OriginIdInferenceRule::apply(QueryPlanPtr queryPlan) {
-    // query local origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
+    // origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = 1;
     // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
     for (auto originIdAssignmentOperators : queryPlan->getOperatorByType<OriginIdAssignmentOperator>()) {

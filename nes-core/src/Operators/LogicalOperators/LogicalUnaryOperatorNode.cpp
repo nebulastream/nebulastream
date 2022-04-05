@@ -61,7 +61,6 @@ void LogicalUnaryOperatorNode::inferInputOrigins() {
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
     }
-    //TODO add a check to check that we don't include the same origin id multiple times as this would show an invalid query plan
     this->inputOriginIds = inputOriginIds;
 }
 

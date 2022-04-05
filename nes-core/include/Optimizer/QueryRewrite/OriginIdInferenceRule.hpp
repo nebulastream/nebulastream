@@ -26,7 +26,7 @@ using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferenceRule>;
 /**
  * @brief The OriginIdInferenceRule traverses the operator tree and assigns origin ids to operators.
  *
- * In general, origin ids are emitted from sources, windows or or other stateful operators and are used to identify the origin of records.
+ * In general, origin ids are emitted from sources, windows or other stateful operators and are used to identify the origin of records.
  * This is crucial for stateful operators, which have to make guarantees over the order of records in the stream (see WatermarkProcessor)
  *
  * This rule is performed in two phases:

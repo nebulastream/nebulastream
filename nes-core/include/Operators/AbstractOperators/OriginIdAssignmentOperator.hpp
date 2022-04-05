@@ -19,7 +19,10 @@
 namespace NES {
 /**
  * @brief An operator, which creates an initializes a new origin id.
- * This is usually a an Source, Window, or Join Operator.
+ * This are usually operators that create and emit new data records,
+ * e.g., a Source, Window aggregation, or Join Operator.
+ * Operators that only modify or select an already existing record, e.g.,
+ * Filter or Map, dont need to assign new origin ids.
  */
 class OriginIdAssignmentOperator : public virtual OperatorNode {
   public:

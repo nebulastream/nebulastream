@@ -83,7 +83,7 @@ class LogicalOperatorFactory {
      */
     static LogicalUnaryOperatorNodePtr createSourceOperator(SourceDescriptorPtr const& sourceDescriptor,
                                                             OperatorId id = Util::getNextOperatorId(),
-                                                            OriginId originId = 0);
+                                                            OriginId originId = INVALID_ORIGIN_ID);
 
     /**
     * @brief Create a specialized watermark assigner operator.
