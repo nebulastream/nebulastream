@@ -15,7 +15,7 @@ Visit our documentation at https://docs.nebula.stream
     - [REST API](https://docs.nebula.stream/docs/clients/rest-api/)     
     - [JAVA Client](https://docs.nebula.stream/docs/clients/java-client/)
 - Development:
-    - [Contribution-guidelines(https://docs.nebula.stream/docs/dev/contribution-guidelines/)
+    - [Contribution-guidelines](https://docs.nebula.stream/docs/dev/contribution-guidelines/)
   
 ## Components:
 
