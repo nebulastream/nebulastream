@@ -1,0 +1,8 @@
+paths:
+  "nes-core/API/QueryAPI.hpp":
+    - Did you prepared a PR to update Stream/CEP API documentation?
+    - Did you open issues to reflect new API changes in Cpp/Java/Python clients?
+  "nes-core/src/REST/**":
+    - Did you prepared a PR to update the REST API documentation?
+  ".github/**":
+    - Did you run changes past the build management team?
