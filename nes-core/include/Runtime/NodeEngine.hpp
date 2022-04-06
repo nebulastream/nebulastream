@@ -65,7 +65,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   public:
     enum NodeEngineQueryStatus { started, stopped, registered };
 
-    ~NodeEngine() override;
+    virtual ~NodeEngine() override;
 
     NodeEngine() = delete;
     NodeEngine(const NodeEngine&) = delete;

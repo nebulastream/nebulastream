@@ -44,7 +44,6 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
       waitTime(waitTime), retryTimes(retryTimes) {
-    NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }
 
