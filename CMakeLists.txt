@@ -378,9 +378,20 @@ if (USE_S2)
     message(STATUS "s2 is enabled")
 
     if(NOT S2_ABSL_INCLUDE_PATH)
-        message(STATUS "s2 does not work with the absl version included in nes, please specify the path to the include directory containing the header folder of the absl files used to compile s2")
+        message(STATUS "s2 requires absl lts_2021_11_02 which is not included in the nes dependencies, please specify the path to the include directory containing the header folder of the absl files used to compile s2")
     endif()
     include_directories(${S2_ABSL_INCLUDE_PATH})
+
+    if(S2_PATH)
+        add_library(s2 STATIC IMPORTED)
+        set_target_properties(s2 PROPERTIES
+                IMPORTED_LOCATION "${S2_PATH}/lib/libs2.so"
+                INTERFACE_INCLUDE_DIRECTORIES "${S2_PATH}/include/"
+                )
+    else()
+        find_package(s2)
+    endif()
+
     set(LIBRARIES ${LIBRARIES} s2)
     add_compile_definitions(S2DEF)
 else ()
