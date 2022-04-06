@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
+#include "NesBaseTest.hpp"
 
 #define _TURN_OFF_PLATFORM_STRING// undef U from cpprest
-#include <REST/Controller/TopologyController.hpp>
-#include <Topology/Topology.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
+#include "REST/Controller/TopologyController.hpp"
+#include "Topology/Topology.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/TestUtils.hpp"
 #include <cpprest/http_client.h>
 #include <memory>
 

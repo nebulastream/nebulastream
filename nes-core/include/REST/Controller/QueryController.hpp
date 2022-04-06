@@ -113,7 +113,7 @@ class QueryController : public BaseController {
      * @param httpRequest
      * @return true if 'queryId' parameter exists and query with queryId exists else false
      */
-    bool validateURIParametersAndQueryId(std::map<utility::string_t, utility::string_t> parameters ,const web::http::http_request& httpRequest);
+    bool validateURIParametersContainQueryIdAndQueryIdExists(std::map<utility::string_t, utility::string_t> parameters ,const web::http::http_request& httpRequest);
 
     TopologyPtr topology;
     QueryServicePtr queryService;

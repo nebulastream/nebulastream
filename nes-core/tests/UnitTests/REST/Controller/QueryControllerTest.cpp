@@ -12,20 +12,20 @@
     limitations under the License.
 */
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
+#include "NesBaseTest.hpp"
+#include "Util/Logger/Logger.hpp"
+#include "Util/TestUtils.hpp"
 #include <cpprest/http_client.h>
-#include <REST/Controller/QueryController.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <WorkQueues/RequestQueue.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
-#include <Compiler/JITCompiler.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include "REST/Controller/QueryController.hpp"
+#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
+#include "WorkQueues/RequestQueue.hpp"
+#include "Services/QueryParsingService.hpp"
+#include "Compiler/CPPCompiler/CPPCompiler.hpp"
+#include "Compiler/JITCompilerBuilder.hpp"
+#include "Compiler/JITCompiler.hpp"
+#include "Catalogs/Source/PhysicalSource.hpp"
+#include "Catalogs/Source/LogicalSource.hpp"
+#include "Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp"
 
 namespace NES {
 
