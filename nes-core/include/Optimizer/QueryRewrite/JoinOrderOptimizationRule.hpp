@@ -110,7 +110,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @param joins - all "allowed" join edges, that won't result in a cartesian product
      * @return joined AbstractJoinPlanOperator resulting from joining left and right.
      */
-    std::optional<AbstractJoinPlanOperatorPtr> join(OptimizerPlanOperatorPtr left, OptimizerPlanOperatorPtr right, std::vector<Join::JoinEdgePtr> joins);
+    std::optional<AbstractJoinPlanOperatorPtr> join(AbstractJoinPlanOperatorPtr left, AbstractJoinPlanOperatorPtr right, std::vector<Join::JoinEdgePtr> joins);
 
     /**
      * @brief checks whether the involved logical streams of left plan and right plan have a potential join candidate.

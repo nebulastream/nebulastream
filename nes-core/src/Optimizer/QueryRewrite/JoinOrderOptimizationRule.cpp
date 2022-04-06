@@ -254,12 +254,17 @@ namespace NES::Optimizer {
         return combs;
     }
     // JVS test this method. I need to know whether this is a good/working way to construct the join tree.
-    std::optional<AbstractJoinPlanOperatorPtr> JoinOrderOptimizationRule::join(OptimizerPlanOperatorPtr left, OptimizerPlanOperatorPtr right, std::vector<Join::JoinEdgePtr> joins){
+
+    // JVS try out to change parameter type to AbstractJoinPlanOperator
+    std::optional<AbstractJoinPlanOperatorPtr> JoinOrderOptimizationRule::join(AbstractJoinPlanOperatorPtr left, AbstractJoinPlanOperatorPtr right, std::vector<Join::JoinEdgePtr> joins){
         //Get for left and right the involved OptimizerPlanOperators (logical data streams, potentially joined)
-        std::set<OptimizerPlanOperatorPtr> leftInvolved = left->getInvolvedOptimizerPlanOperators();
-        std::set<OptimizerPlanOperatorPtr> rightInvolved = right->getInvolvedOptimizerPlanOperators();
+        std::set<OptimizerPlanOperatorPtr> leftInvolved = left->getInvolvedOptimizerPlanOperators1();
+        std::set<OptimizerPlanOperatorPtr> rightInvolved = right->getInvolvedOptimizerPlanOperators1();
+
+        // JVS check if leftInvolved or rightInvolved is strictly zero sometimes
 
 
+        // sometimes left or right can be OptimizerPlanOperator instead of AbstractJoinPlanOperator
         //Initialize finalPred which is used to combine multiple join predicates together
         //Important as plans may be joined with multiple possible join graph edges
         std::vector<Join::LogicalJoinDefinitionPtr> finalPred;
