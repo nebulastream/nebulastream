@@ -89,7 +89,7 @@ void ExecutionTrace::checkInputReference(uint32_t currentBlockIndex, ValueRef in
                 // value ref is an input
                 auto& jump = preBlock.operations[preBlock.operations.size() - 1].input[0];
                 auto& blockRef = get<BlockRef>(jump);
-                if (std::find(blockRef.arguments.begin(), blockRef.arguments.end(), currentInput) == blockRef.                arguments.end()) {
+                if (std::find(blockRef.arguments.begin(), blockRef.arguments.end(), currentInput) == blockRef.arguments.end()) {
                     blockRef.arguments.emplace_back(currentInput);
                 }
             }
@@ -140,6 +140,18 @@ void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightIn
         // create new block
         auto& mergeBlock = executionTrace.processControlFlowMerge(blockId, opId);
         currentOperationCounter = mergeBlock.operations.size() - 1;
+    } else if (executionTrace.localTagMap.contains(tag)) {
+        std::cout << "Local Control-flow merge-> Loop" << result.value << std::endl;
+        std::cout << "Control-flow merge" << result.value << std::endl;
+        std::cout << executionTrace << std::endl;
+        auto res = executionTrace.localTagMap.find(tag);
+        auto [blockId, opId] = res->second;
+        auto& mergeBlock = executionTrace.processControlFlowMerge(blockId, opId);
+        auto mergeOperation = mergeBlock.operations.front();
+        result.ref = std::get<ValueRef>(mergeOperation.result);
+        std::cout << executionTrace << std::endl;
+        currentOperationCounter = 1;
+
     } else {
         auto leftInputRef = executionTrace.findReference(leftInput.ref, leftInput.srcRef);
         auto rightInputRef = executionTrace.findReference(rightInput.ref, rightInput.srcRef);

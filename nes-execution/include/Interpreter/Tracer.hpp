@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <iostream>
 namespace NES::Interpreter {
 
 class Value;

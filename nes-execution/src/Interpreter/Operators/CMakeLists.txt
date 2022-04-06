@@ -11,10 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Expressions)
-add_subdirectory(Operators)
-
 add_source_files(nes-execution
-        Tracer.cpp
-        Record.cpp
+        ExecuteOperator.cpp
+        Operator.cpp
+        Scan.cpp
+        Selection.cpp
         )

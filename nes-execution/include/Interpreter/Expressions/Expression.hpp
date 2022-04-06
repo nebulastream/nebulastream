@@ -15,7 +15,7 @@ using ExpressionPtr = std::shared_ptr<Expression>;
 
 class Expression {
   public:
-    virtual Value execute(RecordPtr record) = 0;
+    virtual Value execute(Record& record) = 0;
     virtual ~Expression() = default;
 };
 

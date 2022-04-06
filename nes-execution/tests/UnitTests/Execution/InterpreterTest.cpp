@@ -14,7 +14,11 @@
 
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/Value.hpp>
+#include <Interpreter/Expressions/EqualsExpression.hpp>
+#include <Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
+#include <Interpreter/Operators/Scan.hpp>
+#include <Interpreter/Operators/Selection.hpp>
 #include <Interpreter/Tracer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <execinfo.h>
@@ -533,4 +537,15 @@ TEST_F(InterpreterTest, sumWhileLoopTest) {
     ASSERT_EQ(block3.operations[2].op, CMP);
 }
 
+TEST_F(InterpreterTest, selectionQueryTest) {
+    TraceContext tracer;
+    Scan scan = Scan();
+    auto readFieldF1 = std::make_shared<ReadFieldExpression>(0);
+    auto readFieldF2 = std::make_shared<ReadFieldExpression>(0);
+    auto equalsExpression = std::make_shared<EqualsExpression>(readFieldF1, readFieldF2);
+    auto selection = std::make_shared<Selection>(equalsExpression);
+    scan.setChild(std::move(selection));
+
+    scan.open(tracer);
+}
 }// namespace NES::Interpreter

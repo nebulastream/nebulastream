@@ -1,21 +1,26 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
 #include <Interpreter/DataValue/Any.hpp>
-#include <Interpreter/Operations/AddOp.hpp>
-#include <Interpreter/Operations/AndOp.hpp>
-#include <Interpreter/Operations/DivOp.hpp>
-#include <Interpreter/Operations/EqualsOp.hpp>
-#include <Interpreter/Operations/LessThenOp.hpp>
-#include <Interpreter/Operations/MulOp.hpp>
-#include <Interpreter/Operations/NegateOp.hpp>
-#include <Interpreter/Operations/OrOp.hpp>
-#include <Interpreter/Operations/SubOp.hpp>
+#include <Interpreter/DataValue/Boolean.hpp>
+#include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/Tracer.hpp>
 #include <Interpreter/Util/Casting.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <memory>
 namespace NES::Interpreter {
+
+namespace Operations {
+std::unique_ptr<Any> AddOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> AndOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> DivOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> EqualsOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> LessThan(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> MulOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> OrOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> SubOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
+std::unique_ptr<Any> NegateOp(const std::unique_ptr<Any>& leftExp);
+}// namespace Operations
 
 class Value {
   public:
@@ -24,7 +29,7 @@ class Value {
     Value(std::unique_ptr<Any> wrappedValue, TraceContext* traceContext)
         : value(std::move(wrappedValue)), traceContext(traceContext), ref(traceContext->createNextRef()), srcRef(ref){
 
-                                                                      };
+                                                                                                          };
 
     Value(std::unique_ptr<Any>& wrappedValue) : value(std::move(wrappedValue)), ref(0, 0), srcRef(ref){};
     Value(int value, TraceContext* traceContext) : Value(std::make_unique<Integer>(value), traceContext) {
@@ -38,20 +43,18 @@ class Value {
     };
 
     // copy constructor
-    Value(const Value& other) : value(other.value->copy()), traceContext(other.traceContext), ref(other.ref), srcRef(other.ref){}
+    Value(const Value& other) : value(other.value->copy()), traceContext(other.traceContext), ref(other.ref), srcRef(other.ref) {}
 
     // move constructor
     Value(Value&& other) noexcept
         : value(std::exchange(other.value, nullptr)), traceContext(other.traceContext), ref(other.ref), srcRef(other.ref) {}
 
     // copy assignment
-    Value& operator=(const Value& other) {
-        return *this = Value(other);
-    }
+    Value& operator=(const Value& other) { return *this = Value(other); }
 
     // move assignment
     Value& operator=(Value&& other) noexcept {
-        if(traceContext){
+        if (traceContext) {
             traceContext->getExecutionTrace().traceAssignment(srcRef, other.ref);
         }
         std::swap(value, other.value);
@@ -59,7 +62,7 @@ class Value {
         return *this;
     }
 
-    operator bool()  {
+    operator bool() {
         std::cout << "trace bool eval" << std::endl;
         if (instanceOf<Boolean>(value)) {
             auto boolValue = cast<Boolean>(value);
@@ -327,8 +330,6 @@ auto inline operator||(const LHS& left, const RHS& right) {
     Trace(left.traceContext, OpCode::OR, left, right, resValue);
     return resValue;
 };
-
-
 
 }// namespace NES::Interpreter
 
