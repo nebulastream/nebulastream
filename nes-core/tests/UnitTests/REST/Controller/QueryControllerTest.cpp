@@ -36,7 +36,7 @@ class QueryControllerTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("QueryControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryControllerTest test class.");
     }
-    static void TearDownTestSuite() { NES_INFO("Tear down TopologyControllerTest test class."); }
+    static void TearDownTestSuite() { NES_INFO("Tear down QueryControllerTest test class."); }
 
     void SetUp() {
         TopologyPtr topology = Topology::create();
@@ -369,7 +369,7 @@ TEST_F(QueryControllerTest, testStopQueryInvalidParameterOrNoQueryIdProvided) {
     web::http::http_response httpResponse1;
     web::json::value response1;
 
-
+    //tests handling of missing queryId in URI parameters
     queryController->handleGet(std::vector<utility::string_t>{"query", "stop-query"}, msg1);
     msg1.get_response()
         .then([&httpResponse1](const pplx::task<web::http::http_response>& task) {
@@ -397,7 +397,7 @@ TEST_F(QueryControllerTest, testStopQueryInvalidParameterOrNoQueryIdProvided) {
     web::http::http_response httpResponse2;
     web::json::value response2;
 
-
+    //tests handling of providing non-existent queryId
     queryController->handleGet(std::vector<utility::string_t>{"query", "execution-plan"}, msg2);
     msg2.get_response()
         .then([&httpResponse2](const pplx::task<web::http::http_response>& task) {
