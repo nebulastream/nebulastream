@@ -61,7 +61,7 @@ enum class LogLevel : uint8_t {
 #elif defined(NES_LOGLEVEL_FATAL_ERROR)
 #define NES_COMPILE_TIME_LOG_LEVEL 2
 #elif defined(NES_LOGLEVEL_NONE)
-#define NES_LOGGING_NON_LEVEL 1
+#define NES_COMPILE_TIME_LOG_LEVEL 1
 #endif
 
 /**
@@ -137,10 +137,10 @@ class Logger {
 
 #define NES_LOG(LEVEL, message)                                                                                                  \
     do {                                                                                                                         \
-        auto constexpr __level = getLogLevel(LEVEL);                                                                             \
+        auto constexpr __level = NES::getLogLevel(LEVEL);                                                                             \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
             auto __logger = NES::Logger::getInstance();                                                                          \
-            if (getLogLevel(__logger->getCurrentLogLevel()) >= __level) {                                                        \
+            if (NES::getLogLevel(__logger->getCurrentLogLevel()) >= __level) {                                                        \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << message;                                                                                                 \
@@ -150,17 +150,17 @@ class Logger {
     } while (0)
 
 // Creates a log message with log level trace.
-#define NES_TRACE(...) NES_LOG(LogLevel::LOG_TRACE, __VA_ARGS__);
+#define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
 // Creates a log message with log level info.
-#define NES_INFO(...) NES_LOG(LogLevel::LOG_INFO, __VA_ARGS__);
+#define NES_INFO(...) NES_LOG(NES::LogLevel::LOG_INFO, __VA_ARGS__);
 // Creates a log message with log level debug.
-#define NES_DEBUG(...) NES_LOG(LogLevel::LOG_DEBUG, __VA_ARGS__);
+#define NES_DEBUG(...) NES_LOG(NES::LogLevel::LOG_DEBUG, __VA_ARGS__);
 // Creates a log message with log level warning.
-#define NES_WARNING(...) NES_LOG(LogLevel::LOG_WARNING, __VA_ARGS__);
+#define NES_WARNING(...) NES_LOG(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
 // Creates a log message with log level error.
-#define NES_ERROR(...) NES_LOG(LogLevel::LOG_ERROR, __VA_ARGS__);
+#define NES_ERROR(...) NES_LOG(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
 // Creates a log message with log level fatal error.
-#define NES_FATAL_ERROR(...) NES_LOG(LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
+#define NES_FATAL_ERROR(...) NES_LOG(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
 
 /// I am aware that we do not like __ before variable names but here we need them
 /// to avoid name collions, e.g., __buffer, __stacktrace
