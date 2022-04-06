@@ -29,6 +29,10 @@ bool isInBuildDir() {
     return executablePath.parent_path().string().starts_with(PATH_TO_BINARY_DIR);
 }
 
+bool isInBuildDirIsAvailable() {
+    return exists(std::filesystem::path(CLANG_EXECUTABLE));
+}
+
 bool isInUNIXInstallDir() {
     auto executablePath = getExecutablePath();
     return executablePath.parent_path().string() == UNIX_INSTALL_BIN_DIR;
@@ -71,7 +75,7 @@ RuntimePathConfig loadRuntimePathConfig() {
         runtimePathConfig.clangBinaryPath = executablePath.append("bin/nes-clang");
         runtimePathConfig.includePaths.push_back(executablePath.append("include/nebulatstream"));
         runtimePathConfig.libPaths.push_back(executablePath.append("lib"));
-    } else if (isInBuildDir()) {
+    } else if (isInBuildDir() || isInBuildDirIsAvailable()) {
         NES_DEBUG("Detected a build dir as a execution location");
         const std::string coreBinaryDir = PATH_TO_BINARY_DIR "/nes-common/";
         const std::string commonBinaryDir = PATH_TO_BINARY_DIR "/nes-core/";
