@@ -38,8 +38,8 @@ if __name__ == "__main__":
                      'rte_memory.h',
                      'apex_memmove.cpp']
     exclude = set(['cmake-build-debug', 'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
-                   'build', 'yaml', 'jitify', 'magicenum', 'Backward', '/nebulastream/nes-core/include/Parsers/NePSL/gen',
-                   '/nebulastream/nes-core/src/Parsers/NePSL/gen'])
+                   'build', 'yaml', 'jitify', 'magicenum', 'Backward', 'nes-core/include/Parsers/NePSL/gen',
+                   'nes-core/src/Parsers/NePSL/gen'])
     result = True
     print(str(sys.argv))
     for subdir, dirs, files in os.walk(sys.argv[1]):
