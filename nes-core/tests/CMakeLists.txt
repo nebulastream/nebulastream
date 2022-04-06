@@ -44,7 +44,7 @@ target_link_libraries(nes-tests INTERFACE ${GTEST_LIBRARIES} nes nes-tests-util)
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
-add_executable(udf-catalog-controller-test "UnitTests/Rest/UdfCatalogControllerTest.cpp")
+add_executable(udf-catalog-controller-test "UnitTests/REST/Controller/UdfCatalogControllerTest.cpp")
 target_link_libraries(udf-catalog-controller-test nes-tests)
 add_test(NAME udf-catalog-controller-test COMMAND udf-catalog-controller-test)
 
@@ -115,12 +115,12 @@ target_link_libraries(topology-tests nes-tests)
 add_test(NAME topology-tests COMMAND topology-tests)
 
 ### NES Query Controller Tests ###
-add_executable(query-controller-test "UnitTests/Rest/QueryControllerTest.cpp")
+add_executable(query-controller-test "UnitTests/REST/Controller/QueryControllerTest.cpp")
 target_link_libraries(query-controller-test nes-tests)
 add_test(NAME query-controller-test COMMAND query-controller-test)
 
 ### NES Topology Controller Tests ###
-add_executable(topology-controller-tests "UnitTests/Rest/TopologyControllerTest.cpp")
+add_executable(topology-controller-tests "UnitTests/REST/Controller/TopologyControllerTest.cpp")
 target_link_libraries(topology-controller-tests nes-tests)
 add_test(NAME topology-controller-tests COMMAND topology-controller-tests)
 
