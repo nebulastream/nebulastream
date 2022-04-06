@@ -53,6 +53,7 @@ jobs:
         with:
           gh-token: ${{ secrets.GITHUB_TOKEN }}
           include-hidden-files: true
+          input-file: .github/CHECKLIST.yml
 
   build-x64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
