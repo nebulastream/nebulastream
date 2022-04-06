@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -33,6 +34,7 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -55,6 +57,7 @@
 #include "../util/NesBaseTest.hpp"
 #include "../util/TestQuery.hpp"
 #include "../util/TestQueryCompiler.hpp"
+#include "Sinks/Mediums/NullOutputSink.hpp"
 
 using namespace std;
 
@@ -104,8 +107,13 @@ class TestSink : public SinkMedium {
   public:
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    TestSink(const SchemaPtr& schema, Runtime::NodeEnginePtr nodeEngine, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 1, 0, 0) {
+    TestSink(const SchemaPtr& schema,
+             Runtime::NodeEnginePtr nodeEngine,
+             const Runtime::BufferManagerPtr& bufferManager,
+             uint32_t numOfProducers = 1,
+             QueryId queryId = 0,
+             QuerySubPlanId querySubPlanId = 0)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, numOfProducers, queryId, querySubPlanId) {
         // nop
     }
 
@@ -147,77 +155,6 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
     buf.setNumberOfTuples(10);
 }
 
-TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
-    auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
-    auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->dataPort.setValue(*dataPort1);
-    workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
-    workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
-    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
-    workerConfiguration->numberOfBuffersPerWorker.setValue(64);
-    workerConfiguration->physicalSources.add(physicalSource);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
-                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                          .build();
-    auto netManager = nodeEngine->getNetworkManager();
-
-    NesPartition nesPartition{1, 22, 33, 44};
-    auto nodeLocation = NodeLocation(0, "127.0.0.1", *dataPort1);
-    auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
-    auto networkSource = std::make_shared<NetworkSource>(schema,
-                                                         nodeEngine->getBufferManager(),
-                                                         nodeEngine->getQueryManager(),
-                                                         netManager,
-                                                         nesPartition,
-                                                         nodeLocation,
-                                                         64,
-                                                         NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES);
-    EXPECT_TRUE(networkSource->start());
-
-    ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionConsumerCounter(nesPartition), 1UL);
-    EXPECT_TRUE(networkSource->stop());
-    netManager->unregisterSubpartitionConsumer(nesPartition);
-    ASSERT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
-              PartitionRegistrationStatus::Deleted);
-    ASSERT_TRUE(nodeEngine->stop());
-}
-
-TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
-    auto physicalSource = PhysicalSource::create("default_logical", "default", DefaultSourceType::create());
-    auto workerConfig = WorkerConfiguration::create();
-    workerConfig->dataPort = *dataPort1;
-    workerConfig->physicalSources.add(physicalSource);
-    auto nodeEngineBuilder = Runtime::NodeEngineBuilder::create(workerConfig);
-    auto nodeEngine = nodeEngineBuilder.build();
-    NodeLocation nodeLocation{0, "127.0.0.1", *dataPort1};
-    NesPartition nesPartition{1, 22, 33, 44};
-    auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
-
-    auto networkSource = std::make_shared<NetworkSource>(schema,
-                                                         nodeEngine->getBufferManager(),
-                                                         nodeEngine->getQueryManager(),
-                                                         nodeEngine->getNetworkManager(),
-                                                         nesPartition,
-                                                         nodeLocation,
-                                                         64,
-                                                         NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES);
-    EXPECT_TRUE(networkSource->start());
-
-    auto networkSink = std::make_shared<
-        NetworkSink>(schema, *dataPort1, 0, 0, nodeLocation, nesPartition, nodeEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
-
-    nodeEngine->getNetworkManager()->unregisterSubpartitionConsumer(nesPartition);
-
-    EXPECT_TRUE(networkSource->stop());
-    EXPECT_TRUE(nodeEngine->stop());
-    networkSource.reset();
-    nodeEngine.reset();
-}
-
 template<typename MockedNodeEngine, typename... ExtraParameters>
 std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname,
                                                      uint16_t port,
@@ -248,11 +185,12 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto stateManager = std::make_shared<Runtime::StateManager>(0);
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
             std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
+        auto hwManager = std::make_shared<Runtime::HardwareManager>();
         auto queryManager = std::make_shared<Runtime::DynamicQueryManager>(std::make_shared<DummyQueryListener>(),
                                                                            bufferManagers,
                                                                            0,
                                                                            1,
-                                                                           nullptr,
+                                                                           hwManager,
                                                                            stateManager);
         auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
         auto networkManagerCreator = [=](const Runtime::NodeEnginePtr& engine) {
@@ -271,7 +209,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory, jitCompiler);
 
         return std::make_shared<MockedNodeEngine>(std::move(physicalSources),
-                                                  std::make_shared<Runtime::HardwareManager>(),
+                                                  std::move(hwManager),
                                                   std::move(bufferManagers),
                                                   std::move(queryManager),
                                                   std::move(bufferStorage),
@@ -296,8 +234,11 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
     auto sendingThreads = std::vector<std::thread>();
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
-    NodeLocation nodeLocation{0, "127.0.0.1", *dataPort1};
+    NodeLocation nodeLocationSource{0, "127.0.0.1", *dataPort1};
+    NodeLocation nodeLocationSink{0, "127.0.0.1", *dataPort2};
+
     NesPartition nesPartition{1, 22, 33, 44};
+    ThreadBarrierPtr sinkShutdownBarrier = std::make_shared<ThreadBarrier>(numSendingThreads + 1);
 
     class MockedNodeEngine : public Runtime::NodeEngine {
       public:
@@ -326,13 +267,16 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::move(partitionManager),
                          std::move(queryCompiler),
                          std::make_shared<NES::Runtime::StateManager>(0),
-                         std::weak_ptr<NesWorker>(),
+                         std::make_shared<DummyQueryListener>(),
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          0,
                          64,
                          64,
                          12),
               nesPartition(nesPartition), completed(completed), bufferCnt(bufferCnt) {}
+
+        ~MockedNodeEngine() = default;
+
         void onDataBuffer(Network::NesPartition id, TupleBuffer&) override {
             if (nesPartition == id) {
                 bufferCnt++;
@@ -356,64 +300,64 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         void onChannelError(Network::Messages::ErrorMessage message) override { NodeEngine::onChannelError(message); }
     };
 
-    auto nodeEngine1 = createMockedEngine<MockedNodeEngine>("127.0.0.1",
-                                                            *dataPort1,
-                                                            bufferSize,
-                                                            buffersManaged,
-                                                            completed,
-                                                            nesPartition,
-                                                            bufferCnt);
     try {
-        auto netManager = nodeEngine1->getNetworkManager();
-
         std::thread receivingThread([&]() {
+            auto recvEngine = createMockedEngine<MockedNodeEngine>("127.0.0.1",
+                                                                   *dataPort1,
+                                                                   bufferSize,
+                                                                   buffersManaged,
+                                                                   completed,
+                                                                   nesPartition,
+                                                                   bufferCnt);
             // register the incoming channel
+            auto sink = std::make_shared<NullOutputSink>(recvEngine, 1, 0, 0);
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> succ = {sink};
             auto source = std::make_shared<NetworkSource>(schema,
-                                                          nodeEngine1->getBufferManager(),
-                                                          nodeEngine1->getQueryManager(),
-                                                          netManager,
+                                                          recvEngine->getBufferManager(),
+                                                          recvEngine->getQueryManager(),
+                                                          recvEngine->getNetworkManager(),
                                                           nesPartition,
-                                                          nodeLocation,
+                                                          nodeLocationSink,
                                                           64,
                                                           NSOURCE_RETRY_WAIT,
-                                                          NSOURCE_RETRIES);
-            EXPECT_TRUE(source->start());
-            EXPECT_EQ(nodeEngine1->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
+                                                          NSOURCE_RETRIES,
+                                                          std::move(succ));
+            recvEngine->getQueryManager()->registerQuery(
+                Runtime::Execution::ExecutableQueryPlan::create(0,
+                                                                0,
+                                                                {source},
+                                                                {sink},
+                                                                {},
+                                                                recvEngine->getQueryManager(),
+                                                                recvEngine->getBufferManager()));
+            ASSERT_EQ(recvEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
                       PartitionRegistrationStatus::Registered);
             completed.get_future().get();
-            EXPECT_TRUE(source->stop());
-            auto rt = Runtime::ReconfigurationMessage(-1, 0, Runtime::Destroy, source);
-            source->postReconfigurationCallback(rt);
-            EXPECT_EQ(nodeEngine1->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
-                      PartitionRegistrationStatus::Deleted);
+            sinkShutdownBarrier->wait();
+            ASSERT_TRUE(recvEngine->stop());
         });
 
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         auto workerConfig2 = WorkerConfiguration::create();
         workerConfig2->dataPort = *dataPort2;
+        workerConfig2->bufferSizeInBytes = bufferSize;
         workerConfig2->physicalSources.add(physicalSource);
-        auto nodeEngineBuilder2 = Runtime::NodeEngineBuilder::create(workerConfig2);
-        auto nodeEngine2 = nodeEngineBuilder2.build();
+        auto nodeEngineBuilder2 =
+            Runtime::NodeEngineBuilder::create(workerConfig2).setQueryStatusListener(std::make_shared<DummyQueryListener>());
+        auto sendEngine = nodeEngineBuilder2.build();
 
-        auto networkSink = std::make_shared<NetworkSink>(schema,
-                                                         0,
-                                                         0,
-                                                         0,
-                                                         nodeLocation,
-                                                         nesPartition,
-                                                         nodeEngine2,
-                                                         numSendingThreads,
-                                                         NSOURCE_RETRY_WAIT,
-                                                         NSOURCE_RETRIES);
+        auto networkSink = std::make_shared<
+            NetworkSink>(schema, 0, 0, 0, nodeLocationSource, nesPartition, sendEngine, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
+        networkSink->preSetup();
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
-                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine2->getBufferManager(), 64);
+                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), sendEngine->getBufferManager(), 64);
                 auto rt = Runtime::ReconfigurationMessage(0, 0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
-                    auto buffer = nodeEngine2->getBufferManager()->getBufferBlocking();
+                    auto buffer = sendEngine->getBufferManager()->getBufferBlocking();
                     for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                         buffer.getBuffer<uint64_t>()[j] = j;
                     }
@@ -421,6 +365,9 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                     networkSink->writeData(buffer, workerContext);
                     usleep(rand() % 10000 + 1000);
                 }
+                auto rt2 = Runtime::ReconfigurationMessage(0, 0, Runtime::SoftEndOfStream, networkSink);
+                networkSink->reconfigure(rt2, workerContext);
+                sinkShutdownBarrier->wait();
             });
             sendingThreads.emplace_back(std::move(sendingThread));
         }
@@ -430,18 +377,15 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                 t.join();
             }
         }
+        networkSink->shutdown();
         receivingThread.join();
-        ASSERT_TRUE(nodeEngine2->stop());
+        ASSERT_TRUE(sendEngine->stop());
     } catch (...) {
         FAIL();
     }
     auto const bf = bufferCnt.load();
     ASSERT_TRUE(bf > 0);
     ASSERT_EQ(static_cast<std::size_t>(bf), numSendingThreads * totalNumBuffer);
-    ASSERT_EQ(nodeEngine1->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
-              PartitionRegistrationStatus::Deleted);
-    ASSERT_TRUE(nodeEngine1->stop());
-    nodeEngine1 = nullptr;
 }
 
 namespace detail {
@@ -458,7 +402,7 @@ class TestSourceWithLatch : public DefaultSource {
                         bufferManager,
                         queryManager,
                         /*bufferCnt*/ 1,
-                        /*frequency*/ 1000,
+                        /*frequency*/ 0,
                         operatorId,
                         numSourceLocalBuffers,
                         successors),
@@ -493,31 +437,35 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
 
     auto latch = std::make_shared<ThreadBarrier>(numQueries);
 
-    auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->dataPort.setValue(*dataPort1);
-    for (auto source : physicalSources)
-        workerConfiguration->physicalSources.add(source);
-    workerConfiguration->numWorkerThreads.setValue(numThreads);
-    workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
-    workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
-    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
-    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
-
-    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration)
-                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                                .build();
-    auto netManagerSender = nodeEngineSender->getNetworkManager();
-    NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto workerConfiguration1 = WorkerConfiguration::create();
-    workerConfiguration1->dataPort.setValue(*dataPort2);
-    for (auto source : physicalSources)
+    workerConfiguration1->dataPort.setValue(*dataPort1);
+    for (auto source : physicalSources) {
         workerConfiguration1->physicalSources.add(source);
+    }
     workerConfiguration1->numWorkerThreads.setValue(numThreads);
     workerConfiguration1->bufferSizeInBytes.setValue(bufferSize);
     workerConfiguration1->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
     workerConfiguration1->numberOfBuffersInSourceLocalBufferPool.setValue(64);
     workerConfiguration1->numberOfBuffersPerWorker.setValue(12);
-    auto nodeEngineReceiver = Runtime::NodeEngineBuilder::create(workerConfiguration1).build();
+
+    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration1)
+                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                                .build();
+    auto netManagerSender = nodeEngineSender->getNetworkManager();
+    NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
+    auto workerConfiguration2 = WorkerConfiguration::create();
+    workerConfiguration2->dataPort.setValue(*dataPort2);
+    for (auto source : physicalSources) {
+        workerConfiguration2->physicalSources.add(source);
+    }
+    workerConfiguration2->numWorkerThreads.setValue(numThreads);
+    workerConfiguration2->bufferSizeInBytes.setValue(bufferSize);
+    workerConfiguration2->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
+    workerConfiguration2->numberOfBuffersInSourceLocalBufferPool.setValue(64);
+    workerConfiguration2->numberOfBuffersPerWorker.setValue(12);
+    auto nodeEngineReceiver = Runtime::NodeEngineBuilder::create(workerConfiguration2)
+                                  .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                                  .build();
 
     auto netManagerReceiver = nodeEngineReceiver->getNetworkManager();
     NodeLocation nodeLocationReceiver = netManagerReceiver->getServerLocation();
@@ -525,7 +473,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     std::vector<std::shared_ptr<TestSink>> finalSinks;
 
     uint32_t subPlanId = 0;
-    for (auto i = 0; i < numQueries; ++i) {
+    for (auto i = 1; i <= numQueries; ++i) {
         NesPartition nesPartition{Network::QueryId(i),
                                   Network::OperatorId(i * 22),
                                   Network::PartitionId(i * 33),
@@ -550,7 +498,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                        successors);
             });
 
-        auto testSink = std::make_shared<TestSink>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
+        auto testSink =
+            std::make_shared<TestSink>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager(), 1, i, subPlanId);
         finalSinks.emplace_back(testSink);
         auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
@@ -601,28 +550,30 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         auto request2 = QueryCompilation::QueryCompilationRequest::create(queryPlan2, nodeEngineSender);
         auto result2 = queryCompiler->compileQuery(request2);
         auto builderGeneratorQEP = result2->getExecutableQueryPlan();
-        ASSERT_TRUE(nodeEngineSender->registerQueryInNodeEngine(builderGeneratorQEP));
-        ASSERT_TRUE(nodeEngineReceiver->registerQueryInNodeEngine(builderReceiverQEP));
+        //        ASSERT_TRUE(nodeEngineSender->registerQueryInNodeEngine(builderGeneratorQEP));
+        //        ASSERT_TRUE(nodeEngineReceiver->registerQueryInNodeEngine(builderReceiverQEP));
+        //        ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getQueryId()));
+        //        ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
+
+        auto func = [](auto engine, auto qep) {
+            return engine->registerQueryInNodeEngine(qep);
+        };
+
+        auto f1 = std::async(std::launch::async, func, nodeEngineSender, builderGeneratorQEP);
+        auto f2 = std::async(std::launch::async, func, nodeEngineReceiver, builderReceiverQEP);
+
+        ASSERT_TRUE(f1.get());
+        ASSERT_TRUE(f2.get());
         ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getQueryId()));
         ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
     }
 
     ASSERT_EQ(numQueries, finalSinks.size());
 
-    //    for (auto i = 0; i < numQueries; ++i) {
-    //        ASSERT_TRUE(nodeEngineSender->startQuery(i));
-    //        ASSERT_TRUE(nodeEngineReceiver->startQuery(i));
-    //        usleep(10 * 1000); // 10ms
-    //    }
-
     for (const auto& testSink : finalSinks) {
         ASSERT_EQ(10ULL, testSink->completed.get_future().get());
     }
 
-    for (auto i = 0; i < numQueries; ++i) {
-        ASSERT_TRUE(nodeEngineSender->undeployQuery(i));
-        ASSERT_TRUE(nodeEngineReceiver->undeployQuery(i));
-    }
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }
@@ -707,7 +658,9 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             completedProm.set_value(false);
         } else {
             senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);
+            senderChannel->close(Runtime::QueryTerminationType::Graceful);
             senderChannel.reset();
+            netManager->unregisterSubpartitionProducer(nesPartition);
         }
 
         t.join();
@@ -730,25 +683,45 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
 
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->dataPort.setValue(*dataPort1);
-    workerConfiguration->physicalSources.add(physicalSource);
-    workerConfiguration->bufferSizeInBytes.setValue(bufferSize);
-    workerConfiguration->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
-    workerConfiguration->numberOfBuffersInSourceLocalBufferPool.setValue(64);
-    workerConfiguration->numberOfBuffersPerWorker.setValue(12);
-
-    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration)
-                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                                .build();
     auto workerConfiguration1 = WorkerConfiguration::create();
-    workerConfiguration1->dataPort.setValue(*dataPort2);
+    workerConfiguration1->dataPort.setValue(*dataPort1);
     workerConfiguration1->physicalSources.add(physicalSource);
     workerConfiguration1->bufferSizeInBytes.setValue(bufferSize);
     workerConfiguration1->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
     workerConfiguration1->numberOfBuffersInSourceLocalBufferPool.setValue(64);
     workerConfiguration1->numberOfBuffersPerWorker.setValue(12);
-    auto nodeEngineReceiver = Runtime::NodeEngineBuilder::create(workerConfiguration1).build();
+
+    auto nodeEngineSender = Runtime::NodeEngineBuilder::create(workerConfiguration1)
+                                .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                                .build();
+    auto workerConfiguration2 = WorkerConfiguration::create();
+    workerConfiguration2->dataPort.setValue(*dataPort2);
+    workerConfiguration2->physicalSources.add(physicalSource);
+    workerConfiguration2->bufferSizeInBytes.setValue(bufferSize);
+    workerConfiguration2->numberOfBuffersInGlobalBufferManager.setValue(buffersManaged);
+    workerConfiguration2->numberOfBuffersInSourceLocalBufferPool.setValue(64);
+    workerConfiguration2->numberOfBuffersPerWorker.setValue(12);
+
+    std::promise<bool> queryCompleted;
+
+    class TestQueryListener : public DummyQueryListener {
+      public:
+        explicit TestQueryListener(std::promise<bool>& queryCompleted) : queryCompleted(queryCompleted) {}
+
+        bool notifyQueryStatusChange(QueryId id,
+                                     QuerySubPlanId planId,
+                                     Runtime::Execution::ExecutableQueryPlanStatus status) override {
+            queryCompleted.set_value(true);
+            return DummyQueryListener::notifyQueryStatusChange(id, planId, status);
+        }
+
+      private:
+        std::promise<bool>& queryCompleted;
+    };
+
+    auto nodeEngineReceiver = Runtime::NodeEngineBuilder::create(workerConfiguration2)
+                                  .setQueryStatusListener(std::make_shared<TestQueryListener>(queryCompleted))
+                                  .build();
     // create NetworkSink
 
     class TestNetworkSink : public NetworkSink {
@@ -757,14 +730,18 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
 
       protected:
         void onEvent(Runtime::BaseEvent& event) override {
-            NetworkSink::onEvent(event);
+           // NetworkSink::onEvent(event);
             bool eventReceived = event.getEventType() == Runtime::EventType::kCustomEvent
                 && dynamic_cast<Runtime::CustomEventWrapper&>(event).data<detail::TestEvent>()->testValue() == 123;
-            completed.set_value(eventReceived);
+            bool expected = false;
+            if (sourceNotifier->compare_exchange_strong(expected, true)) {
+                completed.set_value(eventReceived);
+            }
         }
 
       public:
         std::promise<bool> completed;
+        std::atomic<bool>* sourceNotifier;
     };
 
     auto networkSourceDescriptor1 = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -786,14 +763,56 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                    successors);
         });
 
+    class TestSourceEvent : public GeneratorSource {
+      public:
+        explicit TestSourceEvent(const SchemaPtr& schema,
+                                 const Runtime::BufferManagerPtr& bufferManager,
+                                 const Runtime::QueryManagerPtr& queryManager,
+                                 OperatorId operatorId,
+                                 size_t numSourceLocalBuffers,
+                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+            : GeneratorSource(schema,
+                              bufferManager,
+                              queryManager,
+                              1000,
+                              operatorId,
+                              numSourceLocalBuffers,
+                              GatheringMode::INTERVAL_MODE,
+                              successors) {}
+
+        std::optional<Runtime::TupleBuffer> receiveData() override {
+            if (!canStop) {
+                auto buffer = bufferManager->getBufferBlocking();
+                auto* writer = buffer.getBuffer<int64_t>();
+                writer[0] = 1;
+                writer[1] = 2;
+                writer[2] = 3;
+                buffer.setNumberOfTuples(1);
+                return buffer;
+            } else {
+                return {};
+            }
+        }
+
+      public:
+        std::atomic<bool> canStop{false};
+    };
+
     class TestSinkEvent : public SinkMedium {
       public:
         SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
         explicit TestSinkEvent(const SchemaPtr& schema,
                                Runtime::NodeEnginePtr nodeEngine,
-                               const Runtime::BufferManagerPtr& bufferManager)
-            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 1, 0, 0) {
+                               const Runtime::BufferManagerPtr& bufferManager,
+                               uint32_t numOfProducers = 1,
+                               QueryId queryId = 0,
+                               QuerySubPlanId querySubPlanId = 0)
+            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
+                         nodeEngine,
+                         numOfProducers,
+                         queryId,
+                         querySubPlanId) {
             // nop
         }
 
@@ -811,24 +830,6 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
         string toString() const override { return std::string(); }
     };
 
-    class TestSourceEvent : public DefaultSource {
-      public:
-        explicit TestSourceEvent(const SchemaPtr& schema,
-                                 const Runtime::BufferManagerPtr& bufferManager,
-                                 const Runtime::QueryManagerPtr& queryManager,
-                                 OperatorId operatorId,
-                                 size_t numSourceLocalBuffers,
-                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
-            : DefaultSource(schema,
-                            bufferManager,
-                            queryManager,
-                            /*bufferCnt*/ 1,
-                            /*frequency*/ 1000,
-                            operatorId,
-                            numSourceLocalBuffers,
-                            successors) {}
-    };
-
     auto testSink = std::make_shared<TestSinkEvent>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
@@ -843,25 +844,9 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
     auto result = queryCompiler->compileQuery(request);
     auto builderReceiverQEP = result->getExecutableQueryPlan();
 
-    // creating query plan
-    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
-        schema,
-        [&](OperatorId,
-            const SourceDescriptorPtr&,
-            const Runtime::NodeEnginePtr&,
-            size_t numSourceLocalBuffers,
-            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return std::make_shared<TestSourceEvent>(schema,
-                                                     nodeEngineSender->getBufferManager(),
-                                                     nodeEngineSender->getQueryManager(),
-                                                     1,
-                                                     numSourceLocalBuffers,
-                                                     std::move(successors));
-        });
-
     auto networkSink = std::make_shared<TestNetworkSink>(schema,
                                                          0,
-                                                         1,
+                                                         0,
                                                          1,
                                                          nodeLocationReceiver,
                                                          nesPartition,
@@ -869,6 +854,24 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES);
+
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        schema,
+        [&](OperatorId,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            auto source = std::make_shared<TestSourceEvent>(schema,
+                                                            nodeEngineSender->getBufferManager(),
+                                                            nodeEngineSender->getQueryManager(),
+                                                            1,
+                                                            numSourceLocalBuffers,
+                                                            std::move(successors));
+            networkSink->sourceNotifier = &source->canStop;
+            return source;
+        });
+
     auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
 
@@ -879,17 +882,26 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
     queryCompiler = TestUtils::createTestQueryCompiler();
     auto result2 = queryCompiler->compileQuery(request2);
     auto builderGeneratorQEP = result2->getExecutableQueryPlan();
-    ASSERT_TRUE(nodeEngineSender->registerQueryInNodeEngine(builderGeneratorQEP));
-    ASSERT_TRUE(nodeEngineReceiver->registerQueryInNodeEngine(builderReceiverQEP));
+
+    auto func = [](auto engine, auto qep) {
+        return engine->registerQueryInNodeEngine(qep);
+    };
+
+    auto f1 = std::async(std::launch::async, func, nodeEngineSender, builderGeneratorQEP);
+    auto f2 = std::async(std::launch::async, func, nodeEngineReceiver, builderReceiverQEP);
+
+    ASSERT_TRUE(f1.get());
+    ASSERT_TRUE(f2.get());
+
+    auto future = networkSink->completed.get_future();
 
     ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getQueryId()));
     ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
 
-    auto future = networkSink->completed.get_future();
     ASSERT_TRUE(future.get());
 
-    ASSERT_TRUE(nodeEngineSender->undeployQuery(builderGeneratorQEP->getQueryId()));
-    ASSERT_TRUE(nodeEngineReceiver->undeployQuery(builderReceiverQEP->getQueryId()));
+    ASSERT_TRUE(queryCompleted.get_future().get());
+
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }

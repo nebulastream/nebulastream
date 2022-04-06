@@ -38,8 +38,7 @@ class NetworkSource : public DataSource {
                   size_t numSourceLocalBuffers,
                   std::chrono::milliseconds waitTime,
                   uint8_t retryTimes,
-                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors =
-                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!

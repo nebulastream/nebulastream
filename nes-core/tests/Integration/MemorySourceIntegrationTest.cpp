@@ -88,7 +88,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
@@ -102,20 +102,20 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     //    NES_INFO("MemorySourceIntegrationTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
+    ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
     std::string line;
@@ -131,10 +131,10 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     ASSERT_EQ(recordsToExpect, lineCnt - 1);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
@@ -187,7 +187,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
@@ -201,20 +201,20 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("MemorySourceIntegrationTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
+    ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
     std::string line;
@@ -230,10 +230,10 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     ASSERT_EQ(recordsToExpect, lineCnt - 1);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /// This test checks that a deployed MemorySource can write M records stored in N+1 buffers
@@ -288,7 +288,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     // local fs
@@ -302,20 +302,20 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("MemorySourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("MemorySourceIntegrationTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
+    ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
     std::string line;
@@ -332,10 +332,10 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     ASSERT_EQ(recordsToExpect, lineCnt - 1);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 }// namespace NES

@@ -207,8 +207,6 @@ void AbstractQueryManager::destroy() {
             threadPool.reset();
         }
         NES_DEBUG("AbstractQueryManager::resetQueryManager finished");
-    } else {
-        NES_ASSERT2_FMT(false, "invalid status of query manager, need to implement the transition");
     }
 }
 
@@ -265,7 +263,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
             if (status == Execution::ExecutableQueryPlanStatus::Invalid) {
-                NES_WARNING("Query" << qepId << "was already removed or never deployed");
+                NES_WARNING("Query" << qepId << " was already removed or never deployed");
                 return;
             }
             NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped

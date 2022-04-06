@@ -110,7 +110,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -128,7 +128,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
@@ -141,21 +141,21 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
         + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    int buffersToASSERT = 1;
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    const std::string expected =
+    const std::string ASSERTed =
         "tpch_customer$C_CUSTKEY:INTEGER,tpch_customer$C_NAME:ArrayType,tpch_customer$C_ADDRESS:ArrayType,tpch_customer$C_"
         "NATIONKEY:INTEGER,tpch_customer$C_PHONE:ArrayType,tpch_customer$C_ACCTBAL:(Float),tpch_customer$C_MKTSEGMENT:ArrayType,"
         "tpch_customer$C_COMMENT:ArrayType\n"
@@ -177,13 +177,13 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
         "regular theodolites kindle blithely courts. carefully even theodolites haggle slyly along the ide\n"
         "9,Customer#000000009,xKiAFTjUsCuxfeleNqefumTrjS,8,18-338-906-3675,8324.070000,FURNITURE,r theodolites according to the "
         "requests wake thinly excuses: pending requests haggle furiousl\n";
-    EXPECT_EQ(content, expected);
+    ASSERT_EQ(content, ASSERTed);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 // simple test for nation table
@@ -198,7 +198,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -216,7 +216,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
@@ -229,34 +229,34 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
         + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    int buffersToASSERT = 1;
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    const std::string expected = "tpch_nation$N_NATIONKEY:INTEGER,tpch_nation$N_NAME:ArrayType,tpch_nation$N_REGIONKEY:INTEGER,"
+    const std::string ASSERTed = "tpch_nation$N_NATIONKEY:INTEGER,tpch_nation$N_NAME:ArrayType,tpch_nation$N_REGIONKEY:INTEGER,"
                                  "tpch_nation$N_COMMENT:ArrayType\n"
                                  "21,VIETNAM,2,hely enticingly express accounts. even, final \n"
                                  "22,RUSSIA,3, requests against the platelets use never according to the quickly regular pint\n"
                                  "23,UNITED KINGDOM,3,eans boost carefully special requests. accounts are. carefull\n"
                                  "24,UNITED STATES,1,y final packages. slow foxes cajole quickly. quickly silent platelets "
                                  "breach ironic accounts. unusual pinto be\n";
-    EXPECT_EQ(content, expected);
+    ASSERT_EQ(content, ASSERTed);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 // incomplete
@@ -272,7 +272,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -296,7 +296,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
@@ -313,34 +313,34 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
         + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    int buffersToASSERT = 1;
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    const std::string expected = "tpch_nation$C_NATIONKEY:INTEGER,tpch_nation$C_NAME:ArrayType,tpch_nation$C_REGIONKEY:INTEGER,"
+    const std::string ASSERTed = "tpch_nation$C_NATIONKEY:INTEGER,tpch_nation$C_NAME:ArrayType,tpch_nation$C_REGIONKEY:INTEGER,"
                                  "tpch_nation$C_COMMENT:ArrayType\n"
                                  "21,VIETNAM,2,hely enticingly express accounts. even, final \n"
                                  "22,RUSSIA,3, requests against the platelets use never according to the quickly regular pint\n"
                                  "23,UNITED KINGDOM,3,eans boost carefully special requests. accounts are. carefull\n"
                                  "24,UNITED STATES,1,y final packages. slow foxes cajole quickly. quickly silent platelets "
                                  "breach ironic accounts. unusual pinto be\n";
-    EXPECT_EQ(content, expected);
+    ASSERT_EQ(content, ASSERTed);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 }// namespace NES::Experimental
