@@ -38,20 +38,16 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
     }
 
     auto compiler = languageCompiler->second;
-    auto asyncResult = std::async(std::launch::deferred, [compiler, request]() {
-         return compiler->compile(request);
-
+    auto asyncResult = std::async(std::launch::async, [compiler, request]() {
+        return compiler->compile(request);
     });
     return asyncResult;
-
 }
 
 std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
     return handleRequest(request);
 }
 
-JITCompiler::~JITCompiler() {
-    NES_DEBUG("~JITCompiler")
-}
+JITCompiler::~JITCompiler() { NES_DEBUG("~JITCompiler") }
 
 }// namespace NES::Compiler
