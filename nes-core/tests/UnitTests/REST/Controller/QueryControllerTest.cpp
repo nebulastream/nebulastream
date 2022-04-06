@@ -421,5 +421,44 @@ TEST_F(QueryControllerTest, testStopQueryInvalidParameterOrNoQueryIdProvided) {
               httpResponse2.status_code());
 }
 
+TEST_F(QueryControllerTest, testNonExistentSchemaAttribtue) {
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
+    TopologyNodePtr  topologyNode = TopologyNode::create(1,"0",0,0,1);
+    SourceCatalogEntryPtr entry = SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
+    ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
+    web::http::http_request msg(web::http::methods::POST);
+    //set query string
+    std::string queryString =
+        R"(Query::from("default_logical").filter(Attribute("BAD") < 42).sink(PrintSinkDescriptor::create()); )";
+    web::json::value messageContent{};
+    messageContent["userQuery"] = web::json::value::string(queryString);
+    messageContent["strategyName"] = web::json::value::string("BottomUp");
+    msg.set_body(messageContent);
+
+    web::http::http_response httpResponse;
+    web::json::value response;
+
+
+    queryController->handlePost(std::vector<utility::string_t>{"query", "execute-query"}, msg);
+    msg.get_response()
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+            try {
+                httpResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+    httpResponse.extract_json()
+        .then([&response](const pplx::task<web::json::value>& task) {
+            response = task.get();
+        })
+        .wait();
+    auto getExecutionPlanResponse = response.as_object();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
+    EXPECT_TRUE(getExecutionPlanResponse.at("message").as_string().find("FieldAccessExpression: the field BAD is not defined in the  schema") != string::npos);
+}
+
 
 }

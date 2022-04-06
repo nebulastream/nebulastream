@@ -178,7 +178,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     restResponse["queryId"] = web::json::value::number(queryId);
                     successMessageImpl(request, restResponse, web::http::status_codes::Created);
                     return;
-                } catch (const InvalidQueryException& exc) {//test that submits broken query(not sink/no source etc
+                } catch (const InvalidQueryException& exc) {
                     NES_ERROR("QueryController: handlePost -execute-query: Exception occurred during submission of a query "
                               "user request:"
                               << exc.what());
