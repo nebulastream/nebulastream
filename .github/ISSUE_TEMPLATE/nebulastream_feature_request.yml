@@ -1,8 +1,8 @@
 ---
-name: 🔧 NebulaStream Bug report
-description: Problems and issues with code in NebulaStream core
-labels: ["Bug"]
-title: '[BUG]'
+name: 🚀 NebulaStream Feature Request
+description: Suggest a new awesome feature to NebulaStream
+labels: ["enhancement"]
+title: '[FEATURE]'
 body:
   - type: markdown
     attributes:
