@@ -15,8 +15,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Experimental/CRC32Hash.hpp>
-#include <Util/Experimental/MurMurHash3.hpp>
 #include <Util/Experimental/Hash.hpp>
+#include <Util/Experimental/MurMurHash3.hpp>
 #include <assert.h>
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
@@ -41,12 +41,10 @@ namespace NES::Experimental {
  */
 class Hashmap {
   public:
-#ifdef __aarch64__
-    const Hash<MurMurHash3> hasher = Hash<MurMurHash3>();
-#endif
-
-#ifdef __x86_64__
+#if defined(__SSE4_2__)
     const Hash<CRC32Hash> hasher = Hash<CRC32Hash>();
+#else
+    const Hash<MurMurHash3> hasher = Hash<MurMurHash3>();
 #endif
     using hash_t = uint64_t;
     static const size_t headerSize = 16;// next* + hash = 16byte
