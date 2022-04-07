@@ -14,21 +14,21 @@
 
 #include <Common/GeographicalLocation.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <Exceptions/AccessingInvalidCoordinatesException.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cmath>
 
 namespace NES::Experimental::Mobility {
 
 GeographicalLocation::GeographicalLocation() {
-    latitude = kInvalidLocationDegrees;
-    longitude = kInvalidLocationDegrees;
+    latitude = std::numeric_limits<double>::quiet_NaN();
+    longitude = std::numeric_limits<double>::quiet_NaN();
 }
 
 GeographicalLocation::GeographicalLocation(double latitude, double longitude) {
-    //Coordinates <kInvalidLocationDegrees, kInvalidLocationDegrees> lead to the creation of an object which symbolizes an invalid location
-    if (!(latitude == kInvalidLocationDegrees && longitude == kInvalidLocationDegrees) && !checkValidityOfCoordinates(latitude, longitude)) {
+    //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
+    if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude)) {
         NES_WARNING("Trying to create node with an invalid location");
         throw CoordinatesOutOfRangeException();
     }
@@ -42,6 +42,7 @@ GeographicalLocation GeographicalLocation::fromString(const std::string& coordin
     if (coordinates.empty()) {
         throw InvalidCoordinateFormatException();
     }
+
     std::stringstream stringStream(coordinates);
     double lat;
     stringStream >> lat;
@@ -70,24 +71,24 @@ GeographicalLocation::operator Coordinates() const {
 }
 
 bool GeographicalLocation::operator==(const GeographicalLocation& other) const {
+    //if both objects are an invalid location, consider them equal
+    if (!this->isValid() && !other.isValid()) {
+       return true;
+    }
     return this->latitude == other.latitude && this->longitude == other.longitude;
-};
+}
 
 double GeographicalLocation::getLatitude() const {
-    if (!isValid()) {
-        throw AccessingInvalidCoordinatesException();
-    }
     return latitude;
 }
 
 double GeographicalLocation::getLongitude() const {
-    if (!isValid()) {
-        throw AccessingInvalidCoordinatesException();
-    }
     return longitude;
 }
 
-bool GeographicalLocation::isValid() const { return checkValidityOfCoordinates(latitude, longitude); }
+bool GeographicalLocation::isValid() const{
+    return !(std::isnan(latitude) || std::isnan(longitude));
+}
 
 std::string GeographicalLocation::toString() const {
     return std::to_string(latitude) + ", " + std::to_string(longitude);
@@ -97,4 +98,4 @@ bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double lo
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
 
-}// namespace NES
+}// namespace NES::Experimental::Mobility

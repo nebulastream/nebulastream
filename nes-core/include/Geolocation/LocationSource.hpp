@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_LOCATIONSOURCE_HPP
-#define NES_LOCATIONSOURCE_HPP
+#ifndef NES_GEOLOCATION_LOCATIONSOURCE_HPP
+#define NES_GEOLOCATION_LOCATIONSOURCE_HPP
 
 #include <cstdint>
 #include <utility>
@@ -45,4 +45,4 @@ class LocationSource {
 };
 }
 
-#endif//NES_LOCATIONSOURCE_HPP
+#endif//NES_GEOLOCATION_LOCATIONSOURCE_HPP

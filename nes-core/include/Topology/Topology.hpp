@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <optional>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -27,7 +28,6 @@
 namespace NES {
 
 //if no other values is supplied to the getClosestNodePosition() function, it will use this search radius to try to find a node
-const int DEFAULT_SEARCH_RADIUS = 50;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
@@ -35,6 +35,7 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
 namespace Experimental::Mobility {
+const int DEFAULT_SEARCH_RADIUS = 50;
 class GeographicalLocation;
 }
 
@@ -98,7 +99,7 @@ class Topology {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const NES::Experimental::Mobility::GeographicalLocation& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const NES::Experimental::Mobility::GeographicalLocation& geoLoc, int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
@@ -107,7 +108,7 @@ class Topology {
      * @param radius the maximum distance in kilometres which the returned node can have from the specified node
      * @return TopologyNodePtr to the closest field node unequal to nodePtr
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental

@@ -276,7 +276,7 @@ TEST_F(GeoLocationTests, testInvalidLocationFromCmd) {
                                       string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
-    EXPECT_THROW(workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams), CoordinatesOutOfRangeException);
+    EXPECT_THROW(workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams), NES::Experimental::Mobility::CoordinatesOutOfRangeException);
 }
 
 TEST_F(GeoLocationTests, DISABLED_testLocationFromConfig) {

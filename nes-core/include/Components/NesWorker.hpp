@@ -316,6 +316,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
 
+    //TODO Issue 2497: move location related logic into separate class
     NES::Experimental::Mobility::GeographicalLocationPtr fixedLocationCoordinates;
     bool isMobile;
     NES::Experimental::Mobility::LocationSourcePtr locationSource;

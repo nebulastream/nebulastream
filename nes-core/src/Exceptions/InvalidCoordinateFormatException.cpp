@@ -13,7 +13,7 @@
 */
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
 
-namespace NES {
+namespace NES::Experimental::Mobility {
 const char* InvalidCoordinateFormatException::what() const noexcept {
     return "The provided string is not of the format \"<lat>, <lng>\"";
 }

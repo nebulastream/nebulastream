@@ -15,7 +15,7 @@
 #define NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP
 #include <exception>
 
-namespace NES {
+namespace NES::Experimental::Mobility {
 
 /**
  * @brief an exception indicating that the entered string is not of the format "<double>, <double>"

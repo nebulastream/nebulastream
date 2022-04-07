@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LOCATIONSOURCECSV_HPP
-#define NES_LOCATIONSOURCECSV_HPP
+#ifndef NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
+#define NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
 #include <Geolocation/LocationSource.hpp>
 #include <Common/GeographicalLocation.hpp>
 #include <vector>
@@ -60,4 +60,4 @@ class LocationSourceCSV : public LocationSource {
 };
 }
 
-#endif//NES_LOCATIONSOURCECSV_HPP
+#endif//NES_GEOLOCATION_LOCATIONSOURCECSV_HPP

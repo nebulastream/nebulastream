@@ -388,6 +388,9 @@ if (USE_S2)
                 IMPORTED_LOCATION "${S2_PATH}/lib/libs2.so"
                 INTERFACE_INCLUDE_DIRECTORIES "${S2_PATH}/include/"
                 )
+
+        #to get the static library for linking libnes.so
+        link_directories(${S2_PATH}/lib)
     else()
         find_package(s2)
     endif()

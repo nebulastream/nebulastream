@@ -16,7 +16,7 @@
 #define NES_COORDINATESOUTOFRANGEEXCEPTION_HPP
 
 #include <exception>
-namespace NES {
+namespace NES::Experimental::Mobility {
 
 /**
  * @brief an exception indicating that the entered latitude is not in range [-90, 90] or the longitude is not in range [-180, 180]
