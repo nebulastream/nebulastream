@@ -307,7 +307,7 @@ TEST_F(RemoteClientTest, StopAStoppedQuery) {
     checkForQueryStart(queryId);
     EXPECT_TRUE(stopQuery(queryId));
     sleep(3);
-    EXPECT_FALSE(stopQuery(queryId));
+    EXPECT_TRUE(stopQuery(queryId));
 }
 
 /**

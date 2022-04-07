@@ -43,7 +43,7 @@ class QueryFailureTest : public Testing::NESBaseTest {
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(QueryFailureTest, failQueryFaultySource) {
+TEST_F(QueryFailureTest, DISABLED_failQueryFaultySource) {
     struct Test {
         uint32_t id;
         uint32_t value;
