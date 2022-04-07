@@ -33,6 +33,12 @@ Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv) {
         throw std::system_error(errno, std::system_category());
     }
 
+    std::cout << "Going to execute: " << cmd << " ";
+    for (auto& p : argv) {
+        std::cout << p << " ";
+    }
+    std::cout << std::endl;
+
     argv.insert(argv.begin(), cmd);
 
     switch (pid = ::fork()) {

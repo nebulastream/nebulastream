@@ -32,7 +32,7 @@ bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult,
         builder.append_query(("queryId"), queryId);
         clientProc.request(web::http::methods::GET, builder.to_string())
             .then([](const web::http::http_response& response) {
-                cout << "Get query status" << endl;
+                //cout << "Get query status" << endl;
                 return response.extract_json();
             })
             .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {

@@ -222,7 +222,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                 flag = 0;
                 break;
             }
-            cout << "NesWorker wait" << endl;
+            //cout << "NesWorker wait" << endl;
             sleep(5);
         }
         NES_DEBUG("NesWorker: joined, return");
