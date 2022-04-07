@@ -200,9 +200,10 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
+include(CheckCXXCompilerFlag)
 # Native/Generic march support
 if (NES_BUILD_NATIVE)
-    include(CheckCXXCompilerFlag)
+
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
     if (COMPILER_SUPPORTS_MARCH_NATIVE)
         message(STATUS "CMAKE detects native arch support")
