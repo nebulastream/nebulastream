@@ -393,13 +393,8 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     Coordinates* pCoordinates = request.mutable_coordinates();
-    if (fixedCoordinates.isValid()) {
-        pCoordinates->set_lat(fixedCoordinates.getLatitude());
-        pCoordinates->set_lng(fixedCoordinates.getLongitude());
-    } else {
-        pCoordinates->set_lat(Experimental::Mobility::kInvalidLocationDegrees);
-        pCoordinates->set_lng(Experimental::Mobility::kInvalidLocationDegrees);
-    }
+    pCoordinates->set_lat(fixedCoordinates.getLatitude());
+    pCoordinates->set_lng(fixedCoordinates.getLongitude());
 
 
     class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
@@ -482,7 +477,9 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
 std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::GeographicalLocation coord,
                                                                                                double radius) {
     GetNodesInRangeRequest request;
-    request.set_allocated_coord(new Coordinates{coord});
+    Coordinates* pCoordinates = request.mutable_coord();
+    pCoordinates->set_lat(coord.getLatitude());
+    pCoordinates->set_lng(coord.getLongitude());
     request.set_radius(radius);
     GetNodesInRangeReply reply;
     ClientContext context;
