@@ -1192,7 +1192,8 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
     } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
         // TODO: is the "overwrite" of the message a good thing?
         // EXPECT_EQ(err.what(),std::string("Invalid argument"));
-        EXPECT_EQ(err.what(), std::string("stoull"));// TODO(Dimitrios) this fails on mac as err.what() == "stoull: no conversion"
+        std::string msg = err.what();
+        EXPECT_TRUE(msg.find(std::string("stoull")) != std::string::npos);
     } catch (std::out_of_range const& err) {         // 2/2 throwables from stoull
         EXPECT_EQ(err.what(), std::string("Out of range"));
     } catch (...) {
@@ -1224,7 +1225,8 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
     } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
         // TODO: is the "overwrite" of the message a good thing?
         // EXPECT_EQ(err.what(),std::string("Invalid argument"));
-        EXPECT_EQ(err.what(), std::string("stoull"));
+        std::string msg = err.what();
+        EXPECT_TRUE(msg.find(std::string("stoull")) != std::string::npos);
     } catch (std::out_of_range const& err) {// 2/2 throwables from stoull
         EXPECT_EQ(err.what(), std::string("Out of range"));
     } catch (...) {
