@@ -97,6 +97,8 @@ static constexpr auto sleepDuration = std::chrono::seconds(1);
 
 [[nodiscard]] std::string restPort(uint64_t restPort) { return "--restPort=" + std::to_string(restPort); }
 
+[[nodiscard]] std::string enableDebug() { return "--logLevel=LOG_DEBUG"; }
+
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
    * @param flags
