@@ -35,7 +35,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SemanticQueryValidationTest.log", NES::LogLevel::LOG_INFO);
+        NES::Logger::setupLogging("SemanticQueryValidationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SemanticQueryValidationTest class.");
     }
 

@@ -41,7 +41,7 @@ using namespace Configurations;
 class grpcTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("grpcTests.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("grpcTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup grpc test class.");
     }
 };

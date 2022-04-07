@@ -71,7 +71,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief The current log level. Controls the detail of log messages.
      */
     EnumOption<LogLevel> logLevel = {LOG_LEVEL_CONFIG,
-                                     LogLevel::LOG_DEBUG,
+                                     LogLevel::LOG_INFO,
                                      "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     /**

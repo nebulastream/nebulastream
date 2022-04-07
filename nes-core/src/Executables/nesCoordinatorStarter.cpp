@@ -41,7 +41,7 @@ int main(int argc, const char* argv[]) {
     try {
         std::cout << logo << std::endl;
         std::cout << coordinator << " v" << NES_VERSION << std::endl;
-        NES::Logger::setupLogging("nesCoordinatorStarter.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("nesCoordinatorStarter.log", NES::LogLevel::LOG_INFO);
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
 
         map<string, string> commandLineParams;

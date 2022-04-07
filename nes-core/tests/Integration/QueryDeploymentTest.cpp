@@ -41,7 +41,7 @@ using namespace Configurations;
 class QueryDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("QueryDeploymentTest.log", NES::LogLevel::LOG_TRACE);
+        NES::Logger::setupLogging("QueryDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryDeploymentTest test class.");
     }
 };
