@@ -322,18 +322,21 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           NSOURCE_RETRY_WAIT,
                                                           NSOURCE_RETRIES,
                                                           std::move(succ));
-            recvEngine->getQueryManager()->registerQuery(
-                Runtime::Execution::ExecutableQueryPlan::create(0,
-                                                                0,
-                                                                {source},
-                                                                {sink},
-                                                                {},
-                                                                recvEngine->getQueryManager(),
-                                                                recvEngine->getBufferManager()));
+            auto qep = Runtime::Execution::ExecutableQueryPlan::create(0,
+                                                                       0,
+                                                                       {source},
+                                                                       {sink},
+                                                                       {},
+                                                                       recvEngine->getQueryManager(),
+                                                                       recvEngine->getBufferManager());
+            recvEngine->getQueryManager()->registerQuery(qep);
             ASSERT_EQ(recvEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
                       PartitionRegistrationStatus::Registered);
             completed.get_future().get();
             sinkShutdownBarrier->wait();
+            while (qep->getStatus() != Runtime::Execution::ExecutableQueryPlanStatus::Stopped) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
             ASSERT_TRUE(recvEngine->stop());
         });
 
@@ -574,6 +577,17 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         ASSERT_EQ(10ULL, testSink->completed.get_future().get());
     }
 
+    auto completedQueries = 0;
+    while (completedQueries != numQueries) {
+        for (auto i = 1; i <= numQueries; ++i) {
+            auto qepStatus = nodeEngineReceiver->getQueryStatus(i);
+            if (qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Stopped) {
+                completedQueries++;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }
@@ -730,7 +744,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
 
       protected:
         void onEvent(Runtime::BaseEvent& event) override {
-           // NetworkSink::onEvent(event);
+            // NetworkSink::onEvent(event);
             bool eventReceived = event.getEventType() == Runtime::EventType::kCustomEvent
                 && dynamic_cast<Runtime::CustomEventWrapper&>(event).data<detail::TestEvent>()->testValue() == 123;
             bool expected = false;
