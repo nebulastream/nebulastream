@@ -200,10 +200,10 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
-include(CheckCXXCompilerFlag)
+
 # Native/Generic march support
 if (NES_BUILD_NATIVE)
-
+    include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
     if (COMPILER_SUPPORTS_MARCH_NATIVE)
         message(STATUS "CMAKE detects native arch support")
@@ -213,16 +213,17 @@ if (NES_BUILD_NATIVE)
         if (${AVX2_FOUND})
             message(STATUS "CMAKE detects AVX2 support")
             add_compile_definitions(HAS_AVX)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -sse4.2 -mavx2")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
         endif ()
     else ()
         message(FATAL_ERROR "NES_BUILD_NATIVE was true but the compiler does not support it on this architecture.")
     endif ()
 else ()
     # Compiler should produce specific code for system architecture
-    if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86-64")
-        message(STATUS "CMAKE detects generic x86-64 arch support")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic -sse4.2")
+    MESSAGE("CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+        message(STATUS "CMAKE detects generic x86_64 arch support")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
     elseif (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
         message(STATUS "CMAKE detects APPLE ARM64 support")
         # Clang has the exact same macros for A14 as M1.
@@ -237,6 +238,8 @@ else ()
         # to use -mcpu=CPU_TYPE. For more info, here:
         # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
+    else()
+        message(FATAL_ERROR "CMAKE_SYSTEM_PROCESSOR was ${CMAKE_SYSTEM_PROCESSOR} this is a unsupported architecture.")
     endif ()
 endif ()
 

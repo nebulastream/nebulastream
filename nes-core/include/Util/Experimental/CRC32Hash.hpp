@@ -19,7 +19,7 @@
 
 namespace NES::Experimental {
 
-#ifdef __aarch64__
+#if !defined(__SSE4_2__)
 class CRC32Hash : public Hash<CRC32Hash> {
   public:
     inline uint64_t hashKey(uint64_t, hash_t) const { NES_NOT_IMPLEMENTED(); }
@@ -27,9 +27,8 @@ class CRC32Hash : public Hash<CRC32Hash> {
 
     inline uint64_t hashKey(const void*, int, uint64_t) const { NES_NOT_IMPLEMENTED(); }
 };
-#endif
 
-#ifdef __x86_64__
+#else
 
 #include <x86intrin.h>
 
