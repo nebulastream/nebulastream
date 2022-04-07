@@ -1072,7 +1072,7 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
         FAIL();
     } catch (std::exception const& err) {
         std::string msg = err.what();
-        EXPECT_TRUE(msg.find(std::string("CSV file is not valid")) != std::string::npos);
+        EXPECT_TRUE(msg.find(std::string("Could not determine absolute pathname")) != std::string::npos);
     }
 }
 
