@@ -26,7 +26,7 @@ bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult,
     std::string currentStatus;
 
     NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalogService/status");
         web::uri_builder builder(("/"));
         builder.append_query(("queryId"), queryId);
@@ -45,6 +45,9 @@ bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult,
                 }
             })
             .wait();
+        if (currentStatus == "RUNNING" || currentStatus == "STOPPED") {
+            break;
+        }
         NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
     }

@@ -107,9 +107,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
-
     string ASSERTedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
                              "1,1\n"
@@ -209,11 +206,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
                              "1,1\n"
                              "1,1\n"
                              "1,1\n";
-
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId3, std::to_string(*restPort)));
-
+    
     std::ifstream ifsQ1(pathQuery1.c_str());
     ASSERT_TRUE(ifsQ1.good());
     std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));
@@ -307,9 +300,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
-
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
 
     string ASSERTedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
                               "R2000073,1543624020000,102.629631,8\n"
@@ -410,9 +400,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
-
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
 
     string ASSERTedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,51\n"
@@ -515,9 +502,6 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
-
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
 
     string ASSERTedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,51\n"

@@ -28,7 +28,7 @@ Logger::Logger() : details(std::make_unique<detail::LoggerDetails>()) {}
 LogLevel& Logger::getCurrentLogLevel() { return currentLogLevel; }
 
 void Logger::setLogLevel(const LogLevel logLevel) {
-    if (getLogLevel(logLevel) < NES_COMPILE_TIME_LOG_LEVEL) {
+    if (getLogLevel(logLevel) > NES_COMPILE_TIME_LOG_LEVEL) {
         NES_FATAL_ERROR("The log level " << magic_enum::enum_name(logLevel)
                                          << " is not available as NebulaStream was compiled with loglevel: "
                                          << magic_enum::enum_name(magic_enum::enum_value<LogLevel>(NES_COMPILE_TIME_LOG_LEVEL)));

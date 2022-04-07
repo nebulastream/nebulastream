@@ -65,7 +65,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Port of the Data server of the Coordinator.
      * This is used to receive data at the coordinator.
      */
-    UIntOption dataPort = {DATA_PORT_CONFIG, 4001, "Data server port of the Coordinator"};
+    UIntOption dataPort = {DATA_PORT_CONFIG, 0, "Data server port of the Coordinator"};
 
     /**
      * @brief The current log level. Controls the detail of log messages.
