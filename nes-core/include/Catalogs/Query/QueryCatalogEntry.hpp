@@ -21,6 +21,7 @@
 #include <Util/QueryStatus.hpp>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -42,11 +43,11 @@ using QuerySubPlanMetaDataPtr = std::shared_ptr<QuerySubPlanMetaData>;
  */
 class QueryCatalogEntry {
   public:
-    QueryCatalogEntry(QueryId queryId,
-                      std::string queryString,
-                      std::string queryPlacementStrategy,
-                      QueryPlanPtr inputQueryPlan,
-                      QueryStatus::Value queryStatus);
+    explicit QueryCatalogEntry(QueryId queryId,
+                               std::string queryString,
+                               std::string queryPlacementStrategy,
+                               QueryPlanPtr inputQueryPlan,
+                               QueryStatus::Value queryStatus);
 
     /**
      * @brief method to get the id of the query
@@ -108,12 +109,6 @@ class QueryCatalogEntry {
      */
     PlacementStrategy::Value getQueryPlacementStrategy();
 
-    /**
-     * @brief create a copy of query catalog entry.
-     * @return copy of this query catalog entry
-     */
-    QueryCatalogEntry copy();
-
     void setMetaInformation(std::string metaInformation);
 
     std::string getMetaInformation();
@@ -153,6 +148,7 @@ class QueryCatalogEntry {
     void removeAllQuerySubPlanMetaData();
 
   private:
+    mutable std::mutex mutex;
     QueryId queryId;
     std::string queryString;
     std::string queryPlacementStrategy;

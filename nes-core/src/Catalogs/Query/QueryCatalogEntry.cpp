@@ -35,38 +35,48 @@ QueryPlanPtr QueryCatalogEntry::getInputQueryPlan() const { return inputQueryPla
 
 QueryPlanPtr QueryCatalogEntry::getExecutedQueryPlan() const { return executedQueryPlan; }
 
-void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) { this->executedQueryPlan = executedQueryPlan; }
+void QueryCatalogEntry::setExecutedQueryPlan(QueryPlanPtr executedQueryPlan) {
+    std::unique_lock lock(mutex);
+    this->executedQueryPlan = executedQueryPlan;
+}
 
-QueryStatus::Value QueryCatalogEntry::getQueryStatus() const { return queryStatus; }
+QueryStatus::Value QueryCatalogEntry::getQueryStatus() const {
+    std::unique_lock lock(mutex);
+    return queryStatus;
+}
 
-std::string QueryCatalogEntry::getQueryStatusAsString() const { return QueryStatus::toString(queryStatus); }
+std::string QueryCatalogEntry::getQueryStatusAsString() const {
+    std::unique_lock lock(mutex);
+    return QueryStatus::toString(queryStatus);
+}
 
-void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) { this->queryStatus = queryStatus; }
+void QueryCatalogEntry::setQueryStatus(QueryStatus::Value queryStatus) {
+    std::unique_lock lock(mutex);
+    this->queryStatus = queryStatus;
+}
 
-void QueryCatalogEntry::setMetaInformation(std::string metaInformation) { this->metaInformation = std::move(metaInformation); }
+void QueryCatalogEntry::setMetaInformation(std::string metaInformation) {
+    std::unique_lock lock(mutex);
+    this->metaInformation = std::move(metaInformation);
+}
 
 std::string QueryCatalogEntry::getMetaInformation() { return metaInformation; }
 
 const std::string& QueryCatalogEntry::getQueryPlacementStrategyAsString() const { return queryPlacementStrategy; }
-
-QueryCatalogEntry QueryCatalogEntry::copy() {
-    auto queryCatalogEntry = QueryCatalogEntry(queryId, queryString, queryPlacementStrategy, inputQueryPlan, queryStatus);
-    queryCatalogEntry.setExecutedQueryPlan(executedQueryPlan);
-    return queryCatalogEntry;
-}
 
 PlacementStrategy::Value QueryCatalogEntry::getQueryPlacementStrategy() {
     return PlacementStrategy::getFromString(queryPlacementStrategy);
 }
 
 void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan) {
+    std::unique_lock lock(mutex);
     optimizationPhases.insert(std::pair<std::string, QueryPlanPtr>(phaseName, queryPlan));
 }
 
 std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() { return optimizationPhases; }
 
 void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, uint64_t workerId) {
-
+    std::unique_lock lock(mutex);
     if (querySubPlanMetaDataMap.find(querySubPlanId) != querySubPlanMetaDataMap.end()) {
         throw InvalidQueryException("Query catalog entry already contain the query sub plan id "
                                     + std::to_string(querySubPlanId));
@@ -77,7 +87,7 @@ void QueryCatalogEntry::addQuerySubPlanMetaData(QuerySubPlanId querySubPlanId, u
 }
 
 QuerySubPlanMetaDataPtr QueryCatalogEntry::getQuerySubPlanMetaData(QuerySubPlanId querySubPlanId) {
-
+    std::unique_lock lock(mutex);
     if (querySubPlanMetaDataMap.find(querySubPlanId) == querySubPlanMetaDataMap.end()) {
         throw InvalidQueryException("Query catalog entry does not contains the input query sub pln Id "
                                     + std::to_string(querySubPlanId));
@@ -86,7 +96,7 @@ QuerySubPlanMetaDataPtr QueryCatalogEntry::getQuerySubPlanMetaData(QuerySubPlanI
 }
 
 std::vector<QuerySubPlanMetaDataPtr> QueryCatalogEntry::getAllSubQueryPlanMetaData() {
-
+    std::unique_lock lock(mutex);
     //Fetch all query sub plan metadata information
     std::vector<QuerySubPlanMetaDataPtr> allQuerySubPlanMetaData;
     for (const auto& pair : querySubPlanMetaDataMap) {
@@ -95,6 +105,9 @@ std::vector<QuerySubPlanMetaDataPtr> QueryCatalogEntry::getAllSubQueryPlanMetaDa
     return allQuerySubPlanMetaData;
 }
 
-void QueryCatalogEntry::removeAllQuerySubPlanMetaData() { querySubPlanMetaDataMap.clear(); }
+void QueryCatalogEntry::removeAllQuerySubPlanMetaData() {
+    std::unique_lock lock(mutex);
+    querySubPlanMetaDataMap.clear();
+}
 
 }// namespace NES
