@@ -14,6 +14,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
+#include <Windowing/Experimental/NonBlockingWatermarkProcessor.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>
@@ -46,7 +47,7 @@ class LockFreeWatermarkProcessorTest : public testing::Test {
  * Assumption:
  * As we insert all updates in a sequential fashion we assume that the getCurrentWatermark is equal to the latest processed update.
  */
-TEST_F(LockFreeWatermarkProcessorTest, singleThreadLSequentialUpdaterTest) {
+TEST_F(LockFreeWatermarkProcessorTest, singleThreadSequentialUpdaterTest) {
     auto updates = 10000;
     auto watermarkProcessor = std::make_shared<Experimental::LockFreeWatermarkProcessor<>>();
     // preallocate watermarks for each transaction
