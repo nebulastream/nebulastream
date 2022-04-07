@@ -75,7 +75,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
         numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schemaSize));
     } else {
         //if the memory area spans multiple buffers
-        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schemaSize;
+        auto restTuples = memoryAreaSize / this->schemaSize;
         auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->schemaSize));
         if (restTuples > numberOfTuplesPerBuffer) {
             numberOfTuplesToProduce = numberOfTuplesPerBuffer;
@@ -97,64 +97,71 @@ void BenchmarkSource::open() {
 }
 
 void BenchmarkSource::runningRoutine() {
-    open();
+    try {
+        open();
 
-    NES_INFO("Going to produce " << numberOfTuplesToProduce);
-    std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
+        NES_INFO("Going to produce " << numberOfTuplesToProduce);
+        //std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
 
-    for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
-        Runtime::TupleBuffer buffer;
-        switch (sourceMode) {
-            case SourceMode::EMPTY_BUFFER: {
-                buffer = bufferManager->getBufferBlocking();
-                break;
-            }
-            case SourceMode::COPY_BUFFER_SIMD_RTE: {
+        for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
+            Runtime::TupleBuffer buffer;
+            switch (sourceMode) {
+                case SourceMode::EMPTY_BUFFER: {
+                    buffer = bufferManager->getBufferBlocking();
+                    break;
+                }
+                case SourceMode::COPY_BUFFER_SIMD_RTE: {
 #ifdef HAS_AVX
-                buffer = bufferManager->getBufferBlocking();
-                rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
+                    buffer = bufferManager->getBufferBlocking();
+                    rte_memcpy(buffer.getBuffer(),
+                               numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
+                               buffer.getBufferSize());
 #else
-                NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
+                    NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
 #endif
-                break;
+                    break;
+                }
+                case SourceMode::COPY_BUFFER_SIMD_APEX: {
+                    buffer = bufferManager->getBufferBlocking();
+                    apex_memcpy(buffer.getBuffer(),
+                                numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
+                                buffer.getBufferSize());
+                    break;
+                }
+                case SourceMode::CACHE_COPY: {
+                    buffer = bufferManager->getBufferBlocking();
+                    memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
+                    break;
+                }
+                case SourceMode::COPY_BUFFER: {
+                    buffer = bufferManager->getBufferBlocking();
+                    memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
+                    break;
+                }
+                case SourceMode::WRAP_BUFFER: {
+                    buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
+                                                              bufferSize,
+                                                              this);
+                    break;
+                }
             }
-            case SourceMode::COPY_BUFFER_SIMD_APEX: {
-                buffer = bufferManager->getBufferBlocking();
-                apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
-                break;
-            }
-            case SourceMode::CACHE_COPY: {
-                buffer = bufferManager->getBufferBlocking();
-                memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
-                break;
-            }
-            case SourceMode::COPY_BUFFER: {
-                buffer = bufferManager->getBufferBlocking();
-                memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
-                break;
-            }
-            case SourceMode::WRAP_BUFFER: {
-                buffer =
-                    Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
-                break;
+
+            buffer.setNumberOfTuples(numberOfTuplesToProduce);
+            generatedTuples += numberOfTuplesToProduce;
+            generatedBuffers++;
+
+            for (const auto& successor : executableSuccessors) {
+                queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
             }
         }
 
-        buffer.setNumberOfTuples(numberOfTuplesToProduce);
-        generatedTuples += numberOfTuplesToProduce;
-        generatedBuffers++;
-
-        for (const auto& successor : executableSuccessors) {
-            queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
-        }
+        close();
+        completedPromise.set_value(true);
+        NES_DEBUG("DataSource " << operatorId << " end running");
+    } catch (std::exception const& error) {
+        queryManager->notifySourceFailure(shared_from_base<DataSource>(), error.what());
+        completedPromise.set_exception(std::make_exception_ptr(error));
     }
-
-    close();
-    // inject reconfiguration task containing end of source
-    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
-    bufferManager->destroy();
-    queryManager.reset();
-    NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
 void BenchmarkSource::close() {

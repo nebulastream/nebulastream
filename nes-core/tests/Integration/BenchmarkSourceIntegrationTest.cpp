@@ -47,7 +47,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -73,8 +73,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 
     constexpr auto memAreaSize = 4096;           // 1 MB
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
-    constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
-    auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
+    constexpr auto buffersToASSERT = memAreaSize / bufferSizeInNodeEngine;
+    auto recordsToASSERT = memAreaSize / schema->getSchemaSizeInBytes();
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
@@ -85,16 +85,16 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     }
 
     auto benchmarkSourceType =
-        BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect, 0, "interval", "copyBuffer", 0, 0);
+        BenchmarkSourceType::create(memArea, memAreaSize, buffersToASSERT, 0, "interval", "copyBuffer", 0, 0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "benchmSourceTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "benchmSourceTestOut.csv";
     remove(filePath.c_str());
 
     //register query
@@ -102,41 +102,42 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
         R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    NES_INFO("BenchmarkSourceIntegrationTest: Query is running");
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("BenchmarkSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     //    NES_INFO("BenchmarkSourceIntegrationTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
+    ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
     std::string line;
     std::size_t lineCnt = 0;
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
-            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            ASSERT_EQ(line, expectedString);
+            std::string ASSERTedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
+            ASSERT_EQ(line, ASSERTedString);
         }
         lineCnt++;
     }
 
-    ASSERT_EQ(recordsToExpect, lineCnt - 1);
+    ASSERT_EQ(recordsToASSERT, lineCnt - 1);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
@@ -148,7 +149,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -174,8 +175,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 
     constexpr auto memAreaSize = sizeof(Record) * 5;
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
-    constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
-    auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
+    constexpr auto buffersToASSERT = memAreaSize / bufferSizeInNodeEngine;
+    auto recordsToASSERT = memAreaSize / schema->getSchemaSizeInBytes();
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
@@ -190,11 +191,11 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "benchmSourceTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "benchmSourceTestOut.csv";
     remove(filePath.c_str());
 
     //register query
@@ -202,41 +203,41 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
         R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("BenchmarkSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("BenchmarkSourceIntegrationTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
+    ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
     std::string line;
     std::size_t lineCnt = 0;
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
-            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            ASSERT_EQ(line, expectedString);
+            std::string ASSERTedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
+            ASSERT_EQ(line, ASSERTedString);
         }
         lineCnt++;
     }
 
-    ASSERT_EQ(recordsToExpect, lineCnt - 1);
+    ASSERT_EQ(recordsToASSERT, lineCnt - 1);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 /// This test checks that a deployed MemorySource can write M records stored in N+1 buffers
@@ -250,7 +251,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_INFO("BenchmarkSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -276,8 +277,8 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
 
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto memAreaSize = bufferSizeInNodeEngine * 64 + (bufferSizeInNodeEngine / 2);
-    constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
-    auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
+    constexpr auto buffersToASSERT = memAreaSize / bufferSizeInNodeEngine;
+    auto recordsToASSERT = memAreaSize / schema->getSchemaSizeInBytes();
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
@@ -288,16 +289,16 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     }
 
     auto benchmarkSourceType =
-        BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, "interval", "copyBuffer", 0, 0);
+        BenchmarkSourceType::create(memArea, memAreaSize, buffersToASSERT + 1, 0, "interval", "copyBuffer", 0, 0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "benchmSourceTestOut";
+    std::string filePath = getTestResourceFolder() / "benchmSourceTestOut";
     remove(filePath.c_str());
 
     //register query
@@ -305,42 +306,42 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
         R"(Query::from("memory_stream").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("BenchmarkSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
+    ASSERT_TRUE(ifs.good());
 
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     NES_INFO("BenchmarkSourceIntegrationTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
+    ASSERT_TRUE(!content.empty());
 
     std::ifstream infile(filePath.c_str());
     std::string line;
     std::size_t lineCnt = 0;
     while (std::getline(infile, line)) {
         if (lineCnt > 0) {
-            std::string expectedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
-            std::cout << " line=" << line << " expected=" << expectedString << std::endl;
-            ASSERT_EQ(line, expectedString);
+            std::string ASSERTedString = std::to_string(lineCnt - 1) + "," + std::to_string(lineCnt - 1);
+            //            std::cout << " line=" << line << " ASSERTed=" << ASSERTedString << std::endl;
+            ASSERT_EQ(line, ASSERTedString);
         }
         lineCnt++;
     }
 
-    ASSERT_EQ(recordsToExpect, lineCnt - 1);
+    ASSERT_EQ(recordsToASSERT, lineCnt - 1);
 
     bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
+    ASSERT_TRUE(retStopWrk);
 
     bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
+    ASSERT_TRUE(retStopCord);
 }
 
 }// namespace NES

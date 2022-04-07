@@ -227,6 +227,9 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
         bool stopQuery = true;
         if (subQueryStatus == QueryStatus::SoftStopCompleted) {
             for (auto& querySubPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
+                NES_DEBUG("Updating query subplan status for query id="
+                          << queryId << " subplan=" << querySubPlanMetaData->getQuerySubPlanId() << " is "
+                          << QueryStatus::toString(querySubPlanMetaData->getQuerySubPlanStatus()))
                 if (querySubPlanMetaData->getQuerySubPlanStatus() != QueryStatus::SoftStopCompleted) {
                     stopQuery = false;
                     break;
@@ -235,6 +238,7 @@ bool QueryCatalogService::handleSoftStop(SharedQueryId sharedQueryId,
             // Mark the query as stopped if all sub queryIdAndCatalogEntryMapping are stopped
             if (stopQuery) {
                 queryCatalogEntry->setQueryStatus(QueryStatus::Stopped);
+                NES_INFO("Query with id " << queryCatalogEntry->getQueryId() << " is now stopped");
             }
         }
     }

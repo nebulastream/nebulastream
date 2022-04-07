@@ -198,19 +198,23 @@ static constexpr auto sleepDuration = std::chrono::seconds(1);
         }
         NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
-        bool isQueryRunning = status == QueryStatus::Running;
-        if (isQueryRunning) {
-            NES_TRACE("TestUtils: Query " << queryId << " is now in running status.");
-            return isQueryRunning;
-        }
 
-        if (status == QueryStatus::Stopped) {
-            return true;// was once running
-        }
-
-        if (status == QueryStatus::Failed) {
-            NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
-            return false;
+        switch (queryCatalogEntry->getQueryStatus()) {
+            case QueryStatus::MarkedForHardStop:
+            case QueryStatus::MarkedForSoftStop:
+            case QueryStatus::SoftStopCompleted:
+            case QueryStatus::SoftStopTriggered:
+            case QueryStatus::Stopped:
+            case QueryStatus::Running: {
+                return true;
+            }
+            case QueryStatus::Failed: {
+                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
+                return false;
+            }
+            default: {
+                break;
+            }
         }
 
         std::this_thread::sleep_for(sleepDuration);
