@@ -57,14 +57,14 @@ then
       # timeout after 70 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
-      timeout 70m make test_debug
+      timeout 100m make test_debug
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then
         rm -rf /nebulastream/build 
         if [ "$RequireTest" = "true" ];
         then
-          echo "Required Tests Failed"          
+          echo "Required Tests Failed"
           exit $errorCode
         else
           echo "Optional Tests Failed"
