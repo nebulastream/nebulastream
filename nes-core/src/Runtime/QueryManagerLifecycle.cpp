@@ -243,7 +243,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
         case std::future_status::timeout:
         case std::future_status::deferred: {
             // TODO we need to fail the query now as it could not be stopped?
-            NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getQuerySubPlanId());
+            NES_ASSERT2_FMT(false, "Cannot stop query within deadline getQuerySubPlanId()=" << qep->getQuerySubPlanId());
             break;
         }
     }
