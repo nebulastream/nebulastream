@@ -90,7 +90,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFi
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(*restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
+    //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
