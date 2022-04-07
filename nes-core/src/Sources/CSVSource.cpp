@@ -53,12 +53,16 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     char* path = realpath(filePath.c_str(), nullptr);
-    NES_DEBUG("CSVSource: Opening path " << path);
+    if (path == nullptr) {
+        NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
+
+    }
     input.open(path);
     if(!(input.is_open() && input.good()))
     {
-        NES_THROW_RUNTIME_ERROR("CSV file is not valid");
+        NES_THROW_RUNTIME_ERROR("Could not open CSV file: " << path);
     }
+    NES_DEBUG("CSVSource: Opening path " << path);
 
     NES_DEBUG("CSVSource::CSVSource: read buffer");
     input.seekg(0, std::ifstream::end);
