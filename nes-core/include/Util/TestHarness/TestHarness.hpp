@@ -485,8 +485,9 @@ class TestHarness {
         ifs.seekg(0, std::ifstream::beg);
 
         // read the binary output as a vector of T
-        std::vector<T> actualOutputVector(length/sizeof(T));
-        auto* buff = reinterpret_cast<char*>(actualOutputVector.data());
+        std::vector<T> outputVector;
+        outputVector.resize(length/sizeof(T));
+        auto* buff = reinterpret_cast<char*>(outputVector.data());
         ifs.read(buff, length);
 
         for (const auto& worker : testHarnessWorkerConfigurations) {
@@ -494,7 +495,7 @@ class TestHarness {
         }
         nesCoordinator->stopCoordinator(false);
 
-        return actualOutputVector;
+        return outputVector;
     }
 
     TopologyPtr getTopology() {
