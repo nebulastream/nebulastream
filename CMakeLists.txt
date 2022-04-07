@@ -232,7 +232,7 @@ else ()
         # offer so many different configuration parameters
         # that compilers prefer -mcpu=XXX instead.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-a14")
-    elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
         message(STATUS "CMAKE detects generic ARM64 support")
         # Arm themselves suggest using -mcpu=native, or in general,
         # to use -mcpu=CPU_TYPE. For more info, here:
