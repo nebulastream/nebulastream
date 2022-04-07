@@ -55,6 +55,8 @@ TEST_F(HashMapTest, insertKey) {
     ASSERT_EQ(entry1, entry2);
 }
 
+#if defined(__SSE4_2__)
+
 TEST_F(HashMapTest, insertSmallNumberOfUniqueKey) {
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto map = Experimental::Hashmap(bm, 8, 8, 100);
@@ -144,4 +146,5 @@ TEST_F(HashMapTest, insertMultipleValues) {
         ASSERT_EQ(value->v2, i * 42ULL);
     }
 }
+#endif
 }// namespace NES
