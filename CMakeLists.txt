@@ -200,46 +200,42 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
-# AVX detection
-find_package(AVX)
-
 # Native/Generic march support
 if (NES_BUILD_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
-    if (${AVX2_FOUND})
-        add_compile_definitions(HAS_AVX)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
-    endif ()
-else ()
-    # Compiler should produce specific code for system architecture
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
     if (COMPILER_SUPPORTS_MARCH_NATIVE)
         message(STATUS "CMAKE detects native arch support")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
+        # AVX detection
+        find_package(AVX)
         if (${AVX2_FOUND})
             message(STATUS "CMAKE detects AVX2 support")
+            add_compile_definitions(HAS_AVX)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
         endif ()
     else ()
-        if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86-64")
-            message(STATUS "CMAKE detects generic x86-64 arch support")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
-        elseif (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-            message(STATUS "CMAKE detects APPLE ARM64 support")
-            # Clang has the exact same macros for A14 as M1.
-            # Current Clang master has -mcpu=apple-m1 but
-            # not yet on latest release. Overall, arm64/aarch64
-            # offer so many different configuration parameters
-            # that compilers prefer -mcpu=XXX instead.
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-a14")
-        elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-            message(STATUS "CMAKE detects generic ARM64 support")
-            # Arm themselves suggest using -mcpu=native, or in general,
-            # to use -mcpu=CPU_TYPE. For more info, here:
-            # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
-        endif ()
+        message(FATAL_ERROR "NES_BUILD_NATIVE was true but the compiler does not support it on this architecture.")
+    endif ()
+else ()
+    # Compiler should produce specific code for system architecture
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86-64")
+        message(STATUS "CMAKE detects generic x86-64 arch support")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
+    elseif (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+        message(STATUS "CMAKE detects APPLE ARM64 support")
+        # Clang has the exact same macros for A14 as M1.
+        # Current Clang master has -mcpu=apple-m1 but
+        # not yet on latest release. Overall, arm64/aarch64
+        # offer so many different configuration parameters
+        # that compilers prefer -mcpu=XXX instead.
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-a14")
+    elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+        message(STATUS "CMAKE detects generic ARM64 support")
+        # Arm themselves suggest using -mcpu=native, or in general,
+        # to use -mcpu=CPU_TYPE. For more info, here:
+        # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
     endif ()
 endif ()
 
@@ -566,7 +562,6 @@ add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLE
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)
 install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
-
 
 
 include(CMakePackageConfigHelpers)
