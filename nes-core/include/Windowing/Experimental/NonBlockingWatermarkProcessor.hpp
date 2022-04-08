@@ -24,31 +24,30 @@
 
 namespace NES::Experimental {
 
-template<class T, uint64_t blockSize>
+template<class T, uint64_t blockSize = 100>
 class NonBlockingMonotonicSeqQueue {
+  public:
+    struct Container {
+        uint64_t seq;
+        T value;
+    };
 
     class Block {
       public:
         Block(uint64_t blockIndex) : blockIndex(blockIndex){};
+        Block(const Block& other) : blockIndex(other.blockIndex){};
         const uint64_t blockIndex;
-        std::array<std::tuple<uint64_t, T>, blockSize> log;
+        std::array<Container, blockSize> log;
         std::shared_ptr<Block> next;
     };
 
-    class Node {
-      public:
-        Node(uint64_t seq) : seq(seq){};
-        const uint64_t seq;
-        const T value;
-        std::shared_ptr<Node> next;
-    };
-
   public:
-    NonBlockingMonotonicSeqQueue() { head = new Node(); }
+    NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) {}
+    ~NonBlockingMonotonicSeqQueue() {}
 
     void emplaceValueInBlock(uint64_t seq, T value) {
         // The block index, which contains the sequence number.
-        auto targetBlockIndex = seq % blockSize;
+        auto targetBlockIndex = seq / blockSize;
         // Find the right block
         auto currentBlock = std::atomic_load(&head);
         // Each block contains blockSize elements and covers sequence numbers from
@@ -59,7 +58,7 @@ class NonBlockingMonotonicSeqQueue {
             auto nextBlock = std::atomic_load(&currentBlock->next);
             if (nextBlock == nullptr) {
                 auto newBlock = std::make_shared<Block>(currentBlock->blockIndex + 1);
-                atomic_compare_exchange_weak(nextBlock, &currentBlock->next, newBlock);
+                //std::atomic_compare_exchange_strong(nextBlock, &currentBlock->next, newBlock);
                 // we don't if this or another thread succeeds, as we just start over again in the loop
                 // and use what ever is now stored in currentBlock.next.
                 continue;
@@ -69,7 +68,7 @@ class NonBlockingMonotonicSeqQueue {
         }
 
         // check if we really found the correct block
-        if (!(currentBlock->blockIndex * blockSize >= seq && currentBlock->blockIndex * blockSize + blockSize < seq)) {
+        if (!(seq >= currentBlock->blockIndex * blockSize && seq < currentBlock->blockIndex * blockSize + blockSize )) {
             NES_THROW_RUNTIME_ERROR("The found block is wrong, we expected ");
         }
 
@@ -77,16 +76,18 @@ class NonBlockingMonotonicSeqQueue {
         // It is safe to perform this operation without atomics as no other thread will have the same sequence number,
         // and thus can modify this value.
         auto seqIndexInBlock = seq - (currentBlock->blockIndex * blockSize);
-        currentBlock->log[seqIndexInBlock] = std::make_tuple(seq, value);
+        currentBlock->log[seqIndexInBlock].seq = seq;
+        currentBlock->log[seqIndexInBlock].value = value;
     }
 
-    uint64_t shiftCurrent() {
+    void shiftCurrent() {
         auto checkForUpdate = true;
         while (checkForUpdate) {
             auto currentBlock = std::atomic_load(&head);
             // we are looking for the next sequence number
-            auto seqNumber = currentSeq.load();
-            while (currentBlock->blockIndex < seqNumber) {
+            auto currentSequenceNumber = currentSeq.load();
+            auto targetBlockIndex = currentSequenceNumber / blockSize;
+            while (currentBlock->blockIndex < targetBlockIndex) {
                 // append new block if the next block is a nullptr
                 auto nextBlock = std::atomic_load(&currentBlock->next);
                 if (nextBlock == nullptr) {
@@ -98,14 +99,14 @@ class NonBlockingMonotonicSeqQueue {
 
             // check if next value is set
             // next seqNumber
-            auto nextSeqNumber = seqNumber + 1;
+            auto nextSeqNumber = currentSequenceNumber + 1;
             if (nextSeqNumber % blockSize == 0) {
                 // the next sequence number is the first element in the next block.
                 auto nextBlock = std::atomic_load(&currentBlock->next);
                 if (nextBlock != nullptr) {
                     // this will always be the first element
                     auto& value = nextBlock->log[0];
-                    if (std::get<0>(value) == nextSeqNumber) {
+                    if (value.seq == nextSeqNumber) {
                         // the next sequence number is still in the current block thus we only have to exchange the currentSeq.
                         if (std::atomic_compare_exchange_strong(&currentSeq, &nextSeqNumber, nextSeqNumber)) {
                             std::atomic_compare_exchange_strong(&head, &nextBlock, nextBlock);
@@ -116,9 +117,9 @@ class NonBlockingMonotonicSeqQueue {
             } else {
                 auto seqIndexInBlock = nextSeqNumber - (currentBlock->blockIndex * blockSize);
                 auto& value = currentBlock->log[seqIndexInBlock];
-                if (std::get<0>(value) == nextSeqNumber) {
+                if (value.seq == nextSeqNumber) {
                     // the next sequence number is still in the current block thus we only have to exchange the currentSeq.
-                    std::atomic_compare_exchange_strong(&currentSeq, &nextSeqNumber, nextSeqNumber);
+                    std::atomic_compare_exchange_strong(&currentSeq, &nextSeqNumber, currentSequenceNumber);
                     continue;
                 }
             }
@@ -134,10 +135,31 @@ class NonBlockingMonotonicSeqQueue {
 
         // We now try to shift the current sequence number
         shiftCurrent();
+        return getCurrentValue();
+    }
+
+    auto getCurrentValue() {
+        auto currentBlock = std::atomic_load(&head);
+        // we are looking for the next sequence number
+        auto seqNumber = currentSeq.load();
+        auto targetBlockIndex = seqNumber / blockSize;
+        while (currentBlock->blockIndex < targetBlockIndex) {
+            // append new block if the next block is a nullptr
+            auto nextBlock = std::atomic_load(&currentBlock->next);
+            if (nextBlock == nullptr) {
+                NES_THROW_RUNTIME_ERROR("The next block dose not exists. This should not happen here.");
+            }
+            // move to the next block
+            currentBlock = nextBlock;
+        }
+
+        auto seqIndexInBlock = seqNumber - (currentBlock->blockIndex * blockSize);
+        auto& value = currentBlock->log[seqIndexInBlock];
+        return value.value;
     }
 
   private:
-    std::shared_ptr<Node> head;
+    std::shared_ptr<Block> head;
     std::atomic<uint64_t> currentSeq;
 };
 
