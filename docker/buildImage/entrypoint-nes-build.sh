@@ -15,7 +15,7 @@
 #quit if command returns non-zero code
 #set -e
 
-if [ -f "/nebulastream/CMakeLists.txt" ]; then
+if [ ! -f "/nebulastream/CMakeLists.txt" ]; then
   echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]"
   exit 1
 fi
