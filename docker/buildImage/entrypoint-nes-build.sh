@@ -15,7 +15,10 @@
 #quit if command returns non-zero code
 #set -e
 
-[[ ! -f /nebulastream/CMakeLists.txt ]] && echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]" && exit 1
+if [ -f "/nebulastream/CMakeLists.txt" ]; then
+  echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]"
+  exit 1
+fi
 
 # RequireBuild indicates if the build should succeed if we fail during make.
 # This is important to check the log to identify build errors on new platforms.
@@ -41,7 +44,7 @@ then
     if [ $errorCode -ne 0 ];
     then
       rm -rf /nebulastream/build
-      if [ "$RequireBuild" == "true" ];
+      if [ "$RequireBuild" = "true" ];
       then
         echo "Required Build Failed"     
         exit $errorCode
@@ -59,7 +62,7 @@ then
       if [ $errorCode -ne 0 ];
       then
         rm -rf /nebulastream/build 
-        if [ "$RequireTest" == "true" ];
+        if [ "$RequireTest" = "true" ];
         then
           echo "Required Tests Failed"          
           exit $errorCode
