@@ -52,7 +52,7 @@ namespace TestUtils {
 
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
 // in milliseconds
-static constexpr auto sleepDuration = std::chrono::seconds(1);
+static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
