@@ -561,7 +561,7 @@ add_subdirectory(cmake/docs)
 
 # Custom test commands --------------------------------------------------------
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLELISM} --output-on-failure DEPENDS ${UNITTESTS})
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLELISM} DEPENDS ${UNITTESTS})
 
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)
