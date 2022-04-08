@@ -256,7 +256,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
     if (it != queryIdToQuerySubPlanIds.end()) {
         std::vector<QuerySubPlanId> querySubPlanIds = it->second;
         if (querySubPlanIds.empty()) {
-            NES_ERROR("Runtime: Unable to find qep ids for the query " << queryId << ". Start failed.");
+            NES_ERROR("Runtime: Unable to find qep ids for the query " << queryId << ". Stop failed.");
             return false;
         }
 

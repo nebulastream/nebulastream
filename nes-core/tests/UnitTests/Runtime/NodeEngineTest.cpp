@@ -382,6 +382,9 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
+    while (engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Finished) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
     ASSERT_TRUE(engine->undeployQuery(testQueryId));
     ASSERT_TRUE(engine->stop());
 
@@ -678,9 +681,9 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
-
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
-
+    while (engine->getQueryStatus(testQueryId) != ExecutableQueryPlanStatus::Finished) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
     ASSERT_TRUE(engine->undeployQuery(testQueryId));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
 

@@ -188,7 +188,8 @@ bool AbstractQueryManager::deregisterQuery(const Execution::ExecutableQueryPlanP
     NES_DEBUG("AbstractQueryManager::deregisterAndUndeployQuery: query" << qep->getQueryId());
     std::unique_lock lock(queryMutex);
     auto qepStatus = qep->getStatus();
-    NES_ASSERT2_FMT(qepStatus == Execution::ExecutableQueryPlanStatus::Stopped
+    NES_ASSERT2_FMT(qepStatus == Execution::ExecutableQueryPlanStatus::Finished
+                        || qepStatus == Execution::ExecutableQueryPlanStatus::ErrorState
                         || qepStatus == Execution::ExecutableQueryPlanStatus::Stopped,
                     "Cannot deregisterQuery query " << qep->getQuerySubPlanId() << " as it is not stopped/failed");
     for (auto const& source : qep->getSources()) {
