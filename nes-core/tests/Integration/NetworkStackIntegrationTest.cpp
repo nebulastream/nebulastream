@@ -334,7 +334,8 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                       PartitionRegistrationStatus::Registered);
             completed.get_future().get();
             sinkShutdownBarrier->wait();
-            while (qep->getStatus() != Runtime::Execution::ExecutableQueryPlanStatus::Stopped) {
+            while (!(qep->getStatus() == Runtime::Execution::ExecutableQueryPlanStatus::Stopped
+                     || qep->getStatus() == Runtime::Execution::ExecutableQueryPlanStatus::Finished)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
             }
             ASSERT_TRUE(recvEngine->stop());
@@ -581,7 +582,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     while (completedQueries != numQueries) {
         for (auto i = 1; i <= numQueries; ++i) {
             auto qepStatus = nodeEngineReceiver->getQueryStatus(i);
-            if (qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Stopped) {
+            if (qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Stopped
+                || qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
                 completedQueries++;
             }
         }

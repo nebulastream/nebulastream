@@ -267,6 +267,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
                 return;
             }
             NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
+                           || status == Execution::ExecutableQueryPlanStatus::Finished
                            || status == Execution::ExecutableQueryPlanStatus::ErrorState,
                        "query plan " << qepId << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);

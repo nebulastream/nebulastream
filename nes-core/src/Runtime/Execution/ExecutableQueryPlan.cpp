@@ -202,7 +202,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                       << queryId << " sub plan " << querySubPlanId << " left tokens = " << numOfTerminationTokens);
             if (numOfTerminationTokens.fetch_sub(1) == 1) {
                 auto expected = Execution::ExecutableQueryPlanStatus::Running;
-                if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
+                if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Finished)) {
                     // if CAS fails - it means the query was already stopped or failed
                     NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
                                                                 << " is marked as (soft) stopped now");
