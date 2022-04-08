@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@ then
     if [ $errorCode -ne 0 ];
     then
       rm -rf ./*
-      if [ "$RequireBuild" == "true" ];
+      if [ "$RequireBuild" = "true" ];
       then
         echo "Required Build Failed"     
         exit $errorCode
