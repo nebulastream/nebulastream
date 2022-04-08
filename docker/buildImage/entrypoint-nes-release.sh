@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ make format
 make nes-doc
 
 # release the tag and push next snapshot version
-if [[ $RELEASE_TYPE == 'Major' ]]; then
+if [ $RELEASE_TYPE = 'Major' ]; then
   make major_release
-elif [[ $RELEASE_TYPE == 'Minor' ]]; then
+elif [ $RELEASE_TYPE = 'Minor' ]; then
   make minor_release
 else
   make release
