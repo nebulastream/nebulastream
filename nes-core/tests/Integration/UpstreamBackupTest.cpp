@@ -135,7 +135,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     EXPECT_TRUE(currentTimestamp == timestamp);
 
     NES_INFO("UpstreamBackupTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");

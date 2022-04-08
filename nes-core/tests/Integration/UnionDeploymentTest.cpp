@@ -192,7 +192,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     EXPECT_EQ(content, expectedContent);
 
     NES_INFO("UnionDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
@@ -358,7 +358,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     EXPECT_EQ(content, expectedContent);
 
     NES_INFO("UnionDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
@@ -523,7 +523,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     EXPECT_EQ(content, expectedContent);
 
     NES_INFO("UnionDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
@@ -746,7 +746,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
@@ -866,7 +866,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
@@ -1005,7 +1005,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     EXPECT_TRUE(content.find(expectedContentMainQry));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");

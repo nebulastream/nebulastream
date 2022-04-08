@@ -143,7 +143,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     EXPECT_TRUE(ifs.good());
 
     NES_INFO("SeqOperatorTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     bool retStopWrk1 = wrk1->stop(true);
@@ -228,7 +228,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("SeqOperatorTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =
@@ -326,7 +326,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("AndOperatorTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
@@ -421,7 +421,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("SeqOperatorTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(outputFilePath.c_str());
@@ -543,7 +543,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("SeqOperatorTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     string expectedContent =

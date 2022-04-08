@@ -76,7 +76,9 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     RegisterQueryReply reply;
     ClientContext context;
 
-    std::shared_ptr<::grpc::Channel> channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    grpc::ChannelArguments args;
+    args.SetInt("test_key", querySubPlanId);
+    std::shared_ptr<::grpc::Channel> channel = grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), args);
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
 
     // Call object to store rpc data

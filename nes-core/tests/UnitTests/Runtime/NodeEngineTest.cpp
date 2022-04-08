@@ -516,6 +516,14 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
+    while (engine->getQueryStatus(2) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
+    while (engine->getQueryStatus(1) != Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+
     ASSERT_TRUE(engine->undeployQuery(1));
     ASSERT_TRUE(engine->undeployQuery(2));
     ASSERT_TRUE(engine->stop());

@@ -50,7 +50,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     uint64_t idOfNodeToRemove = nodeToRemove->getId();
     if (indexOnNodeIds.find(idOfNodeToRemove) == indexOnNodeIds.end()) {
         NES_WARNING("Topology: The physical node " << nodeToRemove << " doesn't exists in the system.");
-        return false;
+        return true;
     }
 
     if (!rootNode) {

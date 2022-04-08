@@ -146,7 +146,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceTumblingWindowOnCoodinato
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
@@ -289,7 +289,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDis
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
@@ -436,7 +436,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
@@ -582,7 +582,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceTumblingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
@@ -722,7 +722,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentSourceSlidingWindowOnCoodinator
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
@@ -874,7 +874,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDist
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
@@ -1042,7 +1042,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorS
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
@@ -1209,7 +1209,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentSourceSlidingWindowOnCoodinatorN
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
