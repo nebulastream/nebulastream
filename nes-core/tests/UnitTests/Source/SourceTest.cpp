@@ -1676,7 +1676,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
     EXPECT_EQ(lambdaDataSource.getNumberOfGeneratedTuples(), numBuffers * lambdaDataSource.numberOfTuplesToProduce);
 }
 
-TEST_F(SourceTest, testIngestionRateFromQuery) {
+TEST_F(SourceTest, DISABLED_testIngestionRateFromQuery) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
