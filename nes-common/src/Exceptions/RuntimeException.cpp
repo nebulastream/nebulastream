@@ -20,7 +20,7 @@ namespace NES::Exceptions {
 
 RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location)
     : errorMessage(std::move(msg)) {
-    Logger::getInstance()->log(LogLevel::LOG_ERROR, msg, location);
+    Logger::getInstance()->log(LogLevel::LOG_ERROR, errorMessage, location);
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);
 }
