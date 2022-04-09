@@ -18,14 +18,16 @@ limitations under the License.
 
 namespace NES::Join {
 
-    JoinEdge::JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition){
+JoinEdge::JoinEdge(AbstractJoinPlanOperatorPtr leftOperator,
+                   AbstractJoinPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition){
         setLeftOperator(leftOperator);
         setRightOperator(rightOperator);
         setJoinDefinition(joinDefinition);
         // JVS: Check the real heuristic here
         setSelectivity(1);
     }
-    JoinEdge::JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition, float selectivity){
+    JoinEdge::JoinEdge(AbstractJoinPlanOperatorPtr leftOperator,
+                       AbstractJoinPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition, float selectivity){
         setLeftOperator(leftOperator);
         setRightOperator(rightOperator);
         setJoinDefinition(joinDefinition);
@@ -56,9 +58,11 @@ namespace NES::Join {
 
     const LogicalJoinDefinitionPtr& JoinEdge::getJoinDefinition() const { return joinDefinition; }
     float JoinEdge::getSelectivity() const { return selectivity; }
-    const OptimizerPlanOperatorPtr& JoinEdge::getLeftOperator() const { return leftOperator; }
-    void JoinEdge::setLeftOperator(const OptimizerPlanOperatorPtr& leftOperator) { JoinEdge::leftOperator = leftOperator; }
-    const OptimizerPlanOperatorPtr& JoinEdge::getRightOperator() const { return rightOperator; }
-    void JoinEdge::setRightOperator(const OptimizerPlanOperatorPtr& rightOperator) { JoinEdge::rightOperator = rightOperator; }
+    const AbstractJoinPlanOperatorPtr& JoinEdge::getLeftOperator() const { return leftOperator; }
+    void JoinEdge::setLeftOperator(const AbstractJoinPlanOperatorPtr& leftOperator) { JoinEdge::leftOperator = leftOperator; }
+    const AbstractJoinPlanOperatorPtr& JoinEdge::getRightOperator() const { return rightOperator; }
+
+    void JoinEdge::setRightOperator(const AbstractJoinPlanOperatorPtr& rightOperator) { JoinEdge::rightOperator = rightOperator; }
+
 
     };// namespace NES::Join

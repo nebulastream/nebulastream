@@ -15,7 +15,8 @@ limitations under the License.
 #ifndef NES_ABSTRACTJOINPLANOPERATOR_HPP
 #define NES_ABSTRACTJOINPLANOPERATOR_HPP
 
-#include <Windowing/JoinEdge.hpp>
+//#include <Windowing/JoinEdge.hpp>
+
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Util/OptimizerPlanOperator.hpp>
@@ -27,28 +28,33 @@ namespace NES {
 class AbstractJoinPlanOperator;
 using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
 
-        class AbstractJoinPlanOperator : public OptimizerPlanOperator {
+class AbstractJoinPlanOperator : public OptimizerPlanOperator {
 
           public:
             /**
-     * @brief - constructor for building a OptimizerPlanOperator that is essentially just one logical stream
+     * @brief - constructor for building a AbstractJoinPlanOperator that is a join between an OptimizerPlanOperator
      */
-            AbstractJoinPlanOperator(OptimizerPlanOperatorPtr leftChild,
-                                     OptimizerPlanOperatorPtr rightChild,
+            AbstractJoinPlanOperator(AbstractJoinPlanOperatorPtr leftChild,
+                                     AbstractJoinPlanOperatorPtr rightChild,
                                      Join::LogicalJoinDefinitionPtr joinPredicate,
                                      float selectivity);
 
-          private:
+            /**
+             * @brief - constructor for building an AbstractJoinPlanOperator from a source (OptimizerPlanOperator
+             */
+            AbstractJoinPlanOperator(OptimizerPlanOperatorPtr source);
 
+          private:
+            AbstractJoinPlanOperator(OptimizerPlanOperator source);
             /**
 	 * The left child.
 	 */
-            OptimizerPlanOperatorPtr leftChild;
+            AbstractJoinPlanOperatorPtr leftChild;
 
             /**
 	 * The right child.
 	 */
-            OptimizerPlanOperatorPtr rightChild;
+            AbstractJoinPlanOperatorPtr rightChild;
 
             /**
 	 * The join predicate applied during this join.
@@ -60,6 +66,24 @@ using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
              */
             float selectivity;
 
+            /**
+      * Cost issued by this operator
+      * This is usually the output cardinality of, e.g., a join.
+      * Sum of operators input sizes.
+      */
+            long operatorCosts;
+
+            /**
+      * Cost of the whole subplan cumulated.
+      * OP cost of root + children's cumulative costs
+      */
+            long cumulativeCosts;
+
+            /**
+      * source cardinality, i.e. size of tuples in window // or if joined the output cardinality of this join.
+      */
+            long cardinality;
+
           public:
             float getSelectivity() const;
             void setSelectivity(float selectivity);
@@ -70,10 +94,6 @@ using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
 	 */
             std::set<OptimizerPlanOperatorPtr> involvedOptimizerPlanOperators;
 
-            /**
-	 * The cardinality of the operator.
-	 */
-            long cardinality;
 
           public:
 
@@ -86,15 +106,19 @@ using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
                 return this->getId() < abstractJoinPlanOperator2.getId();
             }
 
-            const OptimizerPlanOperatorPtr& getLeftChild() const;
-            void setLeftChild(const OptimizerPlanOperatorPtr& leftChild);
-            const OptimizerPlanOperatorPtr& getRightChild() const;
-            void setRightChild(const OptimizerPlanOperatorPtr& rightChild);
+            const AbstractJoinPlanOperatorPtr& getLeftChild() const;
+            void setLeftChild(const AbstractJoinPlanOperatorPtr& leftChild);
+            const AbstractJoinPlanOperatorPtr& getRightChild() const;
+            void setRightChild(const AbstractJoinPlanOperatorPtr& rightChild);
 
-            const std::set<NES::OptimizerPlanOperatorPtr>& getInvolvedOptimizerPlanOperators1();
-            void setInvolvedOptimizerPlanOperators1(const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators);
-            long getCardinality1() const;
-            void setCardinality1(long cardinality);
+            const std::set<NES::OptimizerPlanOperatorPtr>& getInvolvedOptimizerPlanOperators();
+            void setInvolvedOptimizerPlanOperators(const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators);
+            long getCardinality() const;
+            void setCardinality(long cardinality);
+            long getOperatorCosts() const;
+            void setOperatorCosts(long operatorCosts);
+            long getCumulativeCosts() const;
+            void setCumulativeCosts(long cumulativeCosts);
         };
 
     } // namespace NES
