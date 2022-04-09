@@ -15,19 +15,18 @@ limitations under the License.
 #ifndef NES_JOINEDGE_HPP
 #define NES_JOINEDGE_HPP
 
-#include <Util/OptimizerPlanOperator.hpp>
+#include "Util/AbstractJoinPlanOperator.hpp"
+
 
 namespace NES::Join {
-
         /**
  * @brief Defines left stream, right stream, joinDefinition (to check joining attributes) and optionally selectivity of a join
  */
         class JoinEdge {
 
           public:
-            JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightSource, LogicalJoinDefinitionPtr joinDefinition);
-            JoinEdge(OptimizerPlanOperatorPtr leftOperator, OptimizerPlanOperatorPtr rightSource, LogicalJoinDefinitionPtr joinDefinition ,float selectivity);
-
+            JoinEdge(AbstractJoinPlanOperatorPtr leftOperator, AbstractJoinPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition, float selectivity);
+            JoinEdge(AbstractJoinPlanOperatorPtr leftOperator, AbstractJoinPlanOperatorPtr rightOperator, LogicalJoinDefinitionPtr joinDefinition);
 
             const LogicalJoinDefinitionPtr& getJoinDefinition() const;
             float getSelectivity() const;
@@ -40,14 +39,14 @@ namespace NES::Join {
 
             std::string toString();
 
-            const OptimizerPlanOperatorPtr& getLeftOperator() const;
-            void setLeftOperator(const OptimizerPlanOperatorPtr& leftOperator);
-            const OptimizerPlanOperatorPtr& getRightOperator() const;
-            void setRightOperator(const OptimizerPlanOperatorPtr& rightOperator);
+            const AbstractJoinPlanOperatorPtr& getLeftOperator() const;
+            void setLeftOperator(const AbstractJoinPlanOperatorPtr& leftOperator);
+            const AbstractJoinPlanOperatorPtr& getRightOperator() const;
+            void setRightOperator(const AbstractJoinPlanOperatorPtr& rightOperator);
 
           private:
-            OptimizerPlanOperatorPtr leftOperator;
-            OptimizerPlanOperatorPtr rightOperator;
+            AbstractJoinPlanOperatorPtr leftOperator;
+            AbstractJoinPlanOperatorPtr rightOperator;
             LogicalJoinDefinitionPtr joinDefinition;
             float selectivity = 1;
         };

@@ -29,39 +29,20 @@ int NES::OptimizerPlanOperator::current_id = 0;
 
 
     NES::OptimizerPlanOperator::OptimizerPlanOperator(SourceLogicalOperatorNodePtr source) {
-            setOperatorCosts(0);
-            setCumulativeCosts(0);
-            setCardinality(0); // can i deduce this somehow?
             setSourceNode(source);
             id = ++OptimizerPlanOperator::current_id;
             //setInvolvedOptimizerPlanOperators(nullptr);
         }
 
     NES::OptimizerPlanOperator::OptimizerPlanOperator() {
-        setOperatorCosts(-1);
-        setCumulativeCosts(0);
-        setCardinality(0);
         id = ++OptimizerPlanOperator::current_id;
     }
 
-
-    long NES::OptimizerPlanOperator::getOperatorCosts() const { return operatorCosts; }
-    void NES::OptimizerPlanOperator::setOperatorCosts(long operatorCosts) { OptimizerPlanOperator::operatorCosts = operatorCosts; }
-    long NES::OptimizerPlanOperator::getCumulativeCosts() const { return cumulativeCosts; }
-    void NES::OptimizerPlanOperator::setCumulativeCosts(long cumulativeCosts) {
-        OptimizerPlanOperator::cumulativeCosts = cumulativeCosts;
-    }
-    long NES::OptimizerPlanOperator::getCardinality() const { return cardinality; }
-    void NES::OptimizerPlanOperator::setCardinality(long cardinality) { OptimizerPlanOperator::cardinality = cardinality; }
     int NES::OptimizerPlanOperator::getId() const { return id; }
-    const std::set<NES::OptimizerPlanOperatorPtr>& NES::OptimizerPlanOperator::getInvolvedOptimizerPlanOperators() const {
-        return involvedOptimizerPlanOperators;
-    }
-    void NES::OptimizerPlanOperator::setInvolvedOptimizerPlanOperators(
-        const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators) {
-        OptimizerPlanOperator::involvedOptimizerPlanOperators = involvedOptimizerPlanOperators;
-    }
+
     const NES::SourceLogicalOperatorNodePtr& NES::OptimizerPlanOperator::getSourceNode() const { return sourceNode; }
+
     void NES::OptimizerPlanOperator::setSourceNode(const NES::SourceLogicalOperatorNodePtr& sourceNode) {
         OptimizerPlanOperator::sourceNode = sourceNode;
     }
+    void NES::OptimizerPlanOperator::setId(int id) { OptimizerPlanOperator::id = id; }

@@ -46,6 +46,12 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
     static JoinOrderOptimizationRulePtr create();
     virtual ~JoinOrderOptimizationRule() = default;
 
+    /**
+     * @brief sets hardcoded Cardinalities for all base sources of the test  classes.
+     * @param source
+     */
+    static int getHardCodedCardinalitiesForSource(OptimizerPlanOperatorPtr source);
+
   private:
     explicit JoinOrderOptimizationRule();
 
@@ -54,18 +60,18 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @brief Checks which join connections between sources are possible in a query plan and returns a list of all possible connections (edges)
      * e.g. if there are three streams: Cars, Trucks, Bikes all have common attributes which allow arbitrary join orders.
      * This function would in this case return a list with Cars |><| Trucks |><| Bikes, Cars |><| Bikes |><| Trucks and Trucks |><| Bikes |><| Cars...
-     * @param sources a vector of OptimizerPlanOperators - which are logical streams with some join optimization relevant information, joinOperators of the query
+     * @param abstractJoinOperators a vector of AbstractJoinPlanOperatorPtr - which are logical sources with some join optimization relevant information, joinOperators of the query
      * @return list of source connections
      */
-    std::vector<Join::JoinEdgePtr> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<OptimizerPlanOperatorPtr> sources);
+    std::vector<Join::JoinEdgePtr> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators);
 
     /**
      * @brief Optimize order of join operators according to cost-model
      * @param Sources logical streams to optimize on, joins - edges between streams
-     * @return OptimizerPlanOperator that is the optimal join order according to cost-model
+     * @return AbstractJoinPlanOperatorPtr that is the optimal join order according to cost-model
      */
 
-    OptimizerPlanOperatorPtr optimizeJoinOrder(std::vector<OptimizerPlanOperatorPtr> sources, std::vector<Join::JoinEdgePtr> joins);
+    AbstractJoinPlanOperatorPtr optimizeJoinOrder(std::vector<OptimizerPlanOperatorPtr> sources, std::vector<Join::JoinEdgePtr> joins);
 
     /**
      * @brief Filters out the substring that determines the logical source of a join partner.
@@ -88,7 +94,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @param joins joinEdges giving information about the possible joins.
      * @return updated join table
      */
-    std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>> createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, OptimizerPlanOperatorPtr>> subs, int level, std::vector<Join::JoinEdgePtr> joins);
+    std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> subs, int level, std::vector<Join::JoinEdgePtr> joins);
 
     /**
      * @brief sets operator and cumulative costs for a joinStep on level 2 or above.
@@ -97,7 +103,9 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
 
     // TODO write description once you have better understanding
     /**
-     * @brief for a specific level of joins (number of involved logical streams) count the number of possible combinations
+     * @brief for a specific level of joins (number of involved logical streams) add all possible combinations of levels
+     * e.g. imagine we have consider all combination where we have 2 involved joins. We can only join them by joining sources of level 1 (base sources) with level 2 sources (already joined once)
+     * e.g. for 3 involved joins we could either join  a base source (level 1) with a source that is joined twice already (level 2) or join two sources of level 2 -- meaning two join products.
      * @param level
      * @return
      */
@@ -121,12 +129,6 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      */
     bool isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved, std::set<OptimizerPlanOperatorPtr> rightInvolved, Join::JoinEdgePtr edge);
 
-
-    /**
-     * @brief sets hardcoded Cardinalities for all base sources of the test  classes.
-     * @param sources
-     */
-    void getHardCodedCardinalitiesForSources(std::vector<OptimizerPlanOperatorPtr> sources);
     void getHardCodedJoinSelectivities(std::vector<Join::JoinEdgePtr> joinEdges);
 };
 } // namespace NES::Optimizer

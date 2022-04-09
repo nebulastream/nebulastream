@@ -13,9 +13,10 @@ limitations under the License.
 */
 
 #include <Util/AbstractJoinPlanOperator.hpp>
+#include <Optimizer/QueryRewrite/JoinOrderOptimizationRule.hpp>
 
-NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr leftChild,
-                                                        OptimizerPlanOperatorPtr rightChild,
+NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(AbstractJoinPlanOperatorPtr leftChild,
+                                                        AbstractJoinPlanOperatorPtr rightChild,
                                                         Join::LogicalJoinDefinitionPtr joinPredicate,
                                                         float selectivity){
         this->leftChild = leftChild;
@@ -24,6 +25,20 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
         this->selectivity = selectivity;
     }
 
+NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr source){
+    this->leftChild = nullptr;
+    this->rightChild = nullptr;
+    this->joinPredicate = nullptr;
+    this->selectivity = 1;
+    this->setSourceNode(source->getSourceNode());
+    this->setId(source->getId());
+    this->setCardinality(Optimizer::JoinOrderOptimizationRule::getHardCodedCardinalitiesForSource(source)); // JVS TRY THIS OUT (and line below)
+    this->setCumulativeCosts(this->getCardinality());
+    this->setOperatorCosts(0);
+    std::set<OptimizerPlanOperatorPtr> involvedOptimizerPlanOperators;
+    involvedOptimizerPlanOperators.insert(source);
+    this->setInvolvedOptimizerPlanOperators(involvedOptimizerPlanOperators);
+}
 
     const NES::Join::LogicalJoinDefinitionPtr& NES::AbstractJoinPlanOperator::getJoinPredicate() const { return joinPredicate; }
     void NES::AbstractJoinPlanOperator::setJoinPredicate(const Join::LogicalJoinDefinitionPtr joinPredicate) {
@@ -32,36 +47,55 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
 
 
 
-    const std::set<NES::OptimizerPlanOperatorPtr>& NES::AbstractJoinPlanOperator::getInvolvedOptimizerPlanOperators1() {
+    const std::set<NES::OptimizerPlanOperatorPtr>& NES::AbstractJoinPlanOperator::getInvolvedOptimizerPlanOperators() {
         // in case this is empty yet, set it by checking the involved streams of left and right child.
+        // JVS mind that this is set to == 1 if we are dealing with a base source (check constructor with source)
         if (involvedOptimizerPlanOperators.size() == 0){
-            std::set<OptimizerPlanOperatorPtr> leftTabs = leftChild->getInvolvedOptimizerPlanOperators();
-            std::set<OptimizerPlanOperatorPtr> rightTabs = rightChild->getInvolvedOptimizerPlanOperators();
-            // JVS Declaring static seems to be the issue here
+
+            // get left and right tabs
+            std::set<OptimizerPlanOperatorPtr> leftTabs;
+            std::set<OptimizerPlanOperatorPtr> rightTabs;
+            if (leftChild != nullptr){
+               leftTabs = leftChild->getInvolvedOptimizerPlanOperators();
+            }
+            if (rightChild != nullptr){
+                rightTabs = rightChild->getInvolvedOptimizerPlanOperators();
+            }
+
             std::set<OptimizerPlanOperatorPtr> thisTabs;
+            // JVS Declaring static seems to be the issue here
             std::set_union(leftTabs.begin(), leftTabs.end(),
                            rightTabs.begin(), rightTabs.end(),
                            std::inserter(thisTabs, thisTabs.begin()));
 
-            setInvolvedOptimizerPlanOperators1(thisTabs);
+            setInvolvedOptimizerPlanOperators(thisTabs);
         }
 
             return involvedOptimizerPlanOperators;
 
     }
-    void NES::AbstractJoinPlanOperator::setInvolvedOptimizerPlanOperators1(
+    void NES::AbstractJoinPlanOperator::setInvolvedOptimizerPlanOperators(
         const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators) {
         AbstractJoinPlanOperator::involvedOptimizerPlanOperators = involvedOptimizerPlanOperators;
     }
-    long NES::AbstractJoinPlanOperator::getCardinality1() const { return cardinality; }
-    void NES::AbstractJoinPlanOperator::setCardinality1(long cardinality) { AbstractJoinPlanOperator::cardinality = cardinality; }
-    const NES::OptimizerPlanOperatorPtr& NES::AbstractJoinPlanOperator::getLeftChild() const { return leftChild; }
-    void NES::AbstractJoinPlanOperator::setLeftChild(const NES::OptimizerPlanOperatorPtr& leftChild) {
-        AbstractJoinPlanOperator::leftChild = leftChild;
-    }
-    const NES::OptimizerPlanOperatorPtr& NES::AbstractJoinPlanOperator::getRightChild() const { return rightChild; }
-    void NES::AbstractJoinPlanOperator::setRightChild(const NES::OptimizerPlanOperatorPtr& rightChild) {
-        AbstractJoinPlanOperator::rightChild = rightChild;
-    }
+    long NES::AbstractJoinPlanOperator::getCardinality() const { return cardinality; }
+    void NES::AbstractJoinPlanOperator::setCardinality(long cardinality) { AbstractJoinPlanOperator::cardinality = cardinality; }
+
     float NES::AbstractJoinPlanOperator::getSelectivity() const { return selectivity; }
     void NES::AbstractJoinPlanOperator::setSelectivity(float selectivity) { AbstractJoinPlanOperator::selectivity = selectivity; }
+    long NES::AbstractJoinPlanOperator::getOperatorCosts() const { return operatorCosts; }
+    void NES::AbstractJoinPlanOperator::setOperatorCosts(long operatorCosts) {
+        AbstractJoinPlanOperator::operatorCosts = operatorCosts;
+    }
+    long NES::AbstractJoinPlanOperator::getCumulativeCosts() const { return cumulativeCosts; }
+    void NES::AbstractJoinPlanOperator::setCumulativeCosts(long cumulativeCosts) {
+        AbstractJoinPlanOperator::cumulativeCosts = cumulativeCosts;
+    }
+    const NES::AbstractJoinPlanOperatorPtr& NES::AbstractJoinPlanOperator::getLeftChild() const { return leftChild; }
+    void NES::AbstractJoinPlanOperator::setLeftChild(const NES::AbstractJoinPlanOperatorPtr& leftChild) {
+        AbstractJoinPlanOperator::leftChild = leftChild;
+    }
+    const NES::AbstractJoinPlanOperatorPtr& NES::AbstractJoinPlanOperator::getRightChild() const { return rightChild; }
+    void NES::AbstractJoinPlanOperator::setRightChild(const NES::AbstractJoinPlanOperatorPtr& rightChild) {
+        AbstractJoinPlanOperator::rightChild = rightChild;
+    }

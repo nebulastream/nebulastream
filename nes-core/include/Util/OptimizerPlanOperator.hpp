@@ -46,35 +46,11 @@ class OptimizerPlanOperator {
 
   private:
     /**
-      * Cost issued by this operator
-      * This is usually the output cardinality of, e.g., a join.
-      * Sum of operators input sizes.
-      */
-    long operatorCosts;
-
-    /**
-      * Cost of the whole subplan cumulated.
-      * OP cost of root + children's cumulative costs
-      */
-    long cumulativeCosts;
-
-    /**
-      * stream cardinality, i.e. size of tuples in window.
-      */
-    long cardinality;
-
-    /**
-     * not sure if needed
+     * increasing id
      */
     int id;
 
     static int current_id;
-
-    /**
-      * Operators below this operator.
-      * i.e. if there was a join already covered, this would name the respective join partners.
-      */
-    std::set<OptimizerPlanOperatorPtr> involvedOptimizerPlanOperators;
 
     /**
      * Logical Source Operator
@@ -82,16 +58,8 @@ class OptimizerPlanOperator {
     SourceLogicalOperatorNodePtr sourceNode;
 
   public:
-    long getOperatorCosts() const;
-    void setOperatorCosts(long operatorCosts);
-    long getCumulativeCosts() const;
-    void setCumulativeCosts(long cumulativeCosts);
-    long getCardinality() const;
-    void setCardinality(long cardinality);
     int getId() const;
-
-    const std::set<OptimizerPlanOperatorPtr>& getInvolvedOptimizerPlanOperators() const;
-    void setInvolvedOptimizerPlanOperators(const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators);
+    void setId(int id);
 
     const SourceLogicalOperatorNodePtr& getSourceNode() const;
     void setSourceNode(const SourceLogicalOperatorNodePtr& sourceNode);
