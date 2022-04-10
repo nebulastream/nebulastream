@@ -144,6 +144,7 @@ bool DataSource::start() {
 
         prom.set_value(true);
         runningRoutine();
+        NES_DEBUG("DataSource " << operatorId << ": runningRoutine stopped ");
     });
     return prom.get_future().get();
 }
@@ -222,6 +223,8 @@ void DataSource::runningRoutine() {
     } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
         runningRoutineAdaptiveGatheringInterval();
     }
+    NES_DEBUG("DataSource " << operatorId << " end runningRoutine");
+
 }
 
 void DataSource::runningRoutineWithIngestionRate() {
@@ -306,7 +309,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();
-    NES_DEBUG("DataSource " << operatorId << " end running");
+    NES_DEBUG("DataSource " << operatorId << " end runningRoutineWithIngestionRate");
 }
 
 void DataSource::runningRoutineWithGatheringInterval() {
@@ -369,7 +372,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();
-    NES_DEBUG("DataSource " << operatorId << " end running");
+    NES_DEBUG("DataSource " << operatorId << " end runningRoutineWithGatheringInterval");
 }
 
 void DataSource::runningRoutineAdaptiveGatheringInterval() {
@@ -444,7 +447,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();
-    NES_DEBUG("DataSource " << operatorId << " end running");
+    NES_DEBUG("DataSource " << operatorId << " end runningRoutineAdaptiveGatheringInterval");
 }
 
 bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const {
