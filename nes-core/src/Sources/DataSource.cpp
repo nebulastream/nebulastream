@@ -110,7 +110,6 @@ bool DataSource::start() {
     thread = std::make_shared<std::thread>([this, &prom]() {
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
     // only CPU i as set.
-    /*
 #ifdef __linux__
         if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
             NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(),
@@ -119,36 +118,18 @@ bool DataSource::start() {
             CPU_ZERO(&cpuset);
             CPU_SET(sourceAffinity, &cpuset);
             int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-
             if (rc != 0) {
-                NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
-            } else {
-                unsigned long cur_mask;
-                auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
-                if (ret != 0) {
-                    NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
-                }
-                std::cout << "source " << operatorId
-                          << " pins to core=" << sourceAffinity;// << " on numaNode=" << numaNode << " ";
-                printf("setted affinity after assignment: %08lx\n", cur_mask);
+                throw Exceptions::RuntimeException("Cannot set thread affinity on source thread "s + std::to_string(operatorId));
             }
         } else {
             NES_WARNING("Use default affinity for source");
-            std::cout << "source " << operatorId << " does not use affinity" << std::endl;
         }
 #endif
-
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-        taskQueueId = numa_node_of_cpu(cpu);
-#endif
-     std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
-     */
-
-
         prom.set_value(true);
         runningRoutine();
         NES_DEBUG("DataSource " << operatorId << ": runningRoutine stopped ");
     });
+
     return prom.get_future().get();
 }
 
@@ -227,7 +208,6 @@ void DataSource::runningRoutine() {
         runningRoutineAdaptiveGatheringInterval();
     }
     NES_DEBUG("DataSource " << operatorId << " end runningRoutine");
-
 }
 
 void DataSource::runningRoutineWithIngestionRate() {
