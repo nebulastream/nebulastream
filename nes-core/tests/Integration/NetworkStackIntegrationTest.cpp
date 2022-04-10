@@ -686,7 +686,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
     ASSERT_TRUE(eventReceived.load());
 }
 
-TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
+TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     NodeLocation nodeLocationSender{0, "127.0.0.1", *dataPort1};
     NodeLocation nodeLocationReceiver{0, "127.0.0.1", *dataPort2};

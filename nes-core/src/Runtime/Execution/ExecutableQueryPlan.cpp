@@ -226,6 +226,9 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
 void ExecutableQueryPlan::destroy() {
     // sanity checks: ensure we can destroy stopped instances
     auto expected = 0u;
+    if (qepStatus == ExecutableQueryPlanStatus::Created) {
+        return;// there is nothing to destroy;
+    }
     NES_ASSERT2_FMT(numOfTerminationTokens.compare_exchange_strong(expected, uint32_t(-1)),
                     "Destroying still active query plan, tokens left=" << expected);
     for (const auto& source : sources) {
@@ -244,6 +247,8 @@ void ExecutableQueryPlan::onEvent(BaseEvent&) {
     // nop :: left on purpose -> fill this in when you want to support events
 }
 void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {
+    NES_ASSERT2_FMT(qepStatus.load() == ExecutableQueryPlanStatus::Running,
+                    "Cannot complete source on non running query plan id=" << querySubPlanId);
     auto it = std::find(sources.begin(), sources.end(), source);
     NES_ASSERT2_FMT(it != sources.end(),
                     "Cannot find source " << source->getOperatorId() << " in sub query plan " << querySubPlanId);
@@ -251,9 +256,28 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
     NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << querySubPlanId << " = " << terminationType);
     NES_DEBUG("QEP " << querySubPlanId << " Source " << source->getOperatorId()
                      << " is terminated; tokens left = " << (tokensLeft - 1));
+    // the following check is necessary because a data sources first emits an EoS marker and then calls this method.
+    // However, it might happen that the marker is so fast that one possible execution is as follows:
+    // 1) Data Source emits EoS marker
+    // 2) Next pipeline/sink picks the marker and finishes by decreasing `numOfTerminationTokens`
+    // 3) DataSource invokes `notifySourceCompletion`
+    // as a result, the data source might be the last one to decrease the `numOfTerminationTokens` thus it has to
+    // trigger the QEP reconfiguration
+    if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
+        auto reconfMessageQEP =
+            ReconfigurationMessage(getQueryId(),
+                                   getQuerySubPlanId(),
+                                   terminationType == QueryTerminationType::Graceful
+                                       ? SoftEndOfStream
+                                       : (terminationType == QueryTerminationType::HardStop ? HardEndOfStream : FailEndOfStream),
+                                   Reconfigurable::shared_from_this<ExecutableQueryPlan>());
+        queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
+    }
 }
 
-void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipeline, QueryTerminationType) {
+void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipeline, QueryTerminationType terminationType) {
+    NES_ASSERT2_FMT(qepStatus.load() == ExecutableQueryPlanStatus::Running,
+                    "Cannot complete pipeline on non running query plan id=" << querySubPlanId);
     auto it = std::find(pipelines.begin(), pipelines.end(), pipeline);
     NES_ASSERT2_FMT(it != pipelines.end(),
                     "Cannot find pipeline " << pipeline->getPipelineId() << " in sub query plan " << querySubPlanId);
@@ -261,9 +285,22 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
     NES_ASSERT2_FMT(tokensLeft >= 1, "Pipeline was last termination token for " << querySubPlanId);
     NES_DEBUG("QEP " << querySubPlanId << " Pipeline " << pipeline->getPipelineId()
                      << " is terminated; tokens left = " << (tokensLeft - 1));
+    // the same applies here for the pipeline
+    if (tokensLeft == 2) {// this is the second last token to be removed (last one is the qep itself)
+        auto reconfMessageQEP =
+            ReconfigurationMessage(getQueryId(),
+                                   getQuerySubPlanId(),
+                                   terminationType == QueryTerminationType::Graceful
+                                       ? SoftEndOfStream
+                                       : (terminationType == QueryTerminationType::HardStop ? HardEndOfStream : FailEndOfStream),
+                                   Reconfigurable::shared_from_this<ExecutableQueryPlan>());
+        queryManager->addReconfigurationMessage(getQueryId(), getQuerySubPlanId(), reconfMessageQEP, false);
+    }
 }
 
 void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType) {
+    NES_ASSERT2_FMT(qepStatus.load() == ExecutableQueryPlanStatus::Running,
+                    "Cannot complete sink on non running query plan id=" << querySubPlanId);
     auto it = std::find(sinks.begin(), sinks.end(), sink);
     NES_ASSERT2_FMT(it != sinks.end(), "Cannot find sink " << sink->toString() << " in sub query plan " << querySubPlanId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
