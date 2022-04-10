@@ -107,7 +107,7 @@ bool DataSource::start() {
     running = true;
     type = getType();
     NES_DEBUG("DataSource " << operatorId << ": Spawn thread");
-    thread = std::make_shared<std::thread>([&prom]() {
+    thread = std::make_shared<std::thread>([this, &prom]() {
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
     // only CPU i as set.
     /*
