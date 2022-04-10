@@ -17,7 +17,9 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
+#include <future>
 #include <gtest/gtest.h>
+#include <thread>
 #include <typeinfo>
 
 #define ASSERT_INSTANCE_OF(node, instance)                                                                                       \
@@ -51,12 +53,14 @@ class TestWithErrorHandling : public T, public Exceptions::ErrorListener {
         self.reset();
     }
 
-    void onFatalError(int signalNumber, std::string callstack) override {
+    virtual void onFatalError(int signalNumber, std::string callstack) override {
         NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+        FAIL();
     }
 
-    void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
+    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
         NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
+        FAIL();
     }
 
   private:
@@ -115,6 +119,10 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
      */
     void TearDown() override;
 
+    void onFatalError(int signalNumber, std::string callstack) override;
+
+    void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
+
   protected:
     /**
      * @brief Retrieve another free port
@@ -130,6 +138,9 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
 
   private:
     std::filesystem::path testResourcePath;
+    std::unique_ptr<std::thread> waitThread;
+    std::promise<bool> testCompletion;
+    std::atomic<bool> testCompletionSet{false};
 };
 }// namespace Testing
 

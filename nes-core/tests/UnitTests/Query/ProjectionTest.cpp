@@ -110,6 +110,7 @@ class ProjectionTest : public Testing::NESBaseTest {
         NES_DEBUG("ProjectionTest: Tear down ProjectionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
         nodeEngine = nullptr;
+        Testing::NESBaseTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */

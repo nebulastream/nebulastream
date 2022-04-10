@@ -27,15 +27,17 @@
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
-class RowMemoryLayoutTest : public Testing::NESBaseTest {
+class RowMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("RowMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RowMemoryLayoutTest test class.");
     }
-    void SetUp() override { bufferManager = std::make_shared<BufferManager>(4096, 10); }
-    static void TearDownTestCase() {}
+    void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        bufferManager = std::make_shared<BufferManager>(4096, 10);
+    }
 };
 
 TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest) {
