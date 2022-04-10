@@ -110,6 +110,7 @@ bool DataSource::start() {
     thread = std::make_shared<std::thread>([this, &prom]() {
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
     // only CPU i as set.
+    /*
 #ifdef __linux__
         if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
             NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(),
@@ -140,7 +141,9 @@ bool DataSource::start() {
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
         taskQueueId = numa_node_of_cpu(cpu);
 #endif
-        std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
+     std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
+     */
+
 
         prom.set_value(true);
         runningRoutine();
