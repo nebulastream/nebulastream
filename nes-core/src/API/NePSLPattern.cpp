@@ -18,7 +18,7 @@
 #include <Parsers/NePSL/gen/NesCEPParser.h>
 #include <Parsers/NePSL/gen/NesCEPListener.h>
 #include <Parsers/NePSL/gen/NesCEPBaseListener.h>
-#include <Parsers/NePSL/NesCEPQueryPlanCreator.h>
+#include <Parsers/NePSL/NesCEPQueryPlanCreator.hpp>
 #include <API/Query.hpp>
 #include <cstring>
 
