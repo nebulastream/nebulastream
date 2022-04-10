@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_NESCEPQUERYPLANCREATOR_HPP
-#define NES_NESCEPQUERYPLANCREATOR_HPP
+#ifndef NES_NESCEPQUERYPLANCREATOR_H
+#define NES_NESCEPQUERYPLANCREATOR_H
 
 #include <Parsers/NePSL/gen/NesCEPBaseListener.h>
 #include <API/NePSLPattern.h>
@@ -95,4 +95,4 @@ class NesCEPQueryPlanCreator: public NesCEPBaseListener {
         void enterAttribute(NesCEPParser::AttributeContext* context) override ;
     };
 
-#endif//NES_NESCEPQUERYPLANCREATOR_HPP
+#endif//NES_NESCEPQUERYPLANCREATOR_H
