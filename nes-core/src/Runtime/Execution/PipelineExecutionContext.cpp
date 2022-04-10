@@ -30,7 +30,6 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
     : queryId(queryId), emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
       operatorHandlers(std::move(operatorHandlers)), queryManager(queryManager) {
-    NES_DEBUG("Created PipelineExecutionContext() " << toString());
 }
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer buffer, WorkerContextRef workerContext) {

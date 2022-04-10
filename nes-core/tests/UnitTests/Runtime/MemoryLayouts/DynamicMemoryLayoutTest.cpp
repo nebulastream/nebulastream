@@ -31,15 +31,17 @@
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
-class DynamicMemoryLayoutTest : public Testing::NESBaseTest {
+class DynamicMemoryLayoutTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     BufferManagerPtr bufferManager;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
-    void SetUp() override { bufferManager = std::make_shared<BufferManager>(4096, 10); }
-    static void TearDownTestCase() {}
+    void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        bufferManager = std::make_shared<BufferManager>(4096, 10);
+    }
 };
 
 TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {

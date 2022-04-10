@@ -119,7 +119,7 @@ class TestSink : public SinkMedium {
 
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);
-        NES_DEBUG("TestSink:\n" << Util::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+        NES_TRACE("TestSink:\n" << Util::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
 
         uint64_t sum = 0;
         for (uint64_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {
@@ -578,18 +578,25 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         ASSERT_EQ(10ULL, testSink->completed.get_future().get());
     }
 
-    auto completedQueries = 0;
-    while (completedQueries != numQueries) {
+    NES_DEBUG("All network sinks are completed");
+
+    while (true) {
+        auto completedSubQueries = 0u;
         for (auto i = 1; i <= numQueries; ++i) {
-            auto qepStatus = nodeEngineReceiver->getQueryStatus(i);
-            if (qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Stopped
-                || qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
-                completedQueries++;
+            for (auto engine : {nodeEngineReceiver, nodeEngineSender}) {
+                auto qepStatus = engine->getQueryStatus(i);
+                if (qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Stopped
+                    || qepStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
+                    completedSubQueries++;
+                }
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        if (completedSubQueries == subPlanId) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
-
+    NES_DEBUG("All qeps are completed");
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }

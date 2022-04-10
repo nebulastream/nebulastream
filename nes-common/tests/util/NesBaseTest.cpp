@@ -220,6 +220,28 @@ void NESBaseTest::SetUp() {
     }
     restPort = portDispatcher.getNextPort();
     rpcCoordinatorPort = portDispatcher.getNextPort();
+    auto future = testCompletion.get_future();
+    auto self = this;
+    waitThread = std::make_unique<std::thread>([future = std::move(future), self = std::move(self)]() mutable {
+        switch (future.wait_for(std::chrono::minutes(3))) {
+            case std::future_status::ready: {
+                try {
+                    auto res = future.get();
+                    ASSERT_TRUE(res);
+                } catch (std::exception const& exception) {
+                    NES_FATAL_ERROR("Got exception in test [" << typeid(*self).name() << "]: " << exception.what();)
+                    FAIL();
+                }
+                break;
+            }
+            case std::future_status::timeout:
+            case std::future_status::deferred: {
+                NES_ERROR("Cannot terminate test [" << typeid(*self).name() <<"] within deadline");
+                FAIL();
+                break;
+            }
+        }
+    });
 }
 
 BorrowedPortPtr NESBaseTest::getAvailablePort() { return portDispatcher.getNextPort(); }
@@ -231,6 +253,28 @@ void NESBaseTest::TearDown() {
     rpcCoordinatorPort.reset();
     std::filesystem::remove_all(testResourcePath);
     Base::TearDown();
+    auto expected = false;
+    if (testCompletionSet.compare_exchange_strong(expected, true)) {
+        testCompletion.set_value(true);
+    }
+    waitThread->join();
+    waitThread.reset();
+}
+
+void NESBaseTest::onFatalError(int signalNumber, std::string callstack) {
+    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
+    auto expected = false;
+    if (testCompletionSet.compare_exchange_strong(expected, true)) {
+        testCompletion.set_value(false);
+    }
+}
+
+void NESBaseTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
+    NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
+    auto expected = false;
+    if (testCompletionSet.compare_exchange_strong(expected, true)) {
+        testCompletion.set_value(false);
+    }
 }
 
 BorrowedPort::~BorrowedPort() noexcept { parent->recyclePort(portIndex); }

@@ -104,7 +104,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
             nodeEngine->getQueryManager()->notifySinkCompletion(querySubPlanId,
                                                                 std::static_pointer_cast<SinkMedium>(shared_from_this()),
                                                                 terminationType);
-            NES_DEBUG("Sink " << toString() << " is " << terminationType);
+            NES_DEBUG("Sink [" << toString() << "] is " << terminationType);
         }
     }
 }

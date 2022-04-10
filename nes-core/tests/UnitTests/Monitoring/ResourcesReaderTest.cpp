@@ -31,7 +31,7 @@
 
 namespace NES {
 
-class ResourcesReaderTest : public Testing::NESBaseTest {
+class ResourcesReaderTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     AbstractSystemResourcesReaderPtr resourcesReader;
 
@@ -40,10 +40,11 @@ class ResourcesReaderTest : public Testing::NESBaseTest {
         NES_INFO("ResourcesReaderTest: Setup ResourcesReaderTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "ResourcesReaderTest: Tear down ResourcesReaderTest class." << std::endl; }
-
     /* Will be called before a  test is executed. */
-    void SetUp() override { resourcesReader = SystemResourcesReaderFactory::getSystemResourcesReader(); }
+    void SetUp() override {
+        Testing::TestWithErrorHandling<testing::Test>::SetUp();
+        resourcesReader = SystemResourcesReaderFactory::getSystemResourcesReader();
+    }
 };
 
 TEST_F(ResourcesReaderTest, testAbstractSystemResourcesReader) {
