@@ -11,4 +11,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Compiler)
+add_source_files(nes-execution-engine
+        Operation.cpp
+        LoadOperation.cpp
+        StoreOperation.cpp
+        AddIntOperation.cpp
+        PredicateOperation.cpp
+        ConstantIntOperation.cpp
+        LoopOperation.cpp
+        AddressOperation.cpp
+        FunctionOperation.cpp
+        IfOperation.cpp
+        ProxyCallOperation.cpp
+        CompareOperation.cpp
+        ReturnOperation.cpp
+        BranchOperation.cpp
+
+)

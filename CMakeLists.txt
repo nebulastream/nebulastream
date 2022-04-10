@@ -39,7 +39,6 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
-option(NES_USE_MLIR "Enable MLIR based compiler" OFF)
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
 
@@ -509,6 +508,7 @@ if (LLVM_FOUND)
     set(CLANG_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-14)
     set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/lib/clang/${LLVM_PACKAGE_VERSION}/include/)
     set(CLANG_FORMAT_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-format)
+    include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 else ()
     message(FATAL_ERROR "Cannot find llvm")
 endif ()
@@ -516,7 +516,7 @@ message("-- LLVM version ${LLVM_VERSION_STRING}")
 message("-- LLVM version ${LLVM_ROOT_DIR}")
 
 # MLIR
-if(NES_USE_MLIR)
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
     find_package(MLIR REQUIRED CONFIG)
     if(MLIR_FOUND)
         include_directories(SYSTEM ${MLIR_INCLUDE_DIRS})
@@ -525,8 +525,7 @@ if(NES_USE_MLIR)
         message(FATAL_ERROR "Cannot find mlir")
     endif(MLIR_FOUND)
     message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-endif()
-
+endif(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 
 # Set definition values.
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
@@ -598,6 +597,10 @@ endif ()
 add_subdirectory(nes-common)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
+    # Add target for execution engines
+    add_subdirectory(nes-execution-engine)
+endif(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
 # Add target for client

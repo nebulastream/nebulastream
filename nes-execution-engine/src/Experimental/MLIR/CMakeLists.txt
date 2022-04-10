@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-compiler
+add_source_files(nes-execution-engine
         MLIRUtility.cpp
-        )
+        NESIRToMLIR.cpp
+#        NESAbstractionToMLIR.cpp
+)

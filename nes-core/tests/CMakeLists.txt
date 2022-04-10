@@ -216,7 +216,6 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
-
 ### Row Layout Tests ###
 add_executable(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")
 target_link_libraries(row-memory-layout-tests nes-tests)

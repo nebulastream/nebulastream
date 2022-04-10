@@ -15,13 +15,13 @@
 # Set Sources and Headers
 add_subdirectory(src)
 
-get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
+get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
-add_library(nes-compiler SHARED ${NES_COMPILER_SOURCE_FILES})
-message(STATUS "Here: ${NES_COMPILER_SOURCE_FILES}")
-target_link_libraries(nes-compiler PUBLIC nes-common)
-target_include_directories(nes-compiler PUBLIC
+add_library(nes-execution-engine SHARED ${NES_EXECUTION_ENGINE_SOURCE_FILES})
+message(STATUS "Here: ${NES_EXECUTION_ENGINE_SOURCE_FILES}")
+target_link_libraries(nes-execution-engine PUBLIC nes)
+target_include_directories(nes-execution-engine PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
@@ -34,7 +34,7 @@ else ()
 endif ()
 
 #Add the nes common and headers to cpack
-install(TARGETS nes-compiler
+install(TARGETS nes-execution-engine
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)

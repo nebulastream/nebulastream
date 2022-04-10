@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Experimental/NESIR/NESIR.hpp>
+#include <utility>
 
-namespace NES::Runtime {
+namespace NES {
 
-void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment) {
-    void* tmp = nullptr;
-    NES_ASSERT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
-    return tmp;
+// NESIR::NESIR(OperationPtr rootOperation) :
+//     rootOperation(std::move(rootOperation)) {}
+
+std::shared_ptr<FunctionOperation> NESIR::addRootOperation(std::shared_ptr<FunctionOperation> rootOperation) {
+    this->rootOperation = std::move(rootOperation);
+    return this->rootOperation;
 }
 
-void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t) {
-     std::free(p); 
+std::shared_ptr<FunctionOperation> NESIR::getRootOperation() {
+    return rootOperation;
 }
 
-}// namespace NES::Runtime
+}// namespace NES
