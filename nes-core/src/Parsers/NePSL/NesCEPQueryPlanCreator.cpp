@@ -10,7 +10,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <../nes-core/include/Parsers/NePSL/NesCEPQueryPlanCreator.h>
+#include <../nes-core/include/Parsers/NePSL/NesCEPQueryPlanCreator.hpp>
 
 int NesCEPQueryPlanCreator::getDirection() { return direction; }
 void NesCEPQueryPlanCreator::setDirection(int direction) {this->direction = direction;}
