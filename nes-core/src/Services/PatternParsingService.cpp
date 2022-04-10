@@ -18,7 +18,7 @@ limitations under the License.
 #include <ANTLRInputStream.h>
 #include <Parsers/NePSL/gen/NesCEPLexer.h>
 #include <Parsers/NePSL/gen/NesCEPParser.h>
-#include <Parsers/NePSL/NesCEPQueryPlanCreator.h>
+#include <Parsers/NePSL/NesCEPQueryPlanCreator.hpp>
 
 NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std::string& patternString) {
 
