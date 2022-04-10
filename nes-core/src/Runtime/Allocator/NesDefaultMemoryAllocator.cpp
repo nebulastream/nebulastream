@@ -22,6 +22,8 @@ void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment) {
     return tmp;
 }
 
-void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t) { std::free(p); }
+void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t) {
+     std::free(p); 
+}
 
 }// namespace NES::Runtime
