@@ -1253,7 +1253,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
         // EXPECT_EQ(err.what(),std::string("Invalid argument"));
         std::string msg = err.what();
         EXPECT_TRUE(msg.find(std::string("stoull")) != std::string::npos);
-    } catch (std::out_of_range const& err) {         // 2/2 throwables from stoull
+    } catch (std::out_of_range const& err) {// 2/2 throwables from stoull
         EXPECT_EQ(err.what(), std::string("Out of range"));
     } catch (...) {
         FAIL() << "Uncaught exception in test for file with headers!" << std::endl;

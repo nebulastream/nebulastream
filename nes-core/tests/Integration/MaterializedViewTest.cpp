@@ -90,7 +90,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleViewSinkTest: Remove query");
-   // queryService->validateAndQueueStopRequest(queryId);
+    // queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleViewSinkTest: Stop Coordinator");

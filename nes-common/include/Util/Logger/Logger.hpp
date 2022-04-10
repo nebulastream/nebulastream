@@ -137,10 +137,10 @@ class Logger {
 
 #define NES_LOG(LEVEL, message)                                                                                                  \
     do {                                                                                                                         \
-        auto constexpr __level = NES::getLogLevel(LEVEL);                                                                             \
+        auto constexpr __level = NES::getLogLevel(LEVEL);                                                                        \
         if constexpr (NES_COMPILE_TIME_LOG_LEVEL >= __level) {                                                                   \
             auto __logger = NES::Logger::getInstance();                                                                          \
-            if (NES::getLogLevel(__logger->getCurrentLogLevel()) >= __level) {                                                        \
+            if (NES::getLogLevel(__logger->getCurrentLogLevel()) >= __level) {                                                   \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << message;                                                                                                 \
