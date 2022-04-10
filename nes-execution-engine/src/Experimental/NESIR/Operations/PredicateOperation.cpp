@@ -11,19 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/NESIR/Operations/PredicateOperation.hpp>
 
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+namespace NES {
 
-namespace NES::Runtime {
+PredicateOperation::PredicateOperation(OperationType opType, OperationPtr lhs, OperationPtr rhs, PredicateOperation::BinaryOperatorType binOpType)
+    : Operation(opType), lhs(std::move(lhs)), rhs(std::move(rhs)), binOpType(binOpType){}
 
-void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment) {
-    void* tmp = nullptr;
-    NES_ASSERT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
-    return tmp;
-}
-
-void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t) {
-     std::free(p); 
-}
-
-}// namespace NES::Runtime
+bool PredicateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::PredicateOp; }
+PredicateOperation::BinaryOperatorType PredicateOperation::getBinOpType() { return binOpType; }
+}// namespace NES

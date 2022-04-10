@@ -12,18 +12,22 @@
     limitations under the License.
 */
 
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#ifndef NES_RETURNOPERATION_HPP
+#define NES_RETURNOPERATION_HPP
 
-namespace NES::Runtime {
+#include "Experimental/NESIR/Operations/Operation.hpp"
+#include <cstdint>
 
-void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment) {
-    void* tmp = nullptr;
-    NES_ASSERT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
-    return tmp;
-}
+namespace NES {
+class ReturnOperation : public Operation {
+  public:
+    ReturnOperation(uint8_t returnOpCode);
+    ~ReturnOperation() override = default;
 
-void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t) {
-     std::free(p); 
-}
+    uint8_t getReturnOpCode();
 
-}// namespace NES::Runtime
+  private:
+    uint8_t returnOpCode;
+};
+}// namespace NES
+#endif//NES_RETURNOPERATION_HPP

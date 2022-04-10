@@ -12,3 +12,4 @@
 # limitations under the License.
 
 add_subdirectory(MLIR)
+add_subdirectory(NESIR)
