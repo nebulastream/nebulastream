@@ -129,7 +129,6 @@ bool DataSource::start() {
         runningRoutine();
         NES_DEBUG("DataSource " << operatorId << ": runningRoutine stopped ");
     });
-
     return prom.get_future().get();
 }
 
