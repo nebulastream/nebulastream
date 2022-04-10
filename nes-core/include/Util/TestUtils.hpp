@@ -51,7 +51,7 @@ namespace NES {
 namespace TestUtils {
 
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
-static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180); // starting a query requires time
+static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 // in milliseconds
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 

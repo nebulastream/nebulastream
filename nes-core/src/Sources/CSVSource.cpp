@@ -56,8 +56,7 @@ CSVSource::CSVSource(SchemaPtr schema,
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
 
-    auto path =
-        std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
+    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
     NES_DEBUG("CSVSource: Opening path=[" << filePath << "] real path=[" << (path ? path.get() : "<INVALID>") << "]");
 
     if (path == nullptr) {
@@ -65,7 +64,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 
     input.open(path.get());
-    if(!(input.is_open() && input.good())) {
+    if (!(input.is_open() && input.good())) {
         throw Exceptions::RuntimeException("Cannot open file: " + std::string(path.get()));
     }
     NES_DEBUG("CSVSource: Opening path " << path.get());

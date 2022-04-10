@@ -206,7 +206,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
                              "1,1\n"
                              "1,1\n"
                              "1,1\n";
-    
+
     std::ifstream ifsQ1(pathQuery1.c_str());
     ASSERT_TRUE(ifsQ1.good());
     std::string contentQ1((std::istreambuf_iterator<char>(ifsQ1)), (std::istreambuf_iterator<char>()));

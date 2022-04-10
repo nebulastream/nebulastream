@@ -16,9 +16,9 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Services/ReplicationService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Services/ReplicationService.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <optional>

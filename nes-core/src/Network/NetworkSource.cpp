@@ -149,7 +149,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Deleted) {
                 return;
             }
-            if (true) return;
+            if (true)
+                return;
             auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
                                                                              nesPartition,
                                                                              localBufferManager,

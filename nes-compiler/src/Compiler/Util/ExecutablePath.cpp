@@ -29,9 +29,7 @@ bool isInBuildDir() {
     return executablePath.parent_path().string().starts_with(PATH_TO_BINARY_DIR);
 }
 
-bool isInBuildDirIsAvailable() {
-    return exists(std::filesystem::path(CLANG_EXECUTABLE));
-}
+bool isInBuildDirIsAvailable() { return exists(std::filesystem::path(CLANG_EXECUTABLE)); }
 
 bool isInUNIXInstallDir() {
     auto executablePath = getExecutablePath();
