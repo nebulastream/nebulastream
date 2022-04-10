@@ -119,7 +119,7 @@ bool DataSource::start() {
             CPU_SET(sourceAffinity, &cpuset);
             int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
             if (rc != 0) {
-                throw Exceptions::RuntimeException("Cannot set thread affinity on source thread "s + std::to_string(operatorId));
+               NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " + std::to_string(operatorId));
             }
         } else {
             NES_WARNING("Use default affinity for source");
