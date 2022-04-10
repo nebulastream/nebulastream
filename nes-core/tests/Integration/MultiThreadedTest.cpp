@@ -415,8 +415,6 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    sleep(5);
-
     NES_INFO("MultipleWindowsTest: Remove query");
     //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -844,7 +842,6 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    sleep(5);
     NES_DEBUG("JoinDeploymentTest: Remove query");
     //queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));

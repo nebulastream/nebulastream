@@ -98,7 +98,11 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
             plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
         });
-        ASSERT_TRUE(plan->stop());
+
+        auto task = Runtime::ReconfigurationMessage(plan->getQueryId(), plan->getQuerySubPlanId(), NES::Runtime::SoftEndOfStream, plan);
+        plan->postReconfigurationCallback(task);
+
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Finished);
     }
 
     /* Will be called before a test is executed. */

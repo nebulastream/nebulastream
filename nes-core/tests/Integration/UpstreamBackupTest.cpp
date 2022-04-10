@@ -76,7 +76,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 /*
  * @brief test message passing between sink-coordinator-sources
  */
-TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
+TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
