@@ -14,6 +14,7 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
+add_subdirectory(experimental)
 
 get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
 

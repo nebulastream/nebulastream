@@ -71,6 +71,7 @@ class TupleBuffer {
         : controlBlock(controlBlock), ptr(ptr), size(size) {}
 
   public:
+
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] constexpr TupleBuffer() noexcept = default;
 
@@ -211,43 +212,8 @@ class TupleBuffer {
     /// @brief get the number of tuples stored.
     [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
 
-    /// @brief set the number of tuples stored.
-    inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
-
-    /// @brief get the watermark as a timestamp
-    [[nodiscard]] constexpr uint64_t getWatermark() const noexcept { return controlBlock->getWatermark(); }
-
-    /// @brief set the watermark from a timestamp
-    inline void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
-
-    /// @brief get the creation timestamp as a timestamp
-    [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
-
-    /// @brief set the sequence number
-    inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
-
-    /// @brief get the sequence number
-    [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); };
-
-    /// @brief set the creation timestamp with a timestamp
-    inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
-
-    ///@brief get the buffer's origin id (the operator id that creates this buffer).
-    [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }
-
-    ///@brief set the buffer's origin id (the operator id that creates this buffer).
-    inline void setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
-
-    ///@brief set the buffer's recycle callback.
-    inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept {
-        controlBlock->addRecycleCallback(std::move(newCallback));
-    }
 
   private:
-    /**
-     * @brief returns the control block of the buffer USE THIS WITH CAUTION!
-     */
-    [[nodiscard]] detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
