@@ -29,8 +29,7 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
                                                    std::vector<OperatorHandlerPtr> operatorHandlers)
     : queryId(queryId), emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
-      operatorHandlers(std::move(operatorHandlers)), queryManager(queryManager) {
-}
+      operatorHandlers(std::move(operatorHandlers)), queryManager(queryManager) {}
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer buffer, WorkerContextRef workerContext) {
     // call the function handler
