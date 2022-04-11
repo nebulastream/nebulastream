@@ -29,7 +29,6 @@ namespace NES::Network {
 class NetworkSource : public DataSource {
 
   public:
-    void onEndOfStream(bool isGraceful) override;
     NetworkSource(SchemaPtr schema,
                   Runtime::BufferManagerPtr bufferManager,
                   Runtime::QueryManagerPtr queryManager,
