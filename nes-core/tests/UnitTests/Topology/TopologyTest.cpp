@@ -112,7 +112,7 @@ TEST_F(TopologyTest, removeAnExistingNode) {
 /**
  *  Remove a non-existing node.
  */
-TEST_F(TopologyTest, removeNodeFromEmptyTopology) {
+TEST_F(TopologyTest, DISABLED_removeNodeFromEmptyTopology) {
     TopologyPtr topology = Topology::create();
 
     int node1Id = 1;
