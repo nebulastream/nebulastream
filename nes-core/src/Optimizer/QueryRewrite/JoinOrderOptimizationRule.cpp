@@ -63,11 +63,14 @@ namespace NES::Optimizer {
             // print joinEdges
             NES_DEBUG(listJoinEdges(joinEdges));
 
-            // JVS: Step 5: Derive the best order of joins
+            // Construct dynamic programming table and retrieve best optimization order
             AbstractJoinPlanOperatorPtr finalPlan = optimizeJoinOrder(sources, joinEdges);
 
+            std::vector<std::any> joinOrder = extractJoinOrder(finalPlan);
 
             // JVS: Step 6 Rewrite the query according to the best order
+            // use if(el.type() == typeid(vector<any>))
+            queryPlan = updateJoinOrder(queryPlan, joinOrder);
 
 
             return queryPlan;
@@ -347,6 +350,23 @@ namespace NES::Optimizer {
             else
                 edge->setSelectivity(1);
         }
+    }
+
+    std::vector<std::any> JoinOrderOptimizationRule::extractJoinOrder(AbstractJoinPlanOperatorPtr root) {
+        std::vector<std::any> joinOrder;
+        if (root->getInvolvedOptimizerPlanOperators().size() == 1){
+            joinOrder.push_back(root->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+        } else{
+            std::vector<std::any> subSteps;
+            subSteps.push_back(extractJoinOrder(root->getLeftChild()));
+            subSteps.push_back(extractJoinOrder(root->getRightChild()));
+            joinOrder.push_back(subSteps);
+        }
+
+        return joinOrder;
+    }
+    QueryPlanPtr JoinOrderOptimizationRule::updateJoinOrder(QueryPlanPtr queryPlan, std::vector<std::any> joinOrder) {
+        return NES::QueryPlanPtr();
     }
 
     }// namespace NES::Optimizer
