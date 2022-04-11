@@ -130,6 +130,14 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
     bool isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved, std::set<OptimizerPlanOperatorPtr> rightInvolved, Join::JoinEdgePtr edge);
 
     void getHardCodedJoinSelectivities(std::vector<Join::JoinEdgePtr> joinEdges);
+    /**
+     * @brief extracts a list of join steps of the root plan (AbstractJoinPlanOperatorPtr) in a recursive manner
+     * Produces a vector of dynamic depth. each level resembles a join.
+     * @param root - AbstractJoinPlanOperatorPtr containing potentially a series of joins.
+     * @return
+     */
+    std::vector<std::any> extractJoinOrder(AbstractJoinPlanOperatorPtr root);
+    QueryPlanPtr updateJoinOrder(QueryPlanPtr queryPlan, std::vector<std::any> joinOrder);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_
