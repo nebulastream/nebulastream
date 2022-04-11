@@ -305,6 +305,4 @@ void AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t qu
         NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no source was found");
     }
 }
-void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr&, Execution::ExecutableQueryPlanStatus) {}
-
 }// namespace NES::Runtime
