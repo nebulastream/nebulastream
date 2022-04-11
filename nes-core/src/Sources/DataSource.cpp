@@ -116,8 +116,8 @@ bool DataSource::start() {
         auto expected = false;
         if (wasStarted.compare_exchange_strong(expected, true)) {
             thread = std::make_shared<std::thread>([this, &prom]() {
-                // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
-                // only CPU i as set.
+            // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
+            // only CPU i as set.
 #ifdef __linux__
                 if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
                     NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(),

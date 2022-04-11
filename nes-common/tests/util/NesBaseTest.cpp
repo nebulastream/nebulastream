@@ -236,7 +236,7 @@ void NESBaseTest::SetUp() {
             }
             case std::future_status::timeout:
             case std::future_status::deferred: {
-                NES_ERROR("Cannot terminate test [" << typeid(*self).name() <<"] within deadline");
+                NES_ERROR("Cannot terminate test [" << typeid(*self).name() << "] within deadline");
                 FAIL();
                 break;
             }
