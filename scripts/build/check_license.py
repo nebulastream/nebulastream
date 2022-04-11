@@ -31,14 +31,20 @@ license_text_cpp = """/*
 """
 
 if __name__ == "__main__":
-    exclude = set(['cmake-build-debug', 'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
-                   'build', 'yaml', 'jitify', 'magicenum', 'Backward'])
+    exclude_dirs = set(['cmake-build-debug', 'cmake-build-release', 'cmake-build-debug-docker', 'cmake-build-release-docker',
+                        'build', 'yaml', 'jitify', 'magicenum', '.idea'])
+    exclude_files = ['backward.hpp',
+                     'apex_memmove.hpp',
+                     'rte_memory.h',
+                     'apex_memmove.cpp']
     result = True
     for subdir, dirs, files in os.walk(sys.argv[1]):
-        dirs[:] = [d for d in dirs if d not in exclude]
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
         for file in files:
+            if file in exclude_files:
+                continue
             filename = os.path.join(subdir, file)
-            if filename.endswith(".cpp") or filename.endswith(".hpp") or filename.endswith(".proto"):
+            if filename.endswith(".cpp") or filename.endswith(".hpp") or filename.endswith(".h") or filename.endswith(".proto"):
                 with open(filename, "r", encoding="utf-8") as fp:
                     content = fp.read()
                     if not content.startswith(license_text_cpp):
