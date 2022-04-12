@@ -175,6 +175,14 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
         NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id " << queryId);
         const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
         for (const auto& querySubPlan : querySubPlans) {
+            auto sinks = querySubPlan->getOperatorByType<SinkLogicalOperatorNode>();
+            for (const auto& sink : sinks) {
+                if (sink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+                    auto networkSinkDescriptor = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>();
+                    networkSinkDescriptor->setFaultToleranceType(faultToleranceType);
+                    sink->setSinkDescriptor(networkSinkDescriptor);
+                }
+            }
             typeInferencePhase->execute(querySubPlan);
             querySubPlan->setFaultToleranceType(faultToleranceType);
             querySubPlan->setLineageType(lineageType);

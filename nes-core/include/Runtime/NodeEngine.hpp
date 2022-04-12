@@ -204,10 +204,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     Network::NetworkManagerPtr getNetworkManager();
 
-    /**
-     * @brief getter of nes worker
-     * @return NesWorker
-     */
+
     AbstractQueryStatusListenerPtr getQueryStatusListener();
 
     /**

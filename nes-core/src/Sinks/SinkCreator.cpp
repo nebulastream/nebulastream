@@ -20,6 +20,7 @@
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
@@ -149,7 +150,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               Runtime::NodeEnginePtr const& nodeEngine,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
-                              uint8_t retryTimes) {
+                              uint8_t retryTimes,
+                              FaultToleranceType faultToleranceType) {
     return std::make_shared<Network::NetworkSink>(schema,
                                                   uniqueNetworkSinkDescriptorId,
                                                   queryId,
@@ -159,7 +161,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   nodeEngine,
                                                   numOfProducers,
                                                   waitTime,
-                                                  retryTimes);
+                                                  retryTimes,
+                                                  faultToleranceType);
 }
 
 namespace Experimental::MaterializedView {
