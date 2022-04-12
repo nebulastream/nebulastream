@@ -99,6 +99,12 @@ TEST_F(SinkTest, testCSVFileSink) {
     EXPECT_TRUE(write_result);
     std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
 
+    // get buffer content as string
+    auto rowLayoutAfterWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBufferAfterWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutAfterWrite, buffer);
+    std::string bufferContent = dynamicTupleBufferAfterWrite.toString(test_schema);
+    NES_TRACE("Buffer Content= " << bufferContent);
+
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
     std::ifstream ifs(path_to_csv_file.c_str());
@@ -132,6 +138,12 @@ TEST_F(SinkTest, testTextFileSink) {
     EXPECT_TRUE(write_result);
     std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
     //cout << "Buffer Content= " << bufferContent << endl;
+
+    // get buffer content as string
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
+    NES_TRACE("Buffer Content= " << bufferContent);
 
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
@@ -384,7 +396,7 @@ TEST_F(SinkTest, testTextZMQSink) {
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     //std::cout << zmq_source->toString() << std::endl;
 
-    // Start thread for receivingh the data.
+    // Start thread for receiving the data.
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
         zmq_source->open();
@@ -429,7 +441,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
                                       std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     //std::cout << zmq_source->toString() << std::endl;
 
-    // Start thread for receivingh the data.
+    // Start thread for receiving the data.
     auto receiving_thread = std::thread([&]() {
         zmq_source->open();
         auto schemaData = zmq_source->receiveData();

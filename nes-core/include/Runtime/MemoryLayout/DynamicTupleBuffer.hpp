@@ -91,6 +91,12 @@ class DynamicField {
         *reinterpret_cast<Type*>(address) = value;
     };
 
+    /**
+     * @brief get a string representation of this dynamic tuple
+     * @return a string
+     */
+    std::string toString(DataTypePtr dataType);
+
   private:
     uint8_t* address;
     const PhysicalTypePtr physicalType;
@@ -126,6 +132,12 @@ class DynamicTuple {
     * @return DynamicField
     */
     DynamicField operator[](std::string fieldName);
+
+    /**
+     * @brief get a string representation of this dynamic tuple
+     * @return a string
+     */
+    std::string toString(const SchemaPtr& schema);
 
   private:
     const uint64_t tupleIndex;
@@ -202,7 +214,7 @@ class DynamicTupleBuffer {
      * @throws BufferAccessException if index is larger then buffer capacity
      * @return DynamicRecord
      */
-    DynamicTuple operator[](std::size_t tupleIndex);
+    DynamicTuple operator[](std::size_t tupleIndex) const;
 
     /**
      * @brief Gets the underling tuple buffer.
@@ -270,6 +282,12 @@ class DynamicTupleBuffer {
      * @return result stream
      */
     friend std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer);
+
+    /**
+     * @brief Creates a string representation of the dynamic tuple buffer
+     * @return a string representation
+     */
+    std::string toString (const SchemaPtr& schema);
 
   private:
     const MemoryLayoutPtr memoryLayout;

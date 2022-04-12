@@ -87,7 +87,10 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
                             "|4|2.000000|0.800000|8|1234 |\n"
                             "+----------------------------------------------------+";
 
-    std::string result = Util::prettyPrintTupleBuffer(buf, s);
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(s, buf.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buf);
+
+    std::string result = dynamicTupleBuffer.toString(s);
     std::cout << "RES=" << result << std::endl;
     NES_DEBUG("Reference size=" << reference.size() << " content=\n" << reference);
     NES_DEBUG("Result size=" << result.size() << " content=\n" << result);

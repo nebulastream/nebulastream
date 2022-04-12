@@ -210,4 +210,80 @@ TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
     }
 }
 
+TEST_F(DynamicMemoryLayoutTest, toStringTestRowLayout) {
+    const uint32_t NUMBER_OF_TUPLES_IN_BUFFER = 10;
+    const auto schema = Schema::create()->addField("t1", UINT16)->addField("t2", BOOLEAN)->addField("t3", FLOAT64);
+
+    RowLayoutPtr layout;
+    ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(layout, nullptr);
+    schema->setLayoutType(Schema::ROW_LAYOUT);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto buffer = DynamicTupleBuffer(layout, tupleBuffer);
+
+    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
+
+    for (uint32_t i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
+        buffer[i][0].write<uint16_t>(i);
+        buffer[i]["t2"].write<bool>(true);
+        buffer[i][2].write<double>(i * 2.0);
+    }
+
+    std::string expectedOutput = "+----------------------------------------------------+\n"
+                                 "|t1:UINT16|t2:BOOLEAN|t3:FLOAT64|\n"
+                                 "+----------------------------------------------------+\n"
+                                 "|0|1|0.000000|\n"
+                                 "|1|1|2.000000|\n"
+                                 "|2|1|4.000000|\n"
+                                 "|3|1|6.000000|\n"
+                                 "|4|1|8.000000|\n"
+                                 "|5|1|10.000000|\n"
+                                 "|6|1|12.000000|\n"
+                                 "|7|1|14.000000|\n"
+                                 "|8|1|16.000000|\n"
+                                 "|9|1|18.000000|\n"
+                                 "+----------------------------------------------------+";
+
+    EXPECT_EQ(buffer.toString(schema), expectedOutput);
+}
+
+TEST_F(DynamicMemoryLayoutTest, toStringTestColumnLayout) {
+    const uint32_t NUMBER_OF_TUPLES_IN_BUFFER = 10;
+    const auto schema = Schema::create()->addField("t1", UINT16)->addField("t2", BOOLEAN)->addField("t3", FLOAT64);
+
+    ColumnLayoutPtr layout;
+    ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(layout, nullptr);
+    schema->setLayoutType(Schema::COLUMNAR_LAYOUT);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto buffer = DynamicTupleBuffer(layout, tupleBuffer);
+
+    buffer.setNumberOfTuples(NUMBER_OF_TUPLES_IN_BUFFER);
+
+    for (uint32_t i = 0; i < NUMBER_OF_TUPLES_IN_BUFFER; i++) {
+        buffer[i][0].write<uint16_t>(i);
+        buffer[i]["t2"].write<bool>(true);
+        buffer[i][2].write<double>(i * 2.0);
+    }
+
+    std::string expectedOutput = "+----------------------------------------------------+\n"
+                                 "|t1:UINT16|t2:BOOLEAN|t3:FLOAT64|\n"
+                                 "+----------------------------------------------------+\n"
+                                 "|0|1|0.000000|\n"
+                                 "|1|1|2.000000|\n"
+                                 "|2|1|4.000000|\n"
+                                 "|3|1|6.000000|\n"
+                                 "|4|1|8.000000|\n"
+                                 "|5|1|10.000000|\n"
+                                 "|6|1|12.000000|\n"
+                                 "|7|1|14.000000|\n"
+                                 "|8|1|16.000000|\n"
+                                 "|9|1|18.000000|\n"
+                                 "+----------------------------------------------------+";
+
+    EXPECT_EQ(buffer.toString(schema), expectedOutput);
+}
+
 }// namespace NES::Runtime::MemoryLayouts

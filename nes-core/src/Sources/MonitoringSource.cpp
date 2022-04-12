@@ -19,6 +19,7 @@
 #include <Sources/MonitoringSource.hpp>
 
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>
@@ -64,7 +65,12 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     generatedTuples += buf.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_TRACE("MonitoringSource::Buffer content: " << Util::prettyPrintTupleBuffer(buf, schema));
+    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+        auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+
+        NES_TRACE("MonitoringSource::Buffer content: " << buffer.toString(schema));
+    }
 
     return buf;
 }

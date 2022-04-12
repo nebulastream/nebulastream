@@ -776,7 +776,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
         valueFields[4] = 12; //value 12
         buffer.setNumberOfTuples(5);
     }
-    std::cout << "buffer=" << Util::prettyPrintTupleBuffer(buffer, schema) << std::endl;
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+    NES_DEBUG("buffer=" << dynamicTupleBuffer);
+
     /* execute Stage */
     stage1->setup(*executionContext);
     stage1->start(*executionContext);
@@ -1384,7 +1387,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerations) {
     source->open();
     auto inputBuffer = source->receiveData().value();
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
-    cout << "buffer content=" << Util::prettyPrintTupleBuffer(inputBuffer, input_schema);
+
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(input_schema, inputBuffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
+    NES_DEBUG("buffer content=" << dynamicTupleBuffer);
 
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage1->setup(*executionContext);
@@ -1729,6 +1735,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     /* check for correctness, as minIteration = 50, we expect 2 outputs from the 131 tuples in the inputBuffer*/
     EXPECT_EQ(int(resultBuffer.getNumberOfTuples()), 2);
 
-    NES_INFO(Util::prettyPrintTupleBuffer(resultBuffer, inputSchema));
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, resultBuffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
+    NES_DEBUG(dynamicTupleBuffer);
 }
 }// namespace NES

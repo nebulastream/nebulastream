@@ -186,8 +186,10 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     write_buffer.setNumberOfTuples(1);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
 
-    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: "
-              << Util::prettyPrintTupleBuffer(write_buffer, test_schema));
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, write_buffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, write_buffer);
+    NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: " << dynamicTupleBuffer);
+
     opcSink->writeData(write_buffer, wctx);
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) data was written");
     write_buffer.release();

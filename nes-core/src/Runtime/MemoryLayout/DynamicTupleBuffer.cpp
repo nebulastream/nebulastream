@@ -11,13 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <API/AttributeField.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
+
 namespace NES::Runtime::MemoryLayouts {
 
 DynamicField::DynamicField(uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType) {}
@@ -39,7 +42,36 @@ DynamicField DynamicTuple::operator[](std::string fieldName) {
 }
 
 DynamicTuple::DynamicTuple(const uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer)
-    : tupleIndex(tupleIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer)){};
+    : tupleIndex(tupleIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer)) {}
+
+std::string DynamicTuple::toString(const SchemaPtr& schema) {
+    std::stringstream ss;
+    for (uint32_t i = 0; i < schema->getSize(); ++i) {
+        const auto dataType = schema->get(i)->getDataType();
+        DynamicField currentField = this->operator[](i);
+        ss << currentField.toString(dataType) << "|";
+    }
+    return ss.str();
+}
+
+std::string DynamicField::toString(DataTypePtr dataType) {
+    std::stringstream ss;
+    std::string currentFieldContentAsString;
+    if (dataType->isInteger()) {
+        currentFieldContentAsString = std::to_string(this->read<uint32_t>());
+    } if (dataType->isNumeric()) {
+        currentFieldContentAsString = std::to_string(this->read<uint32_t>());
+    }
+    else if (dataType->isBoolean()) {
+        currentFieldContentAsString = std::to_string(this->read<bool>());
+    } else if (dataType->isFloat()) {
+        currentFieldContentAsString = std::to_string(this->read<double>());
+    } else if (dataType->isChar()) {
+        currentFieldContentAsString = std::to_string(this->read<char>());
+    }
+    ss << currentFieldContentAsString;
+    return ss.str();
+};
 
 uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
 
@@ -47,7 +79,7 @@ uint64_t DynamicTupleBuffer::getNumberOfTuples() const { return buffer.getNumber
 
 void DynamicTupleBuffer::setNumberOfTuples(uint64_t value) { buffer.setNumberOfTuples(value); }
 
-DynamicTuple DynamicTupleBuffer::operator[](std::size_t tupleIndex) {
+DynamicTuple DynamicTupleBuffer::operator[](std::size_t tupleIndex) const {
     if (tupleIndex >= getCapacity()) {
         throw BufferAccessException("index " + std::to_string(tupleIndex) + " is out of bound");
     }
@@ -62,12 +94,50 @@ DynamicTupleBuffer::DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, Tupl
 
 TupleBuffer DynamicTupleBuffer::getBuffer() { return buffer; }
 std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer) {
-    os << Util::prettyPrintTupleBuffer(buffer.buffer, buffer.memoryLayout->getSchema());
+    auto buf = buffer;
+    auto str = buf.toString(buffer.memoryLayout->getSchema());
+    os << str;
     return os;
 }
 
 DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::begin() { return TupleIterator(*this); }
 DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::end() { return TupleIterator(*this, getNumberOfTuples()); }
+
+std::string DynamicTupleBuffer::toString(const SchemaPtr& schema) {
+    if (!buffer.isValid()) {
+        return "INVALID_BUFFER_PTR";
+    }
+
+    std::stringstream str;
+    std::vector<uint32_t> physicalSizes;
+    std::vector<PhysicalTypePtr> types;
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    for (uint32_t i = 0; i < schema->getSize(); ++i) {
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
+        physicalSizes.push_back(physicalType->size());
+        types.push_back(physicalType);
+        NES_TRACE("DynamicTupleBuffer: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
+                  + std::to_string(physicalType->size()));
+    }
+
+    str << "+----------------------------------------------------+" << std::endl;
+    str << "|";
+    for (uint32_t i = 0; i < schema->getSize(); ++i) {
+        str << schema->get(i)->getName() << ":"
+            << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
+    }
+    str << std::endl;
+    str << "+----------------------------------------------------+" << std::endl;
+
+    for (auto it = this->begin(); it != this->end(); ++it) {
+        str << "|";
+        DynamicTuple dynamicTuple = (*it);
+        str << dynamicTuple.toString(schema);
+        str << std::endl;
+    }
+    str << "+----------------------------------------------------+";
+    return str.str();
+}
 
 DynamicTupleBuffer::TupleIterator::TupleIterator(DynamicTupleBuffer& buffer) : TupleIterator(buffer, 0) {}
 
