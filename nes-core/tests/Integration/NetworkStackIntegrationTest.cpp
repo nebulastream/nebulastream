@@ -800,6 +800,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                               queryManager,
                               1000,
                               operatorId,
+                              0,
                               numSourceLocalBuffers,
                               GatheringMode::INTERVAL_MODE,
                               successors) {}

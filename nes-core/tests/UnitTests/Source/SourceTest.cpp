@@ -588,6 +588,7 @@ TEST_F(SourceTest, DISABLED_testDataSourceEmptySuccessors) {
                                                                                    this->nodeEngine->getBufferManager(),
                                                                                    this->nodeEngine->getQueryManager(),
                                                                                    this->operatorId,
+                                                                                   this->originId,
                                                                                    this->numSourceLocalBuffersDefault,
                                                                                    {});
     } catch (Exceptions::RuntimeException const& ex) {

@@ -36,8 +36,23 @@ class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScan
                                                           const SourceDescriptorPtr& sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator>
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+
+    /**
+     * @brief Gets the source descriptor for this source operator
+     * @return SourceDescriptorPtr
+     */
     SourceDescriptorPtr getSourceDescriptor();
+
+    /**
+     * @brief Sets the origin id for this source operator
+     * @param originId
+     */
     void setOriginId(OriginId originId);
+
+    /**
+     * @brief Gets the origin id
+     * @return OriginId
+     */
     OriginId getOriginId();
     std::string toString() const override;
     OperatorNodePtr copy() override;
