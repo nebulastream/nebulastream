@@ -220,7 +220,8 @@ class WindowSource : public NES::DefaultSource {
         timestamp = timestamp + 10;
         runCnt++;
 
-        NES_DEBUG("ProjectionTest: source buffer=" << Util::prettyPrintTupleBuffer(buffer, schema));
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+        NES_DEBUG("ProjectionTest: source buffer=" << dynamicTupleBuffer);
         return buffer;
     };
 
@@ -609,7 +610,10 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
     if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
-        NES_DEBUG("ProjectionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, resultBuffer);
+        NES_DEBUG("ProjectionTest: buffer=" << dynamicTupleBuffer);
+
         //TODO 1 Tuple im result buffer in 312 2 results?
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
 

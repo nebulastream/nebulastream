@@ -143,7 +143,9 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, 1);
         auto inputBuffer = createTupleBuffer(bufferSize, buffMgr);
         if (printBuffer) {
-            NES_DEBUG("bufferContent before write=" << Util::prettyPrintTupleBuffer(inputBuffer, testSchema) << '\n');
+            auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, inputBuffer.getBufferSize());
+            auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
+            NES_DEBUG("bufferContent before write=" << dynamicTupleBuffer << '\n');
         }
         bool connectSuccessful = mqttSink->connect();
         if (connectSuccessful) {

@@ -73,54 +73,6 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     return ss.str();
 }
 
-std::string Util::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema) {
-    if (!buffer) {
-        return "INVALID_BUFFER_PTR";
-    }
-    std::stringstream str;
-    std::vector<uint32_t> offsets;
-    std::vector<PhysicalTypePtr> types;
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
-        offsets.push_back(physicalType->size());
-        types.push_back(physicalType);
-        NES_TRACE("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
-                  + std::to_string(physicalType->size()));
-    }
-
-    uint32_t prefix_sum = 0;
-    for (uint32_t i = 0; i < offsets.size(); ++i) {
-        uint32_t val = offsets[i];
-        offsets[i] = prefix_sum;
-        prefix_sum += val;
-        NES_TRACE("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString()
-                  + std::string(": ") + std::to_string(offsets[i]));
-    }
-
-    str << "+----------------------------------------------------+" << std::endl;
-    str << "|";
-    for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << schema->get(i)->getName() << ":"
-            << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString() << "|";
-    }
-    str << std::endl;
-    str << "+----------------------------------------------------+" << std::endl;
-
-    auto* buf = buffer.getBuffer<char>();
-    for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes(); i += schema->getSchemaSizeInBytes()) {
-        str << "|";
-        for (uint32_t s = 0; s < offsets.size(); ++s) {
-            void* value = &buf[i + offsets[s]];
-            std::string tmp = types[s]->convertRawToString(value);
-            str << tmp << "|";
-        }
-        str << std::endl;
-    }
-    str << "+----------------------------------------------------+";
-    return str.str();
-}
-
 /**
  * @brief create CSV lines from the tuples
  * @param tbuffer the tuple buffer

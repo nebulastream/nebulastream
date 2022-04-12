@@ -107,7 +107,9 @@ class TestSink : public SinkMedium {
 
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);
-        NES_DEBUG("TestSink:\n" << Util::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(getSchemaPtr(), input_buffer.getBufferSize());
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, input_buffer);
+        NES_DEBUG("TestSink:\n" << dynamicTupleBuffer);
 
         uint64_t sum = 0;
         for (uint64_t i = 0; i < input_buffer.getNumberOfTuples(); ++i) {

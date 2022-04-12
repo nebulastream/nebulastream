@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -40,7 +41,10 @@ std::vector<Runtime::TupleBuffer> TextFormat::getData(Runtime::TupleBuffer& inpu
         return buffers;
     }
 
-    std::string bufferContent = Util::prettyPrintTupleBuffer(inputBuffer, schema);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, inputBuffer.getBufferSize());
+    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, inputBuffer);
+
+    std::string bufferContent = buffer.toString(schema);
     uint64_t contentSize = bufferContent.length();
     NES_TRACE("TextFormat::getData content size=" << contentSize << " content=" << bufferContent);
 

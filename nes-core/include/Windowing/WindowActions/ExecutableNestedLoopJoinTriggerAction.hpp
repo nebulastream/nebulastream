@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLENESTEDLOOPJOINTRIGGERACTION_HPP_
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -119,11 +120,16 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             //write remaining buffer
             tupleBuffer.setOriginId(this->originId);
             tupleBuffer.setWatermark(currentWatermark);
-            NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
-                      << id << ":: Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
-                      << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
-                      << " originId=" << tupleBuffer.getOriginId() << " watermark=" << tupleBuffer.getWatermark()
-                      << "windowAction=" << toString());
+
+            if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(windowSchema, tupleBuffer.getBufferSize());
+                auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
+                NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
+                          << id << ":: Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
+                          << " records, content=" << dynamicTupleBuffer
+                          << " originId=" << tupleBuffer.getOriginId() << " watermark=" << tupleBuffer.getWatermark()
+                          << "windowAction=" << toString());
+            }
 
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);

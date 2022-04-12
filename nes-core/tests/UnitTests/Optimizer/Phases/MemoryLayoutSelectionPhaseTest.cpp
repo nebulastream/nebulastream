@@ -94,7 +94,10 @@ class TestSink : public SinkMedium {
     bool writeData(TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
         NES_DEBUG("QueryExecutionTest: TestSink: got buffer " << input_buffer);
-        NES_DEBUG("QueryExecutionTest: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+
+        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(getSchemaPtr(), input_buffer.getBufferSize());
+        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, input_buffer);
+        NES_DEBUG("QueryExecutionTest: buffer content " << dynamicTupleBuffer);
 
         resultBuffers.emplace_back(std::move(input_buffer));
         if (resultBuffers.size() == expectedBuffer) {

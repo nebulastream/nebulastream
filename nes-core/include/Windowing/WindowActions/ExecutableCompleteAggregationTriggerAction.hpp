@@ -18,6 +18,7 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
@@ -111,12 +112,16 @@ class ExecutableCompleteAggregationTriggerAction
             tupleBuffer.setWatermark(currentWatermark);
             tupleBuffer.setOriginId(windowDefinition->getOriginId());
             //write remaining buffer
-            NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
-                      << this->windowDefinition->getDistributionType()->toString()
-                      << "): Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
-                      << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
-                      << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
-                      << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
+            if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+                auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
+                NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
+                          << this->windowDefinition->getDistributionType()->toString()
+                          << "): Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
+                          << " records, content=" << dynamicTupleBuffer
+                          << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
+                          << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
+            }
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);
         } else {
@@ -239,11 +244,15 @@ class ExecutableCompleteAggregationTriggerAction
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
-                    NES_TRACE("ExecutableCompleteAggregationTriggerAction "
-                              << id << ": (" << this->windowDefinition->getDistributionType()->toString()
-                              << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
-                              << " records, content=" << Util::prettyPrintTupleBuffer(tupleBuffer, this->windowSchema)
-                              << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString());
+                    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+                        auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
+                        NES_TRACE("ExecutableCompleteAggregationTriggerAction "
+                                  << id << ": (" << this->windowDefinition->getDistributionType()->toString()
+                                  << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
+                                  << " records, content=" << dynamicTupleBuffer
+                                  << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString());
+                    }
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);
 

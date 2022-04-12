@@ -106,6 +106,7 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Network/Netw
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Expressions/FieldAccessExpressionNode.hpp Nodes/Expressions/FieldAccessExpressionNode.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Expressions/ExpressionNode.hpp Nodes/Expressions/ExpressionNode.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
+register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp Runtime/MemoryLayout/DynamicTupleBuffer.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayout.hpp Runtime/MemoryLayout/RowLayout.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/RowLayoutField.hpp Runtime/MemoryLayout/RowLayoutField.hpp)

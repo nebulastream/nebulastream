@@ -261,11 +261,13 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
     Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
 
+  protected:
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+
   private:
     mutable std::recursive_mutex startStopMutex;
     //    std::shared_ptr<std::thread> thread{nullptr};
     uint64_t maxSequenceNumber = 0;
-    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 
     /**
     * @brief running routine with a fixed gathering interval

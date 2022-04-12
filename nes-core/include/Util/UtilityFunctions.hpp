@@ -157,13 +157,6 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
     return elems;
 }
 
-/**
-* @brief Outputs a tuple buffer accordingly to a specific schema
-* @param buffer the tuple buffer
-* @param schema  the schema
-* @return
-*/
-std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 
 /**
 * @brief Outputs a tuple buffer in text format
