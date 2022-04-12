@@ -21,7 +21,7 @@ WindowOperatorNode::WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr con
                                        OperatorId id,
                                        OriginId originId)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), OriginIdAssignmentOperator(id, originId),
-      windowDefinition(windowDefinition){}
+      windowDefinition(windowDefinition) {}
 
 Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const { return windowDefinition; }
 std::vector<OriginId> WindowOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }

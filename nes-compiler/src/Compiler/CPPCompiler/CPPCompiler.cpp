@@ -39,9 +39,7 @@ std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_share
 CPPCompiler::CPPCompiler()
     : format(std::make_unique<ClangFormat>("cpp")), runtimePathConfig(ExecutablePath::loadRuntimePathConfig()) {}
 
-CPPCompiler::~CPPCompiler() noexcept {
-    NES_DEBUG("~CPPCompiler");
-}
+CPPCompiler::~CPPCompiler() noexcept { NES_DEBUG("~CPPCompiler"); }
 
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
 

@@ -23,7 +23,8 @@ namespace QueryCompilation {
  */
 class QueryCompilationException : public Exceptions::RuntimeException {
   public:
-    explicit QueryCompilationException(const std::string& message, std::source_location location = std::source_location::current());
+    explicit QueryCompilationException(const std::string& message,
+                                       std::source_location location = std::source_location::current());
 };
 
 }// namespace QueryCompilation

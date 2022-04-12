@@ -433,8 +433,12 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, 1, context1, executable1, 1, {sink1});
-    auto source1 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 0, 12, {pipeline1});
+    auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                                engine->getQueryManager(),
+                                                                1,
+                                                                0,
+                                                                12,
+                                                                {pipeline1});
     auto executionPlan =
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
 
@@ -443,8 +447,12 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, 2, context2, executable2, 1, {sink2});
-    auto source2 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2,0, 12, {pipeline2});
+    auto source2 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                                engine->getQueryManager(),
+                                                                2,
+                                                                0,
+                                                                12,
+                                                                {pipeline2});
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
 
@@ -491,8 +499,12 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, 1, context1, executable1, 1, {sink1});
-    auto source1 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 0, 12, {pipeline1});
+    auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                                engine->getQueryManager(),
+                                                                1,
+                                                                0,
+                                                                12,
+                                                                {pipeline1});
     auto executionPlan =
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
 
@@ -502,8 +514,12 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(1, 2, 2, context2, executable2, 1, {sink2});
-    DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 1,12, {pipeline2});
+    DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                                         engine->getQueryManager(),
+                                                                         2,
+                                                                         1,
+                                                                         12,
+                                                                         {pipeline2});
     auto executionPlan2 =
         ExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(), engine->getBufferManager());
 
@@ -548,8 +564,12 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(1, 1, 1, context1, executable1, 1, {sharedSink});
-    auto source1 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 0, 12, {pipeline1});
+    auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                                engine->getQueryManager(),
+                                                                1,
+                                                                0,
+                                                                12,
+                                                                {pipeline1});
     auto executionPlan = ExecutableQueryPlan::create(1,
                                                      1,
                                                      {source1},
@@ -562,8 +582,12 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(2, 2, 2, context2, executable2, 1, {sharedSink});
 
-    DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2,3, 12, {pipeline2});
+    DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                                         engine->getQueryManager(),
+                                                                         2,
+                                                                         3,
+                                                                         12,
+                                                                         {pipeline2});
 
     auto executionPlan2 = ExecutableQueryPlan::create(2,
                                                       2,
