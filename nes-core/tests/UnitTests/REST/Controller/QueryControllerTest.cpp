@@ -26,35 +26,41 @@
 #include "Catalogs/Source/PhysicalSource.hpp"
 #include "Catalogs/Source/LogicalSource.hpp"
 #include "Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp"
+#include "Catalogs/Query/QueryCatalog.hpp"
 
 namespace NES {
 
 class QueryControllerTest : public Testing::NESBaseTest {
   public:
     //use of TestCase to refer to a group of logically connected tests is depreceated
-    static void SetUpTestSuite() {
+    static void SetUpTestCase() {
         NES::Logger::setupLogging("QueryControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryControllerTest test class.");
     }
-    static void TearDownTestSuite() { NES_INFO("Tear down QueryControllerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
 
     void SetUp() {
         TopologyPtr topology = Topology::create();
         QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+        QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         RequestQueuePtr queryRequestQueue = std::make_shared<RequestQueue>(1);
         Compiler::JITCompilerBuilder jitCompilerBuilder = Compiler::JITCompilerBuilder();
         jitCompilerBuilder.registerLanguageCompiler(Compiler::CPPCompiler::create());
         QueryParsingServicePtr queryParsingService = QueryParsingService::create(jitCompilerBuilder.build());
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         Configurations::OptimizerConfiguration optimizerConfiguration = OptimizerConfiguration();
-        QueryServicePtr queryService =   std::make_shared<QueryService>(queryCatalog, queryRequestQueue, sourceCatalog, queryParsingService, optimizerConfiguration);
+        QueryServicePtr queryService =   std::make_shared<QueryService>(queryCatalogService, queryRequestQueue, sourceCatalog, queryParsingService, optimizerConfiguration);
         GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-        queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
+        queryController = std::make_shared<QueryController>(queryService, queryCatalogService, globalExecutionPlan);
     };
 
     SourceCatalogPtr sourceCatalog;
     QueryControllerPtr queryController;
 };
+
+TEST_F(QueryControllerTest, doNothing){
+    NES_DEBUG("Test");
+}
 
 TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
@@ -114,7 +120,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     auto getExecutionPlanResponse2 = response2.as_object();
     NES_DEBUG("Response: " << response2.serialize());
     EXPECT_TRUE(web::http::status_codes::NotFound == httpResponse2.status_code());
-    EXPECT_EQ(getExecutionPlanResponse2.at("message").as_string(), "Provided QueryId does not exist");
+    EXPECT_EQ(getExecutionPlanResponse2.at("message").as_string(), "Provided QueryId: 1 does not exist");
     EXPECT_EQ(getExecutionPlanResponse2.at("code").as_integer(),
               httpResponse2.status_code());
 }

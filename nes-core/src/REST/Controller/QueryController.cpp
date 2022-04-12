@@ -27,6 +27,7 @@
 #include <cpprest/http_msg.h>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+#include "Exceptions/InvalidQueryException.hpp"
 
 namespace NES {
 
@@ -55,16 +56,10 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             //Prepare the response
             successMessageImpl(request, executionPlanJson, web::http::status_codes::OK);
             return;
-        } catch (const QueryNotFoundException& exc) {
-            web::json::value errorResponse{};
-            errorResponse["detail"] =
-                web::json::value::string("Unable to find query with id " + std::to_string(queryId) + " in query catalog.");
-            badRequestImpl(request, errorResponse);
-            return;
         } else if (path[1] == "query-plan") {
             NES_INFO("QueryController:: GET query-plan");
             try {
-                QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
                 NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
                 auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getInputQueryPlan());
                 //Prepare the response
@@ -81,7 +76,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         } else if (path[1] == "optimization-phases") {
             NES_INFO("QueryController:: GET query-phases");
             try {
-                QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
                 auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
                 NES_DEBUG("UtilityFunctions: Getting the json representation of the optimized query plans");
                 auto response = web::json::value::object();
@@ -103,7 +98,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         } else if (path[1] == "query-status") {
             NES_INFO("QueryController:: GET query-status");
             try {
-                QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                QueryCatalogEntryPtr queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
                 NES_DEBUG("QueryController:: Getting the json representation of status: queryId="
                           << queryId << " status=" << queryCatalogEntry->getQueryStatusAsString());
                 web::json::value result{};
@@ -428,7 +423,10 @@ bool QueryController::validateURIParametersContainQueryIdAndQueryIdExists(std::m
     // get the queryId from user input
     QueryId queryId = std::stoi(queryParameter->second);
     NES_DEBUG("Query Controller: Get the registered query");
-    if (!queryCatalog->queryExists(queryId)) {
+    try{
+        queryCatalogService->getEntryForQuery(queryId);
+    }
+    catch(QueryNotFoundException exc){
         web::json::value errorResponse{};
         auto statusCode = web::http::status_codes::NotFound;
         errorResponse["code"] = web::json::value(statusCode);
