@@ -104,10 +104,6 @@ DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::begin() { return TupleIter
 DynamicTupleBuffer::TupleIterator DynamicTupleBuffer::end() { return TupleIterator(*this, getNumberOfTuples()); }
 
 std::string DynamicTupleBuffer::toString(const SchemaPtr& schema) {
-    if (!buffer.isValid()) {
-        return "INVALID_BUFFER_PTR";
-    }
-
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
     std::vector<PhysicalTypePtr> types;
