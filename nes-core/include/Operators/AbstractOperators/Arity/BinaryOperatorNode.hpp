@@ -106,7 +106,7 @@ class BinaryOperatorNode : public virtual OperatorNode {
 
     /**
      * @brief Gets the output origin ids for the result stream
-     * @return std::vector<OriginId>
+     * @return std::vector<OriginId> originids
      */
     std::vector<OriginId> getOutputOriginIds() override;
 

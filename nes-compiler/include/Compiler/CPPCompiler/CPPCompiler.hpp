@@ -31,7 +31,7 @@ class ClangFormat;
 class CPPCompiler : public LanguageCompiler {
   public:
     CPPCompiler();
-    ~CPPCompiler();
+    ~CPPCompiler() noexcept;
 
     /**
      * @brief Creates a new instance of the cpp compiler.
