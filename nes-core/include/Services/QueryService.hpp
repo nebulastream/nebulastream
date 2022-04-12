@@ -33,6 +33,9 @@ namespace NES {
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
 
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
 

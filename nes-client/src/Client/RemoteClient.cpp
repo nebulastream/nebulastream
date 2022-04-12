@@ -241,7 +241,6 @@ RemoteClient::QueryStopResult RemoteClient::stopQuery(uint64_t queryId) {
             (jsonReturn.has_field("detail")) ? jsonReturn.at("detail").as_string() : jsonReturn.at("message").as_string();
     }
     r.withError = withError;
-    r.queryId = jsonReturn.at("queryId").as_integer();
     return r;
 }
 

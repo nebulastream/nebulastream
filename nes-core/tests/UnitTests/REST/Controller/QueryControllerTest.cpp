@@ -11,22 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-#include "NesBaseTest.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "Util/TestUtils.hpp"
+
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/JITCompiler.hpp>
+#include <Compiler/JITCompilerBuilder.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <REST/Controller/QueryController.hpp>
+#include <Services/QueryParsingService.hpp>
+#include <Services/QueryService.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <WorkQueues/RequestQueue.hpp>
 #include <cpprest/http_client.h>
-#include "REST/Controller/QueryController.hpp"
-#include "Plans/Global/Execution/GlobalExecutionPlan.hpp"
-#include "WorkQueues/RequestQueue.hpp"
-#include "Services/QueryParsingService.hpp"
-#include "Compiler/CPPCompiler/CPPCompiler.hpp"
-#include "Compiler/JITCompilerBuilder.hpp"
-#include "Compiler/JITCompiler.hpp"
-#include "Catalogs/Source/PhysicalSource.hpp"
-#include "Catalogs/Source/LogicalSource.hpp"
-#include "Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp"
-#include "Catalogs/Query/QueryCatalog.hpp"
 
 namespace NES {
 
@@ -37,9 +40,11 @@ class QueryControllerTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("QueryControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryControllerTest test class.");
     }
+
     static void TearDownTestCase() { NES_INFO("Tear down QueryControllerTest test class."); }
 
     void SetUp() {
+        Testing::NESBaseTest::SetUp();
         TopologyPtr topology = Topology::create();
         QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
         QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
@@ -49,7 +54,11 @@ class QueryControllerTest : public Testing::NESBaseTest {
         QueryParsingServicePtr queryParsingService = QueryParsingService::create(jitCompilerBuilder.build());
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         Configurations::OptimizerConfiguration optimizerConfiguration = OptimizerConfiguration();
-        QueryServicePtr queryService =   std::make_shared<QueryService>(queryCatalogService, queryRequestQueue, sourceCatalog, queryParsingService, optimizerConfiguration);
+        QueryServicePtr queryService = std::make_shared<QueryService>(queryCatalogService,
+                                                                      queryRequestQueue,
+                                                                      sourceCatalog,
+                                                                      queryParsingService,
+                                                                      optimizerConfiguration);
         GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
         queryController = std::make_shared<QueryController>(queryService, queryCatalogService, globalExecutionPlan);
     };
@@ -57,10 +66,6 @@ class QueryControllerTest : public Testing::NESBaseTest {
     SourceCatalogPtr sourceCatalog;
     QueryControllerPtr queryController;
 };
-
-TEST_F(QueryControllerTest, doNothing){
-    NES_DEBUG("Test");
-}
 
 TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
@@ -70,7 +75,6 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
     web::http::http_response httpResponse1;
     web::json::value response1;
-
 
     queryController->handleGet(std::vector<utility::string_t>{"query", "execution-plan"}, msg1);
     msg1.get_response()
@@ -91,8 +95,7 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     NES_DEBUG("Response: " << response1.serialize());
     EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse1.status_code());
     EXPECT_EQ(getExecutionPlanResponse1.at("message").as_string(), "Parameter queryId must be provided");
-    EXPECT_EQ(getExecutionPlanResponse1.at("code").as_integer(),
-              httpResponse1.status_code());
+    EXPECT_EQ(getExecutionPlanResponse1.at("code").as_integer(), httpResponse1.status_code());
 
     web::http::http_request msg2(web::http::methods::GET);
     //set query string
@@ -100,7 +103,6 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
 
     web::http::http_response httpResponse2;
     web::json::value response2;
-
 
     queryController->handleGet(std::vector<utility::string_t>{"query", "execution-plan"}, msg2);
     msg2.get_response()
@@ -121,14 +123,14 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     NES_DEBUG("Response: " << response2.serialize());
     EXPECT_TRUE(web::http::status_codes::NotFound == httpResponse2.status_code());
     EXPECT_EQ(getExecutionPlanResponse2.at("message").as_string(), "Provided QueryId: 1 does not exist");
-    EXPECT_EQ(getExecutionPlanResponse2.at("code").as_integer(),
-              httpResponse2.status_code());
+    EXPECT_EQ(getExecutionPlanResponse2.at("code").as_integer(), httpResponse2.status_code());
 }
 
 TEST_F(QueryControllerTest, testCorrectExecuteQuery) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    TopologyNodePtr  topologyNode = TopologyNode::create(1,"0",0,0,1);
-    SourceCatalogEntryPtr entry = SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "0", 0, 0, 1);
+    SourceCatalogEntryPtr entry =
+        SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
     ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
     web::http::http_request msg(web::http::methods::POST);
     //set query string
@@ -363,7 +365,9 @@ TEST_F(QueryControllerTest, testExecuteQueryInvalidFaultToleranceType) {
     auto result = response.as_object();
     auto message = response.at("message").as_string();
     NES_DEBUG("Response: " << response.serialize());
-    EXPECT_EQ(message, "Invalid Fault Tolerance Type provided: "+ invalidFaultToleranceType + ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.");
+    EXPECT_EQ(message,
+              "Invalid Fault Tolerance Type provided: " + invalidFaultToleranceType
+                  + ". Valid Fault Tolerance Types are: 'AT_MOST_ONCE', 'AT_LEAST_ONCE', 'EXACTLY_ONCE', 'NONE'.");
     EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
 }
 
@@ -423,14 +427,14 @@ TEST_F(QueryControllerTest, testStopQueryInvalidParameterOrNoQueryIdProvided) {
     NES_DEBUG("Response: " << response2.serialize());
     EXPECT_TRUE(web::http::status_codes::NotFound == httpResponse2.status_code());
     EXPECT_EQ(getExecutionPlanResponse2.at("message").as_string(), "Provided QueryId: " + std::to_string(1) + " does not exist");
-    EXPECT_EQ(getExecutionPlanResponse2.at("code").as_integer(),
-              httpResponse2.status_code());
+    EXPECT_EQ(getExecutionPlanResponse2.at("code").as_integer(), httpResponse2.status_code());
 }
 
 TEST_F(QueryControllerTest, testNonExistentSchemaAttribtue) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
-    TopologyNodePtr  topologyNode = TopologyNode::create(1,"0",0,0,1);
-    SourceCatalogEntryPtr entry = SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
+    TopologyNodePtr topologyNode = TopologyNode::create(1, "0", 0, 0, 1);
+    SourceCatalogEntryPtr entry =
+        SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
     ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
     web::http::http_request msg(web::http::methods::POST);
     //set query string
@@ -443,7 +447,6 @@ TEST_F(QueryControllerTest, testNonExistentSchemaAttribtue) {
 
     web::http::http_response httpResponse;
     web::json::value response;
-
 
     queryController->handlePost(std::vector<utility::string_t>{"query", "execute-query"}, msg);
     msg.get_response()
@@ -463,8 +466,9 @@ TEST_F(QueryControllerTest, testNonExistentSchemaAttribtue) {
     auto getExecutionPlanResponse = response.as_object();
     NES_DEBUG("Response: " << response.serialize());
     EXPECT_TRUE(web::http::status_codes::BadRequest == httpResponse.status_code());
-    EXPECT_TRUE(getExecutionPlanResponse.at("message").as_string().find("FieldAccessExpression: the field BAD is not defined in the  schema") != string::npos);
+    EXPECT_TRUE(getExecutionPlanResponse.at("message").as_string().find(
+                    "FieldAccessExpression: the field BAD is not defined in the  schema")
+                != string::npos);
 }
 
-
-}
+}// namespace NES
