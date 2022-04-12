@@ -31,7 +31,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          Runtime::NodeEnginePtr nodeEngine,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
-                         uint8_t retryTimes)
+                         uint8_t retryTimes,
+                         FaultToleranceType faultToleranceType)
     : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
                  nodeEngine,
                  numOfProducers,
@@ -41,7 +42,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), faultToleranceType(faultToleranceType) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
 }
@@ -50,7 +51,9 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-    nodeEngine->getBufferStorage()->insertBuffer(queryId, nesPartition.getPartitionId(), inputBuffer);
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        nodeEngine->getBufferStorage()->insertBuffer(queryId, nesPartition.getPartitionId(), inputBuffer);
+    }
     if (channel) {
         return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
     }

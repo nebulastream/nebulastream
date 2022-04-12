@@ -18,6 +18,7 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <string>
@@ -43,7 +44,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     NesPartition nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
-                                    uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
+                                    uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId(),
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief returns the string representation of the network sink
@@ -88,18 +90,33 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     uint64_t getUniqueNetworkSinkDescriptorId();
 
+    /**
+     * @brief getter for fault-tolerance type
+     * @return fault-tolerance type
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
+    /**
+     * @brief setter for fault-tolerance type
+     * @param fault-tolerance type
+     */
+    void setFaultToleranceType(FaultToleranceType faultToleranceType);
+
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
-                                   uint64_t uniqueNetworkSinkDescriptorId);
+                                   uint64_t uniqueNetworkSinkDescriptorId,
+                                   FaultToleranceType faultToleranceType);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
     uint64_t uniqueNetworkSinkDescriptorId;
+    FaultToleranceType faultToleranceType;
+
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

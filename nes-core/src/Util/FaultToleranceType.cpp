@@ -29,6 +29,7 @@ FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranc
         return FaultToleranceType::INVALID;
     }
 }
+
 std::string toString(const FaultToleranceType faultToleranceMode) {
     switch (faultToleranceMode) {
         case FaultToleranceType::NONE: return "NONE";

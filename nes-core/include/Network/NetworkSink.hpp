@@ -19,6 +19,7 @@
 #include <Network/NodeLocation.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
 
@@ -49,7 +50,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          Runtime::NodeEnginePtr nodeEngine,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
-                         uint8_t retryTimes);
+                         uint8_t retryTimes,
+                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -127,6 +129,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
+    FaultToleranceType faultToleranceType;
 };
 
 }// namespace Network
