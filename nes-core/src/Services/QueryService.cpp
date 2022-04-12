@@ -85,7 +85,9 @@ QueryId QueryService::validateAndQueueAddRequest(const std::string& queryString,
         }
     } catch (const InvalidQueryException& exc) {
         NES_ERROR("QueryService: " + std::string(exc.what()));
-        queryCatalogService->createNewEntry(queryString, QueryPlan::create(), placementStrategyName);
+        auto emptyQueryPlan = QueryPlan::create();
+        emptyQueryPlan->setQueryId(queryId);
+        queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }
@@ -130,7 +132,9 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
         }
     } catch (const InvalidQueryException& exc) {
         NES_ERROR("QueryService: " + std::string(exc.what()));
-        queryCatalogService->createNewEntry(queryString, QueryPlan::create(), placementStrategyName);
+        auto emptyQueryPlan = QueryPlan::create();
+        emptyQueryPlan->setQueryId(queryId);
+        queryCatalogService->createNewEntry(queryString, emptyQueryPlan, placementStrategyName);
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, exc.what());
         throw exc;
     }

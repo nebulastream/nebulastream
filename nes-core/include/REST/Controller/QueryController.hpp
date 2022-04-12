@@ -17,7 +17,6 @@
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/CpprestForwardedRefs.hpp>
-#include <Services/QueryService.hpp>
 #include <SerializableQueryPlan.pb.h>
 
 namespace NES {
@@ -89,7 +88,7 @@ class QueryController : public BaseController {
      * @param body :
      * @return true if protobuf message is valid, else false
      */
-    bool validateProtobufMessage(std::shared_ptr<SubmitQueryRequest> protobufMessage, const web::http::http_request& request, const utility::string_t& body);
+    bool validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage, const web::http::http_request& request, const utility::string_t& body);
 
     /**
      * Validates user request for post requests to 'execute-query' endpoint. If not valid, creates appropriate reply to http request
@@ -115,7 +114,6 @@ class QueryController : public BaseController {
      */
     bool validateURIParametersContainQueryIdAndQueryIdExists(std::map<utility::string_t, utility::string_t> parameters ,const web::http::http_request& httpRequest);
 
-    TopologyPtr topology;
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
