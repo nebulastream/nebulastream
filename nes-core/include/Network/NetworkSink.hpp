@@ -19,6 +19,7 @@
 #include <Network/NodeLocation.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <string>
