@@ -97,13 +97,16 @@ TEST_F(SinkTest, testCSVFileSink) {
     write_result = csvSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
+    auto rowLayoutBeforeWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBufferBeforeWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutBeforeWrite, buffer);
+    std::string bufferContentBeforeWrite = dynamicTupleBufferBeforeWrite.toString(test_schema);
+    NES_TRACE("Buffer Content= " << bufferContentBeforeWrite);
 
     // get buffer content as string
     auto rowLayoutAfterWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBufferAfterWrite = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutAfterWrite, buffer);
-    std::string bufferContent = dynamicTupleBufferAfterWrite.toString(test_schema);
-    NES_TRACE("Buffer Content= " << bufferContent);
+    std::string bufferContentAfterWrite = dynamicTupleBufferAfterWrite.toString(test_schema);
+    NES_TRACE("Buffer Content= " << bufferContentAfterWrite);
 
     ifstream testFile(path_to_csv_file.c_str());
     EXPECT_TRUE(testFile.good());
@@ -116,7 +119,7 @@ TEST_F(SinkTest, testCSVFileSink) {
     stringstream ss(contentWOHeader);
     string item;
     while (getline(ss, item, ',')) {
-        EXPECT_TRUE(bufferContent.find(item) != std::string::npos);
+        EXPECT_TRUE(bufferContentAfterWrite.find(item) != std::string::npos);
     }
     buffer.release();
 }
@@ -136,8 +139,6 @@ TEST_F(SinkTest, testTextFileSink) {
     buffer.setNumberOfTuples(25);
     write_result = binSink->writeData(buffer, wctx);
     EXPECT_TRUE(write_result);
-    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
-    //cout << "Buffer Content= " << bufferContent << endl;
 
     // get buffer content as string
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
@@ -170,8 +171,10 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     write_result = binSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
-    //cout << "Buffer Content= " << bufferContent << endl;
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
+    NES_TRACE( "Buffer Content= " << bufferContent);
 
     //deserialize schema
     uint64_t idx = path_to_bin_file.rfind('.');
@@ -201,7 +204,16 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     //cout << "result=" << endl << Util::prettyPrintTupleBuffer(deszBuffer, test_schema) << endl;
 
     //cout << "File path = " << path_to_bin_file << " Content=" << Util::prettyPrintTupleBuffer(deszBuffer, test_schema);
-    EXPECT_EQ(Util::prettyPrintTupleBuffer(deszBuffer, test_schema), Util::prettyPrintTupleBuffer(buffer, test_schema));
+
+    auto deszRowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, deszBuffer.getBufferSize());
+    auto deszDynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(deszRowLayout, deszBuffer);
+    std::string deszBufferContent = dynamicTupleBuffer.toString(test_schema);
+
+    auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, deszBuffer);
+    std::string bufferContentActual = dynamicTupleBufferActual.toString(test_schema);
+
+    EXPECT_EQ(deszBufferContent, bufferContentActual);
     buffer.release();
 }
 
@@ -225,7 +237,9 @@ TEST_F(SinkTest, testCSVPrintSink) {
     write_result = csvSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
     //cout << "Buffer Content= " << bufferContent << endl;
 
     ifstream testFile(path_to_osfile_file.c_str());
@@ -274,7 +288,9 @@ TEST_F(SinkTest, testNullOutSink) {
     write_result = nullSink->writeData(buffer, wctx);
 
     EXPECT_TRUE(write_result);
-    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
     //cout << "Buffer Content= " << bufferContent << endl;
 }
 
@@ -298,7 +314,9 @@ TEST_F(SinkTest, testTextPrintSink) {
     buffer.setNumberOfTuples(25);
     write_result = binSink->writeData(buffer, wctx);
     EXPECT_TRUE(write_result);
-    std::string bufferContent = Util::prettyPrintTupleBuffer(buffer, test_schema);
+    auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
+    std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
     ////cout << "Buffer Content= " << bufferContent << endl;
 
     ifstream testFile(path_to_osfile_file.c_str());
@@ -405,7 +423,10 @@ TEST_F(SinkTest, testTextZMQSink) {
 
         std::string bufferContent = Util::printTupleBufferAsText(bufData);
         //cout << "Buffer Content received= " << bufferContent << endl;
-        EXPECT_EQ(bufferContent, Util::prettyPrintTupleBuffer(buffer, test_schema));
+        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, buffer);
+        std::string bufferContentActual = dynamicTupleBufferActual.toString(test_schema);
+        EXPECT_EQ(bufferContent, bufferContentActual);
         receiving_finished = true;
     });
 
@@ -457,7 +478,15 @@ TEST_F(SinkTest, testBinaryZMQSink) {
         //        << " content=" << Util::prettyPrintTupleBuffer(bufData, test_schema) << endl;
         //cout << "ref buffer tups=" << buffer.getNumberOfTuples()
         //        << " content=" << Util::prettyPrintTupleBuffer(buffer, test_schema) << endl;
-        EXPECT_EQ(Util::prettyPrintTupleBuffer(bufData, test_schema), Util::prettyPrintTupleBuffer(buffer, test_schema));
+        auto rowLayoutExpected = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+        auto dynamicTupleBufferExpected = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutExpected, buffer);
+        std::string bufferContentExpected = dynamicTupleBufferExpected.toString(test_schema);
+
+        auto rowLayoutActual = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+        auto dynamicTupleBufferActual = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual, buffer);
+        std::string bufferContentActual = dynamicTupleBufferActual.toString(test_schema);
+
+        EXPECT_EQ(bufferContentExpected, bufferContentActual);
     });
 
     // Wait until receiving is complete.
