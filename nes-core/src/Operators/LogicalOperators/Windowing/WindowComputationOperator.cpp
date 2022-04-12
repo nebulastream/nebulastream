@@ -46,7 +46,8 @@ bool WindowComputationOperator::isIdentical(NodePtr const& rhs) const {
 bool WindowComputationOperator::equal(NodePtr const& rhs) const { return rhs->instanceOf<WindowComputationOperator>(); }
 
 OperatorNodePtr WindowComputationOperator::copy() {
-    auto copy = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition, id)->as<WindowComputationOperator>();
+    auto copy =
+        LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition, id)->as<WindowComputationOperator>();
     copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);

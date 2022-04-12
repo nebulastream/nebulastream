@@ -236,14 +236,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
@@ -332,14 +332,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
@@ -430,14 +430,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDef->setNumberOfInputEdges(1);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
@@ -518,14 +518,14 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createSlicingWindowType(),
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createSlicingWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDef->setNumberOfInputEdges(1);
 
     auto windowInputSchema = Schema::create();
@@ -603,13 +603,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                     {aggregation},
-                                                     TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                     DistributionCharacteristic::createCombiningWindowType(),
-                                                     trigger,
-                                                     triggerAction,
-                                                     0);
+    auto windowDef =
+        LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                        {aggregation},
+                                        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+                                        DistributionCharacteristic::createCombiningWindowType(),
+                                        trigger,
+                                        triggerAction,
+                                        0);
     windowDef->setNumberOfInputEdges(1);
     auto exec = ExecutableSumAggregation<int64_t>::create();
 
@@ -693,14 +694,14 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createCompleteWindowType(),
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     windowDef->setNumberOfInputEdges(1);
 
@@ -783,14 +784,14 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowInputSchema = Schema::create();
 
-    auto windowDef =
-        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
-                                                   {aggregation},
-                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
-                                                   DistributionCharacteristic::createSlicingWindowType(),
-                                                   trigger,
-                                                   triggerAction,
-                                                   0);
+    auto windowDef = Windowing::LogicalWindowDefinition::create(
+        {Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+        {aggregation},
+        TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+        DistributionCharacteristic::createSlicingWindowType(),
+        trigger,
+        triggerAction,
+        0);
     windowDef->setNumberOfInputEdges(1);
 
     auto windowOutputSchema = Schema::create()

@@ -219,8 +219,8 @@ class MockDataSourceWithRunningRoutine : public DataSource {
                      0,
                      numSourceLocalBuffers,
                      gatheringMode,
-                     executableSuccessors){
-            ON_CALL(*this, runningRoutine()).WillByDefault(InvokeWithoutArgs([&]() {
+                     executableSuccessors) {
+        ON_CALL(*this, runningRoutine()).WillByDefault(InvokeWithoutArgs([&]() {
             completedPromise.set_value(true);
             return;
         }));
@@ -577,8 +577,8 @@ TEST_F(SourceTest, testDataSourceGetOperatorId) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->originId,
-                                                                               this->numSourceLocalBuffersDefault,
-                                                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+                                                      this->numSourceLocalBuffersDefault,
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getOperatorId(), this->operatorId);
 }
 
@@ -605,8 +605,8 @@ TEST_F(SourceTest, testDataSourceGetSchema) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       this->originId,
-                                                                               this->numSourceLocalBuffersDefault,
-                                                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+                                                      this->numSourceLocalBuffersDefault,
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(source->getSchema(), this->schema);
 }
 
@@ -718,8 +718,8 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
                                                       this->nodeEngine->getQueryManager(),
                                                       this->operatorId,
                                                       0,
-                                                                               this->numSourceLocalBuffersDefault,
-                                                                               {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+                                                      this->numSourceLocalBuffersDefault,
+                                                      {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
     ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::INTERVAL_MODE);
     ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(GatheringMode::getFromString("clearly_an_erroneous_string"));

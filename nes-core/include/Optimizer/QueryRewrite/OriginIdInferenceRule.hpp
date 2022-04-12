@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYREWRITE_ORIGINIDINFERENCERULE_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_ORIGINIDINFERENCERULE_HPP_
 
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES::Optimizer {
 
@@ -50,4 +50,4 @@ class OriginIdInferenceRule : public BaseRewriteRule {
     explicit OriginIdInferenceRule();
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYREWRITE_ORIGINIDINFERENCERULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_ORIGINIDINFERENCERULE_HPP_

@@ -18,7 +18,7 @@
 namespace NES::Windowing {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {
-    NES_ASSERT2_FMT(numberOfOrigins!=0, "The MultiOriginWatermarkProcessor should have at least one origin");
+    NES_ASSERT2_FMT(numberOfOrigins != 0, "The MultiOriginWatermarkProcessor should have at least one origin");
 }
 
 MultiOriginWatermarkProcessor::~MultiOriginWatermarkProcessor() { localWatermarkProcessor.clear(); }

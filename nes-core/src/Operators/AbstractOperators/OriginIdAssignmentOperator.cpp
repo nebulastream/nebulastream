@@ -27,9 +27,7 @@ std::vector<OriginId> OriginIdAssignmentOperator::getOutputOriginIds() {
     return {originId};
 }
 
-void OriginIdAssignmentOperator::setOriginId(OriginId originId) {
-    this->originId = originId;
-}
+void OriginIdAssignmentOperator::setOriginId(OriginId originId) { this->originId = originId; }
 
 OriginId OriginIdAssignmentOperator::getOriginId() { return originId; }
 

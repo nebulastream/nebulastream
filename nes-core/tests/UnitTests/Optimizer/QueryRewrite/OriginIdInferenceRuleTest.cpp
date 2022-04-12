@@ -184,11 +184,11 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndWindow) {
                        ->as<SourceLogicalOperatorNode>();
     queryPlan->addRootOperator(source3);
     auto dummyWindowDefinition = LogicalWindowDefinition::create({},
-                                    WindowTypePtr(),
-                                    DistributionCharacteristicPtr(),
-                                    WindowTriggerPolicyPtr(),
-                                    WindowActionDescriptorPtr(),
-                                    0);
+                                                                 WindowTypePtr(),
+                                                                 DistributionCharacteristicPtr(),
+                                                                 WindowTriggerPolicyPtr(),
+                                                                 WindowActionDescriptorPtr(),
+                                                                 0);
     auto window = LogicalOperatorFactory::createCentralWindowSpecializedOperator(dummyWindowDefinition)->as<WindowOperatorNode>();
     queryPlan->appendOperatorAsNewRoot(window);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());

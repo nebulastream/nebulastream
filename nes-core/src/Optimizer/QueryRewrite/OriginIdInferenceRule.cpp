@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <Exceptions/RuntimeException.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
-#include <Exceptions/RuntimeException.hpp>
 
 namespace NES::Optimizer {
 
