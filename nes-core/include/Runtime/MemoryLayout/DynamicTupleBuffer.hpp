@@ -95,7 +95,7 @@ class DynamicField {
      * @brief get a string representation of this dynamic tuple
      * @return a string
      */
-    std::string toString(DataTypePtr dataType);
+    std::string toString();
 
   private:
     uint8_t* address;
