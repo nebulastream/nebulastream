@@ -145,7 +145,7 @@ class MQTTTSinkTest : public Testing::NESBaseTest {
         if (printBuffer) {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, inputBuffer.getBufferSize());
             auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, inputBuffer);
-            NES_DEBUG("bufferContent before write=" << dynamicTupleBuffer << '\n');
+            NES_DEBUG("bufferContent before write=" << dynamicTupleBuffer);
         }
         bool connectSuccessful = mqttSink->connect();
         if (connectSuccessful) {
