@@ -74,6 +74,9 @@ class ArrayBase : public std::array<T, s>, public NESType {
         runtimeConstructionTest();
     }
 
+    /// @brief Default constructor
+    ArrayBase() = default;
+
   protected:
     /***
      * @brief Protected constructor which is usable by partial specializations of the base class.
