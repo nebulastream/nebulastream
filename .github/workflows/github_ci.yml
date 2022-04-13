@@ -3,7 +3,7 @@ name: NES CI
 on:
   push:
     branches:
-      - '*'
+      - master
     tags-ignore:
       - '*'
     paths-ignore:
@@ -13,14 +13,13 @@ on:
       - CHECKLIST.yml
       - '.github/**'
   pull_request_target:
-    types: [ ready_for_review, synchronize ]
+    types: [ opened, ready_for_review, synchronize ]
     branches:
       - '*'
     paths-ignore:
       - nes-core/include/Version/version.hpp
       - README.md
       - CODE_OF_CONDUCT.md
-      - CHECKLIST.yml
       - '.github/**'
   workflow_dispatch:
     inputs:
@@ -52,11 +51,10 @@ jobs:
           exit 1
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Checklist
-        uses: wyozi/contextual-qa-checklist-action@master
+      - name: Contextual QA Checklists
+        uses: wyozi/contextual-qa-checklist-action@1.2
         with:
           gh-token: ${{ secrets.GITHUB_TOKEN }}
-          include-hidden-files: true
 
   build-x64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
