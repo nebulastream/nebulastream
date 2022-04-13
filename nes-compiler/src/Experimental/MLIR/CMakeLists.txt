@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-compiler
-#        MLIRJIT.cpp
-#        MLIRUtility.cpp
-#        NESAbstractionToMLIR.cpp
+        MLIRUtility.cpp
+        NESAbstractionToMLIR.cpp
 )

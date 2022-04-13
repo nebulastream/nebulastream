@@ -2,7 +2,6 @@
 #include <string>
 #include <mlir/Target/LLVMIR/Export.h>
 #include <Experimental/MLIR/NESAbstractionToMLIR.hpp>
-#include <Experimental/MLIR/MLIRJIT.hpp>
 
 #include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
 #include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h"
@@ -21,6 +20,8 @@
 
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Linker/Linker.h"
+
+#include <unistd.h>
 
 MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile) :
   mlirFilepath(std::move(mlirFilepath)), debugFromFile(debugFromFile){};
@@ -70,7 +71,14 @@ void MLIRUtility::printMLIRModule(mlir::OwningModuleRef &mlirModule,
         mlirString = insertComments(mlirString);
       }
       if(!mlirFilepath.empty()) {
-        fileStream.write(mlirString.c_str(), mlirString.length());
+          char cwd[1024];
+          if (getcwd(cwd, sizeof(cwd)) != NULL) {
+              printf("Current working dir: %s\n", cwd);
+          } else {
+              perror("getcwd() error");
+          }
+          //Todo File not open yet!
+          fileStream.write(mlirString.c_str(), mlirString.length());
       }
       printf("%s", mlirString.c_str());
     }
@@ -132,7 +140,7 @@ int MLIRUtility::runJit(const std::vector<std::string> &symbols,
   /// Link proxyFunctions into MLIR module. Optimize MLIR module.
   auto printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
     llvm::SMDiagnostic Err;
-    auto proxyFunctionsIR = llvm::parseIRFile("../../proxyFunctionsIR/proxyFunctionsIR.ll", Err, llvmIRModule->getContext());
+    auto proxyFunctionsIR = llvm::parseIRFile("../../../nes-compiler/src/Experimental/proxyFunctionsIR/proxyFunctionsIR.ll", Err, llvmIRModule->getContext());
     llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
     auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
     auto optimizedModule = optPipeline(llvmIRModule);

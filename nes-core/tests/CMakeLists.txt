@@ -211,6 +211,26 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
+### MLIR Tests ###
+if(NES_USE_MLIR)
+    get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+    get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+    add_executable(mlir-tuplebuffer-test "UnitTests/MLIR_Experimental/nesTupleBuffer.cpp")
+#    target_link_libraries(mlir-tuplebuffer-test nes-tests)
+#    add_executable(mlir-tuplebuffer-test "UnitTests/MLIR_Experimental/nesTupleBuffer.cpp")
+    target_link_libraries(mlir-tuplebuffer-test
+            PRIVATE
+            nes-tests
+#            ${GTEST_LIBRARIES}
+            ${dialect_libs}
+            ${conversion_libs}
+            MLIRReconcileUnrealizedCasts
+            MLIRMemRefToLLVM
+            MLIRExecutionEngine
+            )
+    add_test(NAME mlir-tuplebuffer-test COMMAND mlir-tuplebuffer-test)
+endif (NES_USE_MLIR)
+
 
 ### Row Layout Tests ###
 add_executable(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")
