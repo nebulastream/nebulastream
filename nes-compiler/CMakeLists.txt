@@ -14,12 +14,13 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-add_subdirectory(experimental)
 
 get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
 
 # Add Library
 add_library(nes-compiler SHARED ${NES_COMPILER_SOURCE_FILES})
+#message(source file: ${NES_COMPILER_SOURCE_FILES})
+message(STATUS "Here: ${NES_COMPILER_SOURCE_FILES}")
 target_link_libraries(nes-compiler PUBLIC nes-common)
 target_include_directories(nes-compiler PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

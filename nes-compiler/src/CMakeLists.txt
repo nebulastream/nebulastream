@@ -12,6 +12,4 @@
 # limitations under the License.
 
 add_subdirectory(Compiler)
-if(NES_USE_MLIR)
-    add_subdirectory(Experimental)
-endif(NES_USE_MLIR)
+add_subdirectory(Experimental)

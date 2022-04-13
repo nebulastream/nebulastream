@@ -11,8 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#add_subdirectory(generatedMLIR)
-add_subdirectory(MLIR)
-add_subdirectory(NESAbstraction)
-#add_subdirectory(proxyFunctionsIR)
-add_subdirectory(utility)
+add_source_files(nes-compiler
+        NESAbstractionForNode.cpp
+        NESAbstractionIfNode.cpp
+        NESAbstractionNode.cpp
+        NESAbstractionWriteNode.cpp
+)
