@@ -30,8 +30,8 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        QuerySubPlanId querySubPlanId)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
       querySubPlanId(querySubPlanId) {
-    //TODO: issue #2543
-    watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(1);
+    watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numOfProducers);
+    bufferCount = 0;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
 }

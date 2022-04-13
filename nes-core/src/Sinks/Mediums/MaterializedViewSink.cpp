@@ -32,6 +32,11 @@ bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime:
     NES_INFO("MaterializedViewSink::writeData");
     bool ret = view->writeData(inputBuffer);
     ++sentBuffer;
+    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+    if (!(bufferCount % 10)) {
+        notifyEpochTermination(watermarkProcessor->getCurrentWatermark());
+    }
+    bufferCount++;
     return ret;
 }
 

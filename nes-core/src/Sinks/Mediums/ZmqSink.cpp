@@ -143,6 +143,11 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             }
         }
     }
+    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+    if (!(bufferCount % 10)) {
+        notifyEpochTermination(watermarkProcessor->getCurrentWatermark());
+    }
+    bufferCount++;
     return true;
 }
 

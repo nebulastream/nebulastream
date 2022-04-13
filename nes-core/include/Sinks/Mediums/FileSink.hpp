@@ -86,6 +86,7 @@ class FileSink : public SinkMedium {
   protected:
     std::string filePath;
     std::ofstream outputFile;
+    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES

@@ -160,6 +160,7 @@ class SinkMedium : public Runtime::Reconfigurable {
 
   protected:
     SinkFormatPtr sinkFormat;
+    uint32_t bufferCount;
     bool append{
         false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
     std::atomic_bool schemaWritten{false};// TODO same here
