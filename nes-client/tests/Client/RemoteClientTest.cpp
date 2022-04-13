@@ -200,7 +200,8 @@ TEST_F(RemoteClientTest, CorrectnessOfGetQueryPlan) {
     int64_t nonExistingQueryId = queryId + 1;
     std::string response = client->getQueryPlan(nonExistingQueryId);
 
-    std::string expect = "{\"code\":404,\"message\":\"Provided QueryId: " + to_string(nonExistingQueryId) + " does not exist\",\"more_info\":\"https://docs.nebula.stream/docs/clients/rest-api/\"}";
+    std::string expect = "{\"code\":404,\"message\":\"Provided QueryId: " + to_string(nonExistingQueryId)
+        + " does not exist\",\"more_info\":\"https://docs.nebula.stream/docs/clients/rest-api/\"}";
     EXPECT_EQ(response, expect);
     ASSERT_TRUE(stopQuery(queryId));
 }
