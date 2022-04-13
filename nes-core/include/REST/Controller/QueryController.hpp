@@ -88,7 +88,9 @@ class QueryController : public BaseController {
      * @param body :
      * @return true if protobuf message is valid, else false
      */
-    bool validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage, const web::http::http_request& request, const utility::string_t& body);
+    bool validateProtobufMessage(const std::shared_ptr<SubmitQueryRequest>& protobufMessage,
+                                 const web::http::http_request& request,
+                                 const utility::string_t& body);
 
     /**
      * Validates user request for post requests to 'execute-query' endpoint. If not valid, creates appropriate reply to http request
@@ -112,7 +114,8 @@ class QueryController : public BaseController {
      * @param httpRequest
      * @return true if 'queryId' parameter exists and query with queryId exists else false
      */
-    bool validateURIParametersContainQueryIdAndQueryIdExists(std::map<utility::string_t, utility::string_t> parameters ,const web::http::http_request& httpRequest);
+    bool validateURIParametersContainQueryIdAndQueryIdExists(std::map<utility::string_t, utility::string_t> parameters,
+                                                             const web::http::http_request& httpRequest);
 
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;

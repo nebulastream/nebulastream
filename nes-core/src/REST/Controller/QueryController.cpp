@@ -134,7 +134,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                                                                                            << "try to parse query");
                     web::json::value req = web::json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
-                    if (!validateUserRequest(req, request)){
+                    if (!validateUserRequest(req, request)) {
                         return;
                     }
 

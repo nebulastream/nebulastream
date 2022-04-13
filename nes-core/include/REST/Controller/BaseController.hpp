@@ -106,7 +106,9 @@ class BaseController {
      */
     template<typename T,
              std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
-    static void successMessageImpl(const web::http::http_request& request, const T& result, const web::http::status_code& statusCode = web::http::status_codes::OK) {
+    static void successMessageImpl(const web::http::http_request& request,
+                                   const T& result,
+                                   const web::http::status_code& statusCode = web::http::status_codes::OK) {
         web::http::http_response response(statusCode);
         response.headers().add("Access-Control-Allow-Origin", "*");
         response.headers().add("Access-Control-Allow-Headers", "Content-Type");
@@ -123,7 +125,9 @@ class BaseController {
      */
     template<typename T,
              std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
-    static void errorMessageImpl(const web::http::http_request& request, const T& detail, const web::http::status_code& statusCode = web::http::status_codes::BadRequest) {
+    static void errorMessageImpl(const web::http::http_request& request,
+                                 const T& detail,
+                                 const web::http::status_code& statusCode = web::http::status_codes::BadRequest) {
         // Returns error with a specific error code
         web::http::http_response response(statusCode);
         response.headers().add("Access-Control-Allow-Origin", "*");
