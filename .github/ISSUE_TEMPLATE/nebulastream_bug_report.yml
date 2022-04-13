@@ -19,14 +19,14 @@ body:
       label: NebulaStream version
       description: >
         What NebulaStream version are you using? If you wish to
-        discuss NebulaStream, open a [discussion](https://github.com/nebulastream/nebualstream/discussions) instead!
+        discuss NebulaStream, open a [discussion](https://github.com/nebulastream/nebulastream/discussions) instead!
       placeholder: >
         vx.x.x
     validations:
       required: true
   - type: textarea
     attributes:
-      label: What happened
+      label: What happened?
       description: Describe what happened.
       placeholder: >
         Please provide the context in which the problem occurred and explain what happened
@@ -34,18 +34,19 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: What you think should happen instead
+      label: What is the expected behavior?
       description: What do you think went wrong?
       placeholder: >
-        Please explain why you think the behaviour is erroneous. It is extremely helpful if you copy&paste
-        the fragment of logs showing the exact error messages or wrong behaviour and screenshots for
-        UI problems. You can include files by dragging and dropping them here.
+        Explain what you expected and what you actually got. Explain what is different and provide a minimal log of the actual output.
+        You can include files by dragging and dropping them here.
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: How to reproduce
       description: >
         What should we do to reproduce the problem? If you are not able to provide a reproducible case,
-        please open a [discussion](https://github.com/nebulastream/nebualstream/discussions) instead.
+        please open a [discussion](https://github.com/nebulastream/nebulastream/discussions) instead.
       placeholder: >
         Please make sure you provide a reproducible step-by-step case of how to reproduce the problem
         as minimally and precisely as possible. Keep in mind we do not have access to your cluster or DAGs.
@@ -55,7 +56,7 @@ body:
     attributes:
       label: Operating System
       description: What Operating System are you using?
-      placeholder: "You can get it via `cat /etc/os-release` for example"
+      placeholder: "In linux systems you can get it via `cat /etc/os-release`"
     validations:
       required: true
   - type: textarea

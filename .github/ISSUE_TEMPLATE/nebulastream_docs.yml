@@ -29,8 +29,9 @@ body:
       placeholder: >
         Please explain how you think the documentation could be fixed. Ideally specify where a new or missing
         documentation should be added and what kind of information should be included. Sometimes people
-        writing the documentation do not realise that some assumptions the have might not be in the heads
-        of the reader, so try to explain exactly what you would like to see in the docs and why.
+        writing the documentation do not realise that some assumptions the have might not be in the head
+        of the reader, so try to explain exactly what you would like to see in the docs and why? It is ok if
+        you do not know how to solve it.
   - type: checkboxes
     attributes:
       label: Are you willing to submit PR?
