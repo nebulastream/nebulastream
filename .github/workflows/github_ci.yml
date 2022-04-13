@@ -12,10 +12,14 @@ on:
       - CODE_OF_CONDUCT.md
       - CHECKLIST.yml
       - '.github/**'
-  pull_request_target:
-    types: [ opened, ready_for_review, synchronize ]
+  pull_request:
+    types:
+      - ready_for_review
+      - synchronize
+      - opened
+      - reopened
     branches:
-      - '*'
+      - master
     paths-ignore:
       - nes-core/include/Version/version.hpp
       - README.md
