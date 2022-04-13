@@ -5,4 +5,4 @@ paths:
   "nes-core/src/REST/**":
     - Did you prepare a PR to update the REST API documentation?
   ".github/**":
-    - Did you include build management team in your PR?
+    - You are doing changes to github configurations. Did you assign member of build management team to your PR for change review?
