@@ -49,26 +49,15 @@ std::string DynamicTuple::toString(const SchemaPtr& schema) {
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
         const auto dataType = schema->get(i)->getDataType();
         DynamicField currentField = this->operator[](i);
-        ss << currentField.toString(dataType) << "|";
+        ss << currentField.toString() << "|";
     }
     return ss.str();
 }
 
-std::string DynamicField::toString(DataTypePtr dataType) {
+std::string DynamicField::toString() {
     std::stringstream ss;
-    std::string currentFieldContentAsString;
-    if (dataType->isInteger()) {
-        currentFieldContentAsString = std::to_string(this->read<uint32_t>());
-    } if (dataType->isNumeric()) {
-        currentFieldContentAsString = std::to_string(this->read<uint32_t>());
-    }
-    else if (dataType->isBoolean()) {
-        currentFieldContentAsString = std::to_string(this->read<bool>());
-    } else if (dataType->isFloat()) {
-        currentFieldContentAsString = std::to_string(this->read<double>());
-    } else if (dataType->isChar()) {
-        currentFieldContentAsString = std::to_string(this->read<char>());
-    }
+
+    std::string currentFieldContentAsString = this->physicalType->convertRawToString(this->address);
     ss << currentFieldContentAsString;
     return ss.str();
 };
