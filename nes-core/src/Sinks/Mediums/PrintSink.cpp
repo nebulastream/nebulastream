@@ -74,7 +74,12 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
         NES_TRACE("PrintSink::getData: write buffer str= " << ret);
         outputStream << ret << std::endl;
     }
-
+    if ()
+    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+    if (!(bufferCount % 10)) {
+        notifyEpochTermination(watermarkProcessor->getCurrentWatermark());
+    }
+    bufferCount++;
     return true;
 }
 

@@ -67,7 +67,6 @@ void FileSink::shutdown() {}
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-
     NES_TRACE("FileSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " and mode "
                                             << this->getAppendAsString());
 
@@ -116,8 +115,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
     }
     outputFile.flush();
-
-    //TODO: call propagate timestamp
+    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+    if (!(bufferCount % 10)) {
+        notifyEpochTermination(watermarkProcessor->getCurrentWatermark());
+    }
+    bufferCount++;
     return true;
 }
 
