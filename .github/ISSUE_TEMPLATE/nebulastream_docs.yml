@@ -8,7 +8,6 @@ body:
     attributes:
       # yamllint disable rule:line-length
       value: "
-        <img src='https://www.nebula.stream/img/logos/nesLogo.png' align='left' width='80' height='80'>
         Thank you for finding the time to report the problem!
         
         We really appreciate the community's efforts to improve NebulaStream.

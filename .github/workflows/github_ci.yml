@@ -56,6 +56,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Contextual QA Checklists
+        if: github.event_name == 'pull_request'
         uses: wyozi/contextual-qa-checklist-action@1.2
         with:
           gh-token: ${{ secrets.GITHUB_TOKEN }}
