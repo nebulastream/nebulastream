@@ -457,9 +457,12 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
                                                        << " orgID=" << this->operatorId);
 
-                auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-                auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
-                NES_TRACE("DataSource produced buffer content=" << buffer.toString(schema));
+                if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+                    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+                    auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
+                    NES_TRACE("DataSource produced buffer content=" << buffer.toString(schema));
+                }
+
                 emitWorkFromSource(buf);
                 ++cnt;
             } else {
