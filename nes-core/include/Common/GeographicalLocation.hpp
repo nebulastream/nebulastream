@@ -119,6 +119,6 @@ class GeographicalLocation {
     double longitude;
 };
 
-}// namespace NES
+}// namespace NES::Experimental::Mobility
 
 #endif//NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_

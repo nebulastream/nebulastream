@@ -73,26 +73,18 @@ GeographicalLocation::operator Coordinates() const {
 bool GeographicalLocation::operator==(const GeographicalLocation& other) const {
     //if both objects are an invalid location, consider them equal
     if (!this->isValid() && !other.isValid()) {
-       return true;
+        return true;
     }
     return this->latitude == other.latitude && this->longitude == other.longitude;
 }
 
-double GeographicalLocation::getLatitude() const {
-    return latitude;
-}
+double GeographicalLocation::getLatitude() const { return latitude; }
 
-double GeographicalLocation::getLongitude() const {
-    return longitude;
-}
+double GeographicalLocation::getLongitude() const { return longitude; }
 
-bool GeographicalLocation::isValid() const{
-    return !(std::isnan(latitude) || std::isnan(longitude));
-}
+bool GeographicalLocation::isValid() const { return !(std::isnan(latitude) || std::isnan(longitude)); }
 
-std::string GeographicalLocation::toString() const {
-    return std::to_string(latitude) + ", " + std::to_string(longitude);
-}
+std::string GeographicalLocation::toString() const { return std::to_string(latitude) + ", " + std::to_string(longitude); }
 
 bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);

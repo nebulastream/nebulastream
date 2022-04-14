@@ -175,14 +175,15 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
     if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
         view = nodeEngine->getMaterializedViewManager()->getView(viewId);
     } else {
-        view = nodeEngine->getMaterializedViewManager()->createView(NES::Experimental::MaterializedView::ViewType::TUPLE_VIEW, viewId);
+        view = nodeEngine->getMaterializedViewManager()->createView(NES::Experimental::MaterializedView::ViewType::TUPLE_VIEW,
+                                                                    viewId);
     }
     return std::make_shared<NES::Experimental::MaterializedView::MaterializedViewSink>(std::move(view),
-                                                                                  format,
-                                                                                  nodeEngine,
-                                                                                  activeProducers,
-                                                                                  queryId,
-                                                                                  parentPlanId);
+                                                                                       format,
+                                                                                       nodeEngine,
+                                                                                       activeProducers,
+                                                                                       queryId,
+                                                                                       parentPlanId);
 }
 
 }// namespace Experimental::MaterializedView

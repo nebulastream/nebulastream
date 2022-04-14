@@ -182,19 +182,19 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     std::string argv[] = {"--localWorkerIp=localhost",
-        "--coordinatorPort=5000",
-        "--numWorkerThreads=5",
-        "--numberOfBuffersInGlobalBufferManager=2048",
-        "--numberOfBuffersInSourceLocalBufferPool=128",
-        "--queryCompiler.compilationStrategy=FAST",
-        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-        "--physicalSources.type=DefaultSource",
-        "--physicalSources.numberOfBuffersToProduce=5",
-        "--physicalSources.rowLayout=false",
-        "--physicalSources.physicalSourceName=x",
-        "--physicalSources.logicalSourceName=default",
-        "--fieldNodeLocationCoordinates=23.88,-3.4"};
+                          "--coordinatorPort=5000",
+                          "--numWorkerThreads=5",
+                          "--numberOfBuffersInGlobalBufferManager=2048",
+                          "--numberOfBuffersInSourceLocalBufferPool=128",
+                          "--queryCompiler.compilationStrategy=FAST",
+                          "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+                          "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+                          "--physicalSources.type=DefaultSource",
+                          "--physicalSources.numberOfBuffersToProduce=5",
+                          "--physicalSources.rowLayout=false",
+                          "--physicalSources.physicalSourceName=x",
+                          "--physicalSources.logicalSourceName=default",
+                          "--fieldNodeLocationCoordinates=23.88,-3.4"};
     int argc = 14;
 
     std::map<string, string> commandLineParams;

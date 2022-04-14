@@ -21,10 +21,9 @@
 namespace NES::Experimental::Mobility {
 class GeographicalLocation;
 using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
-}
+}// namespace NES::Experimental::Mobility
 
 namespace NES::Configurations::Experimental::Mobility {
-
 
 class GeographicalLocationFactory {
 
@@ -36,7 +35,8 @@ class GeographicalLocationFactory {
      * if the string was empty
      */
 
-    static ::NES::Experimental::Mobility::GeographicalLocation createFromString(std::string , std::map<std::string, std::string>& commandLineParams);
+    static ::NES::Experimental::Mobility::GeographicalLocation
+    createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief obtains a Geographical location objects from yaml config
@@ -46,5 +46,5 @@ class GeographicalLocationFactory {
      */
     static ::NES::Experimental::Mobility::GeographicalLocation createFromYaml(Yaml::Node& yamlConfig);
 };
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Configurations::Experimental::Mobility
 #endif//NES_GEOGRAPHICALLOCATIONFACTORY_HPP

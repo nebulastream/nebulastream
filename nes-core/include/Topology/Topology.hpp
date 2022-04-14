@@ -19,8 +19,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <vector>
 #include <optional>
+#include <vector>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -37,7 +37,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 namespace Experimental::Mobility {
 const int DEFAULT_SEARCH_RADIUS = 50;
 class GeographicalLocation;
-}
+}// namespace Experimental::Mobility
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
@@ -82,7 +82,9 @@ class Topology {
      * non field nodes to become field nodes
      * @return true if successful
      */
-    bool setFieldNodeCoordinates(const TopologyNodePtr& node, NES::Experimental::Mobility::GeographicalLocation geoLoc, bool init = false);
+    bool setFieldNodeCoordinates(const TopologyNodePtr& node,
+                                 NES::Experimental::Mobility::GeographicalLocation geoLoc,
+                                 bool init = false);
 
     /**
      * Experimental
@@ -99,7 +101,8 @@ class Topology {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const NES::Experimental::Mobility::GeographicalLocation& geoLoc, int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const NES::Experimental::Mobility::GeographicalLocation& geoLoc,
+                                                    int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
@@ -108,7 +111,8 @@ class Topology {
      * @param radius the maximum distance in kilometres which the returned node can have from the specified node
      * @return TopologyNodePtr to the closest field node unequal to nodePtr
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr,
+                                                    int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
@@ -117,7 +121,8 @@ class Topology {
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
-    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>> getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
+    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>>
+    getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
 
     /**
      * Experimental

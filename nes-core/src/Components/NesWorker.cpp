@@ -21,6 +21,7 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
+#include <Geolocation/LocationSourceCSV.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -37,7 +38,6 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-#include <Geolocation/LocationSourceCSV.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -59,9 +59,9 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      fixedLocationCoordinates(std::make_shared<NES::Experimental::Mobility::GeographicalLocation>(workerConfig->locationCoordinates.getValue())),
-      isMobile(workerConfig->isMobile.getValue()),
-      queryCompilerConfiguration(workerConfig->queryCompiler),
+      fixedLocationCoordinates(
+          std::make_shared<NES::Experimental::Mobility::GeographicalLocation>(workerConfig->locationCoordinates.getValue())),
+      isMobile(workerConfig->isMobile.getValue()), queryCompilerConfiguration(workerConfig->queryCompiler),
       enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()),
       numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
@@ -220,7 +220,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         bool success = createLocationSource(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
         NES_DEBUG("create location source= " << success);
         NES_ASSERT(success, "cannot create location source");
-
     }
 
     if (blocking) {
@@ -538,7 +537,8 @@ NES::Experimental::Mobility::GeographicalLocation NesWorker::getGeoLoc() {
     return *fixedLocationCoordinates;
 }
 
-std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> NesWorker::getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius) {
+std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>>
+NesWorker::getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 

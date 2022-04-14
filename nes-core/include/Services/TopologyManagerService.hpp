@@ -15,12 +15,12 @@
 #ifndef NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
+#include <Common/GeographicalLocation.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
 #include <vector>
-#include <Common/GeographicalLocation.hpp>
-#include <Topology/TopologyNode.hpp>
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif
@@ -96,7 +96,8 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing a pointer to the topology node and the nodes location
      */
-    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>> getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
+    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>>
+    getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
 
     /**
      * Experimental
@@ -105,7 +106,8 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location
      */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodesIdsInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
+    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>>
+    getNodesIdsInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
 
     /**
      * Method to return the root node

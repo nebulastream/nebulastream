@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Geolocation/LocationSourceCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <gtest/gtest.h>
-#include <Geolocation/LocationSourceCSV.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <chrono>
+#include <gtest/gtest.h>
 #include <thread>
 
 namespace NES {
@@ -37,9 +37,9 @@ TEST_F(LocationSourceCSVTest, testCsvMovement) {
     NES::Experimental::Mobility::LocationSourceCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
     auto startTime = sourceCsv.getStarttime();
     auto timefirstLoc = startTime;
-    auto timesecloc= startTime + 100000000;
-    auto timethirdloc= startTime + 200000000;
-    auto timefourthloc= startTime + 300000000;
+    auto timesecloc = startTime + 100000000;
+    auto timethirdloc = startTime + 200000000;
+    auto timefourthloc = startTime + 300000000;
     auto loopTime = startTime + 400000000;
 
     double pos1lat = 52.55227464714949;
@@ -65,19 +65,19 @@ TEST_F(LocationSourceCSVTest, testCsvMovement) {
             EXPECT_GE(currentTuple.first.getLatitude(), pos1lat);
             EXPECT_GE(currentTuple.first.getLongitude(), pos1lng);
             EXPECT_LE(currentTuple.first.getLatitude(), pos2lat);
-            EXPECT_LE(currentTuple.first.getLongitude(),  pos2lng);
+            EXPECT_LE(currentTuple.first.getLongitude(), pos2lng);
         } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
             NES_DEBUG("checking second loc")
             EXPECT_GE(currentTuple.first.getLatitude(), pos2lat);
             EXPECT_GE(currentTuple.first.getLongitude(), pos2lng);
             EXPECT_LE(currentTuple.first.getLatitude(), pos3lat);
-            EXPECT_LE(currentTuple.first.getLongitude(),  pos3lng);
+            EXPECT_LE(currentTuple.first.getLongitude(), pos3lng);
         } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
             NES_DEBUG("checking third loc")
             EXPECT_GE(currentTuple.first.getLatitude(), pos3lat);
             EXPECT_GE(currentTuple.first.getLongitude(), pos3lng);
             EXPECT_LE(currentTuple.first.getLatitude(), pos4lat);
-            EXPECT_LE(currentTuple.first.getLongitude(),  pos4lng);
+            EXPECT_LE(currentTuple.first.getLongitude(), pos4lng);
         } else if (beforeQuery > timefourthloc) {
             NES_DEBUG("checking fourth loc")
             EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::GeographicalLocation(pos4lat, pos4lng));

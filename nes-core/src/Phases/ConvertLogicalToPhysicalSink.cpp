@@ -164,11 +164,11 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         auto materializedViewSinkDescriptor =
             sinkDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         return NES::Experimental::MaterializedView::createMaterializedViewSink(schema,
-                                                                          nodeEngine,
-                                                                          numOfProducers,
-                                                                          querySubPlan->getQueryId(),
-                                                                          querySubPlan->getQuerySubPlanId(),
-                                                                          materializedViewSinkDescriptor->getViewId());
+                                                                               nodeEngine,
+                                                                               numOfProducers,
+                                                                               querySubPlan->getQueryId(),
+                                                                               querySubPlan->getQuerySubPlanId(),
+                                                                               materializedViewSinkDescriptor->getViewId());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

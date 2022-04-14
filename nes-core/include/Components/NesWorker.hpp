@@ -41,7 +41,7 @@ using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
 
 class LocationSource;
 using LocationSourcePtr = std::shared_ptr<LocationSource>;
-}
+}// namespace Experimental::Mobility
 
 class WorkerRPCServer;
 class CoordinatorRPCClient;
@@ -170,7 +170,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * Experimental
      * @brief check if this worker runs on a mobile device
      */
-     bool isMobileNode() const;
+    bool isMobileNode() const;
 
     /**
      * Experimental
@@ -187,7 +187,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius);
+    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>>
+    getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius);
 
     /**
      * Experimental

@@ -37,7 +37,7 @@ class RegistrationMetrics;
 namespace Experimental::Mobility {
 class GeographicalLocation;
 using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
-}
+}// namespace Experimental::Mobility
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
@@ -173,7 +173,8 @@ class CoordinatorRPCClient {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding fixed coordinates as GeographicalLocation objects
      */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius);
+    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>>
+    getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions
