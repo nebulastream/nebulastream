@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Network/NetworkSink.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -19,7 +20,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Network/NetworkSink.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -183,7 +183,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
     switch (task.getType()) {
         case PropagateEpoch: {
             auto networkSinks = getSinks();
-            for (const DataSinkPtr& sink: networkSinks) {
+            for (const DataSinkPtr& sink : networkSinks) {
                 Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
                 networkSink->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, task.getUserData<uint64_t>());
             }

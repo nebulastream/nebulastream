@@ -21,19 +21,23 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
-                                             uint64_t uniqueNetworkSinkDescriptorId,
-                                             FaultToleranceType faultToleranceType)
+                                             FaultToleranceType faultToleranceType,
+                                             uint64_t uniqueNetworkSinkDescriptorId)
     : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes),
-      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), faultToleranceType(faultToleranceType) {}
+      faultToleranceType(faultToleranceType), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
-                                                uint64_t uniqueNetworkSinkOperatorId,
-                                                FaultToleranceType faultToleranceType) {
-    return std::make_shared<NetworkSinkDescriptor>(
-        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes, uniqueNetworkSinkOperatorId, faultToleranceType));
+                                                FaultToleranceType faultToleranceType,
+                                                uint64_t uniqueNetworkSinkOperatorId) {
+    return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
+                                                                         nesPartition,
+                                                                         waitTime,
+                                                                         retryTimes,
+                                                                         faultToleranceType,
+                                                                         uniqueNetworkSinkOperatorId));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -58,7 +62,9 @@ std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return wa
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
 uint64_t NetworkSinkDescriptor::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
+
 FaultToleranceType NetworkSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+
 void NetworkSinkDescriptor::setFaultToleranceType(FaultToleranceType faultToleranceType) {
     NetworkSinkDescriptor::faultToleranceType = faultToleranceType;
 }

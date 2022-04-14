@@ -57,7 +57,6 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
         NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
         serializableQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
         serializableQueryPlan->set_queryid(queryPlan->getQueryId());
-
     }
 }
 

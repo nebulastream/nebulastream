@@ -204,7 +204,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     Network::NetworkManagerPtr getNetworkManager();
 
-
+    /**
+     * @brief getter of query status listener
+     * @return return the query status listener
+     */
     AbstractQueryStatusListenerPtr getQueryStatusListener();
 
     /**

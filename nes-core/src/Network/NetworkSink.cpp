@@ -144,5 +144,4 @@ OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetwor
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
-
 }// namespace NES::Network
