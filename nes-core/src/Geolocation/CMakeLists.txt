@@ -14,5 +14,7 @@
 add_source_files(nes-core
         LocationSource.cpp
         LocationSourceCSV.cpp
+        GeospatialTopology.cpp
+        WorkerGeospatialInfo.cpp
 )
 
