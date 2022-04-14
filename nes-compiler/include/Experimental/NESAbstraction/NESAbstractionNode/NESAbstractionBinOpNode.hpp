@@ -11,8 +11,10 @@
     limitations under the License.
 */
 
-#ifndef MLIR_APPROACH_NESABSTRACTIONBINOPNODE_HPP
-#define MLIR_APPROACH_NESABSTRACTIONBINOPNODE_HPP
+#ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONBINOPNODE_HPP_
+#define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONBINOPNODE_HPP_
+
+#ifdef MLIR_COMPILER
 
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionIfNode.hpp>
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionNode.hpp>
@@ -104,4 +106,5 @@ private:
     Operation operation;
     std::vector<std::shared_ptr<NESAbstractionNode>> childNodes;
 };
-#endif //MLIR_APPROACH_NESABSTRACTIONBINOPNODE_HPP
+#endif //MLIR_COMPILER
+#endif //NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONBINOPNODE_HPP_

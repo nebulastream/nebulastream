@@ -11,11 +11,12 @@
     limitations under the License.
 */
 
-#ifndef MLIR_APPROACH_NESAbstractionTree_HPP
-#define MLIR_APPROACH_NESAbstractionTree_HPP
+#ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTREE_HPP_
+#define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTREE_HPP_
 
-//#include <NESAbstraction/NESAbstractionNode/NESAbstractionNode.hpp>
-#include "NESAbstractionNode/NESAbstractionNode.hpp"
+#ifdef MLIR_COMPILER
+
+#include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionNode.hpp>
 #include <cstdint>
 #include <memory>
 
@@ -39,4 +40,5 @@ private:
     uint64_t depth;
     uint64_t numNodes;
 };
-#endif //MLIR_APPROACH_NESAbstractionTree_HPP
+#endif //MLIR_COMPILER
+#endif //NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTREE_HPP_

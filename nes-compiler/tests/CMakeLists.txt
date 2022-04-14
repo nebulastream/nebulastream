@@ -24,8 +24,7 @@ target_link_libraries(compiler-sharedlibrary-test nes-tests-util ${GTEST_LIBRARI
 add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)
 
 if(NES_USE_MLIR)
-    get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-#    get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+    get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS) # MLIR_CONVERSION_LIBS are also defined
     add_executable(compiler-mlir-simpleModuleFromString-test "UnitTests/Experimental/MLIRModuleFromSimpleString.cpp")
     target_link_libraries(nes-compiler
             PUBLIC

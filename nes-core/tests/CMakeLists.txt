@@ -216,18 +216,15 @@ if(NES_USE_MLIR)
     get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
     get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
     add_executable(mlir-tuplebuffer-test "UnitTests/MLIR_Experimental/MLIRTupleBufferTest.cpp")
-#    target_link_libraries(mlir-tuplebuffer-test nes-tests)
-#    add_executable(mlir-tuplebuffer-test "UnitTests/MLIR_Experimental/nesTupleBuffer.cpp")
-    target_link_libraries(mlir-tuplebuffer-test
-            PRIVATE
-            nes-tests
-#            ${GTEST_LIBRARIES}
+    target_link_libraries(nes-tests
+            INTERFACE
             ${dialect_libs}
             ${conversion_libs}
             MLIRReconcileUnrealizedCasts
             MLIRMemRefToLLVM
             MLIRExecutionEngine
             )
+    target_link_libraries(mlir-tuplebuffer-test nes-tests)
     add_test(NAME mlir-tuplebuffer-test COMMAND mlir-tuplebuffer-test)
 endif (NES_USE_MLIR)
 

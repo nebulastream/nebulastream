@@ -11,8 +11,10 @@
     limitations under the License.
 */
 
-#ifndef MLIR_APPROACH_NESABSTRACTIONIFNODE_HPP
-#define MLIR_APPROACH_NESABSTRACTIONIFNODE_HPP
+#ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONIFNODE_HPP_
+#define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONIFNODE_HPP_
+
+#ifdef MLIR_COMPILER
 
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionBinOpNode.hpp>
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionNode.hpp>
@@ -68,5 +70,5 @@ private:
 //    std::vector<int32_t> comparisonValueTypes; //not used yet, all types are int32_t
     std::vector<std::shared_ptr<NESAbstractionNode>> childNodes;
 };
-
-#endif //MLIR_APPROACH_NESABSTRACTIONIFNODE_HPP
+#endif //MLIR_COMPILER
+#endif //NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONIFNODE_HPP_

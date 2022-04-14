@@ -11,37 +11,32 @@
     limitations under the License.
 */
 
-#ifndef MLIR_APPROACH_NESABSTRACTIONTOMLIR_HPP
-#define MLIR_APPROACH_NESABSTRACTIONTOMLIR_HPP
+#ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
+#define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 
-//#include "NESAbstraction/NESAbstractionNode/NESAbstractionBinOpNode.hpp"
-#include "../NESAbstraction/NESAbstractionNode/NESAbstractionBinOpNode.hpp"
-//#include "NESAbstraction/NESAbstractionNode/NESAbstractionWriteNode.hpp"
-#include "../NESAbstraction/NESAbstractionNode/NESAbstractionWriteNode.hpp"
-//#include "NESAbstraction/NESAbstractionNode/NESAbstractionForNode.hpp"
-#include "../NESAbstraction/NESAbstractionNode/NESAbstractionForNode.hpp"
-//#include "NESAbstraction/NESAbstractionNode/NESAbstractionIfNode.hpp"
-#include "../NESAbstraction/NESAbstractionNode/NESAbstractionIfNode.hpp"
-//#include <NESAbstraction/NESAbstractionTree.hpp>
-#include "../NESAbstraction/NESAbstractionTree.hpp"
+#ifdef MLIR_COMPILER
+
+#include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionForNode.hpp>
+#include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionIfNode.hpp>
+#include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionBinOpNode.hpp>
+#include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionWriteNode.hpp>
+#include <Experimental/NESAbstraction/NESAbstractionTree.hpp>
 
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
-//#include "mlir/Dialect/StandardOps/IR/Ops.h"
-#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
-#include "mlir/Dialect/SCF/SCF.h"
-//#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
+#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
+#include <mlir/Dialect/SCF/SCF.h>
 
-#include "mlir/IR/Attributes.h"
-#include "mlir/IR/Builders.h"
-#include "mlir/IR/BuiltinAttributes.h"
-#include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/BuiltinTypes.h"
-#include "mlir/IR/MLIRContext.h"
-#include "mlir/IR/Operation.h"
-#include "mlir/IR/PatternMatch.h"
-#include "mlir/IR/Value.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/StringSet.h"
+#include <mlir/IR/Attributes.h>
+#include <mlir/IR/Builders.h>
+#include <mlir/IR/BuiltinAttributes.h>
+#include <mlir/IR/BuiltinOps.h>
+#include <mlir/IR/BuiltinTypes.h>
+#include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/Operation.h>
+#include <mlir/IR/PatternMatch.h>
+#include <mlir/IR/Value.h>
+#include <llvm/ADT/StringMap.h>
+#include <llvm/ADT/StringSet.h>
 
 #include <cstdint>
 #include <memory>
@@ -218,4 +213,5 @@ private:
      */
     int8_t getBitWidthFromType(NESAbstractionNode::BasicType type);
 };
-#endif //MLIR_APPROACH_NESABSTRACTIONTOMLIR_HPP
+#endif //MLIR_COMPILER
+#endif //NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_

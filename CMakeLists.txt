@@ -501,6 +501,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
+# if(NOT NES_USE MLIR) # Todo find out if necessary, because LLVM 14 instead of 13 is used
 find_package(LLVM 14 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
@@ -509,6 +510,7 @@ if (LLVM_FOUND)
     set(CLANG_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-14)
     set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/lib/clang/${LLVM_PACKAGE_VERSION}/include/)
     set(CLANG_FORMAT_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-format)
+    include_directories(${LLVM_INCLUDE_DIRS})
 else ()
     message(FATAL_ERROR "Cannot find llvm")
 endif ()
