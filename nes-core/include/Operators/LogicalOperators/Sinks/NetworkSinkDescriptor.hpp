@@ -44,8 +44,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     NesPartition nesPartition,
                                     std::chrono::milliseconds waitTime,
                                     uint32_t retryTimes,
-                                    uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId(),
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    uint64_t uniqueNetworkSinkDescriptorId = Util::getNextOperatorId());
 
     /**
      * @brief returns the string representation of the network sink
@@ -107,16 +107,15 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    NesPartition nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
-                                   uint64_t uniqueNetworkSinkDescriptorId,
-                                   FaultToleranceType faultToleranceType);
+                                   FaultToleranceType faultToleranceType,
+                                   uint64_t uniqueNetworkSinkDescriptorId);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
-    uint64_t uniqueNetworkSinkDescriptorId;
     FaultToleranceType faultToleranceType;
-
+    uint64_t uniqueNetworkSinkDescriptorId;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
