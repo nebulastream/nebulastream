@@ -20,10 +20,6 @@
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <vector>
-#ifdef S2DEF
-#include <s2/s2point_index.h>
-#endif
 
 namespace NES {
 
@@ -35,9 +31,9 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
 namespace Experimental::Mobility {
-const int DEFAULT_SEARCH_RADIUS = 50;
-class GeographicalLocation;
-}// namespace Experimental::Mobility
+class GeospatialTopology;
+using GeospatialTopologyPtr = std::shared_ptr<GeospatialTopology>;
+}
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
@@ -71,64 +67,6 @@ class Topology {
      * @return true if successful
      */
     bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
-
-    /**
-     * Experimental
-     * @brief This method sets the location of a new node (making it a field node) or updates the position of an existing field node
-     * @param node: a pointer to the topology node
-     * @param geoLoc: the (new) location of the field node
-     * @param init: defines if the method is called as part of node creation or later on. trying to set a location for a node
-     * without existing coordinates will result in failure if the init flag is not set, thus preventing the updating of
-     * non field nodes to become field nodes
-     * @return true if successful
-     */
-    bool setFieldNodeCoordinates(const TopologyNodePtr& node,
-                                 NES::Experimental::Mobility::GeographicalLocation geoLoc,
-                                 bool init = false);
-
-    /**
-     * Experimental
-     * @brief removes a node from the spatial index. This method is called if a node with a location is unregistered
-     * @param node: a pointer to the topology node whose entry is to be removed from the spatial index
-     * @returns true on success, false if the node in question does not have a location
-     */
-    bool removeNodeFromSpatialIndex(const TopologyNodePtr& node);
-
-    /**
-     * Experimental
-     * @brief returns the closest field node to a certain geographical location
-     * @param geoLoc: Coordinates of a location on the map
-     * @param radius: the maximum distance which the returned node can have from the specified location
-     * @return TopologyNodePtr to the closest field node
-     */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const NES::Experimental::Mobility::GeographicalLocation& geoLoc,
-                                                    int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
-
-    /**
-     * Experimental
-     * @brief returns the closest field node to a certain node (which does not equal the node passed as an argument)
-     * @param nodePtr: pointer to a field node
-     * @param radius the maximum distance in kilometres which the returned node can have from the specified node
-     * @return TopologyNodePtr to the closest field node unequal to nodePtr
-     */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr,
-                                                    int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
-
-    /**
-     * Experimental
-     * @brief get a list of all the nodes within a certain radius around a location
-     * @param center: a location around which we look for nodes
-     * @param radius: the maximum distance in kilometres of the returned nodes from center
-     * @return a vector of pairs containing node pointers and the corresponding locations
-     */
-    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>>
-    getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
-
-    /**
-     * Experimental
-     * @return the amount of field nodes (non mobile nodes with a known location) in the system
-     */
-    size_t getSizeOfPointIndex();
 
     /**
      * @brief This method will find a given physical node by its id
@@ -258,6 +196,12 @@ class Topology {
     */
     static TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes);
 
+    /**
+     * Getter for accessing the geospatial topology linked to this topology
+     * @return A smart pointer to the GeospatialTopology
+     */
+    NES::Experimental::Mobility::GeospatialTopologyPtr getGeoTopology();
+
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
 
@@ -276,11 +220,8 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
+    NES::Experimental::Mobility::GeospatialTopologyPtr geoTopology;
 
-#ifdef S2DEF
-    // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
-    S2PointIndex<TopologyNodePtr> nodePointIndex;
-#endif
 };
 }// namespace NES
 #endif// NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

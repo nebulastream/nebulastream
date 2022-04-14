@@ -749,4 +749,8 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
     return nullptr;
 }
 
+NES::Experimental::Mobility::GeospatialTopologyPtr Topology::getGeoTopology() {
+    return geoTopology;
+}
+
 }// namespace NES
