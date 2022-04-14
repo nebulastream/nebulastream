@@ -19,8 +19,8 @@
 
 namespace NES::Configurations::Experimental::Mobility {
 
-::NES::Experimental::Mobility::GeographicalLocation GeographicalLocationFactory::createFromString(std::string,
-                                                                      std::map<std::string, std::string>& commandLineParams) {
+::NES::Experimental::Mobility::GeographicalLocation
+GeographicalLocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
     std::string coordStr;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
         if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
@@ -41,6 +41,5 @@ namespace NES::Configurations::Experimental::Mobility {
         return ::NES::Experimental::Mobility::GeographicalLocation::fromString(configString);
     }
     return {200, 200};
-
 }
 }//namespace NES::Configurations::Experimental::Mobility

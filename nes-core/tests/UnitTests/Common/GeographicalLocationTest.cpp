@@ -32,10 +32,14 @@ class GeographicalLocationTest : public Testing::TestWithErrorHandling<testing::
 };
 
 TEST_F(GeographicalLocationTest, testExceptionHandling) {
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation(200, 0), NES::Experimental::Mobility::CoordinatesOutOfRangeException);
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation(200, 200), NES::Experimental::Mobility::CoordinatesOutOfRangeException);
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200, 0"), NES::Experimental::Mobility::CoordinatesOutOfRangeException);
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200. 0"), NES::Experimental::Mobility::InvalidCoordinateFormatException);
+    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation(200, 0),
+                 NES::Experimental::Mobility::CoordinatesOutOfRangeException);
+    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation(200, 200),
+                 NES::Experimental::Mobility::CoordinatesOutOfRangeException);
+    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200, 0"),
+                 NES::Experimental::Mobility::CoordinatesOutOfRangeException);
+    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200. 0"),
+                 NES::Experimental::Mobility::InvalidCoordinateFormatException);
 
     auto geoLoc = NES::Experimental::Mobility::GeographicalLocation::fromString("23, 110");
     EXPECT_EQ(geoLoc.getLatitude(), 23);
@@ -49,6 +53,5 @@ TEST_F(GeographicalLocationTest, testExceptionHandling) {
 
     EXPECT_EQ(invalidGeoLoc1, invalidGeoLoc2);
     EXPECT_NE(geoLoc, invalidGeoLoc1);
-
 }
 }// namespace NES

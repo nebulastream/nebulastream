@@ -24,6 +24,6 @@ namespace NES::Experimental::Mobility {
 class CoordinatesOutOfRangeException : public std::exception {
     const char* what() const noexcept;
 };
-}// namespace NES
+}// namespace NES::Experimental::Mobility
 
 #endif//NES_COORDINATESOUTOFRANGEEXCEPTION_HPP

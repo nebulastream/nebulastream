@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <Geolocation/LocationSourceCSV.hpp>
-#include <iostream>
-#include <fstream>
-#include <Util/TimeMeasurement.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <fstream>
+#include <iostream>
 #ifdef S2DEF
 #include <s2/s2point.h>
 #include <s2/s2polyline.h>
@@ -35,23 +35,23 @@ LocationSourceCSV::LocationSourceCSV(std::string csvPath) {
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time
     while (std::getline(inputStream, csvLine)) {
         std::stringstream stringStream(csvLine);
-            getline(stringStream, locString, ';');
-            getline(stringStream, timeString, ';');
-            Timestamp time = std::stoul(timeString);
-            NES_TRACE("Read from csv: " << locString << ", " << time);
+        getline(stringStream, locString, ';');
+        getline(stringStream, timeString, ';');
+        Timestamp time = std::stoul(timeString);
+        NES_TRACE("Read from csv: " << locString << ", " << time);
 
-            //add startTime to the offset obtained from csv to get absolute timestamp
-            time += startTime;
+        //add startTime to the offset obtained from csv to get absolute timestamp
+        time += startTime;
 
-            //construct a pair containing a location and the time at which the device is at exactly that point
-            // and sve it to a vector containing all waypoints
-            std::pair waypoint(GeographicalLocation::fromString(locString), time);
-            waypoints.push_back(waypoint);
-        }
-        NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
-        NES_DEBUG("first timestamp is " << waypoints.front().second << ", last timestamp is " << waypoints.back().second)
-        //set first csv entry as the next wypoint
-        nextWaypoint = waypoints.begin();
+        //construct a pair containing a location and the time at which the device is at exactly that point
+        // and sve it to a vector containing all waypoints
+        std::pair waypoint(GeographicalLocation::fromString(locString), time);
+        waypoints.push_back(waypoint);
+    }
+    NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
+    NES_DEBUG("first timestamp is " << waypoints.front().second << ", last timestamp is " << waypoints.back().second)
+    //set first csv entry as the next wypoint
+    nextWaypoint = waypoints.begin();
 }
 
 std::pair<GeographicalLocation, Timestamp> LocationSourceCSV::getCurrentLocation() {
@@ -108,8 +108,6 @@ std::pair<GeographicalLocation, Timestamp> LocationSourceCSV::getCurrentLocation
 #endif
 }
 
-Timestamp LocationSourceCSV::getStarttime() const {
-    return startTime;
-}
+Timestamp LocationSourceCSV::getStarttime() const { return startTime; }
 
-}
+}// namespace NES::Experimental::Mobility

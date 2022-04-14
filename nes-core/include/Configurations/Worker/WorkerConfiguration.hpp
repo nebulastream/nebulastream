@@ -21,10 +21,10 @@
 #include <Configurations/Worker/GeographicalLocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Geolocation/LocationSourceCSV.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
 #include <map>
 #include <string>
-#include <Geolocation/LocationSourceCSV.hpp>
 
 namespace NES {
 
@@ -163,8 +163,9 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Experimental::Mobility::GeographicalLocation, Configurations::Experimental::Mobility::GeographicalLocationFactory> locationCoordinates = {LOCATION_COORDINATES_CONFIG,
-                                                                                                                                                              "the physical location of the worker"};
+    WrapOption<NES::Experimental::Mobility::GeographicalLocation,
+               Configurations::Experimental::Mobility::GeographicalLocationFactory>
+        locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
      * @brief specify if the worker is running on a mobile device. If this option is set, setting the fixedLocationCoordinates
@@ -176,7 +177,10 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
      * a simulation
      */
-    EnumOption<NES::Experimental::Mobility::LocationSource::Type> locationSourceType = {LOCATION_SOURCE_TYPE_CONFIG, NES::Experimental::Mobility::LocationSource::Type::csv, "the kind of interface which the  mobile worker gets its geolocation info from"};
+    EnumOption<NES::Experimental::Mobility::LocationSource::Type> locationSourceType = {
+        LOCATION_SOURCE_TYPE_CONFIG,
+        NES::Experimental::Mobility::LocationSource::Type::csv,
+        "the kind of interface which the  mobile worker gets its geolocation info from"};
 
     /**
      * @brief specify the config data specific to the source of location data which was specified in the locationSourceType option

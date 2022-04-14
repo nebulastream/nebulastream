@@ -396,7 +396,6 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     pCoordinates->set_lat(fixedCoordinates.getLatitude());
     pCoordinates->set_lng(fixedCoordinates.getLongitude());
 
-
     class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
       public:
         uint64_t& workerId;
@@ -474,8 +473,8 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::GeographicalLocation coord,
-                                                                                               double radius) {
+std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>>
+CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::GeographicalLocation coord, double radius) {
     GetNodesInRangeRequest request;
     Coordinates* pCoordinates = request.mutable_coord();
     pCoordinates->set_lat(coord.getLatitude());

@@ -49,8 +49,10 @@ class MaintenanceServiceTest : public Testing::TestWithErrorHandling<testing::Te
         queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
         executionPlan = GlobalExecutionPlan::create();
         nesRequestQueue = std::make_shared<RequestQueue>(1);
-        maintenanceService =
-            std::make_shared<NES::Experimental::MaintenanceService>(topology, queryCatalogService, nesRequestQueue, executionPlan);
+        maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,
+                                                                                     queryCatalogService,
+                                                                                     nesRequestQueue,
+                                                                                     executionPlan);
     }
 
     /* Will be called before a test is executed. */

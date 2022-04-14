@@ -119,20 +119,25 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
     //checking coordinates
-    EXPECT_EQ(node2->getCoordinates().value(), NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092));
+    EXPECT_EQ(node2->getCoordinates().value(),
+              NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092));
     EXPECT_EQ(topology->getClosestNodeTo(node4), node3);
     EXPECT_EQ(topology->getClosestNodeTo(node4->getCoordinates().value()).value(), node4);
-    topology->setFieldNodeCoordinates(node2, NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
+    topology->setFieldNodeCoordinates(node2,
+                                      NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(topology->getClosestNodeTo(node4), node2);
-    EXPECT_EQ(node2->getCoordinates().value(), NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ(node2->getCoordinates().value(),
+              NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
-    auto inRange = topology->getNodesInRange(NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092), 50.0);
+    auto inRange =
+        topology->getNodesInRange(NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092), 50.0);
     EXPECT_EQ(inRange.size(), (size_t) 3);
     auto inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //moving node 3 to hamburg (more than 100km away
-    topology->setFieldNodeCoordinates(node3, NES::Experimental::Mobility::GeographicalLocation(53.559524264262194, 10.039384739854102));
+    topology->setFieldNodeCoordinates(node3,
+                                      NES::Experimental::Mobility::GeographicalLocation(53.559524264262194, 10.039384739854102));
 
     //node 3 should not have any nodes within a radius of 100km
     EXPECT_EQ(topology->getClosestNodeTo(node3, 100).has_value(), false);
@@ -152,7 +157,11 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
 
     //location far away from all the other nodes should not have any closest node
-    EXPECT_EQ(topology->getClosestNodeTo(NES::Experimental::Mobility::GeographicalLocation(-53.559524264262194, -10.039384739854102), 100).has_value(), false);
+    EXPECT_EQ(
+        topology
+            ->getClosestNodeTo(NES::Experimental::Mobility::GeographicalLocation(-53.559524264262194, -10.039384739854102), 100)
+            .has_value(),
+        false);
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -248,7 +257,7 @@ TEST_F(GeoLocationTests, testMobileNodes) {
 TEST_F(GeoLocationTests, testLocationFromCmd) {
 
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = { "--fieldNodeLocationCoordinates=23.88,-3.4" };
+    std::string argv[] = {"--fieldNodeLocationCoordinates=23.88,-3.4"};
     int argc = 1;
 
     std::map<string, string> commandLineParams;
@@ -265,7 +274,7 @@ TEST_F(GeoLocationTests, testLocationFromCmd) {
 
 TEST_F(GeoLocationTests, testInvalidLocationFromCmd) {
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    std::string argv[] = { "--fieldNodeLocationCoordinates=230.88,-3.4" };
+    std::string argv[] = {"--fieldNodeLocationCoordinates=230.88,-3.4"};
     int argc = 1;
 
     std::map<string, string> commandLineParams;
@@ -276,7 +285,8 @@ TEST_F(GeoLocationTests, testInvalidLocationFromCmd) {
                                       string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
-    EXPECT_THROW(workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams), NES::Experimental::Mobility::CoordinatesOutOfRangeException);
+    EXPECT_THROW(workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams),
+                 NES::Experimental::Mobility::CoordinatesOutOfRangeException);
 }
 
 TEST_F(GeoLocationTests, DISABLED_testLocationFromConfig) {

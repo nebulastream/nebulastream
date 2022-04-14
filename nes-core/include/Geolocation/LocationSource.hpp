@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <utility>
 
-
 namespace NES::Experimental::Mobility {
 class GeographicalLocation;
 using Timestamp = uint64_t;
@@ -27,10 +26,7 @@ using Timestamp = uint64_t;
  */
 class LocationSource {
   public:
-
-    enum Type {
-        csv
-    };
+    enum Type { csv };
 
     /**
      * @brief default destructor
@@ -43,6 +39,6 @@ class LocationSource {
      */
     virtual std::pair<GeographicalLocation, Timestamp> getCurrentLocation() = 0;
 };
-}
+}// namespace NES::Experimental::Mobility
 
 #endif//NES_GEOLOCATION_LOCATIONSOURCE_HPP

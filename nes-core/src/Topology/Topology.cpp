@@ -77,7 +77,9 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     return false;
 }
 
-bool Topology::setFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc, bool init) {
+bool Topology::setFieldNodeCoordinates(const TopologyNodePtr& node,
+                                       Experimental::Mobility::GeographicalLocation geoLoc,
+                                       bool init) {
 #ifdef S2DEF
     double newLat = geoLoc.getLatitude();
     double newLng = geoLoc.getLongitude();
@@ -125,7 +127,8 @@ bool Topology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 #endif
 }
 
-std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const Experimental::Mobility::GeographicalLocation& geoLoc, int radius) {
+std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const Experimental::Mobility::GeographicalLocation& geoLoc,
+                                                          int radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -182,8 +185,8 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr&
 #endif
 }
 
-std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> Topology::getNodesInRange(Experimental::Mobility::GeographicalLocation center,
-                                                                                                                double radius) {
+std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>>
+Topology::getNodesInRange(Experimental::Mobility::GeographicalLocation center, double radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -194,7 +197,9 @@ std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocat
     std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> closestNodeList;
     for (auto r : result) {
         auto latLng = S2LatLng(r.point());
-        closestNodeList.emplace_back(r.data(), Experimental::Mobility::GeographicalLocation(latLng.lat().degrees(), latLng.lng().degrees()));
+        closestNodeList.emplace_back(
+            r.data(),
+            Experimental::Mobility::GeographicalLocation(latLng.lat().degrees(), latLng.lng().degrees()));
     }
     return closestNodeList;
 

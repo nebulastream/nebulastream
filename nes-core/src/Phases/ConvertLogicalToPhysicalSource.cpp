@@ -204,13 +204,13 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating static data source");
         auto staticDataSourceDescriptor = sourceDescriptor->as<NES::Experimental::StaticDataSourceDescriptor>();
         return NES::Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
-                                                    staticDataSourceDescriptor->getPathTableFile(),
-                                                    bufferManager,
-                                                    queryManager,
-                                                    operatorId,
-                                                    originId,
-                                                    numSourceLocalBuffers,
-                                                    successors);
+                                                         staticDataSourceDescriptor->getPathTableFile(),
+                                                         bufferManager,
+                                                         queryManager,
+                                                         operatorId,
+                                                         originId,
+                                                         numSourceLocalBuffers,
+                                                         successors);
     } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();
@@ -258,13 +258,13 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                                         viewId);
         }
         return NES::Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
-                                                                            bufferManager,
-                                                                            queryManager,
-                                                                            operatorId,
-                                                                            originId,
-                                                                            numSourceLocalBuffers,
-                                                                            successors,
-                                                                            std::move(view));
+                                                                                 bufferManager,
+                                                                                 queryManager,
+                                                                                 operatorId,
+                                                                                 originId,
+                                                                                 numSourceLocalBuffers,
+                                                                                 successors,
+                                                                                 std::move(view));
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

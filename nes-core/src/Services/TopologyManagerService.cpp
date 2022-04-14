@@ -73,8 +73,9 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    if (fixedCoordinates.isValid() &&  !newTopologyNode->isMobileNode() ) {
-        NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", " << fixedCoordinates.getLongitude());
+    if (fixedCoordinates.isValid() && !newTopologyNode->isMobileNode()) {
+        NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", "
+                                                            << fixedCoordinates.getLongitude());
         topology->setFieldNodeCoordinates(newTopologyNode, fixedCoordinates, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
@@ -203,13 +204,13 @@ uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNode
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of furture movement
 
-std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> TopologyManagerService::getNodesInRange(Experimental::Mobility::GeographicalLocation center,
-                                                                                                      double radius) {
+std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>>
+TopologyManagerService::getNodesInRange(Experimental::Mobility::GeographicalLocation center, double radius) {
     return topology->getNodesInRange(center, radius);
 }
 
-std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(Experimental::Mobility::GeographicalLocation center,
-                                                                                                  double radius) {
+std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>>
+TopologyManagerService::getNodesIdsInRange(Experimental::Mobility::GeographicalLocation center, double radius) {
     auto list = getNodesInRange(center, radius);
     std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> nodeIDsInRange{};
     nodeIDsInRange.reserve(list.size());

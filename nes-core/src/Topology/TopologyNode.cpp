@@ -140,15 +140,9 @@ void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
     setFixedCoordinates(Experimental::Mobility::GeographicalLocation(latitude, longitude));
 }
 
-void TopologyNode::setFixedCoordinates(Experimental::Mobility::GeographicalLocation geoLoc) {
-    fixedCoordinates = geoLoc;
-}
+void TopologyNode::setFixedCoordinates(Experimental::Mobility::GeographicalLocation geoLoc) { fixedCoordinates = geoLoc; }
 
-void TopologyNode::setMobile(bool isMobile) {
-    this->isMobile = isMobile;
-}
+void TopologyNode::setMobile(bool isMobile) { this->isMobile = isMobile; }
 
-bool TopologyNode::isMobileNode() {
-    return isMobile;
-}
+bool TopologyNode::isMobileNode() { return isMobile; }
 }// namespace NES

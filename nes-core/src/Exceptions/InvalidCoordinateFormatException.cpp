@@ -17,4 +17,4 @@ namespace NES::Experimental::Mobility {
 const char* InvalidCoordinateFormatException::what() const noexcept {
     return "The provided string is not of the format \"<lat>, <lng>\"";
 }
-}// namespace NES
+}// namespace NES::Experimental::Mobility

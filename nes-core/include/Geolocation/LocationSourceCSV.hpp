@@ -14,8 +14,8 @@
 
 #ifndef NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
 #define NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
-#include <Geolocation/LocationSource.hpp>
 #include <Common/GeographicalLocation.hpp>
+#include <Geolocation/LocationSource.hpp>
 #include <vector>
 
 namespace NES::Experimental::Mobility {
@@ -26,7 +26,6 @@ namespace NES::Experimental::Mobility {
  */
 class LocationSourceCSV : public LocationSource {
   public:
-
     /**
      * @brief construct a location source that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
      * @param csvPath: The path of the csv file
@@ -36,7 +35,8 @@ class LocationSourceCSV : public LocationSource {
     /**
      * @brief default destructor
      */
-    ~LocationSourceCSV() override = default;;
+    ~LocationSourceCSV() override = default;
+    ;
 
     /**
      * @brief get the simulated last known location of the device. if s2 is enabled this will be an interpolated point along
@@ -53,11 +53,10 @@ class LocationSourceCSV : public LocationSource {
     [[nodiscard]] Timestamp getStarttime() const;
 
   private:
-
     Timestamp startTime;
     std::vector<std::pair<GeographicalLocation, Timestamp>> waypoints;
     std::vector<std::pair<GeographicalLocation, Timestamp>>::iterator nextWaypoint;
 };
-}
+}// namespace NES::Experimental::Mobility
 
 #endif//NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
