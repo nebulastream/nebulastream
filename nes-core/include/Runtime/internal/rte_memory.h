@@ -159,18 +159,18 @@ static inline void* rte_memcpy_generic(void* dst, const void* src, size_t n) {
     if (n < 16) {
         if (n & 0x01) {
             *(uint8_t*) dstu = *(const uint8_t*) srcu;
-            srcu = (uintptr_t)((const uint8_t*) srcu + 1);
-            dstu = (uintptr_t)((uint8_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint8_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint8_t*) dstu + 1);
         }
         if (n & 0x02) {
             *(uint16_t*) dstu = *(const uint16_t*) srcu;
-            srcu = (uintptr_t)((const uint16_t*) srcu + 1);
-            dstu = (uintptr_t)((uint16_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint16_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint16_t*) dstu + 1);
         }
         if (n & 0x04) {
             *(uint32_t*) dstu = *(const uint32_t*) srcu;
-            srcu = (uintptr_t)((const uint32_t*) srcu + 1);
-            dstu = (uintptr_t)((uint32_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint32_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint32_t*) dstu + 1);
         }
         if (n & 0x08)
             *(uint64_t*) dstu = *(const uint64_t*) srcu;
@@ -343,18 +343,18 @@ static inline void* rte_memcpy_generic(void* dst, const void* src, size_t n) {
     if (n < 16) {
         if (n & 0x01) {
             *(uint8_t*) dstu = *(const uint8_t*) srcu;
-            srcu = (uintptr_t)((const uint8_t*) srcu + 1);
-            dstu = (uintptr_t)((uint8_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint8_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint8_t*) dstu + 1);
         }
         if (n & 0x02) {
             *(uint16_t*) dstu = *(const uint16_t*) srcu;
-            srcu = (uintptr_t)((const uint16_t*) srcu + 1);
-            dstu = (uintptr_t)((uint16_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint16_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint16_t*) dstu + 1);
         }
         if (n & 0x04) {
             *(uint32_t*) dstu = *(const uint32_t*) srcu;
-            srcu = (uintptr_t)((const uint32_t*) srcu + 1);
-            dstu = (uintptr_t)((uint32_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint32_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint32_t*) dstu + 1);
         }
         if (n & 0x08) {
             *(uint64_t*) dstu = *(const uint64_t*) srcu;
@@ -619,18 +619,18 @@ static inline void* rte_memcpy_generic(void* dst, const void* src, size_t n) {
     if (n < 16) {
         if (n & 0x01) {
             *(uint8_t*) dstu = *(const uint8_t*) srcu;
-            srcu = (uintptr_t)((const uint8_t*) srcu + 1);
-            dstu = (uintptr_t)((uint8_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint8_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint8_t*) dstu + 1);
         }
         if (n & 0x02) {
             *(uint16_t*) dstu = *(const uint16_t*) srcu;
-            srcu = (uintptr_t)((const uint16_t*) srcu + 1);
-            dstu = (uintptr_t)((uint16_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint16_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint16_t*) dstu + 1);
         }
         if (n & 0x04) {
             *(uint32_t*) dstu = *(const uint32_t*) srcu;
-            srcu = (uintptr_t)((const uint32_t*) srcu + 1);
-            dstu = (uintptr_t)((uint32_t*) dstu + 1);
+            srcu = (uintptr_t) ((const uint32_t*) srcu + 1);
+            dstu = (uintptr_t) ((uint32_t*) dstu + 1);
         }
         if (n & 0x08) {
             *(uint64_t*) dstu = *(const uint64_t*) srcu;

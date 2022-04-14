@@ -20,7 +20,6 @@
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Formats/TextFormat.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
@@ -31,6 +30,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
