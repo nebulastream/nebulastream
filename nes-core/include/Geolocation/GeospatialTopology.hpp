@@ -14,24 +14,33 @@
 #ifndef NES_GEOLOCATION_GEOSPATIALTOPOLOGY_HPP
 #define NES_GEOLOCATION_GEOSPATIALTOPOLOGY_HPP
 #include <memory>
+#include <optional>
+#include <vector>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
 
 namespace NES {
+
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-}
 
-namespace NES::Experimental::Mobility {
+class TopologyNode;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+namespace Experimental::Mobility {
 
 const int DEFAULT_SEARCH_RADIUS = 50;
 class GeographicalLocation;
 
+/**
+ * this class holds information about the geographical position of nodes, for which such a position is known (field nodes)
+ * and offers functions to find field nodes within certain ares
+ */
 class GeospatialTopology {
   public:
 
-    GeospatialTopology(TopologyPtr topology);
+    GeospatialTopology();
 
     /**
      * Experimental
@@ -85,14 +94,13 @@ class GeospatialTopology {
      * @return the amount of field nodes (non mobile nodes with a known location) in the system
      */
     size_t getSizeOfPointIndex();
+
   private:
-    //A smart pointer to the topology which this geotopology belongs to
-    TopologyPtr topology;
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;
 #endif
 };
-
-}//namespace NES::Experimental::Mobility
+}//namespace Experimental::Mobility
+}//namespace NES
 #endif//NES_GEOLOCATION_GEOSPATIALTOPOLOGY_HPP

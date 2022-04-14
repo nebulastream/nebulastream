@@ -39,8 +39,8 @@ namespace Experimental::Mobility {
 class GeographicalLocation;
 using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
 
-class LocationSource;
-using LocationSourcePtr = std::shared_ptr<LocationSource>;
+class WorkerGeospatialInfo;
+using WorkerGeospatialInfoPtr = std::shared_ptr<WorkerGeospatialInfo>;
 }// namespace Experimental::Mobility
 
 class WorkerRPCServer;
@@ -152,53 +152,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     TopologyNodeId getTopologyNodeId() const;
 
     /**
-     * Experimental
-     * @brief construct a mobile worker location source. This function is experimental.
-     * @param type defines the the subclass of locationsource to be used
-     * @param config the config parameters for the location source
-     * @return
-     */
-    bool createLocationSource(NES::Experimental::Mobility::LocationSource::Type type, std::string config);
-
-    /**
-     * Experimental
-     * @brief checks if this Worker runs on a non-mobile device with a known location (Field Node)
-     */
-    bool isFieldNode();
-
-    /**
-     * Experimental
-     * @brief check if this worker runs on a mobile device
-     */
-    bool isMobileNode() const;
-
-    /**
-     * Experimental
-     * @brief returns an optional containing a GeographicalLocation object if the node has a fixed location or
-     * containing a nullopt_t if the node does not have a location
-     * @return optional containing the GeographicalLocation
-     */
-    NES::Experimental::Mobility::GeographicalLocation getGeoLoc();
-
-    /**
-     * Experimental
-     * @brief Method to get all field nodes within a certain range around a geographical point
-     * @param coord: GeographicalLocation representing the center of the query area
-     * @param radius: radius in km to define query area
-     * @return list of node IDs and their corresponding GeographicalLocations
-     */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>>
-    getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius);
-
-    /**
-     * Experimental
-     * @brief Method to get all field nodes within a certain range around the location of this node
-     * @param radius = radius in km to define query area
-     * @return list of node IDs and their corresponding GeographicalLocations
-     */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodeIdsInRange(double radius);
-
-    /**
      * @brief Method to check if a worker is still running
      * @return running status of the worker
      */
@@ -263,6 +216,12 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
       */
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
+    /**
+     * get the class containing all geospatiol info on this worker if it is a field node or mobile node
+     * @return
+     */
+    NES::Experimental::Mobility::WorkerGeospatialInfoPtr getGeospatialInfo();
+
   private:
     /**
      * @brief method to register physical source with the coordinator
@@ -283,13 +242,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     bool waitForConnect() const;
 
     void handleRpcs(WorkerRPCServer& service);
-
-    /**
-     * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
-     * @param geoLoc: The new fixed GeographicalLocation to be set
-     * @return success of operation
-     */
-    bool setFixedLocationCoordinates(const NES::Experimental::Mobility::GeographicalLocation& geoLoc);
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
@@ -317,10 +269,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
 
-    //TODO Issue 2497: move location related logic into separate class
-    NES::Experimental::Mobility::GeographicalLocationPtr fixedLocationCoordinates;
-    bool isMobile;
-    NES::Experimental::Mobility::LocationSourcePtr locationSource;
+    NES::Experimental::Mobility::WorkerGeospatialInfoPtr geospatialInfo;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;
