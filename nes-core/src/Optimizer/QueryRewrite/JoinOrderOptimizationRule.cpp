@@ -69,8 +69,8 @@ namespace NES::Optimizer {
             std::vector<std::any> joinOrder = extractJoinOrder(finalPlan);
 
             // JVS: Step 6 Rewrite the query according to the best order
-            // use if(el.type() == typeid(vector<any>))
-            queryPlan = updateJoinOrder(queryPlan, joinOrder);
+            // use
+            //queryPlan = updateJoinOrder(joinOperators, joinOrder);
 
 
             return queryPlan;
@@ -365,9 +365,23 @@ namespace NES::Optimizer {
 
         return joinOrder;
     }
-    QueryPlanPtr JoinOrderOptimizationRule::updateJoinOrder(QueryPlanPtr queryPlan, std::vector<std::any> joinOrder) {
-        return NES::QueryPlanPtr();
+    // JVS das wird sehr, sehr nervig
+    // in-place change, because constructing a new QueryPlan is prohibited
+    // JVS Iterate through joinOrder and alter step-by-step the QueryPlan
+    void JoinOrderOptimizationRule::updateJoinOrder(std::vector<JoinLogicalOperatorNodePtr> joins, std::vector<std::any> joinOrder, int level) {
+        // JVS build basic class and then alter it for generalization
+        // vllt. kann ich einfach die function hier rekursiv aufrufen
+        for(auto el : joinOrder){
+            if(el.type() == typeid(std::vector<std::any>)){
+                // if element is a vector, this implies a join --> find the join on this level and alter it.
+                auto joinLogicalOperatorNodePtr = joins[level];
+                // JVS Alter left and right part of join
+
+
+            }
+        }
     }
+
 
     }// namespace NES::Optimizer
 

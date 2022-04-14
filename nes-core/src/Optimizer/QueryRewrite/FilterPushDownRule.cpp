@@ -37,15 +37,15 @@ FilterPushDownRule::FilterPushDownRule() = default;
 QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 
     NES_INFO("Applying FilterPushDownRule to query " << queryPlan->toString());
-    const auto rootOperators = queryPlan->getRootOperators();
-    std::vector<FilterLogicalOperatorNodePtr> filterOperators;
+    const auto rootOperators = queryPlan->getRootOperators(); // JVS what are the roots? -- here would be the root join (highest join)?
+    std::vector<FilterLogicalOperatorNodePtr> filterOperators; // JVS list of all filterOperators derived from root.
     for (const auto& rootOperator : rootOperators) {
         //FIXME: this will result in adding same filter operator twice in the vector
         // remove the duplicate filters from the vector
         auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
         filterOperators.insert(filterOperators.end(), filters.begin(), filters.end());
     }
-    NES_DEBUG("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
+    NES_DEBUG("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id"); //JVS lower number i think is closer to leaf. not sure why this is done
     std::sort(filterOperators.begin(),
               filterOperators.end(),
               [](const FilterLogicalOperatorNodePtr& lhs, const FilterLogicalOperatorNodePtr& rhs) {
@@ -62,27 +62,27 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filterOperator) {
 
     NES_TRACE("FilterPushDownRule: Get children of current filter");
-    std::vector<NodePtr> childrenOfFilter = filterOperator->getChildren();
+    std::vector<NodePtr> childrenOfFilter = filterOperator->getChildren(); // JVS get for this particular filterOperator all children ->e.g. source to filter in
     NES_TRACE("FilterPushDownRule: Copy children to the queue for further processing");
-    std::deque<NodePtr> nodesToProcess(childrenOfFilter.begin(), childrenOfFilter.end());
+    std::deque<NodePtr> nodesToProcess(childrenOfFilter.begin(), childrenOfFilter.end()); // JVS put all children in a double ended queue (deque).
 
-    while (!nodesToProcess.empty()) {
+    while (!nodesToProcess.empty()) { // JVS loop over all children do sth. until the queue is empty.
 
-        static bool isFilterAboveUnionOperator{false};
+        static bool isFilterAboveUnionOperator{false}; // JVS what is this doing? I can imagine that if there was a union before, we need to filter both ends BEFORE union.
         NES_TRACE("FilterPushDownRule: Get first operator for processing");
-        NodePtr node = nodesToProcess.front();
-        nodesToProcess.pop_front();
+        NodePtr node = nodesToProcess.front(); // JVS gets first element from queue -- but doesn't remove it.
+        nodesToProcess.pop_front(); // JVS removes it now...
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
             || node->instanceOf<FilterLogicalOperatorNode>() || node->instanceOf<ProjectionLogicalOperatorNode>()
             || node->instanceOf<JoinLogicalOperatorNode>()) {
-
+            // JVS if the node is either a source, a window, a filterOperator itself, a projection or a join --> prevent pushing it down.
             NES_TRACE("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
-            if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {
+            if (node->as<OperatorNode>()->getId() != filterOperator->getId()) { // JVS this is because the while loop changes the current node. If we are not at the initial position, we can alter it.
                 NES_TRACE("FilterPushDownRule: Adding Filter operator between current operator and its parents");
                 if (isFilterAboveUnionOperator) {//If  filter was above a union operator
                     NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
                     //Create duplicate of the filter
-                    OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
+                    OperatorNodePtr duplicatedFilterOperator = filterOperator->copy(); // JVS what i said above -- they duplicate the filter to push it two both unions.
                     duplicatedFilterOperator->setId(Util::getNextOperatorId());
                     //Inset it between currently traversed node and its parent
                     if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {

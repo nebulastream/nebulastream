@@ -137,7 +137,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @return
      */
     std::vector<std::any> extractJoinOrder(AbstractJoinPlanOperatorPtr root);
-    QueryPlanPtr updateJoinOrder(QueryPlanPtr queryPlan, std::vector<std::any> joinOrder);
+    void updateJoinOrder(std::vector<JoinLogicalOperatorNodePtr> joins, std::vector<std::any> joinOrder, int level = 0);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_
