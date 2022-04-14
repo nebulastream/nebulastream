@@ -29,9 +29,19 @@
 #include <Util/TestUtils.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
+#include <cpprest/filestream.h>
+#include <cpprest/http_client.h>
 #include <thread>
 
+using namespace utility;
 using namespace std;
+using namespace web;
+// Common features like URIs.
+using namespace web::http;
+// Common HTTP functionality
+using namespace web::http::client;
+// HTTP client features
+using namespace concurrency::streams;
 
 namespace NES {
 
@@ -76,7 +86,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 /*
  * @brief test message passing between sink-coordinator-sources
  */
-TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
+TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -101,17 +111,15 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query = "Query::from(\"window\")"
-                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
-                   "Milliseconds()))"
-                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))) "
-                   ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\")))"
-                   ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    std::stringstream ssQuery1;
+    ssQuery1 << R"({"userQuery" : "Query::from(\"window\").sink(FileSinkDescriptor::create(\")";
+    ssQuery1 << outputFilePath;
+    ssQuery1 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery1 << R"());","strategyName" : "BottomUp")";
+    ssQuery1 << R"(,"faultTolerance" : "AT_LEAST_ONCE"})";
 
-    QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    web::json::value jsonReturn = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(*restPort));
+    QueryId queryId = jsonReturn.at("queryId").as_integer();
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
