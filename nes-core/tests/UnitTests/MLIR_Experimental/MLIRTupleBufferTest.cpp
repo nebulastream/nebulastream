@@ -142,7 +142,7 @@ void printBuffer(std::vector<NESAbstractionNode::BasicType> types,
 
 
 
-TEST(MLIRTupleBufferIteration, executeSimpleStringMLIR) {
+TEST(MLIRTupleBufferIteration, simpleBufferIteration) {
     // Register any command line options.
     mlir::registerAsmPrinterCLOptions();
     mlir::registerMLIRContextCLOptions();
