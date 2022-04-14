@@ -1459,8 +1459,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
                                                       nesPartition,
                                                       waitTime,
                                                       serializedSinkDescriptor.retrytimes(),
-                                                      serializedSinkDescriptor.uniquenetworksinkdescriptorid(),
-                                                      FaultToleranceType(serializedSinkDescriptor.faulttolerancemode()));
+                                                      FaultToleranceType(serializedSinkDescriptor.faulttolerancemode()),
+                                                      serializedSinkDescriptor.uniquenetworksinkdescriptorid());
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
