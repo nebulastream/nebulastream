@@ -27,6 +27,8 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <Geolocation/GeospatialTopology.hpp>
+#include <Geolocation/WorkerGeospatialInfo.hpp>
 
 using namespace std;
 namespace NES {
@@ -93,25 +95,26 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     cout << "worker 1 started connected " << endl;
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 0);
+    NES::Experimental::Mobility::GeospatialTopologyPtr geoTopology = topology->getGeoTopology();
+    EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 0);
 
     bool retConWrk2 = wrk2->connect();
     EXPECT_TRUE(retConWrk2);
     cout << "worker 2 started connected " << endl;
 
-    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 1);
+    EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 1);
 
     bool retConWrk3 = wrk3->connect();
     EXPECT_TRUE(retConWrk3);
     cout << "worker 3 started connected " << endl;
 
-    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 2);
+    EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 2);
 
     bool retConWrk4 = wrk4->connect();
     EXPECT_TRUE(retConWrk4);
     cout << "worker 4 started connected " << endl;
 
-    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 3);
+    EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 3);
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
@@ -119,49 +122,44 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
     //checking coordinates
-    EXPECT_EQ(node2->getCoordinates().value(),
-              NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092));
-    EXPECT_EQ(topology->getClosestNodeTo(node4), node3);
-    EXPECT_EQ(topology->getClosestNodeTo(node4->getCoordinates().value()).value(), node4);
-    topology->setFieldNodeCoordinates(node2,
-                                      NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
-    EXPECT_EQ(topology->getClosestNodeTo(node4), node2);
-    EXPECT_EQ(node2->getCoordinates().value(),
-              NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
-    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 3);
+    EXPECT_EQ(node2->getCoordinates().value(), NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092));
+    EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node3);
+    EXPECT_EQ(geoTopology->getClosestNodeTo(node4->getCoordinates().value()).value(), node4);
+    geoTopology->setFieldNodeCoordinates(node2, NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node2);
+    EXPECT_EQ(node2->getCoordinates().value(), NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
     auto inRange =
-        topology->getNodesInRange(NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092), 50.0);
+        geoTopology->getNodesInRange(NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092), 50.0);
     EXPECT_EQ(inRange.size(), (size_t) 3);
-    auto inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
+    auto inRangeAtWorker = wrk2->getGeospatialInfo()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //moving node 3 to hamburg (more than 100km away
-    topology->setFieldNodeCoordinates(node3,
-                                      NES::Experimental::Mobility::GeographicalLocation(53.559524264262194, 10.039384739854102));
+    geoTopology->setFieldNodeCoordinates(node3, NES::Experimental::Mobility::GeographicalLocation(53.559524264262194, 10.039384739854102));
 
     //node 3 should not have any nodes within a radius of 100km
-    EXPECT_EQ(topology->getClosestNodeTo(node3, 100).has_value(), false);
+    EXPECT_EQ(geoTopology->getClosestNodeTo(node3, 100).has_value(), false);
 
     //because node 3 is in hamburg now, we will only get 2 nodes in a radius of 100km (node 3 itself and node 4)
-    inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
+    inRangeAtWorker = wrk2->getGeospatialInfo()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
     EXPECT_EQ(inRangeAtWorker.at(1).first, wrk4->getWorkerId());
-    EXPECT_EQ(inRangeAtWorker.at(1).second, wrk4->getGeoLoc());
+    EXPECT_EQ(inRangeAtWorker.at(1).second, wrk4->getGeospatialInfo()->getGeoLoc());
 
     //when looking within a radius of 500km we will find all nodes again
-    inRangeAtWorker = wrk2->getNodeIdsInRange(500.0);
+    inRangeAtWorker = wrk2->getGeospatialInfo()->getNodeIdsInRange(500.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //if we remove one of the other nodes, there should be one node less in the radius of 500 km
     topology->removePhysicalNode(topology->findNodeWithId(wrk3->getWorkerId()));
-    inRangeAtWorker = wrk2->getNodeIdsInRange(500.0);
+    inRangeAtWorker = wrk2->getGeospatialInfo()->getNodeIdsInRange(500.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
 
     //location far away from all the other nodes should not have any closest node
-    EXPECT_EQ(
-        topology
-            ->getClosestNodeTo(NES::Experimental::Mobility::GeographicalLocation(-53.559524264262194, -10.039384739854102), 100)
-            .has_value(),
-        false);
+    EXPECT_EQ(geoTopology
+                  ->getClosestNodeTo(NES::Experimental::Mobility::GeographicalLocation(-53.559524264262194, -10.039384739854102), 100)
+                  .has_value(),
+                  false);
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -215,22 +213,23 @@ TEST_F(GeoLocationTests, testMobileNodes) {
     cout << "worker 1 started connected " << endl;
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 0);
+    NES::Experimental::Mobility::GeospatialTopologyPtr geoTopology = topology->getGeoTopology();
+    EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 0);
 
     bool retConWrk2 = wrk2->connect();
     EXPECT_TRUE(retConWrk2);
     cout << "worker 2 started connected " << endl;
 
-    EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 1);
+    EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 1);
 
-    EXPECT_EQ(wrk1->isMobileNode(), true);
-    EXPECT_EQ(wrk2->isMobileNode(), false);
+    EXPECT_EQ(wrk1->getGeospatialInfo()->isMobileNode(), true);
+    EXPECT_EQ(wrk2->getGeospatialInfo()->isMobileNode(), false);
 
-    EXPECT_EQ(wrk1->isFieldNode(), false);
-    EXPECT_EQ(wrk2->isFieldNode(), true);
+    EXPECT_EQ(wrk1->getGeospatialInfo()->isFieldNode(), false);
+    EXPECT_EQ(wrk2->getGeospatialInfo()->isFieldNode(), true);
 
-    EXPECT_EQ(wrk1->getGeoLoc(), NES::Experimental::Mobility::GeographicalLocation(52.55227464714949, 13.351743136322877));
-    EXPECT_EQ(wrk2->getGeoLoc(), NES::Experimental::Mobility::GeographicalLocation::fromString(location2));
+    EXPECT_EQ(wrk1->getGeospatialInfo()->getGeoLoc(), NES::Experimental::Mobility::GeographicalLocation(52.55227464714949, 13.351743136322877));
+    EXPECT_EQ(wrk2->getGeospatialInfo()->getGeoLoc(), NES::Experimental::Mobility::GeographicalLocation::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());

@@ -24,6 +24,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
+#include <Geolocation/GeospatialTopology.hpp>
 
 namespace NES {
 
@@ -76,7 +77,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     if (fixedCoordinates.isValid() && !newTopologyNode->isMobileNode()) {
         NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", "
                                                             << fixedCoordinates.getLongitude());
-        topology->setFieldNodeCoordinates(newTopologyNode, fixedCoordinates, true);
+        topology->getGeoTopology()->setFieldNodeCoordinates(newTopologyNode, fixedCoordinates, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }
@@ -206,7 +207,7 @@ uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNode
 
 std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>>
 TopologyManagerService::getNodesInRange(Experimental::Mobility::GeographicalLocation center, double radius) {
-    return topology->getNodesInRange(center, radius);
+    return topology->getGeoTopology()->getNodesInRange(center, radius);
 }
 
 std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>>

@@ -20,15 +20,11 @@
 #include <algorithm>
 #include <deque>
 #include <utility>
-#ifdef S2DEF
-#include <s2/s2closest_point_query.h>
-#include <s2/s2earth.h>
-#include <s2/s2latlng.h>
-#endif
+#include <Geolocation/GeospatialTopology.hpp>
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr) {}
+Topology::Topology() : rootNode(nullptr), geoTopology(std::make_shared<NES::Experimental::Mobility::GeospatialTopology>()) {}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
@@ -65,9 +61,8 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
-        //TODO Issue #2497: move this into a separate class dealing with geolocation
         if (nodeToRemove->isFieldNode()) {
-            removeNodeFromSpatialIndex(nodeToRemove);
+            (*geoTopology).removeNodeFromSpatialIndex(nodeToRemove);
         }
         indexOnNodeIds.erase(idOfNodeToRemove);
         NES_DEBUG("Topology: Successfully removed the node.");
@@ -75,148 +70,6 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     }
     NES_WARNING("Topology: Unable to remove the node.");
     return false;
-}
-
-bool Topology::setFieldNodeCoordinates(const TopologyNodePtr& node,
-                                       Experimental::Mobility::GeographicalLocation geoLoc,
-                                       bool init) {
-#ifdef S2DEF
-    double newLat = geoLoc.getLatitude();
-    double newLng = geoLoc.getLongitude();
-    S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));
-    NES_DEBUG("updating location of Node to: " << newLat << ", " << newLng);
-
-    //if this function was not called during the creation of the node (init != false), we need to delete the old entry
-    if (!init) {
-        auto oldCoordOpt = node->getCoordinates();
-        //a non field node cannot be given a position after its creation
-        if (!oldCoordOpt.has_value() && !init) {
-            NES_WARNING("Trying to set the Position of a non field node");
-            return false;
-        }
-
-        auto oldCoord = oldCoordOpt.value();
-        S2Point oldLoc(S2LatLng::FromDegrees(oldCoord.getLatitude(), oldCoord.getLongitude()));
-        nodePointIndex.Remove(oldLoc, node);
-    }
-
-    nodePointIndex.Add(newLoc, node);
-#else
-    NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
-    NES_INFO("init = " << init);
-#endif
-    node->setFixedCoordinates(geoLoc);
-    return true;
-}
-
-bool Topology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
-#ifdef S2DEF
-    auto geoLocOpt = node->getCoordinates();
-    if (!geoLocOpt.has_value()) {
-        NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
-        return false;
-    }
-    auto geoLoc = geoLocOpt.value();
-    S2Point point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude()));
-    nodePointIndex.Remove(point, node);
-    return true;
-#else
-    NES_WARNING("Files were compiled without s2. Nothing can be removed from the spatial index because it does not exist");
-    NES_INFO("node id: " << node->getId());
-    return {};
-#endif
-}
-
-std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const Experimental::Mobility::GeographicalLocation& geoLoc,
-                                                          int radius) {
-#ifdef S2DEF
-    S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
-    query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
-        S2Point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude())));
-    S2ClosestPointQuery<TopologyNodePtr>::Result queryResult = query.FindClosestPoint(&target);
-    if (queryResult.is_empty()) {
-        return {};
-    }
-    return queryResult.data();
-#else
-    NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
-    NES_INFO("supplied values: " << geoLoc.getLatitude() << ", " << geoLoc.getLongitude() << " radius:" << radius);
-    return {};
-#endif
-}
-
-std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
-#ifdef S2DEF
-    auto GeoLocOpt = nodePtr->getCoordinates();
-
-    if (!GeoLocOpt.has_value()) {
-        NES_WARNING("Trying to get the closest node to a node that does not have a location");
-        return {};
-    }
-
-    auto geoLoc = GeoLocOpt.value();
-
-    S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
-    query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
-        S2Point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude())));
-    auto queryResult = query.FindClosestPoint(&target);
-    //if we cannot find any node within the radius return an empty optional
-    if (queryResult.is_empty()) {
-        return {};
-    }
-    //if the closest node is different from the input node, return it
-    auto closest = queryResult.data();
-    if (closest != nodePtr) {
-        return closest;
-    }
-    //if the closest node is equal to our input node, we need to look for the second closest
-    auto closestPoints = query.FindClosestPoints(&target);
-    if (closestPoints.size() < 2) {
-        return {};
-    }
-    return closestPoints[1].data();
-
-#else
-    NES_WARNING("Files were compiled without s2, cannot find closest nodes");
-    NES_INFO(radius << nodePtr);
-    return {};
-#endif
-}
-
-std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>>
-Topology::getNodesInRange(Experimental::Mobility::GeographicalLocation center, double radius) {
-#ifdef S2DEF
-    S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
-    query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-
-    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
-        S2Point(S2LatLng::FromDegrees(center.getLatitude(), center.getLongitude())));
-    auto result = query.FindClosestPoints(&target);
-    std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> closestNodeList;
-    for (auto r : result) {
-        auto latLng = S2LatLng(r.point());
-        closestNodeList.emplace_back(
-            r.data(),
-            Experimental::Mobility::GeographicalLocation(latLng.lat().degrees(), latLng.lng().degrees()));
-    }
-    return closestNodeList;
-
-#else
-    NES_WARNING("Files were compiled without s2, cannot find closest nodes");
-    NES_INFO("supplied values: " << center.getLatitude() << ", " << center.getLongitude() << "radius: " << radius);
-    return {};
-#endif
-}
-
-size_t Topology::getSizeOfPointIndex() {
-#ifdef S2DEF
-    return nodePointIndex.num_points();
-#else
-    NES_WARNING("s2 lib not included");
-    return {};
-#endif
 }
 
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
@@ -752,5 +605,4 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
 NES::Experimental::Mobility::GeospatialTopologyPtr Topology::getGeoTopology() {
     return geoTopology;
 }
-
 }// namespace NES
