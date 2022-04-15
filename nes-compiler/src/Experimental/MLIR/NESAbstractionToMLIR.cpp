@@ -294,8 +294,7 @@ void MLIRGenerator::generateMLIRFromNode(std::shared_ptr<NESAbstractionNode> nod
                                          Value tuple) {
   switch(node->getNodeType()) {
     case NESAbstractionNode::ForNode:
-      generateMLIRFromNode(std::static_pointer_cast<NESAbstractionForNode>(node), 
-                           tuple);
+      generateMLIRFromNode(std::static_pointer_cast<NESAbstractionForNode>(node));
       break;
     case NESAbstractionNode::IfNode:
       generateMLIRFromNode(std::static_pointer_cast<NESAbstractionIfNode>(node), 
@@ -312,35 +311,34 @@ void MLIRGenerator::generateMLIRFromNode(std::shared_ptr<NESAbstractionNode> nod
     }
 }
 
-void MLIRGenerator::generateMLIRFromNode(std::shared_ptr<NESAbstractionForNode> 
-                                         abstractionNode, Value tuple) {
+void MLIRGenerator::generateMLIRFromNode(const std::shared_ptr<NESAbstractionForNode>& abstractionNode) {
   // Define index variables for loop. Define the loop iteration variable.
-  arith::ConstantIndexOp lowerBound = builder->create<arith::ConstantIndexOp>(
+  auto lowerBound = builder->create<arith::ConstantIndexOp>(
                                       getNameLoc("lowerBound"), 0);
-  arith::ConstantIndexOp upperBound = builder->create<arith::ConstantIndexOp>(
+  auto upperBound = builder->create<arith::ConstantIndexOp>(
                                       getNameLoc("upperBound"), 
                                       abstractionNode->getUpperBound());
-  arith::ConstantIndexOp stepSize = builder->create<arith::ConstantIndexOp>(
+  auto stepSize = builder->create<arith::ConstantIndexOp>(
                                       getNameLoc("stepSize"), 1);
   Value iterationVariable = builder->create<arith::ConstantOp>(
                                       getNameLoc("iterationVariable"), 
                                       builder->getI32IntegerAttr(0));
   // Create an MLIR loop.
   insertComment("// Main For Loop");
-  scf::ForOp loop = builder->create<scf::ForOp>(getNameLoc("forLoop"), 
+  auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"),
       lowerBound, upperBound, stepSize, iterationVariable);
 
   // Set IP to inside of loop body. Process child node. Restore IP on return.
   auto currentInsertionPoint = builder->saveInsertionPoint();
-  builder->setInsertionPointToStart(loop.getBody());
-  debugBufferPrint(loop.getRegionIterArgs().begin()[0], 
+  builder->setInsertionPointToStart(forLoop.getBody());
+  debugBufferPrint(forLoop.getRegionIterArgs().begin()[0],
     abstractionNode->getIndexes(), abstractionNode->getTypes());
   generateMLIRFromNode(std::move(abstractionNode->getChildNodes().front()), 
-                       loop.getRegionIterArgs()[0]);
+                       forLoop.getRegionIterArgs()[0]);
   builder->restoreInsertionPoint(currentInsertionPoint);
 
   // Insert return into 'execute' function block. This is the FINAL return.
-  builder->create<LLVM::ReturnOp>(getNameLoc("return"), loop->getResult(0));
+  builder->create<LLVM::ReturnOp>(getNameLoc("return"), forLoop->getResult(0));
 }
 
 void MLIRGenerator::generateMLIRFromNode(
@@ -393,8 +391,9 @@ void MLIRGenerator::generateMLIRFromNode(std::shared_ptr<NESAbstractionBinOpNode
   builder->clearInsertionPoint();
 }
 
-void MLIRGenerator::generateMLIRFromNode(std::shared_ptr<NESAbstractionWriteNode> 
+void MLIRGenerator::generateMLIRFromNode(std::shared_ptr<NESAbstractionWriteNode>
   abstractionNode, Value tuple) {
+  printf("NodeId: %ld",abstractionNode->getNodeId());
   builder->create<scf::YieldOp>(getNameLoc("yieldOperation"), tuple);
 }
 

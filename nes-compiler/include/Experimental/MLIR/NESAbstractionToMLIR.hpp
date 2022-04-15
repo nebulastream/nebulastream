@@ -82,10 +82,8 @@ private:
     /**
      * @brief Calls the specific generate function based on currentNode's type.
      * @param parentBlock MLIR Block that new operation is inserted into.
-     * @param tuple Represents an arbitrary processed tuple.
      */
-    void generateMLIRFromNode(std::shared_ptr<NESAbstractionForNode> node, 
-                              Value tuple);
+    void generateMLIRFromNode(const std::shared_ptr<NESAbstractionForNode>& node);
 
     /**
      * @brief Generates MLIR code for a for loop.
@@ -93,7 +91,7 @@ private:
      * @param parentBlock Parent block in which this operation is inserted.
      * @param tuple The current tuple read by the for loop.
      */
-    void generateMLIRFromNode(std::shared_ptr<NESAbstractionNode> node, 
+    void generateMLIRFromNode(std::shared_ptr<NESAbstractionNode> node,
                               Value tuple);
 
     /**
@@ -102,7 +100,7 @@ private:
      * @param parentBlock Parent block in which this operation is inserted.
      * @param tuple The current tuple read by the for loop.
      */
-    void generateMLIRFromNode(std::shared_ptr<NESAbstractionIfNode> node, 
+    void generateMLIRFromNode(std::shared_ptr<NESAbstractionIfNode> node,
                               Value tuple);
 
     /**
@@ -111,7 +109,7 @@ private:
      * @param parentBlock Parent block in which this operation is inserted.
      * @param tuple The current tuple read by the for loop.
      */
-    void generateMLIRFromNode(std::shared_ptr<NESAbstractionBinOpNode> node, 
+    void generateMLIRFromNode(std::shared_ptr<NESAbstractionBinOpNode> node,
                               Value tuple);
 
     /**
@@ -120,7 +118,7 @@ private:
      * @param ParentBlock Parent block in which this operation is inserted.
      * @param Tuple The current tuple read by the for loop.
      */
-    void generateMLIRFromNode(std::shared_ptr<NESAbstractionWriteNode> node, 
+    void generateMLIRFromNode(std::shared_ptr<NESAbstractionWriteNode> node,
                               Value tuple);
 
     /**
