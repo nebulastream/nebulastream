@@ -358,10 +358,14 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const 
     std::unique_lock lock(engineMutex);
     std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
     for (auto& subQueryPlanId : subQueryPlanIds) {
-        NES_DEBUG("NodeEngine:: Find sources for subQueryPlanId " << subQueryPlanId);
+        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId " << subQueryPlanId);
         auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
         for (auto& source : sources) {
-            source->injectEpochBarrier(timestamp, queryId);
+            if (source->injectEpochBarrier(timestamp, queryId)) {
+                NES_DEBUG("NodeEngine: Inject epoch barrier " << timestamp << "to the query " << queryId);
+            } else {
+                NES_ERROR("NodeEngine: Couldn't inject epoch barrier to the query" << queryId);
+            }
         }
     }
 }

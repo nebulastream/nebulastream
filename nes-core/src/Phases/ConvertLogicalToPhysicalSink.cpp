@@ -160,7 +160,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getFaultToleranceType(),
                                  networkSinkDescriptor->getRetryTimes());
-    } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
+    } else if (sinkDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating materialized view sink");
         auto materializedViewSinkDescriptor =
             sinkDescriptor->as<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>();

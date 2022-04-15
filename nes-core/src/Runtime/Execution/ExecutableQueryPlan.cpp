@@ -182,6 +182,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case PropagateEpoch: {
+            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
+            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId);
             auto networkSinks = getSinks();
             for (const DataSinkPtr& sink : networkSinks) {
                 Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);

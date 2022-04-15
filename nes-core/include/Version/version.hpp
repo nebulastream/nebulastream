@@ -18,5 +18,5 @@
 #define NES_VERSION_MINOR 2
 #define NES_VERSION_PATCH 15
 #define NES_VERSION_POST_FIX -SNAPSHOT
-constexpr char const* NES_VERSION      = "0.2.15-SNAPSHOT";
+constexpr char const* NES_VERSION = "0.2.15-SNAPSHOT";
 #endif
