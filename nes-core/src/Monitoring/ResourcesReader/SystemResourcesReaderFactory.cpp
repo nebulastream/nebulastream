@@ -14,6 +14,7 @@
 
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
+#include <Monitoring/ResourcesReader/MacOsSystemResourceReader.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -23,6 +24,9 @@ AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResource
 #ifdef __linux__
     auto abstractReader = std::make_shared<LinuxSystemResourcesReader>();
     NES_INFO("SystemResourcesReaderFactory: Linux detected, return LinuxSystemResourcesReader");
+#elif __APPLE__
+    auto abstractReader = std::make_shared<MacOsSystemResourcesReader>();
+    NES_INFO("MetricUtils: MacOs detected, return MacOsSystemResourcesReader");
 #else
     auto abstractReader = std::make_shared<AbstractSystemResourcesReader>();
     NES_INFO("SystemResourcesReaderFactory: OS not supported, return DefaultReader");

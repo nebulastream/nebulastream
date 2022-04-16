@@ -15,6 +15,6 @@
 #ifndef NES_SYSTEMRESOURCESREADERTYPE_HPP
 #define NES_SYSTEMRESOURCESREADERTYPE_HPP
 
-enum SystemResourcesReaderType { AbstractReader, LinuxReader };
+enum SystemResourcesReaderType { AbstractReader, LinuxReader, MacOsReader };
 
 #endif//NES_SYSTEMRESOURCESREADERTYPE_HPP

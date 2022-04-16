@@ -145,7 +145,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
 
             // check if a limit is set for the given cgroup, the smaller value is the available RAM
             uint64_t systemMem = LinuxSystemResourcesReader::readMemoryStats().TOTAL_RAM;
-            uint64_t limitMem = std::stoull(memoryStr);// TODO: lets coordinator crash on macOS-Intel as memoryStr="". #2307
+            uint64_t limitMem = std::stoull(memoryStr);
             output.totalMemoryBytes = std::min(limitMem, systemMem);
         } else {
             NES_ERROR("LinuxSystemResourcesReader: File for memory.usage_in_bytes not available");

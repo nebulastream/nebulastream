@@ -21,4 +21,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_source_files(nes-core
             LinuxSystemResourcesReader.cpp
             )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "APPLE")
+    # Apple-specific stuff
+    add_source_files(nes-core
+            MacOsSystemResourceReader.cpp
+            )
 endif ()
