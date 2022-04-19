@@ -918,7 +918,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
 
         auto resultBuffer2 = testSink->get(1);
         auto rowLayoutActual2 = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, resultBuffer.getBufferSize());
-        auto dynamicTupleBufferActual2 = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual2, resultBuffer);
+        auto dynamicTupleBufferActual2 = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayoutActual2, resultBuffer2);
         NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer2.getNumberOfTuples() << " tuples.");
         NES_INFO("QueryExecutionTest: buffer=" << dynamicTupleBufferActual2);
         std::string expectedContent2 = "+----------------------------------------------------+\n"
