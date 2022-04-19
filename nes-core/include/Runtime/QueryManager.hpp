@@ -281,7 +281,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @brief get number of tasks in the queue
      * @return task count
      */
-    virtual uint64_t getNumberOfTasksInWorkerQueue() const = 0;
+    virtual uint64_t getNumberOfTasksInWorkerQueues() const = 0;
 
     /**
      * Return the current occupation of the task queue
@@ -471,7 +471,7 @@ class DynamicQueryManager : public AbstractQueryManager {
      */
     void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
 
-    uint64_t getNumberOfTasksInWorkerQueue() const override;
+    uint64_t getNumberOfTasksInWorkerQueues() const override;
 
   private:
     /**
@@ -555,7 +555,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     void
     addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
 
-    uint64_t getNumberOfTasksInWorkerQueue() const override;
+    uint64_t getNumberOfTasksInWorkerQueues() const override;
   protected:
     /**
      * @brief

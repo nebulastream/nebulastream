@@ -97,9 +97,9 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
     }
 }
 
-uint64_t DynamicQueryManager::getNumberOfTasksInWorkerQueue() const { return taskQueue.size(); }
+uint64_t DynamicQueryManager::getNumberOfTasksInWorkerQueues() const { return taskQueue.size(); }
 
-uint64_t MultiQueueQueryManager::getNumberOfTasksInWorkerQueue() const {
+uint64_t MultiQueueQueryManager::getNumberOfTasksInWorkerQueues() const {
     uint64_t sum = 0;
     for (uint64_t i = 0; i < numberOfQueues; i++) {
         sum += taskQueues[i].size();
