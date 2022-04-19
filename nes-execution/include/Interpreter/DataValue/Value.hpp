@@ -55,15 +55,16 @@ class Value {
     // move assignment
     Value& operator=(Value&& other) noexcept {
         if (traceContext) {
-            traceContext->getExecutionTrace().traceAssignment(srcRef, other.ref);
+            Trace(traceContext, OpCode::ASSIGN, other, *this);
+            //traceContext->getExecutionTrace().traceAssignment(srcRef, other.ref);
         }
         std::swap(value, other.value);
-        std::swap(ref, other.ref);
+        //std::swap(ref, other.ref);
         return *this;
     }
 
     operator bool() {
-        std::cout << "trace bool eval" << std::endl;
+        //std::cout << "trace bool eval" << std::endl;
         if (instanceOf<Boolean>(value)) {
             auto boolValue = cast<Boolean>(value);
             Trace(traceContext, OpCode::CMP, *this, *this);
@@ -86,10 +87,12 @@ template<class T>
 concept IsValueType = std::is_same<Value, T>::value;
 
 template<class T>
-concept IsNotValueType = !std::is_same<Value, T>::value;
+concept IsNotValueType = !
+std::is_same<Value, T>::value;
 
 template<class T>
-requires(std::is_fundamental<T>::value == true) inline auto toValue(T&& t, TraceContext* traceContext) -> Value {
+    requires(std::is_fundamental<T>::value == true)
+inline auto toValue(T&& t, TraceContext* traceContext) -> Value {
     return Value{std::forward<T>(t), traceContext};
 }
 

@@ -1,11 +1,12 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
+#include <functional>
+#include <iostream>
 #include <memory>
 #include <ostream>
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <iostream>
 namespace NES::Interpreter {
 
 class Value;
@@ -31,7 +32,7 @@ struct TagHasher {
     }
 };
 
-enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST };
+enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN };
 
 class ValueRef {
   public:
@@ -75,14 +76,24 @@ class BlockRef {
 
 using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef>;
 
+class OperationRef {
+  public:
+    OperationRef(uint32_t blockId, uint32_t operationId) : blockId(blockId), operationId(operationId) {}
+    uint32_t blockId;
+    uint32_t operationId;
+};
+
 class Operation {
   public:
     Operation(OpCode op, ValueRef result, std::vector<InputVariant> input) : op(op), result(result), input(input){};
-    Operation(const Operation& other) : op(other.op), result(other.result), input(other.input) {}
+    Operation(OpCode op) : op(op), result(), input(){};
+    Operation(const Operation& other)
+        : op(other.op), result(other.result), input(other.input), operationRef(other.operationRef) {}
     ~Operation() {}
     OpCode op;
     InputVariant result;
     std::vector<InputVariant> input;
+    std::shared_ptr<OperationRef> operationRef;
     friend std::ostream& operator<<(std::ostream& os, const Operation& operation);
 };
 
@@ -109,11 +120,15 @@ class ExecutionTrace {
   public:
     ExecutionTrace() : tagMap(), blocks() { createBlock(); };
     ~ExecutionTrace(){};
-    void addOperation(Operation operation) {
+    void addOperation(Operation& operation) {
         if (blocks.empty()) {
             createBlock();
         }
+        operation.operationRef = std::make_shared<OperationRef>(currentBlock, blocks[currentBlock].operations.size());
         blocks[currentBlock].operations.emplace_back(operation);
+        if (operation.op == RETURN) {
+            returnRef = operation.operationRef;
+        }
     }
 
     uint32_t createBlock() {
@@ -129,16 +144,18 @@ class ExecutionTrace {
     bool hasNextOperation() { return currentBlock; }
 
     void setCurrentBloc(uint32_t index) { currentBlock = index; }
+    void traceCMP(Operation& operation);
     ValueRef findReference(ValueRef ref, const ValueRef value);
     void checkInputReference(uint32_t currentBlock, ValueRef inputReference, ValueRef currentInput);
     ValueRef createBlockArgument(uint32_t blockIndex, ValueRef ref, ValueRef value);
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
-    std::unordered_map<Tag, std::tuple<uint32_t, uint32_t>, TagHasher> tagMap;
-    std::unordered_map<Tag, std::tuple<uint32_t, uint32_t>, TagHasher> localTagMap;
+    std::unordered_map<Tag, std::shared_ptr<OperationRef>, TagHasher> tagMap;
+    std::unordered_map<Tag, std::shared_ptr<OperationRef>, TagHasher> localTagMap;
 
     void traceAssignment(ValueRef value, ValueRef value1);
+    std::shared_ptr<OperationRef> returnRef;
 
   private:
     uint32_t currentBlock;
@@ -160,6 +177,10 @@ class TraceContext {
     };
     void trace(OpCode op, const Value& left, const Value& right, Value& result);
     void trace(OpCode op, const Value& input, Value& result);
+    void trace(Operation& operation);
+    void traceCMP(const ValueRef& valueRef, bool result);
+    bool isExpectedOperation(OpCode operation);
+    std::shared_ptr<OperationRef> isKnownOperation(Tag& tag);
 
     ExecutionTrace& getExecutionTrace() { return executionTrace; };
     ValueRef createNextRef() { return ValueRef(executionTrace.getCurrentBlockIndex(), currentOperationCounter); }
@@ -171,6 +192,15 @@ class TraceContext {
     uint64_t currentOperationCounter = 0;
     uint64_t startAddress;
 };
+
+template<typename Functor>
+ExecutionTrace traceFunction(Functor func) {
+    auto tracer = TraceContext();
+    func(&tracer);
+    Operation result = Operation(RETURN);
+    tracer.trace(result);
+    return tracer.getExecutionTrace();
+}
 
 inline void Trace(TraceContext* ctx, OpCode type, const Value& left, const Value& right, Value& result) {
     if (ctx != nullptr) {

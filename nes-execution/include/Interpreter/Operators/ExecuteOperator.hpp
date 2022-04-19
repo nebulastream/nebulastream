@@ -7,7 +7,7 @@ class Record;
 
 class ExecuteOperator : public Operator {
   public:
-    virtual void open(TraceContext& tracer) = 0;
+    virtual void open(TraceContext& tracer)  = 0;
     virtual void execute(Record& record) = 0;
     virtual ~ExecuteOperator() {};
 };

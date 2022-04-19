@@ -21,7 +21,7 @@ Tag TraceContext::createTag() {
         }
     }
 
-    for (int i = 0; i < size - 1; i++) {
+    for (int i = 0; i < size - 2; i++) {
         auto address = (uint64_t) buffer[i];
         addresses.push_back(address);
     }
@@ -108,7 +108,7 @@ void ExecutionTrace::checkInputReference(uint32_t currentBlockIndex, ValueRef in
         }
     }
 }
-
+/*
 void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightInput, Value& result) {
     if (executionTrace.getCurrentBlock().operations.size() > currentOperationCounter) {
         // we should contain this operation
@@ -162,8 +162,10 @@ void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightIn
         currentOperationCounter++;
     }
 }
+ */
 
 Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex) {
+    std::cout << *this << std::endl;
     // perform a control flow merge and merge the current block with operations in some other block.
     // create new block
     auto mergedBlockId = createBlock();
@@ -174,11 +176,16 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
 
     for (uint32_t opIndex = operationIndex; opIndex < oldBlock.operations.size(); opIndex++) {
         auto sourceOperation = oldBlock.operations[opIndex];
+        sourceOperation.operationRef->blockId = mergedBlockId;
+        sourceOperation.operationRef->operationId = mergeBlock.operations.size();
         mergeBlock.operations.emplace_back(sourceOperation);
     }
 
+    auto oldBlockRef = BlockRef(mergedBlockId);
+
     // rename vars in new block
     // todo reduce complexity
+    /*
     for (uint32_t opIndex = 0; opIndex < mergeBlock.operations.size(); opIndex++) {
         auto& operation = mergeBlock.operations[opIndex];
         if (auto* valRef = std::get_if<ValueRef>(&operation.result)) {
@@ -196,7 +203,7 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
         }
     }
 
-    auto oldBlockRef = BlockRef(mergedBlockId);
+
     for (uint32_t opIndex = 0; opIndex < mergeBlock.operations.size(); opIndex++) {
         auto& operation = mergeBlock.operations[opIndex];
         for (auto& input : operation.input) {
@@ -208,11 +215,12 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
             }
         }
     }
-
+*/
     // remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
     oldBlock.operations.emplace_back(Operation(JMP, ValueRef(0, 0), {oldBlockRef}));
-    addOperation(Operation(JMP, ValueRef(0, 0), {BlockRef(mergedBlockId)}));
+    auto operation = Operation(JMP, ValueRef(0, 0), {BlockRef(mergedBlockId)});
+    addOperation(operation);
 
     mergeBlock.predecessors.emplace_back(blockIndex);
     mergeBlock.predecessors.emplace_back(currentBlock);
@@ -232,6 +240,94 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     return mergeBlock;
 }
 
+void TraceContext::trace(OpCode op, const Value& left, const Value& right, Value& result) {
+    auto operation = Operation(op, result.ref, {left.ref, right.ref});
+    trace(operation);
+}
+
+void TraceContext::trace(OpCode op, const Value& input, Value& result) {
+    if (op == OpCode::CONST) {
+        auto constValue = input.value->copy();
+        auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
+        trace(operation);
+    } else if (op == CMP) {
+        traceCMP(input.ref, cast<Boolean>(result.value)->value);
+    } else {
+        auto operation = Operation(op, result.ref, {input.ref});
+        trace(operation);
+    }
+}
+
+bool TraceContext::isExpectedOperation(OpCode opCode) {
+    auto& currentBlock = executionTrace.getCurrentBlock();
+    if (currentBlock.operations.size() <= currentOperationCounter) {
+        return false;
+    }
+    auto currentOperation = currentBlock.operations[currentOperationCounter];
+    // the next operation is a jump we transfer to that block.
+    while (currentOperation.op == JMP) {
+        executionTrace.setCurrentBloc(std::get<BlockRef>(currentOperation.input[0]).block);
+        currentOperationCounter = 0;
+        currentOperation = executionTrace.getCurrentBlock().operations[currentOperationCounter];
+    }
+    return currentOperation.op == opCode;
+}
+
+std::shared_ptr<OperationRef> TraceContext::isKnownOperation(Tag& tag) {
+    if (executionTrace.tagMap.contains(tag)) {
+        return executionTrace.tagMap.find(tag)->second;
+    } else if (executionTrace.localTagMap.contains(tag)) {
+        return executionTrace.localTagMap.find(tag)->second;
+    }
+    return nullptr;
+}
+
+void TraceContext::traceCMP(const ValueRef& valueRef, bool result) {
+    uint32_t trueBlock;
+    uint32_t falseBlock;
+    if (!isExpectedOperation(CMP)) {
+        trueBlock = executionTrace.createBlock();
+        falseBlock = executionTrace.createBlock();
+        executionTrace.getBlock(trueBlock).predecessors.emplace_back(executionTrace.getCurrentBlockIndex());
+        executionTrace.getBlock(falseBlock).predecessors.emplace_back(executionTrace.getCurrentBlockIndex());
+        auto operation = Operation(CMP, valueRef, {BlockRef(trueBlock), BlockRef(falseBlock)});
+        executionTrace.addOperation(operation);
+    } else {
+        // we repeat the operation
+        auto operation = executionTrace.getCurrentBlock().operations[currentOperationCounter];
+        trueBlock = std::get<BlockRef>(operation.input[0]).block;
+        falseBlock = std::get<BlockRef>(operation.input[1]).block;
+    }
+
+    // set next block
+    if (result) {
+        executionTrace.setCurrentBloc(trueBlock);
+    } else {
+        executionTrace.setCurrentBloc(falseBlock);
+    }
+    currentOperationCounter = 0;
+}
+
+void TraceContext::trace(Operation& operation) {
+    // check if we repeat a known trace or if this is a new operation.
+    // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
+    if (!isExpectedOperation(operation.op)) {
+        auto tag = createTag();
+        if (auto ref = isKnownOperation(tag)) {
+            std::cout << executionTrace << std::endl;
+            auto& mergeBlock = executionTrace.processControlFlowMerge(ref->blockId, ref->operationId);
+            auto mergeOperation = mergeBlock.operations.front();
+            currentOperationCounter = 1;
+            return;
+        }
+        executionTrace.addOperation(operation);
+        executionTrace.localTagMap.emplace(std::make_pair(tag, operation.operationRef));
+    }
+
+    currentOperationCounter++;
+}
+
+/*
 void TraceContext::trace(OpCode op, const Value& input, Value& result) {
 
     if (executionTrace.getCurrentBlock().operations.size() > currentOperationCounter) {
@@ -322,12 +418,21 @@ void TraceContext::trace(OpCode op, const Value& input, Value& result) {
         }
     }
 }
+ */
 
 bool Block::isLocalValueRef(ValueRef& ref) {
-    if (ref.blockId == blockId) {
-        // this is a local ref
-        return true;
+
+    for (const auto& operation : operations) {
+        if (auto resultValueRef = std::get_if<ValueRef>(&operation.result)) {
+            if (resultValueRef->blockId == ref.blockId && resultValueRef->operationId == ref.operationId) {
+                return true;
+            }
+        }
     }
+    //if (ref.blockId == blockId) {
+    // this is a local ref
+    //    return true;
+    //}
     return std::find(arguments.begin(), arguments.end(), ref) != arguments.end();
 }
 
