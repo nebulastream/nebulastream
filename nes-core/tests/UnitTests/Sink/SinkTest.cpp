@@ -174,7 +174,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, buffer);
     std::string bufferContent = dynamicTupleBuffer.toString(test_schema);
-    NES_TRACE( "Buffer Content= " << bufferContent);
+    NES_TRACE("Buffer Content= " << bufferContent);
 
     //deserialize schema
     uint64_t idx = path_to_bin_file.rfind('.');

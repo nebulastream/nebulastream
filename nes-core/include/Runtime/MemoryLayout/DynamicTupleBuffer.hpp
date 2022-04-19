@@ -287,7 +287,7 @@ class DynamicTupleBuffer {
      * @brief Creates a string representation of the dynamic tuple buffer
      * @return a string representation
      */
-    std::string toString (const SchemaPtr& schema);
+    std::string toString(const SchemaPtr& schema);
 
   private:
     const MemoryLayoutPtr memoryLayout;

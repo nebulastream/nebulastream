@@ -139,7 +139,7 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
         generatedTuples += numberOfTuplesPerBuffer;
         generatedBuffers++;
 
-        if(Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
+        if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
             auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(this->memoryLayout, buf);
             NES_TRACE("YSBSource::Buffer content: " << dynamicTupleBuffer);
         }
