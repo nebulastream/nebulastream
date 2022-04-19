@@ -54,7 +54,9 @@ void assignmentOperator(TraceContext* tracer) {
 }
 
 TEST_F(InterpreterTest, assignmentOperatorTest) {
-    auto executionTrace = traceFunction(assignmentOperator);
+    auto executionTrace = traceFunction([](auto* tc) {
+        assignmentOperator(tc);
+    });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -62,8 +64,7 @@ TEST_F(InterpreterTest, assignmentOperatorTest) {
     ASSERT_EQ(block0.operations[0].op, CONST);
     ASSERT_EQ(block0.operations[1].op, CONST);
     ASSERT_EQ(block0.operations[2].op, ADD);
-    ASSERT_EQ(block0.operations[3].op, ASSIGN);
-    ASSERT_EQ(block0.operations[4].op, RETURN);
+    ASSERT_EQ(block0.operations[3].op, RETURN);
 }
 
 void arithmeticExpression(TraceContext* tracer) {
@@ -77,7 +78,9 @@ void arithmeticExpression(TraceContext* tracer) {
  * @brief This test compiles a test CPP File
  */
 TEST_F(InterpreterTest, arithmeticExpressionTest) {
-    auto executionTrace = traceFunction(arithmeticExpression);
+    auto executionTrace = traceFunction([](auto* tc) {
+        arithmeticExpression(tc);
+    });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -117,7 +120,9 @@ void logicalExpressionEquals(TraceContext* tracer) {
 }
 
 TEST_F(InterpreterTest, logicalExpressionEqualsTest) {
-    auto executionTrace = traceFunction(logicalExpressionLessThan);
+    auto executionTrace = traceFunction([](auto* tc) {
+        logicalExpressionEquals(tc);
+    });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -187,7 +192,9 @@ void logicalExpression(TraceContext* tracer) {
 }
 
 TEST_F(InterpreterTest, logicalExpressionTest) {
-    auto executionTrace = traceFunction(logicalExpressionGreaterEquals);
+    auto executionTrace = traceFunction([](auto* tc) {
+        logicalExpression(tc);
+    });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
@@ -215,7 +222,7 @@ void ifCondition(bool flag, TraceContext* tracer) {
  * @brief This test compiles a test CPP File
  */
 TEST_F(InterpreterTest, ifConditionTest) {
-    auto executionTrace = traceFunction([](TraceContext* tracer){
+    auto executionTrace = traceFunction([](TraceContext* tracer) {
         ifCondition(true, tracer);
         tracer->reset();
         ifCondition(false, tracer);
@@ -276,7 +283,7 @@ void ifElseCondition(bool flag, TraceContext* tracer) {
  * @brief This test compiles a test CPP File
  */
 TEST_F(InterpreterTest, ifElseConditionTest) {
-    auto executionTrace = traceFunction([](TraceContext* tracer){
+    auto executionTrace = traceFunction([](TraceContext* tracer) {
         ifElseCondition(true, tracer);
         tracer->reset();
         ifElseCondition(false, tracer);
@@ -335,7 +342,9 @@ void emptyLoop(TraceContext* tracer) {
 }
 
 TEST_F(InterpreterTest, emptyLoopTest) {
-    auto execution = traceFunction(emptyLoop);
+    auto execution = traceFunction([](auto* tc) {
+        emptyLoop(tc);
+    });
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
@@ -353,7 +362,7 @@ TEST_F(InterpreterTest, emptyLoopTest) {
     auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
@@ -380,7 +389,9 @@ void longEmptyLoop(TraceContext* tracer) {
 }
 
 TEST_F(InterpreterTest, longEmptyLoopTest) {
-    auto execution = traceFunction(longEmptyLoop);
+    auto execution = traceFunction([](auto* tc) {
+        longEmptyLoop(tc);
+    });
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
@@ -398,7 +409,7 @@ TEST_F(InterpreterTest, longEmptyLoopTest) {
     auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
@@ -424,7 +435,9 @@ void sumLoop(TraceContext* tracer) {
 }
 
 TEST_F(InterpreterTest, sumLoopTest) {
-    auto execution = traceFunction(sumLoop);
+    auto execution = traceFunction([](auto* tc) {
+        sumLoop(tc);
+    });
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
@@ -444,8 +457,8 @@ TEST_F(InterpreterTest, sumLoopTest) {
     auto blockref = std::get<BlockRef>(block1.operations[4].input[0]);
     ASSERT_EQ(blockref.block, 3);
     ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[3].result));
-    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[3].result));
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
@@ -468,12 +481,12 @@ void sumWhileLoop(TraceContext* tracer) {
         agg = agg + 1;
     }
     auto res = agg == 10;
-    Operation result = Operation(RETURN);
-    tracer->trace(result);
 }
 
 TEST_F(InterpreterTest, sumWhileLoopTest) {
-    auto execution = traceFunction(sumWhileLoop);
+    auto execution = traceFunction([](auto* tc) {
+        sumWhileLoop(tc);
+    });
     std::cout << execution << std::endl;
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution.getBlocks();
@@ -481,21 +494,17 @@ TEST_F(InterpreterTest, sumWhileLoopTest) {
     auto block0 = basicBlocks[0];
     std::cout << execution << std::endl;
     ASSERT_EQ(block0.operations[0].op, CONST);
-    ASSERT_EQ(block0.operations[1].op, CONST);
-    ASSERT_EQ(block0.operations[2].op, JMP);
+    ASSERT_EQ(block0.operations[1].op, JMP);
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
     ASSERT_EQ(block1.operations[0].op, CONST);
     ASSERT_EQ(block1.operations[1].op, ADD);
-    ASSERT_EQ(block1.operations[2].op, CONST);
-    ASSERT_EQ(block1.operations[3].op, ADD);
-    ASSERT_EQ(block1.operations[4].op, JMP);
-    auto blockref = std::get<BlockRef>(block1.operations[4].input[0]);
+    ASSERT_EQ(block1.operations[2].op, JMP);
+    auto blockref = std::get<BlockRef>(block1.operations[2].input[0]);
     ASSERT_EQ(blockref.block, 3);
-    ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[3].result));
-    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(blockref.arguments.size(), 1);
+    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[1].result));
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
@@ -506,7 +515,7 @@ TEST_F(InterpreterTest, sumWhileLoopTest) {
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
-    ASSERT_EQ(block3.arguments.size(), 2);
+    ASSERT_EQ(block3.arguments.size(), 1);
     ASSERT_EQ(block3.operations[0].op, CONST);
     ASSERT_EQ(block3.operations[1].op, LESS_THAN);
     ASSERT_EQ(block3.operations[2].op, CMP);
@@ -522,7 +531,9 @@ void invertedLoop(TraceContext* tracer) {
 }
 
 TEST_F(InterpreterTest, invertedLoopTest) {
-    auto execution = traceFunction(invertedLoop);
+    auto execution = traceFunction([](auto* tc) {
+        invertedLoop(tc);
+    });
     std::cout << execution << std::endl;
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution.getBlocks();
@@ -535,30 +546,20 @@ TEST_F(InterpreterTest, invertedLoopTest) {
 
     auto block1 = basicBlocks[1];
     ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op, CONST);
-    ASSERT_EQ(block1.operations[1].op, ADD);
-    ASSERT_EQ(block1.operations[2].op, CONST);
-    ASSERT_EQ(block1.operations[3].op, ADD);
-    ASSERT_EQ(block1.operations[4].op, JMP);
-    auto blockref = std::get<BlockRef>(block1.operations[4].input[0]);
-    ASSERT_EQ(blockref.block, 3);
-    ASSERT_EQ(blockref.arguments.size(), 2);
-    ASSERT_EQ(blockref.arguments[0], std::get<ValueRef>(block1.operations[3].result));
-    ASSERT_EQ(blockref.arguments[1], std::get<ValueRef>(block1.operations[1].result));
+    ASSERT_EQ(block1.operations[0].op, JMP);
 
     auto block2 = basicBlocks[2];
     ASSERT_EQ(block2.predecessors[0], 3);
-    ASSERT_EQ(block2.arguments.size(), 1);
-    ASSERT_EQ(block2.operations[0].op, CONST);
-    ASSERT_EQ(block2.operations[1].op, EQUALS);
+    ASSERT_EQ(block2.arguments.size(), 0);
 
     auto block3 = basicBlocks[3];
     ASSERT_EQ(block3.predecessors[0], 0);
     ASSERT_EQ(block3.predecessors[1], 1);
     ASSERT_EQ(block3.arguments.size(), 2);
     ASSERT_EQ(block3.operations[0].op, CONST);
-    ASSERT_EQ(block3.operations[1].op, LESS_THAN);
-    ASSERT_EQ(block3.operations[2].op, CMP);
+    ASSERT_EQ(block3.operations[1].op, ADD);
+    ASSERT_EQ(block3.operations[2].op, LESS_THAN);
+    ASSERT_EQ(block3.operations[3].op, CMP);
 }
 
 TEST_F(InterpreterTest, selectionQueryTest) {
@@ -570,7 +571,7 @@ TEST_F(InterpreterTest, selectionQueryTest) {
     auto selection = std::make_shared<Selection>(equalsExpression);
     scan.setChild(std::move(selection));
 
-    auto execution = traceFunction([&scan](TraceContext* traceContext){
+    auto execution = traceFunction([&scan](TraceContext* traceContext) {
         scan.open(*traceContext);
     });
     execution = ssaCreationPhase.apply(std::move(execution));
