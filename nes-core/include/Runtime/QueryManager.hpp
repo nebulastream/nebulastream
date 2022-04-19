@@ -556,6 +556,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
+
   protected:
     /**
      * @brief
