@@ -14,6 +14,7 @@
 
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -21,9 +22,8 @@
 namespace NES {
 
 CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
-                                                             WorkerRPCClientPtr workerRPCClient,
-                                                             std::string healthServiceName)
-    : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient) {
+                                                             WorkerRPCClientPtr workerRPCClient, std::string healthServiceName, CoordinatorConfigurationPtr coordinatorConfiguration)
+    : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient), coordinatorConfiguration(coordinatorConfiguration) {
     id = 9999;
     this->healthServiceName = healthServiceName;
 }
@@ -34,8 +34,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
     NES_DEBUG("start health checking on coordinator");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
-
-        auto waitTime = std::chrono::seconds(/*coordinator object->*/getCoordinatorConfiguration()->coordinatorHealthCheckWaitTime.getValue());
+        auto waitTime = std::chrono::seconds(coordinatorConfiguration->coordinatorHealthCheckWaitTime.getValue());
         while (isRunning) {
             for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
                 auto nodeIp = node.second->getIpAddress();

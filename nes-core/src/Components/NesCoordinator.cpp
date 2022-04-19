@@ -227,8 +227,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     NES_DEBUG("NesCoordinator::startCoordinatorRESTServer: ready");
 
-    healthCheckService =
-        std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, workerRpcClient, HEALTH_SERVICE_NAME);
+    healthCheckService = std::make_shared<CoordinatorHealthCheckService>(topologyManagerService, workerRpcClient, HEALTH_SERVICE_NAME, coordinatorConfiguration);
     topologyManagerService->setHealthService(healthCheckService);
     NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
