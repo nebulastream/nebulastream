@@ -94,6 +94,19 @@ class GPUQueryExecutionTest : public Testing::TestWithErrorHandling<testing::Tes
     Runtime::NodeEnginePtr nodeEngine;
 };
 
+void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
+    std::for_each(plan->getSources().begin(), plan->getSources().end(), [plan](auto source) {
+        plan->notifySourceCompletion(source, Runtime::QueryTerminationType::Graceful);
+    });
+    std::for_each(plan->getPipelines().begin(), plan->getPipelines().end(), [plan](auto pipeline) {
+        plan->notifyPipelineCompletion(pipeline, Runtime::QueryTerminationType::Graceful);
+    });
+    std::for_each(plan->getSinks().begin(), plan->getSinks().end(), [plan](auto sink) {
+        plan->notifySinkCompletion(sink, Runtime::QueryTerminationType::Graceful);
+    });
+    ASSERT_TRUE(plan->stop());
+}
+
 void fillBufferToSimpleSchema(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
 
     auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
@@ -274,6 +287,13 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
 
 // Test offloading only the column to be offloaded to the gpu
 class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
+    class InputRecord {
+      public:
+        [[maybe_unused]] int64_t id;
+        [[maybe_unused]] int64_t one;
+        [[maybe_unused]] int64_t value;
+    };
+
   public:
     uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
         // Prepare a simple CUDA kernel which adds 42 to the record and then write it to the result
@@ -288,9 +308,24 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
                                                   "    }\n"
                                                   "}\n";
 
+        const char* const header = "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\n"
+                                   "#ifndef NES_GPUINPUTRECORD_CUH\n"
+                                   "#define NES_GPUINPUTRECORD_CUH\n"
+                                   "\n"
+                                   "#include <cstdint>"
+                                   "\n"
+                                   "class InputRecord {\n"
+                                   "    public:\n"
+                                   "        int64_t id;\n"
+                                   "        int64_t one;\n"
+                                   "        int64_t value;\n"
+                                   "};\n"
+                                   "\n"
+                                   "#endif//NES_GPUINPUTRECORD_CUH\n";
         // setup the kernel program and allocate gpu buffer
-
-        cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(int64_t));
+        // setup the kernel program and allocate gpu buffer
+        cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(InputRecord), {header});
+//        cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(int64_t));
 
         // define the schema (to be used to create column layout and obtaining column offset)
         testSchemaColumnLayout = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
@@ -339,7 +374,6 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
     }
 
     CUDAKernelWrapper<int64_t, int64_t> cudaKernelWrapper;
-    uint64_t columnOffset;
     SchemaPtr testSchemaColumnLayout;
 };
 
@@ -410,8 +444,11 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorSimpleQuery) {
             // id
             EXPECT_EQ(valueField[recordIndex], recordIndex + 42);
         }
+    } else {
+        FAIL();
     }
-    ASSERT_TRUE(plan->stop());
+
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -487,8 +524,11 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorWithMultipleFields) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
         }
+    } else {
+        FAIL();
     }
-    ASSERT_TRUE(plan->stop());
+
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -563,8 +603,11 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
             NES_DEBUG("expected: " << (recordIndex % 2) + 42 << " actual: " << resultRecordValueFields[recordIndex]);
         }
+    } else {
+        FAIL();
     }
-    ASSERT_TRUE(plan->stop());
+
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
