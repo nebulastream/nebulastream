@@ -25,6 +25,8 @@
 
 namespace NES {
 
+const uint32_t buffersPerEpoch = 10;
+
 enum SinkMediumTypes {
     ZMQ_SINK,
     PRINT_SINK,
@@ -165,7 +167,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     void updateWatermark(Runtime::TupleBuffer& inputBuffer);
 
   protected:
-    static const uint32_t buffersPerEpoch = 10;
     SinkFormatPtr sinkFormat;
     uint32_t bufferCount;
     bool append{
