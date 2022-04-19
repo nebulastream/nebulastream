@@ -40,6 +40,15 @@ uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
     return sentBuffer;
 }
+
+void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
+    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+    if (!(bufferCount % buffersPerEpoch)) {
+        notifyEpochTermination(watermarkProcessor->getCurrentWatermark());
+    }
+    bufferCount++;
+}
+
 uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
     std::unique_lock lock(writeMutex);
     return sentTuples;

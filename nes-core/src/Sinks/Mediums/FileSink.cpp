@@ -115,11 +115,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
     }
     outputFile.flush();
-    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
-    if (!(bufferCount % 10)) {
-        notifyEpochTermination(watermarkProcessor->getCurrentWatermark());
-    }
-    bufferCount++;
+    updateWatermark(inputBuffer);
     return true;
 }
 
