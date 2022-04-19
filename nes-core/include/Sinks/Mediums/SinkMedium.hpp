@@ -158,7 +158,14 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     OperatorId getOperatorId() const { return 0; }
 
+    /**
+     * @brief update watermark and propagate timestamp
+     * @param inputBuffer
+     */
+    void updateWatermark(Runtime::TupleBuffer& inputBuffer);
+
   protected:
+    static const uint32_t buffersPerEpoch = 10;
     SinkFormatPtr sinkFormat;
     uint32_t bufferCount;
     bool append{
