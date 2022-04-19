@@ -157,7 +157,6 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
     return elems;
 }
 
-
 /**
 * @brief Outputs a tuple buffer in text format
 * @param buffer the tuple buffer

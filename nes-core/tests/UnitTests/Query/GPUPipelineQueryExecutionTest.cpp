@@ -325,7 +325,7 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
         // setup the kernel program and allocate gpu buffer
         // setup the kernel program and allocate gpu buffer
         cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(InputRecord), {header});
-//        cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(int64_t));
+        //        cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(int64_t));
 
         // define the schema (to be used to create column layout and obtaining column offset)
         testSchemaColumnLayout = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)

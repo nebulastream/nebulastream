@@ -118,9 +118,9 @@ class ExecutableCompleteAggregationTriggerAction
                 NES_TRACE("ExecutableCompleteAggregationTriggerAction ("
                           << this->windowDefinition->getDistributionType()->toString()
                           << "): Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
-                          << " records, content=" << dynamicTupleBuffer
-                          << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
-                          << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
+                          << " records, content=" << dynamicTupleBuffer << " originId=" << tupleBuffer.getOriginId()
+                          << "windowAction=" << toString() << " currentWatermark=" << currentWatermark
+                          << " lastWatermark=" << lastWatermark);
             }
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);
@@ -245,13 +245,14 @@ class ExecutableCompleteAggregationTriggerAction
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
                     if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
-                        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+                        auto rowLayout =
+                            Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
                         NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                                   << id << ": (" << this->windowDefinition->getDistributionType()->toString()
                                   << "): Dispatch intermediate output buffer with " << currentNumberOfTuples
-                                  << " records, content=" << dynamicTupleBuffer
-                                  << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString());
+                                  << " records, content=" << dynamicTupleBuffer << " originId=" << tupleBuffer.getOriginId()
+                                  << "windowAction=" << toString());
                     }
                     //forward buffer to next  pipeline stage
                     executionContext->dispatchBuffer(tupleBuffer);

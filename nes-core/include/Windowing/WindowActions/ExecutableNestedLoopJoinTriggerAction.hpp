@@ -126,9 +126,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                 auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
                           << id << ":: Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
-                          << " records, content=" << dynamicTupleBuffer
-                          << " originId=" << tupleBuffer.getOriginId() << " watermark=" << tupleBuffer.getWatermark()
-                          << "windowAction=" << toString());
+                          << " records, content=" << dynamicTupleBuffer << " originId=" << tupleBuffer.getOriginId()
+                          << " watermark=" << tupleBuffer.getWatermark() << "windowAction=" << toString());
             }
 
             //forward buffer to next  pipeline stage

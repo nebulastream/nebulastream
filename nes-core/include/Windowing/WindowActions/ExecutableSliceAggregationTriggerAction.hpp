@@ -166,14 +166,15 @@ class ExecutableSliceAggregationTriggerAction
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                         // get buffer as string
-                        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+                        auto rowLayout =
+                            Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
                         auto dynamicTupleBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, tupleBuffer);
 
                         //write full buffer
                         NES_TRACE("ExecutableSliceAggregationTriggerAction "
                                   << id << ": Dispatch intermediate output buffer with " << currentNumberOfTuples
-                                  << " records, content=" << dynamicTupleBuffer
-                                  << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString());
+                                  << " records, content=" << dynamicTupleBuffer << " originId=" << tupleBuffer.getOriginId()
+                                  << "windowAction=" << toString());
                     }
 
                     //forward buffer to next  pipeline stage
