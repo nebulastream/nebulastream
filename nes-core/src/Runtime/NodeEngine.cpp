@@ -494,6 +494,16 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
+std::vector<QuerySubPlanId> NodeEngine::getSubQueryIds(uint64_t queryId) {
+    auto iterator = queryIdToQuerySubPlanIds.find(queryId);
+    if (iterator != queryIdToQuerySubPlanIds.end()) {
+        return iterator->second;
+    }
+    else {
+        return {};
+    }
+}
+
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr

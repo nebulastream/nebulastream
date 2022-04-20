@@ -29,12 +29,13 @@ namespace NES {
 
 ReplicationService::ReplicationService(NesCoordinatorPtr coordinatorPtr) : coordinatorPtr(std::move(coordinatorPtr)) {}
 
-EpochId ReplicationService::getCurrentEpochBarrier(uint64_t queryId, uint64_t epoch) const {
+int ReplicationService::getCurrentEpochBarrier(uint64_t queryId) const {
     std::unique_lock lock(replicationServiceMutex);
-    auto pairEpochTimestamp = this->queryIdToCurrentEpochBarrierMap.at(queryId);
-    if (pairEpochTimestamp.first == epoch) {
-        return pairEpochTimestamp.second;
-    } else {
+    auto pairEpochTimestamp = this->queryIdToCurrentEpochBarrierMap.find(queryId);
+    if (pairEpochTimestamp != this->queryIdToCurrentEpochBarrierMap.end()) {
+        return pairEpochTimestamp->second.second;
+    }
+    else {
         return -1;
     }
 }

@@ -163,6 +163,12 @@ class SinkMedium : public Runtime::Reconfigurable {
     OperatorId getOperatorId() const { return 0; }
 
     /**
+     * @brief returns current smallest timestamp stored in multi origin watermark processor
+     * @return epoch barrier
+     */
+    uint64_t getCurrentEpochBarrier();
+
+    /**
      * @brief update watermark and propagate timestamp
      * @param inputBuffer
      */

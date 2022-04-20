@@ -292,6 +292,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(uint64_t querySubPlanId) const;
 
+    /**
+     * @brief finds sub query ids for a given query id
+     * @param queryId query id
+     * @return vector of subQueryIds
+     */
+    std::vector<QuerySubPlanId> getSubQueryIds(uint64_t queryId);
+
   public:
     /**
      * @brief Create a node engine and gather node information
