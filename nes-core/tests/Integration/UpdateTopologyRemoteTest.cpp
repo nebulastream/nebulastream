@@ -44,6 +44,7 @@ class UpdateTopologyRemoteTest : public Testing::NESBaseTest {
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     auto workerConfig1 = WorkerConfiguration::create();
     auto workerConfig2 = WorkerConfiguration::create();
 
@@ -128,6 +129,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     auto workerConfig1 = WorkerConfiguration::create();
     auto workerConfig2 = WorkerConfiguration::create();
 

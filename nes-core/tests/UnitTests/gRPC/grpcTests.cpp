@@ -51,6 +51,7 @@ class grpcTests : public Testing::NESBaseTest {
 */
 TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     auto defaultSource = DefaultSourceType::create();
     PhysicalSourcePtr srcConf = PhysicalSource::create("default_logical", "x1", defaultSource);
@@ -108,6 +109,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
 */
 TEST_F(grpcTests, testGrpcSendErrorNotification) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     auto defaultSource = DefaultSourceType::create();
     PhysicalSourcePtr srcConf = PhysicalSource::create("default_logical", "x1", defaultSource);

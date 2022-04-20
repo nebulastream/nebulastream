@@ -42,6 +42,7 @@ class BenchmarkSourceIntegrationTest : public Testing::NESBaseTest {
 /// This test checks that a deployed BenchmarkSource can write M records spanning exactly N records
 TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
@@ -143,6 +144,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -245,6 +247,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 
 TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
