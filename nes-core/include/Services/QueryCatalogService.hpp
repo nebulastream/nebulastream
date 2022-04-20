@@ -149,6 +149,13 @@ class QueryCatalogService {
     void removeSharedQueryPlanMapping(SharedQueryId sharedQueryId);
 
     /**
+     * Fetch all query ids that belong to the shared query plan
+     * @param sharedQueryId : the id of the shared query plan
+     * @return collection of ids of queries merged in shared query plan
+     */
+    std::vector<QueryId> getQueryIdsForSharedQueryId(SharedQueryId sharedQueryId);
+
+    /**
      * Clear the query catalog
      */
     void clearQueries();
