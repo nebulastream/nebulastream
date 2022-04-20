@@ -205,6 +205,7 @@ const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string IS_MOBILE_CONFIG = "isMobile";
 const std::string LOCATION_SOURCE_CONFIG = "locationSourceConfig";
 const std::string LOCATION_SOURCE_TYPE_CONFIG = "locationSourceType";
+const std::string LOCATION_INFO_CONFIG = "locationInfoConfig";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";

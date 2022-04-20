@@ -197,6 +197,8 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption locationSourceConfig = {LOCATION_SOURCE_CONFIG, "", "the configuration data for the location interface"};
 
+    StringOption locationInfoConfig = {LOCATION_INFO_CONFIG, "", "the configuration data for the location info class"};
+
     /**
      * @brief Configuration yaml path.
      * @warning this is just a placeholder configuration
@@ -269,6 +271,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &isMobile,
                 &locationSourceType,
                 &locationSourceConfig,
+                &locationInfoConfig,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,
