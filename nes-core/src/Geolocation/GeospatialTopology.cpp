@@ -21,33 +21,34 @@
 
 namespace NES::Experimental::Mobility {
 
-GeospatialTopology::GeospatialTopology() {}
+GeospatialTopology::GeospatialTopology() = default;
 
-bool GeospatialTopology::setFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc, bool init) {
+bool GeospatialTopology::initializeFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc) {
+   return setFieldNodeCoordinates(node, geoLoc);
+}
+
+bool GeospatialTopology::updateFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc) {
+#ifdef S2DEF
+        if(removeNodeFromSpatialIndex(node)) {
+            return setFieldNodeCoordinates(node, geoLoc);
+        }
+        return false;
+#else
+        return setFieldNodeCoordinates(node, geoLoc);
+#endif
+}
+
+
+
+bool GeospatialTopology::setFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc) {
 #ifdef S2DEF
     double newLat = geoLoc.getLatitude();
     double newLng = geoLoc.getLongitude();
     S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));
     NES_DEBUG("updating location of Node to: " << newLat << ", " << newLng);
-
-    //if this function was not called during the creation of the node (init != false), we need to delete the old entry
-    if (!init) {
-        auto oldCoordOpt = node->getCoordinates();
-        //a non field node cannot be given a position after its creation
-        if (!oldCoordOpt.has_value() && !init) {
-            NES_WARNING("Trying to set the Position of a non field node");
-            return false;
-        }
-
-        auto oldCoord = oldCoordOpt.value();
-        S2Point oldLoc(S2LatLng::FromDegrees(oldCoord.getLatitude(), oldCoord.getLongitude()));
-        nodePointIndex.Remove(oldLoc, node);
-    }
-
     nodePointIndex.Add(newLoc, node);
 #else
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
-    NES_INFO("init = " << init);
 #endif
     node->setFixedCoordinates(geoLoc);
     return true;

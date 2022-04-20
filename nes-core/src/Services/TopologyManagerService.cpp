@@ -77,7 +77,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
     if (fixedCoordinates.isValid() && !newTopologyNode->isMobileNode()) {
         NES_DEBUG("added node with geographical location: " << fixedCoordinates.getLatitude() << ", "
                                                             << fixedCoordinates.getLongitude());
-        topology->getGeoTopology()->setFieldNodeCoordinates(newTopologyNode, fixedCoordinates, true);
+        topology->getGeoTopology()->initializeFieldNodeCoordinates(newTopologyNode, fixedCoordinates);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }

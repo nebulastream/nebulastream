@@ -125,7 +125,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     EXPECT_EQ(node2->getCoordinates().value(), NES::Experimental::Mobility::GeographicalLocation(52.53736960143897, 13.299134894776092));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node3);
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4->getCoordinates().value()).value(), node4);
-    geoTopology->setFieldNodeCoordinates(node2, NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
+    geoTopology->updateFieldNodeCoordinates(node2, NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node2);
     EXPECT_EQ(node2->getCoordinates().value(), NES::Experimental::Mobility::GeographicalLocation(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 3);
@@ -136,7 +136,7 @@ TEST_F(GeoLocationTests, testFieldNodes) {
     auto inRangeAtWorker = wrk2->getGeospatialInfo()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //moving node 3 to hamburg (more than 100km away
-    geoTopology->setFieldNodeCoordinates(node3, NES::Experimental::Mobility::GeographicalLocation(53.559524264262194, 10.039384739854102));
+    geoTopology->updateFieldNodeCoordinates(node3, NES::Experimental::Mobility::GeographicalLocation(53.559524264262194, 10.039384739854102));
 
     //node 3 should not have any nodes within a radius of 100km
     EXPECT_EQ(geoTopology->getClosestNodeTo(node3, 100).has_value(), false);
