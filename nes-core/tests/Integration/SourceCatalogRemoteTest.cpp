@@ -41,6 +41,7 @@ class SourceCatalogRemoteTest : public Testing::NESBaseTest {
 
 TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");
@@ -80,6 +81,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
 
 TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");
@@ -123,6 +125,7 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
 
 TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");
@@ -168,6 +171,7 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
 
 TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");

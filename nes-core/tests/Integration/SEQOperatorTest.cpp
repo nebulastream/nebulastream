@@ -72,6 +72,7 @@ class SeqOperatorTest : public Testing::NESBaseTest {
  */
 TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
@@ -161,6 +162,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
  */
 TEST_F(SeqOperatorTest, testPatternOneSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
@@ -258,6 +260,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
  */
 TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SeqOperatorTest: Start coordinator");
@@ -355,6 +358,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
  */
 TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
@@ -453,6 +457,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
 //TODO Ariane issue 2303
 TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SeqOperatorTest: Start coordinator");

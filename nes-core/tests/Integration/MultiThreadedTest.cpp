@@ -46,6 +46,7 @@ class MultiThreadedTest : public Testing::NESBaseTest {
 
 TEST_F(MultiThreadedTest, testFilterQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
@@ -126,6 +127,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 
 TEST_F(MultiThreadedTest, testProjectQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
@@ -203,6 +205,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 
 TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numWorkerThreads = numberOfCoordinatorThreads;
@@ -283,6 +286,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
  */
 TEST_F(MultiThreadedTest, testMultipleWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numberOfSlots = (12);
@@ -360,6 +364,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 
 TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numberOfSlots = (12);
@@ -434,6 +439,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
  */
 TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numberOfSlots = (16);
@@ -521,6 +527,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 
 TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numberOfSlots = (16);
@@ -627,6 +634,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->numberOfSlots = (16);
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -782,6 +790,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
  */
 TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->numberOfSlots = (16);
