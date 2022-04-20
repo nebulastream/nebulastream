@@ -68,19 +68,21 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     auto restMethod = web::http::methods::POST;
     auto path = "query/execute-query-ex";
 
-    web::json::value jsonReturn;
+    web::json::value resultJson;
+    web::http::status_code resultStatusCode;
     web::http::client::http_client_config cfg;
     cfg.set_timeout(requestTimeout);
     NES_DEBUG("RemoteClient::send: " << this->coordinatorHost << " " << this->coordinatorRESTPort);
     web::http::client::http_client client(getHostName(), cfg);
     client.request(restMethod, path, message)
-        .then([](const web::http::http_response& response) {
+        .then([&resultStatusCode](const web::http::http_response& response) {
+            resultStatusCode = response.status_code();
             return response.extract_json();
         })
-        .then([&jsonReturn](const pplx::task<web::json::value>& task) {
+        .then([&resultJson](const pplx::task<web::json::value>& task) {
             NES_INFO("RemoteClient::send: received response");
             try {
-                jsonReturn = task.get();
+                resultJson = task.get();
             } catch (const web::http::http_exception& e) {
                 NES_ERROR("RemoteClient::send: error while setting return: " << e.what());
                 throw ClientException("RemoteClient::send: error while setting return.");
@@ -88,18 +90,20 @@ uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
         })
         .wait();
 
-    uint64_t queryId = 0;// Invalid query
-    try {
-        if (jsonReturn.has_field("queryId")) {
-            queryId = jsonReturn.at("queryId").as_integer();
+    if (resultStatusCode == web::http::status_codes::Created) {
+        if (resultJson.has_field("queryId")) {
+            return resultJson.at("queryId").as_integer();
         } else {
-            throw ClientException(jsonReturn.at("message").as_string() + ": " + jsonReturn.at("detail").as_string());
+            throw ClientException("Invalid response format queryId is not contained in: " + resultJson.to_string());
         }
-    } catch (const web::json::json_exception& e) {
-        NES_ERROR("RemoteClient::submitQuery: error= " << e.what());
-        throw ClientException(e.what());
+    } else {
+        NES_ERROR("Received response with error code: " << resultStatusCode);
+        if (resultJson.has_field("message")) {
+            throw ClientException(resultJson.at("message").as_string());
+        } else {
+            throw ClientException("Invalid response format for error message");
+        }
     }
-    return queryId;
 }
 
 bool RemoteClient::testConnection() {
@@ -126,7 +130,10 @@ bool RemoteClient::testConnection() {
             }
         })
         .wait();
-    return jsonReturn.at("success").as_bool();
+    if (jsonReturn.has_field("success")) {
+        return jsonReturn.at("success").as_bool();
+    }
+    throw ClientException("Invalid response format");
 }
 
 std::string RemoteClient::getQueryPlan(uint64_t queryId) {
