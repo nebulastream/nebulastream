@@ -70,11 +70,11 @@ class MLIRUtility {
          * @param mlirModule: The module to print/write.
          * @param debugFlags: Determine whether and how to print/write MLIR.
          */
-        void printMLIRModule(mlir::OwningModuleRef &mlirModule,
+        void printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &mlirModule,
                              DebugFlags *debugFlags);
 
     private:
-        mlir::OwningModuleRef module;
+        mlir::OwningOpRef<mlir::ModuleOp> module;
         mlir::MLIRContext context;
         std::string mlirFilepath;
         bool debugFromFile;

@@ -79,7 +79,7 @@ static mlir::LogicalResult lowerToLLVMDialect(mlir::ModuleOp module) {
     return pm.run(module);
 }
 
-void printMLIRModule(mlir::OwningModuleRef &module) {
+void printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &module) {
     std::string mlirString;
     llvm::raw_string_ostream llvmStringStream(mlirString);
 //    llvm::StringRef filePathRef("../../generatedMLIR/generated.mlir");
@@ -143,7 +143,7 @@ func @execute(%arg0: i32) -> i32 attributes {llvm.emit_c_interface} {
 //    //  mlir::OwningModuleRef module2 = mlir::parseSourceFile(
 //    //    "/home/rudi/dima/mlir-approach/generatedMLIR/generated.mlir", &context);
 //    //  auto ops = module2->body().getOps();
-    mlir::OwningModuleRef module2 = parseSourceString(moduleStr, &context);
+    mlir::OwningOpRef<mlir::ModuleOp> module2 = parseSourceString(moduleStr, &context);
 
     printMLIRModule(module2);
 //

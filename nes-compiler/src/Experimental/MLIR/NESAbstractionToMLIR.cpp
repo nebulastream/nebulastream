@@ -23,7 +23,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypes.h"
-#include "mlir/IR/Identifier.h"
+//#include "mlir/IR/Identifier.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/OpImplementation.h"
@@ -33,7 +33,7 @@
 #include "mlir/IR/Verifier.h"
 #include "mlir/Parser.h"
 #include "mlir/Support/LLVM.h"
-#include "mlir/Transforms/BufferUtils.h"
+//#include "mlir/Transforms/BufferUtils.h"
 #include "mlir/Transforms/InliningUtils.h"
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/StringRef.h"
@@ -89,15 +89,8 @@ void MLIRGenerator::insertComment(const std::string& comment) {
 }
 
 Location MLIRGenerator::getNameLoc(const std::string &name) {
-  auto fileNamePtr = std::make_shared<std::string>("Q" + queryId);
-  auto namedLocationIdentifier = std::make_shared<std::string>(name);
-  auto baseLocation = mlir::FileLineColLoc::get(builder->getIdentifier(
-                                                *fileNamePtr), 0, 0);
-  // builder->create<LLVM::ResumeOp>(getNameLoc("test"), constZero);
-  // Todo make return dependent on debug (compiler) flag
-  // return UnknownLoc::get(context);
-  // return OpaqueLoc::get(nullptr, context);
-  return NameLoc::get(builder->getIdentifier(*namedLocationIdentifier), baseLocation);
+  auto baseLocation = mlir::FileLineColLoc::get(builder->getStringAttr("Q" + queryId), 0, 0);
+  return NameLoc::get(builder->getStringAttr(name), baseLocation);
 }
 
 mlir::arith::CmpIPredicate convertToMLIRComparison(

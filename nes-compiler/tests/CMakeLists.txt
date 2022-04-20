@@ -29,10 +29,65 @@ if(NES_USE_MLIR)
     target_link_libraries(nes-compiler
             PUBLIC
             ${GTEST_LIBRARIES}
-            ${dialect_libs}
-            MLIRReconcileUnrealizedCasts
-            MLIRMemRefToLLVM
+#            ${dialect_libs}
             MLIRExecutionEngine
+
+#            MLIRAffineAnalysis
+#            MLIRAffine
+#            MLIRAffineTransforms
+#            MLIRAffineUtils
+#            MLIRArithmetic
+#            MLIRArithmeticTransforms
+#            MLIRArmNeon
+#            MLIRArmSVE
+#            MLIRArmSVETransforms
+#            MLIRAsync
+#            MLIRAsyncTransforms
+#            MLIRAMX
+#            MLIRAMXTransforms
+#            MLIRBufferization
+#            MLIRBufferizationTransforms
+#            MLIRComplex
+#            MLIRDLTI
+            MLIREmitC
+            MLIRGPUOps
+            MLIRGPUTransforms
+            MLIRLinalgAnalysis
+            MLIRAffineBufferizableOpInterfaceImpl
+            MLIRLinalgBufferizableOpInterfaceImpl
+            MLIRModuleBufferization
+            MLIRLinalg
+            MLIRLinalgTransforms
+            MLIRLinalgUtils
+            MLIRLLVMIRTransforms
+            MLIRLLVMIR
+            MLIRNVVMIR
+            MLIRROCDLIR
+            MLIRMath
+            MLIRMathTransforms
+            MLIRMemRef
+            MLIRMemRefTransforms
+            MLIRMemRefUtils
+            MLIROpenACC
+            MLIROpenMP
+            MLIRPDL
+            MLIRPDLInterp
+            MLIRQuant
+            MLIRSCF
+            MLIRSCFTransforms
+            MLIRSCFUtils
+            MLIRShape
+            MLIRShapeOpsTransforms
+            MLIRSparseTensor
+            MLIRSparseTensorTransforms
+            MLIRSparseTensorPipelines
+            MLIRSparseTensorUtils
+
+            MLIRSPIRV
+            MLIRTensor
+            MLIRTensorInferTypeOpInterfaceImpl
+            MLIRTensorTilingInterfaceImpl
+            MLIRTosa
             )
     target_link_libraries(compiler-mlir-simpleModuleFromString-test
             PRIVATE

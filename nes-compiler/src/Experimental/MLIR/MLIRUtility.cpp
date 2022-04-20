@@ -64,7 +64,7 @@ std::string MLIRUtility::insertComments(const std::string &moduleString) {
   return moduleWithComments;
 }
 
-void MLIRUtility::printMLIRModule(mlir::OwningModuleRef &mlirModule,
+void MLIRUtility::printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &mlirModule,
                                   DebugFlags *debugFlags) {
     if(!debugFlags) {
       mlirModule->dump();
@@ -158,7 +158,7 @@ int MLIRUtility::runJit(const std::vector<std::string> &symbols,
     llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
     auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
     auto optimizedModule = optPipeline(llvmIRModule);
-    llvmIRModule->dump();
+    llvmIRModule->print(llvm::errs(), nullptr);
     return optimizedModule;
   };
 
