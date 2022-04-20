@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 class SinkMedium;
@@ -32,7 +33,10 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param filePath the path to the output file
      * @return descriptor for file sink
      */
-    static SinkDescriptorPtr create(std::string fileName, std::string sinkFormat, const std::string& append);
+    static SinkDescriptorPtr create(std::string fileName,
+                                    std::string sinkFormat,
+                                    const std::string& append,
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Factory method to create a new file sink descriptor as default
@@ -54,11 +58,18 @@ class FileSinkDescriptor : public SinkDescriptor {
 
     bool getAppend() const;
 
+    /**
+     * @brief getter for fault-tolerance type
+     * @return fault-tolerance type
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
   private:
-    explicit FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append);
+    explicit FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append, FaultToleranceType faultToleranceType);
     std::string fileName;
     std::string sinkFormat;
     bool append;
+    FaultToleranceType faultToleranceType;
 };
 
 using FileSinkDescriptorPtr = std::shared_ptr<FileSinkDescriptor>;

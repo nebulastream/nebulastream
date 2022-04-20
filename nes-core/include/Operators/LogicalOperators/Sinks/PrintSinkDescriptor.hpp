@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
@@ -29,12 +30,19 @@ class PrintSinkDescriptor : public SinkDescriptor {
      * @brief Factory method to create a new prink sink descriptor
      * @return descriptor for print sink
      */
-    static SinkDescriptorPtr create();
+    static SinkDescriptorPtr create(FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
     std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
+    /**
+     * @brief getter for fault-tolerance type
+     * @return fault-tolerance type
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
   private:
-    explicit PrintSinkDescriptor();
+    explicit PrintSinkDescriptor(FaultToleranceType faultToleranceType);
+    FaultToleranceType faultToleranceType;
 };
 
 using PrintSinkDescriptorPtr = std::shared_ptr<PrintSinkDescriptor>;

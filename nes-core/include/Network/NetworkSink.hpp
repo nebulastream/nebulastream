@@ -40,6 +40,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param networkManager
     * @param nodeLocation
     * @param nesPartition
+    * @param faultToleranceType: fault-tolerance guarantee chosen by a user
     */
     explicit NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,

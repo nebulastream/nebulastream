@@ -19,16 +19,23 @@
 namespace NES {
 
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) {
-    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(std::move(fileName), "TEXT_FORMAT", false));
-}
-
-SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, std::string sinkFormat, const std::string& append) {
     return std::make_shared<FileSinkDescriptor>(
-        FileSinkDescriptor(std::move(fileName), std::move(sinkFormat), append == "APPEND"));
+        FileSinkDescriptor(std::move(fileName), "TEXT_FORMAT", false, FaultToleranceType::NONE));
 }
 
-FileSinkDescriptor::FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append)
-    : fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)), append(append) {}
+SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName,
+                                             std::string sinkFormat,
+                                             const std::string& append,
+                                             FaultToleranceType faultToleranceType) {
+    return std::make_shared<FileSinkDescriptor>(
+        FileSinkDescriptor(std::move(fileName), std::move(sinkFormat), append == "APPEND", faultToleranceType));
+}
+
+FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
+                                       std::string sinkFormat,
+                                       bool append,
+                                       FaultToleranceType faultToleranceType)
+    : fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)), append(append), faultToleranceType(faultToleranceType) {}
 
 const std::string& FileSinkDescriptor::getFileName() const { return fileName; }
 
@@ -45,5 +52,7 @@ bool FileSinkDescriptor::equal(SinkDescriptorPtr const& other) {
 bool FileSinkDescriptor::getAppend() const { return append; }
 
 std::string FileSinkDescriptor::getSinkFormatAsString() { return sinkFormat; }
+
+FaultToleranceType FileSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 }// namespace NES

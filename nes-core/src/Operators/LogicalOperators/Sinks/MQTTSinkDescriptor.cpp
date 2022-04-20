@@ -24,10 +24,11 @@ MQTTSinkDescriptor::MQTTSinkDescriptor(std::string&& address,
                                        const TimeUnits timeUnit,
                                        uint64_t messageDelay,
                                        const ServiceQualities qualityOfService,
-                                       bool asynchronousClient)
+                                       bool asynchronousClient,
+                                       FaultToleranceType faultToleranceType)
     : address(std::move(address)), clientId(std::move(clientId)), topic(std::move(topic)), user(std::move(user)),
       maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
-      asynchronousClient(asynchronousClient) {}
+      asynchronousClient(asynchronousClient), faultToleranceType(faultToleranceType) {}
 
 std::string MQTTSinkDescriptor::getAddress() const { return address; }
 
@@ -47,6 +48,8 @@ MQTTSinkDescriptor::ServiceQualities MQTTSinkDescriptor::getQualityOfService() c
 
 bool MQTTSinkDescriptor::getAsynchronousClient() const { return asynchronousClient; }
 
+FaultToleranceType MQTTSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+
 SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              std::string&& topic,
                                              std::string&& user,
@@ -55,7 +58,8 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              uint64_t messageDelay,
                                              ServiceQualities qualityOfService,
                                              bool asynchronousClient,
-                                             std::string&& clientId) {
+                                             std::string&& clientId,
+                                             FaultToleranceType faultToleranceType) {
     return std::make_shared<MQTTSinkDescriptor>(std::move(address),
                                                 std::move(clientId),
                                                 std::move(topic),
@@ -64,7 +68,8 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                                 timeUnit,
                                                 messageDelay,
                                                 qualityOfService,
-                                                asynchronousClient);
+                                                asynchronousClient,
+                                                faultToleranceType);
 }
 
 std::string MQTTSinkDescriptor::toString() { return "MQTTSinkDescriptor()"; }

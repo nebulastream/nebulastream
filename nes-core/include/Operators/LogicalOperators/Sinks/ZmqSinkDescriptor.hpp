@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_ZMQSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
@@ -32,7 +33,10 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      * @param internal: defines if the zmq should send the message schema as a first message
      * @return descriptor for ZMQ sink
      */
-    static SinkDescriptorPtr create(std::string host, uint16_t port, bool internal = false);
+    static SinkDescriptorPtr create(std::string host,
+                                    uint16_t port,
+                                    bool internal = false,
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Get the zmq address where the data is to be written
@@ -50,6 +54,12 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      */
     void setPort(uint16_t port);
 
+    /**
+     * @brief getter for fault-tolerance type
+     * @return fault-tolerance type
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
     bool isInternal() const;
     void setInternal(bool internal);
 
@@ -57,11 +67,12 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     std::string toString() override;
 
   private:
-    explicit ZmqSinkDescriptor(std::string host, uint16_t port, bool internal);
+    explicit ZmqSinkDescriptor(std::string host, uint16_t port, bool internal, FaultToleranceType faultToleranceType);
 
     std::string host;
     uint16_t port;
     bool internal;
+    FaultToleranceType faultToleranceType;
 };
 
 using ZmqSinkDescriptorPtr = std::shared_ptr<ZmqSinkDescriptor>;

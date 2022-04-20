@@ -16,6 +16,7 @@
 #define NES_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -40,7 +41,8 @@ class FileSink : public SinkMedium {
                       const std::string& filePath,
                       bool append,
                       QueryId queryId,
-                      QuerySubPlanId querySubPlanId);
+                      QuerySubPlanId querySubPlanId,
+                      FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief dtor

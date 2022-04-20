@@ -30,8 +30,9 @@ FileSink::FileSink(SinkFormatPtr format,
                    const std::string& filePath,
                    bool append,
                    QueryId queryId,
-                   QuerySubPlanId querySubPlanId)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId) {
+                   QuerySubPlanId querySubPlanId,
+                   FaultToleranceType faultToleranceType)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -115,7 +116,9 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
     }
     outputFile.flush();
-    updateWatermark(inputBuffer);
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermark(inputBuffer);
+    }
     return true;
 }
 

@@ -53,7 +53,8 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               uint32_t activeProducers,
                               const std::string& filePath,
-                              bool append);
+                              bool append,
+                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a binary test sink with a schema
@@ -69,7 +70,8 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t numOfProducers,
                                const std::string& filePath,
-                               bool append);
+                               bool append,
+                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a binary test sink with a schema into the nes
@@ -85,7 +87,8 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     const Runtime::NodeEnginePtr& nodeEngine,
                                     uint32_t numOfProducers,
                                     const std::string& filePath,
-                                    bool append);
+                                    bool append,
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a JSON test sink with a schema int
@@ -101,7 +104,8 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t numOfProducers,
                                const std::string& filePath,
-                               bool append);
+                               bool append,
+                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a ZMQ test sink with a schema and Text format output
@@ -118,7 +122,8 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               uint32_t numOfProducers,
                               const std::string& host,
-                              uint16_t port);
+                              uint16_t port,
+                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 #ifdef ENABLE_OPC_BUILD
 /**
  * @brief create a OPC test sink with a schema
@@ -152,7 +157,8 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              const Runtime::NodeEnginePtr& nodeEngine,
                              uint32_t numOfProducers,
                              const std::string& host,
-                             uint16_t port);
+                             uint16_t port,
+                             FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
@@ -169,7 +175,8 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 uint32_t activeProducers,
                                 const std::string& host,
                                 uint16_t port,
-                                bool internal);
+                                bool internal,
+                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a print test sink with a schema
@@ -183,7 +190,8 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 QuerySubPlanId querySubPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 uint32_t activeProducers,
-                                std::ostream& out);
+                                std::ostream& out,
+                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a print that does not output something
@@ -207,7 +215,8 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                QuerySubPlanId querySubPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
-                               std::ostream& out);
+                               std::ostream& out,
+                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 /**
  * @brief create a network data sink
@@ -246,7 +255,8 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        uint32_t numOfProducers,
                                        QueryId queryId,
                                        QuerySubPlanId parentPlanId,
-                                       uint64_t viewId);
+                                       uint64_t viewId,
+                                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
 }// namespace Experimental::MaterializedView
 
@@ -293,7 +303,8 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                            MQTTSinkDescriptor::TimeUnits timeUnit,
                            uint64_t msgDelay,
                            MQTTSinkDescriptor::ServiceQualities qualityOfService,
-                           bool asynchronousClient);
+                           bool asynchronousClient,
+                           FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 #endif
 
 }// namespace NES

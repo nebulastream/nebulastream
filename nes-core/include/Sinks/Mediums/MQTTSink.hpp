@@ -40,6 +40,7 @@ class MQTTSink : public SinkMedium {
      * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
+     * @param faultToleranceType: fault-tolerance guarantee chosen by a user
      * @return MQTT sink
      */
     // TODO change MSGS to Messages
@@ -56,7 +57,8 @@ class MQTTSink : public SinkMedium {
                       MQTTSinkDescriptor::TimeUnits timeUnit,
                       uint64_t messageDelay,
                       MQTTSinkDescriptor::ServiceQualities qualityOfService,
-                      bool asynchronousClient);
+                      bool asynchronousClient,
+                      FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
     ~MQTTSink() NES_NOEXCEPT(false) override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;

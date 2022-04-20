@@ -26,9 +26,10 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      uint32_t numOfProducers,
                      QueryId queryId,
                      QuerySubPlanId querySubPlanId,
-                     std::ostream& pOutputStream)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId), outputStream(pOutputStream) {
-}
+                     std::ostream& pOutputStream,
+                     FaultToleranceType faultToleranceType)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType),
+      outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;
 
@@ -74,7 +75,9 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
         NES_TRACE("PrintSink::getData: write buffer str= " << ret);
         outputStream << ret << std::endl;
     }
-    updateWatermark(inputBuffer);
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermark(inputBuffer);
+    }
     return true;
 }
 
