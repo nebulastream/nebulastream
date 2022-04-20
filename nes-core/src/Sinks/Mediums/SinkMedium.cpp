@@ -87,6 +87,11 @@ bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
 void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(message, context);
 }
+
+uint64_t SinkMedium::getCurrentEpochBarrier() {
+    return watermarkProcessor->getCurrentWatermark();
+}
+
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
