@@ -17,6 +17,7 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
@@ -31,7 +32,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @param materialized view id
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr create(uint64_t viewId);
+    static SinkDescriptorPtr create(uint64_t viewId, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief returns the string representation of the network sink
@@ -52,9 +53,16 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      */
     uint64_t getViewId();
 
+    /**
+     * @brief getter for fault-tolerance type
+     * @return fault-tolerance type
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
   private:
-    MaterializedViewSinkDescriptor(uint64_t viewId);
+    MaterializedViewSinkDescriptor(uint64_t viewId, FaultToleranceType faultToleranceType);
     uint64_t viewId;
+    FaultToleranceType faultToleranceType;
 };
 using MaterializedViewSinkDescriptorPtr = std::shared_ptr<MaterializedViewSinkDescriptor>;
 }// namespace NES::Experimental::MaterializedView

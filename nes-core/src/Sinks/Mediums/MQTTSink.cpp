@@ -47,9 +47,10 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    MQTTSinkDescriptor::TimeUnits timeUnit,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
-                   bool asynchronousClient)
-    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId), address(address),
-      clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
+                   bool asynchronousClient,
+                   FaultToleranceType faultToleranceType)
+    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, faultToleranceType),
+      address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 
     minDelayBetweenSends =
@@ -110,7 +111,9 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: " << ex.what());
         return false;
     }
-    updateWatermark(inputBuffer);
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermark(inputBuffer);
+    }
     return true;
 }
 

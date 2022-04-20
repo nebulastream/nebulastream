@@ -17,11 +17,15 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor() = default;
+PrintSinkDescriptor::PrintSinkDescriptor(FaultToleranceType faultToleranceType) : faultToleranceType(faultToleranceType) {}
 
-SinkDescriptorPtr PrintSinkDescriptor::create() { return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor()); }
+SinkDescriptorPtr PrintSinkDescriptor::create(FaultToleranceType faultToleranceType) {
+    return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(faultToleranceType));
+}
 
 std::string PrintSinkDescriptor::toString() { return "PrintSinkDescriptor()"; }
 bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other) { return other->instanceOf<PrintSinkDescriptor>(); }
+
+FaultToleranceType PrintSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 }// namespace NES

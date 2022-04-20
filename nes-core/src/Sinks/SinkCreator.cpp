@@ -41,10 +41,18 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                const std::string& filePath,
-                               bool append) {
+                               bool append,
+                               FaultToleranceType faultToleranceType) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine, activeProducers, filePath, append, queryId, querySubPlanId);
+    return std::make_shared<FileSink>(format,
+                                      nodeEngine,
+                                      activeProducers,
+                                      filePath,
+                                      append,
+                                      queryId,
+                                      querySubPlanId,
+                                      faultToleranceType);
 }
 
 DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
@@ -53,9 +61,17 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               uint32_t activeProducers,
                               const std::string& filePath,
-                              bool append) {
+                              bool append,
+                              FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine, activeProducers, filePath, append, queryId, querySubPlanId);
+    return std::make_shared<FileSink>(format,
+                                      nodeEngine,
+                                      activeProducers,
+                                      filePath,
+                                      append,
+                                      queryId,
+                                      querySubPlanId,
+                                      faultToleranceType);
 }
 
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
@@ -64,9 +80,17 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     const Runtime::NodeEnginePtr& nodeEngine,
                                     uint32_t activeProducers,
                                     const std::string& filePath,
-                                    bool append) {
+                                    bool append,
+                                    FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine, activeProducers, filePath, append, queryId, querySubPlanId);
+    return std::make_shared<FileSink>(format,
+                                      nodeEngine,
+                                      activeProducers,
+                                      filePath,
+                                      append,
+                                      queryId,
+                                      querySubPlanId,
+                                      faultToleranceType);
 }
 
 DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
@@ -75,9 +99,17 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                const std::string& filePath,
-                               bool append) {
+                               bool append,
+                               FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine, activeProducers, filePath, append, queryId, querySubPlanId);
+    return std::make_shared<FileSink>(format,
+                                      nodeEngine,
+                                      activeProducers,
+                                      filePath,
+                                      append,
+                                      queryId,
+                                      querySubPlanId,
+                                      faultToleranceType);
 }
 
 DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
@@ -86,9 +118,18 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               uint32_t activeProducers,
                               const std::string& host,
-                              uint16_t port) {
+                              uint16_t port,
+                              FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<ZmqSink>(format, nodeEngine, activeProducers, host, port, false, queryId, querySubPlanId);
+    return std::make_shared<ZmqSink>(format,
+                                     nodeEngine,
+                                     activeProducers,
+                                     host,
+                                     port,
+                                     false,
+                                     queryId,
+                                     querySubPlanId,
+                                     faultToleranceType);
 }
 
 DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
@@ -97,9 +138,18 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              const Runtime::NodeEnginePtr& nodeEngine,
                              uint32_t activeProducers,
                              const std::string& host,
-                             uint16_t port) {
+                             uint16_t port,
+                             FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<ZmqSink>(format, nodeEngine, activeProducers, host, port, false, queryId, querySubPlanId);
+    return std::make_shared<ZmqSink>(format,
+                                     nodeEngine,
+                                     activeProducers,
+                                     host,
+                                     port,
+                                     false,
+                                     queryId,
+                                     querySubPlanId,
+                                     faultToleranceType);
 }
 
 DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
@@ -109,9 +159,18 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 uint32_t activeProducers,
                                 const std::string& host,
                                 uint16_t port,
-                                bool internal) {
+                                bool internal,
+                                FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<ZmqSink>(format, nodeEngine, activeProducers, host, port, internal, queryId, querySubPlanId);
+    return std::make_shared<ZmqSink>(format,
+                                     nodeEngine,
+                                     activeProducers,
+                                     host,
+                                     port,
+                                     internal,
+                                     queryId,
+                                     querySubPlanId,
+                                     faultToleranceType);
 }
 
 DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
@@ -119,9 +178,10 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 QuerySubPlanId querySubPlanId,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 uint32_t activeProducers,
-                                std::ostream& out) {
+                                std::ostream& out,
+                                FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out);
+    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out, faultToleranceType);
 }
 
 DataSinkPtr createNullOutputSink(QueryId queryId,
@@ -136,9 +196,10 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                QuerySubPlanId querySubPlanId,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
-                               std::ostream& out) {
+                               std::ostream& out,
+                               FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out);
+    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out, faultToleranceType);
 }
 
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
@@ -172,7 +233,8 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        uint32_t activeProducers,
                                        QueryId queryId,
                                        QuerySubPlanId parentPlanId,
-                                       uint64_t viewId) {
+                                       uint64_t viewId,
+                                       FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     NES::Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
     if (nodeEngine->getMaterializedViewManager()->containsView(viewId)) {
@@ -186,7 +248,8 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                                                                        nodeEngine,
                                                                                        activeProducers,
                                                                                        queryId,
-                                                                                       parentPlanId);
+                                                                                       parentPlanId,
+                                                                                       faultToleranceType);
 }
 
 }// namespace Experimental::MaterializedView
@@ -227,7 +290,8 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                            const MQTTSinkDescriptor::TimeUnits timeUnit,
                            uint64_t msgDelay,
                            MQTTSinkDescriptor::ServiceQualities qualityOfService,
-                           bool asynchronousClient) {
+                           bool asynchronousClient,
+                           FaultToleranceType faultToleranceType) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<MQTTSink>(format,
                                       nodeEngine,
@@ -242,7 +306,8 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                                       timeUnit,
                                       msgDelay,
                                       qualityOfService,
-                                      asynchronousClient);
+                                      asynchronousClient,
+                                      faultToleranceType);
 }
 #endif
 }// namespace NES

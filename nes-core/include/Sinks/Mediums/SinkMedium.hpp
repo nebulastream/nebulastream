@@ -20,6 +20,7 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <mutex>
 
@@ -52,7 +53,8 @@ class SinkMedium : public Runtime::Reconfigurable {
                         Runtime::NodeEnginePtr nodeEngine,
                         uint32_t numOfProducers,
                         QueryId queryId,
-                        QuerySubPlanId querySubPlanId);
+                        QuerySubPlanId querySubPlanId,
+                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief virtual method to setup sink
@@ -179,6 +181,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
+    FaultToleranceType faultToleranceType;
 
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety

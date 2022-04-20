@@ -287,7 +287,6 @@ message SerializableOperator{
       uint64 waitTime = 3;
       uint32 retryTimes = 4;
       uint64 uniqueNetworkSinkDescriptorId = 5;
-      uint64 faultToleranceMode = 6;
     }
 
     message SerializableMaterializedViewSinkDescriptor {
@@ -295,6 +294,7 @@ message SerializableOperator{
     }
 
     google.protobuf.Any sinkDescriptor = 1;
+    uint64 faultToleranceMode = 2;
   }
 
   /**

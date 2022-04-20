@@ -16,6 +16,7 @@
 #define NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
@@ -37,7 +38,8 @@ class MaterializedViewSink : public SinkMedium {
                          Runtime::NodeEnginePtr nodeEngine,
                          uint32_t numOfProducers,
                          QueryId queryId,
-                         QuerySubPlanId parentPlanId);
+                         QuerySubPlanId parentPlanId,
+                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief setup method for materialized view sink

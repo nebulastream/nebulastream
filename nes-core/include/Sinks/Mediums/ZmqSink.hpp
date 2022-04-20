@@ -21,6 +21,7 @@
 #include <zmq.hpp>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
@@ -35,7 +36,8 @@ class ZmqSink : public SinkMedium {
             uint16_t port,
             bool internal,
             QueryId queryId,
-            QuerySubPlanId querySubPlanId);
+            QuerySubPlanId querySubPlanId,
+            FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
     ~ZmqSink() override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;

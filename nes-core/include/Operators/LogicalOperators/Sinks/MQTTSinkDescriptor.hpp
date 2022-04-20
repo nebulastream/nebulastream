@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 namespace NES {
@@ -47,7 +48,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                     uint64_t messageDelay,
                                     ServiceQualities qualityOfService,
                                     bool asynchronousClient,
-                                    std::string&& clientId = "");
+                                    std::string&& clientId = "",
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief get address information from a MQTT sink client
@@ -103,6 +105,12 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     bool getAsynchronousClient() const;
 
+    /**
+     * @brief getter for fault-tolerance type
+     * @return fault-tolerance type
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
     [[nodiscard]] std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
@@ -127,7 +135,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                 TimeUnits timeUnit,
                                 uint64_t messageDelay,
                                 ServiceQualities qualityOfService,
-                                bool asynchronousClient);
+                                bool asynchronousClient,
+                                FaultToleranceType faultToleranceType);
 
   private:
     std::string address;
@@ -139,6 +148,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     uint64_t messageDelay;
     ServiceQualities qualityOfService;
     bool asynchronousClient;
+    FaultToleranceType faultToleranceType;
 };
 
 using MQTTSinkDescriptorPtr = std::shared_ptr<MQTTSinkDescriptor>;
