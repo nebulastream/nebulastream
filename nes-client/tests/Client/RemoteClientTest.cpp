@@ -94,17 +94,20 @@ class RemoteClientTest : public Testing::NESBaseTest {
         }
         return false;
     }
-
+    static constexpr auto defaultTimeout = std::chrono::seconds(10);
     void checkForQueryStart(int64_t queryId) {
-        while (true) {
+        auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+        auto startTs = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < startTs + timeoutInSec) {
             auto status = QueryStatus::getFromString(client->getQueryStatus(queryId));
             if (status == QueryStatus::Registered || status == QueryStatus::Scheduling || status == QueryStatus::Deployed) {
                 NES_DEBUG("Query " << queryId << " not started yet");
                 sleep(1);
             } else {
-                break;
+                return;
             }
         }
+        throw Exceptions::RuntimeException("Test checkForQueryStart timeout exceeds.");
     }
 
   public:
@@ -160,7 +163,7 @@ TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest) {
         std::string errorMessage = e.what();
         constexpr auto expected = "The logical source 'default_l' can not be found in the SourceCatalog";
         EXPECT_NE(errorMessage.find(expected), std::string::npos);
-    } catch(...){
+    } catch (...) {
         // wrong exception
         FAIL();
     }
@@ -333,7 +336,7 @@ TEST_F(RemoteClientTest, DeployInvalidQuery) {
         std::string errorMessage = e.what();
         constexpr auto expected = "does not contain a valid sink operator as root";
         EXPECT_NE(errorMessage.find(expected), std::string::npos);
-    } catch(...){
+    } catch (...) {
         // wrong exception
         FAIL();
     }
