@@ -14,6 +14,7 @@
 
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/Value.hpp>
+#include <Interpreter/DataValue/Address.hpp>
 #include <Interpreter/Expressions/EqualsExpression.hpp>
 #include <Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
@@ -536,6 +537,50 @@ TEST_F(InterpreterTest, invertedLoopTest) {
     });
     std::cout << execution << std::endl;
     execution = ssaCreationPhase.apply(std::move(execution));
+    auto basicBlocks = execution.getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 4);
+    auto block0 = basicBlocks[0];
+    std::cout << execution << std::endl;
+    ASSERT_EQ(block0.operations[0].op, CONST);
+    ASSERT_EQ(block0.operations[1].op, CONST);
+    ASSERT_EQ(block0.operations[2].op, JMP);
+
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 3);
+    ASSERT_EQ(block1.operations[0].op, JMP);
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 3);
+    ASSERT_EQ(block2.arguments.size(), 0);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 0);
+    ASSERT_EQ(block3.predecessors[1], 1);
+    ASSERT_EQ(block3.arguments.size(), 2);
+    ASSERT_EQ(block3.operations[0].op, CONST);
+    ASSERT_EQ(block3.operations[1].op, ADD);
+    ASSERT_EQ(block3.operations[2].op, LESS_THAN);
+    ASSERT_EQ(block3.operations[3].op, CMP);
+}
+
+
+void loadStoreValue(TraceContext* tracer) {
+    auto addressVal = Value(10, tracer);
+    Address address = Address(tracer, addressVal);
+    auto value = address.load();
+    value = value + 10;
+    address.store(value);
+}
+
+
+TEST_F(InterpreterTest, loadStoreValueTest) {
+
+    auto execution = traceFunction([](auto* tc) {
+        loadStoreValue(tc);
+    });
+    std::cout << execution << std::endl;
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << execution << std::endl;
     auto basicBlocks = execution.getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];

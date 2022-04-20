@@ -32,7 +32,7 @@ struct TagHasher {
     }
 };
 
-enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN };
+enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN, LOAD, STORE };
 
 class ValueRef {
   public:
