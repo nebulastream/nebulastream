@@ -36,8 +36,12 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
+namespace Configurations {
+
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
+
+}//namespace Configuratiions
 
 const std::chrono::seconds waitTimeInSeconds = std::chrono::seconds(1);
 
