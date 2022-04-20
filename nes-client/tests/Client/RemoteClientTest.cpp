@@ -153,14 +153,17 @@ TEST_F(RemoteClientTest, SubmitQueryTest) {
 
 TEST_F(RemoteClientTest, SubmitQueryWithWrongLogicalSourceNameTest) {
     Query query = Query::from("default_l").sink(NullOutputSinkDescriptor::create());
-    EXPECT_THROW(
-        try { client->submitQuery(query); } catch (std::exception const& e) {
-            std::string errorMessage = e.what();
-            constexpr auto expectedMessage = "The logical source 'default_l' can not be found in the SourceCatalog";
-            ASSERT_NE(errorMessage.find(expectedMessage), std::string::npos);
-            throw;
-        },
-        Client::ClientException);
+    try {
+        client->submitQuery(query);
+        FAIL();
+    } catch (Client::ClientException const& e) {
+        std::string errorMessage = e.what();
+        constexpr auto expected = "The logical source 'default_l' can not be found in the SourceCatalog";
+        EXPECT_NE(errorMessage.find(expected), std::string::npos);
+    } catch(...){
+        // wrong exception
+        FAIL();
+    }
 }
 
 /**
@@ -323,14 +326,17 @@ TEST_F(RemoteClientTest, StopInvalidQueryId) { ASSERT_FALSE(stopQuery(21)); }
  */
 TEST_F(RemoteClientTest, DeployInvalidQuery) {
     Query query = Query::from("default_logical");
-    EXPECT_THROW(
-        try { client->submitQuery(query); } catch (std::exception const& e) {
-            std::string errorMessage = e.what();
-            constexpr auto expected = "does not contain a valid sink operator as root";
-            EXPECT_NE(errorMessage.find(expected), std::string::npos);
-            throw;
-        },
-        Client::ClientException);
+    try {
+        client->submitQuery(query);
+        FAIL();
+    } catch (Client::ClientException const& e) {
+        std::string errorMessage = e.what();
+        constexpr auto expected = "does not contain a valid sink operator as root";
+        EXPECT_NE(errorMessage.find(expected), std::string::npos);
+    } catch(...){
+        // wrong exception
+        FAIL();
+    }
 }
 
 }// namespace NES
