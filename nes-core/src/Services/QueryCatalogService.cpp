@@ -316,4 +316,17 @@ void QueryCatalogService::removeSharedQueryPlanMapping(SharedQueryId sharedQuery
     queryCatalog->removeSharedQueryPlanIdMappings(sharedQueryId);
 }
 
+std::vector<QueryId> QueryCatalogService::getQueryIdsForSharedQueryId(SharedQueryId sharedQueryId) {
+    std::unique_lock lock(serviceMutex);
+
+    std::vector<QueryId> queryIds;
+    //Fetch query catalog entries
+    auto queryCatalogEntries = queryCatalog->getQueryCatalogEntriesForSharedQueryId(sharedQueryId);
+    //create collection of query ids
+    for (auto& queryCatalogEntry : queryCatalogEntries) {
+        queryIds.emplace_back(queryCatalogEntry->getQueryId());
+    }
+    return queryIds;
+}
+
 }// namespace NES
