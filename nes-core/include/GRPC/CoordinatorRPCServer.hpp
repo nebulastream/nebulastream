@@ -16,9 +16,6 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
-#include <Services/ReplicationService.hpp>
-#include <Services/SourceCatalogService.hpp>
-#include <Services/TopologyManagerService.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
@@ -28,6 +25,9 @@ using grpc::ServerContext;
 using grpc::Status;
 
 namespace NES {
+
+class QueryService;
+using QueryServicePtr = std::shared_ptr<QueryService>;
 
 class TopologyManagerService;
 using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
@@ -51,17 +51,20 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
     /**
      * @brief Create coordinator RPC server
+     * @param queryService: the instance of Query Service
      * @param topologyManagerService : the instance of the topologyManagerService
      * @param sourceCatalogService : the instance of the steam catalog service
      * @param queryCatalogService : the instance of monitoring service
      * @param monitoringService : the instance of monitoring service
      * @param replicationService : the instance of monitoring service
      */
-    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
+    explicit CoordinatorRPCServer(QueryServicePtr queryService,
+                                  TopologyManagerServicePtr topologyManagerService,
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
                                   MonitoringManagerPtr monitoringManager,
                                   ReplicationServicePtr replicationService);
+
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
@@ -244,6 +247,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                    ::SoftStopCompletionReply* response) override;
 
   private:
+    QueryServicePtr queryService;
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;
     QueryCatalogServicePtr queryCatalogService;

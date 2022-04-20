@@ -19,18 +19,21 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/QueryCatalogService.hpp>
+#include <Services/QueryService.hpp>
+#include <Services/ReplicationService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
 
 using namespace NES;
 
-CoordinatorRPCServer::CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
+CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
+                                           TopologyManagerServicePtr topologyManagerService,
                                            SourceCatalogServicePtr sourceCatalogService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            MonitoringManagerPtr monitoringManager,
                                            ReplicationServicePtr replicationService)
-    : topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
+    : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
       queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
@@ -286,7 +289,16 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         NES_ERROR("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: "
                   << request->queryid() << "Id of worker: " << request->workerid()
                   << " Reason for failure: " << request->errormsg());
-        // TODO implement here what happens with received Query that failed
+
+        auto sharedQueryId = request->queryid();
+        auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId);
+
+        for (const auto& queryId : queryIds) {
+            bool stopped = queryService->validateAndQueueStopRequest(queryId);
+            if (!stopped) {
+                NES_ERROR("Failed to stop query " << queryId);
+            }
+        }
         reply->set_success(true);
         return Status::OK;
     } catch (std::exception& ex) {
@@ -340,12 +352,13 @@ Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage*
 Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
                                              const ::RequestSoftStopMessage* request,
                                              ::StopRequestReply* response) {
+    auto sharedQueryId = request->queryid();
+    auto subQueryPlanId = request->subqueryid();
+    NES_WARNING("CoordinatorRPCServer: received request for soft stopping the shared query plan id: " << sharedQueryId)
 
     //Check with query catalog service if the request possible
-    auto queryId = request->queryid();
-    auto subQueryPlanId = request->subqueryid();
     auto sourceId = request->sourceid();
-    auto softStopPossible = queryCatalogService->checkAndMarkForSoftStop(queryId, subQueryPlanId, sourceId);
+    auto softStopPossible = queryCatalogService->checkAndMarkForSoftStop(sharedQueryId, subQueryPlanId, sourceId);
 
     //Send response
     response->set_success(softStopPossible);
@@ -355,10 +368,14 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
 Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                        const ::SoftStopTriggeredMessage* request,
                                                        ::SoftStopTriggeredReply* response) {
+    auto sharedQueryId = request->queryid();
+    auto subQueryPlanId = request->subqueryid();
+    NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : "
+             << subQueryPlanId << " shared query plan id: " << sharedQueryId)
+
     //Fetch the request
     auto queryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
-    auto sourceId = request->sourceid();
 
     //inform catalog service
     bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopTriggered);
