@@ -42,17 +42,9 @@ class GeospatialTopology {
 
     GeospatialTopology();
 
-    /**
-     * Experimental
-     * @brief This method sets the location of a new node (making it a field node) or updates the position of an existing field node
-     * @param node: a pointer to the topology node
-     * @param geoLoc: the (new) location of the field node
-     * @param init: defines if the method is called as part of node creation or later on. trying to set a location for a node
-     * without existing coordinates will result in failure if the init flag is not set, thus preventing the updating of
-     * non field nodes to become field nodes
-     * @return true if successful
-     */
-    bool setFieldNodeCoordinates(const TopologyNodePtr& node, NES::Experimental::Mobility::GeographicalLocation geoLoc, bool init = false);
+    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc);
+
+    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc);
 
     /**
      * Experimental
@@ -96,6 +88,19 @@ class GeospatialTopology {
     size_t getSizeOfPointIndex();
 
   private:
+
+    /**
+     * Experimental
+     * @brief This method sets the location of a new node (making it a field node) or updates the position of an existing field node
+     * @param node: a pointer to the topology node
+     * @param geoLoc: the (new) location of the field node
+     * @param init: defines if the method is called as part of node creation or later on. trying to set a location for a node
+     * without existing coordinates will result in failure if the init flag is not set, thus preventing the updating of
+     * non field nodes to become field nodes
+     * @return true if successful
+     */
+    bool setFieldNodeCoordinates(const TopologyNodePtr& node, NES::Experimental::Mobility::GeographicalLocation geoLoc);
+
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;
