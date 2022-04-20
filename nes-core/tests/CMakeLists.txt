@@ -792,6 +792,10 @@ if (USE_S2)
     add_executable(location-integration-tests "Integration/LocationIntegrationTests.cpp")
     target_link_libraries(location-integration-tests nes-tests s2)
     add_test(NAME location-integration-tests COMMAND location-integration-tests)
+
+    add_executable(geoSpatialInfoTest "UnitTests/Geolocation/GeoSpatialInfoTest.cpp")
+    target_link_libraries(geoSpatialInfoTest nes-tests s2)
+    add_test(NAME geoSpatialInfoTest  COMMAND geoSpatialInfoTest)
 endif ()
 
 #------------------------------- # E2E Test Suite --------------------------------

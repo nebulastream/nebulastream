@@ -16,7 +16,14 @@
 
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <memory>
+#include <s2/s2point.h>
+#include <s2/s2point_index.h>
+#include <thread>
 #include <vector>
+#include <deque>
+
+class S2Polyline;
+using S2PolylinePtr = std::shared_ptr<S2Polyline>;
 
 namespace NES {
 class CoordinatorRPCClient;
@@ -30,6 +37,16 @@ using LocationPtr = std::shared_ptr<Location>;
 namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
+
+//todo: make this a member variale and set the default via config
+//todo: check what alternatives there are to sleep() in order to use more finegrained intervals
+const uint64_t kDefaultUpdateInterval = 10;
+const size_t kDefaultLocBufferSize = 10;
+const size_t kDefaultSaveRate = 4;
+//todo: do we want this in absolute degrees or relative to the speed?
+const double kPathDistanceDelta = 1;
+const double kPathExtensionFactor = 10;
+const double kSaveNodesRange = 50;
 
 class NodeLocationWrapper {
   public:
@@ -89,6 +106,11 @@ class NodeLocationWrapper {
     std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(double radius);
 
     /**
+     * Experimental
+     */
+    [[noreturn]] void startReconnectPlanning(size_t locBufferSize, uint64_t updateInterval, size_t bufferSaveRate);
+
+    /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
      * @param geoLoc: The new fixed Location to be set
      * @return success of operation
@@ -101,11 +123,27 @@ class NodeLocationWrapper {
      */
     LocationProviderPtr getLocationProvider();
 
+    static std::pair<S2Point, S1Angle> findPathCoverage(S2PolylinePtr path, S2Point coveringNode, S1Angle coverage);
+
   private:
+    void updatePredictedPath(Location oldLoc, Location newLoc);
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::LocationPtr fixedLocationCoordinates;
     bool isMobile;
     LocationProviderPtr locationProvider;
+    std::deque<std::pair<Location, Timestamp>> locationBuffer;
+
+    std::shared_ptr<std::thread> locationUpdateThread;
+
+    uint64_t updateInterval;
+    size_t locBufferSize;
+    size_t saveRate;
+    //todo: make these pointers inf necessary. would allow forward declarations
+    S2Point pathBeginning;
+    S2PolylinePtr trajectoryLine;
+    S2PointIndex<uint64_t> fieldNodeIndex;
+    //todo: maybe use a cap for this instead?
+    LocationPtr positionOfLastNodeIndexUpdate;
 };
 
 }//namespace NES::Spatial::Mobility::Experimental
