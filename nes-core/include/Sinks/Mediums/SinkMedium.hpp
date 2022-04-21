@@ -54,7 +54,8 @@ class SinkMedium : public Runtime::Reconfigurable {
                         uint32_t numOfProducers,
                         QueryId queryId,
                         QuerySubPlanId querySubPlanId,
-                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                        uint64_t numberOfSources = 0);
 
     /**
      * @brief virtual method to setup sink
@@ -189,6 +190,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     QuerySubPlanId querySubPlanId;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     FaultToleranceType faultToleranceType;
+    uint64_t numberOfSources;
 
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety

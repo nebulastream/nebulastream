@@ -28,9 +28,11 @@ class PrintSinkDescriptor : public SinkDescriptor {
   public:
     /**
      * @brief Factory method to create a new prink sink descriptor
+     * @param faultToleranceType: fault tolerance type of a query
+     * @param numberOfSources: number of sources of a given query
      * @return descriptor for print sink
      */
-    static SinkDescriptorPtr create(FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+    static SinkDescriptorPtr create(FaultToleranceType faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfSources = 0);
     std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
@@ -40,9 +42,16 @@ class PrintSinkDescriptor : public SinkDescriptor {
      */
     FaultToleranceType getFaultToleranceType() const;
 
+    /**
+     * @brief getter for number of sources
+     * @return number of sources
+     */
+    uint64_t getNumberOfSources() const;
+
   private:
-    explicit PrintSinkDescriptor(FaultToleranceType faultToleranceType);
+    explicit PrintSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfSources);
     FaultToleranceType faultToleranceType;
+    uint64_t numberOfSources;
 };
 
 using PrintSinkDescriptorPtr = std::shared_ptr<PrintSinkDescriptor>;

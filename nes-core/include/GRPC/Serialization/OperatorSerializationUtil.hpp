@@ -131,7 +131,8 @@ class OperatorSerializationUtil {
      * @return the serialized SerializableOperator_SinkDetails.
      */
     static SerializableOperator_SinkDetails* serializeSinkDescriptor(const SinkDescriptorPtr& sinkDescriptor,
-                                                                     SerializableOperator_SinkDetails* sinkDetails);
+                                                                     SerializableOperator_SinkDetails* sinkDetails,
+                                                                     uint64_t numberOfSources);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink SinkDescriptorPtr.

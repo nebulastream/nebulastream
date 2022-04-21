@@ -19,12 +19,12 @@
 namespace NES {
 
 SinkDescriptorPtr
-ZmqSinkDescriptor::create(std::string host, uint16_t port, bool internal, FaultToleranceType faultToleranceType) {
-    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(std::move(host), port, internal, faultToleranceType));
+ZmqSinkDescriptor::create(std::string host, uint16_t port, bool internal, FaultToleranceType faultToleranceType, uint64_t numberOfSources) {
+    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(std::move(host), port, internal, faultToleranceType, numberOfSources));
 }
 
-ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, bool internal, FaultToleranceType faultToleranceType)
-    : host(std::move(host)), port(port), internal(internal), faultToleranceType(faultToleranceType) {}
+ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, bool internal, FaultToleranceType faultToleranceType, uint64_t numberOfSources)
+    : host(std::move(host)), port(port), internal(internal), faultToleranceType(faultToleranceType), numberOfSources(numberOfSources) {}
 
 const std::string& ZmqSinkDescriptor::getHost() const { return host; }
 uint16_t ZmqSinkDescriptor::getPort() const { return port; }
@@ -46,5 +46,7 @@ bool ZmqSinkDescriptor::isInternal() const { return internal; }
 void ZmqSinkDescriptor::setInternal(bool newInternal) { ZmqSinkDescriptor::internal = newInternal; }
 
 FaultToleranceType ZmqSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+
+uint64_t ZmqSinkDescriptor::getNumberOfSources() const { return numberOfSources; }
 
 }// namespace NES

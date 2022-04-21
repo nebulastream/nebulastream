@@ -48,8 +48,9 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient,
-                   FaultToleranceType faultToleranceType)
-    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, faultToleranceType),
+                   FaultToleranceType faultToleranceType,
+                   uint64_t numberOfSources)
+    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfSources),
       address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 

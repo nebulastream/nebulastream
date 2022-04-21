@@ -38,6 +38,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
+     * @param faultToleranceType: fault tolerance type of a query
+     * @param numberOfSources: number of sources of a given query
      * @return descriptor for MQTT sink
      */
     static SinkDescriptorPtr create(std::string&& address,
@@ -49,7 +51,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                     ServiceQualities qualityOfService,
                                     bool asynchronousClient,
                                     std::string&& clientId = "",
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    uint64_t numberOfSources = 0);
 
     /**
      * @brief get address information from a MQTT sink client
@@ -111,6 +114,12 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     FaultToleranceType getFaultToleranceType() const;
 
+    /**
+     * @brief getter for number of sources
+     * @return number of sources
+     */
+    uint64_t getNumberOfSources() const;
+
     [[nodiscard]] std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
@@ -125,6 +134,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
+     * @param faultToleranceType: fault tolerance type of a query
+     * @param numberOfSources: number of sources of a given query
      * @return MQTT sink
      */
     explicit MQTTSinkDescriptor(std::string&& address,
@@ -136,7 +147,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                 uint64_t messageDelay,
                                 ServiceQualities qualityOfService,
                                 bool asynchronousClient,
-                                FaultToleranceType faultToleranceType);
+                                FaultToleranceType faultToleranceType,
+                                uint64_t numberOfSources);
 
   private:
     std::string address;
@@ -149,6 +161,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     ServiceQualities qualityOfService;
     bool asynchronousClient;
     FaultToleranceType faultToleranceType;
+    uint64_t numberOfSources;
 };
 
 using MQTTSinkDescriptorPtr = std::shared_ptr<MQTTSinkDescriptor>;

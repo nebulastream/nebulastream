@@ -303,7 +303,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         auto sink = ZmqSinkDescriptor::create("localhost", 42);
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
@@ -322,7 +322,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         auto sink = PrintSinkDescriptor::create();
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
@@ -330,7 +330,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         auto sink = FileSinkDescriptor::create("test");
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
@@ -338,7 +338,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         auto sink = FileSinkDescriptor::create("test", "TEXT_FORMAT", "APPEND");
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
@@ -346,7 +346,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         auto sink = FileSinkDescriptor::create("test", "TEXT_FORMAT", "OVERWRITE");
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
@@ -354,7 +354,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         auto sink = FileSinkDescriptor::create("test", "NES_FORMAT", "OVERWRITE");
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
@@ -362,7 +362,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         auto sink = FileSinkDescriptor::create("test", "CSV_FORMAT", "OVERWRITE");
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
@@ -372,7 +372,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         Network::NesPartition nesPartition{1, 22, 33, 44};
         auto sink = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
         auto* serializedSinkDescriptor =
-            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
+            OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails(), 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
         EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
