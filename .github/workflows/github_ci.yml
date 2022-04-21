@@ -80,6 +80,9 @@ jobs:
           - osversion: ubuntu-21_10
             require_build: "true"
             require_test: "true"
+          - osversion: ubuntu-22_04
+              require_build: "true"
+              require_test: "true"
           - osversion: alpine-3.15
             require_build: "true"
             require_test: "false"
