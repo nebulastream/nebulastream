@@ -98,6 +98,31 @@ void MLIRUtility::printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &mlirModule,
     }
 }
 
+int MLIRUtility::loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags) {
+    context.loadDialect<mlir::StandardOpsDialect>();
+    context.loadDialect<mlir::LLVM::LLVMDialect>();
+    context.loadDialect<mlir::scf::SCFDialect>();
+    module = parseSourceString(mlirString, &context);
+
+    printMLIRModule(module, debugFlags);
+
+    if (!module) {
+        llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
+        return 1;
+    }
+
+    mlir::PassManager passManager(&context);
+    applyPassManagerCLOptions(passManager);
+    passManager.addPass(mlir::createInlinerPass());
+    passManager.addPass(mlir::createLowerToCFGPass());
+    passManager.addPass(mlir::createLowerToLLVMPass());
+
+    if (mlir::failed(passManager.run(*module))) {
+        return 1;
+    }
+    return 0;
+}
+
 int MLIRUtility::loadAndProcessMLIR(const std::shared_ptr<NESAbstractionTree>& NESTree,
                                     DebugFlags *debugFlags) {
   
@@ -153,12 +178,13 @@ int MLIRUtility::runJit(const std::vector<std::string> &symbols,
 
   /// Link proxyFunctions into MLIR module. Optimize MLIR module.
   auto printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
-    llvm::SMDiagnostic Err;
-    auto proxyFunctionsIR = llvm::parseIRFile("../../../nes-compiler/src/Experimental/proxyFunctionsIR/proxyFunctionsIR.ll", Err, llvmIRModule->getContext());
-    llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
+      //Todo make dependent
+//    llvm::SMDiagnostic Err;
+//    auto proxyFunctionsIR = llvm::parseIRFile("../../../nes-compiler/src/Experimental/proxyFunctionsIR/proxyFunctionsIR.ll", Err, llvmIRModule->getContext());
+//    llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
     auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
     auto optimizedModule = optPipeline(llvmIRModule);
-    llvmIRModule->print(llvm::errs(), nullptr);
+//    llvmIRModule->print(llvm::errs(), nullptr);
     return optimizedModule;
   };
 

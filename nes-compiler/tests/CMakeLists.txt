@@ -25,79 +25,20 @@ add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)
 
 if(NES_USE_MLIR)
     get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS) # MLIR_CONVERSION_LIBS are also defined
+    get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
     add_executable(compiler-mlir-simpleModuleFromString-test "UnitTests/Experimental/MLIRModuleFromSimpleString.cpp")
+    # Not linking MLIRExecutionEngine against nes-compiler first throws 'hidden symbol `LLVMInitializeX86Target' error.
     target_link_libraries(nes-compiler
             PUBLIC
-            ${GTEST_LIBRARIES}
-#            ${dialect_libs}
             MLIRExecutionEngine
-
-#            MLIRAffineAnalysis
-#            MLIRAffine
-#            MLIRAffineTransforms
-#            MLIRAffineUtils
-#            MLIRArithmetic
-#            MLIRArithmeticTransforms
-#            MLIRArmNeon
-#            MLIRArmSVE
-#            MLIRArmSVETransforms
-#            MLIRAsync
-#            MLIRAsyncTransforms
-#            MLIRAMX
-#            MLIRAMXTransforms
-#            MLIRBufferization
-#            MLIRBufferizationTransforms
-#            MLIRComplex
-#            MLIRDLTI
-            MLIREmitC
-            MLIRGPUOps
-            MLIRGPUTransforms
-            MLIRLinalgAnalysis
-            MLIRAffineBufferizableOpInterfaceImpl
-            MLIRLinalgBufferizableOpInterfaceImpl
-            MLIRModuleBufferization
-            MLIRLinalg
-            MLIRLinalgTransforms
-            MLIRLinalgUtils
-            MLIRLLVMIRTransforms
-            MLIRLLVMIR
-            MLIRNVVMIR
-            MLIRROCDLIR
-            MLIRMath
-            MLIRMathTransforms
-            MLIRMemRef
-            MLIRMemRefTransforms
-            MLIRMemRefUtils
-            MLIROpenACC
-            MLIROpenMP
-            MLIRPDL
-            MLIRPDLInterp
-            MLIRQuant
-            MLIRSCF
-            MLIRSCFTransforms
-            MLIRSCFUtils
-            MLIRShape
-            MLIRShapeOpsTransforms
-            MLIRSparseTensor
-            MLIRSparseTensorTransforms
-            MLIRSparseTensorPipelines
-            MLIRSparseTensorUtils
-
-            MLIRSPIRV
-            MLIRTensor
-            MLIRTensorInferTypeOpInterfaceImpl
-            MLIRTensorTilingInterfaceImpl
-            MLIRTosa
             )
     target_link_libraries(compiler-mlir-simpleModuleFromString-test
-            PRIVATE
-            nes-compiler)
+            nes-compiler
+            ${GTEST_LIBRARIES}
+            ${dialect_libs}
+            )
     add_test(NAME compiler-mlir-simpleModuleFromString-test COMMAND compiler-mlir-simpleModuleFromString-test)
 endif(NES_USE_MLIR)
-
-#add_executable(compiler-mlir-buffer "UnitTests/Experimental/nesTupleBuffer.cpp")
-#target_link_libraries(compiler-mlir-buffer-test ${GTEST_LIBRARIES} nes-compiler)
-#add_test(NAME compiler-mlir-buffer COMMAND compiler-mlir-buffer)
 
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)

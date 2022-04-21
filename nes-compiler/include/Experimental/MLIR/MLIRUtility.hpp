@@ -56,6 +56,8 @@ class MLIRUtility {
         int loadAndProcessMLIR(const std::shared_ptr<NESAbstractionTree>& NESTree,
                                 DebugFlags *debugFlags = nullptr);
 
+        int loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags);
+
         /**
          * @brief Takes symbols and JITAddresses and JIT runs created module.
          * @param llvmIRModule External symbol names, e.g. function names.
