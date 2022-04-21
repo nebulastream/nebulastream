@@ -94,8 +94,9 @@ class RemoteClientTest : public Testing::NESBaseTest {
         }
         return false;
     }
-    static constexpr auto defaultTimeout = std::chrono::seconds(10);
+
     void checkForQueryStart(int64_t queryId) {
+        auto defaultTimeout = std::chrono::seconds(10);
         auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto startTs = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < startTs + timeoutInSec) {
