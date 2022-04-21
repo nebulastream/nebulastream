@@ -28,9 +28,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>
-#include <gtest/gtest.h>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
+#include <gtest/gtest.h>
 #include <thread>
 
 using namespace utility;
@@ -46,7 +46,8 @@ using namespace concurrency::streams;
 namespace NES {
 
 using namespace Configurations;
-static int timestamp = 1644426604;
+const int timestamp = 1644426604;
+const uint64_t numberOfTupleBuffers = 4;
 
 class UpstreamBackupTest : public Testing::NESBaseTest {
   public:
@@ -78,13 +79,13 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
-        csvSourceTypeInfinite->setNumberOfTuplesToProducePerBuffer(2);
+        csvSourceTypeInfinite->setNumberOfTuplesToProducePerBuffer(numberOfTupleBuffers);
         csvSourceTypeInfinite->setNumberOfBuffersToProduce(0);
 
         csvSourceTypeFinite = CSVSourceType::create();
         csvSourceTypeFinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
-        csvSourceTypeFinite->setNumberOfTuplesToProducePerBuffer(3);
-        csvSourceTypeFinite->setNumberOfBuffersToProduce(4);
+        csvSourceTypeFinite->setNumberOfTuplesToProducePerBuffer(numberOfTupleBuffers - 1);
+        csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
 
         inputSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
@@ -127,8 +128,8 @@ TEST_F(UpstreamBackupTest, testDataBufferingAtAllNodes) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query = "Query::from(\"window\").sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query =
+        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
@@ -139,11 +140,10 @@ TEST_F(UpstreamBackupTest, testDataBufferingAtAllNodes) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == 4);
-    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == 4);
+    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
     wrk1->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
     wrk2->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
-
 
     NES_INFO("UpstreamBackupTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -195,8 +195,8 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query = "Query::from(\"window\").sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query =
+        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
@@ -210,19 +210,24 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
     for (auto querySubPlanId : querySubPlanIds) {
         auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
         for (auto& sink : sinks) {
-            auto buffer = bufferManager->getUnpooledBuffer(16384);
-            buffer->setWatermark(16384);
-            sink->updateWatermark(buffer.value());
+            auto buffer1 = bufferManager->getUnpooledBuffer(timestamp);
+            buffer1->setWatermark(timestamp);
+            buffer1->setSequenceNumber(1);
+            sink->updateWatermark(buffer1.value());
+            auto buffer2 = bufferManager->getUnpooledBuffer(timestamp);
+            buffer2->setWatermark(timestamp);
+            buffer2->setOriginId(1);
+            buffer2->setSequenceNumber(1);
+            sink->updateWatermark(buffer2.value());
             auto currentTimestamp = sink->getCurrentEpochBarrier();
             while (currentTimestamp == 0) {
                 NES_INFO("UpstreamBackupTest: current timestamp: " << currentTimestamp);
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 currentTimestamp = sink->getCurrentEpochBarrier();
             }
-            EXPECT_TRUE(currentTimestamp == 16384);
+            EXPECT_TRUE(currentTimestamp == timestamp);
         }
     }
-
 
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -270,15 +275,14 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query = "Query::from(\"window\").sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query =
+        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-
 
     //get sink
     auto querySubPlanIds = crd->getNodeEngine()->getSubQueryIds(queryId);
@@ -298,7 +302,6 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     //check if the method was called
     EXPECT_TRUE(currentTimestamp == timestamp);
-
 
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
@@ -327,7 +330,7 @@ TEST_F(UpstreamBackupTest, testTrimmingAfterPropagateEpoch) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
+    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
     workerConfig->physicalSources.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -348,27 +351,35 @@ TEST_F(UpstreamBackupTest, testTrimmingAfterPropagateEpoch) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query = "Query::from(\"window\").sink(FileSinkDescriptor::create(\""
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query =
+        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == 4);
-    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == 4);
+    //insert tuple buffers to check later if they are trimmed
+    for (uint64_t i = 0; i < numberOfTupleBuffers; i++) {
+        auto buffer = bufferManager->getUnpooledBuffer(timestamp);
+        buffer->setWatermark(timestamp + i);
+        buffer->setOriginId(1);
+        buffer->setSequenceNumber(1 + i);
+        wrk1->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
+        wrk2->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
+    }
+    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
 
     //get sink
     auto querySubPlanIds = crd->getNodeEngine()->getSubQueryIds(queryId);
     for (auto querySubPlanId : querySubPlanIds) {
         auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
         for (auto& sink : sinks) {
-            sink->notifyEpochTermination(timestamp);
+            sink->notifyEpochTermination(timestamp + numberOfTupleBuffers);
         }
     }
     //check if buffers got trimmed
@@ -376,6 +387,7 @@ TEST_F(UpstreamBackupTest, testTrimmingAfterPropagateEpoch) {
     EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == 0);
 
     NES_INFO("UpstreamBackupTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");

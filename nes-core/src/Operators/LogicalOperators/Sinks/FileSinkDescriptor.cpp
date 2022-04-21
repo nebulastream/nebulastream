@@ -37,7 +37,8 @@ FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
                                        bool append,
                                        FaultToleranceType faultToleranceType,
                                        uint64_t numberOfSources)
-    : fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)), append(append), faultToleranceType(faultToleranceType), numberOfSources(numberOfSources) {}
+    : fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)), append(append), faultToleranceType(faultToleranceType),
+      numberOfSources(numberOfSources) {}
 
 const std::string& FileSinkDescriptor::getFileName() const { return fileName; }
 

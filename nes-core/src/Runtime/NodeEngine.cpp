@@ -498,8 +498,7 @@ std::vector<QuerySubPlanId> NodeEngine::getSubQueryIds(uint64_t queryId) {
     auto iterator = queryIdToQuerySubPlanIds.find(queryId);
     if (iterator != queryIdToQuerySubPlanIds.end()) {
         return iterator->second;
-    }
-    else {
+    } else {
         return {};
     }
 }

@@ -196,7 +196,14 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 FaultToleranceType faultToleranceType,
                                 uint64_t numberOfSources) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out, faultToleranceType, numberOfSources);
+    return std::make_shared<PrintSink>(format,
+                                       nodeEngine,
+                                       activeProducers,
+                                       queryId,
+                                       querySubPlanId,
+                                       out,
+                                       faultToleranceType,
+                                       numberOfSources);
 }
 
 DataSinkPtr createNullOutputSink(QueryId queryId,
@@ -215,7 +222,14 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                FaultToleranceType faultToleranceType,
                                uint64_t numberOfSources) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, querySubPlanId, out, faultToleranceType, numberOfSources);
+    return std::make_shared<PrintSink>(format,
+                                       nodeEngine,
+                                       activeProducers,
+                                       queryId,
+                                       querySubPlanId,
+                                       out,
+                                       faultToleranceType,
+                                       numberOfSources);
 }
 
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,

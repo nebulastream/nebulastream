@@ -17,7 +17,8 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfSources) : faultToleranceType(faultToleranceType), numberOfSources(numberOfSources) {}
+PrintSinkDescriptor::PrintSinkDescriptor(FaultToleranceType faultToleranceType, uint64_t numberOfSources)
+    : faultToleranceType(faultToleranceType), numberOfSources(numberOfSources) {}
 
 SinkDescriptorPtr PrintSinkDescriptor::create(FaultToleranceType faultToleranceType, uint64_t numberOfSources) {
     return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(faultToleranceType, numberOfSources));

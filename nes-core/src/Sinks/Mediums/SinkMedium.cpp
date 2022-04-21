@@ -32,7 +32,9 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint64_t numberOfSources)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
       querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfSources(numberOfSources) {
-    watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfSources);
+    if (numberOfSources > 0) {
+        watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfSources);
+    }
     bufferCount = 0;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
@@ -89,9 +91,7 @@ void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::
     Reconfigurable::reconfigure(message, context);
 }
 
-uint64_t SinkMedium::getCurrentEpochBarrier() {
-    return watermarkProcessor->getCurrentWatermark();
-}
+uint64_t SinkMedium::getCurrentEpochBarrier() { return watermarkProcessor->getCurrentWatermark(); }
 
 void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
     Reconfigurable::postReconfigurationCallback(message);
