@@ -37,7 +37,8 @@ class ZmqSink : public SinkMedium {
             bool internal,
             QueryId queryId,
             QuerySubPlanId querySubPlanId,
-            FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+            FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+            uint64_t numberOfSources = 0);
     ~ZmqSink() override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;

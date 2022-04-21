@@ -295,6 +295,7 @@ message SerializableOperator{
 
     google.protobuf.Any sinkDescriptor = 1;
     uint64 faultToleranceMode = 2;
+    uint64 numberOfOriginIds = 3;
   }
 
   /**

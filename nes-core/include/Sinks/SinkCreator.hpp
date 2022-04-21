@@ -44,6 +44,8 @@ DataSinkPtr createTestSink();
  * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 
@@ -54,7 +56,8 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               uint32_t activeProducers,
                               const std::string& filePath,
                               bool append,
-                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                              uint64_t numberOfSources = 0);
 
 /**
  * @brief create a binary test sink with a schema
@@ -62,6 +65,8 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
  * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createTextFileSink(const SchemaPtr& schema,
@@ -71,7 +76,8 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                uint32_t numOfProducers,
                                const std::string& filePath,
                                bool append,
-                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                               uint64_t numberOfSources = 0);
 
 /**
  * @brief create a binary test sink with a schema into the nes
@@ -79,6 +85,8 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
  * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
@@ -88,7 +96,8 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     uint32_t numOfProducers,
                                     const std::string& filePath,
                                     bool append,
-                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                    FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                    uint64_t numberOfSources = 0);
 
 /**
  * @brief create a JSON test sink with a schema int
@@ -96,6 +105,8 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
  * @param bufferManager
  * @param path to file
  * @param bool indicating if data is appended (true) or overwritten (false)
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
@@ -105,7 +116,8 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                uint32_t numOfProducers,
                                const std::string& filePath,
                                bool append,
-                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                               uint64_t numberOfSources = 0);
 
 /**
  * @brief create a ZMQ test sink with a schema and Text format output
@@ -114,6 +126,8 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
  * @param hostname as sting
  * @param port at uint16
  * @param internal refers to the usage of this zmq sink as a fwd operator such that we dont have to send the schema, only the data
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
@@ -123,7 +137,8 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               uint32_t numOfProducers,
                               const std::string& host,
                               uint16_t port,
-                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                              uint64_t numberOfSources = 0);
 #ifdef ENABLE_OPC_BUILD
 /**
  * @brief create a OPC test sink with a schema
@@ -149,6 +164,8 @@ DataSinkPtr createOPCSink(SchemaPtr schema,
  * @param bufferManager
  * @param hostname as sting
  * @param port at uint16
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
@@ -158,7 +175,8 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              uint32_t numOfProducers,
                              const std::string& host,
                              uint16_t port,
-                             FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                             FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                             uint64_t numberOfSources = 0);
 
 /**
  * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
@@ -166,6 +184,8 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
  * @param bufferManager
  * @param hostname as sting
  * @param port at uint16
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
@@ -176,13 +196,16 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 const std::string& host,
                                 uint16_t port,
                                 bool internal,
-                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                uint64_t numberOfSources = 0);
 
 /**
  * @brief create a print test sink with a schema
  * @param schema of sink
  * @param bufferManager
  * @param output stream
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
@@ -191,7 +214,8 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 uint32_t activeProducers,
                                 std::ostream& out,
-                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                uint64_t numberOfSources = 0);
 
 /**
  * @brief create a print that does not output something
@@ -208,6 +232,8 @@ DataSinkPtr createNullOutputSink(QueryId queryId,
  * @param parentPlan id of the parent qep
  * @param bufferManager
  * @param output stream
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
@@ -216,7 +242,8 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                std::ostream& out,
-                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                               uint64_t numberOfSources = 0);
 
 /**
  * @brief create a network data sink
@@ -226,6 +253,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
  * @param nesPartition
  * @param waitTime
  * @param retryTimes
+ * @param faultToleranceType: fault tolerance type of a query
  * @return a data sink pointer
  */
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
@@ -248,6 +276,8 @@ namespace Experimental::MaterializedView {
  * @param nodeEngine
  * @param parentPlanId
  * @param viewId
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
@@ -256,7 +286,8 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        QueryId queryId,
                                        QuerySubPlanId parentPlanId,
                                        uint64_t viewId,
-                                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                       uint64_t numberOfSources = 0);
 
 }// namespace Experimental::MaterializedView
 
@@ -288,6 +319,8 @@ createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const st
  * @param msgDelay: how long to wait before sending the next message from client
  * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
  * @param asynchronousClient: 1 if client should be asynchronous, else 0
+ * @param faultToleranceType: fault tolerance type of a query
+ * @param numberOfSources: number of sources of a given query
  * @return a data sink pointer
  */
 DataSinkPtr createMQTTSink(const SchemaPtr& schema,
@@ -304,7 +337,8 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                            uint64_t msgDelay,
                            MQTTSinkDescriptor::ServiceQualities qualityOfService,
                            bool asynchronousClient,
-                           FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                           FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                           uint64_t numberOfSources = 0);
 #endif
 
 }// namespace NES
