@@ -74,7 +74,10 @@ class FileSinkDescriptor : public SinkDescriptor {
     uint64_t getNumberOfSources() const;
 
   private:
-    explicit FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append, FaultToleranceType faultToleranceType,
+    explicit FileSinkDescriptor(std::string fileName,
+                                std::string sinkFormat,
+                                bool append,
+                                FaultToleranceType faultToleranceType,
                                 uint64_t numberOfSources);
     std::string fileName;
     std::string sinkFormat;

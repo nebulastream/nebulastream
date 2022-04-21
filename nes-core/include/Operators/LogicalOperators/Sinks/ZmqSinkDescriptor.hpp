@@ -76,7 +76,11 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     uint64_t getNumberOfSources() const;
 
   private:
-    explicit ZmqSinkDescriptor(std::string host, uint16_t port, bool internal, FaultToleranceType faultToleranceType, uint64_t numberOfSources);
+    explicit ZmqSinkDescriptor(std::string host,
+                               uint16_t port,
+                               bool internal,
+                               FaultToleranceType faultToleranceType,
+                               uint64_t numberOfSources);
 
     std::string host;
     uint16_t port;

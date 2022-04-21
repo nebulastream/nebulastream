@@ -34,8 +34,7 @@ int ReplicationService::getCurrentEpochBarrier(uint64_t queryId) const {
     auto pairEpochTimestamp = this->queryIdToCurrentEpochBarrierMap.find(queryId);
     if (pairEpochTimestamp != this->queryIdToCurrentEpochBarrierMap.end()) {
         return pairEpochTimestamp->second.second;
-    }
-    else {
+    } else {
         return -1;
     }
 }
@@ -54,7 +53,7 @@ void ReplicationService::saveEpochBarrier(uint64_t queryId, uint64_t epochBarrie
 std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(uint64_t queryId) const {
     auto globalQueryPlan = this->coordinatorPtr->getGlobalQueryPlan();
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(queryId);
-    if (!sharedQueryPlan) {
+    if (sharedQueryPlan) {
         return sharedQueryPlan->getQueryPlan()->getSourceOperators();
     }
     NES_ERROR("ReplicationService: no shared query plan found for the queryId " << queryId);
@@ -79,7 +78,10 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
                 bool success = false;
                 for (auto& sourceLocation : sourceLocations) {
                     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-                    success = workerRpcClient->injectEpochBarrier(epochBarrier, queryId, sourceLocation->getIpAddress());
+                    auto ipAddress = sourceLocation->getIpAddress();
+                    auto grpcPort = sourceLocation->getGrpcPort();
+                    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+                    success = workerRpcClient->injectEpochBarrier(epochBarrier, queryId, rpcAddress);
                     NES_ASSERT(success, false);
                     NES_DEBUG("ReplicationService: success=" << success);
                 }

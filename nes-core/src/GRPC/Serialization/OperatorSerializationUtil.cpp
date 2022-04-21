@@ -1496,9 +1496,10 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MaterializedViewSinkDescriptor");
-        return Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(serializedSinkDescriptor.viewid(),
-                                                                                      FaultToleranceType(deserializedFaultTolerance),
-                                                                                      deserializedNumberOfSources);
+        return Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(
+            serializedSinkDescriptor.viewid(),
+            FaultToleranceType(deserializedFaultTolerance),
+            deserializedNumberOfSources);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
