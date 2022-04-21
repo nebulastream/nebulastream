@@ -1,9 +1,9 @@
 name: NES Release
 
 # The following pipeline, is executed whenever we create a new version tag at the main repository.
-# The pipeline first creates a new tag at nebulastream/nebulastream-dev-builds, which hast the same tag_name as the $GITHUB_REF_NAME.
-# Thus, if the master version tag is v10 the also the tag_name is v10.
-# In the second step, the pipeline builds the individual debian packages and adds them to a release under the just created tag.
+# The pipeline first creates a new tag at nebulastream/nebulastream-dev-builds and nebulastream/nebulastream-demo, which
+# have the same tag_name as the $GITHUB_REF_NAME. Thus, if the master version tag is v10 the also the tag_name is v10.
+# In the final step, the pipeline builds the individual debian packages and adds them to a release under the new tag.
 
 on:
   push:
