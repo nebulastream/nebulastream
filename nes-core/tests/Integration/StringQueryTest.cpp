@@ -61,6 +61,8 @@ class StringQueryTest : public Testing::NESBaseTest {
         uint32_t key;
         char value[s];
 
+        SchemaClass() = default;
+
         inline SchemaClass(uint32_t key, std::string const& str) : key(key), value() {
             auto const* value = str.c_str();
 
