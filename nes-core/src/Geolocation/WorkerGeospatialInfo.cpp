@@ -153,9 +153,28 @@ void WorkerGeospatialInfo::updatePredictedPath(GeographicalLocation oldLoc, Geog
         pathBeginning = oldPoint;
     }
 }
+/*
+double hav(double x) {
+
+}
+ */
 
 std::pair<S2Point, S1Angle> WorkerGeospatialInfo::findPathCoverage(S2PolylinePtr path, S2Point coveringNode, S1Angle coverage) {
+    int vertexIndex = 0;
+    auto projectedPoint = path->Project(coveringNode, &vertexIndex);
+    auto distAngle = S1Angle(coveringNode, projectedPoint);
+    NES_DEBUG("distangle : " << distAngle.degrees())
 
+    double coverageRadiansOnLine = acos(cos(coverage) / cos(distAngle));
+    auto coverageAngleOnLine = S1Angle::Radians(coverageRadiansOnLine);
 
+    //the polyline always only consists of 2 points, so index 1 is its end
+    auto vertSpan = path->vertices_span();
+    NES_DEBUG("span " << S2LatLng(vertSpan[0]) << ", " << S2LatLng(vertSpan[1]))
+    NES_DEBUG("projected point" << S2LatLng(projectedPoint))
+    NES_DEBUG("covering node " << S2LatLng(coveringNode))
+    NES_DEBUG("coverage boundary " << S2LatLng(S2::GetPointOnLine(coveringNode, projectedPoint, coverage)))
+    S2Point coverageEnd = S2::GetPointOnLine(projectedPoint, vertSpan[1], coverageAngleOnLine);
+    return {coverageEnd, coverageAngleOnLine};
 }
 }// namespace NES::Experimental::Mobility

@@ -37,14 +37,14 @@ class LocationSourceCSVTest : public testing::Test {
 
 TEST_F(LocationSourceCSVTest, testCoverageClaculation) {
     S2Point lineStart(S2LatLng::FromDegrees(52.0, 13.0));
-    S2Point lineEnd(S2LatLng::FromDegrees(52.0, 13.01));
+    S2Point lineEnd(S2LatLng::FromDegrees(52.0, 13.03));
     std::vector<S2Point> v;
     v.push_back(lineStart);
     v.push_back(lineEnd);
     S2PolylinePtr path = std::make_shared<S2Polyline>(v);
     NES_DEBUG("interpol " << S2LatLng(path->Interpolate(0.5)))
-    S2Point node(S2LatLng::FromDegrees(52.05, 13.005));
-    S1Angle coverage = S1Angle::Degrees(1.5);
+    S2Point node(S2LatLng::FromDegrees(52.002, 13.007));
+    S1Angle coverage = S1Angle::Degrees(0.003);
 
     auto res = NES::Experimental::Mobility::WorkerGeospatialInfo::findPathCoverage(path, node, coverage);
 
