@@ -39,12 +39,19 @@ namespace NES::Util {
  */
 template<class T, uint64_t blockSize = 100>
 class NonBlockingMonotonicSeqQueue {
-  public:
+  private:
+    /**
+     * @brief Container, which contains the sequence number and the value.
+     */
     struct Container {
         uint64_t seq;
         T value;
     };
 
+    /**
+     * @brief Block of values, which is one element in the linked-list.
+     * If the next block exists *next* contains the reference.
+     */
     class Block {
       public:
         Block(uint64_t blockIndex) : blockIndex(blockIndex){};
@@ -59,6 +66,11 @@ class NonBlockingMonotonicSeqQueue {
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) {}
     ~NonBlockingMonotonicSeqQueue() {}
 
+    /**
+     * @brief Emplace the next element to the queue and
+     * @param seq
+     * @param value
+     */
     void emplace(uint64_t seq, T value) {
         // First we emplace the value to its specific block.
         // After this call it is safe to assume that a block, which contains seq exists.
@@ -67,6 +79,10 @@ class NonBlockingMonotonicSeqQueue {
         shiftCurrent();
     }
 
+    /**
+     * @brief Returns the current value.
+     * @return T
+     */
     auto getCurrentValue() {
         auto currentBlock = std::atomic_load(&head);
         // we are looking for the next sequence number
