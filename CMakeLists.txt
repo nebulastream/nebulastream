@@ -208,6 +208,14 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
+# Add Python
+option(ENABLE_PYTHON "Build using python" ON)
+if (ENABLE_PYTHON)
+    message(STATUS "Python enabled")
+    find_package(PythonLibs REQUIRED)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    set(LIBRARIES ${LIBRARIES} ${PYTHON_LIBRARIES} -lutil)
+endif()
 
 # Native/Generic march support
 if (NES_BUILD_NATIVE)
