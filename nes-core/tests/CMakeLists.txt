@@ -65,12 +65,12 @@ add_executable(watermark-manager-test "UnitTests/Runtime/WatermarkManagerTest.cp
 target_link_libraries(watermark-manager-test nes-tests)
 add_test(NAME watermark-manager-test COMMAND watermark-manager-test)
 
-add_executable(lock-free-multi-origin-watermark-processor-test "UnitTests/Runtime/LockFreeMultiOriginWatermarkProcessorTest.cpp")
+add_executable(lock-free-multi-origin-watermark-processor-test "UnitTests/Windowing/Experimental/LockFreeMultiOriginWatermarkProcessorTest.cpp")
 target_link_libraries(lock-free-multi-origin-watermark-processor-test nes  nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME lock-free-multi-origin-watermark-processor-test COMMAND lock-free-multi-origin-watermark-processor-test)
 
 
-add_executable(lock-free-watermark-processor-test "UnitTests/Runtime/LockFreeWatermarkProcessorTest.cpp")
+add_executable(lock-free-watermark-processor-test "UnitTests/Windowing/Experimental/LockFreeWatermarkProcessorTest.cpp")
 target_link_libraries(lock-free-watermark-processor-test nes  nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME lock-free-watermark-processor-test COMMAND lock-free-watermark-processor-test)
 
