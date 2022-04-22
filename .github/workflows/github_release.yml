@@ -48,7 +48,7 @@ jobs:
             osversion: ubuntu-18_04
           - arch: arm64
             osversion: ubuntu-21_10
-         - arch: arm64
+          - arch: arm64
             osversion: ubuntu-22_04
     steps:
       - uses: AutoModality/action-clean@v1
