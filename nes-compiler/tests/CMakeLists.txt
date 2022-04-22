@@ -31,11 +31,11 @@ if(NES_USE_MLIR)
     target_link_libraries(nes-compiler
             PUBLIC
             MLIRExecutionEngine
+            ${GTEST_LIBRARIES}
+            ${dialect_libs}
             )
     target_link_libraries(compiler-mlir-simpleModuleFromString-test
             nes-compiler
-            ${GTEST_LIBRARIES}
-            ${dialect_libs}
             )
     add_test(NAME compiler-mlir-simpleModuleFromString-test COMMAND compiler-mlir-simpleModuleFromString-test)
 endif(NES_USE_MLIR)

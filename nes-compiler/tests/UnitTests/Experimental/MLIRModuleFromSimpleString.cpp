@@ -100,7 +100,7 @@ TEST(MLIRModuleFromSimpleString, executeSimpleStringMLIR) {
     // Order must match symbolNames order!
     const std::vector<llvm::JITTargetAddress> jitAddresses{
         llvm::pointerToJITTargetAddress(&testIntArray)};
-    mlirUtility->runJit(symbolNames, jitAddresses);
+    mlirUtility->runJit(symbolNames, jitAddresses, false);
 
     assert(true);
 }

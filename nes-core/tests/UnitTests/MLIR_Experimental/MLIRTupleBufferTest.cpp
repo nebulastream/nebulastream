@@ -152,7 +152,7 @@ TEST(MLIRTupleBufferIteration, simpleBufferIteration) {
 
     // Configuration
     const bool debugFromFile = false;
-    const std::string mlirFilepath = "../../../nes-compiler/src/Experimental/generatedMLIR/locationTest.mlir";
+    const std::string mlirFilepath = "../../../nes-compiler/src/Experimental/MLIR/generatedMLIR/locationTest.mlir";
     MLIRUtility::DebugFlags debugFlags{};
     debugFlags.comments = true;
     debugFlags.enableDebugInfo = false;
@@ -219,7 +219,7 @@ TEST(MLIRTupleBufferIteration, simpleBufferIteration) {
         llvm::pointerToJITTargetAddress(inputBufferPointer),
         llvm::pointerToJITTargetAddress(outputBufferPointer),
         llvm::pointerToJITTargetAddress(IBPtr)};
-    mlirUtility->runJit(symbolNames, jitAddresses);
+    mlirUtility->runJit(symbolNames, jitAddresses, true);
 
     printBuffer(types, numTuples, outputBufferPointer);
     assert(true);
