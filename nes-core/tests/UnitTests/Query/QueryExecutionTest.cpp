@@ -53,6 +53,7 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
+#include "Python.h"
 using namespace NES;
 using Runtime::TupleBuffer;
 
@@ -1097,12 +1098,62 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
                             Runtime::Execution::PipelineExecutionContext& ctx,
                             Runtime::WorkerContext& wc) override {
         auto record = buffer.getBuffer<InputRecord>();
-        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-            record[i].test$value = record[i].test$value + 42;
-            // call into python
+
+        //Access python script located in nes-core/tests/test_data
+        const char pyUDFName[] = "PythonUDF";
+        const char pyUDFLocation[] = "test_data/";
+        const char pyFuncName[] = "add42";
+        PyObject *pyName, *pyModule, *pyFunc, *pyArgs, *pyValue;
+
+        Py_Initialize();
+        PyList_Insert(PySys_GetObject("path"), 0, PyUnicode_FromString(pyUDFLocation));
+        pyName = PyUnicode_FromString(pyUDFName);
+        pyModule = PyImport_Import(pyName);
+        Py_DECREF(pyName);
+        if (pyModule != nullptr) {
+            pyFunc = PyObject_GetAttrString(pyModule, pyFuncName);
+            if (pyFunc && PyCallable_Check(pyFunc)) {
+                for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
+                    pyArgs = PyTuple_New(1);
+                    pyValue = PyLong_FromLong(record[i].test$value);
+                    if (!pyValue) {
+                        Py_DECREF(pyArgs);
+                        Py_DECREF(pyModule);
+                        NES_ERROR("Unable to convert value");
+                    }
+                    PyTuple_SetItem(pyArgs, 0, pyValue);
+                    pyValue = PyObject_CallObject(pyFunc, pyArgs);
+                    //TODO: Fix reference counting, right now we're deferencing after each python call
+                    Py_DECREF(pyArgs);
+                    if (pyValue != nullptr) {
+                        record[i].test$value = PyLong_AsLong(pyValue);
+                        Py_DECREF(pyValue);
+                    } else {
+                        Py_DECREF(pyFunc);
+                        Py_DECREF(pyModule);
+                        PyErr_Print();
+                        NES_ERROR( "Function call failed\n");
+                    }
+                }
+            } else {
+                if (PyErr_Occurred()) {
+                    PyErr_Print();
+                }
+                NES_ERROR("Cannot find function " << pyFuncName);
+            }
+            Py_XDECREF(pyFunc);
+            Py_DECREF(pyModule);
+        } else {
+            PyErr_Print();
+            NES_ERROR( "Failed to load " << pyUDFName);
+            return ExecutionResult::Error;
         }
+
         ctx.emitBuffer(buffer, wc);
-        return ExecutionResult::Ok;
+        if (Py_FinalizeEx() < 0) {
+            return ExecutionResult::Ok;
+        }
+        return ExecutionResult::Error;
     }
 };
 
