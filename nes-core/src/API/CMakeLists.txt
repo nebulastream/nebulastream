@@ -18,6 +18,5 @@ add_source_files(nes-core
         Windowing.cpp
         WindowedQuery.cpp
         NePSLPattern.cpp
-        ../../include/API/NePSLPattern.h
 )
 add_subdirectory(Expressions)
