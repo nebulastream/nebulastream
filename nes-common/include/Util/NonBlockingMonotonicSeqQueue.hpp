@@ -29,12 +29,10 @@ namespace NES::Util {
  * This queue receives values of type T with an associated sequence number and
  * returns the value with the highest sequence number in strictly monotonic increasing order.
  *
- *
  * Internally this queue is implemented as a linked-list of blocks and each block stores a list of <seq,T> pairs.
  * |------- |       |------- |
  * | s1, s2 | ----> | s3, s4 |
  * |------- |       | ------ |
- * Whenever we
  *
  * @tparam T
  * @tparam blockSize
@@ -61,32 +59,21 @@ class NonBlockingMonotonicSeqQueue {
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) {}
     ~NonBlockingMonotonicSeqQueue() {}
 
-    uint64_t emplace(uint64_t seq, T value) {
+    void emplace(uint64_t seq, T value) {
         // First we emplace the value to its specific block.
         // After this call it is safe to assume that a block, which contains seq exists.
         emplaceValueInBlock(seq, value);
-
         // We now try to shift the current sequence number
         shiftCurrent();
-        return getCurrentValue();
     }
 
     auto getCurrentValue() {
         auto currentBlock = std::atomic_load(&head);
         // we are looking for the next sequence number
-        auto seqNumber = currentSeq.load();
-        auto targetBlockIndex = seqNumber / blockSize;
-        while (currentBlock->blockIndex < targetBlockIndex) {
-            // append new block if the next block is a nullptr
-            auto nextBlock = std::atomic_load(&currentBlock->next);
-            if (nextBlock == nullptr) {
-                NES_THROW_RUNTIME_ERROR("The next block dose not exists. This should not happen here.");
-            }
-            // move to the next block
-            currentBlock = nextBlock;
-        }
-
-        auto seqIndexInBlock = seqNumber - (currentBlock->blockIndex * blockSize);
+        auto currentSequenceNumber = currentSeq.load();
+        auto targetBlockIndex = currentSequenceNumber / blockSize;
+        currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
+        auto seqIndexInBlock = currentSequenceNumber - (currentBlock->blockIndex * blockSize);
         auto& value = currentBlock->log[seqIndexInBlock];
         return value.value;
     }
@@ -133,16 +120,9 @@ class NonBlockingMonotonicSeqQueue {
             auto currentBlock = std::atomic_load(&head);
             // we are looking for the next sequence number
             auto currentSequenceNumber = currentSeq.load();
+            // find the correct block, that contains the current sequence number.
             auto targetBlockIndex = currentSequenceNumber / blockSize;
-            while (currentBlock->blockIndex < targetBlockIndex) {
-                // append new block if the next block is a nullptr
-                auto nextBlock = std::atomic_load(&currentBlock->next);
-                if (nextBlock == nullptr) {
-                    NES_THROW_RUNTIME_ERROR("The next block dose not exists. This should not happen here.");
-                }
-                // move to the next block
-                currentBlock = nextBlock;
-            }
+            currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
 
             // check if next value is set
             // next seqNumber
@@ -173,6 +153,26 @@ class NonBlockingMonotonicSeqQueue {
             }
             checkForUpdate = false;
         }
+    }
+
+    /**
+     * @brief This function traverses the linked list of blocks, till the target block index is found.
+     * It assumes, that the target block index exists. If not, the function throws a runtime exception.
+     * @param currentBlock the start block, usually the head.
+     * @param targetBlockIndex the target address
+     * @return the found block, which contains the target block index.
+     */
+    std::shared_ptr<Block> getTargetBlock(std::shared_ptr<Block> currentBlock, uint64_t targetBlockIndex) {
+        while (currentBlock->blockIndex < targetBlockIndex) {
+            // append new block if the next block is a nullptr
+            auto nextBlock = std::atomic_load(&currentBlock->next);
+            if (!nextBlock) {
+                NES_THROW_RUNTIME_ERROR("The next block dose not exists. This should not happen here.");
+            }
+            // move to the next block
+            currentBlock = nextBlock;
+        }
+        return currentBlock;
     }
 
   private:
