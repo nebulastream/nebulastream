@@ -899,7 +899,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     /* prepare input tuple buffer */
     source->open();
     auto optVal = source->receiveData();
-    ASSERT(optVal.has_value());
+    ASSERT_TRUE(optVal.has_value());
     if (auto inputBuffer = *optVal; !!inputBuffer) {
 
         /* execute Stage */
@@ -1717,7 +1717,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     /* prepare input tuple buffer */
     source->open();
     auto optVal = source->receiveData();
-    ASSERT(optVal.has_value());
+    ASSERT_TRUE(optVal.has_value());
     auto inputBuffer = *optVal;
 
     /* execute Stage */
