@@ -64,33 +64,12 @@ TEST_F(QueryCatalogTest, testAddNewPattern) {
     //Prepare
     std::string patternString =
         "PATTERN test:= (A) FROM default_logical AS A INTO Print :: testSink ";
-
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
     QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -104,35 +83,13 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -146,33 +103,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleSinksSmall) {
     //Prepare
     std::string patternString =
         "PATTERN test:= (A) FROM default_logical AS A INTO Print :: testSink, Print :: testSink2, Print :: testSink3  ";
-
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
     QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -186,35 +122,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleSinksSmall) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -228,33 +142,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleSinks) {
     //Prepare
     std::string patternString =
         "PATTERN test:= (A) FROM default_logical AS A INTO Print :: testSink, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3  ";
-
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
     QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -268,35 +161,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleSinks) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -309,33 +180,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimes1) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A[2]) FROM default_logical AS A INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A[2]) FROM default_logical AS A INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -349,35 +199,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimes1) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()).times(2,2); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -390,33 +218,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimes2) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A*) FROM default_logical AS A INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A*) FROM default_logical AS A INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -430,35 +237,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimes2) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()).times(0,99999999999); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -471,33 +256,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimes3) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A+) FROM default_logical AS A INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A+) FROM default_logical AS A INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -511,35 +275,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimes3) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()).times(1,99999999999); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -552,33 +294,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperator) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A OR B) FROM default_logical AS A, default_logical AS B INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A OR B) FROM default_logical AS A, default_logical AS B INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -592,35 +313,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperator) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").orWith(Query::from("default_logical")).sink(PrintSinkDescriptor::create());)";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -633,33 +332,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternFilter) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -673,35 +351,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryFilter) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("currentSpeed") < Attribute("AllowedSpeed")).sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -714,33 +370,13 @@ TEST_F(QueryCatalogTest, testAddNewPatternTwoFilters) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed && A.value < A.random INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed && A.value < A.random INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -754,35 +390,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryTwoFilters) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("currentSpeed") < Attribute("AllowedSpeed")).filter(Attribute("value") < Attribute("random")).sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -796,33 +410,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternMap) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU] INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -836,35 +429,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryMap) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").map(Attribute("name") ="TU").sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -877,33 +448,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleMapSmall) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, department=DIMA ] INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, department=DIMA ] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -917,35 +467,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleMapSmall) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -958,33 +486,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleMap) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA ] INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA ] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -998,35 +505,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleMap) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1039,33 +524,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleMapMultipleSinks) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA ] INTO Print :: testSink, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3  ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA ] INTO Print :: testSink, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3, Print :: testSink2, Print :: testSink3  ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1079,35 +543,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleMapMultipleSinks) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1120,33 +562,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimesAndMap) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A[10]) FROM default_logical AS A RETURN ce := [name=TU] INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A[10]) FROM default_logical AS A RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1160,35 +581,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimesAndMap) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").times(10,10).map(Attribute("name") ="TU").sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1201,33 +600,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimesAndFilter) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A[10]) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A[10]) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1241,35 +619,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimesAndFilter) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").times(10,10).filter(Attribute("currentSpeed") < Attribute("AllowedSpeed")).sink(PrintSinkDescriptor::create()); )";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1282,33 +638,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorAndFilter) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1322,35 +657,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorAndFilter) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").orWith(Query::from("default_logical")).filter(Attribute("currentSpeed") < Attribute("AllowedSpeed")).sink(PrintSinkDescriptor::create());)";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1363,33 +676,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorMapAndFilter) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A AND B) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1403,36 +695,14 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorMapAndFilter) {
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").orWith(Query::from("default_logical")).filter(Attribute("currentSpeed") < Attribute("AllowedSpeed")).map(Attribute("name") ="TU").sink(PrintSinkDescriptor::create());)";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     QueryCatalogServicePtr queryCatalogService = std::make_shared<QueryCatalogService>(queryCatalog);
     auto catalogEntry = queryCatalogService->createNewEntry(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1445,33 +715,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMapAndFilter) {
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1492,35 +741,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMapAndFIlter) {
             .map(Attribute("name") ="TU")
             .sink(PrintSinkDescriptor::create()))
             ;)";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1533,33 +760,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMapAndFilterMultipleSinks
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1573,35 +779,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMapAndFIlterMultipleSInks) 
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").times(2,2).orWith(Query::from("default_logical")).times(0,99999999999).filter(Attribute("currentSpeed") < Attribute("AllowedSpeed")).map(Attribute("name") ="TU").sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create());)";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
@@ -1614,33 +798,12 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMultipleMapAndFilterMulti
 
     //Prepare
     std::string patternString =
-        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA] INTO Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink ";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA, name=TU, type=random, department=DIMA] INTO Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink, Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
-
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -1654,35 +817,13 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMultipleMapAndFIlterMultipl
     //Prepare
     std::string queryString =
         R"(Query::from("default_logical").times(2,2).orWith(Query::from("default_logical")).times(0,99999999999).filter(Attribute("currentSpeed") < Attribute("AllowedSpeed")).map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").map(Attribute("name") ="TU").map(Attribute("type") ="random").map(Attribute("department") ="DIMA").sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create());)";
-    //*************************************Time Measurement***************************
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
-    //-----------------------------------------------------
-
     QueryPtr query = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
-
-
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
-    //---------------------------------------------------------------------------
-    auto t2 = high_resolution_clock::now();
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
-
-    /* Getting number of milliseconds as a double. */
-    duration<double, std::milli> ms_double = t2 - t1;
-
-    std::cout << ms_int.count() << "ms\n";
-    std::cout << ms_double.count() << "ms\n";
-
-    //**************************************************************
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalogService->getAllQueryCatalogEntries();

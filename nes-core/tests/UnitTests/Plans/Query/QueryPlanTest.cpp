@@ -22,12 +22,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
-#include <Services/QueryParsingService.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
-#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 
 using namespace NES;
 
