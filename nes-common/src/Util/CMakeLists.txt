@@ -16,6 +16,7 @@ add_source_files(nes-common
         StacktraceLoader.cpp
         ThreadNaming.cpp
         FileMutex.cpp
+        NonBlockingMonotonicSeqQueue.cpp
 )
 add_subdirectory(yaml)
 add_subdirectory(Logger)
