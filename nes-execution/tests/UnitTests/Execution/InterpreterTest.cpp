@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <Interpreter/DataValue/Address.hpp>
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/Value.hpp>
-#include <Interpreter/DataValue/Address.hpp>
 #include <Interpreter/Expressions/EqualsExpression.hpp>
 #include <Interpreter/Expressions/ReadFieldExpression.hpp>
+#include <Interpreter/FunctionCall.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
 #include <Interpreter/Operators/Scan.hpp>
 #include <Interpreter/Operators/Selection.hpp>
@@ -47,6 +48,35 @@ class InterpreterTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down InterpreterTest test class." << std::endl; }
 };
+
+uint64_t callNoArgs() { return 42; }
+
+uint64_t add(uint64_t x, uint64_t y) { return x + y; }
+class TestObject {
+  public:
+    static uint64_t staticFunc(uint64_t x, uint64_t y) { return x + y; }
+    uint64_t memberFunc(uint64_t x, uint64_t y) { return x + y; }
+};
+
+TEST_F(InterpreterTest, functionCallTest) {
+    auto value = FunctionCall(callNoArgs);
+    ASSERT_EQ(value, 42);
+    auto res = FunctionCall(add, (uint64_t) 10, (uint64_t) 11);
+    ASSERT_EQ(res, 21);
+
+    res = FunctionCall(TestObject::staticFunc, (uint64_t) 11, (uint64_t) 11);
+    ASSERT_EQ(res, 22);
+
+    auto t = TestObject();
+    //std::bind(&TestObject::memberFunc, &t, 15, 15);
+    uint64_t v = 15;
+    TraceContext tc = TraceContext();
+    Value value2 = toValue(2, &tc);
+    res = bind2(&TestObject::memberFunc, &t, value2, (uint64_t) 15);
+   // auto memberFunc = std::mem_fn(&TestObject::memberFunc);
+    // res = memberFunc(&t, (uint64_t) 15, (uint64_t) 15);
+    ASSERT_EQ(res, 17);
+}
 
 void assignmentOperator(TraceContext* tracer) {
     Value iw = Value(1, tracer);
@@ -563,7 +593,6 @@ TEST_F(InterpreterTest, invertedLoopTest) {
     ASSERT_EQ(block3.operations[3].op, CMP);
 }
 
-
 void loadStoreValue(TraceContext* tracer) {
     auto addressVal = Value(10, tracer);
     Address address = Address(tracer, addressVal);
@@ -571,7 +600,6 @@ void loadStoreValue(TraceContext* tracer) {
     value = value + 10;
     address.store(value);
 }
-
 
 TEST_F(InterpreterTest, loadStoreValueTest) {
 

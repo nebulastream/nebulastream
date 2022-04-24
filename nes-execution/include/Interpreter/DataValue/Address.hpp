@@ -1,5 +1,6 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ADDRESS_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ADDRESS_HPP_
+#include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/Value.hpp>
 namespace NES::Interpreter {
 
@@ -14,6 +15,13 @@ class Address {
     }
 
     void store(Value& value) { tc->trace(STORE, addressValue, value, value); };
+
+    void* getPtr() {
+        auto val = cast<Integer>(addressValue.value);
+        return (void*) val->value;
+    }
+
+    Value& getAddress() { return addressValue; }
 
   private:
     TraceContext* tc;
