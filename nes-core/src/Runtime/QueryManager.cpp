@@ -83,7 +83,8 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                            numThreads,
                            std::move(hardwareManager),
                            stateManager,
-                           std::move(workerToCoreMapping)) {
+                           std::move(workerToCoreMapping)),
+      numberOfQueues(numberOfQueues){
 
     NES_DEBUG("QueryManger: use static mode for numberOfQueues=" << numberOfQueues << " numThreads=" << numThreads
                                                                  << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue);

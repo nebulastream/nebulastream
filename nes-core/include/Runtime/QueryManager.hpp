@@ -623,7 +623,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
 
   private:
     std::vector<folly::MPMCQueue<Task>> taskQueues;
-    uint16_t numberOfQueues;
+    uint16_t numberOfQueues = 1;
     uint16_t numberOfThreadsPerQueue;
     std::unordered_map<QuerySubPlanId, uint64_t> queryToTaskQueueIdMap;
     std::atomic<uint64_t> currentTaskQueueId = 0;
