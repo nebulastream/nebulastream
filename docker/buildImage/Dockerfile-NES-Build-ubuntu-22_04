@@ -23,8 +23,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     graphviz \
     libbsd-dev \
     cmake \
-    software-properties-common \
-    && apt-get clean -qq
+    software-properties-common
 
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
