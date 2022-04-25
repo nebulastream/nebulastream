@@ -115,39 +115,12 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             (!this->partitionManager) ? std::make_shared<Network::PartitionManager>() : this->partitionManager;
         auto hardwareManager = (!this->hardwareManager) ? std::make_shared<Runtime::HardwareManager>() : this->hardwareManager;
         std::vector<BufferManagerPtr> bufferManagers;
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-        if (workerConfiguration->numaAwareness.getValue()) {
-            auto numberOfBufferPerNumaNode =
-                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue() / hardwareManager->getNumberOfNumaRegions();
-            NES_ASSERT2_FMT(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue() < numberOfBufferPerNumaNode,
-                            "The number of buffer for each numa node: "
-                                << numberOfBufferPerNumaNode << " is lower than the fixed size pool: "
-                                << workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
-            NES_ASSERT2_FMT(workerConfiguration->numberOfBuffersPerWorker.getValue() < numberOfBufferPerNumaNode,
-                            "The number of buffer for each numa node: "
-                                << numberOfBufferPerNumaNode << " is lower than the pipeline pool: "
-                                << workerConfiguration->numberOfBuffersPerWorker.getValue());
-            for (auto i = 0u; i < hardwareManager->getNumberOfNumaRegions(); ++i) {
-                bufferManagers.push_back(std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-                                                                         numberOfBufferPerNumaNode,
-                                                                         hardwareManager->getNumaAllocator(i)));
-            }
-        } else {
-            bufferManagers.push_back(
-                std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-                                                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
-                                                hardwareManager->getGlobalAllocator()));
-        }
-#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
-        NES_WARNING("Numa flags " << int(!workerConfiguration->numaAwareness.getValue()));
 
         //get the list of queue where to pin from the config
-        std::vector<uint64_t> queuePinListMapping =
-            Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->queuePinList.getValue(), ",");
-        auto numberOfQueues = Util::numberOfUniqueValues(queuePinListMapping);
+        auto numberOfQueues = workerConfiguration->numberOfQueues.getValue();
 
         //create one buffer manager per queue
-        if (numberOfQueues == 0) {
+        if (numberOfQueues == 1) {
             bufferManagers.push_back(
                 std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
                                                 workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -160,17 +133,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                     hardwareManager->getGlobalAllocator()));
             }
         }
-#else
-        if (!this->bufferManagers.empty()) {
-            bufferManagers = this->bufferManagers;
-        } else {
-            NES_WARNING("Numa flags " << int(!workerConfiguration->numaAwareness.getValue()) << " are ignored");
-            bufferManagers.push_back(
-                std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-                                                workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
-                                                hardwareManager->getGlobalAllocator()));
-        }
-#endif
+
         if (bufferManagers.empty()) {
             NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
             throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided",
