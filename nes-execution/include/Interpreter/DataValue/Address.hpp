@@ -3,10 +3,10 @@
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/Value.hpp>
 namespace NES::Interpreter {
-
+/*
 class Address {
   public:
-    Address(TraceContext* tc, Value addressValue) : tc(tc), addressValue(std::move(addressValue)){};
+    Address(Value addressValue) : tc(tc), addressValue(std::move(addressValue)){};
     Value load() {
         auto intValue = std::make_unique<Integer>(10);
         Value result = Value(std::move(intValue), tc);
@@ -27,6 +27,6 @@ class Address {
     TraceContext* tc;
     Value addressValue;
 };
-
+*/
 }// namespace NES::Interpreter
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ADDRESS_HPP_

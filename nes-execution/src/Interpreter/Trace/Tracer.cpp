@@ -1,6 +1,6 @@
 #include <Interpreter/DataValue/Boolean.hpp>
 #include <Interpreter/DataValue/Value.hpp>
-#include <Interpreter/Tracer.hpp>
+#include <Interpreter/Trace/Tracer.hpp>
 #include <Interpreter/Util/Casting.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <execinfo.h>
@@ -240,23 +240,6 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     return mergeBlock;
 }
 
-void TraceContext::trace(OpCode op, const Value& left, const Value& right, Value& result) {
-    auto operation = Operation(op, result.ref, {left.ref, right.ref});
-    trace(operation);
-}
-
-void TraceContext::trace(OpCode op, const Value& input, Value& result) {
-    if (op == OpCode::CONST) {
-        auto constValue = input.value->copy();
-        auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
-        trace(operation);
-    } else if (op == CMP) {
-        traceCMP(input.ref, cast<Boolean>(result.value)->value);
-    } else {
-        auto operation = Operation(op, result.ref, {input.ref});
-        trace(operation);
-    }
-}
 
 bool TraceContext::isExpectedOperation(OpCode opCode) {
     auto& currentBlock = executionTrace.getCurrentBlock();

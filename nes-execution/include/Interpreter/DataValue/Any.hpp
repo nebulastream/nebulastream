@@ -21,6 +21,24 @@ class Any : public TypeCastable {
     Any(Kind k) : TypeCastable(k){};
 };
 
+template<class X, class Y>
+    requires(std::is_same<Any, X>::value)
+inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& value) {
+    // copy value value
+    return value->copy();
+}
+
+
+template<class X, class Y>
+    requires(std::is_base_of<Y, X>::value == true && std::is_same<Any, X>::value == false ) inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& value) {
+    // copy value value
+    Y* anyVal = value.get();
+    X* intValue = static_cast<X*>(anyVal);
+    return std::make_unique<X>(*intValue);
+    //return std::unique_ptr<X>{static_cast<X*>(value.get())};
+}
+
+
 }// namespace NES::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ANY_HPP_

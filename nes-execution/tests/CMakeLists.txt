@@ -15,9 +15,14 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
-add_executable(interpreter-test "UnitTests/Execution/InterpreterTest.cpp")
-target_link_libraries(interpreter-test ${GTEST_LIBRARIES} nes-execution)
-add_test(NAME interpreter-test COMMAND interpreter-test)
+add_executable(value-test "UnitTests/Execution/ValueTest.cpp")
+target_link_libraries(value-test ${GTEST_LIBRARIES} nes-execution)
+add_test(NAME value-test COMMAND value-test)
+
+#add_executable(interpreter-test "UnitTests/Execution/InterpreterTest.cpp")
+#target_link_libraries(interpreter-test ${GTEST_LIBRARIES} nes-execution)
+#add_test(NAME interpreter-test COMMAND interpreter-test)
+
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 

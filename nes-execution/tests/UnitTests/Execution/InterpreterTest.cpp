@@ -59,6 +59,11 @@ class TestObject {
 };
 
 TEST_F(InterpreterTest, functionCallTest) {
+
+    auto intValue = std::make_unique<Integer>(42);
+
+    std::unique_ptr<Any> anyValue = std::move(intValue);
+
     auto value = FunctionCall(callNoArgs);
     ASSERT_EQ(value, 42);
     auto res = FunctionCall(add, (uint64_t) 10, (uint64_t) 11);

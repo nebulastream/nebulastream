@@ -7,57 +7,9 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <Interpreter/Trace/Tag.hpp>
+#include <Interpreter/Trace/ValueRef.hpp>
 namespace NES::Interpreter {
-
-class Value;
-
-class Tag {
-  public:
-    bool operator==(const Tag& other) const { return other.addresses == addresses; }
-    friend std::ostream& operator<<(std::ostream& os, const Tag& tag);
-    std::vector<uint64_t> addresses;
-};
-
-struct TagHasher {
-    std::size_t operator()(const Tag& k) const {
-        using std::hash;
-        using std::size_t;
-        using std::string;
-        auto hasher = std::hash<uint64_t>();
-        std::size_t hashVal = 1;
-        for (auto address : k.addresses) {
-            hashVal = hashVal ^ hasher(address) << 1;
-        }
-        return hashVal;
-    }
-};
-
-enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN, LOAD, STORE };
-
-class ValueRef {
-  public:
-    ValueRef() : blockId(), operationId(){};
-    ValueRef(uint32_t blockId, uint32_t operationId) : blockId(blockId), operationId(operationId){};
-    ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId) {}
-    ValueRef& operator=(const ValueRef& other) {
-        this->operationId = other.operationId;
-        this->blockId = other.blockId;
-        return *this;
-    }
-    uint32_t blockId;
-    uint32_t operationId;
-    bool operator==(const ValueRef& rhs) const;
-    bool operator!=(const ValueRef& rhs) const;
-    friend std::ostream& operator<<(std::ostream& os, const ValueRef& tag);
-};
-
-struct ValueRefHasher {
-    std::size_t operator()(const ValueRef& k) const {
-        auto hasher = std::hash<uint64_t>();
-        std::size_t hashVal = hasher(k.operationId) ^ hasher(k.blockId);
-        return hashVal;
-    }
-};
 
 class ConstantValue {
   public:
@@ -175,8 +127,8 @@ class TraceContext {
         executionTrace.tagMap.merge(executionTrace.localTagMap);
         executionTrace.localTagMap.clear();
     };
-    void trace(OpCode op, const Value& left, const Value& right, Value& result);
-    void trace(OpCode op, const Value& input, Value& result);
+   // void trace(OpCode op, const Value& left, const Value& right, Value& result);
+   // void trace(OpCode op, const Value& input, Value& result);
     void trace(Operation& operation);
     void traceCMP(const ValueRef& valueRef, bool result);
     bool isExpectedOperation(OpCode operation);
@@ -201,18 +153,29 @@ ExecutionTrace traceFunction(Functor func) {
     tracer.trace(result);
     return tracer.getExecutionTrace();
 }
-
-inline void Trace(TraceContext* ctx, OpCode type, const Value& left, const Value& right, Value& result) {
+/**
+void Trace(OpCode op, const Value& left, const Value& right, Value& result) {
     if (ctx != nullptr) {
-        ctx->trace(type, left, right, result);
+        auto operation = Operation(op, result.ref, {left.ref, right.ref});
+        ctx->trace(operation);
     }
 }
 
-inline void Trace(TraceContext* ctx, OpCode type, const Value& input, Value& result) {
+void Trace(OpCode op, const Value& input, Value& result) {
     if (ctx != nullptr) {
-        ctx->trace(type, input, result);
+        if (op == OpCode::CONST) {
+            auto constValue = input.value->copy();
+            auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
+            ctx->trace(operation);
+        } else if (op == CMP) {
+            ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
+        } else {
+            auto operation = Operation(op, result.ref, {input.ref});
+            ctx->trace(operation);
+        }
     }
 }
+ */
 
 }// namespace NES::Interpreter
 
