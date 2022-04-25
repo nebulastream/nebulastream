@@ -223,7 +223,9 @@ class NonBlockingMonotonicSeqQueue {
     }
 
   private:
+    // Stores a reference to the current block
     std::shared_ptr<Block> head;
+    // Stores the current sequence number
     std::atomic<uint64_t> currentSeq;
 };
 
