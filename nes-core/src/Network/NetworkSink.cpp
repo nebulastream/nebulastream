@@ -32,17 +32,20 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
-                         FaultToleranceType faultToleranceType)
+                         FaultToleranceType faultToleranceType,
+                         uint64_t numberOfOrigins)
     : inherited0(std::make_shared<NesFormat>(schema, Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
                  nodeEngine,
                  numOfProducers,
                  queryId,
-                 querySubPlanId),
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), faultToleranceType(faultToleranceType) {
+      numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());
 }

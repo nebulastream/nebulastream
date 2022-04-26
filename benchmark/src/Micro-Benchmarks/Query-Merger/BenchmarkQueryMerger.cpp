@@ -306,7 +306,7 @@ int main(int argc, const char* argv[]) {
                 //Fetch the global query plan and count the number of operators produced post merging the queries
                 auto gqp = coordinator->getGlobalQueryPlan();
                 auto allSQP = gqp->getAllSharedQueryPlans();
-                std::cout << "Number of Sources : " << gqp->sourceNamesToSharedQueryPlanMap.size() << std::endl;
+                std::cout << "Number of Origins : " << gqp->sourceNamesToSharedQueryPlanMap.size() << std::endl;
                 uint64_t mergedOperators = 0;
                 for (auto sqp : allSQP) {
                     unsigned long planSize = QueryPlanIterator(sqp->getQueryPlan()).snapshot().size();

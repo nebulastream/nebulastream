@@ -20,6 +20,8 @@
 
 namespace NES {
 
+using EpochId = int;
+
 /**
  * @brief: This class is located at the coordinator side and responsible for notifying all sources that participate in the query about current
  * epoch barrier. It saves current  For the given query id it finds logical sources and maps them to the physical ones. For every physical source it creates
@@ -43,7 +45,7 @@ class ReplicationService {
      * @param queryId current query id
      * @return current epoch barrier
      */
-    int getCurrentEpochBarrier(uint64_t queryId) const;
+    EpochId getCurrentEpochBarrier(uint64_t queryId) const;
 
   private:
     /**

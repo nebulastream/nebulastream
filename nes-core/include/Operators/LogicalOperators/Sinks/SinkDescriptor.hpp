@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
 
+#include <Util/FaultToleranceType.hpp>
 #include <memory>
 
 namespace NES {
@@ -28,7 +29,7 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    SinkDescriptor() = default;
+    explicit SinkDescriptor(FaultToleranceType faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfOrigins = 1);
 
     virtual ~SinkDescriptor() = default;
 
@@ -46,6 +47,18 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     };
 
     /**
+     * @brief getter for fault-tolerance type
+     * @return fault-tolerance type
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
+    /**
+     * @brief getter for number of origins
+     * @return number of origins
+     */
+    uint64_t getNumberOfOrigins() const;
+
+    /**
     * @brief Dynamically casts the node to a NodeType
     * @tparam NodeType
     * @return returns a shared pointer of the NodeType
@@ -57,8 +70,13 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
         }
         throw std::bad_cast();
     }
+
     virtual std::string toString() = 0;
     [[nodiscard]] virtual bool equal(SinkDescriptorPtr const& other) = 0;
+
+  protected:
+    FaultToleranceType faultToleranceType;
+    uint64_t numberOfOrigins;
 };
 
 }// namespace NES

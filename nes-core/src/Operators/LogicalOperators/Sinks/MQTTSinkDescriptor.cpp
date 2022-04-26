@@ -26,10 +26,10 @@ MQTTSinkDescriptor::MQTTSinkDescriptor(std::string&& address,
                                        const ServiceQualities qualityOfService,
                                        bool asynchronousClient,
                                        FaultToleranceType faultToleranceType,
-                                       uint64_t numberOfSources)
-    : address(std::move(address)), clientId(std::move(clientId)), topic(std::move(topic)), user(std::move(user)),
-      maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
-      asynchronousClient(asynchronousClient), faultToleranceType(faultToleranceType), numberOfSources(numberOfSources) {}
+                                       uint64_t numberOfOrigins)
+    : SinkDescriptor(faultToleranceType, numberOfOrigins), address(std::move(address)), clientId(std::move(clientId)),
+      topic(std::move(topic)), user(std::move(user)), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
+      messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient) {}
 
 std::string MQTTSinkDescriptor::getAddress() const { return address; }
 
@@ -51,7 +51,7 @@ bool MQTTSinkDescriptor::getAsynchronousClient() const { return asynchronousClie
 
 FaultToleranceType MQTTSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
-uint64_t MQTTSinkDescriptor::getNumberOfSources() const { return numberOfSources; }
+uint64_t MQTTSinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 
 SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              std::string&& topic,
@@ -63,7 +63,7 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              bool asynchronousClient,
                                              std::string&& clientId,
                                              FaultToleranceType faultToleranceType,
-                                             uint64_t numberOfSources) {
+                                             uint64_t numberOfOrigins) {
     return std::make_shared<MQTTSinkDescriptor>(std::move(address),
                                                 std::move(clientId),
                                                 std::move(topic),
@@ -74,7 +74,7 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                                 qualityOfService,
                                                 asynchronousClient,
                                                 faultToleranceType,
-                                                numberOfSources);
+                                                numberOfOrigins);
 }
 
 std::string MQTTSinkDescriptor::toString() { return "MQTTSinkDescriptor()"; }

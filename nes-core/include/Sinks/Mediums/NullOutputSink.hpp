@@ -37,7 +37,9 @@ class NullOutputSink : public SinkMedium {
     explicit NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,
                             QueryId queryId,
-                            QuerySubPlanId querySubPlanId);
+                            QuerySubPlanId querySubPlanId,
+                            FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                            uint64_t numberOfOrigins = 1);
 
     /**
      * @brief destructor
