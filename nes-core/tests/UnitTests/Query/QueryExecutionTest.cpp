@@ -53,7 +53,10 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
+#ifdef PYTHON_UDF_ENABLED
 #include "Python.h"
+#endif
+
 using namespace NES;
 using Runtime::TupleBuffer;
 
@@ -1087,7 +1090,12 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
+/**
+ * The ExternalOperatorQuery test and PythonUDFPipelineStage class
+ * invoke the python interpreter and will fail if python UDF are not enabled
+ */
+#ifdef PYTHON_UDF_ENABLED
+class PythonUDFPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
     struct InputRecord {
         int64_t test$id;
@@ -1113,6 +1121,7 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
         if (pyModule != nullptr) {
             pyFunc = PyObject_GetAttrString(pyModule, pyFuncName);
             if (pyFunc && PyCallable_Check(pyFunc)) {
+                // Iterate over tuples and add 42 to test$value via python UDF
                 for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
                     pyArgs = PyTuple_New(1);
                     pyValue = PyLong_FromLong(record[i].test$value);
@@ -1122,8 +1131,8 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
                         NES_ERROR("Unable to convert value");
                     }
                     PyTuple_SetItem(pyArgs, 0, pyValue);
+                    // The python function call happens here
                     pyValue = PyObject_CallObject(pyFunc, pyArgs);
-                    //TODO: Fix reference counting, right now we're deferencing after each python call
                     Py_DECREF(pyArgs);
                     if (pyValue != nullptr) {
                         record[i].test$value = PyLong_AsLong(pyValue);
@@ -1148,7 +1157,6 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
             NES_ERROR( "Failed to load " << pyUDFName);
             return ExecutionResult::Error;
         }
-
         ctx.emitBuffer(buffer, wc);
         if (Py_FinalizeEx() < 0) {
             return ExecutionResult::Ok;
@@ -1187,7 +1195,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
 
-    auto customPipelineStage = std::make_shared<CustomPipelineStageOne>();
+    auto customPipelineStage = std::make_shared<PythonUDFPipelineStage>();
     auto externalOperator =
         NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 
@@ -1232,3 +1240,4 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
     testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
+#endif
