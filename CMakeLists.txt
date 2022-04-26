@@ -208,12 +208,14 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
-# Add Python
-option(ENABLE_PYTHON "Build using python" ON)
-if (ENABLE_PYTHON)
-    message(STATUS "Python enabled")
+# Add Python UDF support
+option(ENABLE_PYTHON_UDF "Build supporting python UDF" OFF)
+message(STATUS "Python UDF support: ${ENABLE_PYTHON_UDF}")
+if (ENABLE_PYTHON_UDF)
+    add_compile_definitions(PYTHON_UDF_ENABLED)
     find_package(PythonLibs REQUIRED)
     include_directories(${PYTHON_INCLUDE_DIRS})
+    # Python needs to link against libutil. "python3-config --ldflags" will give the recommended flags
     set(LIBRARIES ${LIBRARIES} ${PYTHON_LIBRARIES} -lutil)
 endif()
 
