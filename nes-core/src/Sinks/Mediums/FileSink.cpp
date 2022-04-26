@@ -32,14 +32,14 @@ FileSink::FileSink(SinkFormatPtr format,
                    QueryId queryId,
                    QuerySubPlanId querySubPlanId,
                    FaultToleranceType faultToleranceType,
-                   uint64_t numberOfSources)
+                   uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfSources) {
+                 numberOfOrigins) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {

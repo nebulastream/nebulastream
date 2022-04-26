@@ -20,25 +20,25 @@ namespace NES {
 
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName) {
     return std::make_shared<FileSinkDescriptor>(
-        FileSinkDescriptor(std::move(fileName), "TEXT_FORMAT", false, FaultToleranceType::NONE, 0));
+        FileSinkDescriptor(std::move(fileName), "TEXT_FORMAT", false, FaultToleranceType::NONE, 1));
 }
 
 SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName,
                                              std::string sinkFormat,
                                              const std::string& append,
                                              FaultToleranceType faultToleranceType,
-                                             uint64_t numberOfSources) {
+                                             uint64_t numberOfOrigins) {
     return std::make_shared<FileSinkDescriptor>(
-        FileSinkDescriptor(std::move(fileName), std::move(sinkFormat), append == "APPEND", faultToleranceType, numberOfSources));
+        FileSinkDescriptor(std::move(fileName), std::move(sinkFormat), append == "APPEND", faultToleranceType, numberOfOrigins));
 }
 
 FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
                                        std::string sinkFormat,
                                        bool append,
                                        FaultToleranceType faultToleranceType,
-                                       uint64_t numberOfSources)
-    : fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)), append(append), faultToleranceType(faultToleranceType),
-      numberOfSources(numberOfSources) {}
+                                       uint64_t numberOfOrigins)
+    : SinkDescriptor(faultToleranceType, numberOfOrigins), fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)),
+      append(append) {}
 
 const std::string& FileSinkDescriptor::getFileName() const { return fileName; }
 
@@ -55,9 +55,5 @@ bool FileSinkDescriptor::equal(SinkDescriptorPtr const& other) {
 bool FileSinkDescriptor::getAppend() const { return append; }
 
 std::string FileSinkDescriptor::getSinkFormatAsString() { return sinkFormat; }
-
-FaultToleranceType FileSinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
-
-uint64_t FileSinkDescriptor::getNumberOfSources() const { return numberOfSources; }
 
 }// namespace NES

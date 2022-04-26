@@ -41,7 +41,7 @@ class MQTTSink : public SinkMedium {
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @param faultToleranceType: fault-tolerance guarantee chosen by a user
-     * @param numberOfSources: number of sources of a given query
+     * @param numberOfOrigins: number of origins of a given query
      * @return MQTT sink
      */
     // TODO change MSGS to Messages
@@ -60,7 +60,7 @@ class MQTTSink : public SinkMedium {
                       MQTTSinkDescriptor::ServiceQualities qualityOfService,
                       bool asynchronousClient,
                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                      uint64_t numberOfSources = 0);
+                      uint64_t numberOfOrigins = 1);
     ~MQTTSink() NES_NOEXCEPT(false) override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;

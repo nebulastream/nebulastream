@@ -35,7 +35,7 @@ class FileSink : public SinkMedium {
      * @param filePath location of file on sink server
      * @param modus of writting (overwrite or append)
      * @param faultToleranceType: fault tolerance type of a query
-     * @param numberOfSources: number of sources of a given query
+     * @param numberOfOrigins: number of origins of a given query
      */
     explicit FileSink(SinkFormatPtr format,
                       Runtime::NodeEnginePtr nodeEngine,
@@ -45,7 +45,7 @@ class FileSink : public SinkMedium {
                       QueryId queryId,
                       QuerySubPlanId querySubPlanId,
                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                      uint64_t numberOfSources = 0);
+                      uint64_t numberOfOrigins = 1);
 
     /**
      * @brief dtor

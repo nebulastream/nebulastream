@@ -28,14 +28,14 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      QuerySubPlanId querySubPlanId,
                      std::ostream& pOutputStream,
                      FaultToleranceType faultToleranceType,
-                     uint64_t numberOfSources)
+                     uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfSources),
+                 numberOfOrigins),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;

@@ -33,7 +33,7 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr
-    create(uint64_t viewId, FaultToleranceType faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfSources = 0);
+    create(uint64_t viewId, FaultToleranceType faultToleranceType = FaultToleranceType::NONE, uint64_t numberOfOrigins = 1);
 
     /**
      * @brief returns the string representation of the network sink
@@ -61,16 +61,14 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
     FaultToleranceType getFaultToleranceType() const;
 
     /**
-     * @brief getter for number of sources
-     * @return number of sources
+     * @brief getter for number of origins
+     * @return number of origins
      */
-    uint64_t getNumberOfSources() const;
+    uint64_t getNumberOfOrigins() const;
 
   private:
-    MaterializedViewSinkDescriptor(uint64_t viewId, FaultToleranceType faultToleranceType, uint64_t numberOfSources);
+    MaterializedViewSinkDescriptor(uint64_t viewId, FaultToleranceType faultToleranceType, uint64_t numberOfOrigins);
     uint64_t viewId;
-    FaultToleranceType faultToleranceType;
-    uint64_t numberOfSources;
 };
 using MaterializedViewSinkDescriptorPtr = std::shared_ptr<MaterializedViewSinkDescriptor>;
 }// namespace NES::Experimental::MaterializedView

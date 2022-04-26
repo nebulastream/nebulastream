@@ -51,11 +51,17 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    numOfProducers,
                                    std::cout,
                                    printSinkDescriptor->getFaultToleranceType(),
-                                   printSinkDescriptor->getNumberOfSources());
+                                   printSinkDescriptor->getNumberOfOrigins());
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
+        const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
-        return createNullOutputSink(querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine, numOfProducers);
+        return createNullOutputSink(querySubPlan->getQueryId(),
+                                    querySubPlan->getQuerySubPlanId(),
+                                    nodeEngine,
+                                    numOfProducers,
+                                    nullOutputSinkDescriptor->getFaultToleranceType(),
+                                    nullOutputSinkDescriptor->getNumberOfOrigins());
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
@@ -68,7 +74,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    zmqSinkDescriptor->getPort(),
                                    zmqSinkDescriptor->isInternal(),
                                    zmqSinkDescriptor->getFaultToleranceType(),
-                                   zmqSinkDescriptor->getNumberOfSources());
+                                   zmqSinkDescriptor->getNumberOfOrigins());
     }
 #ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
@@ -118,7 +124,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                               mqttSinkDescriptor->getQualityOfService(),
                               mqttSinkDescriptor->getAsynchronousClient(),
                               mqttSinkDescriptor->getFaultToleranceType(),
-                              mqttSinkDescriptor->getNumberOfSources());
+                              mqttSinkDescriptor->getNumberOfOrigins());
     }
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
@@ -134,7 +140,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                      fileSinkDescriptor->getFileName(),
                                      fileSinkDescriptor->getAppend(),
                                      fileSinkDescriptor->getFaultToleranceType(),
-                                     fileSinkDescriptor->getNumberOfSources());
+                                     fileSinkDescriptor->getNumberOfOrigins());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
             return createBinaryNESFileSink(schema,
                                            querySubPlan->getQueryId(),
@@ -144,7 +150,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                            fileSinkDescriptor->getFileName(),
                                            fileSinkDescriptor->getAppend(),
                                            fileSinkDescriptor->getFaultToleranceType(),
-                                           fileSinkDescriptor->getNumberOfSources());
+                                           fileSinkDescriptor->getNumberOfOrigins());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
             return createTextFileSink(schema,
                                       querySubPlan->getQueryId(),
@@ -154,7 +160,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                       fileSinkDescriptor->getFileName(),
                                       fileSinkDescriptor->getAppend(),
                                       fileSinkDescriptor->getFaultToleranceType(),
-                                      fileSinkDescriptor->getNumberOfSources());
+                                      fileSinkDescriptor->getNumberOfOrigins());
         } else {
             NES_ERROR("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");
@@ -172,6 +178,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  numOfProducers,
                                  networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getFaultToleranceType(),
+                                 networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes());
     } else if (sinkDescriptor->instanceOf<NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating materialized view sink");
@@ -185,7 +192,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             querySubPlan->getQuerySubPlanId(),
             materializedViewSinkDescriptor->getViewId(),
             materializedViewSinkDescriptor->getFaultToleranceType(),
-            materializedViewSinkDescriptor->getNumberOfSources());
+            materializedViewSinkDescriptor->getNumberOfOrigins());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");

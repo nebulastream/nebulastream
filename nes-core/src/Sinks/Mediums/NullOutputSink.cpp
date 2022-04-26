@@ -23,14 +23,21 @@ namespace NES {
 NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                QueryId queryId,
-                               QuerySubPlanId querySubPlanId)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId) {}
+                               QuerySubPlanId querySubPlanId,
+                               FaultToleranceType faultToleranceType,
+                               uint64_t numberOfOrigins)
+    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins) {}
 
 NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) { return true; }
+bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermark(inputBuffer);
+    }
+    return true;
+}
 
 std::string NullOutputSink::toString() const {
     std::stringstream ss;

@@ -29,11 +29,11 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        QueryId queryId,
                        QuerySubPlanId querySubPlanId,
                        FaultToleranceType faultToleranceType,
-                       uint64_t numberOfSources)
+                       uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
-      querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfSources(numberOfSources) {
-    if (numberOfSources > 0) {
-        watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfSources);
+      querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
+    if (numberOfOrigins > 0) {
+        watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins);
     }
     bufferCount = 0;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");

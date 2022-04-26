@@ -40,7 +40,7 @@ class MaterializedViewSink : public SinkMedium {
                          QueryId queryId,
                          QuerySubPlanId parentPlanId,
                          FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                         uint64_t numberOfSources = 0);
+                         uint64_t numberOfOrigins = 1);
 
     /**
      * @brief setup method for materialized view sink

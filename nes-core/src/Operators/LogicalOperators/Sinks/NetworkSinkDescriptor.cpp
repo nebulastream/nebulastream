@@ -22,21 +22,24 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              std::chrono::milliseconds waitTime,
                                              uint32_t retryTimes,
                                              FaultToleranceType faultToleranceType,
-                                             uint64_t uniqueNetworkSinkDescriptorId)
-    : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes),
-      faultToleranceType(faultToleranceType), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId) {}
+                                             uint64_t uniqueNetworkSinkDescriptorId,
+                                             uint64_t numberOfOrigins)
+    : SinkDescriptor(faultToleranceType, numberOfOrigins), nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition),
+      waitTime(waitTime), retryTimes(retryTimes), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
                                                 FaultToleranceType faultToleranceType,
+                                                uint64_t numberOfOrigins,
                                                 uint64_t uniqueNetworkSinkOperatorId) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(std::move(nodeLocation),
                                                                          nesPartition,
                                                                          waitTime,
                                                                          retryTimes,
                                                                          faultToleranceType,
+                                                                         numberOfOrigins,
                                                                          uniqueNetworkSinkOperatorId));
 }
 

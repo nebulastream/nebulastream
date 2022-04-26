@@ -32,14 +32,14 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      * @param port: port number for connecting to zmq
      * @param internal: defines if the zmq should send the message schema as a first message
      * @param faultToleranceType: fault tolerance type of a query
-     * @param numberOfSources: number of sources of a given query
+     * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for ZMQ sink
      */
     static SinkDescriptorPtr create(std::string host,
                                     uint16_t port,
                                     bool internal = false,
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                    uint64_t numberOfSources = 0);
+                                    uint64_t numberOfOrigins = 1);
 
     /**
      * @brief Get the zmq address where the data is to be written
@@ -70,23 +70,21 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     std::string toString() override;
 
     /**
-     * @brief getter for number of sources
-     * @return number of sources
+     * @brief getter for number of origins
+     * @return number of origins
      */
-    uint64_t getNumberOfSources() const;
+    uint64_t getNumberOfOrigins() const;
 
   private:
     explicit ZmqSinkDescriptor(std::string host,
                                uint16_t port,
                                bool internal,
                                FaultToleranceType faultToleranceType,
-                               uint64_t numberOfSources);
+                               uint64_t numberOfOrigins);
 
     std::string host;
     uint16_t port;
     bool internal;
-    FaultToleranceType faultToleranceType;
-    uint64_t numberOfSources;
 };
 
 using ZmqSinkDescriptorPtr = std::shared_ptr<ZmqSinkDescriptor>;

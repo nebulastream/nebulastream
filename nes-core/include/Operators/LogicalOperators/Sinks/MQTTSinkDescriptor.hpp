@@ -39,7 +39,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @param faultToleranceType: fault tolerance type of a query
-     * @param numberOfSources: number of sources of a given query
+     * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for MQTT sink
      */
     static SinkDescriptorPtr create(std::string&& address,
@@ -52,7 +52,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                     bool asynchronousClient,
                                     std::string&& clientId = "",
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                    uint64_t numberOfSources = 0);
+                                    uint64_t numberOfOrigins = 1);
 
     /**
      * @brief get address information from a MQTT sink client
@@ -115,10 +115,10 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     FaultToleranceType getFaultToleranceType() const;
 
     /**
-     * @brief getter for number of sources
-     * @return number of sources
+     * @brief getter for number of origins
+     * @return number of origins
      */
-    uint64_t getNumberOfSources() const;
+    uint64_t getNumberOfOrigins() const;
 
     [[nodiscard]] std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
@@ -135,7 +135,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @param faultToleranceType: fault tolerance type of a query
-     * @param numberOfSources: number of sources of a given query
+     * @param numberOfOrigins: number of origins of a given query
      * @return MQTT sink
      */
     explicit MQTTSinkDescriptor(std::string&& address,
@@ -148,7 +148,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                 ServiceQualities qualityOfService,
                                 bool asynchronousClient,
                                 FaultToleranceType faultToleranceType,
-                                uint64_t numberOfSources);
+                                uint64_t numberOfOrigins);
 
   private:
     std::string address;
@@ -160,8 +160,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     uint64_t messageDelay;
     ServiceQualities qualityOfService;
     bool asynchronousClient;
-    FaultToleranceType faultToleranceType;
-    uint64_t numberOfSources;
 };
 
 using MQTTSinkDescriptorPtr = std::shared_ptr<MQTTSinkDescriptor>;

@@ -42,7 +42,7 @@ class PrintSink : public SinkMedium {
               QueryId queryId,
               std::ostream& pOutputStream = std::cout,
               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-              uint64_t numberOfSources = 0);
+              uint64_t numberOfOrigins = 1);
 
     /**
      * @brief destructor

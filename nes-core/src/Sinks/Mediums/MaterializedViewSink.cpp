@@ -24,14 +24,14 @@ MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
                                            QueryId queryId,
                                            QuerySubPlanId parentPlanId,
                                            FaultToleranceType faultToleranceType,
-                                           uint64_t numberOfSources)
+                                           uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  queryId,
                  parentPlanId,
                  faultToleranceType,
-                 numberOfSources),
+                 numberOfOrigins),
       view(std::move(view)){};
 
 // It is somehow requiered to clear the view at the sink shoutdown due to NES's memory management

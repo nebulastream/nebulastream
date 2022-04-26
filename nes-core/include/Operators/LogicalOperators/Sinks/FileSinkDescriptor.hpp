@@ -32,14 +32,14 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param schema output schema of this sink descriptor
      * @param filePath the path to the output file
      * @param faultToleranceType: fault tolerance type of a query
-     * @param numberOfSources: number of sources of a given query
+     * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for file sink
      */
     static SinkDescriptorPtr create(std::string fileName,
                                     std::string sinkFormat,
                                     const std::string& append,
                                     FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                                    uint64_t numberOfSources = 0);
+                                    uint64_t numberOfOrigins = 1);
 
     /**
      * @brief Factory method to create a new file sink descriptor as default
@@ -61,29 +61,15 @@ class FileSinkDescriptor : public SinkDescriptor {
 
     bool getAppend() const;
 
-    /**
-     * @brief getter for fault-tolerance type
-     * @return fault-tolerance type
-     */
-    FaultToleranceType getFaultToleranceType() const;
-
-    /**
-     * @brief getter for number of sources
-     * @return number of sources
-     */
-    uint64_t getNumberOfSources() const;
-
   private:
     explicit FileSinkDescriptor(std::string fileName,
                                 std::string sinkFormat,
                                 bool append,
                                 FaultToleranceType faultToleranceType,
-                                uint64_t numberOfSources);
+                                uint64_t numberOfOrigins);
     std::string fileName;
     std::string sinkFormat;
     bool append;
-    FaultToleranceType faultToleranceType;
-    uint64_t numberOfSources;
 };
 
 using FileSinkDescriptorPtr = std::shared_ptr<FileSinkDescriptor>;
