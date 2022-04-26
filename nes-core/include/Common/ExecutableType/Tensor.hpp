@@ -24,70 +24,104 @@ namespace NES::ExecutableTypes {
 //Todo: add checks: dimensions, out of bounds, etc.
 //Todo: add iterators
 
-template<typename T, std::size_t dimension = 1, typename = std::enable_if_t<!std::is_pointer_v<T> && std::is_arithmetic_v<T>>>
-class Tensor : public NESType {
+template<typename T, std::size_t numberOfDimensions, std::size_t totalSize, typename = std::enable_if_t<!std::is_pointer_v<T> && std::is_arithmetic_v<T>>>
+class Tensor : public Array<T, numberOfDimensions> {
   public:
-    /*
-     * @brief Public, externally visible data type of this tensor
+    /**
+     * Public, externally visible type of this tensor
      */
     using type = T;
-
+    /**
+     * @brief Public, externally visible shape of this tensor
+     */
+    size_t shape[numberOfDimensions];
     /**
      * @brief default constructor
      */
     Tensor() = default;
 
     /**
-     * constructor for a tensor
+     * @brief: constructor for tensor
      * @tparam Dims
-     * @param ds
+     * @param dims inputted dimensions for constructing the tensor
      */
     template<typename... Dims>
-    Tensor(Dims... ds) : size(1) {
-        create(1, ds...);
+    Tensor(Dims... dims) {
+        create(1, dims...);
     }
-
+    /**
+     * @brief [] operator for indexing and obtaining the correct tensor values
+     * @tparam Dims
+     * @param dims inputted dimensions vars where we want to obtain the saved value for
+     * @return obtain saved value at given index
+     */
     template<typename... Dims>
-    T& operator()(Dims... ds) const {
-        return pointer[getIndex(1, ds...)];
+    T& operator[](Dims... dims) const {
+        return tensor->at(getIndex(1, dims...));
     }
-    size_t getSize(size_t s = 1) const { return shape[s - 1]; }
 
   private:
     /**
-     * @brief private, points to the base of the multidimensional array
+     * @brief private container for allocated tensor memory
      */
-    std::unique_ptr<T[]> pointer;
+    std::shared_ptr<Array<T, totalSize>> tensor;
 
     /**
-     * @brief non initialized shape of the array
+     * @brief total size for the underlying array
      */
-    std::size_t shape[dimension];
+    static constexpr size_t realSize = totalSize;
 
     /**
-     * @brief non intiialized number of dimensions
+     * @brief method for creating a dense tensor
+     * @tparam Dims
+     * @param currentDim
+     * @param sizeCurrentDim
+     * @param remainingDims
      */
-    std::size_t size;
-
     template<typename... Dims>
-    void create(size_t s, size_t d, Dims... ds) {
-        size *= d;
-        shape[s - 1] = d;
-        create(s + 1, ds...);
+    void create(size_t currentDim, size_t sizeCurrentDim, Dims... remainingDims) {
+        shape[currentDim - 1] = sizeCurrentDim;
+        create(currentDim + 1, remainingDims...);
     }
-    void create(size_t s) { pointer = std::unique_ptr<T[]>(new T[size]); }
-    int computeSubSize(size_t s) const {
-        if (s == dimension) {
+    /**
+     * @brief method for creating a dense tensor from an underlying array
+     * @param currentDimension
+     */
+    void create(size_t currentDimension) {
+        tensor = std::make_shared<Array<T, realSize>>();
+    }
+    /**
+     * @brief
+     * @param currentDim
+     * @return
+     */
+    [[nodiscard]] int computeIndex(size_t currentDim) const{
+        if(currentDim == numberOfDimensions){
             return 1;
         }
-        return shape[s] * computeSubSize(s + 1);
+        return shape[currentDim] * computeIndex(currentDim+1);
+    }
+    /**
+     *
+     * @tparam Dims
+     * @param currentDim
+     * @param sizeCurrentDim
+     * @param remainingDims
+     * @return
+     */
+    template<typename... Dims>
+    [[nodiscard]] int getIndex(size_t currentDim, size_t sizeCurrentDim, Dims... remainingDims) const{
+        return sizeCurrentDim * computeIndex(currentDim) + getIndex(currentDim + 1, remainingDims...);
+    }
+    /**
+     *
+     * @param currentDim
+     * @return
+     */
+    [[nodiscard]] int getIndex(size_t currentDim) const {
+        return 0;
     }
 
-    template<typename... Dims>
-    size_t getIndex(size_t s, size_t d, Dims... ds) const {
-        return d * computeSubSize(s) + getIndex(s + 1, ds...);
-    }
-    size_t getIndex(size_t s) const { return 0; }
 };
 
 }// namespace NES::ExecutableTypes
