@@ -99,10 +99,11 @@ class NonBlockingMonotonicSeqQueue {
      */
     auto getCurrentValue() {
         auto currentBlock = std::atomic_load(&head);
-        // we are looking for the next sequence number
+        // get the current sequence number and access the associated block
         auto currentSequenceNumber = currentSeq.load();
         auto targetBlockIndex = currentSequenceNumber / blockSize;
         currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
+        // read the value from the correct slot.
         auto seqIndexInBlock = currentSequenceNumber - (currentBlock->blockIndex * blockSize);
         auto& value = currentBlock->log[seqIndexInBlock];
         return value.value;
