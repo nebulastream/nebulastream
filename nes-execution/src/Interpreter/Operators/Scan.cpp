@@ -5,10 +5,10 @@
 namespace NES::Interpreter {
 
 void Scan::open(TraceContext& tracer)  {
-    Value numberOfRecords = Value(20, &tracer);
-    auto v1 = Value(0, &tracer);
-    auto fields = std::vector<Value>({v1});
-    for (auto i = Value(0, &tracer); i < numberOfRecords; i = i + 1) {
+    Value numberOfRecords = Value<>(20);
+    auto v1 = Value<>(0);
+    auto fields = std::vector<Value<>>({v1});
+    for (auto i = Value<Integer>(0); i < numberOfRecords.as<Integer>(); i = i + 1) {
         Record record = Record(fields);
         child->execute(record);
     }

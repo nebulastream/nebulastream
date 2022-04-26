@@ -148,7 +148,7 @@ class TraceContext {
 template<typename Functor>
 ExecutionTrace traceFunction(Functor func) {
     auto tracer = TraceContext();
-    func(&tracer);
+    func();
     Operation result = Operation(RETURN);
     tracer.trace(result);
     return tracer.getExecutionTrace();

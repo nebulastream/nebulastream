@@ -71,7 +71,8 @@ class Value : BaseValue {
         //     Trace(OpCode::ASSIGN, other, *this);
         //traceContext->getExecutionTrace().traceAssignment(srcRef, other.ref);
         //}
-        std::swap(value, other.value);
+        this->value = cast<ValueType>(other.value);
+      //  std::swap(value, other.value);
         //std::swap(ref, other.ref);
         return *this;
     }

@@ -14,10 +14,10 @@ namespace NES::Interpreter {
 
 class Record {
   public:
-    explicit Record(std::vector<Value> records);
+    explicit Record(std::vector<Value<>> records);
     ~Record() = default;
-    Value& read(uint64_t fieldIndex);
-    void write(uint64_t fieldIndex, Value& value);
+    Value<>& read(uint64_t fieldIndex);
+    void write(uint64_t fieldIndex, Value<>& value);
     //  virtual Value<AnyPtr> read(std::string fieldName);
     //  virtual Value<AnyPtr> read(uint64_t fieldIndex);
     // virtual void write(std::string fieldName, Value<AnyPtr> value);
@@ -25,7 +25,7 @@ class Record {
     //friend std::ostream& operator<<(std::ostream&, const RecordPtr&);
 
   private:
-    std::vector<Value> records;
+    std::vector<Value<>> records;
 };
 
 using RecordPtr = std::shared_ptr<Record>;

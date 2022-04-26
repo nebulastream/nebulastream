@@ -13,7 +13,7 @@ class ReadFieldExpression : public Expression {
 
   public:
     ReadFieldExpression(uint64_t fieldIndex) : fieldIndex(fieldIndex) {}
-    Value execute(Record& record) override { return record.read(fieldIndex); }
+    Value<> execute(Record& record) override { return record.read(fieldIndex); }
 };
 
 }// namespace NES::Interpreter

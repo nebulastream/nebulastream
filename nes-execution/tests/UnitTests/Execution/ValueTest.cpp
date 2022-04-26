@@ -42,26 +42,35 @@ class ValueTest : public testing::Test {
 };
 
 TEST_F(ValueTest, functionCallTest) {
-     auto intValue = std::make_unique<Integer>(42);
-     std::unique_ptr<Any> valAny = cast<Any>(intValue);
-     std::unique_ptr<Any> valAny2 = cast<Any>(valAny);
+    auto intValue = std::make_unique<Integer>(42);
+    std::unique_ptr<Any> valAny = cast<Any>(intValue);
+    std::unique_ptr<Any> valAny2 = cast<Any>(valAny);
 
-     auto anyValue = Value<Integer>(std::move(intValue));
-     anyValue = anyValue + 10;
+    auto anyValue = Value<Integer>(std::move(intValue));
+    anyValue = anyValue + 10;
 
+    Value<Integer> val = Value<Integer>(42);
+    Value<Integer> val2 = 42;
+    Value<Any> va = val2;
+    Value<Any> va2 = Value<>(10);
+    auto anyValueNew1 = Value<>(10);
+    auto anyValueNew2 = Value<>(10);
+    auto anyValueNew3 = anyValueNew1;
+    anyValueNew3 = anyValueNew2;
+    val2 = val;
+}
 
-     Value<Integer> val = Value<Integer>(42);
-     Value<Integer> val2 = 42;
-     Value<Any> va = val2;
-     Value<Any> va2 = Value<>(10);
-     auto anyValueNew1 =  Value<>(10);
-     auto anyValueNew2 =  Value<>(10);
-     auto anyValueNew3 =  anyValueNew1 ;
-     anyValueNew3 =  anyValueNew2 ;
-     val2 = val ;
+TEST_F(ValueTest, addValueTest) {
+    auto x = Value<>(1);
+    auto y = Value<>(2);
+    auto intZ = y + x;
+    ASSERT_EQ(intZ.value->value, 3);
 
+    Value<Any> anyZ = y + x;
+    ASSERT_EQ(anyZ.as<Integer>().value->value, 3);
 
-
+    anyZ = intZ + intZ;
+    ASSERT_EQ(anyZ.as<Integer>().value->value, 6);
 }
 
 }// namespace NES::Interpreter

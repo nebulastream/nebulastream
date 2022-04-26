@@ -4,6 +4,7 @@
 #include <memory>
 namespace NES::Interpreter {
 
+/*
 
 template<class TFn, typename... Args>
 auto MemberFunctionCall(TFn&& f, Args...) {
@@ -64,7 +65,7 @@ std::conditional_t<std::is_void_v<R>, void, R> FunctionCall(R (*fnptr)(Args...),
         return fnptr(arguments...);
     }
 }
-
+*/
 }// namespace NES::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_

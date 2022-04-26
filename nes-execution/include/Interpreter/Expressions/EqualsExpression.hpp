@@ -13,7 +13,7 @@ class EqualsExpression : public Expression {
   public:
     EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
         : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
-    Value execute(Record& record) override {
+    Value<> execute(Record& record) override {
         Value leftValue = leftSubExpression->execute(record);
         Value rightValue = rightSubExpression->execute(record);
         return leftValue == rightValue;

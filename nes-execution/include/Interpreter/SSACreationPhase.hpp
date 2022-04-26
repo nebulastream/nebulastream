@@ -1,6 +1,6 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
-#include <Interpreter/Tracer.hpp>
+#include <Interpreter/Trace/Tracer.hpp>
 #include <set>
 
 namespace NES::Interpreter {
