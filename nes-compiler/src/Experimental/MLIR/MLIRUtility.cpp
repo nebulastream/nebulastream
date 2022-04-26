@@ -81,13 +81,6 @@ void MLIRUtility::printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
             mlirString = insertComments(mlirString);
         }
         if (!mlirFilepath.empty()) {
-            char cwd[1024];
-            if (getcwd(cwd, sizeof(cwd)) != NULL) {
-                printf("Current working dir: %s\n", cwd);
-            } else {
-                perror("getcwd() error");
-            }
-            //Todo File not open yet!
             fileStream.write(mlirString.c_str(), mlirString.length());
         }
         printf("%s", mlirString.c_str());
@@ -100,6 +93,7 @@ int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags*
     context.loadDialect<mlir::scf::SCFDialect>();
     module = parseSourceString(mlirString, &context);
 
+    printf("Kek %d", debugFlags->comments);
     printMLIRModule(module, debugFlags);
 
     if (!module) {
