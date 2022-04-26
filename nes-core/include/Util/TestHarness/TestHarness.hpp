@@ -486,7 +486,7 @@ class TestHarness {
 
         // read the binary output as a vector of T
         std::vector<T> outputVector;
-        outputVector.resize(length/sizeof(T));
+        outputVector.resize(length / sizeof(T));
         auto* buff = reinterpret_cast<char*>(outputVector.data());
         ifs.read(buff, length);
 
