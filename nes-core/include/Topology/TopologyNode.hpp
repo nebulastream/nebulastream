@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 #define NES_INCLUDE_TOPOLOGY_TOPOLOGYNODE_HPP_
 
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
 #include <Nodes/Node.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <any>
@@ -158,7 +158,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    std::optional<NES::Experimental::Mobility::GeographicalLocation> getCoordinates();
+    std::optional<NES::Experimental::Mobility::Location> getCoordinates();
 
     /**
      * Experimental
@@ -175,7 +175,7 @@ class TopologyNode : public Node {
      * @param geoLoc: the Geographical location of the node
      * @return true on success
      */
-    void setFixedCoordinates(NES::Experimental::Mobility::GeographicalLocation geoLoc);
+    void setFixedCoordinates(NES::Experimental::Mobility::Location geoLoc);
 
     /**
      * Experimental
@@ -200,7 +200,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
-    std::optional<NES::Experimental::Mobility::GeographicalLocation> fixedCoordinates;
+    std::optional<NES::Experimental::Mobility::Location> fixedCoordinates;
     bool isMobile;
 
     /**

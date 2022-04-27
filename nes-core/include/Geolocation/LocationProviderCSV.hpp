@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
-#define NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
-#include <Common/GeographicalLocation.hpp>
-#include <Geolocation/LocationSource.hpp>
+#ifndef NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
+#define NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
+#include <Common/Location.hpp>
+#include <Geolocation/LocationProvider.hpp>
 #include <vector>
 
 namespace NES::Experimental::Mobility {
@@ -24,18 +24,18 @@ namespace NES::Experimental::Mobility {
  * @brief this class reads locations and timestamps from a csv file and simulates the behaviour of a geolocation interface
  * of a mobile device
  */
-class LocationSourceCSV : public LocationSource {
+class LocationProviderCSV : public LocationProvider {
   public:
     /**
      * @brief construct a location source that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
      * @param csvPath: The path of the csv file
      */
-    explicit LocationSourceCSV(std::string csvPath);
+    explicit LocationProviderCSV(std::string csvPath);
 
     /**
      * @brief default destructor
      */
-    ~LocationSourceCSV() override = default;
+    ~LocationProviderCSV() override = default;
     ;
 
     /**
@@ -44,7 +44,7 @@ class LocationSourceCSV : public LocationSource {
      * most recent of the timestamps lying in the past
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    std::pair<GeographicalLocation, Timestamp> getCurrentLocation() override;
+    std::pair<Location, Timestamp> getCurrentLocation() override;
 
     /**
      *
@@ -54,9 +54,9 @@ class LocationSourceCSV : public LocationSource {
 
   private:
     Timestamp startTime;
-    std::vector<std::pair<GeographicalLocation, Timestamp>> waypoints;
-    std::vector<std::pair<GeographicalLocation, Timestamp>>::iterator nextWaypoint;
+    std::vector<std::pair<Location, Timestamp>> waypoints;
+    std::vector<std::pair<Location, Timestamp>>::iterator nextWaypoint;
 };
 }// namespace NES::Experimental::Mobility
 
-#endif//NES_GEOLOCATION_LOCATIONSOURCECSV_HPP
+#endif//NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP

@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Geolocation/GeospatialTopology.hpp>
+#include <Geolocation/LocationIndex.hpp>
 #include <Topology/TopologyNode.hpp>
 #ifdef S2DEF
 #include <s2/s2closest_point_query.h>
@@ -21,13 +21,13 @@
 
 namespace NES::Experimental::Mobility {
 
-GeospatialTopology::GeospatialTopology() = default;
+LocationIndex::LocationIndex() = default;
 
-bool GeospatialTopology::initializeFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc) {
+bool LocationIndex::initializeFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc) {
    return setFieldNodeCoordinates(node, geoLoc);
 }
 
-bool GeospatialTopology::updateFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc) {
+bool LocationIndex::updateFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc) {
 #ifdef S2DEF
         if(removeNodeFromSpatialIndex(node)) {
             return setFieldNodeCoordinates(node, geoLoc);
@@ -38,9 +38,7 @@ bool GeospatialTopology::updateFieldNodeCoordinates(const TopologyNodePtr& node,
 #endif
 }
 
-
-
-bool GeospatialTopology::setFieldNodeCoordinates(const TopologyNodePtr& node, Experimental::Mobility::GeographicalLocation geoLoc) {
+bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc) {
 #ifdef S2DEF
     double newLat = geoLoc.getLatitude();
     double newLng = geoLoc.getLongitude();
@@ -54,7 +52,7 @@ bool GeospatialTopology::setFieldNodeCoordinates(const TopologyNodePtr& node, Ex
     return true;
 }
 
-bool GeospatialTopology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
+bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 #ifdef S2DEF
     auto geoLocOpt = node->getCoordinates();
     if (!geoLocOpt.has_value()) {
@@ -72,7 +70,7 @@ bool GeospatialTopology::removeNodeFromSpatialIndex(const TopologyNodePtr& node)
 #endif
 }
 
-std::optional<TopologyNodePtr> GeospatialTopology::getClosestNodeTo(const Experimental::Mobility::GeographicalLocation& geoLoc, int radius) {
+std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const Location& geoLoc, int radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -90,7 +88,7 @@ std::optional<TopologyNodePtr> GeospatialTopology::getClosestNodeTo(const Experi
 #endif
 }
 
-std::optional<TopologyNodePtr> GeospatialTopology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
+std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
     auto GeoLocOpt = nodePtr->getCoordinates();
 
@@ -129,7 +127,8 @@ std::optional<TopologyNodePtr> GeospatialTopology::getClosestNodeTo(const Topolo
 #endif
 }
 
-std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> GeospatialTopology::getNodesInRange(Experimental::Mobility::GeographicalLocation center,
+std::vector<std::pair<TopologyNodePtr, Location>>
+LocationIndex::getNodesInRange(Location center,
                                                                                                                 double radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
@@ -138,10 +137,10 @@ std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocat
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
         S2Point(S2LatLng::FromDegrees(center.getLatitude(), center.getLongitude())));
     auto result = query.FindClosestPoints(&target);
-    std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocation>> closestNodeList;
+    std::vector<std::pair<TopologyNodePtr, Location>> closestNodeList;
     for (auto r : result) {
         auto latLng = S2LatLng(r.point());
-        closestNodeList.emplace_back(r.data(), Experimental::Mobility::GeographicalLocation(latLng.lat().degrees(), latLng.lng().degrees()));
+        closestNodeList.emplace_back(r.data(), Location(latLng.lat().degrees(), latLng.lng().degrees()));
     }
     return closestNodeList;
 
@@ -152,7 +151,7 @@ std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::GeographicalLocat
 #endif
 }
 
-size_t GeospatialTopology::getSizeOfPointIndex() {
+size_t LocationIndex::getSizeOfPointIndex() {
 #ifdef S2DEF
     return nodePointIndex.num_points();
 #else

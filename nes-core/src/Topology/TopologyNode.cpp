@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
@@ -128,7 +128,7 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
 
 bool TopologyNode::isFieldNode() { return fixedCoordinates.has_value(); }
 
-std::optional<Experimental::Mobility::GeographicalLocation> TopologyNode::getCoordinates() {
+std::optional<Experimental::Mobility::Location> TopologyNode::getCoordinates() {
     if (isMobile) {
         //todo issue #2722: return the current location of the mobile node
         return {};
@@ -137,10 +137,10 @@ std::optional<Experimental::Mobility::GeographicalLocation> TopologyNode::getCoo
 }
 
 void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
-    setFixedCoordinates(Experimental::Mobility::GeographicalLocation(latitude, longitude));
+    setFixedCoordinates(Experimental::Mobility::Location(latitude, longitude));
 }
 
-void TopologyNode::setFixedCoordinates(Experimental::Mobility::GeographicalLocation geoLoc) { fixedCoordinates = geoLoc; }
+void TopologyNode::setFixedCoordinates(Experimental::Mobility::Location geoLoc) { fixedCoordinates = geoLoc; }
 
 void TopologyNode::setMobile(bool isMobile) { this->isMobile = isMobile; }
 

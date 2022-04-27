@@ -24,13 +24,13 @@ namespace NES::Experimental::Mobility {
  * @brief a representation of geographical location used to specify the fixed location of field nodes
  * and the changing location of mobile devices
  */
-class GeographicalLocation {
+class Location {
 
   public:
     /**
      * @brief the default constructor which constructs an object with lat=200 and lng=200 which represents an invalid location
      */
-    GeographicalLocation();
+    Location();
 
     /**
      * @brief constructs a Geographical location from latitude and longitude in degrees
@@ -38,21 +38,21 @@ class GeographicalLocation {
      * @param latitude: geographical latitude in degrees [-90, 90]
      * @param longitude: geographical longitude in degrees [-180, 180]
      */
-    GeographicalLocation(double latitude, double longitude);
+    Location(double latitude, double longitude);
 
     /**
      * @brief constructs a Geographicala location object from a Coordinates object used as members of protobuf messages
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param coord: the coordinate object
      */
-    explicit GeographicalLocation(const Coordinates& coord);
+    explicit Location(const Coordinates& coord);
 
     /**
      * @brief constructs a Geographical location from a tuple of doubles
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param coordTuple: a tuple of doubles in the format <lat, lng>
      */
-    explicit GeographicalLocation(std::tuple<double, double> coordTuple);
+    explicit Location(std::tuple<double, double> coordTuple);
 
     /**
      * @brief creates a tuple of doubles containing latitude and longitude of the location
@@ -71,7 +71,7 @@ class GeographicalLocation {
      * @param other: the object to compare to
      * @return true both objects have the same latitude and longitude. false otherwise
      */
-    bool operator==(const GeographicalLocation& other) const;
+    bool operator==(const Location& other) const;
 
     /**
      * @brief getter for the latitude
@@ -98,13 +98,13 @@ class GeographicalLocation {
     [[nodiscard]] std::string toString() const;
 
     /**
-     * @brief Constructs a GeographicalLocation form a string.
+     * @brief Constructs a Location form a string.
      * @throws InvalidCoordinateFormatException if the input string is not of the format "<double>, <double>"
      * @throws CoordinatesOutOfRangeException if the entered parameters do not correspond to a valid lat/long pair
      * @param coordinates: string of the format "<latitude>, <longitude>"
-     * @return a GeographicalLocation object
+     * @return a Location object
      */
-    static GeographicalLocation fromString(const std::string& coordinates);
+    static Location fromString(const std::string& coordinates);
 
     /**
      * @brief checks if the a pair of doubles represents valid coordinates (abs(lat) < 90 and abs(lng) < 180)

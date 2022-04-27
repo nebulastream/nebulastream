@@ -21,32 +21,32 @@
 
 namespace NES {
 
-class GeographicalLocationTest : public Testing::TestWithErrorHandling<testing::Test> {
+class LocationUnitTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoLoc.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup GeographicalLocation test class.");
+        NES_INFO("Setup Location test class.");
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down GeographilcalLocationUnitTest test class."); }
 };
 
-TEST_F(GeographicalLocationTest, testExceptionHandling) {
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation(200, 0),
+TEST_F(LocationUnitTest, testExceptionHandling) {
+    EXPECT_THROW(NES::Experimental::Mobility::Location(200, 0),
                  NES::Experimental::Mobility::CoordinatesOutOfRangeException);
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation(200, 200),
+    EXPECT_THROW(NES::Experimental::Mobility::Location(200, 200),
                  NES::Experimental::Mobility::CoordinatesOutOfRangeException);
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200, 0"),
+    EXPECT_THROW(NES::Experimental::Mobility::Location::fromString("200, 0"),
                  NES::Experimental::Mobility::CoordinatesOutOfRangeException);
-    EXPECT_THROW(NES::Experimental::Mobility::GeographicalLocation::fromString("200. 0"),
+    EXPECT_THROW(NES::Experimental::Mobility::Location::fromString("200. 0"),
                  NES::Experimental::Mobility::InvalidCoordinateFormatException);
 
-    auto geoLoc = NES::Experimental::Mobility::GeographicalLocation::fromString("23, 110");
+    auto geoLoc = NES::Experimental::Mobility::Location::fromString("23, 110");
     EXPECT_EQ(geoLoc.getLatitude(), 23);
     EXPECT_EQ(geoLoc.getLongitude(), 110);
     EXPECT_TRUE(geoLoc.isValid());
-    auto invalidGeoLoc1 = NES::Experimental::Mobility::GeographicalLocation();
-    auto invalidGeoLoc2 = NES::Experimental::Mobility::GeographicalLocation();
+    auto invalidGeoLoc1 = NES::Experimental::Mobility::Location();
+    auto invalidGeoLoc2 = NES::Experimental::Mobility::Location();
     EXPECT_FALSE(invalidGeoLoc1.isValid());
     EXPECT_TRUE(std::isnan(invalidGeoLoc1.getLatitude()));
     EXPECT_TRUE(std::isnan(invalidGeoLoc1.getLongitude()));

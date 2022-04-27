@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
+#include <Geolocation/LocationIndex.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
@@ -20,11 +21,10 @@
 #include <algorithm>
 #include <deque>
 #include <utility>
-#include <Geolocation/GeospatialTopology.hpp>
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr), geoTopology(std::make_shared<NES::Experimental::Mobility::GeospatialTopology>()) {}
+Topology::Topology() : rootNode(nullptr), locationIndex(std::make_shared<NES::Experimental::Mobility::LocationIndex>()) {}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
@@ -62,7 +62,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
         if (nodeToRemove->isFieldNode()) {
-            (*geoTopology).removeNodeFromSpatialIndex(nodeToRemove);
+            locationIndex->removeNodeFromSpatialIndex(nodeToRemove);
         }
         indexOnNodeIds.erase(idOfNodeToRemove);
         NES_DEBUG("Topology: Successfully removed the node.");
@@ -602,7 +602,7 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
     return nullptr;
 }
 
-NES::Experimental::Mobility::GeospatialTopologyPtr Topology::getGeoTopology() {
-    return geoTopology;
+NES::Experimental::Mobility::LocationIndexPtr Topology::getLocationIndex() {
+    return locationIndex;
 }
 }// namespace NES

@@ -11,12 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_GEOLOCATION_WORKERGEOSPATIALINFO_HPP
-#define NES_GEOLOCATION_WORKERGEOSPATIALINFO_HPP
+#ifndef NES_GEOLOCATION_LOCATIONSERVICE_HPP
+#define NES_GEOLOCATION_LOCATIONSERVICE_HPP
 
+#include <Geolocation/LocationProvider.hpp>
 #include <memory>
-#include <Geolocation/LocationSource.hpp>
 #include <vector>
+#include <Util/Experimental/LocationProviderType.hpp>
 
 namespace NES {
 class CoordinatorRPCClient;
@@ -24,14 +25,14 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 }
 
 namespace NES::Experimental::Mobility {
-class GeographicalLocation;
-using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
-using LocationSourcePtr = std::shared_ptr<LocationSource>;
+class Location;
+using LocationPtr = std::shared_ptr<Location>;
+using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
-class WorkerGeospatialInfo {
+class LocationService {
   public:
 
-    explicit WorkerGeospatialInfo( bool isMobile, GeographicalLocation fieldNodeLoc);
+    explicit LocationService( bool isMobile, Location fieldNodeLoc);
 
     /**
      * Experimental
@@ -40,9 +41,14 @@ class WorkerGeospatialInfo {
      * @param config the config parameters for the location source
      * @return
      */
-    bool createLocationSource(NES::Experimental::Mobility::LocationSource::Type type, std::string config);
+    bool createLocationProvider(LocationProviderType type, std::string config);
 
-    void setRPCClient(CoordinatorRPCClientPtr rpcClientPtr);
+    /**
+     * Experimental
+     * Set the rpcClient which this Location Service can use to communicate with the coordinator
+     * @param rpcClientPtr
+     */
+    void setCoordinatorRPCClient(CoordinatorRPCClientPtr rpcClientPtr);
     /**
      * Experimental
      * @brief checks if this Worker runs on a non-mobile device with a known location (Field Node)
@@ -53,24 +59,24 @@ class WorkerGeospatialInfo {
      * Experimental
      * @brief check if this worker runs on a mobile device
      */
-    bool isMobileNode() const;
+    [[nodiscard]] bool isMobileNode() const;
 
     /**
      * Experimental
-     * @brief returns an optional containing a GeographicalLocation object if the node has a fixed location or
+     * @brief returns an optional containing a Location object if the node has a fixed location or
      * containing a nullopt_t if the node does not have a location
-     * @return optional containing the GeographicalLocation
+     * @return optional containing the Location
      */
-    NES::Experimental::Mobility::GeographicalLocation getGeoLoc();
+    Location getLocation();
 
     /**
      * Experimental
      * @brief Method to get all field nodes within a certain range around a geographical point
-     * @param coord: GeographicalLocation representing the center of the query area
+     * @param coord: Location representing the center of the query area
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodeIdsInRange(NES::Experimental::Mobility::GeographicalLocation coord, double radius);
+    std::vector<std::pair<uint64_t, Location>> getNodeIdsInRange(Location coord, double radius);
 
     /**
      * Experimental
@@ -78,21 +84,21 @@ class WorkerGeospatialInfo {
      * @param radius = radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::GeographicalLocation>> getNodeIdsInRange(double radius);
+    std::vector<std::pair<uint64_t, Location>> getNodeIdsInRange(double radius);
 
     /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
-     * @param geoLoc: The new fixed GeographicalLocation to be set
+     * @param geoLoc: The new fixed Location to be set
      * @return success of operation
      */
-    bool setFixedLocationCoordinates(const NES::Experimental::Mobility::GeographicalLocation& geoLoc);
+    bool setFixedLocationCoordinates(const Location& geoLoc);
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    NES::Experimental::Mobility::GeographicalLocationPtr fixedLocationCoordinates;
+    LocationPtr fixedLocationCoordinates;
     bool isMobile;
-    NES::Experimental::Mobility::LocationSourcePtr locationSource;
+    LocationProviderPtr locationProvider;
 };
 
 }//namespace NES::Experimental::Mobility
-#endif//NES_GEOLOCATION_WORKERGEOSPATIALINFO_HPP
+#endif//NES_GEOLOCATION_LOCATIONSERVICE_HPP

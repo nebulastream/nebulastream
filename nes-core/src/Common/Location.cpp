@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Exceptions/InvalidCoordinateFormatException.hpp>
@@ -21,12 +21,12 @@
 
 namespace NES::Experimental::Mobility {
 
-GeographicalLocation::GeographicalLocation() {
+Location::Location() {
     latitude = std::numeric_limits<double>::quiet_NaN();
     longitude = std::numeric_limits<double>::quiet_NaN();
 }
 
-GeographicalLocation::GeographicalLocation(double latitude, double longitude) {
+Location::Location(double latitude, double longitude) {
     //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
     if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude)) {
         NES_WARNING("Trying to create node with an invalid location");
@@ -36,9 +36,9 @@ GeographicalLocation::GeographicalLocation(double latitude, double longitude) {
     this->longitude = longitude;
 }
 
-GeographicalLocation::GeographicalLocation(const Coordinates& coord) : GeographicalLocation(coord.lat(), coord.lng()) {}
+Location::Location(const Coordinates& coord) : Location(coord.lat(), coord.lng()) {}
 
-GeographicalLocation GeographicalLocation::fromString(const std::string& coordinates) {
+Location Location::fromString(const std::string& coordinates) {
     if (coordinates.empty()) {
         throw InvalidCoordinateFormatException();
     }
@@ -58,19 +58,19 @@ GeographicalLocation GeographicalLocation::fromString(const std::string& coordin
     return {lat, lng};
 }
 
-GeographicalLocation::operator std::tuple<double, double>() { return std::make_tuple(latitude, longitude); };
+Location::operator std::tuple<double, double>() { return std::make_tuple(latitude, longitude); };
 
-GeographicalLocation::GeographicalLocation(std::tuple<double, double> coordTuple)
-    : GeographicalLocation(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
+Location::Location(std::tuple<double, double> coordTuple)
+    : Location(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
 
-GeographicalLocation::operator Coordinates() const {
+Location::operator Coordinates() const {
     Coordinates coordinates;
     coordinates.set_lat(latitude);
     coordinates.set_lng(longitude);
     return coordinates;
 }
 
-bool GeographicalLocation::operator==(const GeographicalLocation& other) const {
+bool Location::operator==(const Location& other) const {
     //if both objects are an invalid location, consider them equal
     if (!this->isValid() && !other.isValid()) {
         return true;
@@ -78,15 +78,15 @@ bool GeographicalLocation::operator==(const GeographicalLocation& other) const {
     return this->latitude == other.latitude && this->longitude == other.longitude;
 }
 
-double GeographicalLocation::getLatitude() const { return latitude; }
+double Location::getLatitude() const { return latitude; }
 
-double GeographicalLocation::getLongitude() const { return longitude; }
+double Location::getLongitude() const { return longitude; }
 
-bool GeographicalLocation::isValid() const { return !(std::isnan(latitude) || std::isnan(longitude)); }
+bool Location::isValid() const { return !(std::isnan(latitude) || std::isnan(longitude)); }
 
-std::string GeographicalLocation::toString() const { return std::to_string(latitude) + ", " + std::to_string(longitude); }
+std::string Location::toString() const { return std::to_string(latitude) + ", " + std::to_string(longitude); }
 
-bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double longitude) {
+bool Location::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
 

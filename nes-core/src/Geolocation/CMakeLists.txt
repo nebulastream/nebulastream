@@ -12,9 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        LocationSource.cpp
-        LocationSourceCSV.cpp
-        GeospatialTopology.cpp
-        WorkerGeospatialInfo.cpp
+        LocationProvider.cpp
+        LocationProviderCSV.cpp
+        LocationIndex.cpp
+        LocationService.cpp
 )
 

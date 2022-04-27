@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Geolocation/LocationSourceCSV.hpp>
+#include <Geolocation/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/TimeMeasurement.hpp>
@@ -21,20 +21,20 @@
 
 namespace NES {
 
-class LocationSourceCSVTest : public testing::Test {
+class LocationProviderCSVTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("GeoSourceCSV.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup LocationSourceCSV test class.");
+        NES_INFO("Setup LocationProviderCSV test class.");
     }
 
     void SetUp() override {}
 
-    static void TearDownTestCase() { NES_INFO("Tear down LocationSourceCSV test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down LocationProviderCSV test class."); }
 };
 
-TEST_F(LocationSourceCSVTest, testCsvMovement) {
-    NES::Experimental::Mobility::LocationSourceCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+TEST_F(LocationProviderCSVTest, testCsvMovement) {
+    NES::Experimental::Mobility::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
     auto startTime = sourceCsv.getStarttime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
@@ -80,7 +80,7 @@ TEST_F(LocationSourceCSVTest, testCsvMovement) {
             EXPECT_LE(currentTuple.first.getLongitude(), pos4lng);
         } else if (beforeQuery > timefourthloc) {
             NES_DEBUG("checking fourth loc")
-            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::GeographicalLocation(pos4lat, pos4lng));
+            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::Location(pos4lat, pos4lng));
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         beforeQuery = getTimestamp();
@@ -92,16 +92,16 @@ TEST_F(LocationSourceCSVTest, testCsvMovement) {
     while (afterQuery < loopTime) {
         if (afterQuery < timesecloc) {
             NES_DEBUG("checking first loc")
-            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::GeographicalLocation(pos1lat, pos1lng));
+            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::Location(pos1lat, pos1lng));
         } else if (beforeQuery > timesecloc && afterQuery <= timethirdloc) {
             NES_DEBUG("checking second loc")
-            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::GeographicalLocation(pos2lat, pos2lng));
+            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::Location(pos2lat, pos2lng));
         } else if (beforeQuery > timethirdloc && afterQuery <= timefourthloc) {
             NES_DEBUG("checking third loc")
-            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::GeographicalLocation(pos3lat, pos3lng));
+            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::Location(pos3lat, pos3lng));
         } else if (beforeQuery > timefourthloc) {
             NES_DEBUG("checking fourth loc")
-            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::GeographicalLocation(pos4lat, pos4lng));
+            EXPECT_EQ(currentTuple.first, NES::Experimental::Mobility::Location(pos4lat, pos4lng));
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         beforeQuery = getTimestamp();
