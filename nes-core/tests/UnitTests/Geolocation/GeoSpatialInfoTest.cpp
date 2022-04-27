@@ -35,7 +35,7 @@ class LocationSourceCSVTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down LocationSourceCSV test class."); }
 };
 
-TEST_F(LocationSourceCSVTest, testCoverageClaculation) {
+TEST_F(LocationSourceCSVTest, testCoverageCalculation) {
     S2Point lineStart(S2LatLng::FromDegrees(52.0, 13.0));
     S2Point lineEnd(S2LatLng::FromDegrees(52.0, 13.03));
     std::vector<S2Point> v;
