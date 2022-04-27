@@ -75,7 +75,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
         }
     }
 
-    //Mark query as deployed
+    //Mark queries as deployed
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Deployed, "");
     }
@@ -89,7 +89,7 @@ bool QueryDeploymentPhase::execute(SharedQueryPlanPtr sharedQueryPlan) {
                                        "QueryDeploymentPhase: Failed to deploy shared query " + std::to_string(sharedQueryId));
     }
 
-    //Mark query as running
+    //Mark queries as running
     for (auto& queryId : sharedQueryPlan->getQueryIds()) {
         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Running, "");
     }
