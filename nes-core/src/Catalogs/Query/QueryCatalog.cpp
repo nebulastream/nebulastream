@@ -67,12 +67,12 @@ QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(QueryId queryId) {
 }
 
 bool QueryCatalog::queryExists(QueryId queryId) {
-    NES_TRACE("QueryCatalog: queryExists with id=" << queryId << " registered queryIdAndCatalogEntryMapping=" << printQueries());
+    NES_TRACE("QueryCatalog: Check if query with id " << queryId << " exists.");
     if (queryIdAndCatalogEntryMapping.count(queryId) > 0) {
         NES_TRACE("QueryCatalog: query with id " << queryId << " exists");
         return true;
     }
-    NES_TRACE("QueryCatalog: query with id " << queryId << " does not exist");
+    NES_WARNING("QueryCatalog: query with id " << queryId << " does not exist");
     return false;
 }
 

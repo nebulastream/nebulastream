@@ -296,16 +296,12 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                        const ::SoftStopTriggeredMessage* request,
                                                        ::SoftStopTriggeredReply* response) {
     auto sharedQueryId = request->queryid();
-    auto subQueryPlanId = request->subqueryid();
-    NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : "
-             << subQueryPlanId << " shared query plan id: " << sharedQueryId)
-
-    //Fetch the request
-    auto queryId = request->queryid();
     auto querySubPlanId = request->querysubplanid();
+    NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : "
+             << querySubPlanId << " shared query plan id: " << sharedQueryId)
 
     //inform catalog service
-    bool success = queryCatalogService->updateQuerySubPlanStatus(queryId, querySubPlanId, QueryStatus::SoftStopTriggered);
+    bool success = queryCatalogService->updateQuerySubPlanStatus(sharedQueryId, querySubPlanId, QueryStatus::SoftStopTriggered);
 
     //update response
     response->set_success(success);

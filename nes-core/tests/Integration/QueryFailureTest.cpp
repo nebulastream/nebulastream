@@ -43,48 +43,153 @@ class QueryFailureTest : public Testing::NESBaseTest {
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(QueryFailureTest, DISABLED_failQueryFaultySource) {
-    struct Test {
-        uint32_t id;
-        uint32_t value;
-    };
+TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical source
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    struct Output {
-        uint32_t id;
-        uint32_t value;
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/malformed_csv_test.csv");
+    csvSourceType->setGatheringInterval(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
+    csvSourceType->setNumberOfBuffersToProduce(6);
+    csvSourceType->setSkipHeader(false);
+    workerConfig1->coordinatorPort = port;
+    auto physicalSource1 = PhysicalSource::create("test", "physical_test", csvSourceType);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
-    };
 
-    auto defaultLogicalSchema =
-        Schema::create()->addField("id", DataTypeFactory::createUInt32())->addField("value", DataTypeFactory::createUInt32());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
-    ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
-    CSVSourceTypePtr cfg;
-    cfg = CSVSourceType::create();
-    cfg->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/malformed_csv_test.csv");
-    cfg->setGatheringInterval(1);
-    cfg->setNumberOfTuplesToProducePerBuffer(2);
-    cfg->setNumberOfBuffersToProduce(6);
-    cfg->setSkipHeader(false);
-    string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator("test", cfg);
+    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    //    testHarness = testHarness.pushElement<Test>({1, 1}, 2);
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = R"(Query::from("test").filter(Attribute("value")>2).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    NES_DEBUG("query=" << query);
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+}
 
-    try {
-        testHarness.validate().setupTopology();
+/**
+ * This test checks if we can run a valid query after a query failed
+ */
+TEST_F(QueryFailureTest, testExecutingOnFaultAndOneCorrectQuery) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical source
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-        std::vector<Output> actualOutput = testHarness.getOutput<Output>(1, "BottomUp", "NONE", "IN_MEMORY");
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    auto workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "/malformed_csv_test.csv");
+    csvSourceType->setGatheringInterval(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(2);
+    csvSourceType->setNumberOfBuffersToProduce(6);
+    csvSourceType->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("test", "physical_test", csvSourceType);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource2 = PhysicalSource::create("default_logical", "default_source", defaultSourceType);
+    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource2);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-        ASSERT_EQ(actualOutput.size(), 1);
-    } catch (std::exception& ex) {
-        NES_ERROR("Error: " << ex.what());
-        FAIL();
-    }
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath1 = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query1 = R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    NES_DEBUG("query=" << query1);
+    QueryId queryId1 =
+        queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+
+    std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId2 =
+        queryService->validateAndQueueAddRequest(query2, "BottomUp");
+
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+    int response1 = remove(outputFilePath1.c_str());
+    EXPECT_EQ(response1, 0);
+
+    int response2 = remove(outputFilePath2.c_str());
+    EXPECT_EQ(response2, 0);
 }
 
 TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {}
