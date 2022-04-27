@@ -318,7 +318,8 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
     this->replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
-    CoordinatorRPCServer service(topologyManagerService,
+    CoordinatorRPCServer service(queryService,
+                                 topologyManagerService,
                                  sourceCatalogService,
                                  queryCatalogService,
                                  monitoringService->getMonitoringManager(),
