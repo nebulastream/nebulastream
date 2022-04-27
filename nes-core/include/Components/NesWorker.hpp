@@ -36,11 +36,11 @@ class ServerCompletionQueue;
 namespace NES {
 
 namespace Experimental::Mobility {
-class GeographicalLocation;
-using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
+class Location;
+using LocationPtr = std::shared_ptr<Location>;
 
-class WorkerGeospatialInfo;
-using WorkerGeospatialInfoPtr = std::shared_ptr<WorkerGeospatialInfo>;
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
 }// namespace Experimental::Mobility
 
 class WorkerRPCServer;
@@ -217,10 +217,10 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
     /**
-     * get the class containing all geospatiol info on this worker if it is a field node or mobile node
+     * get the class containing all location info on this worker if it is a field node or mobile node
      * @return
      */
-    NES::Experimental::Mobility::WorkerGeospatialInfoPtr getGeospatialInfo();
+    NES::Experimental::Mobility::LocationServicePtr getLocationIndex();
 
   private:
     /**
@@ -269,7 +269,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
 
-    NES::Experimental::Mobility::WorkerGeospatialInfoPtr geospatialInfo;
+    NES::Experimental::Mobility::LocationServicePtr locationService;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;

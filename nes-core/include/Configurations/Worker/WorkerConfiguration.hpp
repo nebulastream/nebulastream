@@ -15,14 +15,15 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/GeographicalLocationFactory.hpp>
+#include <Configurations/Worker/LocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Geolocation/LocationSourceCSV.hpp>
+#include <Geolocation/LocationProviderCSV.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
+#include <Util/Experimental/LocationProviderType.hpp>
 #include <map>
 #include <string>
 
@@ -163,8 +164,8 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Experimental::Mobility::GeographicalLocation,
-               Configurations::Experimental::Mobility::GeographicalLocationFactory>
+    WrapOption<NES::Experimental::Mobility::Location,
+               Configurations::Experimental::Mobility::LocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
@@ -177,9 +178,9 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
      * a simulation
      */
-    EnumOption<NES::Experimental::Mobility::LocationSource::Type> locationSourceType = {
+    EnumOption<NES::Experimental::Mobility::LocationProviderType> locationSourceType = {
         LOCATION_SOURCE_TYPE_CONFIG,
-        NES::Experimental::Mobility::LocationSource::Type::csv,
+        NES::Experimental::Mobility::LocationProviderType::CSV,
         "the kind of interface which the  mobile worker gets its geolocation info from"};
 
     /**

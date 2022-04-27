@@ -31,8 +31,8 @@ class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
 namespace Experimental::Mobility {
-class GeospatialTopology;
-using GeospatialTopologyPtr = std::shared_ptr<GeospatialTopology>;
+class LocationIndex;
+using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 }
 
 /**
@@ -197,10 +197,10 @@ class Topology {
     static TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes);
 
     /**
-     * Getter for accessing the geospatial topology linked to this topology
-     * @return A smart pointer to the GeospatialTopology
+     * Getter for accessing the location index linked to this topology
+     * @return A smart pointer to the LocationIndex
      */
-    NES::Experimental::Mobility::GeospatialTopologyPtr getGeoTopology();
+    NES::Experimental::Mobility::LocationIndexPtr getLocationIndex();
 
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
@@ -220,7 +220,7 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
-    NES::Experimental::Mobility::GeospatialTopologyPtr geoTopology;
+    NES::Experimental::Mobility::LocationIndexPtr locationIndex;
 
 };
 }// namespace NES

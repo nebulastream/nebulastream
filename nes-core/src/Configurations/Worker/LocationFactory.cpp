@@ -11,16 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/GeographicalLocationFactory.hpp>
+#include <Configurations/Worker/LocationFactory.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 
 namespace NES::Configurations::Experimental::Mobility {
 
-::NES::Experimental::Mobility::GeographicalLocation
-GeographicalLocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
+::NES::Experimental::Mobility::Location LocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
     std::string coordStr;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
         if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
@@ -31,14 +30,14 @@ GeographicalLocationFactory::createFromString(std::string, std::map<std::string,
     if (coordStr.empty()) {
         return {200, 200};
     }
-    return ::NES::Experimental::Mobility::GeographicalLocation::fromString(coordStr);
+    return ::NES::Experimental::Mobility::Location::fromString(coordStr);
 }
 
 //TODO 2655 make this function work. it currently returns the standard value even if another value is supplied via yaml
-::NES::Experimental::Mobility::GeographicalLocation GeographicalLocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
+::NES::Experimental::Mobility::Location LocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
     auto configString = yamlConfig[LOCATION_COORDINATES_CONFIG].As<std::string>();
     if (!configString.empty() && configString != "\n") {
-        return ::NES::Experimental::Mobility::GeographicalLocation::fromString(configString);
+        return ::NES::Experimental::Mobility::Location::fromString(configString);
     }
     return {200, 200};
 }

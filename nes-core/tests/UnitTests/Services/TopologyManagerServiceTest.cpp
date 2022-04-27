@@ -69,7 +69,7 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
     uint64_t nodeId = topologyManagerService
-                          ->registerNode(ip, publish_port, 5000, 6, false, NES::Experimental::Mobility::GeographicalLocation());
+                          ->registerNode(ip, publish_port, 5000, 6, false, NES::Experimental::Mobility::Location());
     EXPECT_NE(nodeId, 0u);
 
     uint64_t nodeId1 = topologyManagerService->registerNode(ip,
@@ -77,12 +77,12 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
                                                             5000,
                                                             6,
                                                             false,
-                                                            NES::Experimental::Mobility::GeographicalLocation());
+                                                            NES::Experimental::Mobility::Location());
     EXPECT_NE(nodeId1, 0u);
 
     //test register existing node
     uint64_t nodeId2 = topologyManagerService
-                           ->registerNode(ip, publish_port, 5000, 6, false, NES::Experimental::Mobility::GeographicalLocation());
+                           ->registerNode(ip, publish_port, 5000, 6, false, NES::Experimental::Mobility::Location());
     EXPECT_EQ(nodeId2, 0u);
     //test unregister not existing node
     bool successUnregisterNotExistingNode = topologyManagerService->unregisterNode(552);

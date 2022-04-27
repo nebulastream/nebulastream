@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_GEOLOCATION_GEOSPATIALTOPOLOGY_HPP
-#define NES_GEOLOCATION_GEOSPATIALTOPOLOGY_HPP
+#ifndef NES_GEOLOCATION_LOCATIONINDEX_HPP
+#define NES_GEOLOCATION_LOCATIONINDEX_HPP
 #include <memory>
 #include <optional>
 #include <vector>
@@ -31,20 +31,33 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 namespace Experimental::Mobility {
 
 const int DEFAULT_SEARCH_RADIUS = 50;
-class GeographicalLocation;
+class Location;
 
 /**
  * this class holds information about the geographical position of nodes, for which such a position is known (field nodes)
  * and offers functions to find field nodes within certain ares
  */
-class GeospatialTopology {
+class LocationIndex {
   public:
+    LocationIndex();
 
-    GeospatialTopology();
+    /**
+     * Experimental
+     * @brief initialize a field nodes coordinates on creation and add it to the LocatinIndex
+     * @param node a pointer to the topology node
+     * @param geoLoc  the location of the Field node
+     * @return true on success
+     */
+    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
 
-    bool initializeFieldNodeCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc);
-
-    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, GeographicalLocation geoLoc);
+    /**
+     * Experimental
+     * @brief update a field nodes coordinates on will fails if called on non field nodes
+     * @param node a pointer to the topology node
+     * @param geoLoc  the new location of the Field node
+     * @return true on success, false if the node was not a field node
+     */
+    bool updateFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
 
     /**
      * Experimental
@@ -61,7 +74,7 @@ class GeospatialTopology {
      * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const NES::Experimental::Mobility::GeographicalLocation& geoLoc, int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const Location& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
@@ -70,7 +83,7 @@ class GeospatialTopology {
      * @param radius the maximum distance in kilometres which the returned node can have from the specified node
      * @return TopologyNodePtr to the closest field node unequal to nodePtr
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = NES::Experimental::Mobility::DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
      * Experimental
@@ -79,7 +92,7 @@ class GeospatialTopology {
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations
      */
-    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::GeographicalLocation>> getNodesInRange(NES::Experimental::Mobility::GeographicalLocation center, double radius);
+    std::vector<std::pair<TopologyNodePtr, Location>> getNodesInRange(Location center, double radius);
 
     /**
      * Experimental
@@ -91,15 +104,13 @@ class GeospatialTopology {
 
     /**
      * Experimental
-     * @brief This method sets the location of a new node (making it a field node) or updates the position of an existing field node
+     * @brief This method sets the location of a field node and adds it to the spatial index. No check for existing entries is
+     * performed. To avoid duplicates use initializeFieldNodeCoordinates() or updateFieldNodeCoordinates
      * @param node: a pointer to the topology node
      * @param geoLoc: the (new) location of the field node
-     * @param init: defines if the method is called as part of node creation or later on. trying to set a location for a node
-     * without existing coordinates will result in failure if the init flag is not set, thus preventing the updating of
-     * non field nodes to become field nodes
      * @return true if successful
      */
-    bool setFieldNodeCoordinates(const TopologyNodePtr& node, NES::Experimental::Mobility::GeographicalLocation geoLoc);
+    bool setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
 
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
@@ -108,4 +119,4 @@ class GeospatialTopology {
 };
 }//namespace Experimental::Mobility
 }//namespace NES
-#endif//NES_GEOLOCATION_GEOSPATIALTOPOLOGY_HPP
+#endif//NES_GEOLOCATION_LOCATIONINDEX_HPP

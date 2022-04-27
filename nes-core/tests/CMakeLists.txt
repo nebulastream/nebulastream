@@ -538,10 +538,10 @@ add_executable(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
 target_link_libraries(adaptive-sensor-tests nes-tests)
 add_test(NAME adaptive-sensor-tests COMMAND adaptive-sensor-tests)
 
-### Geographical Location Tests ###
-add_executable(geographical-location-unit-tests "UnitTests/Common/GeographicalLocationTest.cpp")
-target_link_libraries(geographical-location-unit-tests nes-tests)
-add_test(NAME geographical-location-unit-tests COMMAND geographical-location-unit-tests)
+### Location Tests ###
+add_executable(location-unit-tests "UnitTests/Common/LocationUnitTest.cpp")
+target_link_libraries(location-unit-tests nes-tests)
+add_test(NAME location-unit-tests COMMAND location-unit-tests)
 
 
 ### Async Task Executor ###
@@ -549,10 +549,10 @@ add_executable(async-task-executor-ut "UnitTests/Runtime/AsyncTaskExecutorTest.c
 target_link_libraries(async-task-executor-ut nes-tests)
 add_test(NAME async-task-executor-ut COMMAND async-task-executor-ut)
 
-### Location Source CSV Tests ###
-add_executable(location-source-csv-unit-tests "UnitTests/Geolocation/LocationSourceCSVTest.cpp")
-target_link_libraries(location-source-csv-unit-tests nes-tests)
-add_test(NAME location-source-csv-unit-tests COMMAND location-source-csv-unit-tests)
+### Location Provider CSV Tests ###
+add_executable(location-provider-csv-unit-tests "UnitTests/Geolocation/LocationProviderCSVTest.cpp")
+target_link_libraries(location-provider-csv-unit-tests nes-tests)
+add_test(NAME location-provider-csv-unit-tests COMMAND location-provider-csv-unit-tests)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
@@ -729,11 +729,11 @@ add_executable(query-failure-test "Integration/QueryFailureTest.cpp")
 target_link_libraries(query-failure-test nes-tests)
 add_test(NAME query-failure-test COMMAND query-failure-test)
 
-### GeoLocationTest ###
+### Location Integration Test ###
 if (USE_S2)
-    add_executable(geoLocationTests "Integration/GeoLocationTests.cpp")
-    target_link_libraries(geoLocationTests nes-tests s2)
-    add_test(NAME geoLocationTests COMMAND geoLocationTests)
+    add_executable(location-integration-tests "Integration/LocationIntegrationTests.cpp")
+    target_link_libraries(location-integration-tests nes-tests s2)
+    add_test(NAME location-integration-tests COMMAND location-integration-tests)
 endif ()
 
 #------------------------------- # E2E Test Suite --------------------------------

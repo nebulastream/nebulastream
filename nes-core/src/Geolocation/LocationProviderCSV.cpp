@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Geolocation/LocationSourceCSV.hpp>
+#include <Geolocation/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
@@ -23,7 +23,7 @@
 
 namespace NES::Experimental::Mobility {
 
-LocationSourceCSV::LocationSourceCSV(std::string csvPath) {
+LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
     std::string csvLine;
     std::ifstream inputStream(csvPath);
     std::string locString;
@@ -45,7 +45,7 @@ LocationSourceCSV::LocationSourceCSV(std::string csvPath) {
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(GeographicalLocation::fromString(locString), time);
+        std::pair waypoint(Location::fromString(locString), time);
         waypoints.push_back(waypoint);
     }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
@@ -54,7 +54,7 @@ LocationSourceCSV::LocationSourceCSV(std::string csvPath) {
     nextWaypoint = waypoints.begin();
 }
 
-std::pair<GeographicalLocation, Timestamp> LocationSourceCSV::getCurrentLocation() {
+std::pair<Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
     //get the time the request is made so we can compare it to the timestamps in the list of waypoints
     Timestamp requestTime = getTimestamp();
 
@@ -94,7 +94,7 @@ std::pair<GeographicalLocation, Timestamp> LocationSourceCSV::getCurrentLocation
     //we use the fraction to interpolate the point on path where the device is located if it
     //travels at constant speed from prevWaypoint to nextWaypoint
     S2LatLng resultS2(path.Interpolate(fraction));
-    GeographicalLocation result(resultS2.lat().degrees(), resultS2.lng().degrees());
+    Location result(resultS2.lat().degrees(), resultS2.lng().degrees());
 
     NES_TRACE("Retrieving s2-interpolated location");
     NES_TRACE("Location: " << result.toString() << "; Time: " << prevWaypoint->second)
@@ -108,6 +108,6 @@ std::pair<GeographicalLocation, Timestamp> LocationSourceCSV::getCurrentLocation
 #endif
 }
 
-Timestamp LocationSourceCSV::getStarttime() const { return startTime; }
+Timestamp LocationProviderCSV::getStarttime() const { return startTime; }
 
 }// namespace NES::Experimental::Mobility

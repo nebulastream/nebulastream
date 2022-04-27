@@ -14,7 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -381,7 +381,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         const RegistrationMetrics& registrationMetrics,
-                                        Experimental::Mobility::GeographicalLocation fixedCoordinates,
+                                        Experimental::Mobility::Location fixedCoordinates,
                                         bool isMobile) {
 
     RegisterNodeRequest request;
@@ -473,8 +473,8 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>>
-CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::GeographicalLocation coord, double radius) {
+std::vector<std::pair<uint64_t, Experimental::Mobility::Location>>
+CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::Location coord, double radius) {
     GetNodesInRangeRequest request;
     Coordinates* pCoordinates = request.mutable_coord();
     pCoordinates->set_lat(coord.getLatitude());
@@ -485,7 +485,7 @@ CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::GeographicalLoca
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    std::vector<std::pair<uint64_t, Experimental::Mobility::GeographicalLocation>> nodesInRange;
+    std::vector<std::pair<uint64_t, Experimental::Mobility::Location>> nodesInRange;
     for (NodeGeoInfo nodeInfo : *reply.mutable_nodes()) {
         nodesInRange.emplace_back(nodeInfo.id(), nodeInfo.coord());
     }

@@ -11,21 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_GEOGRAPHICALLOCATIONFACTORY_HPP
-#define NES_GEOGRAPHICALLOCATIONFACTORY_HPP
+#ifndef NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP
+#define NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <memory>
 #include <string>
 
 namespace NES::Experimental::Mobility {
-class GeographicalLocation;
-using GeographicalLocationPtr = std::shared_ptr<GeographicalLocation>;
+class Location;
+using LocationPtr = std::shared_ptr<Location>;
 }// namespace NES::Experimental::Mobility
 
 namespace NES::Configurations::Experimental::Mobility {
 
-class GeographicalLocationFactory {
+class LocationFactory {
 
   public:
     /**
@@ -35,8 +35,7 @@ class GeographicalLocationFactory {
      * if the string was empty
      */
 
-    static ::NES::Experimental::Mobility::GeographicalLocation
-    createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
+    static ::NES::Experimental::Mobility::Location createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief obtains a Geographical location objects from yaml config
@@ -44,7 +43,7 @@ class GeographicalLocationFactory {
      * @return A geographical location with the coordinates from the config entry, or <200, 200> (representing invalid coordinates)
      * if the string was empty
      */
-    static ::NES::Experimental::Mobility::GeographicalLocation createFromYaml(Yaml::Node& yamlConfig);
+    static ::NES::Experimental::Mobility::Location createFromYaml(Yaml::Node& yamlConfig);
 };
 }// namespace NES::Configurations::Experimental::Mobility
-#endif//NES_GEOGRAPHICALLOCATIONFACTORY_HPP
+#endif//NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP

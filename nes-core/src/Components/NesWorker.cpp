@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/GeographicalLocation.hpp>
+#include <Common/Location.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
@@ -21,7 +21,8 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
-#include <Geolocation/LocationSourceCSV.hpp>
+#include <Geolocation/LocationProviderCSV.hpp>
+#include <Geolocation/LocationService.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -38,8 +39,6 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-#include <Geolocation/LocationSourceCSV.hpp>
-#include <Geolocation/WorkerGeospatialInfo.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -61,7 +60,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      geospatialInfo(std::make_shared<NES::Experimental::Mobility::WorkerGeospatialInfo>(workerConfig->isMobile, workerConfig->locationCoordinates)),
+      locationService(std::make_shared<NES::Experimental::Mobility::LocationService>(workerConfig->isMobile, workerConfig->locationCoordinates)),
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
       enableMonitoring(workerConfig->enableMonitoring.getValue()),
       numberOfQueues(workerConfig->numberOfQueues.getValue()),
@@ -216,11 +215,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
-    if (geospatialInfo->isMobileNode()) {
+    if (locationService->isMobileNode()) {
         NES_DEBUG("Creating location source");
-        bool success = geospatialInfo->createLocationSource(
-                                            workerConfig->locationSourceType,
-                                            workerConfig->locationSourceConfig);
+        bool success =
+            locationService->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
 
         NES_DEBUG("create location source= " << success);
         NES_ASSERT(success, "cannot create location source");
@@ -291,7 +289,7 @@ bool NesWorker::connect() {
     std::string address = coordinatorIp + ":" + std::to_string(coordinatorPort);
 
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
-    geospatialInfo->setRPCClient(coordinatorRpcClient);
+    locationService->setCoordinatorRPCClient(coordinatorRpcClient);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
 
@@ -302,8 +300,8 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  numberOfSlots,
                                                                  registrationMetrics,
-                                                                 geospatialInfo->getGeoLoc(),
-                                                                 geospatialInfo->isMobileNode());
+                                                                 locationService->getLocation(),
+                                                                 locationService->isMobileNode());
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
@@ -504,8 +502,8 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-NES::Experimental::Mobility::WorkerGeospatialInfoPtr NesWorker::getGeospatialInfo() {
-    return geospatialInfo;
+NES::Experimental::Mobility::LocationServicePtr NesWorker::getLocationIndex() {
+    return locationService;
 }
 
 

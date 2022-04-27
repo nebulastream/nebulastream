@@ -11,34 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_GEOLOCATION_LOCATIONSOURCE_HPP
-#define NES_GEOLOCATION_LOCATIONSOURCE_HPP
+#ifndef NES_GEOLOCATION_LOCATIONPROVIDER_HPP
+#define NES_GEOLOCATION_LOCATIONPROVIDER_HPP
 
 #include <cstdint>
 #include <utility>
 
 namespace NES::Experimental::Mobility {
-class GeographicalLocation;
+class Location;
 using Timestamp = uint64_t;
 
 /**
  * @brief this class represents an interface to obtain a mobile devices current position
  */
-class LocationSource {
+class LocationProvider {
   public:
-    enum Type { csv };
-
     /**
      * @brief default destructor
      */
-    virtual ~LocationSource() = default;
+    virtual ~LocationProvider() = default;
 
     /**
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual std::pair<GeographicalLocation, Timestamp> getCurrentLocation() = 0;
+    virtual std::pair<Location, Timestamp> getCurrentLocation() = 0;
 };
 }// namespace NES::Experimental::Mobility
 
-#endif//NES_GEOLOCATION_LOCATIONSOURCE_HPP
+#endif//NES_GEOLOCATION_LOCATIONPROVIDER_HPP
