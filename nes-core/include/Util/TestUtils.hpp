@@ -245,7 +245,7 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
                 return true;
             }
             case QueryStatus::Failed: {
-                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
+                NES_ERROR("Query failed to start. Expected: Running or Optimizing but found " + QueryStatus::toString(status));
                 return false;
             }
             default: {

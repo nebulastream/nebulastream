@@ -82,7 +82,7 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
         NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
                   + ". Ignoring stop query request.");
         //        throw InvalidQueryStatusException(
-        //            {QueryStatus::Scheduling, QueryStatus::Registered, QueryStatus::Deployed, QueryStatus::Running},
+        //            {QueryStatus::Optimizing, QueryStatus::Registered, QueryStatus::Deployed, QueryStatus::Running},
         //            currentStatus);
         return false;
     }
@@ -133,7 +133,7 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
     //Handle new status of the query
     switch (queryStatus) {
         case QueryStatus::Registered:
-        case QueryStatus::Scheduling:
+        case QueryStatus::Optimizing:
         case QueryStatus::Restarting:
         case QueryStatus::Migrating:
         case QueryStatus::Deployed:
@@ -154,7 +154,7 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
         }
         default:
             throw InvalidQueryStatusException({QueryStatus::Registered,
-                                               QueryStatus::Scheduling,
+                                               QueryStatus::Optimizing,
                                                QueryStatus::Restarting,
                                                QueryStatus::Migrating,
                                                QueryStatus::Stopped,

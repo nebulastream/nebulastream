@@ -89,7 +89,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Input Query Plan", queryPlan);
 
                     NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
-                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Scheduling, "");
+                    queryCatalogService->updateQueryStatus(queryId, QueryStatus::Optimizing, "");
 
                     NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                     queryPlan = typeInferencePhase->execute(queryPlan);
