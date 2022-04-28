@@ -100,6 +100,8 @@ class RestServer {
    */
     bool start();
 
+    void run();
+
     /**
    * @brief method to stop rest server
    * @return bool indicating sucesss

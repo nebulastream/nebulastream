@@ -14,7 +14,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v18)
+set(VCPKG_BINARY_VERSION vOatpp-cpprestsdk)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -156,6 +156,15 @@ if (CMAKE_NES_TRACE_NODE_CREATION)
     add_compile_definitions(NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
+
+#use Oatpp rest server
+if (CMAKE_NES_USE_OATPP)
+    message("Using Oatpp as REST framework")
+    add_compile_definitions(NES_USE_OATPP)
+endif()
+
+get_directory_property(MYDEFS COMPILE_DEFINITIONS)
+message( STATUS "Compile defs contain: " ${MYDEFS} )
 
 # Infers the log level based on the provided "NES_LOG_LEVEL" flag.
 # Currently we support the following log levels:
@@ -377,8 +386,12 @@ endif ()
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 # C++ REST SDK
-find_package(cpprestsdk CONFIG REQUIRED)
-set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
+#find_package(cpprestsdk CONFIG REQUIRED)
+#set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
+
+#Oatpp REST SDK
+find_package(oatpp REQUIRED)
+set(LIBRARIES ${LIBRARIES} oatpp::oatpp)
 
 # Eigen3 linear alg library
 find_package(Eigen3 CONFIG REQUIRED NO_MODULE)

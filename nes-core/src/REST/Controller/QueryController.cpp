@@ -37,6 +37,7 @@ QueryController::QueryController(QueryServicePtr queryService,
     : queryService(std::move(queryService)), queryCatalogService(std::move(queryCatalogService)),
       globalExecutionPlan(std::move(globalExecutionPlan)) {}
 
+#ifndef NES_USE_OATPP
 void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     auto parameters = getParameters(request);
@@ -436,5 +437,6 @@ bool QueryController::validateURIParametersContainQueryIdAndQueryIdExists(
     }
     return true;
 }
+#endif
 
 }// namespace NES

@@ -26,6 +26,7 @@ SourceCatalogController::SourceCatalogController(SourceCatalogPtr sourceCatalog)
     NES_DEBUG("SourceCatalogController()");
 }
 
+#ifndef NES_USE_OATPP
 void SourceCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
@@ -365,5 +366,5 @@ void SourceCatalogController::handleDelete(const std::vector<utility::string_t>&
         resourceNotFoundImpl(request);
     }
 }
-
+#endif
 }// namespace NES

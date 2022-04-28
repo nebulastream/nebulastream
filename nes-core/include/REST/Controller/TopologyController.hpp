@@ -26,6 +26,7 @@ class TopologyController : public BaseController {
     explicit TopologyController(TopologyPtr topology);
 
     ~TopologyController() = default;
+#ifndef NES_USE_OATPP
     /**
      * Handling the Get requests for the query
      * @param path : the url of the rest request
@@ -41,13 +42,15 @@ class TopologyController : public BaseController {
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
 
   private:
-    TopologyPtr topology;
     /**
       * @brief function to obtain JSON representation of a NES Topology
       * @param root of the Topology
       * @return JSON representation of the Topology
       */
     web::json::value getTopologyAsJson(TopologyPtr root);
+#endif
+    TopologyPtr topology;
+
 };
 
 using TopologyControllerPtr = std::shared_ptr<TopologyController>;
