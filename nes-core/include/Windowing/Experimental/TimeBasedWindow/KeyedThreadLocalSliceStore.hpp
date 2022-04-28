@@ -31,14 +31,39 @@ class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 /**
- * @brief A Slice store, which stores slices for a specific thread.
+ * @brief A Slice store for tumbling and sliding windows,
+ * which stores slices for a specific thread.
+ * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
  * As the slice store is only using by a single thread, we dont have to protect its functions for concurrent accesses.
  */
 class KeyedThreadLocalSliceStore {
   public:
     explicit KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory,
-                                        uint64_t sliceSize,
+                                        uint64_t windowSize,
+                                        uint64_t windowSlide,
                                         uint64_t numberOfPreallocatedSlices);
+
+    /**
+     * @brief Calculates the start of a slice for a specific timestamp ts.
+     * @param ts the timestamp for which we calculate the start of the particular slice.
+     * @return uint64_t slice start
+     */
+    inline uint64_t getSliceStartTs(uint64_t ts) {
+        auto nextWindowStart = ts - (ts) % windowSize;
+        auto nextSlideStart = ts - (ts) % windowSlide;
+        return std::max(nextWindowStart, nextSlideStart);
+    }
+
+    /**
+     * @brief Calculates the end of a slice for a specific timestamp ts.
+     * @param ts the timestamp for which we calculate the end of the particular slice.
+     * @return uint64_t slice end
+     */
+    inline uint64_t getSliceEndTs(uint64_t ts) {
+        auto nextWindowStart = ts + (windowSize - (ts) % windowSize);
+        auto nextSlideStart = ts + (windowSlide - (ts) % windowSlide);
+        return std::min(nextWindowStart, nextSlideStart);
+    }
 
     /**
      * @brief Finds a slice by a specific time stamp.
@@ -46,28 +71,30 @@ class KeyedThreadLocalSliceStore {
      * @return KeyedSlicePtr
      */
     inline KeyedSlicePtr& findSliceByTs(uint64_t ts) {
-        auto logicalSliceIndex = ts / sliceSize;
-        return getSlice(logicalSliceIndex);
+        NES_ASSERT(ts > lastWatermarkTs, "The ts " << ts << " can't be smaller then the lastWatermarkTs " << lastWatermarkTs);
+        // calculate the slice end for a specific ts
+        auto sliceEndTs = getSliceEndTs(ts);
+        return getSlice(sliceEndTs);
     }
 
     /**
-     * @brief Returns an slice by a specific slice index.
-     * @param sliceIndex
+     * @brief Returns an slice by a specific slice end timestamp.
+     * @param sliceEndTs
      * @return KeyedSlicePtr
      */
-    inline const KeyedSlicePtr& operator[](uint64_t sliceIndex) { return getSlice(sliceIndex); }
+    inline const KeyedSlicePtr& operator[](uint64_t sliceEndTs) { return getSlice(sliceEndTs); }
 
     /**
-     * @brief Returns the currently minimal slice index.
+     * @brief Returns the slice end ts for the first slice in the slice store.
      * @return uint64_t
      */
-    inline uint64_t getFirstIndex() { return firstIndex; }
+    inline uint64_t getFirstIndex() { return minimalSliceEnd; }
 
     /**
-     * @brief Returns the currently maximal slice index.
+     * @brief Returns the slice end ts for the last slice in the slice store.
      * @return uint64_t
      */
-    inline uint64_t getLastIndex() { return lastIndex; }
+    inline uint64_t getLastIndex() { return currentSlice->getEnd(); }
 
     /**
      * @brief Deletes the slice with the smalles slice index.
@@ -92,6 +119,12 @@ class KeyedThreadLocalSliceStore {
      */
     void setFirstSliceIndex(uint64_t sliceIndex);
 
+    /**
+     * @brief Returns the number of currently stored slices
+     * @return uint64_t
+     */
+    uint64_t getNumberOfSlices();
+
   private:
     /**
      * @brief Appends a new slice to the end of the slice store.
@@ -104,17 +137,30 @@ class KeyedThreadLocalSliceStore {
      * @param sliceIndex
      * @return KeyedSlicePtr
      */
-    inline KeyedSlicePtr& getSlice(uint64_t sliceIndex) {
-        if (sliceIndex < firstIndex) {
-            throw WindowProcessingException("Requested slice index " + std::to_string(sliceIndex) + " is before "
-                                            + std::to_string(firstIndex));
+    inline KeyedSlicePtr& getSlice(uint64_t sliceEnd) {
+
+        if (slices.empty()) {
         }
-        if (currentSlice != nullptr && sliceIndex == lastIndex) {
+
+        auto sliceIter = slices.rbegin();
+        while ((*sliceIter)->getStart() > sliceEnd) {
+            sliceIter++;
+        }
+
+        auto& slice = *sliceIter;
+        if(slice->getStart() <= sliceEnd && slice->getEnd() < sliceEnd){
+            // we found the correct slice
+        }
+        auto s = allocateNewSlice(0,0,0);
+        slices.emplace(sliceIter.base(), std::move(s));
+        sliceIter.add
+
+        if (currentSlice != nullptr && sliceEnd == lastIndex) {
             return currentSlice;
-        } else if (!slices.contains(sliceIndex)) {
-            return insertSlice(sliceIndex);
+        } else if (!slices.contains(sliceEnd)) {
+            return insertSlice(sliceEnd);
         } else {
-            return slices[sliceIndex];
+            return slices[sliceEnd];
         }
     }
 
@@ -122,10 +168,10 @@ class KeyedThreadLocalSliceStore {
 
   private:
     NES::Experimental::HashMapFactoryPtr hashMapFactory;
-    uint64_t sliceSize;
+    const uint64_t windowSlide;
+    const uint64_t windowSize;
     KeyedSlicePtr currentSlice;
-    std::map<uint64_t, KeyedSlicePtr> slices;
-    std::list<KeyedSlicePtr> preallocatedSlices;
+    std::list<KeyedSlicePtr> slices;
     uint64_t firstIndex = 0;
     uint64_t lastIndex = 0;
     uint64_t lastWatermarkTs = 0;
