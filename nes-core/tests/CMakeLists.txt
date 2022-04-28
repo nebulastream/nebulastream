@@ -74,6 +74,11 @@ add_executable(lock-free-watermark-processor-test "UnitTests/Windowing/Experimen
 target_link_libraries(lock-free-watermark-processor-test nes  nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME lock-free-watermark-processor-test COMMAND lock-free-watermark-processor-test)
 
+add_executable(keyed-slice-test "UnitTests/Windowing/Experimental/TimeBasedWindow/KeyedSliceTest.cpp")
+target_link_libraries(keyed-slice-test nes  nes-tests-util ${GTEST_LIBRARIES})
+add_test(NAME keyed-slice-test COMMAND keyed-slice-test)
+
+
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests nes-tests)

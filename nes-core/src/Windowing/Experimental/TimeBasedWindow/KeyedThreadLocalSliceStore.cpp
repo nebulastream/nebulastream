@@ -17,9 +17,9 @@
 
 namespace NES::Windowing::Experimental {
 KeyedThreadLocalSliceStore::KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory,
-                                                       uint64_t sliceSize,
+                                                       uint64_t slideSize,
                                                        uint64_t numberOfPreallocatedSlices)
-    : hashMapFactory(hashMapFactory), sliceSize(sliceSize) {
+    : hashMapFactory(hashMapFactory), sliceSize(slideSize) {
     for (uint64_t i = 0; i < numberOfPreallocatedSlices; i++) {
         preallocatedSlices.emplace_back(std::make_unique<KeyedSlice>(hashMapFactory, 0, 0, 0));
     }
@@ -50,21 +50,25 @@ uint64_t KeyedThreadLocalSliceStore::getLastWatermark() { return lastWatermarkTs
 
 void KeyedThreadLocalSliceStore::setLastWatermark(uint64_t watermarkTs) { lastWatermarkTs = watermarkTs; }
 
-KeyedSlicePtr& KeyedThreadLocalSliceStore::insertSlice(uint64_t sliceIndex) {
+uint64_t KeyedThreadLocalSliceStore::getNumberOfSlices() {
+    return slices.size();
+}
+
+KeyedSlicePtr& KeyedThreadLocalSliceStore::insertSlice(uint64_t sliceEnd) {
     // slices are always pre-initialized. Thus, we can just call reset.
-    auto startTs = sliceIndex * sliceSize;
-    auto endTs = (sliceIndex + 1) * sliceSize;
-    auto slice = allocateNewSlice(startTs, endTs, sliceIndex);
-    if (sliceIndex >= lastIndex) {
+    auto startTs = this->getNextSliceStart(sliceEnd * sliceSize);
+    auto endTs = (sliceEnd + 1) * sliceSize;
+    auto slice = allocateNewSlice(startTs, endTs, sliceEnd);
+    if (sliceEnd >= lastIndex) {
         if (currentSlice != nullptr) {
             slices[currentSlice->getIndex()] = std::move(currentSlice);
         }
-        lastIndex = sliceIndex;
+        lastIndex = sliceEnd;
         currentSlice = std::move(slice);
         return currentSlice;
     } else {
-        slices[sliceIndex] = std::move(slice);
-        return slices[sliceIndex];
+        slices[sliceEnd] = std::move(slice);
+        return slices[sliceEnd];
     }
 }
 void KeyedThreadLocalSliceStore::setFirstSliceIndex(uint64_t i) { firstIndex = i; }
