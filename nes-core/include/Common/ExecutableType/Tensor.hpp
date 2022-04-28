@@ -34,7 +34,7 @@ class Tensor : public Array<T, numberOfDimensions> {
     /**
      * @brief Public, externally visible shape of this tensor
      */
-    size_t shape[numberOfDimensions];
+    std::array<size_t,numberOfDimensions> shape;
     /**
      * @brief default constructor
      */
@@ -47,6 +47,7 @@ class Tensor : public Array<T, numberOfDimensions> {
      */
     template<typename... Dims>
     Tensor(Dims... dims) {
+        tensor = std::make_shared<Array<T, realSize>>();
         create(1, dims...);
     }
     /**
@@ -88,7 +89,6 @@ class Tensor : public Array<T, numberOfDimensions> {
      * @param currentDimension
      */
     void create(size_t currentDimension) {
-        tensor = std::make_shared<Array<T, realSize>>();
     }
     /**
      * @brief
