@@ -50,6 +50,7 @@ class OptimizerPlanOperator {
      */
     int id;
 
+  private:
     static int current_id;
 
     /**

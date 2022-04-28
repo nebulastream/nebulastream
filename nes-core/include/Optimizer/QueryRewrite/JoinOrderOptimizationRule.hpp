@@ -136,8 +136,27 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @param root - AbstractJoinPlanOperatorPtr containing potentially a series of joins.
      * @return
      */
-    std::vector<std::any> extractJoinOrder(AbstractJoinPlanOperatorPtr root);
-    void updateJoinOrder(std::vector<JoinLogicalOperatorNodePtr> joins, std::vector<std::any> joinOrder, int level = 0);
+    std::any extractJoinOrder(AbstractJoinPlanOperatorPtr root);
+
+
+
+    /**
+     * @brief function that alters an existing query plan to become a new, updated version with the optimal join ordering according to our cost model.
+     @param oldPlan - the pre-existing query plan that is copied and altered
+     */
+    QueryPlanPtr updateJoinOrder(QueryPlanPtr oldPlan,
+                                 AbstractJoinPlanOperatorPtr finalPlan,
+                                 const std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
+                                 const std::vector<Join::JoinEdgePtr> joinEdges);
+    /**
+     * provides the joinOrder in a readable string format. -- is invoked recursvely
+     * @param joinOrder
+     */
+    std::string printJoinOrder(std::any joinOrder);
+    JoinLogicalOperatorNodePtr constructJoin(const AbstractJoinPlanOperatorPtr& leftChild,
+                                             const AbstractJoinPlanOperatorPtr& rightChild,
+                                             const std::vector<SourceLogicalOperatorNodePtr> sources,
+                                             const std::vector<Join::JoinEdgePtr> vector);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_
