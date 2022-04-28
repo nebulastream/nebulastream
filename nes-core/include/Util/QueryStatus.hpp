@@ -29,7 +29,7 @@ class QueryStatus {
      * @brief Represents various states the user query goes through.
      *
      * Registered: Query is registered to be scheduled to the worker nodes (added to the queue).
-     * Scheduling: Coordinator node is processing the Query and will transmit the execution pipelines to worker nodes.
+     * Optimizing: Coordinator is optimizing the query.
      * Running: Query is now running successfully.
      * MarkedForHardStop: A request arrived into the system for stopping a query and system marks the query for stopping (added to the queue).
      * Stopped: Query was explicitly stopped either by system or by user.
@@ -37,7 +37,7 @@ class QueryStatus {
      */
     enum Value : uint8_t {
         Registered = 0,
-        Scheduling,
+        Optimizing,
         Deployed,
         Running,
         MarkedForHardStop,
