@@ -504,6 +504,18 @@ endif ()
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 message("-- LLVM version ${LLVM_ROOT_DIR}")
 
+# MLIR
+if(NES_USE_MLIR)
+    find_package(MLIR REQUIRED CONFIG)
+    if(MLIR_FOUND)
+        include_directories(SYSTEM ${MLIR_INCLUDE_DIRS})
+        add_compile_definitions(MLIR_COMPILER)
+    else ()
+        message(FATAL_ERROR "Cannot find mlir")
+    endif(MLIR_FOUND)
+    message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+endif(NES_USE_MLIR)
+
 
 # Set definition values.
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
