@@ -31,7 +31,9 @@ class ConnectivityController : public BaseController {
      * @param path : the url of the rest request
      * @param message : the user message
      */
+#ifndef NES_USE_OATPP
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
+#endif
 };
 
 using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;

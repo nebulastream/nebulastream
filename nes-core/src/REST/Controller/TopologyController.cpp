@@ -26,6 +26,7 @@ namespace NES {
 
 TopologyController::TopologyController(TopologyPtr topology) : topology(std::move(topology)) {}
 
+#ifndef NES_USE_OATPP
 void TopologyController::handleGet(const std::vector<utility::string_t>& paths, web::http::http_request& message) {
     NES_DEBUG("TopologyController: GET Topology");
 
@@ -228,4 +229,5 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
     topologyJson["edges"] = web::json::value::array(edges);
     return topologyJson;
 }
+#endif
 }// namespace NES

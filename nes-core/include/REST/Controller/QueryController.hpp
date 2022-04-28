@@ -42,6 +42,7 @@ class QueryController : public BaseController {
 
     ~QueryController() = default;
 
+#ifndef NES_USE_OATPP
     /**
      * Handling the Get requests for the query
      * @param path : the url of the rest request
@@ -116,6 +117,7 @@ class QueryController : public BaseController {
      */
     bool validateURIParametersContainQueryIdAndQueryIdExists(std::map<utility::string_t, utility::string_t> parameters,
                                                              const web::http::http_request& httpRequest);
+#endif
 
     QueryServicePtr queryService;
     QueryCatalogServicePtr queryCatalogService;

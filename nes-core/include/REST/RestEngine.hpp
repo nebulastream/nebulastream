@@ -109,6 +109,7 @@ class RestEngine {
                const Runtime::BufferManagerPtr bufferManager,
                const NES::Spatial::Index::Experimental::LocationServicePtr& locationService);
 
+#ifndef NES_USE_OATPP
     void handleGet(web::http::http_request request);
     void handlePost(web::http::http_request request);
     void handleDelete(web::http::http_request request);
@@ -150,6 +151,8 @@ class RestEngine {
 
   protected:
     web::http::experimental::listener::http_listener _listener;// main micro service network endpoint
+#else
+
 
   private:
     QueryControllerPtr queryController;
@@ -165,4 +168,5 @@ class RestEngine {
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;
 }// namespace NES
+#endif
 #endif// NES_INCLUDE_REST_RESTENGINE_HPP_

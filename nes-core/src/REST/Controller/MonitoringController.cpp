@@ -28,7 +28,7 @@ MonitoringController::MonitoringController(MonitoringServicePtr mService, Runtim
     : monitoringService(mService), bufferManager(bufferManager) {
     NES_DEBUG("MonitoringController: Initializing");
 }
-
+#ifndef NES_USE_OATPP
 void MonitoringController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     NES_INFO("MonitoringController: Processing GET request");
     if (path[1] == "start") {
@@ -88,5 +88,6 @@ void MonitoringController::handlePost(const std::vector<utility::string_t>&, web
     NES_DEBUG("MonitoringController: Processing POST request");
     resourceNotFoundImpl(message);
 }
+#endif
 
 }// namespace NES

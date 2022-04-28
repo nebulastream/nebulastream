@@ -29,6 +29,7 @@ using namespace Catalogs;
 
 const std::string UdfCatalogController::path_prefix = "udf-catalog"s;
 
+#ifndef NES_USE_OATPP
 bool UdfCatalogController::verifyCorrectPathPrefix(const std::string& path_prefix, web::http::http_request& request) {
     if (path_prefix != UdfCatalogController::path_prefix) {
         NES_ERROR("The RestEngine delegated an HTTP request with an unknown path prefix to the UdfCatalogController: path[0] = "
@@ -197,5 +198,5 @@ void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& pa
     result["removed"] = web::json::value(removed);
     successMessageImpl(request, result);
 }
-
+#endif
 }// namespace NES
