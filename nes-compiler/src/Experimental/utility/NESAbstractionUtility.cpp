@@ -12,15 +12,15 @@
     limitations under the License.
 */
 
-#include <Experimental/utility/createNESAbstraction.hpp>
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionForNode.hpp>
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionIfNode.hpp>
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionWriteNode.hpp>
+#include <Experimental/utility/NESAbstractionUtility.hpp>
 /**
   * @brief Create a simple NESAbstractionTree used for testing.
   * @return std::unique_ptr<NESAbstractionTree>
   */
-std::shared_ptr<NESAbstractionTree> createSimpleNESAbstractionTree(
+std::shared_ptr<NESAbstractionTree> NESAbstractionUtility::createSimpleNESAbstractionTree(
     uint64_t numTuples, std::vector<uint64_t> indexes, std::vector<NESAbstractionNode::BasicType> types) {
     // Define the ForNode.
     std::shared_ptr<NESAbstractionNode> forNode =

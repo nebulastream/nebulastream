@@ -16,4 +16,5 @@ add_source_files(nes-compiler
         NESAbstractionIfNode.cpp
         NESAbstractionNode.cpp
         NESAbstractionWriteNode.cpp
+        NESAbstractionReadNode.cpp
 )

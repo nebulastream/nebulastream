@@ -20,12 +20,19 @@
 #include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionNode.hpp>
 #include <Experimental/NESAbstraction/NESAbstractionTree.hpp>
 
-/**
+
+class NESAbstractionUtility {
+  public:
+    NESAbstractionUtility() = default;
+    ~NESAbstractionUtility() = default;
+    /**
    * @brief Create a simple NESAbstractionTree used for testing.
    * @return std::unique_ptr<NESAbstractionTree>
    */
-std::shared_ptr<NESAbstractionTree> createSimpleNESAbstractionTree(
-   uint64_t numTuples, std::vector<uint64_t> indexes, std::vector<NESAbstractionNode::BasicType> types);
+    static std::shared_ptr<NESAbstractionTree> createSimpleNESAbstractionTree(
+        uint64_t numTuples, std::vector<uint64_t> indexes, std::vector<NESAbstractionNode::BasicType> types);
+
+};
 
 #endif //MLIR_COMPILER
 #endif //NES_INCLUDE_EXPERIMENTAL_CREATENESABSTRACTION_HPP_

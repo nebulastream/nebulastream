@@ -501,7 +501,6 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-# if(NOT NES_USE MLIR) # Todo find out if necessary, because LLVM 14 instead of 13 is used
 find_package(LLVM 14 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")

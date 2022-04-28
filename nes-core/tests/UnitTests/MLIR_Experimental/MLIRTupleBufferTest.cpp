@@ -21,11 +21,11 @@
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/ExecutionEngine/JITSymbol.h"
 
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionNode.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Experimental/utility/createNESAbstraction.hpp>
+#include <Experimental/NESAbstraction/NESAbstractionNode/NESAbstractionNode.hpp>
+#include <Experimental/utility/NESAbstractionUtility.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES {
 class MLIRTupleBufferIteration : public testing::Test {
@@ -192,7 +192,7 @@ TEST(MLIRTupleBufferIteration, simpleBufferIteration) {
         };
 
     // Create sample NESAbstractionTree create an MLIR Module for it.
-    auto NESTree = createSimpleNESAbstractionTree(numTuples, indices, types);
+    auto NESTree = NESAbstractionUtility::createSimpleNESAbstractionTree(numTuples, indices, types);
     auto mlirUtility = std::make_shared<MLIRUtility>(mlirFilepath, debugFromFile);
     if (int error = mlirUtility->loadAndProcessMLIR(NESTree, &debugFlags)) {
         assert(false);

@@ -178,7 +178,7 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols,
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-            //    llvmIRModule->print(llvm::errs(), nullptr);
+            llvmIRModule->print(llvm::errs(), nullptr);
             return optimizedModule;
         };
     } else {

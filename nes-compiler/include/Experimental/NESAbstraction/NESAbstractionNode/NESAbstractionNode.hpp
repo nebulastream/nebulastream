@@ -22,7 +22,7 @@
 
 class NESAbstractionNode {
 public:
-    enum NodeType{ForNode, IfNode, WriteNode, BinOpNode};
+    enum NodeType{ForNode, IfNode, WriteNode, BinOpNode, ReadNode};
     enum BasicType {
         //BasicTypes
         // Type < 5 is INT
