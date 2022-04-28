@@ -21,7 +21,7 @@ namespace NES {
 std::string QueryStatus::toString(const Value queryStatus) {
     switch (queryStatus) {
         case Registered: return "REGISTERED";
-        case Scheduling: return "SCHEDULING";
+        case Optimizing: return "OPTIMIZING";
         case Deployed: return "DEPLOYED";
         case Running: return "RUNNING";
         case Stopped: return "STOPPED";
@@ -38,8 +38,8 @@ std::string QueryStatus::toString(const Value queryStatus) {
 QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
     if (queryStatus == "REGISTERED") {
         return Registered;
-    } else if (queryStatus == "SCHEDULING") {
-        return Scheduling;
+    } else if (queryStatus == "OPTIMIZING") {
+        return Optimizing;
     } else if (queryStatus == "DEPLOYED") {
         return Deployed;
     } else if (queryStatus == "RUNNING") {

@@ -49,7 +49,7 @@ std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
             requestQueue.pop_front();
             currentBatchSize++;
         }
-        NES_INFO("QueryRequestQueue: Scheduling " << queriesToSchedule.size() << " queryIdAndCatalogEntryMapping.");
+        NES_INFO("QueryRequestQueue: Optimizing " << queriesToSchedule.size() << " queryIdAndCatalogEntryMapping.");
         setNewRequestAvailable(!requestQueue.empty());
         return queriesToSchedule;
     }
