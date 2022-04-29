@@ -195,7 +195,7 @@ class NonBlockingMonotonicSeqQueue {
                 auto& value = currentBlock->log[seqIndexInBlock];
                 if (value.seq == nextSeqNumber) {
                     // the next sequence number is still in the current block thus we only have to exchange the currentSeq.
-                    std::atomic_compare_exchange_strong(&currentSeq, &currentSequenceNumber, nextSeqNumber);
+                    std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber);
                     continue;
                 }
             }
