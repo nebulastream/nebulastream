@@ -527,6 +527,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                                                      nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager(),
                                                                      id,
+                                                                     0, // dummy origin id
                                                                      numSourceLocalBuffers,
                                                                      std::move(successors));
             });
@@ -546,6 +547,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
                                                                      nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager(),
                                                                      id,
+                                                                     0, // dummy origin id
                                                                      numSourceLocalBuffers,
                                                                      std::move(successors));
             });
@@ -557,7 +559,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
             ->addField("build$id2", BasicType::INT64)
             ->addField("build$value", BasicType::INT64)
             ;
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(sourceDescriptorBuildSide)
@@ -720,6 +722,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0, // dummy origin id
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -739,6 +742,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
+                                                                 0, // dummy origin id
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -750,7 +754,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                             ->addField("build$id2", BasicType::INT64)
                             ->addField("build$value", BasicType::INT64)
         ;
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(sourceDescriptorProbeSide)

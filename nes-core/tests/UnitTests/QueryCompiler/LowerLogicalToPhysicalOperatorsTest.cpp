@@ -409,7 +409,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleJoinQuery) {
 }
 
 
-TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSimpleBatchJoinQuery) {
+TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleBatchJoinQuery) {
     BatchJoinLogicalOperatorNodePtr batchJoinOp1;
     {
         auto joinType = Join::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
@@ -439,7 +439,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSimpleBatchJoinQuery) {
     sourceOp2->setOutputSchema(rightSchema);
 
     NES_DEBUG(queryPlan->toString());
-    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create(options);
     auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
