@@ -56,7 +56,6 @@ class ContinuousSourceTest : public Testing::NESBaseTest {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -161,7 +160,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -212,7 +210,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -264,7 +261,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -375,7 +371,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -487,7 +482,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -548,7 +542,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");
@@ -636,7 +629,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("ContinuousSourceTest: Start coordinator");

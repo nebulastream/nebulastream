@@ -50,7 +50,6 @@ class LocationIntegrationTests : public Testing::NESBaseTest {
 
 TEST_F(LocationIntegrationTests, testFieldNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;

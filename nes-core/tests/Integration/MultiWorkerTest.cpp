@@ -42,7 +42,6 @@ class MultiWorkerTest : public Testing::NESBaseTest {
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;
@@ -109,7 +108,6 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;
@@ -149,7 +147,6 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
 
 TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;
@@ -194,7 +191,6 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;
@@ -231,7 +227,6 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;
@@ -276,7 +271,6 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, testMultipleWorker) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;

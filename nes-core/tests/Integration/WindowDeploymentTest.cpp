@@ -55,7 +55,6 @@ class WindowDeploymentTest : public Testing::NESBaseTest {
  */
 TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
 
@@ -131,7 +130,6 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
  */
 TEST_F(WindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
@@ -433,7 +431,6 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
 
@@ -827,7 +824,6 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTime) {
 
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -895,7 +891,6 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
 
 TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -981,7 +976,6 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
  */
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1050,7 +1044,6 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
  */
 TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     auto workerConfig1 = WorkerConfiguration::create();
     auto workerConfig2 = WorkerConfiguration::create();
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
@@ -1187,7 +1180,6 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
  */
 TEST_F(WindowDeploymentTest, testDistributedTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     //register logical source qnv

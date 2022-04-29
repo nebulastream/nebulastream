@@ -47,7 +47,6 @@ class MaterializedViewTest : public Testing::NESBaseTest {
 /// @brief tests if a query with materialized view sink starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MaterializedViewTupleViewSinkTest: Start coordinator");
@@ -103,7 +102,6 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
 /// @brief tests if a query with materialized view source starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MaterializedViewTupleBufferSourceTest: Start coordinator");
@@ -157,7 +155,6 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 // @brief tests with two concurrent queryIdAndCatalogEntryMapping if writing and reading of MVs works properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Start coordinator");
