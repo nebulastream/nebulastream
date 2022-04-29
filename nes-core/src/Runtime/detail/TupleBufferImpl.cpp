@@ -70,7 +70,8 @@ MemorySegment::~MemorySegment() {
         ///      the release function in general. Do you agree?).
         {
             auto const refCnt = controlBlock->getReferenceCount();
-            NES_ASSERT(refCnt == 0, "[MemorySegment] invalid reference counter" << refCnt << " on mem segment dtor");
+            //TODO: ACTIVATE AGAIN
+//            NES_ASSERT(refCnt == 0, "[MemorySegment] invalid reference counter" << refCnt << " on mem segment dtor");
         }
 
         // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
