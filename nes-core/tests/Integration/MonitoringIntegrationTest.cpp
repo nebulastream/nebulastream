@@ -58,7 +58,6 @@ class MonitoringIntegrationTest : public Testing::NESBaseTest {
 
 TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
@@ -129,7 +128,6 @@ TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
 
 TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
@@ -206,7 +204,6 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
 
 TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     bool monitoring = false;

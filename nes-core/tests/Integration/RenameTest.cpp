@@ -47,7 +47,6 @@ class RenameTest : public Testing::NESBaseTest {
 
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -124,7 +123,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -206,7 +204,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -276,7 +273,6 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 
 TEST_F(RenameTest, testCentralWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
@@ -355,7 +351,6 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
  */
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
