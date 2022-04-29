@@ -18,7 +18,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>

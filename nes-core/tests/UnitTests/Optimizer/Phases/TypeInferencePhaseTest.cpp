@@ -994,21 +994,21 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
  */
 TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->removeLogicalStream("default_logical");
+    sourceCatalog->removeLogicalSource("default_logical");
 
     SchemaPtr schemaProbeSide = Schema::create()
             ->addField("id1", BasicType::INT64)
             ->addField("one", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    sourceCatalog->addLogicalStream("probe", schemaProbeSide);
+    sourceCatalog->addLogicalSource("probe", schemaProbeSide);
 
 
     SchemaPtr schemaBuildSide = Schema::create()
             ->addField("id2", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    sourceCatalog->addLogicalStream("build", schemaBuildSide);
+    sourceCatalog->addLogicalSource("build", schemaBuildSide);
 
     auto subQuery = Query::from("build");
 
@@ -1063,21 +1063,21 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
  */
 TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    sourceCatalog->removeLogicalStream("default_logical");
+    sourceCatalog->removeLogicalSource("default_logical");
 
     SchemaPtr schemaProbeSide = Schema::create()
             ->addField("id1", BasicType::INT64)
             ->addField("one", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    sourceCatalog->addLogicalStream("probe", schemaProbeSide);
+    sourceCatalog->addLogicalSource("probe", schemaProbeSide);
 
 
     SchemaPtr schemaBuildSide = Schema::create()
             ->addField("id2", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    sourceCatalog->addLogicalStream("build", schemaBuildSide);
+    sourceCatalog->addLogicalSource("build", schemaBuildSide);
 
     auto subQuery = Query::from("build");
 

@@ -12,56 +12,9 @@
     limitations under the License.
 */
 
-/* TODO readd the first line:
-         statistics->setTimestampFirstProcessedTask(now, true);
-        statistics->setTimestampLastProcessedTask(now);
-
-        statistics->incProcessedTasks();
-        statistics->incProcessedBuffers();
-
- *
- */
-
-/* TODO put into:
- bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager) {
-->
-
-    // register start timestamp of query in statistics
-    if (queryToStatisticsMap.contains(qep->getQuerySubPlanId())) {
-        auto statistics = queryToStatisticsMap.find(qep->getQuerySubPlanId());
-        auto now =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-                .count();
-        statistics->setTimestampQueryStart(now, false);
-    } else {
-        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
-        NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
-    }
- */
-
-/* TODO put into:
-
-void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
-->
-    if (queryToStatisticsMap.contains(qepId)) {
-
-
- ->
-        statistics->setTimestampLastProcessedTask(now);
-
-        statistics->incProcessedTasks();
-        statistics->incProcessedBuffers();
-
-        auto creation = task.getBufferRef().getCreationTimestamp();
- */
-
-/*
+/* TODO
  * add to Reconfig... constructors:
  -1, // any querID
- */
-
-/* start query, make this true:
- * statistics->setTimestampQueryStart(now, false);
  */
 
 #include <Network/NetworkSink.hpp>

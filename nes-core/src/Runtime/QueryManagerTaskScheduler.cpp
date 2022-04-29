@@ -39,6 +39,7 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
   public:
     explicit ReconfigurationPipelineExecutionContext(QuerySubPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
+            -1, // this is a dummy pipelineID
             queryExecutionPlanId,
             std::move(queryManager),
             [](TupleBuffer&, NES::Runtime::WorkerContext&) {
@@ -279,12 +280,15 @@ void AbstractQueryManager::updateStatistics(const Task& task,
     if (queryToStatisticsMap.contains(querySubPlanId)) {
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
 
+        auto now =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count();
+
+        statistics->setTimestampFirstProcessedTask(now, true);
+        statistics->setTimestampLastProcessedTask(now);
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestamp();
-        auto now =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-                .count();
         auto diff = now - creation;
         //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
         NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");

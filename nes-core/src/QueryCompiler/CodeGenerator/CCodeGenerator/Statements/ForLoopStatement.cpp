@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ForLoopStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -28,7 +28,7 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
                                    ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
                                    std::vector<StatementPtr> loopBody)
-        : varDeclaration(std::move(varDeclaration)), varDeclarationStatememt(nullptr),
+        : varDeclaration(std::move(varDeclaration)), varDeclarationStatement(nullptr),
         condition(std::move(condition)), advance(std::move(advance)),
         body(std::make_shared<CompoundStatement>()) {
     for (auto const& stmt : loopBody) {

@@ -203,7 +203,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     } else if (sourceDescriptor->instanceOf<NES::Experimental::StaticDataSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating static data source");
         auto staticDataSourceDescriptor = sourceDescriptor->as<NES::Experimental::StaticDataSourceDescriptor>();
-        return Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
+        return NES::Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
                                                     staticDataSourceDescriptor->getPathTableFile(),
                                                     staticDataSourceDescriptor->getLateStart(),
                                                     bufferManager,

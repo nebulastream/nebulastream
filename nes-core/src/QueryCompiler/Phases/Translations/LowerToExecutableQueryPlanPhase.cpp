@@ -358,6 +358,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
             return NES::Experimental::StaticDataSourceDescriptor::create(schema,
                                                                          staticDataSourceType->getPathTableFile(),
                                                                          staticDataSourceType->getLateStart());
+        }
         case LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
             return LambdaSourceDescriptor::create(schema,
