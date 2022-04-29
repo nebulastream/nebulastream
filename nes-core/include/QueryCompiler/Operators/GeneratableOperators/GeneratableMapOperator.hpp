@@ -45,6 +45,12 @@ class GeneratableMapOperator : public GeneratableOperator {
      */
     static GeneratableOperatorPtr
     create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
+    /**
+    * @brief Code generation function for the execute call of an operator.
+    * The execute function is called for each tuple buffer consumed by this operator.
+    * @param codegen reference to the code generator.
+    * @param context reference to the current pipeline context.
+    */
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
