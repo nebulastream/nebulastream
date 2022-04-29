@@ -3828,6 +3828,10 @@ VariableDeclaration CCodeGenerator::getOperatorHandler(const PipelineContextPtr&
             typeString = "Join::BatchJoinOperatorHandler";
             identifier = "batchJoinOperatorHandler";
             break;
+        case Runtime::Execution::KEY_EVENT_TIME_WINDOW: // afaik nothing uses or tests this behaviour
+            typeString = "Windowing::Experimental::BatchJoinOperatorHandler";
+            identifier = "keyEventTimeWindowOperatorHandler";
+            break;
     }
 
     auto tf = getTypeFactory();
