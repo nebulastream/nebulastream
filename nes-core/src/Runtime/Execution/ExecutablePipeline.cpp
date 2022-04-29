@@ -235,7 +235,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 }
                 stop();
                 queryManager->notifyPipelineCompletion(querySubPlanId,
-                                                       shared_from_this<ExecutablePipeline>(),
+                                                       inherited0::shared_from_this<ExecutablePipeline>(),
                                                        task.getType() == Runtime::SoftEndOfStream
                                                            ? Runtime::QueryTerminationType::Graceful
                                                            : Runtime::QueryTerminationType::HardStop);

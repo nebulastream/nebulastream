@@ -437,7 +437,8 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, DataSinkPtr sink)
         : PipelineExecutionContext(
-            0,
+            -1, // mock pipeline id
+            0, // mock query id
             std::move(queryManager),
             [sink](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
