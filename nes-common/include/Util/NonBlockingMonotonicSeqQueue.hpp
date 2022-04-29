@@ -151,7 +151,7 @@ class NonBlockingMonotonicSeqQueue {
         // It is safe to perform this operation without atomics as no other thread can't the same sequence number,
         // and thus can't modify this value.
         // Concurrent can also not happen yet as the currentSeq is only modified in shiftCurrent.
-        auto seqIndexInBlock = seq - (currentBlock->blockIndex * blockSize);
+        auto seqIndexInBlock = seq % blockSize;
         currentBlock->log[seqIndexInBlock].seq = seq;
         currentBlock->log[seqIndexInBlock].value = value;
     }
@@ -183,15 +183,15 @@ class NonBlockingMonotonicSeqQueue {
                     auto& value = nextBlock->log[0];
                     if (value.seq == nextSeqNumber) {
                         // Modify currentSeq and head
-                        if (std::atomic_compare_exchange_strong(&currentSeq, &currentSequenceNumber, nextSeqNumber)) {
+                        if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber)) {
                             NES_DEBUG("Swap HEAD: remove " << currentBlock->blockIndex << " - " << currentBlock.use_count());
-                            std::atomic_compare_exchange_strong(&head, &currentBlock, nextBlock);
+                            std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
                         };
                         continue;
                     }
                 }
             } else {
-                auto seqIndexInBlock = nextSeqNumber - (currentBlock->blockIndex * blockSize);
+                auto seqIndexInBlock = nextSeqNumber % blockSize;
                 auto& value = currentBlock->log[seqIndexInBlock];
                 if (value.seq == nextSeqNumber) {
                     // the next sequence number is still in the current block thus we only have to exchange the currentSeq.
