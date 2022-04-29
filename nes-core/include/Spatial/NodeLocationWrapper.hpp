@@ -21,6 +21,7 @@
 #include <thread>
 #include <vector>
 #include <deque>
+#include <Util/TimeMeasurement.hpp>
 
 class S2Polyline;
 using S2PolylinePtr = std::shared_ptr<S2Polyline>;
@@ -126,12 +127,12 @@ class NodeLocationWrapper {
     static std::pair<S2Point, S1Angle> findPathCoverage(S2PolylinePtr path, S2Point coveringNode, S1Angle coverage);
 
   private:
-    void updatePredictedPath(Location oldLoc, Location newLoc);
+    void updatePredictedPath(NES::Spatial::Index::Experimental::LocationPtr oldLoc, NES::Spatial::Index::Experimental::LocationPtr newLoc);
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::LocationPtr fixedLocationCoordinates;
     bool isMobile;
     LocationProviderPtr locationProvider;
-    std::deque<std::pair<Location, Timestamp>> locationBuffer;
+    std::deque<std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> locationBuffer;
 
     std::shared_ptr<std::thread> locationUpdateThread;
 
@@ -143,7 +144,7 @@ class NodeLocationWrapper {
     S2PolylinePtr trajectoryLine;
     S2PointIndex<uint64_t> fieldNodeIndex;
     //todo: maybe use a cap for this instead?
-    LocationPtr positionOfLastNodeIndexUpdate;
+    NES::Spatial::Index::Experimental::LocationPtr positionOfLastNodeIndexUpdate;
 };
 
 }//namespace NES::Spatial::Mobility::Experimental
