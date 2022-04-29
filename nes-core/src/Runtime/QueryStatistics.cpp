@@ -14,7 +14,7 @@
 
 #include <Runtime/QueryStatistics.hpp>
 #include <sstream>
-#include <Util/Logger.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime {
 

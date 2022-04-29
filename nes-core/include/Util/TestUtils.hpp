@@ -299,7 +299,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
                                           QueryId queryId,
                                           const GlobalQueryPlanPtr& globalQueryPlan,
                                           uint64_t expectedResult,
-                                          uint64_t timeoutSeconds = defaultTimeout) {
+                                          std::chrono::seconds timeoutSeconds = defaultTimeout) {
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
         NES_ERROR("Unable to find global query Id for user query id " << queryId);
@@ -307,9 +307,8 @@ template<typename Predicate = std::equal_to<uint64_t>>
     }
 
     NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
-    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutSeconds) {
         NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
         //FIXME: handle vector of statistics properly in #977
@@ -321,24 +320,25 @@ template<typename Predicate = std::equal_to<uint64_t>>
         uint64_t now =
                 std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
+        auto timeoutMillisec = std::chrono::milliseconds(defaultTimeout);
 
-            // wait for another iteration if the last processed task was very recent.
-            if (statistics[0]->getTimestampLastProcessedTask() == 0
-                || statistics[0]->getTimestampFirstProcessedTask() == 0
-                || statistics[0]->getTimestampLastProcessedTask() > now - timeoutSeconds) {
-                NES_DEBUG("checkCompleteOrTimeout: A task was processed within the last "
-                            << defaultCooldown << "ms, the query may still be active. Restart the timeout period.");
-            }
-            // return if enough buffer have been received
-            else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
-                NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats="
-                          << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                          << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
-                return true;
-            }
-            NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
+        // wait for another iteration if the last processed task was very recent.
+        if (statistics[0]->getTimestampLastProcessedTask() == 0
+            || statistics[0]->getTimestampFirstProcessedTask() == 0
+            || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count()) {
+            NES_DEBUG("checkCompleteOrTimeout: A task was processed within the last "
+                      << timeoutMillisec.count() << "ms, the query may still be active. Restart the timeout period.");
+        }
+        // return if enough buffer have been received
+        else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
+            NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats="
                       << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
-                      << " expected=" << expectedResult);
+                      << " procWatermarks=" << statistics[0]->getProcessedWatermarks());
+            return true;
+        }
+        NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
+                  << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
+                  << " expected=" << expectedResult);
 
         std::this_thread::sleep_for(sleepDuration);
     }

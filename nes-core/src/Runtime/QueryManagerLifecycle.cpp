@@ -181,6 +181,19 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
             NES_DEBUG("AbstractQueryManager: source " << source << " started successfully");
         }
     }
+
+    // register start timestamp of query in statistics
+    if (queryToStatisticsMap.contains(qep->getQuerySubPlanId())) {
+        auto statistics = queryToStatisticsMap.find(qep->getQuerySubPlanId());
+        auto now =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count();
+        statistics->setTimestampQueryStart(now, true);
+    } else {
+        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
+        NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
+    }
+
     return true;
 }
 
