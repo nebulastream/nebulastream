@@ -152,7 +152,7 @@ TEST(MLIRTupleBufferIteration, simpleBufferIteration) {
 
     // Configuration
     const bool debugFromFile = false;
-    const std::string mlirFilepath = "../../../nes-compiler/src/Experimental/MLIR/generatedMLIR/locationTest.mlir";
+    const std::string mlirFilepath = "/home/rudi/mlir/generatedMLIR/locationTest.mlir";
     MLIRUtility::DebugFlags debugFlags{};
     debugFlags.comments = true;
     debugFlags.enableDebugInfo = false;

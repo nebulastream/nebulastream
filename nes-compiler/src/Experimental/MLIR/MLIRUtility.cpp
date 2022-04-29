@@ -171,8 +171,9 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols,
     if (useProxyFunctions) {
         printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
             llvm::SMDiagnostic Err;
+            //Todo change path
             auto proxyFunctionsIR =
-                llvm::parseIRFile("../../../nes-compiler/src/Experimental/utility/proxyFunctionsIR/proxyFunctionsIR.ll",
+                llvm::parseIRFile("/home/rudi/mlir/proxyFunctionsIR/proxyFunctionsIR.ll",
                                   Err,
                                   llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));

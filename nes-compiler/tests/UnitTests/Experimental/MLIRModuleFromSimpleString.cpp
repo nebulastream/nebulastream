@@ -85,7 +85,7 @@ TEST(MLIRModuleFromSimpleString, executeSimpleStringMLIR) {
         }
     )mlir";
 
-    const std::string mlirFilepath = "../../../nes-compiler/src/Experimental/MLIR/generatedMLIR/simpleString.mlir";
+    const std::string mlirFilepath = "/home/rudi/mlir/generatedMLIR/simpleString.mlir";
     MLIRUtility::DebugFlags debugFlags{};
     debugFlags.comments = true;
     debugFlags.enableDebugInfo = false;
