@@ -11,14 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/NESIR/Operations/PredicateOperation.hpp>
 
-#ifndef NES_OPERATOR_HPP
-#define NES_OPERATOR_HPP
+namespace NES {
 
-class Operator {
-  public:
-    Operator() = default;
-    ~Operator() = default;
-};
+PredicateOperation::PredicateOperation(OperationType opType, OperationPtr lhs, OperationPtr rhs, PredicateOperation::BinaryOperatorType binOpType)
+    : Operation(opType), lhs(std::move(lhs)), rhs(std::move(rhs)), binOpType(binOpType){}
 
-#endif//NES_OPERATOR_HPP
+bool PredicateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::PredicateOp; }
+PredicateOperation::BinaryOperatorType PredicateOperation::getBinOpType() { return binOpType; }
+}// namespace NES

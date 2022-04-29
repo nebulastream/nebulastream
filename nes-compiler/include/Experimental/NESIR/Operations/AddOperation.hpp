@@ -12,13 +12,24 @@
     limitations under the License.
 */
 
-#ifndef NES_STOREOPERATION_HPP
-#define NES_STOREOPERATION_HPP
+#ifndef NES_ADDOPERATION_HPP
+#define NES_ADDOPERATION_HPP
 
-class StoreOperation {
+#include <Experimental/NESIR/Operations/Operation.hpp>
+
+namespace NES {
+class AddOperation : public Operation {
   public:
-    StoreOperation() = default;
-    ~StoreOperation() = default;
-};
+    AddOperation(OperationPtr lhs, OperationPtr rhs);
+    ~AddOperation() override = default;
 
-#endif//NES_STOREOPERATION_HPP
+    OperationPtr getLHS();
+    OperationPtr getRHS();
+    bool classof(const Operation* Op);
+
+  private:
+    OperationPtr lhs;
+    OperationPtr rhs;
+};
+}// namespace NES
+#endif//NES_ADDOPERATION_HPP

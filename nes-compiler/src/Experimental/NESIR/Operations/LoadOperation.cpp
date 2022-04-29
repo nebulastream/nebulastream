@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/BasicBlocks/IfBasicBlock.hpp>
-namespace NES {
-NES::IfBasicBlock::IfBasicBlock(const std::vector<Operation*>& operations,
-                                NES::BasicBlockPtr nextIfBlock,
-                                NES::BasicBlockPtr nextElseBlock)
-    : BasicBlock(BasicBlockType::IfBasicBlock, operations), nextIfBlock(std::move(nextIfBlock)),
-      nextElseBlock(std::move(nextElseBlock)) {}
+#include <Experimental/NESIR/Operations/LoadOperation.hpp>
 
-bool IfBasicBlock::classof(const BasicBlock* Block) { return Block->getBlockType() == BasicBlock::IfBasicBlock; }
+namespace NES {
+
+LoadOperation::LoadOperation(void* inputBufferPtr)
+    : Operation(OperationType::LoadOp), inputBufferPtr(inputBufferPtr) {}
+
+bool NES::LoadOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
+void* LoadOperation::getInputBuffer() { return inputBufferPtr; }
 
 }// namespace NES

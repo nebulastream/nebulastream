@@ -20,8 +20,15 @@
 namespace NES {
 class LoopBasicBlock : public BasicBlock {
   public:
-    LoopBasicBlock() = default;
+    LoopBasicBlock(std::vector<Operation*> operators, BasicBlockPtr nextBlock, uint64_t upperLimit);
     ~LoopBasicBlock() override = default;
+
+    [[nodiscard]] uint64_t getUpperLimit() const;
+    static bool classof(const BasicBlock *Block);
+
+  private:
+    BasicBlockPtr nextBlock;
+    uint64_t upperLimit;
 
 
 

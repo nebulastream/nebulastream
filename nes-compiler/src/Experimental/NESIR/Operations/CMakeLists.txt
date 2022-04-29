@@ -12,7 +12,10 @@
 # limitations under the License.
 
 add_source_files(nes-compiler
+        Operation.cpp
         LoadOperation.cpp
         StoreOperation.cpp
         AddOperation.cpp
+        PredicateOperation.cpp
+        ConstantOperation.cpp
 )

@@ -12,12 +12,26 @@
     limitations under the License.
 */
 
-#ifndef NES_ADDOPERATION_HPP
-#define NES_ADDOPERATION_HPP
+#ifndef NES_OPERATION_HPP
+#define NES_OPERATION_HPP
 
-class AddOperation {
-    AddOperation() = default;
-    ~AddOperation() = default;
+#include <memory>
+
+namespace NES {
+
+class Operation {
+  public:
+    enum OperationType{AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp};
+
+    explicit Operation(OperationType opType);
+    virtual ~Operation() = default;
+
+    OperationType getOperationType() const;
+
+  private:
+    OperationType opType;
 };
+using OperationPtr = std::unique_ptr<Operation>;
 
-#endif//NES_ADDOPERATION_HPP
+}// namespace NES
+#endif//NES_OPERATION_HPP

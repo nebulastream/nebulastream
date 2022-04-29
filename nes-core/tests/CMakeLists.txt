@@ -215,7 +215,6 @@ endif (NES_USE_MQTT)
 if(NES_USE_MLIR)
     get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
     get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-    add_executable(mlir-tuplebuffer-test "UnitTests/MLIR_Experimental/MLIRTupleBufferTest.cpp")
     target_link_libraries(nes-tests
             INTERFACE
             ${dialect_libs}
@@ -225,9 +224,15 @@ if(NES_USE_MLIR)
             MLIRExecutionEngine
             )
 
+    add_executable(mlir-tuplebuffer-test "UnitTests/MLIR_Experimental/MLIRTupleBufferTest.cpp")
     target_link_libraries(mlir-tuplebuffer-test
             nes-tests)
     add_test(NAME mlir-tuplebuffer-test COMMAND mlir-tuplebuffer-test)
+
+    add_executable(mlir-nesir-test "UnitTests/MLIR_Experimental/MLIRNESIRTest.cpp")
+    target_link_libraries(mlir-nesir-test
+            nes-tests)
+    add_test(NAME mlir-nesir-test COMMAND mlir-nesir-test)
 endif (NES_USE_MLIR)
 
 

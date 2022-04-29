@@ -12,7 +12,13 @@
     limitations under the License.
 */
 
-#ifdef NES_USE_MLIR
-#include <Experimental/NESIR/Operators/LoadOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstantOperation.hpp>
 
-#endif //NES_USE_MLIR
+namespace NES {
+
+ConstantOperation::ConstantOperation(int constantValue)
+    : Operation(OperationType::ConstantOp), constantValue(constantValue){}
+
+bool ConstantOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstantOp; }
+int ConstantOperation::getConstantValue() { return constantValue; }
+}// namespace NES

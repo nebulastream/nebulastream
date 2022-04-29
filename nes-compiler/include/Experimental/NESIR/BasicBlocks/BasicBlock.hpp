@@ -18,28 +18,29 @@
 #include <vector>
 #include <memory>
 
+#include <Experimental/NESIR/Operations/Operation.hpp>
 namespace NES {
-class Operator;
 
 class BasicBlock {
   public:
-    BasicBlock() = default;
-    virtual ~BasicBlock() = default;
+    enum BasicBlockType{LoopBasicBlock, IfBasicBlock};
 
     /**
      * @brief BasicBlock used for control flow in NES IR
-     * @param operators: A list of operators that are executed in the BasicBlock.
+     * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlock : The BasicBlock that is next in the control flow of the execution.
      */
-    BasicBlock(std::vector<Operator> operators, BasicBlock *nextBlock);
-
-    //    void addOperators(std::vector<Operators> operators);
+    explicit BasicBlock(BasicBlockType basicBlockType, std::vector<Operation*> operations);
+    virtual ~BasicBlock() = default;
+    [[nodiscard]] std::vector<Operation*> getOperations();
+    [[nodiscard]] BasicBlockType getBlockType() const;
+    //    void addOperations(std::vector<Operations> Operations);
     //    void addNextBlock(BasicBlock);
 
   private:
-    std::vector<Operator> operators;
-    BasicBlock *nextBlock;
+    BasicBlockType basicBlockType;
+    std::vector<Operation*> operations;
 };
-using BasicBlockPtr = std::shared_ptr<BasicBlock>;
+using BasicBlockPtr = std::unique_ptr<BasicBlock>;
 } // namespace NES
 #endif//NES_BASICBLOCK_HPP

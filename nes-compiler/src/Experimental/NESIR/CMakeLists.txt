@@ -12,4 +12,4 @@
 # limitations under the License.
 
 add_subdirectory(BasicBlocks)
-add_subdirectory(Operators)
+add_subdirectory(Operations)

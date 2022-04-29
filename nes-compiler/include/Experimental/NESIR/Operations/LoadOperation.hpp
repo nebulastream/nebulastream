@@ -12,7 +12,22 @@
     limitations under the License.
 */
 
-#ifdef NES_USE_MLIR
-#include <Experimental/NESIR/Operators/AddOperation.hpp>
+#ifndef NES_LOADOPERATION_HPP
+#define NES_LOADOPERATION_HPP
 
-#endif //NES_USE_MLIR
+#include <Experimental/NESIR/Operations/Operation.hpp>
+
+namespace NES {
+class LoadOperation : public Operation {
+  public:
+    explicit LoadOperation(void* inputBufferPtr);
+    ~LoadOperation() override = default;
+
+    void* getInputBuffer();
+    bool classof(const Operation *Op);
+  private:
+    void* inputBufferPtr; //Todo fix: MLIR centric
+
+};
+}// namespace NES
+#endif//NES_LOADOPERATION_HPP

@@ -15,10 +15,20 @@
 #ifndef NES_IFBASICBLOCK_HPP
 #define NES_IFBASICBLOCK_HPP
 
-class IfBasicBlock {
-  public:
-    IfBasicBlock() = default;
-    ~IfBasicBlock() = default;
-};
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 
+namespace NES {
+class IfBasicBlock : public BasicBlock {
+  public:
+    IfBasicBlock(const std::vector<Operation*>& operations, BasicBlockPtr nextIfBlock, BasicBlockPtr nextElseBlock);
+    ~IfBasicBlock() override = default;
+
+    bool classof(const BasicBlock *Block);
+
+
+  private:
+    BasicBlockPtr nextIfBlock;
+    BasicBlockPtr nextElseBlock;
+};
+}// namespace NES
 #endif//NES_IFBASICBLOCK_HPP

@@ -13,9 +13,13 @@
 */
 
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
-#include <Experimental/NESIR/Operators/Operator.hpp>
 #include <utility>
 
-NES::BasicBlock::BasicBlock(std::vector<Operator> operators, BasicBlock *nextBlock)
-    : operators(std::move(operators)), nextBlock(nextBlock) {
-}
+namespace NES {
+BasicBlock::BasicBlock(BasicBlock::BasicBlockType basicBlockType, std::vector<Operation*> operations)
+    : basicBlockType(basicBlockType), operations(std::move(operations)) {}
+
+std::vector<Operation*> BasicBlock::getOperations() { return operations; }
+
+BasicBlock::BasicBlockType BasicBlock::getBlockType() const { return basicBlockType; }
+}// namespace NES

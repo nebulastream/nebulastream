@@ -12,13 +12,23 @@
     limitations under the License.
 */
 
-#ifndef NES_LOADOPERATION_HPP
-#define NES_LOADOPERATION_HPP
+#ifndef NES_CONSTANTOPERATION_HPP
+#define NES_CONSTANTOPERATION_HPP
 
-class LoadOperation {
+#include <Experimental/NESIR/Operations/Operation.hpp>
+
+namespace NES {
+
+class ConstantOperation : public Operation {
   public:
-    LoadOperation() = default;
-    ~LoadOperation() = default;
+    explicit ConstantOperation(int constantValue);
+    ~ConstantOperation() override = default;
+
+    int getConstantValue();
+    static bool classof(const Operation* Op);
+  private:
+    int constantValue;
 };
 
-#endif//NES_LOADOPERATION_HPP
+}// namespace NES
+#endif//NES_CONSTANTOPERATION_HPP

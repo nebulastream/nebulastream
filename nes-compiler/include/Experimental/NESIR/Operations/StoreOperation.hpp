@@ -12,7 +12,22 @@
     limitations under the License.
 */
 
-#ifdef NES_USE_MLIR
-#include <Experimental/NESIR/Operators/StoreOperation.hpp>
+#ifndef NES_STOREOPERATION_HPP
+#define NES_STOREOPERATION_HPP
 
-#endif //NES_USE_MLIR
+#include <Experimental/NESIR/Operations/Operation.hpp>
+
+namespace NES {
+class StoreOperation : public Operation{
+  public:
+    explicit StoreOperation(void* outputBufferPtr);
+    ~StoreOperation() override = default;
+
+    void* getOutputBuffer();
+    bool classof(const Operation* Op);
+
+  private:
+    void* outputBufferPtr;
+};
+}// namespace NES
+#endif//NES_STOREOPERATION_HPP

@@ -13,3 +13,16 @@
 */
 
 #include <Experimental/NESIR/BasicBlocks/LoopBasicBlock.hpp>
+#include <utility>
+namespace NES {
+LoopBasicBlock::LoopBasicBlock(std::vector<Operation*> operations, BasicBlockPtr nextBlock, uint64_t upperLimit)
+    : BasicBlock(BasicBlockType::LoopBasicBlock, std::move(operations)),
+      nextBlock(std::move(nextBlock)), upperLimit(upperLimit) {}
+
+uint64_t LoopBasicBlock::getUpperLimit() const { return upperLimit; }
+
+bool LoopBasicBlock::classof(const BasicBlock *Block) {
+    return Block->getBlockType() == BasicBlock::LoopBasicBlock;
+}
+
+}// namespace NES
