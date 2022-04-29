@@ -106,7 +106,8 @@ enum OperatorHandlerType : uint8_t {
     WINDOW,
     CEP,
     JOIN,
-    BATCH_JOIN
+    BATCH_JOIN,
+    KEY_EVENT_TIME_WINDOW
 };
 
 class ExecutablePipeline;
