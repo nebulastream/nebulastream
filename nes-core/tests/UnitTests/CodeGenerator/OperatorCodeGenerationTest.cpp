@@ -121,7 +121,8 @@ class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutio
     TestPipelineExecutionContext(Runtime::QueryManagerPtr queryManager,
                                  std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
-            0,
+            -1, // mock pipeline id
+            0, // mock query id
             std::move(queryManager),
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
