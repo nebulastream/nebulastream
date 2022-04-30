@@ -30,16 +30,16 @@ class BasicBlock {
      * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlock : The BasicBlock that is next in the control flow of the execution.
      */
-    explicit BasicBlock(BasicBlockType basicBlockType, std::vector<Operation*> operations);
+    explicit BasicBlock(BasicBlockType basicBlockType, std::vector<OperationPtr> operations);
     virtual ~BasicBlock() = default;
-    [[nodiscard]] std::vector<Operation*> getOperations();
+    [[nodiscard]] std::vector<OperationPtr> getOperations();
     [[nodiscard]] BasicBlockType getBlockType() const;
     //    void addOperations(std::vector<Operations> Operations);
     //    void addNextBlock(BasicBlock);
 
   private:
     BasicBlockType basicBlockType;
-    std::vector<Operation*> operations;
+    std::vector<OperationPtr> operations;
 };
 using BasicBlockPtr = std::unique_ptr<BasicBlock>;
 } // namespace NES

@@ -14,7 +14,7 @@
 
 #include <Experimental/NESIR/BasicBlocks/IfBasicBlock.hpp>
 namespace NES {
-NES::IfBasicBlock::IfBasicBlock(const std::vector<Operation*>& operations,
+NES::IfBasicBlock::IfBasicBlock(const std::vector<OperationPtr>& operations,
                                 NES::BasicBlockPtr nextIfBlock,
                                 NES::BasicBlockPtr nextElseBlock)
     : BasicBlock(BasicBlockType::IfBasicBlock, operations), nextIfBlock(std::move(nextIfBlock)),

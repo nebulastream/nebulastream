@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/AddOperation.hpp>
+#include <Experimental/NESIR/Operations/AddIntOperation.hpp>
 namespace NES {
-AddOperation::AddOperation(OperationPtr lhs, OperationPtr rhs)
+AddIntOperation::AddIntOperation(OperationPtr lhs, OperationPtr rhs)
     : Operation(OperationType::AddOp), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
 
-bool AddOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
+bool AddIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
-OperationPtr AddOperation::getLHS() { return std::move(lhs); }
-OperationPtr AddOperation::getRHS() { return std::move(rhs); }
+OperationPtr AddIntOperation::getLHS() { return std::move(lhs); }
+OperationPtr AddIntOperation::getRHS() { return std::move(rhs); }
 }// namespace NES

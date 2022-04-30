@@ -13,7 +13,7 @@
 */
 
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Experimental/MLIR/NESAbstractionToMLIR.hpp>
+#include <Experimental/MLIR/NESIRToMLIR.hpp>
 #include <mlir/Target/LLVMIR/Export.h>
 #include <string>
 
@@ -21,6 +21,9 @@
 #include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h"
 #include "mlir/ExecutionEngine/OptUtils.h"
 #include "mlir/IR/OperationSupport.h"
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/SCF/SCF.h"
+#include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Parser.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
@@ -113,7 +116,7 @@ int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags*
     return 0;
 }
 
-int MLIRUtility::loadAndProcessMLIR(const std::shared_ptr<NESAbstractionTree>& NESTree, DebugFlags* debugFlags) {
+int MLIRUtility::loadAndProcessMLIR(const std::shared_ptr<NES::LoopBasicBlock>& loopBasicBlock, DebugFlags* debugFlags) {
 
     // Todo find a good place to load the required Dialects
     // Load all Dialects required to process/generate the required MLIR.
@@ -126,8 +129,8 @@ int MLIRUtility::loadAndProcessMLIR(const std::shared_ptr<NESAbstractionTree>& N
         module = mlir::parseSourceFile(mlirFilepath, &context);
     } else {
         // create NESAbstraction for testing and an MLIRGenerator
-        auto MLIRGen = new MLIRGenerator(context, "1");
-        module = MLIRGen->generateMLIR(NESTree->getRootNode());
+        auto MLIRGen = new MLIRGenerator(context);
+        module = MLIRGen->generateMLIR(loopBasicBlock); //Todo use real
         printMLIRModule(module, debugFlags);
     }
 

@@ -16,7 +16,7 @@
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
 #ifdef MLIR_COMPILER
-#include <Experimental/NESAbstraction/NESAbstractionTree.hpp>
+#include <Experimental/NESIR/BasicBlocks/LoopBasicBlock.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
@@ -53,8 +53,8 @@ class MLIRUtility {
         * @param debugFlags: Determine whether and how to print/write MLIR.
         * @return int: 1 if error occurred, else 0
         */
-        int loadAndProcessMLIR(const std::shared_ptr<NESAbstractionTree>& NESTree,
-                                DebugFlags *debugFlags = nullptr);
+        int loadAndProcessMLIR(const std::shared_ptr<NES::LoopBasicBlock>& loopBasicBlock,
+                               DebugFlags *debugFlags = nullptr);
 
         int loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags);
 

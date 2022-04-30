@@ -16,18 +16,23 @@
 #define NES_STOREOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
+#include <vector>
 
 namespace NES {
 class StoreOperation : public Operation{
   public:
-    explicit StoreOperation(void* outputBufferPtr);
+    explicit StoreOperation(void* outputBufferPtr, std::vector<OperationPtr> valuesToStore, std::vector<uint64_t> outputBufferIndexes);
     ~StoreOperation() override = default;
 
     void* getOutputBuffer();
-    bool classof(const Operation* Op);
+    std::vector<OperationPtr> getValuesToStore();
+    std::vector<uint64_t> getOutputBufferIndexes();
+    static bool classof(const Operation* Op);
 
   private:
     void* outputBufferPtr;
+    std::vector<OperationPtr> valuesToStore;
+    std::vector<uint64_t> outputBufferIndexes;
 };
 }// namespace NES
 #endif//NES_STOREOPERATION_HPP

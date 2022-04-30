@@ -145,83 +145,83 @@ void printBuffer(std::vector<NESAbstractionNode::BasicType> types,
 
 
 TEST(MLIRTupleBufferIteration, simpleBufferIteration) {
-    // Register any command line options.
-    mlir::registerAsmPrinterCLOptions();
-    mlir::registerMLIRContextCLOptions();
-    mlir::registerPassManagerCLOptions();
-
-    // Configuration
-    const bool debugFromFile = false;
-    const std::string mlirFilepath = "/home/rudi/mlir/generatedMLIR/locationTest.mlir";
-    MLIRUtility::DebugFlags debugFlags{};
-    debugFlags.comments = true;
-    debugFlags.enableDebugInfo = false;
-    debugFlags.prettyDebug = false;
-
-    // Create NES TupleBuffers
-    auto buffMgr = new NES::Runtime::BufferManager(); //shared pointer causes crash (destructor problem)
-
-    auto inputBuffer = buffMgr->getBufferBlocking();
-    auto outputBuffer = buffMgr->getBufferBlocking();
-
-    // create input data
-    const uint64_t numTuples = 3;
-    std::vector<NESAbstractionNode::BasicType> types{
-        NESAbstractionNode::BasicType::INT8,
-        NESAbstractionNode::BasicType::INT32,
-        NESAbstractionNode::BasicType::BOOLEAN,
-        NESAbstractionNode::BasicType::FLOAT,
-        NESAbstractionNode::BasicType::CHAR,
-        NESAbstractionNode::BasicType::DOUBLE
-    };
-    std::vector<uint64_t> indices{0,1,2,3,4,5};
-
-    struct __attribute__((packed)) testTupleStruct{
-        int8_t a;
-        int32_t b;
-        bool c;
-        float d;
-        char e;
-        double f;
-    };
-    testTupleStruct testTuplesArray[numTuples] =
-        {
-            testTupleStruct{1, 300, true, 2.3, 'a', 10.101010},
-            testTupleStruct{4, 5, false, 1.12, 'b', 22.222222},
-            testTupleStruct{6, 7, true, 1.7, 'c', 94.23}
-        };
-
-    // Create sample NESAbstractionTree create an MLIR Module for it.
-    auto NESTree = NESAbstractionUtility::createSimpleNESAbstractionTree(numTuples, indices, types);
-    auto mlirUtility = std::make_shared<MLIRUtility>(mlirFilepath, debugFromFile);
-    if (int error = mlirUtility->loadAndProcessMLIR(NESTree, &debugFlags)) {
-        assert(false);
-    }
-
-    // Get buffer pointers and copy payload to inputBuffer.
-    auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
-
-    inputBuffer.setNumberOfTuples(numTuples);
-    void *IBPtr = std::addressof(inputBuffer);
-
-    auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
-    memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
-
-    // Register buffers and functions with JIT and run module.
-    const std::vector<std::string> symbolNames{"printFromMLIR",
-                                               "printValueFromMLIR",
-                                               "IB", "OB",
-                                               "IBPtr"};
-    // Order must match symbolNames order!
-    const std::vector<llvm::JITTargetAddress> jitAddresses{
-        llvm::pointerToJITTargetAddress(&printFromMLIR),
-        llvm::pointerToJITTargetAddress(&printValueFromMLIR),
-        llvm::pointerToJITTargetAddress(inputBufferPointer),
-        llvm::pointerToJITTargetAddress(outputBufferPointer),
-        llvm::pointerToJITTargetAddress(IBPtr)};
-    mlirUtility->runJit(symbolNames, jitAddresses, true);
-
-    printBuffer(types, numTuples, outputBufferPointer);
+//    // Register any command line options.
+//    mlir::registerAsmPrinterCLOptions();
+//    mlir::registerMLIRContextCLOptions();
+//    mlir::registerPassManagerCLOptions();
+//
+//    // Configuration
+//    const bool debugFromFile = false;
+//    const std::string mlirFilepath = "/home/rudi/mlir/generatedMLIR/locationTest.mlir";
+//    MLIRUtility::DebugFlags debugFlags{};
+//    debugFlags.comments = true;
+//    debugFlags.enableDebugInfo = false;
+//    debugFlags.prettyDebug = false;
+//
+//    // Create NES TupleBuffers
+//    auto buffMgr = new NES::Runtime::BufferManager(); //shared pointer causes crash (destructor problem)
+//
+//    auto inputBuffer = buffMgr->getBufferBlocking();
+//    auto outputBuffer = buffMgr->getBufferBlocking();
+//
+//    // create input data
+//    const uint64_t numTuples = 3;
+//    std::vector<NESAbstractionNode::BasicType> types{
+//        NESAbstractionNode::BasicType::INT8,
+//        NESAbstractionNode::BasicType::INT32,
+//        NESAbstractionNode::BasicType::BOOLEAN,
+//        NESAbstractionNode::BasicType::FLOAT,
+//        NESAbstractionNode::BasicType::CHAR,
+//        NESAbstractionNode::BasicType::DOUBLE
+//    };
+//    std::vector<uint64_t> indices{0,1,2,3,4,5};
+//
+//    struct __attribute__((packed)) testTupleStruct{
+//        int8_t a;
+//        int32_t b;
+//        bool c;
+//        float d;
+//        char e;
+//        double f;
+//    };
+//    testTupleStruct testTuplesArray[numTuples] =
+//        {
+//            testTupleStruct{1, 300, true, 2.3, 'a', 10.101010},
+//            testTupleStruct{4, 5, false, 1.12, 'b', 22.222222},
+//            testTupleStruct{6, 7, true, 1.7, 'c', 94.23}
+//        };
+//
+//    // Create sample NESAbstractionTree create an MLIR Module for it.
+//    auto NESTree = NESAbstractionUtility::createSimpleNESAbstractionTree(numTuples, indices, types);
+//    auto mlirUtility = std::make_shared<MLIRUtility>(mlirFilepath, debugFromFile);
+//    if (int error = mlirUtility->loadAndProcessMLIR(NESTree, &debugFlags)) {
+//        assert(false);
+//    }
+//
+//    // Get buffer pointers and copy payload to inputBuffer.
+//    auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
+//
+//    inputBuffer.setNumberOfTuples(numTuples);
+//    void *IBPtr = std::addressof(inputBuffer);
+//
+//    auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
+//    memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
+//
+//    // Register buffers and functions with JIT and run module.
+//    const std::vector<std::string> symbolNames{"printFromMLIR",
+//                                               "printValueFromMLIR",
+//                                               "IB", "OB",
+//                                               "IBPtr"};
+//    // Order must match symbolNames order!
+//    const std::vector<llvm::JITTargetAddress> jitAddresses{
+//        llvm::pointerToJITTargetAddress(&printFromMLIR),
+//        llvm::pointerToJITTargetAddress(&printValueFromMLIR),
+//        llvm::pointerToJITTargetAddress(inputBufferPointer),
+//        llvm::pointerToJITTargetAddress(outputBufferPointer),
+//        llvm::pointerToJITTargetAddress(IBPtr)};
+//    mlirUtility->runJit(symbolNames, jitAddresses, true);
+//
+//    printBuffer(types, numTuples, outputBufferPointer);
     assert(true);
 }
 

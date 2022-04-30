@@ -15,7 +15,7 @@ add_source_files(nes-compiler
         Operation.cpp
         LoadOperation.cpp
         StoreOperation.cpp
-        AddOperation.cpp
+        AddIntOperation.cpp
         PredicateOperation.cpp
-        ConstantOperation.cpp
+        ConstantIntOperation.cpp
 )

@@ -15,8 +15,15 @@
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 
 namespace NES {
-StoreOperation::StoreOperation(void* outputBufferPtr)
-    : Operation(OperationType::StoreOp), outputBufferPtr(outputBufferPtr) {}
-bool StoreOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::StoreOp; }
+
+StoreOperation::StoreOperation(void* outputBufferPtr, std::vector<OperationPtr> valuesToStore, std::vector<uint64_t> outputBufferIndexes)
+    : Operation(OperationType::StoreOp), outputBufferPtr(outputBufferPtr), valuesToStore(valuesToStore), outputBufferIndexes(outputBufferIndexes) {}
+
 void* StoreOperation::getOutputBuffer() { return outputBufferPtr; }
+
+std::vector<OperationPtr> StoreOperation::getValuesToStore() { return valuesToStore; }
+
+std::vector<uint64_t> StoreOperation::getOutputBufferIndexes() { return outputBufferIndexes; }
+
+bool StoreOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::StoreOp; }
 }// namespace NES

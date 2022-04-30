@@ -20,6 +20,7 @@
 namespace NES {
 
 class PredicateOperation : public Operation {
+  public:
     enum BinaryOperatorType {
         EQUAL_OP,
         UNEQUAL_OP,

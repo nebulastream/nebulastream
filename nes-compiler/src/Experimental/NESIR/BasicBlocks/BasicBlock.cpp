@@ -16,10 +16,10 @@
 #include <utility>
 
 namespace NES {
-BasicBlock::BasicBlock(BasicBlock::BasicBlockType basicBlockType, std::vector<Operation*> operations)
+BasicBlock::BasicBlock(BasicBlock::BasicBlockType basicBlockType, std::vector<OperationPtr> operations)
     : basicBlockType(basicBlockType), operations(std::move(operations)) {}
 
-std::vector<Operation*> BasicBlock::getOperations() { return operations; }
+std::vector<OperationPtr> BasicBlock::getOperations() { return operations; }
 
 BasicBlock::BasicBlockType BasicBlock::getBlockType() const { return basicBlockType; }
 }// namespace NES

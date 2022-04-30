@@ -12,16 +12,18 @@
     limitations under the License.
 */
 
-#ifndef NES_ADDOPERATION_HPP
-#define NES_ADDOPERATION_HPP
+#ifndef NES_ADDINTOPERATION_HPP
+#define NES_ADDINTOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES {
-class AddOperation : public Operation {
+
+//Todo: Decide: Leave type
+class AddIntOperation : public Operation {
   public:
-    AddOperation(OperationPtr lhs, OperationPtr rhs);
-    ~AddOperation() override = default;
+    AddIntOperation(OperationPtr lhs, OperationPtr rhs);
+    ~AddIntOperation() override = default;
 
     OperationPtr getLHS();
     OperationPtr getRHS();
@@ -32,4 +34,4 @@ class AddOperation : public Operation {
     OperationPtr rhs;
 };
 }// namespace NES
-#endif//NES_ADDOPERATION_HPP
+#endif//NES_ADDINTOPERATION_HPP

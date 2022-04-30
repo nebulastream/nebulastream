@@ -12,23 +12,28 @@
     limitations under the License.
 */
 
-#ifndef NES_CONSTANTOPERATION_HPP
-#define NES_CONSTANTOPERATION_HPP
+#ifndef NES_CONSTANTINTOPERATION_HPP
+#define NES_CONSTANTINTOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES {
 
-class ConstantOperation : public Operation {
+class ConstantIntOperation : public Operation {
   public:
-    explicit ConstantOperation(int constantValue);
-    ~ConstantOperation() override = default;
+    enum ConstIntType {int32, int64};//, uint32, uint64};
+    explicit ConstantIntOperation(int64_t constantValue);
+    ~ConstantIntOperation() override = default;
 
-    int getConstantValue();
+    int64_t getConstantIntValue();
+
+    template<class T>
+    T getIntegerViaType();
     static bool classof(const Operation* Op);
   private:
-    int constantValue;
+    int64_t constantValue;
+    ConstIntType type;
 };
 
 }// namespace NES
-#endif//NES_CONSTANTOPERATION_HPP
+#endif//NES_CONSTANTINTOPERATION_HPP

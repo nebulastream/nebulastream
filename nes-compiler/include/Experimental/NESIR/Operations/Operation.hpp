@@ -21,6 +21,27 @@ namespace NES {
 
 class Operation {
   public:
+    enum BasicType {
+        //BasicTypes
+        // Type < 5 is INT
+        INT1    = 0,
+        INT8    = 1,
+        INT16   = 2,
+        INT32   = 3,
+        INT64   = 4,
+        // Type < 7 is Float
+        FLOAT   = 5,
+        DOUBLE  = 6,
+
+        BOOLEAN = 7,
+        CHAR    = 8,
+        VOID    = 9,
+
+        //DerivedTypes
+        ARRAY     = 32,
+        CHARARRAY = 33,
+        STRUCT    = 34
+    };
     enum OperationType{AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp};
 
     explicit Operation(OperationType opType);
@@ -31,7 +52,7 @@ class Operation {
   private:
     OperationType opType;
 };
-using OperationPtr = std::unique_ptr<Operation>;
+using OperationPtr = std::shared_ptr<Operation>;
 
 }// namespace NES
 #endif//NES_OPERATION_HPP

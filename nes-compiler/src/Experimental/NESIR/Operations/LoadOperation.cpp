@@ -16,10 +16,10 @@
 
 namespace NES {
 
-LoadOperation::LoadOperation(void* inputBufferPtr)
-    : Operation(OperationType::LoadOp), inputBufferPtr(inputBufferPtr) {}
+LoadOperation::LoadOperation(const uint64_t fieldIdx)
+    : Operation(OperationType::LoadOp), fieldIdx(fieldIdx) {}
 
 bool NES::LoadOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
-void* LoadOperation::getInputBuffer() { return inputBufferPtr; }
+uint64_t LoadOperation::getFieldIdx() const { return fieldIdx; }
 
 }// namespace NES

@@ -26,10 +26,10 @@
 #include <Runtime/TupleBuffer.hpp>
 
 #include <Experimental/NESIR/BasicBlocks/LoopBasicBlock.hpp>
+#include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
-#include <Experimental/NESIR/Operations/AddOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstantOperation.hpp>
 
 namespace NES {
 class MLIRNESIRTest : public testing::Test {
@@ -45,40 +45,38 @@ class MLIRNESIRTest : public testing::Test {
 void* getInputBuffer(NES::Runtime::BufferManager* buffMgr) {
     const uint64_t numTuples = 3;
     auto inputBuffer = buffMgr->getBufferBlocking();
+
+    // Create testTupleStruct. Load inputBuffer with testTupleStruct. Write sample array with testTupleStruct to inputBuffer.
     struct __attribute__((packed)) testTupleStruct{
-        int8_t a;
-        int32_t b;
-        bool c;
-        float d;
-        char e;
-        double f;
+        int64_t a;
     };
-    testTupleStruct testTuplesArray[numTuples] =
-        {
-            testTupleStruct{1, 300, true, 2.3, 'a', 10.101010},
-            testTupleStruct{4, 5, false, 1.12, 'b', 22.222222},
-            testTupleStruct{6, 7, true, 1.7, 'c', 94.23}
-        };
-
-
-    // Get buffer pointers and copy payload to inputBuffer.
+    testTupleStruct testTuplesArray[numTuples] = { testTupleStruct{1}, testTupleStruct{4} };
     auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
-
+    memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
     inputBuffer.setNumberOfTuples(numTuples);
-    void *IBPtr = std::addressof(inputBuffer);
-    return IBPtr;
+
+    // Return inputBuffer pointer as void*.
+    return std::addressof(inputBuffer);
 }
 
-TEST(MLIRNESIRTest, simpleBufferIteration) {
+TEST(MLIRNESIRTest, simpleNESIRCreation) {
     const uint64_t numTuples = 3;
     auto buffMgr = new NES::Runtime::BufferManager(); //shared pointer causes crash (destructor problem)
     void* inputBufferPtr = getInputBuffer(buffMgr);
-    std::unique_ptr<Operation> loadOp = std::make_unique<LoadOperation>(inputBufferPtr);
-    std::unique_ptr<Operation> constOp = std::make_unique<ConstantOperation>(9);
-    auto addOp = new AddOperation(std::move(loadOp), std::move(constOp));
-    std::vector<Operation*> loopOps;
-    loopOps.emplace_back(addOp);
-    auto loopBlock = new LoopBasicBlock(loopOps, nullptr, 3);
+    auto outPutBuffer = buffMgr->getBufferBlocking();
+    void* outputBufferPtr = std::addressof(outPutBuffer);
+    // Add Operation
+    auto loadOp = std::make_shared<LoadOperation>(0);
+    auto constOp = std::make_shared<ConstantIntOperation>(9);
+    auto addOp = std::make_shared<AddIntOperation>(std::move(loadOp), std::move(constOp));
+    // Store Operation
+    std::vector<OperationPtr> storeOps{addOp};
+    std::vector<uint64_t> storeIdxs{0};
+    auto storeOp = std::make_shared<StoreOperation>(outputBufferPtr, storeOps, storeIdxs);
+    // Loop BasicBlock
+    std::vector<OperationPtr> loopOps{storeOp};
+    auto loopBlock = new LoopBasicBlock(loopOps, nullptr, inputBufferPtr, numTuples);
+    printf("Upper Limit: %ld\n", loopBlock->getUpperLimit());
     assert(true);
 }
 

@@ -20,13 +20,13 @@
 namespace NES {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(void* inputBufferPtr);
+    explicit LoadOperation(uint64_t fieldIdx);
     ~LoadOperation() override = default;
 
-    void* getInputBuffer();
-    bool classof(const Operation *Op);
+    [[nodiscard]] uint64_t getFieldIdx() const;
+    static bool classof(const Operation *Op);
   private:
-    void* inputBufferPtr; //Todo fix: MLIR centric
+    const uint64_t fieldIdx; //fixme: Could also be identifier. Could be general index (also used by LoopBlock to load record?).
 
 };
 }// namespace NES

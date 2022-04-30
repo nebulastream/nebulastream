@@ -20,7 +20,7 @@
 namespace NES {
 class IfBasicBlock : public BasicBlock {
   public:
-    IfBasicBlock(const std::vector<Operation*>& operations, BasicBlockPtr nextIfBlock, BasicBlockPtr nextElseBlock);
+    IfBasicBlock(const std::vector<OperationPtr>& operations, BasicBlockPtr nextIfBlock, BasicBlockPtr nextElseBlock);
     ~IfBasicBlock() override = default;
 
     bool classof(const BasicBlock *Block);

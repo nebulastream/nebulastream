@@ -18,16 +18,22 @@
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 
 namespace NES {
+/**
+ * @brief Iterates over a buffer. Loads a record on each iteration. Contains operations which are nested inside of the LoopBlock.
+ * Points to other BasicBlocks if there is control flow.
+ */
 class LoopBasicBlock : public BasicBlock {
   public:
-    LoopBasicBlock(std::vector<Operation*> operators, BasicBlockPtr nextBlock, uint64_t upperLimit);
+    LoopBasicBlock(std::vector<OperationPtr> operators, BasicBlockPtr nextBlock, void* inputBufferPtr, uint64_t upperLimit);
     ~LoopBasicBlock() override = default;
 
     [[nodiscard]] uint64_t getUpperLimit() const;
+    void* getInputBufferPtr();
     static bool classof(const BasicBlock *Block);
 
   private:
     BasicBlockPtr nextBlock;
+    void* inputBufferPtr; // Cannot include TupleBuffer currently
     uint64_t upperLimit;
 
 
