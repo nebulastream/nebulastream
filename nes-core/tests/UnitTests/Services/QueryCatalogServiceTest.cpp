@@ -58,8 +58,7 @@ class QueryCatalogServiceTest : public Testing::TestWithErrorHandling<testing::T
     static void TearDownTestCase() { std::cout << "Tear down QueryCatalogServiceTest test class." << std::endl; }
 };
 
-TEST_F(QueryCatalogServiceTest, testAddNewQuery) {
-TEST_F(QueryCatalogTest, testAddNewPattern) {
+TEST_F(QueryCatalogServiceTest, testAddNewPattern) {
 
     //Prepare
     std::string patternString =
@@ -69,16 +68,16 @@ TEST_F(QueryCatalogTest, testAddNewPattern) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQuery) {
+TEST_F(QueryCatalogServiceTest, testAddNewQuery) {
 
     //Prepare
     std::string queryString =
@@ -88,17 +87,17 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternMultipleSinksSmall) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternMultipleSinksSmall) {
 
     //Prepare
     std::string patternString =
@@ -108,16 +107,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleSinksSmall) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryMultipleSinksSmall) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryMultipleSinksSmall) {
 
     //Prepare
     std::string queryString =
@@ -127,17 +126,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleSinksSmall) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternMultipleSinks) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternMultipleSinks) {
 
     //Prepare
     std::string patternString =
@@ -147,16 +146,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleSinks) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryMultipleSinks) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryMultipleSinks) {
 
     //Prepare
     std::string queryString =
@@ -166,17 +165,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleSinks) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternTimes1) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternTimes1) {
 
     //Prepare
     std::string patternString =
@@ -185,16 +184,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimes1) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryTimes1) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryTimes1) {
 
     //Prepare
     std::string queryString =
@@ -204,17 +203,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimes1) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternTimes2) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternTimes2) {
 
     //Prepare
     std::string patternString =
@@ -223,16 +222,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimes2) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryTimes2) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryTimes2) {
 
     //Prepare
     std::string queryString =
@@ -242,17 +241,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimes2) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternTimes3) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternTimes3) {
 
     //Prepare
     std::string patternString =
@@ -261,16 +260,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimes3) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryTimes3) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryTimes3) {
 
     //Prepare
     std::string queryString =
@@ -280,17 +279,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimes3) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternOperator) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternOperator) {
 
     //Prepare
     std::string patternString =
@@ -299,16 +298,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperator) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryOperator) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryOperator) {
 
     //Prepare
     std::string queryString =
@@ -318,17 +317,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperator) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternFilter) {
 
     //Prepare
     std::string patternString =
@@ -337,16 +336,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryFilter) {
 
     //Prepare
     std::string queryString =
@@ -356,17 +355,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternTwoFilters) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternTwoFilters) {
 
     //Prepare
     std::string patternString =
@@ -375,17 +374,17 @@ TEST_F(QueryCatalogTest, testAddNewPatternTwoFilters) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryTwoFilters) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryTwoFilters) {
 
     //Prepare
     std::string queryString =
@@ -395,18 +394,18 @@ TEST_F(QueryCatalogTest, testAddNewQueryTwoFilters) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
 
-TEST_F(QueryCatalogTest, testAddNewPatternMap) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternMap) {
 
     //Prepare
     std::string patternString =
@@ -415,16 +414,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternMap) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryMap) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryMap) {
 
     //Prepare
     std::string queryString =
@@ -434,17 +433,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryMap) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternMultipleMapSmall) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternMultipleMapSmall) {
 
     //Prepare
     std::string patternString =
@@ -453,16 +452,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleMapSmall) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryMultipleMapSmall) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryMultipleMapSmall) {
 
     //Prepare
     std::string queryString =
@@ -472,17 +471,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleMapSmall) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternMultipleMap) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternMultipleMap) {
 
     //Prepare
     std::string patternString =
@@ -491,16 +490,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleMap) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryMultipleMap) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryMultipleMap) {
 
     //Prepare
     std::string queryString =
@@ -510,17 +509,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleMap) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternMultipleMapMultipleSinks) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternMultipleMapMultipleSinks) {
 
     //Prepare
     std::string patternString =
@@ -529,16 +528,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternMultipleMapMultipleSinks) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryMultipleMapMultipleSinks) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryMultipleMapMultipleSinks) {
 
     //Prepare
     std::string queryString =
@@ -548,17 +547,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryMultipleMapMultipleSinks) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternTimesAndMap) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternTimesAndMap) {
 
     //Prepare
     std::string patternString =
@@ -567,16 +566,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimesAndMap) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryTimesAndMap) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryTimesAndMap) {
 
     //Prepare
     std::string queryString =
@@ -586,17 +585,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimesAndMap) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternTimesAndFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternTimesAndFilter) {
 
     //Prepare
     std::string patternString =
@@ -605,16 +604,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternTimesAndFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryTimesAndFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryTimesAndFilter) {
 
     //Prepare
     std::string queryString =
@@ -624,17 +623,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryTimesAndFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternOperatorAndFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternOperatorAndFilter) {
 
     //Prepare
     std::string patternString =
@@ -643,16 +642,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorAndFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryOperatorAndFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryOperatorAndFilter) {
 
     //Prepare
     std::string queryString =
@@ -662,17 +661,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorAndFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternOperatorMapAndFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternOperatorMapAndFilter) {
 
     //Prepare
     std::string patternString =
@@ -681,16 +680,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorMapAndFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryOperatorMapAndFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryOperatorMapAndFilter) {
 
     //Prepare
     std::string queryString =
@@ -707,11 +706,11 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorMapAndFilter) {
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMapAndFilter) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternOperatorTimesMapAndFilter) {
 
     //Prepare
     std::string patternString =
@@ -720,16 +719,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMapAndFilter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMapAndFIlter) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryOperatorTimesMapAndFIlter) {
 
     //Prepare
     std::string queryString =
@@ -746,17 +745,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMapAndFIlter) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMapAndFilterMultipleSinks) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternOperatorTimesMapAndFilterMultipleSinks) {
 
     //Prepare
     std::string patternString =
@@ -765,16 +764,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMapAndFilterMultipleSinks
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMapAndFIlterMultipleSInks) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryOperatorTimesMapAndFIlterMultipleSInks) {
 
     //Prepare
     std::string queryString =
@@ -784,17 +783,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMapAndFIlterMultipleSInks) 
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMultipleMapAndFilterMultipleSinks) {
+TEST_F(QueryCatalogServiceTest, testAddNewPatternOperatorTimesMultipleMapAndFilterMultipleSinks) {
 
     //Prepare
     std::string patternString =
@@ -803,16 +802,16 @@ TEST_F(QueryCatalogTest, testAddNewPatternOperatorTimesMultipleMapAndFilterMulti
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(patternString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(patternString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
     std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalog->getQueries(QueryStatus::Registered);
+    auto run = queryCatalog->getQueriesWithStatus(QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
-TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMultipleMapAndFIlterMultipleSInks) {
+TEST_F(QueryCatalogServiceTest, testAddNewQueryOperatorTimesMultipleMapAndFIlterMultipleSInks) {
 
     //Prepare
     std::string queryString =
@@ -822,20 +821,17 @@ TEST_F(QueryCatalogTest, testAddNewQueryOperatorTimesMultipleMapAndFIlterMultipl
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->createNewEntry(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
-    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalogService->getAllQueryCatalogEntries();
+    std::map<uint64_t, QueryCatalogEntryPtr> reg = queryCatalog->getAllQueryCatalogEntries();
     EXPECT_TRUE(reg.size() == 1U);
-    std::map<uint64_t, QueryCatalogEntryPtr> run = queryCatalogService->getAllEntriesInStatus("REGISTERED");
+    auto run = queryCatalog->getQueryCatalogEntries(NES::QueryStatus::Registered);
     EXPECT_TRUE(run.size() == 1U);
 }
 
 TEST_F(QueryCatalogServiceTest, testAddNewQueryAndStop) {
-
-
-TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
 
     //Prepare
     std::string queryString =
