@@ -15,6 +15,7 @@
 
 add_source_files(nes-core
         NesCEPQueryPlanCreator.cpp
+        NePSLPattern.cpp
 )
 
 add_subdirectory(gen)

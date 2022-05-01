@@ -470,9 +470,9 @@ endif ()
 # Currently antlr dose not come with an own cmake file
 message(STATUS  Antlr ${_VCPKG_INSTALLED_DIR} )
 include_directories(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/include/antlr4-runtime)
-set(LIBRARIES ${LIBRARIES} ${ANTLR4_INCLUDE_DIR})
-link_libraries(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libantlr4-runtime.a)
-link_libraries(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libuuid.a)
+set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libuuid.a)
+set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libantlr4-runtime.a)
+
 
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)

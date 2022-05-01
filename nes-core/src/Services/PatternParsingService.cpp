@@ -11,33 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Services/PatternParsingService.h>
-#include <API/NePSLPattern.h>
-#include <cstring>
 #include <ANTLRInputStream.h>
-#include <Parsers/NePSL/gen/NesCEPLexer.h>
-#include <Parsers/NePSL/gen/NesCEPParser.h>
-#include <Parsers/NePSL/NesCEPQueryPlanCreator.h>
+#include <Parsers/PSL/NePSLPattern.hpp>
+#include <Parsers/PSL/NesCEPQueryPlanCreator.hpp>
+#include <Parsers/PSL/gen/NesCEPLexer.h>
+#include <Parsers/PSL/gen/NesCEPParser.h>
+#include <Services/PatternParsingService.h>
+#include <cstring>
 
 NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std::string& patternString) {
-
-    int n = patternString.length();
-
-    // declaring character array
-    char char_array[n + 1];
-
-    // copying the contents of the
-    // string to char array
-    strcpy(char_array, patternString.c_str());
-
     //ANTLR Pipeline
-    antlr4::ANTLRInputStream input(char_array,n);
+    antlr4::ANTLRInputStream input(patternString.c_str(), patternString.length());
     NesCEPLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     NesCEPParser parser(&tokens);
     NesCEPParser::QueryContext* tree=parser.query();
     std::cout << tree->toStringTree(&parser) << std::endl;
-    NesCEPQueryPlanCreator queryPlanCreator;
+    Parsers::NesCEPQueryPlanCreator queryPlanCreator;
     antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
     auto pattern= queryPlanCreator.getQuery();
     return std::make_shared<Query>(pattern);
