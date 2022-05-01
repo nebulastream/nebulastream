@@ -14,6 +14,7 @@
 
 #include <Services/MonitoringService.hpp>
 
+#ifndef NES_USE_OATPP
 #include <API/Schema.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MonitoringManager.hpp>
@@ -23,7 +24,9 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+
 #include <cpprest/json.h>
+
 #include <utility>
 
 namespace NES {
@@ -148,3 +151,4 @@ web::json::value MonitoringService::getMonitoringStreams() {
 }
 
 }// namespace NES
+#endif

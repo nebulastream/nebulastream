@@ -16,7 +16,9 @@
 #define NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_
 
 #include <REST/CpprestForwardedRefs.hpp>
+#ifndef NES_USE_OATPP
 #include <cpprest/http_msg.h>
+#endif
 #include <map>
 #include <string>
 #include <vector>

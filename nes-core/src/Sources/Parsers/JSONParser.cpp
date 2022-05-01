@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#ifndef NES_USE_OATPP
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -58,3 +59,4 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
     return true;
 }
 }// namespace NES
+#endif
