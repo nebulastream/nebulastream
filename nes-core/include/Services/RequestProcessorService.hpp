@@ -109,6 +109,7 @@ class RequestProcessorService {
     QueryCatalogServicePtr queryCatalogService;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
+    Experimental::QueryMigrationPhasePtr queryMigrationPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     RequestQueuePtr queryRequestQueue;

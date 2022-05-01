@@ -19,4 +19,5 @@ add_source_files(nes-core
         QueryDeploymentPhase.cpp
         QueryUndeploymentPhase.cpp
         MigrationType.cpp
+        QueryMigrationPhase.cpp
 )
