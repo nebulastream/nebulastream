@@ -1,6 +1,6 @@
 
 
-#include "Parsers/NePSL/gen/NesCEPLexer.h"
+#include "Parsers/PSL/gen/NesCEPLexer.h"
 
 using namespace antlr4;
 

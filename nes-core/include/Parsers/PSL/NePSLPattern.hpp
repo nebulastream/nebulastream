@@ -15,26 +15,27 @@ limitations under the License.
 #ifndef NES_NEPSLPATTERN_H
 #define NES_NEPSLPATTERN_H
 
-#include <string>
-#include <queue>
 #include <API/Query.hpp>
 #include <list>
+#include <queue>
+#include <string>
+
+namespace NES::Parsers {
 
 class NePSLPattern {
   private:
     int id;
-    int right= -1;
-    int left= -1;
+    int right = -1;
+    int left = -1;
     std::string op;
-    int parent= -1;
+    int parent = -1;
     bool negated;
     bool iteration;
     uint64_t iterMin;
     uint64_t iterMax;
     std::string eventRight;
     std::string eventLeft;
-    NES::Query query=NES::Query(NULL);
-
+    NES::Query query = NES::Query(NULL);
 
   public:
     explicit NePSLPattern(int id);
@@ -64,7 +65,6 @@ class NePSLPattern {
     const NES::Query& getQuery() const;
     void setQuery(const NES::Query& query);
     void printPattern();
-
 };
-
+}// namespace NES::Parsers
 #endif//NES_NEPSLPATTERN_H

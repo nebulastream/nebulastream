@@ -12,44 +12,42 @@
     limitations under the License.
 */
 
-#include <iostream>
-#include <API/NePSLPattern.h>
-#include <Parsers/NePSL/NesCEPQueryPlanCreator.h>
 #include <API/Query.hpp>
-
+#include <Parsers/PSL/NePSLPattern.hpp>
+#include <Parsers/PSL/NesCEPQueryPlanCreator.hpp>
+#include <iostream>
+namespace NES::Parsers {
 NePSLPattern::NePSLPattern(int id) {
     setId(id);
     setNegated(false);
     setIteration(false);
-
 }
 void NePSLPattern::printPattern() {
-    std::cout<<"subPattern of id: "<<this->getId()<<std::endl;
-    std::cout<<"right: "<<this->getRight()<<std::endl;
-    std::cout<<"left: "<<this->getLeft()<<std::endl;
-    std::cout<<"parent: "<<this->getParent()<<std::endl;
+    std::cout << "subPattern of id: " << this->getId() << std::endl;
+    std::cout << "right: " << this->getRight() << std::endl;
+    std::cout << "left: " << this->getLeft() << std::endl;
+    std::cout << "parent: " << this->getParent() << std::endl;
     try {
-        std::cout<<"eventRight: "<<this->getEventRight()<<std::endl;
+        std::cout << "eventRight: " << this->getEventRight() << std::endl;
 
     } catch (std::exception exception) {
-        std::cout<<"eventRight: null"<<std::endl;
+        std::cout << "eventRight: null" << std::endl;
     }
     try {
-        std::cout<<"eventLeft: "<<this->getEventLeft()<<std::endl;
+        std::cout << "eventLeft: " << this->getEventLeft() << std::endl;
 
     } catch (std::exception exception) {
-        std::cout<<"eventLeft: null"<<std::endl;
+        std::cout << "eventLeft: null" << std::endl;
     }
     try {
-        std::cout<<"op: "<<this->getOp()<<std::endl;
+        std::cout << "op: " << this->getOp() << std::endl;
 
     } catch (std::exception exception) {
-        std::cout<<"op: null"<<std::endl;
+        std::cout << "op: null" << std::endl;
     }
-    std::cout<<"negated: "<<this->negated<<std::endl;
-    std::cout<<"iteration: "<<this->iteration<<std::endl;
+    std::cout << "negated: " << this->negated << std::endl;
+    std::cout << "iteration: " << this->iteration << std::endl;
 }
-
 
 int NePSLPattern::getId() const { return id; }
 void NePSLPattern::setId(int id) { NePSLPattern::id = id; }
@@ -75,3 +73,4 @@ uint64_t NePSLPattern::getIterMax() const { return iterMax; }
 void NePSLPattern::setIterMax(uint64_t iterMax) { NePSLPattern::iterMax = iterMax; }
 const NES::Query& NePSLPattern::getQuery() const { return query; }
 void NePSLPattern::setQuery(const NES::Query& query) { NePSLPattern::query = query; }
+}// namespace NES::Parsers
