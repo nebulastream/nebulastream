@@ -223,7 +223,7 @@ std::map<OperatorId,Experimental::QueryMigrationPhase::InformationForFindingSink
     std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink> mapOfNetworkSourceIdToInfoForFindingNetworkSink;
     for(const SourceLogicalOperatorNodePtr& sourceOperator:sourceOperators){
         auto networkSourceDescriptor = sourceOperator->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>();
-        TopologyNodeId sinkTopolgoyNodeId = networkSourceDescriptor->getSinkTopologyNode();
+        TopologyNodeId sinkTopolgoyNodeId = networkSourceDescriptor->getNodeLocation().getNodeId();
         TopologyNodePtr sinkTopologyNode = topology->findNodeWithId(sinkTopolgoyNodeId);
         //A pair of NetworkSource and Sink "share" a NESPartition. They each hold their own individual partition but are paired together once a Channel is established.
         //This pairing, in the end, is done over the OperatorId, which is also the OperatorId of the NetworkSink.
@@ -252,9 +252,9 @@ std::map<OperatorId,Experimental::QueryMigrationPhase::InformationForFindingSink
         if (!sinkOperator) {
             NES_DEBUG("QueryMigrationPhase: No matching NetworkSink found to NetworkSource with partitionIdentifier "
                       << partitionIdentifier);
-            throw Exception("QueryMigratrionPhase: Couldnt find mathcing NetworkSink.");
+            throw Exceptions::RuntimeException("QueryMigratrionPhase: Couldnt find mathcing NetworkSink.");
         }
-        OperatorId globalOperatorIdOfNetworkSink = sinkOperator->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getGlobalId();
+        OperatorId globalOperatorIdOfNetworkSink = sinkOperator->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNodeLocation().getNodeId();
         QueryMigrationPhase::InformationForFindingSink info{};
         info.sinkTopologyNode = sinkTopolgoyNodeId;
         info.querySubPlanOfNetworkSink = qspOfNetworkSink;

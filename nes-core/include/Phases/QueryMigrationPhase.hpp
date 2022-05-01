@@ -118,6 +118,10 @@ class QueryMigrationPhase {
 
     std::map<OperatorId, InformationForFindingSink>
     getInfoForAllSinks(const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators, unsigned long queryId);
+    bool sendReconfigurationRequests(std::map<OperatorId, InformationForFindingSink>& map,
+                                     uint64_t queryId,
+                                     std::vector<ExecutionNodePtr>& exeNodes);
+    bool sendBufferRequests(std::map<OperatorId, QueryMigrationPhase::InformationForFindingSink> map);
 };
 } // namespace Experimental
 } // namespace NES
