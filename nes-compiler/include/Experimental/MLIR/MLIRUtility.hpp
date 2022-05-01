@@ -16,12 +16,13 @@
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
 #ifdef MLIR_COMPILER
+#include <llvm/ExecutionEngine/JITSymbol.h>
+#include <llvm/ExecutionEngine/Orc/Mangling.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
-#include <llvm/ExecutionEngine/JITSymbol.h>
-#include <llvm/ExecutionEngine/Orc/Mangling.h>
 
+namespace NES::Compiler::Experimental {
 class MLIRUtility {
   public:
     MLIRUtility() = default;
@@ -32,7 +33,7 @@ class MLIRUtility {
      * @param mlirString: A string that must contain a valid MLIR module.
      * @return int: 1 if error occurred, else 0
      */
-    int loadModuleFromString(const std::string &mlirString);
+    int loadModuleFromString(const std::string& mlirString);
 
     /**
      * @brief Takes symbols and JITAddresses and JIT runs created module.
@@ -40,11 +41,12 @@ class MLIRUtility {
      * @param jitAddresses: Memory addresses of external functions, objects, etc.
      * @return int: 1 if error occurred, else 0
      */
-    int runJit(const std::vector<std::string> &llvmIRModule, const std::vector<llvm::JITTargetAddress> &jitAddresses);
+    int runJit(const std::vector<std::string>& llvmIRModule, const std::vector<llvm::JITTargetAddress>& jitAddresses);
 
   private:
     mlir::OwningOpRef<mlir::ModuleOp> module;
     mlir::MLIRContext context;
 };
-#endif //MLIR_COMPILER
-#endif //NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
+}// namespace NES::Compiler::Experimental
+#endif//MLIR_COMPILER
+#endif//NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
