@@ -31,8 +31,7 @@
 #include <unordered_set>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
-#include <GRPC/WorkerRPCCLient>
-#include "GRPC/WorkerRPCClient.hpp"
+#include <GRPC/WorkerRPCClient.hpp>
 
 using namespace NES;
 

@@ -16,6 +16,10 @@
 #define NES_CORE_INCLUDE_PHASES_QUERYMIGRATIONPHASE_HPP_
 #include <memory>
 #include <vector>
+#include <map>
+#include <Topology/TopologyNodeId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
+#include <Operators/OperatorId.hpp>
 
 namespace NES::Optimizer {
 class QueryPlacementPhase;
@@ -41,6 +45,9 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
+class SourceLogicalOperatorNode;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 namespace Experimental {
 
@@ -78,6 +85,12 @@ class QueryMigrationPhase {
                                  WorkerRPCClientPtr workerRPCClient,
                                  NES::Optimizer::QueryPlacementPhasePtr queryPlacementPhase);
 
+    struct InformationForFindingSink{
+        TopologyNodeId sinkTopologyNode;
+        QuerySubPlanId querySubPlanOfNetworkSink;
+        uint64_t globalOperatorIdOfNetworkSink;
+    } __attribute__((aligned(32)));
+
     bool executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans, const ExecutionNodePtr& markedNode);
 
     bool executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans, const ExecutionNodePtr& markedNode);
@@ -103,7 +116,8 @@ class QueryMigrationPhase {
     WorkerRPCClientPtr workerRPCClient;
     NES::Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
 
-
+    std::map<OperatorId, InformationForFindingSink>
+    getInfoForAllSinks(const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators, unsigned long queryId);
 };
 } // namespace Experimental
 } // namespace NES
