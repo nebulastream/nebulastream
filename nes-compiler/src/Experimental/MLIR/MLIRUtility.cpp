@@ -13,27 +13,26 @@
 */
 
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <string>
-
-#include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
-#include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h"
-#include "mlir/ExecutionEngine/OptUtils.h"
-#include "mlir/Parser.h"
-#include "mlir/Pass/PassManager.h"
-#include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
-#include "mlir/Transforms/Passes.h"
-#include <mlir/Dialect/StandardOps/IR/Ops.h>
+#include <llvm/ADT/StringMap.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/JITSymbol.h>
+#include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/TargetSelect.h>
+#include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
+#include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/SCF/SCF.h>
+#include <mlir/Dialect/StandardOps/IR/Ops.h>
+#include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/IR/Attributes.h>
 #include <mlir/IR/PatternMatch.h>
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/JITSymbol.h"
-#include "llvm/Support/TargetSelect.h"
-#include <llvm/ADT/StringMap.h>
-#include <llvm/Support/SourceMgr.h>
+#include <mlir/Parser.h>
+#include <mlir/Pass/PassManager.h>
+#include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+#include <mlir/Transforms/Passes.h>
+#include <string>
 
-
+namespace NES::Compiler::Experimental {
 int MLIRUtility::loadModuleFromString(const std::string& mlirString) {
     // Load necessary Dialects.
     context.loadDialect<mlir::StandardOpsDialect>();
@@ -102,3 +101,4 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols, const std::vect
 
     return 0;
 }
+}// namespace NES::Compiler::Experimental

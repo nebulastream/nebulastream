@@ -15,28 +15,27 @@
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <string>
-
+#include <llvm/ADT/StringRef.h>
+#include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/AsmState.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/InitAllDialects.h>
 #include <mlir/Parser.h>
-#include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
-#include <mlir/Transforms/DialectConversion.h>
 #include <mlir/Pass/PassManager.h>
-#include <llvm/ADT/StringRef.h>
+#include <mlir/Transforms/DialectConversion.h>
+#include <string>
 
-namespace NES::Compiler {
-    class MLIRModuleFromSimpleString : public testing::Test {
-      public:
-        static void SetUpTestCase() {
-            NES::Logger::setupLogging("MLIRBufferTest.log", NES::LogLevel::LOG_DEBUG);
+namespace NES::Compiler::Experimental {
+class MLIRModuleFromSimpleString : public testing::Test {
+  public:
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MLIRBufferTest.log", NES::LogLevel::LOG_DEBUG);
 
-            NES_INFO("MLIRBufferTest test class SetUpTestCase.");
-        }
-        static void TearDownTestCase() { NES_INFO("MLIRBufferTest test class TearDownTestCase."); }
-    };
+        NES_INFO("MLIRBufferTest test class SetUpTestCase.");
+    }
+    static void TearDownTestCase() { NES_INFO("MLIRBufferTest test class TearDownTestCase."); }
+};
 
 // Load a simple MLIR module, which contains a loop, from a string. JIT compile the module and execute it.
 TEST(MLIRModuleFromSimpleString, executeSimpleStringMLIR) {
@@ -90,9 +89,9 @@ TEST(MLIRModuleFromSimpleString, executeSimpleStringMLIR) {
     }
 
     // Create sample input array. Register array address with JIT engine. JIT compile module and execute it.
-    int testIntArray[2]{37,38};
+    int testIntArray[2]{37, 38};
     const std::vector<std::string> symbolNames{"TB"};
     const std::vector<llvm::JITTargetAddress> jitAddresses{llvm::pointerToJITTargetAddress(&testIntArray)};
     mlirUtility->runJit(symbolNames, jitAddresses);
 }
-}// namespace NES::Compiler
+}// namespace NES::Compiler::Experimental
