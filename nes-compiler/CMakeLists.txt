@@ -24,6 +24,17 @@ target_include_directories(nes-compiler PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+if(NES_USE_MLIR)
+    get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS) # MLIR_CONVERSION_LIBS are also defined
+    get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
+    target_link_libraries(nes-compiler
+        PUBLIC
+        MLIRExecutionEngine
+        ${dialect_libs}
+        )
+endif(NES_USE_MLIR)
+
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
