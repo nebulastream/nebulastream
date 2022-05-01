@@ -39,6 +39,7 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
+option(NES_USE_MLIR "Enable MLIR based compiler" ON)
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
 
@@ -514,7 +515,7 @@ if(NES_USE_MLIR)
         message(FATAL_ERROR "Cannot find mlir")
     endif(MLIR_FOUND)
     message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-endif(NES_USE_MLIR)
+endif()
 
 
 # Set definition values.
