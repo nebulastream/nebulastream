@@ -28,19 +28,19 @@ limitations under the License.
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Parsers/PSL/NePSLPattern.hpp>
+#include <Parsers/PSL/PSLPattern.hpp>
 #include <Parsers/PSL/gen/NesCEPBaseListener.h>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES::Parsers {
-class NesCEPQueryPlanCreator : public NesCEPBaseListener {
+class PSLQueryPlanCreator : public NesCEPBaseListener {
   private:
     int direction = -1;// -1 for right 0 for op 1 for left
     int currentPointer = -1;
     int currentParent = -1;
     int id = 0;
-    std::list<NePSLPattern*> patterns;
-    std::list<NePSLPattern*>::iterator it = patterns.begin();
+    std::list<PSLPattern*> patterns;
+    std::list<PSLPattern*>::iterator it = patterns.begin();
     NES::Query query = NES::Query(NULL);
     std::list<std::shared_ptr<NES::SinkDescriptor>> sinks;
     bool inWhere = false;

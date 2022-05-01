@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <ANTLRInputStream.h>
-#include <Parsers/PSL/NePSLPattern.hpp>
-#include <Parsers/PSL/NesCEPQueryPlanCreator.hpp>
+#include <Parsers/PSL/PSLPattern.hpp>
+#include <Parsers/PSL/PSLQueryPlanCreator.hpp>
 #include <Parsers/PSL/gen/NesCEPLexer.h>
 #include <Parsers/PSL/gen/NesCEPParser.h>
 #include <Services/PatternParsingService.h>
@@ -27,7 +27,7 @@ NES::QueryPtr NES::PatternParsingService::createPatternFromCodeString(const std:
     NesCEPParser parser(&tokens);
     NesCEPParser::QueryContext* tree=parser.query();
     std::cout << tree->toStringTree(&parser) << std::endl;
-    Parsers::NesCEPQueryPlanCreator queryPlanCreator;
+    Parsers::PSLQueryPlanCreator queryPlanCreator;
     antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
     auto pattern= queryPlanCreator.getQuery();
     return std::make_shared<Query>(pattern);
