@@ -15,6 +15,7 @@
 #ifndef NES_CORE_INCLUDE_PHASES_QUERYMIGRATIONPHASE_HPP_
 #define NES_CORE_INCLUDE_PHASES_QUERYMIGRATIONPHASE_HPP_
 #include <memory>
+
 namespace NES {
 
 class GlobalExecutionPlan;
@@ -36,6 +37,9 @@ namespace Experimental {
 class QueryMigrationPhase;
 using QueryMigrationPhasePtr = std::shared_ptr<QueryMigrationPhase>;
 
+class MigrateQueryRequest;
+using MigrateQueryRequestPtr = std::shared_ptr<MigrateQueryRequest>;
+
 class QueryMigrationPhase {
 
   public:
@@ -52,14 +56,10 @@ class QueryMigrationPhase {
                                          );
 
     /**
-     * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
-     * selected query placement strategy
-     * @param placementStrategy : name of the placement strategy
-     * @param sharedQueryPlan : the shared query plan to place
-     * @return true is placement successful.
-     * @throws QueryPlacementException
+     * @brief Method takes MigrateQueryRequest and processes it
+     * @return true if migration successful.
      */
-    bool execute();
+    bool execute(const Experimental::MigrateQueryRequestPtr& migrateQueryRequest);
 
   private:
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan,

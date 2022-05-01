@@ -26,4 +26,6 @@ Experimental::QueryMigrationPhase::create(GlobalExecutionPlanPtr globalExecution
                                                NES::Optimizer::QueryPlacementPhasePtr queryPlacementPhase) {
     return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(std::move(globalExecutionPlan), std::move(workerRPCClient), std::move(queryPlacementPhase)));
 }
+bool Experimental::QueryMigrationPhase::execute(const Experimental::MigrateQueryRequestPtr& migrateQueryRequest) {
+    return false; }
 } //namespace NES
