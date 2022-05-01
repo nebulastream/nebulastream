@@ -22,7 +22,7 @@ limitations under the License.
 
 namespace NES::Parsers {
 
-class NePSLPattern {
+class PSLPattern {
   private:
     int id;
     int right = -1;
@@ -38,8 +38,8 @@ class NePSLPattern {
     NES::Query query = NES::Query(NULL);
 
   public:
-    explicit NePSLPattern(int id);
-    NePSLPattern* const* getPatternList() const;
+    explicit PSLPattern(int id);
+    PSLPattern* const* getPatternList() const;
     int getId() const;
     void setId(int id);
     int getRight() const;
