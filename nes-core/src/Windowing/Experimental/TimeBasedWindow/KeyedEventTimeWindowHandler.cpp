@@ -61,6 +61,7 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
     // check if the current max watermark is larger than the thread local watermark
     if (newGlobalWatermark > threadLocalSliceStore.getLastWatermark()) {
 
+
         if (threadLocalSliceStore.getLastWatermark() == 0) {
             // special case for the first watermark handling
             auto currentSliceIndex = newGlobalWatermark / sliceSize;

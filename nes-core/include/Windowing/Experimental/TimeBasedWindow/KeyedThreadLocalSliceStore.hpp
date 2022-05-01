@@ -66,35 +66,68 @@ class KeyedThreadLocalSliceStore {
     }
 
     /**
-     * @brief Finds a slice by a specific time stamp.
-     * @param ts timestamp
+     * @brief Retrieves a slice which covers a specific ts.
+     * If no suitable slice is contained in the slice store we add a slice at the correct position.
+     * Slices cover a cover a range from [startTs, endTs - 1]
+     * @param timestamp requires to be larger then the lastWatermarkTs
      * @return KeyedSlicePtr
      */
     inline KeyedSlicePtr& findSliceByTs(uint64_t ts) {
         NES_ASSERT(ts > lastWatermarkTs, "The ts " << ts << " can't be smaller then the lastWatermarkTs " << lastWatermarkTs);
-        // calculate the slice end for a specific ts
-        auto sliceEndTs = getSliceEndTs(ts);
-        return getSlice(sliceEndTs);
+
+        // Find the correct slice.
+        // Reverse iteration over all slices from the end to the start,
+        // as it is expected that ts is in a more recent slice.
+        // At the end of the iteration sliceIter can be in three states:
+        // 1. sliceIter == slices.rend() -> their is no slice with a start <= ts.
+        // In this case we have to pre-pend a new slice.
+        // 2. sliceIter is at a slide which slice.startTs <= ts and slice.endTs < ts.
+        // In this case we have to insert a new slice after the current sliceIter
+        // 3. sliceIter is at a slide which slice.startTs <= ts and slice.endTs > ts.
+        // In this case we found the correct slice.
+        auto sliceIter = slices.rbegin();
+        while (sliceIter != slices.rend() && (*sliceIter)->getStart() > ts) {
+            sliceIter++;
+        }
+        // Handle the individual cases and append a slice if required.
+        if (sliceIter == slices.rend()) {
+            // We are in case 1. thus we have to prepend a new slice
+            auto newSliceStart = getSliceStartTs(ts);
+            auto newSliceEnd = getSliceEndTs(ts);
+            auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd, 0);
+            return slices.emplace_front(std::move(newSlice));
+        } else if ((*sliceIter)->getStart() <= ts && (*sliceIter)->getEnd() < ts) {
+            // We are in case 2. thus we have to append a new slice after the current iterator
+            auto newSliceStart = getSliceStartTs(ts);
+            auto newSliceEnd = getSliceEndTs(ts);
+            auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd, 0);
+            auto slice = slices.emplace(sliceIter.base(), std::move(newSlice));
+            return *slice;
+        } else if ((*sliceIter)->coversTs(ts)) {
+            // We are in case 3. and found a slice which covers the current ts.
+            // Thus, we return a reference to the slice.
+            return *sliceIter;
+        } else {
+            NES_THROW_RUNTIME_ERROR("Error during slice lookup: We looked for ts: " << ts << " current slices " << this);
+        }
     }
 
-    /**
-     * @brief Returns an slice by a specific slice end timestamp.
-     * @param sliceEndTs
-     * @return KeyedSlicePtr
-     */
-    inline const KeyedSlicePtr& operator[](uint64_t sliceEndTs) { return getSlice(sliceEndTs); }
+    auto getSlices(){
+        return &slices;
+    };
+
 
     /**
      * @brief Returns the slice end ts for the first slice in the slice store.
      * @return uint64_t
      */
-    inline uint64_t getFirstIndex() { return minimalSliceEnd; }
+    inline KeyedSlicePtr& getFirstSlice() { return slices.front(); }
 
     /**
      * @brief Returns the slice end ts for the last slice in the slice store.
      * @return uint64_t
      */
-    inline uint64_t getLastIndex() { return currentSlice->getEnd(); }
+    inline KeyedSlicePtr& getLastSlice() { return slices.back(); }
 
     /**
      * @brief Deletes the slice with the smalles slice index.
@@ -131,38 +164,6 @@ class KeyedThreadLocalSliceStore {
      * @throws WindowProcessingException if the slice store is full
      */
     KeyedSlicePtr& insertSlice(uint64_t sliceIndex);
-
-    /**
-     * @brief Get a specific slice at a specific slice index.
-     * @param sliceIndex
-     * @return KeyedSlicePtr
-     */
-    inline KeyedSlicePtr& getSlice(uint64_t sliceEnd) {
-
-        if (slices.empty()) {
-        }
-
-        auto sliceIter = slices.rbegin();
-        while ((*sliceIter)->getStart() > sliceEnd) {
-            sliceIter++;
-        }
-
-        auto& slice = *sliceIter;
-        if(slice->getStart() <= sliceEnd && slice->getEnd() < sliceEnd){
-            // we found the correct slice
-        }
-        auto s = allocateNewSlice(0,0,0);
-        slices.emplace(sliceIter.base(), std::move(s));
-        sliceIter.add
-
-        if (currentSlice != nullptr && sliceEnd == lastIndex) {
-            return currentSlice;
-        } else if (!slices.contains(sliceEnd)) {
-            return insertSlice(sliceEnd);
-        } else {
-            return slices[sliceEnd];
-        }
-    }
 
     KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs, uint64_t sliceIndex);
 

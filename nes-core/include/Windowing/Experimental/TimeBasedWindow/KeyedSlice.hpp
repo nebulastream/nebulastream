@@ -56,6 +56,15 @@ class KeyedSlice {
      */
     inline uint64_t getIndex() const { return index; }
 
+
+    /**
+     * @brief Checks if a slice covers a specific ts.
+     * A slice cover a cover a range from [startTs, endTs - 1]
+     * @param ts
+     * @return
+     */
+    inline bool coversTs(uint64_t ts) const { return start <= ts && end> ts; }
+
     /**
      * @brief State of the slice.
      * @return uint64_t
