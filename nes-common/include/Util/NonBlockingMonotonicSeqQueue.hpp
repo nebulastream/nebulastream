@@ -65,7 +65,6 @@ class NonBlockingMonotonicSeqQueue {
     class Block {
       public:
         Block(uint64_t blockIndex) : blockIndex(blockIndex){};
-        Block(const Block& other) : blockIndex(other.blockIndex){};
         ~Block() = default;
         const uint64_t blockIndex;
         std::array<Container, blockSize> log = {};
@@ -104,7 +103,7 @@ class NonBlockingMonotonicSeqQueue {
         auto targetBlockIndex = currentSequenceNumber / blockSize;
         currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
         // read the value from the correct slot.
-        auto seqIndexInBlock = currentSequenceNumber - (currentBlock->blockIndex * blockSize);
+        auto seqIndexInBlock = currentSequenceNumber % blockSize;
         auto& value = currentBlock->log[seqIndexInBlock];
         return value.value;
     }
@@ -184,7 +183,7 @@ class NonBlockingMonotonicSeqQueue {
                     if (value.seq == nextSeqNumber) {
                         // Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber)) {
-                            NES_DEBUG("Swap HEAD: remove " << currentBlock->blockIndex << " - " << currentBlock.use_count());
+                            NES_TRACE("Swap HEAD: remove " << currentBlock->blockIndex << " - " << currentBlock.use_count());
                             std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
                         };
                         continue;
@@ -223,7 +222,6 @@ class NonBlockingMonotonicSeqQueue {
         return currentBlock;
     }
 
-  private:
     // Stores a reference to the current block
     std::shared_ptr<Block> head;
     // Stores the current sequence number
