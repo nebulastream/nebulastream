@@ -27,9 +27,10 @@ void ClangFormat::formatFile(std::shared_ptr<File> file) {
     // TODO replace with build-in clang-format #2074
     int ret = system("which clang-format > /dev/null");
     if (ret != 0) {
-        throw CompilerException("Compiler: Did not find external tool 'clang-format'. "
-                                "Please install 'clang-format' and try again."
-                                "If 'clang-format-X' is installed, try to create a symbolic link.");
+        NES_ERROR("Compiler: Clang-format was requested, but did not find external tool 'clang-format'. "
+                  "Please install 'clang-format' and try again."
+                  "If 'clang-format-X' is installed, try to create a symbolic link.");
+        return;
     }
     // construct clang-format command argument
     auto formatCommand = "clang-format --assume-filename=" + language + " -i " + file->getPath();
