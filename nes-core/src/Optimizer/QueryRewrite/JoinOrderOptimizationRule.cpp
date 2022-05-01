@@ -361,13 +361,11 @@ namespace NES::Optimizer {
         // joinOrder[0][0] = R
 
 
-        // extract join order from final plan
+        // extract join order from final plan // jvs might be irrelevant
         std::any joinOrder = extractJoinOrder(finalPlan);
 
-        // print join ORder
+        // print join ORder // JVS nice to have but also irrelevant
         std::cout << printJoinOrder(joinOrder) << std::endl;
-
-
 
         // copy current plan
         QueryPlanPtr newPlan = oldPlan.get()->copy();
@@ -376,12 +374,15 @@ namespace NES::Optimizer {
         JoinLogicalOperatorNodePtr topJoin;
         // JVS durch Baum traversen bis source node nicht mehr nullptr ist.
         // JVS note: my approach currently ignorees additional filter + watermark assigner etc.
-        if (finalPlan != nullptr && finalPlan->getSourceNode() == nullptr){
+        if (finalPlan != nullptr){
             // additional check!
-            if (finalPlan->getLeftChild() && finalPlan->getRightChild() == nullptr){
+            if (finalPlan->getLeftChild() == nullptr && finalPlan->getRightChild() == nullptr){
                 return oldPlan;
             }
-            topJoin = constructJoin(finalPlan->getLeftChild(), finalPlan->getRightChild(), sourceOperators, joinEdges);
+            topJoin = constructJoin(finalPlan->getLeftChild(), finalPlan->getRightChild(), finalPlan->getJoinPredicate(), sourceOperators, joinEdges);
+        } else{
+            NES_DEBUG("FinalPlan is nullptr - returning old plan")
+            return oldPlan;
         }
 
         newPlan->replaceRootOperator(newPlan->getRootOperators()[0], topJoin);
@@ -410,8 +411,137 @@ namespace NES::Optimizer {
     }
     JoinLogicalOperatorNodePtr JoinOrderOptimizationRule::constructJoin(const AbstractJoinPlanOperatorPtr& leftChild,
                                                                         const AbstractJoinPlanOperatorPtr& rightChild,
+                                                                        Join::LogicalJoinDefinitionPtr joinDefinition,
                                                                         const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                                                        const std::vector<Join::JoinEdgePtr> joinEdges) {
+                                                                        const std::vector<Join::JoinEdgePtr> joinEdges
+                                                                        ) {
+
+
+        // JVS Tree can be traversed in a recursive fashion. Lets start with the left side and then right side
+        // return a JoinLogicalOperatorNodePtr as the root node. Left partner of the join, and right partner of the join + some kind of join definition
+
+
+
+        // JVS 1. Check if we are dealing with a source OR a join respectively for left and right child
+        // leftChild
+        SourceLogicalOperatorNodePtr correspondingNodeLeft; // If leftChild == source, find corresponding SourceLogicalOperatorNodePtr in sources array
+        JoinLogicalOperatorNodePtr leftJoin; // if leftChild == join, construct a join by invoked a recursion with its children.
+        if (leftChild->getSourceNode()!=nullptr){
+            // source
+            for (auto source: sources){
+                // iterate over sources to find matching source (by id)
+                if(leftChild->getSourceNode()->getId() == source->getId()){
+                    correspondingNodeLeft = source;
+                    break;
+                }
+            }
+        } else{
+            // join
+            leftJoin = constructJoin(leftChild->getLeftChild(), leftChild->getRightChild(), leftChild->getJoinPredicate(), sources, joinEdges);
+        }
+
+        // rightChild
+        SourceLogicalOperatorNodePtr correspondingNodeRight;
+        JoinLogicalOperatorNodePtr rightJoin;
+        if(rightChild->getSourceNode()!=nullptr){
+            // source
+            for(auto source: sources){
+                if(rightChild->getSourceNode()->getId() == source->getId()){
+                    correspondingNodeLeft = source;
+                    break;
+                }
+            }
+        }else{
+            // join
+            rightJoin = constructJoin(rightChild->getLeftChild(), leftChild->getRightChild(), rightChild->getJoinPredicate(), sources, joinEdges);
+        }
+
+        // JVS 2. List all 4 cases possible and construct respective JoinLogicalOperatorNode
+        // could be both sources, both joins or one of them being a source and the other a join
+
+        Join::LogicalJoinDefinitionPtr newJoinDefinition;
+        // JVS needs testing
+        if(correspondingNodeLeft != nullptr && correspondingNodeRight != nullptr){
+            // both sources
+            // JVS reconsider this: can't we just use joinDefinition from function call and then add correspondingNodeLeft & Right to return Join?
+            for(auto joinEdge: joinEdges){
+                // traverse joinEdges and get edge that holds both sources (note: left and right might be switched)
+                u_int64_t leftEdgeNodeId =  joinEdge->getLeftOperator()->getSourceNode()->getId(); // JVS check if this id exists. typically these should be sources and therefore have Ids
+                u_int64_t rightEdgeNodeId = joinEdge->getRightOperator()->getSourceNode()->getId();
+
+                // check via the id of the corresponding nodes and the joinEdge. Remember that the order can be different.
+                if((correspondingNodeLeft->getId() == leftEdgeNodeId && correspondingNodeRight->getId() == rightEdgeNodeId) ||
+                    (correspondingNodeLeft->getId() == rightEdgeNodeId && correspondingNodeRight->getId() == leftEdgeNodeId)){
+                    // set corresponding joinDefinition of matching joinEdge
+                    newJoinDefinition = joinEdge->getJoinDefinition();
+                    // construct join and return
+                    return std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, 1)); // jvs how to id?
+
+                }
+            }
+        }
+        else if(leftJoin != nullptr && rightJoin != nullptr){
+            // both joins
+            // join of joins...
+            // jvs alter constructJoin by also handing over joinDefinition from AbstractJoinPlanOperator
+            newJoinDefinition = joinDefinition;
+
+            // JVS construct join from newJoinDefinition and return that
+            return std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, 2)); // jvs how to id?
+
+
+
+            // JVS get leftJoinKeyType (FieldAccessExpressionNodePtr)
+            NES_DEBUG("Happy Halloween!");
+
+            // can create it untyped just with the field name
+            // JVS iterate instead over leftChild and rightChild involvedOptimizerPlanOperator. With that method we can get the actual key they are joining on
+            // other idea: alter AbstractJoinPlanOperator to hold the actual keys.
+
+
+
+
+
+
+            // JVS get rightJoinKeyType (FieldAccessExpressionNodePtr)
+
+
+            // Test: Create a join Definition by yourself by logically deriving from inputs.
+            // JVS check if getNumberOfInputEdgesLeft() and Right() are correct and if not how to derive them correctly
+            /*
+            Join::LogicalJoinDefinition joinDefinition = Join::LogicalJoinDefinition(
+                nullptr,
+                nullptr,
+                leftJoin->getJoinDefinition()->getWindowType(),
+                leftJoin->getJoinDefinition()->getDistributionType(),
+                leftJoin->getJoinDefinition()->getTriggerPolicy(),
+                leftJoin->getJoinDefinition()->getTriggerAction(),
+                leftJoin->getJoinDefinition()->getNumberOfInputEdgesLeft(),
+                leftJoin->getJoinDefinition()->getNumberOfInputEdgesRight(),
+                leftJoin->getJoinDefinition()->getJoinType()
+                );
+            */
+
+
+
+
+        }
+
+            // left Join, right Source
+
+            // left Source, right join
+
+
+
+        // JVS Create objects to return
+        //auto newJoinDefinition = Join::LogicalJoinDefinition( ); // jvs needs a bunch of arguments: better derive from existing joinDefinitions
+        //auto join = JoinLogicalOperatorNode // needs joinDefinition, operator Id
+
+        // JVS return ptr of JoinLogicalOperatorNode
+
+
+
+        /*
 
         JoinLogicalOperatorNodePtr leftJoin;
         JoinLogicalOperatorNodePtr rightJoin;
@@ -496,7 +626,7 @@ namespace NES::Optimizer {
 
 
 
-
+*/
         return NES::JoinLogicalOperatorNodePtr();
     }
 

@@ -155,8 +155,9 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
     std::string printJoinOrder(std::any joinOrder);
     JoinLogicalOperatorNodePtr constructJoin(const AbstractJoinPlanOperatorPtr& leftChild,
                                              const AbstractJoinPlanOperatorPtr& rightChild,
+                                             Join::LogicalJoinDefinitionPtr joinDefinition,
                                              const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                             const std::vector<Join::JoinEdgePtr> vector);
+                                             const std::vector<Join::JoinEdgePtr> joinEdges);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_
