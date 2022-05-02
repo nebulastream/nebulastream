@@ -218,7 +218,6 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     // extract total query runtime from statistics
@@ -306,8 +305,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -403,8 +401,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableProjection) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, timeoutSeconds));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -478,7 +475,6 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -552,8 +548,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -635,7 +630,6 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    //ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
@@ -720,8 +714,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -805,8 +798,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     if (!benchmark) {
         std::ifstream ifs(filePath.c_str());
@@ -827,94 +819,6 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
-
-
-
-// join two static data sources together with the batch join operator.
-// Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
-TEST_F(StaticDataSourceIntegrationTest, testBatchFilterCustomerFull) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
-    wrkConf->numWorkerThreads = 8;
-
-    NES_INFO("num work " << wrkConf->numWorkerThreads.getValue() << " num buff " << wrkConf->numberOfBuffersInGlobalBufferManager.getValue());
-
-    crdConf->rpcPort = (*rpcCoordinatorPort);
-    crdConf->restPort = *restPort;
-    wrkConf->coordinatorPort = crdConf->rpcPort;
-
-    // use deprecated feature "logicalSources" to register logical streams before physical streams
-    crdConf->logicalSources.add(LogicalSource::create("tpch_customer", schema_customer));
-
-    PhysicalSourceTypePtr sourceType1 =
-            StaticDataSourceType::create(table_path_customer_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_s0001_customer", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
-
-    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
-
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    auto sourceCatalog = crd->getSourceCatalog();
-
-    // local fs
-    std::string filePath = getTestResourceFolder() / "foooo.csv";
-    remove(filePath.c_str());
-
-    bool benchmark = true;
-
-    //register query
-    std::string queryLogic =
-            R"(Query::from("tpch_customer").filter(Attribute("C_CUSTKEY") < 35))";
-    std::string querySink = benchmark
-            ?   ".sink(NullOutputSinkDescriptor::create());"
-            :   ".sink(FileSinkDescriptor::create(\"" + filePath
-            + R"(" , "CSV_FORMAT", "APPEND"));)";
-    std::string queryString = queryLogic + querySink;
-
-
-    QueryId queryId =
-            queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-    auto globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
-
-    // extract total query runtime from statistics
-    auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
-    printTotalQueryRuntime(stats);
-
-    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    if (!benchmark) {
-        std::ifstream ifs(filePath.c_str());
-        std::ifstream ifsInputProbeSide(table_path_customer_s0001.c_str());
-        EXPECT_TRUE(ifs.good());
-        EXPECT_TRUE(ifsInputProbeSide.good());
-
-        int numResultTuples = std::count(std::istreambuf_iterator<char>(ifs),
-                                         std::istreambuf_iterator<char>(), '\n');
-        int numExpectedTuples = std::count(std::istreambuf_iterator<char>(ifsInputProbeSide),
-                                           std::istreambuf_iterator<char>(), '\n')
-                                                   + 1; // the .csv file contains a header, so we expect one more
-
-                                                   NES_ASSERT(numResultTuples == numExpectedTuples,
-                                                              "The Join changed the number of tuples from " << numExpectedTuples << " in the probe table to " << numResultTuples);
-    }
-
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
 
 // join two static data sources together with the batch join operator
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
@@ -975,8 +879,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1070,8 +973,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyPartitioned) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1162,8 +1064,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1251,8 +1152,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     std::ifstream ifs(filePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1346,8 +1246,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     printTotalQueryRuntime(stats);
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     if (!benchmark) {
         // does the join result have same number of rows as the probe table?
@@ -1396,7 +1295,8 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
 
 
 // join two static data sources together with the batch join operator.
-// two artificial tabeles of the length of CUST and NATION (but with only two integers in schema)
+// two artificial tables of configurable length (generated during test)
+// useful for benchmarking
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
     std::string pathProbe = "./test_data/tmp_probe_table.tbl";
     std::string pathBuild = "./test_data/tmp_build_table.tbl";
@@ -1498,8 +1398,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             printTotalQueryRuntime(stats);
 
             NES_INFO("StaticDataSourceIntegrationTest: Remove query");
-            EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-            EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+            ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
             if (!benchmark) {
                 // does the join result have same number of rows as the probe table?
