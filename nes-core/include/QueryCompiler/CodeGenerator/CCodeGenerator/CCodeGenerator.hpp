@@ -276,7 +276,7 @@ class CCodeGenerator : public CodeGenerator {
     * @brief Code generation for a batch join build operator, which depends on a particular join definition
     * @param batchJoinDef The join batch definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
-    * @param operatorHandlerIndex index for the operator handler. todo jm do we need this?
+    * @param batchJoinOperatorHandler the handler with the shared join state
     * @return flag if the generation was successful.
     */
     bool generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
@@ -287,7 +287,7 @@ class CCodeGenerator : public CodeGenerator {
     * @brief Code generation for a batch join probe operator, which depends on a particular join definition
     * @param batchJoinDef The join batch definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
-    * @param operatorHandlerIndex index for the operator handler. todo jm do we need this?
+    * @param batchJoinOperatorHandler the handler with the shared join state
     * @return flag if the generation was successful.
     */
     bool generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
