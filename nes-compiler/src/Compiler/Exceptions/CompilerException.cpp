@@ -16,7 +16,6 @@
 namespace NES::Compiler {
 
 Compiler::CompilerException::CompilerException(const std::string& message, const std::source_location location)
-    : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {
-}
+    : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
 
 }// namespace NES::Compiler
