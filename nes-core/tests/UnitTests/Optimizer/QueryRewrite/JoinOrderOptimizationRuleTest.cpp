@@ -70,13 +70,10 @@ using namespace NES;
         Query subQuery4 = Query::from("REGION").filter(Attribute("NAME") == "AFRICA"); // check if this is done correctly ("R.NAME = \"AFRICA\"")
 
 
-        // TODO: Consider how to handle windows here -- do we really have a timestamp ? if not => how to generate one?
         Query query = subQuery1.joinWith(subQuery2).where(Attribute("SUPPLIER$SUPPKEY")).equalsTo(Attribute("PARTSUPPLIER$SUPPKEY")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
                           .joinWith(subQuery3).where(Attribute("SUPPLIER$NATIONKEY")).equalsTo(Attribute("NATION$NATIONKEY")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
                           .joinWith(subQuery4).where(Attribute("REGION$REGIONKEY")).equalsTo(Attribute("NATION$REGIONKEY")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)));
         QueryPlanPtr queryPlan = query.getQueryPlan();
-        // JVS mb need to set query Id here to something different than 0.
-        NES_DEBUG(queryPlan);
 
         auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
         queryPlan = joinOrderOptimizationRule->apply(queryPlan);
