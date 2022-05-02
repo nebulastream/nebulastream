@@ -22,11 +22,11 @@
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Common/ExecutableType/Array.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
 PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(SchemaPtr inputSchema,
                                                      SchemaPtr outputSchema,
-                                                     Join::BatchJoinOperatorHandlerPtr joinOperatorHandler) {
+                                                     Join::Experimental::BatchJoinOperatorHandlerPtr joinOperatorHandler) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
@@ -36,21 +36,21 @@ PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(SchemaPtr inputSchema
 PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(OperatorId id,
                                                      const SchemaPtr& inputSchema,
                                                      const SchemaPtr& outputSchema,
-                                                     const Join::BatchJoinOperatorHandlerPtr& joinOperatorHandler) {
+                                                     const Join::Experimental::BatchJoinOperatorHandlerPtr& joinOperatorHandler) {
     return std::make_shared<PhysicalBatchJoinProbeOperator>(id, inputSchema, outputSchema, joinOperatorHandler);
 }
 
 PhysicalBatchJoinProbeOperator::PhysicalBatchJoinProbeOperator(OperatorId id,
                                                    SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,
-                                                   Join::BatchJoinOperatorHandlerPtr joinOperatorHandler)
+                                                   Join::Experimental::BatchJoinOperatorHandlerPtr joinOperatorHandler)
     : OperatorNode(id), PhysicalBatchJoinOperator(std::move(joinOperatorHandler)),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)){};
 
 std::string PhysicalBatchJoinProbeOperator::toString() const { return "PhysicalBatchJoinProbeOperator"; }
 
 OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler); // todo is this a valid copy? looks like we could loose the schemas and handlers at the move operator
+    return create(id, inputSchema, outputSchema, operatorHandler);
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators::Experimental

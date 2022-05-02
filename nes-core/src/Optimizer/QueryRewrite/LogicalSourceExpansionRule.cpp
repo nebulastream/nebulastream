@@ -183,7 +183,7 @@ void LogicalSourceExpansionRule::removeAndAddBlockingUpstreamOperator(const Oper
 bool LogicalSourceExpansionRule::isBlockingOperator(const OperatorNodePtr& operatorNode) {
     return (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()
             || operatorNode->instanceOf<UnionLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
-            || operatorNode->instanceOf<BatchJoinLogicalOperatorNode>());
+            || operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>());
 }
 
 }// namespace NES::Optimizer

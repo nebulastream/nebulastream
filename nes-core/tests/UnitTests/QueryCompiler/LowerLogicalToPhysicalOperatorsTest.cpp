@@ -410,19 +410,19 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleJoinQuery) {
 
 
 TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleBatchJoinQuery) {
-    BatchJoinLogicalOperatorNodePtr batchJoinOp1;
+    Experimental::BatchJoinLogicalOperatorNodePtr batchJoinOp1;
     {
-        auto joinType = Join::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
+        auto joinType = Join::Experimental::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
 
-        Join::LogicalBatchJoinDefinitionPtr batchJoinDef =
-                Join::LogicalBatchJoinDefinition::create(
+        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef =
+                Join::Experimental::LogicalBatchJoinDefinition::create(
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 1,
                 1,
                 joinType);
 
-        batchJoinOp1 = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<BatchJoinLogicalOperatorNode>();
+        batchJoinOp1 = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
     }
 
     auto queryPlan = QueryPlan::create(sourceOp1);
@@ -449,7 +449,7 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleBatchJoinQuery) {
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalBatchJoinProbeOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalBatchJoinBuildOperator>());
     ++iterator;

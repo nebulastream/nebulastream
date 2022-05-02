@@ -23,8 +23,10 @@ using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-class BatchJoinOperatorHandler;
-using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+namespace Experimental {
+    class BatchJoinOperatorHandler;
+    using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+}// namespace Experimental
 }// namespace Join
 
 namespace Windowing {

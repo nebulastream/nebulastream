@@ -607,8 +607,8 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //            /* statements section */
 //            InputTuple *inputTuples = (InputTuple *) inputTupleBuffer.getBuffer();
 //            uint64_t numberOfTuples = inputTupleBuffer.getNumberOfTuples();
-//            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::BatchJoinOperatorHandler>(1);
-//            auto batchJoinHandler = batchJoinOperatorHandler->getBatchJoinHandler<NES::Join::BatchJoinHandler, int64_t, InputTuple>();
+//            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::Experimental::BatchJoinOperatorHandler>(1);
+//            auto batchJoinHandler = batchJoinOperatorHandler->getBatchJoinHandler<NES::Join::Experimental::BatchJoinHandler, int64_t, InputTuple>();
 //            auto hashTable = batchJoinHandler->getHashTable();
 //
 //            for (uint64_t recordIndex = 0; recordIndex < numberOfTuples; ++recordIndex) {
@@ -619,10 +619,10 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //        }
 //
 //        uint32_t setup(Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext) {
-//            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::BatchJoinOperatorHandler>(0);
+//            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::Experimental::BatchJoinOperatorHandler>(0);
 //            auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
 //            auto resultSchema = batchJoinOperatorHandler->getResultSchema();
-//            auto batchJoinHandler = Join::BatchJoinHandler<int64_t, InputTupleBuild>::create(batchJoinDefinition, 17);
+//            auto batchJoinHandler = Join::Experimental::BatchJoinHandler<int64_t, InputTupleBuild>::create(batchJoinDefinition, 17);
 //            batchJoinOperatorHandler->setBatchJoinHandler(batchJoinHandler);
 //
 //            return 0;
@@ -661,8 +661,8 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //            InputTuple *inputTuples = (InputTuple *) inputTupleBuffer.getBuffer();
 //            uint64_t numberOfTuples = inputTupleBuffer.getNumberOfTuples();
 //
-//            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::BatchJoinOperatorHandler>(0);
-//            auto batchJoinHandler = batchJoinOperatorHandler->getBatchJoinHandler<NES::Join::BatchJoinHandler, int64_t, InputTupleBuild>();
+//            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::Experimental::BatchJoinOperatorHandler>(0);
+//            auto batchJoinHandler = batchJoinOperatorHandler->getBatchJoinHandler<NES::Join::Experimental::BatchJoinHandler, int64_t, InputTupleBuild>();
 //            auto hashTable = batchJoinHandler->getHashTable();
 //            NES::Runtime::TupleBuffer resultTupleBuffer = workerContext.allocateTupleBuffer();
 //            ResultTuple *resultTuples = (ResultTuple *) resultTupleBuffer.getBuffer();

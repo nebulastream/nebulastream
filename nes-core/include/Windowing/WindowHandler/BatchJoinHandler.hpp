@@ -29,7 +29,7 @@
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
 
-namespace NES::Join {
+namespace NES::Join::Experimental {
 
 template<class KeyType, class InputTypeBuild>
         using HashTable = cuckoohash_map<KeyType, InputTypeBuild>;
@@ -39,7 +39,7 @@ template<class KeyType, class InputTypeBuild>
 template<class KeyType, class InputTypeBuild>
 class BatchJoinHandler : public AbstractBatchJoinHandler {
   public:
-    explicit BatchJoinHandler(const Join::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+    explicit BatchJoinHandler(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
                          uint64_t id)
         : AbstractBatchJoinHandler(std::move(batchJoinDefinition)), id(id), refCnt(2), isRunning(false),
         hashTable(std::make_shared<HashTable<KeyType, InputTypeBuild>>()) {
@@ -47,7 +47,7 @@ class BatchJoinHandler : public AbstractBatchJoinHandler {
         NES_TRACE("Created join handler with id=" << id);
     }
 
-    static AbstractBatchJoinHandlerPtr create(Join::LogicalBatchJoinDefinitionPtr batchJoinDefinition, uint64_t id) {
+    static AbstractBatchJoinHandlerPtr create(LogicalBatchJoinDefinitionPtr batchJoinDefinition, uint64_t id) {
         return std::make_shared<BatchJoinHandler>(batchJoinDefinition, id);
     }
 
@@ -91,5 +91,5 @@ class BatchJoinHandler : public AbstractBatchJoinHandler {
     std::atomic<bool> isRunning;
     HashTablePtr<KeyType, InputTypeBuild> hashTable;
 };
-}// namespace NES::Join
+}// namespace NES::Join::Experimental
 #endif// NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_HANDLER_HPP_

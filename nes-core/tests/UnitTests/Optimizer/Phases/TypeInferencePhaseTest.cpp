@@ -1022,19 +1022,19 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<JoinLogicalOperatorNode>()[0];
-    BatchJoinLogicalOperatorNodePtr batchJoinOp;
+    Experimental::BatchJoinLogicalOperatorNodePtr batchJoinOp;
     {
-        auto joinType = Join::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
+        auto joinType = Join::Experimental::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
 
-        Join::LogicalBatchJoinDefinitionPtr batchJoinDef =
-                Join::LogicalBatchJoinDefinition::create(
+        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef =
+                Join::Experimental::LogicalBatchJoinDefinition::create(
                         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id1")->as<FieldAccessExpressionNode>(),
                         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id2")->as<FieldAccessExpressionNode>(),
                         1,
                         1,
                         joinType);
 
-        batchJoinOp = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<BatchJoinLogicalOperatorNode>();
+        batchJoinOp = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
     }
     joinOp->replace(batchJoinOp);
     ASSERT_TRUE(batchJoinOp->inferSchema());

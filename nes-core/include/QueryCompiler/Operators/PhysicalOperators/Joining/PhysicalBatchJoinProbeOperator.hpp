@@ -19,11 +19,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 /**
- * @brief Physical operator for the join sink.
+ * @brief Physical operator for the batch join probe.
  * This operator queries the operator state and computes final join results.
  */
 class PhysicalBatchJoinProbeOperator : public PhysicalBatchJoinOperator, public PhysicalUnaryOperator {
@@ -31,19 +29,17 @@ class PhysicalBatchJoinProbeOperator : public PhysicalBatchJoinOperator, public 
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchemaProbe,
                                       const SchemaPtr& outputSchema,
-                                      const Join::BatchJoinOperatorHandlerPtr& operatorHandler);
+                                      const Join::Experimental::BatchJoinOperatorHandlerPtr& operatorHandler);
     static PhysicalOperatorPtr create(SchemaPtr inputSchemaProbe,
                                       SchemaPtr outputSchema,
-                                      Join::BatchJoinOperatorHandlerPtr operatorHandler);
+                                      Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
     PhysicalBatchJoinProbeOperator(OperatorId id,
                              SchemaPtr inputSchemaProbe,
                              SchemaPtr outputSchema,
-                             Join::BatchJoinOperatorHandlerPtr operatorHandler);
+                             Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators::Experimental
 
 #endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_JOINING_PHYSICAL_BATCH_JOIN_PROBE_OPERATOR_HPP_

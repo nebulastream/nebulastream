@@ -72,10 +72,9 @@ LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createJoinOperator(const Jo
     return std::make_shared<JoinLogicalOperatorNode>(joinDefinition, id);
 }
 
-// todo put in experimental namespace
-LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createBatchJoinOperator(const Join::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createBatchJoinOperator(const Join::Experimental::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
                                                                         OperatorId id) {
-    return std::make_shared<BatchJoinLogicalOperatorNode>(batchJoinDefinition, id);
+    return std::make_shared<Experimental::BatchJoinLogicalOperatorNode>(batchJoinDefinition, id);
 }
 
 BroadcastLogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(OperatorId id) {

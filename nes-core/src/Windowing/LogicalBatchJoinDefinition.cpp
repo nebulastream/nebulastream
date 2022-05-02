@@ -15,7 +15,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <utility>
-namespace NES::Join {
+namespace NES::Join::Experimental {
 
 LogicalBatchJoinDefinition::LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr keyTypeBuild,
                                              FieldAccessExpressionNodePtr keyTypeProbe,
@@ -39,7 +39,7 @@ LogicalBatchJoinDefinitionPtr LogicalBatchJoinDefinition::create(const FieldAcce
                                                        uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight,
                                                        JoinType joinType) {
-    return std::make_shared<Join::LogicalBatchJoinDefinition>(keyTypeBuild,
+    return std::make_shared<Join::Experimental::LogicalBatchJoinDefinition>(keyTypeBuild,
                                                               keyTypeProbe,
                                                               numberOfInputEdgesLeft,
                                                               numberOfInputEdgesRight,
@@ -54,7 +54,7 @@ SchemaPtr LogicalBatchJoinDefinition::getBuildSchema() { return buildSchema; }
 
 SchemaPtr LogicalBatchJoinDefinition::getProbeSchema() { return probeSchema; }
 
-Join::LogicalBatchJoinDefinition::JoinType LogicalBatchJoinDefinition::getJoinType() const { return joinType; }
+Join::Experimental::LogicalBatchJoinDefinition::JoinType LogicalBatchJoinDefinition::getJoinType() const { return joinType; }
 
 uint64_t LogicalBatchJoinDefinition::getNumberOfInputEdgesBuild() const { return numberOfInputEdgesBuild; }
 
@@ -75,4 +75,4 @@ void LogicalBatchJoinDefinition::setNumberOfInputEdgesProbe(uint64_t numberOfInp
     LogicalBatchJoinDefinition::numberOfInputEdgesProbe = numberOfInputEdgesRight;
 }
 
-};// namespace NES::Join
+};// namespace NES::Join::Experimental

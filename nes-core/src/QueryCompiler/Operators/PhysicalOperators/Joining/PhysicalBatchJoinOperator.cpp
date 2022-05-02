@@ -16,9 +16,9 @@
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalBatchJoinOperator::PhysicalBatchJoinOperator(Join::BatchJoinOperatorHandlerPtr operatorHandler)
+PhysicalBatchJoinOperator::PhysicalBatchJoinOperator(Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler)
     : operatorHandler(std::move(operatorHandler)){};
 
-Join::BatchJoinOperatorHandlerPtr PhysicalBatchJoinOperator::getBatchJoinHandler() { return operatorHandler; }
+Join::Experimental::BatchJoinOperatorHandlerPtr PhysicalBatchJoinOperator::getBatchJoinHandler() { return operatorHandler; }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

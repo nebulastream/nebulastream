@@ -164,7 +164,7 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return BinaryOperatorNode
     */
-    static LogicalBinaryOperatorNodePtr createBatchJoinOperator(const Join::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+    static LogicalBinaryOperatorNodePtr createBatchJoinOperator(const Join::Experimental::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
                                                            OperatorId id = Util::getNextOperatorId());
 
     /**
