@@ -2176,6 +2176,15 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::LogicalBatch
                                                               PipelineContextPtr context,
                                                               uint64_t id,
                                                               Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+
+    /*
+     * Create struct definition, e.g.:
+        struct __attribute__((packed)) InputTupleBuild {
+            int64_t build$id2;
+            int64_t build$value;
+        };
+     */
+
     const std::string structNameBuildTuple = "InputTupleBuild";
     auto buildTypeStruct = getStructDeclarationFromSchema(structNameBuildTuple, batchJoinDef->getBuildSchema());
     context->code->structDeclarationInputTuples.emplace_back(buildTypeStruct);
@@ -2214,7 +2223,7 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::LogicalBatch
             VarDeclStatement(batchJoinOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
     setupScope->addStatement(windowOperatorStatement.copy());
 
-    // getWindowDefinition
+    // get batch join Definition
     auto batchJoinDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinDefinition");
     auto getBatchJoinDefinitionCall = call("getBatchJoinDefinition");
     auto batchJoinDefinitionStatement =

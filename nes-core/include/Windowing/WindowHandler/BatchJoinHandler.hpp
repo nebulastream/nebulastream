@@ -51,9 +51,6 @@ class BatchJoinHandler : public AbstractBatchJoinHandler {
         return std::make_shared<BatchJoinHandler>(batchJoinDefinition, id);
     }
 
-    ~BatchJoinHandler() override { NES_TRACE("~BatchJoinHandler()"); }
-
-
     std::string toString() override {
         std::stringstream ss;
         ss << "BatchJoinHandler id=" << id;
