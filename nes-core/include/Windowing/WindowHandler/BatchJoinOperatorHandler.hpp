@@ -18,7 +18,8 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
-namespace NES::Join {
+
+namespace NES::Join::Experimental {
 /**
  * @brief Operator handler for batch join.
  */
@@ -35,7 +36,7 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @param resultSchema window result schema
     * @return BatchJoinOperatorHandlerPtr
     */
-    static BatchJoinOperatorHandlerPtr create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition, const SchemaPtr& resultSchema);
+    static Experimental::BatchJoinOperatorHandlerPtr create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition, const SchemaPtr& resultSchema);
 
     /**
     * @brief Factory to create new BatchJoinOperatorHandler
@@ -43,7 +44,7 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @param resultSchema batch join result schema
     * @return BatchJoinOperatorHandlerPtr
     */
-    static BatchJoinOperatorHandlerPtr create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+    static Experimental::BatchJoinOperatorHandlerPtr create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
                                          const SchemaPtr& resultSchema,
                                          const AbstractBatchJoinHandlerPtr& batchJoinHandler);
     /**
@@ -150,6 +151,6 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     bool foundProbeSide = false;
     bool startedProbeSide = false;
 };
-}// namespace NES::Join
+}// namespace NES::Join::Experimental
 
 #endif// NES_INCLUDE_WINDOWING_WINDOW_HANDLER_BATCH_JOIN_OPERATOR_HANDLER_HPP_

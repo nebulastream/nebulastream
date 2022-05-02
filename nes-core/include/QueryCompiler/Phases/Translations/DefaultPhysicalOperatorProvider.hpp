@@ -119,7 +119,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
                                               std::vector<OperatorNodePtr> children);
 
     // todo might need super class of join and batch join, this function is a duplicate of above
-    static OperatorNodePtr getBatchJoinChildInputOperator(const BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
+    static OperatorNodePtr getBatchJoinChildInputOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
                                                            SchemaPtr outputSchema,
                                                            std::vector<OperatorNodePtr> children);
 

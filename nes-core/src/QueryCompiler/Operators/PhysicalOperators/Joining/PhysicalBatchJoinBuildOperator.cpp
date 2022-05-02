@@ -26,7 +26,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalBatchJoinBuildOperator::create(SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,
-                                                      Join::BatchJoinOperatorHandlerPtr operatorHandler) {
+                                                      Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
@@ -36,14 +36,14 @@ PhysicalOperatorPtr PhysicalBatchJoinBuildOperator::create(SchemaPtr inputSchema
 PhysicalOperatorPtr PhysicalBatchJoinBuildOperator::create(OperatorId id,
                                                       const SchemaPtr& inputSchema,
                                                       const SchemaPtr& outputSchema,
-                                                      const Join::BatchJoinOperatorHandlerPtr& operatorHandler) {
+                                                      const Join::Experimental::BatchJoinOperatorHandlerPtr& operatorHandler) {
     return std::make_shared<PhysicalBatchJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler);
 }
 
 PhysicalBatchJoinBuildOperator::PhysicalBatchJoinBuildOperator(OperatorId id,
                                                      SchemaPtr inputSchema,
                                                      SchemaPtr outputSchema,
-                                                     Join::BatchJoinOperatorHandlerPtr operatorHandler)
+                                                     Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalBatchJoinOperator(std::move(operatorHandler)),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)) {};
 

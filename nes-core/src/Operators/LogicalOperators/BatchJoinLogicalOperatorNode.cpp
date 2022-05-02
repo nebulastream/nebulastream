@@ -20,13 +20,11 @@
 #include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
-#include <z3++.h>
 
-namespace NES {
+namespace NES::Experimental {
 
-BatchJoinLogicalOperatorNode::BatchJoinLogicalOperatorNode(Join::LogicalBatchJoinDefinitionPtr batchJoinDefinition, OperatorId id)
+BatchJoinLogicalOperatorNode::BatchJoinLogicalOperatorNode(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition, OperatorId id)
     : OperatorNode(id), LogicalBinaryOperatorNode(id), batchJoinDefinition(std::move(batchJoinDefinition)) {}
 
 bool BatchJoinLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
@@ -39,7 +37,7 @@ std::string BatchJoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-Join::LogicalBatchJoinDefinitionPtr BatchJoinLogicalOperatorNode::getBatchJoinDefinition() { return batchJoinDefinition; }
+Join::Experimental::LogicalBatchJoinDefinitionPtr BatchJoinLogicalOperatorNode::getBatchJoinDefinition() { return batchJoinDefinition; }
 
 bool BatchJoinLogicalOperatorNode::inferSchema() {
 
@@ -160,4 +158,4 @@ void BatchJoinLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-}// namespace NES
+}// namespace NES::Experimental

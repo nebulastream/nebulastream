@@ -118,8 +118,8 @@ void DefaultPipeliningPhase::registerPipelineWithOperatorHandlers(const Operator
     // this function can also be used to register with other types of operator handlers
     // and may be called from other functions than the current processPipelineBreakerOperator().
 
-    if (currentOperator->instanceOf<PhysicalOperators::PhysicalBatchJoinProbeOperator>()) {
-        auto probeOperator = currentOperator->as<PhysicalOperators::PhysicalBatchJoinProbeOperator>();
+    if (currentOperator->instanceOf<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>()) {
+        auto probeOperator = currentOperator->as<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>();
         uint64_t probePipelineID = currentPipeline->getPipelineId();
         probeOperator->getBatchJoinHandler()->setProbePipelineID(probePipelineID);
     } else if (currentOperator->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {

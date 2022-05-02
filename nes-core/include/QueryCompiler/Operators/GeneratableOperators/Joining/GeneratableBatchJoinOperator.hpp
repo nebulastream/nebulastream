@@ -28,8 +28,8 @@ class GeneratableBatchJoinOperator : public GeneratableOperator {
     GeneratableBatchJoinOperator(OperatorId id,
                             SchemaPtr inputSchema,
                             SchemaPtr outputSchema,
-                            Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
-    Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler;
+                            Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+    Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

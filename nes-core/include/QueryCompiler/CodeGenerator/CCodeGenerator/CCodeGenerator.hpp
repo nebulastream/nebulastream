@@ -243,10 +243,10 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateCodeForBatchJoinHandlerSetup(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+    uint64_t generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                   PipelineContextPtr context,
                                                   uint64_t id,
-                                                  Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
+                                                  Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -279,9 +279,9 @@ class CCodeGenerator : public CodeGenerator {
     * @param batchJoinOperatorHandler the handler with the shared join state
     * @return flag if the generation was successful.
     */
-    bool generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+    bool generateCodeForBatchJoinBuild(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                        PipelineContextPtr context,
-                                       Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
+                                       Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
 
     /**
     * @brief Code generation for a batch join probe operator, which depends on a particular join definition
@@ -290,9 +290,9 @@ class CCodeGenerator : public CodeGenerator {
     * @param batchJoinOperatorHandler the handler with the shared join state
     * @return flag if the generation was successful.
     */
-    bool generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+    bool generateCodeForBatchJoinProbe(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                        PipelineContextPtr context,
-                                       Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
+                                       Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
@@ -493,7 +493,7 @@ class CCodeGenerator : public CodeGenerator {
                                                  const std::string& rightType);
 
     /**
-     * @brief returns getBatchJoinHandler<NES::Join::BatchJoinHandler,KeyType,buildType>()
+     * @brief returns getBatchJoinHandler<NES::Join::Experimental::BatchJoinHandler,KeyType,buildType>()
      * @param pipelineContextVariable
      * @param KeyType
      * @param buildType
@@ -577,7 +577,7 @@ class CCodeGenerator : public CodeGenerator {
                                                uint64_t joinOperatorIndex);
 
     /**
-     * @brief creates batchJoinOperatorHandler = tupleBufferVariable.getOperatorHandler<Join::BatchJoinOperatorHandler>(batchJoinOperatorIndex) and
+     * @brief creates batchJoinOperatorHandler = tupleBufferVariable.getOperatorHandler<Join::Experimental::BatchJoinOperatorHandler>(batchJoinOperatorIndex) and
      * appends it to the variableInitStmts
      * @param context
      * @param tupleBufferVariable

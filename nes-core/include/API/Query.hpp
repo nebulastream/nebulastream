@@ -149,7 +149,7 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
-namespace BatchJoinOperatorBuilder {
+namespace Experimental::BatchJoinOperatorBuilder {
     /**
      * @brief BatchJoinOperatorBuilder.
      * @note Initialize as Join between originalQuery and subQueryRhs.
@@ -203,7 +203,7 @@ class JoinWhere {
     ExpressionNodePtr onProbeKey;
 };
 
-}//namespace BatchJoinOperatorBuilder
+}//namespace Experimental::BatchJoinOperatorBuilder
 
 namespace CEPOperatorBuilder {
 
@@ -328,7 +328,7 @@ class Query {
 
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinCondition;
-    friend class BatchJoinOperatorBuilder::JoinWhere;
+    friend class NES::Experimental::BatchJoinOperatorBuilder::JoinWhere;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
@@ -345,10 +345,11 @@ class Query {
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class BatchJoinOperatorBuilder::Join.
+     * @warning The batch join is an experimental feature.
      * @param subQueryRhs
      * @return object where where() function is defined and can be called by user
      */
-    BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
+    NES::Experimental::BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
@@ -552,7 +553,7 @@ class Query {
                 Join::LogicalJoinDefinition::JoinType joinType);
 
     /**
-     * We call it only internal as a last step during the Join/AND operation
+     * We call it only internal as a last step during the batchJoin operation
      * @brief This methods add the join operator to a query
      * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
      * @param subQueryRhs subQuery to be joined
@@ -564,7 +565,7 @@ class Query {
     Query& batchJoin(const Query& subQueryRhs,
                 ExpressionItem onProbeKey,
                 ExpressionItem onBuildKey,
-                Join::LogicalBatchJoinDefinition::JoinType joinType);
+                Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use

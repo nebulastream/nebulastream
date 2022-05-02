@@ -23,20 +23,20 @@ namespace NES::QueryCompilation::GeneratableOperators {
 GeneratableBatchJoinProbeOperator::GeneratableBatchJoinProbeOperator(OperatorId id,
                                                          SchemaPtr inputSchema,
                                                          SchemaPtr outputSchema,
-                                                         Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler)
+                                                         Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler)
     : OperatorNode(id), GeneratableBatchJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler)) {
 }
 
 GeneratableOperatorPtr GeneratableBatchJoinProbeOperator::create(OperatorId id,
                                                            SchemaPtr inputSchema,
                                                            SchemaPtr outputSchema,
-                                                           Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+                                                           Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
     return std::make_shared<GeneratableBatchJoinProbeOperator>(
         GeneratableBatchJoinProbeOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler)));
 }
 
 GeneratableOperatorPtr
-GeneratableBatchJoinProbeOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+GeneratableBatchJoinProbeOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
     return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler));
 }
 

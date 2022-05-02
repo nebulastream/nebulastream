@@ -34,7 +34,7 @@ class GeneratableBatchJoinProbeOperator : public GeneratableBatchJoinOperator {
      * @return generatable join probe.
      */
     static GeneratableOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
     /**
      * @brief Creates a new generatable join sink operator
      * @param id operator id
@@ -44,7 +44,7 @@ class GeneratableBatchJoinProbeOperator : public GeneratableBatchJoinOperator {
      * @return generatable join sink
      */
     static GeneratableOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
     /**
     * @brief Code generation function for the execute call of an operator.
     * The execute function is called for each tuple buffer consumed by this operator.
@@ -59,7 +59,7 @@ class GeneratableBatchJoinProbeOperator : public GeneratableBatchJoinOperator {
     GeneratableBatchJoinProbeOperator(OperatorId id,
                                 SchemaPtr inputSchema,
                                 SchemaPtr outputSchema,
-                                Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+                                Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

@@ -82,7 +82,7 @@ class CustomEventWrapper : public BaseEvent {
 };
 
 /**
- * @brief This class shall be used to define custom events with user-supplied data
+ * @brief This class represents a start method for static data sources
  */
 class StartSourceEvent : public BaseEvent {
   public:

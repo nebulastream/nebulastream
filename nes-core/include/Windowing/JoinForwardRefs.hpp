@@ -20,17 +20,15 @@ namespace NES::Join {
 class LogicalJoinDefinition;
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 
-class LogicalBatchJoinDefinition;
-using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
-
+namespace Experimental {
+    class LogicalBatchJoinDefinition;
+    using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
+}// namespace Experimental
 class JoinActionDescriptor;
 using JoinActionDescriptorPtr = std::shared_ptr<JoinActionDescriptor>;
 
 class AbstractJoinHandler;
 using AbstractJoinHandlerPtr = std::shared_ptr<AbstractJoinHandler>;
-
-class AbstractBatchJoinHandler;
-using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
 
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class ExecutableNestedLoopJoinTriggerAction;
@@ -49,8 +47,13 @@ using BaseJoinActionDescriptorPtr = std::shared_ptr<BaseJoinActionDescriptor>;
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-class BatchJoinOperatorHandler;
-using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+namespace Experimental {
+    class AbstractBatchJoinHandler;
+    using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
+
+    class BatchJoinOperatorHandler;
+    using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+}// namespace Experimental
 
 }// namespace NES::Join
 #endif// NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_

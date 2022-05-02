@@ -16,9 +16,11 @@
 #define NES_INCLUDE_GRPC_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
 
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorId.hpp>
 
 #include <memory>
+
 namespace NES {
 
 class SerializableOperator;
@@ -87,7 +89,8 @@ class OperatorSerializationUtil {
      * @param BatchJoinLogicalOperatorNodePtr The window operator node.
      * @return the serialized SerializableOperator_SinkDetails.
      */
-    static SerializableOperator_BatchJoinDetails serializeBatchJoinOperator(const BatchJoinLogicalOperatorNodePtr& joinOperator);
+    static SerializableOperator_BatchJoinDetails serializeBatchJoinOperator(
+            const Experimental::BatchJoinLogicalOperatorNodePtr& joinOperator);
 
     /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
@@ -120,7 +123,7 @@ class OperatorSerializationUtil {
      * @param operatorId: id of the operator to be deserialized
      * @return BatchJoinLogicalOperatorNode
      */
-    static BatchJoinLogicalOperatorNodePtr deserializeBatchJoinOperator(SerializableOperator_BatchJoinDetails* joinDetails,
+    static Experimental::BatchJoinLogicalOperatorNodePtr deserializeBatchJoinOperator(SerializableOperator_BatchJoinDetails* joinDetails,
                                                               OperatorId operatorId);
 
     /**

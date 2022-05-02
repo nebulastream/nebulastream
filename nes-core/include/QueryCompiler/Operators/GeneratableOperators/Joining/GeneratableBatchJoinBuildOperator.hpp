@@ -31,7 +31,7 @@ class GeneratableBatchJoinBuildOperator : public GeneratableBatchJoinOperator {
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
 
     /**
      * @brief Creates a new generatable join build operator.
@@ -44,7 +44,7 @@ class GeneratableBatchJoinBuildOperator : public GeneratableBatchJoinOperator {
     static GeneratableOperatorPtr create(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
-                                         Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+                                         Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
     /**
     * @brief Code generation function for the execute call of an operator.
     * The execute function is called for each tuple buffer consumed by this operator.
@@ -68,7 +68,7 @@ class GeneratableBatchJoinBuildOperator : public GeneratableBatchJoinOperator {
     GeneratableBatchJoinBuildOperator(OperatorId id,
                                  SchemaPtr inputSchema,
                                  SchemaPtr outputSchema,
-                                 Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+                                 Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
 #endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_JOINING_GENERATABLE_JOIN_BUILD_OPERATOR_HPP_

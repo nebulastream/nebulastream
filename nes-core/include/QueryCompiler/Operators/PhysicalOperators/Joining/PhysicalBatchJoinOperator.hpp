@@ -24,14 +24,14 @@ namespace PhysicalOperators {
  */
 class PhysicalBatchJoinOperator {
   public:
-    Join::BatchJoinOperatorHandlerPtr getBatchJoinHandler();
+    Join::Experimental::BatchJoinOperatorHandlerPtr getBatchJoinHandler();
 
     virtual ~PhysicalBatchJoinOperator() noexcept = default;
 
   protected:
-    explicit PhysicalBatchJoinOperator(Join::BatchJoinOperatorHandlerPtr operatorHandler);
+    explicit PhysicalBatchJoinOperator(Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
 
-    Join::BatchJoinOperatorHandlerPtr operatorHandler;
+    Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

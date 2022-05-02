@@ -21,21 +21,21 @@
 #include <memory>
 #include <z3++.h>
 
-namespace NES {
+namespace NES::Experimental {
 
 /**
  * @brief Batch Join operator, which contains an expression as a predicate.
  */
 class BatchJoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
   public:
-    explicit BatchJoinLogicalOperatorNode(Join::LogicalBatchJoinDefinitionPtr batchJoinDefinition, OperatorId id);
+    explicit BatchJoinLogicalOperatorNode(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition, OperatorId id);
     ~BatchJoinLogicalOperatorNode() override = default;
 
     /**
     * @brief get join definition.
     * @return LogicalJoinDefinition
     */
-    Join::LogicalBatchJoinDefinitionPtr getBatchJoinDefinition();
+    Join::Experimental::LogicalBatchJoinDefinitionPtr getBatchJoinDefinition();
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
@@ -46,7 +46,7 @@ class BatchJoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     void inferStringSignature() override;
 
   private:
-    Join::LogicalBatchJoinDefinitionPtr batchJoinDefinition;
+    Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition;
 };
-}// namespace NES
+}// namespace NES::Experimental
 #endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BATCH_JOIN_LOGICAL_OPERATOR_NODE_HPP_
