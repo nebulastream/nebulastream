@@ -694,9 +694,11 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     // .project(Attribute("tpch_nation$N_NATIONKEY"), Attribute("tpch_nation$N_REGIONKEY"))
 
     //register query
+    // we perform two project operations which have no effect. (just to check, if the batch join works with them)
     std::string queryString =
             R"(Query::from("tpch_nation")
-            .batchJoinWith(Query::from("tpch_customer"))
+            .project(Attribute("tpch_nation$N_NATIONKEY"), Attribute("tpch_nation$N_NAME"), Attribute("tpch_nation$N_REGIONKEY"), Attribute("tpch_nation$N_COMMENT"))
+            .batchJoinWith(Query::from("tpch_customer").project(Attribute("tpch_customer$C_CUSTKEY"), Attribute("tpch_customer$C_NAME"), Attribute("tpch_customer$C_ADDRESS"), Attribute("tpch_customer$C_NATIONKEY"), Attribute("tpch_customer$C_PHONE"), Attribute("tpch_customer$C_ACCTBAL"), Attribute("tpch_customer$C_MKTSEGMENT"), Attribute("tpch_customer$C_COMMENT")))
                 .where(Attribute("C_NATIONKEY"))
                 .equalsTo(Attribute("N_NATIONKEY"))
             .sink(FileSinkDescriptor::create(")"

@@ -56,8 +56,6 @@ SchemaPtr BatchJoinOperatorHandler::getResultSchema() { return resultSchema; }
 void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr context,
                                      Runtime::StateManagerPtr,
                                      uint32_t) {
-    // TODO we want a general model for pipeline predecessor access. this is a bit of a hack.
-
     NES_ASSERT(this->buildPipelineID != 0, "BatchJoinOperatorHandler: The Build Pipeline is not registered at start().");
     NES_ASSERT(this->probePipelineID != 0, "BatchJoinOperatorHandler: The Probe Pipeline is not registered at start().");
 
@@ -67,10 +65,8 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
         NES_ASSERT(context->getPredecessors().size() >= 1, "BatchJoinOperatorHandler: The Build Pipeline should have at least one predecessor.");
 
         if (foundAndStartedBuildSide) {
-            NES_DEBUG("BatchJoinOperatorHandler::start() was called a second time on a build pipeline.");
+            NES_THROW_RUNTIME_ERROR("BatchJoinOperatorHandler::start() was called a second time on a build pipeline.");
             return;
-            // this currently happens all the time, because we register bjoHandler twice in one build pipeline
-            // todo jm change this to an error once we fixed the above.
         }
 
         // send start source event to all build side sources.
@@ -116,7 +112,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
                     NES_ASSERT(!encounteredBuildPipeline,
                                "BatchJoinOperatorHandler: More than one Predecessors of Probe Pipeline has ID of Build pipeline.");
                     encounteredBuildPipeline = true;
-                    continue; // we do not add save the Build Pipeline as a build predecessor
+                    continue; // we do not save the Build Pipeline as a probe predecessor
                 }
 
                 NES_DEBUG("BatchJoinOperatorHandler: Found Pipeline in predecessors of Probe pipeline.");
