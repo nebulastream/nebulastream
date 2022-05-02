@@ -2217,7 +2217,7 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::LogicalBatch
     auto getOperatorHandlerCall = call("getOperatorHandler<Join::BatchJoinOperatorHandler>");
     auto constantOperatorHandlerIndex =
             Constant(tf->createValueType(DataTypeFactory::createBasicValue(joinOperatorHandlerIndex)));
-    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex); // todo jm access the id elsewhere!
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 
     auto windowOperatorStatement =
             VarDeclStatement(batchJoinOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
@@ -2733,9 +2733,8 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinit
 
     // "auto batchJoinHandler = pipelineExecutionContext.getBatchJoinHandler<int64_t, InputTupleBuild>()";
     auto batchJoinHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
-    /* todo the operator handler was registered before in generateCodeForBatchJoinHandlerSetup()
-       but we don't have a way to retrieve the index so we register it a second time: */
-    auto operatorHandlerIndex = context->registerOperatorHandler(batchJoinOperatorHandler);
+
+    int64_t operatorHandlerIndex = context->getHandlerIndex(batchJoinOperatorHandler);
     auto batchJoinOperatorHandlerDeclaration =
         getBatchJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
