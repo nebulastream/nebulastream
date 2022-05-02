@@ -16,8 +16,6 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES {
 
-WindowProcessingException::WindowProcessingException(const std::string& message)
-    : RuntimeException(message, NES::collectAndPrintStacktrace()) {
-    NES_ERROR(message);
-}
+WindowProcessingException::WindowProcessingException(const std::string& message, const std::source_location location)
+    : RuntimeException(message, NES::collectAndPrintStacktrace(), location) {}
 }// namespace NES

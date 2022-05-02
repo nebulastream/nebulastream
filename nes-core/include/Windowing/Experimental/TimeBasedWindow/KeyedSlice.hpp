@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDSLICE_HPP_
 #include <Util/Experimental/HashMap.hpp>
 #include <cinttypes>
+#include <ostream>
 namespace NES::Windowing::Experimental {
 
 /**
@@ -78,6 +79,7 @@ class KeyedSlice {
      * @param index
      */
     void reset(uint64_t start, uint64_t end, uint64_t index);
+    friend std::ostream& operator<<(std::ostream& os, const KeyedSlice& slice);
 
   private:
     uint64_t start;

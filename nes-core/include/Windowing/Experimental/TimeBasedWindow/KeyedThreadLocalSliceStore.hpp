@@ -73,8 +73,10 @@ class KeyedThreadLocalSliceStore {
      * @return KeyedSlicePtr
      */
     inline KeyedSlicePtr& findSliceByTs(uint64_t ts) {
-        NES_ASSERT(ts > lastWatermarkTs, "The ts " << ts << " can't be smaller then the lastWatermarkTs " << lastWatermarkTs);
-
+        if (ts <= lastWatermarkTs) {
+            throw new WindowProcessingException("The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs "
+                                                + std::to_string(lastWatermarkTs));
+        }
         // Find the correct slice.
         // Reverse iteration over all slices from the end to the start,
         // as it is expected that ts is in a more recent slice.
@@ -96,7 +98,7 @@ class KeyedThreadLocalSliceStore {
             auto newSliceEnd = getSliceEndTs(ts);
             auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd, 0);
             return slices.emplace_front(std::move(newSlice));
-        } else if ((*sliceIter)->getStart() <= ts && (*sliceIter)->getEnd() < ts) {
+        } else if ((*sliceIter)->getStart() < ts && (*sliceIter)->getEnd() <= ts) {
             // We are in case 2. thus we have to append a new slice after the current iterator
             auto newSliceStart = getSliceStartTs(ts);
             auto newSliceEnd = getSliceEndTs(ts);
@@ -108,14 +110,13 @@ class KeyedThreadLocalSliceStore {
             // Thus, we return a reference to the slice.
             return *sliceIter;
         } else {
-            NES_THROW_RUNTIME_ERROR("Error during slice lookup: We looked for ts: " << ts << " current slices " << this);
+            NES_THROW_RUNTIME_ERROR("Error during slice lookup: We looked for ts: " << ts << " current front: "
+                                                                                    << getLastSlice()->getStart() << " - "
+                                                                                    << getLastSlice()->getEnd());
         }
     }
 
-    auto getSlices(){
-        return &slices;
-    };
-
+    auto getSlices() { return &slices; };
 
     /**
      * @brief Returns the slice end ts for the first slice in the slice store.
@@ -132,7 +133,7 @@ class KeyedThreadLocalSliceStore {
     /**
      * @brief Deletes the slice with the smalles slice index.
      */
-    void dropFirstSlice();
+    void removeSlicesUntilTs(uint64_t ts);
 
     /**
      * @brief Returns the last watermark.
@@ -147,12 +148,6 @@ class KeyedThreadLocalSliceStore {
     void setLastWatermark(uint64_t watermarkTs);
 
     /**
-     * @brief Sets the first slice index.
-     * @param slice index
-     */
-    void setFirstSliceIndex(uint64_t sliceIndex);
-
-    /**
      * @brief Returns the number of currently stored slices
      * @return uint64_t
      */
@@ -163,18 +158,16 @@ class KeyedThreadLocalSliceStore {
      * @brief Appends a new slice to the end of the slice store.
      * @throws WindowProcessingException if the slice store is full
      */
-    KeyedSlicePtr& insertSlice(uint64_t sliceIndex);
+    //KeyedSlicePtr& insertSlice(uint64_t sliceIndex);
 
     KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs, uint64_t sliceIndex);
 
   private:
     NES::Experimental::HashMapFactoryPtr hashMapFactory;
-    const uint64_t windowSlide;
     const uint64_t windowSize;
+    const uint64_t windowSlide;
     KeyedSlicePtr currentSlice;
     std::list<KeyedSlicePtr> slices;
-    uint64_t firstIndex = 0;
-    uint64_t lastIndex = 0;
     uint64_t lastWatermarkTs = 0;
 };
 }// namespace NES::Windowing::Experimental

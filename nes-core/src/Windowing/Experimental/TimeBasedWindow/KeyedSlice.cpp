@@ -29,4 +29,8 @@ void KeyedSlice::reset(uint64_t start, uint64_t end, uint64_t index) {
     this->index = index;
     this->state.clear();
 }
+std::ostream& operator<<(std::ostream& os, const KeyedSlice& slice) {
+    os << "start: " << slice.start << " end: " << slice.end;
+    return os;
+}
 }// namespace NES::Windowing::Experimental
