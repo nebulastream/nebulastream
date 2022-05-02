@@ -128,7 +128,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         return lowerPhysicalKeyedGlobalSliceStoreAppendOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {
         lowerBatchJoinBuild(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalBatchJoinProbeOperator>()) {
+    } else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>()) {
         lowerBatchJoinProbe(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
         return;
@@ -314,7 +314,7 @@ void DefaultGeneratableOperatorProvider::lowerBatchJoinBuild(const QueryPlanPtr&
 
 void DefaultGeneratableOperatorProvider::lowerBatchJoinProbe(const QueryPlanPtr& queryPlan,
                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
-    auto physicalBatchJoinSink = operatorNode->as<PhysicalOperators::PhysicalBatchJoinProbeOperator>();
+    auto physicalBatchJoinSink = operatorNode->as<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>();
     auto generatableBatchJoinOperator = GeneratableOperators::GeneratableBatchJoinProbeOperator::create(physicalBatchJoinSink->getOutputSchema(),
                                                                                              physicalBatchJoinSink->getOutputSchema(),
                                                                                              physicalBatchJoinSink->getBatchJoinHandler());

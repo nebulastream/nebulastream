@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <utility>
 
-namespace NES::Join {
+namespace NES::Join::Experimental {
 
 /**
  * @brief The AbstractBatchJoinHandler handler is a classes available during compile-time. 
@@ -43,7 +43,7 @@ class AbstractBatchJoinHandler : public detail::virtual_enable_shared_from_this<
     using inherited1 = Runtime::Reconfigurable;
 
   public:
-    explicit AbstractBatchJoinHandler(Join::LogicalBatchJoinDefinitionPtr batchJoinDefinition)
+    explicit AbstractBatchJoinHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition)
      : batchJoinDefinition(std::move(batchJoinDefinition)) {
         // nop
 
@@ -80,5 +80,5 @@ class AbstractBatchJoinHandler : public detail::virtual_enable_shared_from_this<
      */
 };
 
-}// namespace NES::Join
+}// namespace NES::Join::Experimental
 #endif// NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_BATCH_JOIN_HANDLER_HPP_

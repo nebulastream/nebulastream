@@ -18,13 +18,13 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <cstdint>
 
-namespace NES::Join {
+namespace NES::Join::Experimental {
 
 /**
  * @brief Runtime definition of a join operator
  * @experimental
  */
-class LogicalBatchJoinDefinition { // todo its dumb that this is in the windowing dir
+class LogicalBatchJoinDefinition { // todo jm its dumb that this is in the windowing dir
 
   public:
     /**
@@ -126,5 +126,5 @@ class LogicalBatchJoinDefinition { // todo its dumb that this is in the windowin
 };
 
 using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
-}// namespace NES::Join
+}// namespace NES::Join::Experimental
 #endif// NES_INCLUDE_WINDOWING_LOGICAL_BATCH_JOIN_DEFINITION_HPP_

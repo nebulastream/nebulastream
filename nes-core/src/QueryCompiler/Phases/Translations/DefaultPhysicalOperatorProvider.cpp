@@ -165,7 +165,7 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const QueryPlanPtr& qu
         lowerUnionOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         lowerJoinOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<BatchJoinLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>()) {
         lowerBatchJoinOperator(queryPlan, operatorNode);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
@@ -260,7 +260,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
     operatorNode->replace(joinSink);
 }
 
-OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(const BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
+OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
                                                                            SchemaPtr outputSchema,
                                                                            std::vector<OperatorNodePtr> children) {
     NES_ASSERT(!children.empty(), "There should be children for operator " << batchJoinOperator->toString());
@@ -283,10 +283,10 @@ void DefaultPhysicalOperatorProvider::lowerBatchJoinOperator(const QueryPlanPtr&
 //                  /
 //    childsRight _/
 
-    auto batchJoinOperator = operatorNode->as<BatchJoinLogicalOperatorNode>();
+auto batchJoinOperator = operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>();
     // create batch join operator handler, to establish a common Runtime object for build and probw.
     auto batchJoinOperatorHandler =
-        Join::BatchJoinOperatorHandler::create(batchJoinOperator->getBatchJoinDefinition(), batchJoinOperator->getOutputSchema());
+        Join::Experimental::BatchJoinOperatorHandler::create(batchJoinOperator->getBatchJoinDefinition(), batchJoinOperator->getOutputSchema());
 
 
     auto leftInputOperator =
@@ -303,7 +303,7 @@ void DefaultPhysicalOperatorProvider::lowerBatchJoinOperator(const QueryPlanPtr&
 
     auto rightInputOperator = //    called to demultiplex, if there are multiple right childs. this var is not used further.
         getBatchJoinChildInputOperator(batchJoinOperator, batchJoinOperator->getRightInputSchema(), batchJoinOperator->getRightOperators());
-    auto batchJoinProbeOperator = PhysicalOperators::PhysicalBatchJoinProbeOperator::create(
+    auto batchJoinProbeOperator = PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator::create(
                                                                                        batchJoinOperator->getRightInputSchema(), // right = probe side!
                                                                                        batchJoinOperator->getOutputSchema(),
                                                                                        batchJoinOperatorHandler);

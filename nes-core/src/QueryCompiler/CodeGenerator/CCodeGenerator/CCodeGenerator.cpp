@@ -2172,10 +2172,10 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
     return joinOperatorHandlerIndex;
 }
 
-uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                               PipelineContextPtr context,
                                                               uint64_t id,
-                                                              Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+                                                              Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
 
     /*
      * Create struct definition, e.g.:
@@ -2214,7 +2214,7 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::LogicalBatch
 
     auto batchJoinOperatorHandlerDeclaration =
             VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Join::BatchJoinOperatorHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Join::Experimental::BatchJoinOperatorHandler>");
     auto constantOperatorHandlerIndex =
             Constant(tf->createValueType(DataTypeFactory::createBasicValue(joinOperatorHandlerIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
@@ -2241,10 +2241,10 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::LogicalBatch
     // todo jm where does id come from
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
-    // Join::BatchJoinHandler<KeyType, InputTypeBuild>(batchJoinDefinition, id)
+    // Join::Experimental::BatchJoinHandler<KeyType, InputTypeBuild>(batchJoinDefinition, id)
     auto batchJoinHandler = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
     auto createBatchJoinHandlerCall =
-            call("Join::BatchJoinHandler<" + keyType->getCode()->code_ + ", " + structNameBuildTuple + ">::create");
+            call("Join::Experimental::BatchJoinHandler<" + keyType->getCode()->code_ + ", " + structNameBuildTuple + ">::create");
     createBatchJoinHandlerCall->addParameter(VarRef(batchJoinDefDeclaration));
     createBatchJoinHandlerCall->addParameter(VarRef(idParam));
 
@@ -2710,9 +2710,9 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 }
 
 
-bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                    PipelineContextPtr context,
-                                                   Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+                                                   Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
     NES_DEBUG("batch join input=" << context->inputSchema->toString()
                             << " out=" << batchJoinDef->getOutputSchema()->toString());
 
@@ -2786,9 +2786,9 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinit
 }
 
 
-bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                    PipelineContextPtr context,
-                                                   Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+                                                   Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
     NES_DEBUG("batch join input=" << context->inputSchema->toString()
                             << " out=" << batchJoinDef->getOutputSchema()->toString());
 
@@ -3784,7 +3784,7 @@ BinaryOperatorStatement CCodeGenerator::getBatchJoinHandler(const VariableDeclar
                                                              const std::string& buildType) {
 
     auto tf = getTypeFactory();
-    auto call = FunctionCallStatement(std::string("getBatchJoinHandler<NES::Join::BatchJoinHandler, ") + TO_CODE(keyType) + "," + buildType + " >");
+    auto call = FunctionCallStatement(std::string("getBatchJoinHandler<NES::Join::Experimental::BatchJoinHandler, ") + TO_CODE(keyType) + "," + buildType + " >");
     return VarRef(pipelineContextVariable).accessPtr(call);
 }
 
@@ -3833,7 +3833,7 @@ VariableDeclaration CCodeGenerator::getOperatorHandler(const PipelineContextPtr&
             identifier = "joinOperatorHandler";
             break;
         case Runtime::Execution::BATCH_JOIN:
-            typeString = "Join::BatchJoinOperatorHandler";
+            typeString = "Join::Experimental::BatchJoinOperatorHandler";
             identifier = "batchJoinOperatorHandler";
             break;
         case Runtime::Execution::KEY_EVENT_TIME_WINDOW: // afaik nothing uses or tests this behaviour

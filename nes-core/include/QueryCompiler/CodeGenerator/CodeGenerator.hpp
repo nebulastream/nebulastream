@@ -322,10 +322,10 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    virtual uint64_t generateCodeForBatchJoinHandlerSetup(Join::LogicalBatchJoinDefinitionPtr batchJoin,
+    virtual uint64_t generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoin,
                                                           PipelineContextPtr context,
                                                           uint64_t id,
-                                                          Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+                                                          Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
 
     /**
     * @brief Code generation for a join operator, which depends on a particular join definition
@@ -357,9 +357,9 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool
-    generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+    generateCodeForBatchJoinBuild(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                   PipelineContextPtr context,
-                                  Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+                                  Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
 
     /**
     * @brief Code generation for a batch join probe operator, which depends on a particular join definition
@@ -369,9 +369,9 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool
-    generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+    generateCodeForBatchJoinProbe(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                   PipelineContextPtr context,
-                                  Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+                                  Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

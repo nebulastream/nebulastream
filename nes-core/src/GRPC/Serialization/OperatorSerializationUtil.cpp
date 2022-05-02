@@ -177,10 +177,10 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         NES_TRACE("OperatorSerializationUtil:: serialize to JoinLogicalOperatorNode");
         auto joinDetails = serializeJoinOperator(operatorNode->as<JoinLogicalOperatorNode>());
         serializedOperator.mutable_details()->PackFrom(joinDetails);
-    } else if (operatorNode->instanceOf<BatchJoinLogicalOperatorNode>()) {
+    } else if (operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>()) {
         // serialize batch join operator
         NES_TRACE("OperatorSerializationUtil:: serialize to BatchJoinLogicalOperatorNode");
-        auto joinDetails = serializeBatchJoinOperator(operatorNode->as<BatchJoinLogicalOperatorNode>());
+        auto joinDetails = serializeBatchJoinOperator(operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>());
         serializedOperator.mutable_details()->PackFrom(joinDetails);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         // serialize watermarkAssigner operator
@@ -375,7 +375,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
     }
 
     if (details.Is<SerializableOperator_BatchJoinDetails>()) {
-        auto joinOp = operatorNode->as<BatchJoinLogicalOperatorNode>();
+        auto joinOp = operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>();
         joinOp->getBatchJoinDefinition()->updateInputSchemas(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
         joinOp->getBatchJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
     }
@@ -647,7 +647,7 @@ OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePt
 
 
 SerializableOperator_BatchJoinDetails
-OperatorSerializationUtil::serializeBatchJoinOperator(const BatchJoinLogicalOperatorNodePtr& joinOperator) {
+OperatorSerializationUtil::serializeBatchJoinOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& joinOperator) {
     auto joinDetails = SerializableOperator_BatchJoinDetails();
     auto joinDefinition = joinOperator->getBatchJoinDefinition();
 
@@ -657,9 +657,9 @@ OperatorSerializationUtil::serializeBatchJoinOperator(const BatchJoinLogicalOper
     joinDetails.set_numberofinputedgesbuild(joinDefinition->getNumberOfInputEdgesBuild());
     joinDetails.set_numberofinputedgesprobe(joinDefinition->getNumberOfInputEdgesProbe());
 
-    if (joinDefinition->getJoinType() == Join::LogicalBatchJoinDefinition::JoinType::INNER_JOIN) {
+    if (joinDefinition->getJoinType() == Join::Experimental::LogicalBatchJoinDefinition::JoinType::INNER_JOIN) {
         joinDetails.mutable_jointype()->set_jointype(SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
-    } else if (joinDefinition->getJoinType() == Join::LogicalBatchJoinDefinition::JoinType::CARTESIAN_PRODUCT) {
+    } else if (joinDefinition->getJoinType() == Join::Experimental::LogicalBatchJoinDefinition::JoinType::CARTESIAN_PRODUCT) {
         joinDetails.mutable_jointype()->set_jointype(
             SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
     }
@@ -941,28 +941,28 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //    }
 }
 
-BatchJoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeBatchJoinOperator(
+Experimental::BatchJoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeBatchJoinOperator(
         SerializableOperator_BatchJoinDetails* joinDetails, OperatorId operatorId) {
 
     auto serializedJoinType = joinDetails->jointype();
     // check which jointype is set
     // default: INNER_JOIN
-    Join::LogicalBatchJoinDefinition::JoinType joinType = Join::LogicalBatchJoinDefinition::INNER_JOIN;
+    Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType = Join::Experimental::LogicalBatchJoinDefinition::INNER_JOIN;
     // with Cartesian Product is set, change join type
     if (serializedJoinType.jointype() == SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT) {
-        joinType = Join::LogicalBatchJoinDefinition::CARTESIAN_PRODUCT;
+        joinType = Join::Experimental::LogicalBatchJoinDefinition::CARTESIAN_PRODUCT;
     }
 
     auto buildKeyAccessExpression =
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onbuildkey())->as<FieldAccessExpressionNode>();
     auto probeKeyAccessExpression =
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onprobekey())->as<FieldAccessExpressionNode>();
-    auto joinDefinition = Join::LogicalBatchJoinDefinition::create(buildKeyAccessExpression,
+    auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(buildKeyAccessExpression,
                                                               probeKeyAccessExpression,
                                                               joinDetails->numberofinputedgesprobe(),
                                                               joinDetails->numberofinputedgesbuild(),
                                                               joinType);
-    auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<BatchJoinLogicalOperatorNode>();
+    auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<Experimental::BatchJoinLogicalOperatorNode>();
     return retValue;
 
 }

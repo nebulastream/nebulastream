@@ -24,19 +24,18 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * @brief Physical operator for the join build.
  * This operator receives input records and adds them to its operator state.
  */
- // todo think about emit and scan inheritance
 class PhysicalBatchJoinBuildOperator : public PhysicalBatchJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
 public:
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Join::BatchJoinOperatorHandlerPtr& operatorHandler);
+                                      const Join::Experimental::BatchJoinOperatorHandlerPtr& operatorHandler);
     static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::BatchJoinOperatorHandlerPtr operatorHandler);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
     PhysicalBatchJoinBuildOperator(OperatorId id,
                               SchemaPtr inputSchema,
                               SchemaPtr outputSchema,
-                              Join::BatchJoinOperatorHandlerPtr operatorHandler);
+                              Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
 
     ~PhysicalBatchJoinBuildOperator() noexcept override = default;
 

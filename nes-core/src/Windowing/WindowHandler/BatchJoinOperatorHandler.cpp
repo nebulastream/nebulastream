@@ -21,7 +21,7 @@
 #include <variant>
 #include <Sources/StaticDataSource.hpp>
 
-namespace NES::Join {
+namespace NES::Join::Experimental {
 
 BatchJoinOperatorHandlerPtr BatchJoinOperatorHandler::create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
                                                    const SchemaPtr& resultSchema,
@@ -161,4 +161,4 @@ void BatchJoinOperatorHandler::postReconfigurationCallback(Runtime::Reconfigurat
     //  todo jm: I think the EoS message from the build source still gets passed upstream as the JoinBuildPipeline has the JoinProbePipeline as a parent
 }
 
-}// namespace NES::Join
+}// namespace NES::Join::Experimental

@@ -34,14 +34,16 @@ namespace NES::Join {
 class LogicalJoinDefinition;
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 
-class LogicalBatchJoinDefinition;
-using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
-
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-class BatchJoinOperatorHandler;
-using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+namespace Experimental {
+    class LogicalBatchJoinDefinition;
+    using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
+
+    class BatchJoinOperatorHandler;
+    using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+}// namespace Experimental
 }// namespace NES::Join
 namespace NES {
 
@@ -78,8 +80,10 @@ using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
 class JoinLogicalOperatorNode;
 using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
 
-class BatchJoinLogicalOperatorNode;
-using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+namespace Experimental {
+    class BatchJoinLogicalOperatorNode;
+    using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+}
 
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;

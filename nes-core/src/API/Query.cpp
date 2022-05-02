@@ -48,7 +48,9 @@ ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem) { return 
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
-BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Query& subQueryRhs) { return BatchJoinOperatorBuilder::Join(subQueryRhs, *this); }
+NES::Experimental::BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Query& subQueryRhs) {
+    return NES::Experimental::BatchJoinOperatorBuilder::Join(subQueryRhs, *this);
+}
 
 CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
@@ -88,7 +90,7 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 }// namespace JoinOperatorBuilder
 
-namespace BatchJoinOperatorBuilder {
+namespace Experimental::BatchJoinOperatorBuilder {
 
 Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
 
@@ -101,7 +103,7 @@ Query& JoinWhere::equalsTo(const ExpressionItem& onBuildKey) const {
 JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onProbeKey)
 : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onProbeKey(onProbeKey.getExpressionNode()) {}
 
-}// namespace BatchJoinOperatorBuilder
+}// namespace Experimental::BatchJoinOperatorBuilder
 
 namespace CEPOperatorBuilder {
 
@@ -373,7 +375,7 @@ Query& Query::join(const Query& subQueryRhs,
 Query& Query::batchJoin(const Query& subQueryRhs,
                    ExpressionItem onProbeKey,
                    ExpressionItem onBuildKey,
-                   Join::LogicalBatchJoinDefinition::JoinType joinType) {
+                   Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType) {
     NES_DEBUG("Query: batchJoinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
@@ -400,7 +402,7 @@ Query& Query::batchJoin(const Query& subQueryRhs,
     // todo here again we wan't to extend to distributed joins:
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalBatchJoinDefinition::create(
+    auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(
                                                                 buildKeyFieldAccess,
                                                                 probeKeyFieldAccess,
                                                                 1,
@@ -436,7 +438,7 @@ Query& Query::batchJoinWith(const Query& subQueryRhs,
                        ExpressionItem onBuildKey) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
 
-    Join::LogicalBatchJoinDefinition::JoinType joinType = Join::LogicalBatchJoinDefinition::INNER_JOIN;
+    Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType = Join::Experimental::LogicalBatchJoinDefinition::INNER_JOIN;
     return Query::batchJoin(subQueryRhs, onProbeKey, onBuildKey, joinType);
 }
 
