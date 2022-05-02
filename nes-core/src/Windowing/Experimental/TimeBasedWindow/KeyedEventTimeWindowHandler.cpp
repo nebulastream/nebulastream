@@ -40,19 +40,21 @@ KeyedEventTimeWindowHandler::KeyedEventTimeWindowHandler(const Windowing::Logica
 void KeyedEventTimeWindowHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                         NES::Experimental::HashMapFactoryPtr hashmapFactory) {
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        threadLocalSliceStores.emplace_back(hashmapFactory, sliceSize, 100);
+        //  threadLocalSliceStores.emplace_back(hashmapFactory, sliceSize, 100);
     }
     this->factory = hashmapFactory;
 }
 
 NES::Experimental::Hashmap KeyedEventTimeWindowHandler::getHashMap() { return factory->create(); }
 
-void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
-                                                          Runtime::Execution::PipelineExecutionContext& ctx,
-                                                          uint64_t workerId,
-                                                          OriginId originId,
-                                                          uint64_t sequenceNumber,
-                                                          uint64_t watermarkTs) {
+void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext&,
+                                                          Runtime::Execution::PipelineExecutionContext&,
+                                                          uint64_t,
+                                                          OriginId,
+                                                          uint64_t,
+                                                          uint64_t) {
+
+    /*
 
     auto& threadLocalSliceStore = getThreadLocalSliceStore(workerId);
 
@@ -102,6 +104,7 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
         }
         threadLocalSliceStore.setLastWatermark(newGlobalWatermark);
     }
+     */
 }
 
 void KeyedEventTimeWindowHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
