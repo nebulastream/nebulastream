@@ -37,7 +37,7 @@ class KeyedThreadLocalSliceStore;
 class SliceMergeTask {
   public:
     uint64_t sequenceNumber;
-    uint64_t sliceIndex;
+    uint64_t sliceEnd;
 };
 
 class WindowTriggerTask {
@@ -76,8 +76,11 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler,
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
+
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+
     NES::Experimental::Hashmap getHashMap();
+
     KeyedSlicePtr createKeyedSlice(uint64_t sliceIndex);
 
     void triggerSliceMerging(Runtime::WorkerContext& wctx,

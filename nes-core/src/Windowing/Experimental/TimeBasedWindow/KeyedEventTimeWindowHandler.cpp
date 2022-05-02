@@ -47,14 +47,12 @@ void KeyedEventTimeWindowHandler::setup(Runtime::Execution::PipelineExecutionCon
 
 NES::Experimental::Hashmap KeyedEventTimeWindowHandler::getHashMap() { return factory->create(); }
 
-void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext&,
-                                                          Runtime::Execution::PipelineExecutionContext&,
-                                                          uint64_t,
-                                                          OriginId,
-                                                          uint64_t,
-                                                          uint64_t) {
-
-    /*
+void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
+                                                          Runtime::Execution::PipelineExecutionContext& ctx,
+                                                          uint64_t workerId,
+                                                          OriginId originId,
+                                                          uint64_t sequenceNumber,
+                                                          uint64_t watermarkTs) {
 
     auto& threadLocalSliceStore = getThreadLocalSliceStore(workerId);
 
@@ -62,49 +60,29 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
     auto newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
     // check if the current max watermark is larger than the thread local watermark
     if (newGlobalWatermark > threadLocalSliceStore.getLastWatermark()) {
-
-
-        if (threadLocalSliceStore.getLastWatermark() == 0) {
-            // special case for the first watermark handling
-            auto currentSliceIndex = newGlobalWatermark / sliceSize;
-            if (currentSliceIndex > 0) {
-                threadLocalSliceStore.setFirstSliceIndex(currentSliceIndex - 1);
-            }
-        }
-        // push the local slices to the global slice store.
-        auto firstIndex = threadLocalSliceStore.getFirstIndex();
-        auto lastIndex = threadLocalSliceStore.getLastIndex();
-        for (uint64_t si = firstIndex; si <= lastIndex; si++) {
-
-            const auto& slice = threadLocalSliceStore[si];
+        for (auto& slice : threadLocalSliceStore.getSlices()) {
             if (slice->getEnd() > newGlobalWatermark) {
                 break;
             }
-
-            // put partitions to global slice store
             auto& sliceState = slice->getState();
             // each worker adds its local state to the staging area
             auto [addedPartitionsToSlice, numberOfBuffers] =
-                sliceStaging.addToSlice(slice->getIndex(), sliceState.extractEntries());
+                sliceStaging.addToSlice(slice->getEnd(), sliceState.extractEntries());
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
-                    NES_DEBUG("Deploy merge task for slice " << slice->getIndex() << " with " << numberOfBuffers << " buffers.");
+                    NES_DEBUG("Deploy merge task for slice " << slice->getEnd() << " with " << numberOfBuffers << " buffers.");
                     auto buffer = wctx.allocateTupleBuffer();
                     auto task = buffer.getBuffer<SliceMergeTask>();
-                    task->sliceIndex = slice->getIndex();
+                    task->sliceEnd = slice->getEnd();
                     buffer.setNumberOfTuples(1);
                     ctx.dispatchBuffer(buffer);
                 } else {
-                    NES_DEBUG("Slice " << slice->getIndex() << " is empty. Don't deploy merge task.");
+                    NES_DEBUG("Slice " << slice->getEnd() << " is empty. Don't deploy merge task.");
                 }
             }
-
-            // erase slice from thread local slice store
-            threadLocalSliceStore.dropFirstSlice();
         }
         threadLocalSliceStore.setLastWatermark(newGlobalWatermark);
     }
-     */
 }
 
 void KeyedEventTimeWindowHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
@@ -112,13 +90,12 @@ void KeyedEventTimeWindowHandler::triggerSliceMerging(Runtime::WorkerContext& wc
                                                       uint64_t sequenceNumber,
                                                       KeyedSlicePtr slice) {
     // add pre-aggregated slice to slice store
-    auto [oldMaxSliceIndex, newMaxSliceIndex] = globalSliceStore.addSlice(sequenceNumber, slice->getIndex(), std::move(slice));
+    auto [oldMaxSliceIndex, newMaxSliceIndex] = globalSliceStore.addSlice(sequenceNumber, 0, std::move(slice));
     // check if we can trigger window computation
-    // ignore first sequence number
     if (newMaxSliceIndex > oldMaxSliceIndex) {
         auto buffer = wctx.allocateTupleBuffer();
         auto task = buffer.getBuffer<WindowTriggerTask>();
-        // we trigger the compleation of all windows that end between startSlice and <= endSlice.
+        // we trigger the completion of all windows that end between startSlice and <= endSlice.
         NES_DEBUG("Deploy window trigger task for slice  ( " << oldMaxSliceIndex << "-" << newMaxSliceIndex << ")");
         task->startSlice = oldMaxSliceIndex;
         task->endSlice = newMaxSliceIndex;
@@ -150,7 +127,7 @@ void KeyedEventTimeWindowHandler::stop(Runtime::Execution::PipelineExecutionCont
 KeyedSlicePtr KeyedEventTimeWindowHandler::createKeyedSlice(uint64_t sliceIndex) {
     auto startTs = sliceIndex * sliceSize;
     auto endTs = (sliceIndex + 1) * sliceSize;
-    return std::make_unique<KeyedSlice>(factory, startTs, endTs, sliceIndex);
+    return std::make_unique<KeyedSlice>(factory, startTs, endTs);
 };
 
 }// namespace NES::Windowing::Experimental

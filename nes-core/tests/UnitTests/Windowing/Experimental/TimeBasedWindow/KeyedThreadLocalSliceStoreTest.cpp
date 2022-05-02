@@ -50,7 +50,7 @@ class KeyedThreadLocalSliceStoreTest : public testing::Test {
 
 TEST_F(KeyedThreadLocalSliceStoreTest, assignTumblingWindow) {
     auto tumblingWindowSize = 100;
-    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, tumblingWindowSize, tumblingWindowSize, 100);
+    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, tumblingWindowSize, tumblingWindowSize);
     for (uint64_t ts = 1; ts < 1000; ts = ts + 10) {
         auto& slice = sliceStore.findSliceByTs(ts);
         ASSERT_EQ(slice->getStart(), (ts / tumblingWindowSize) * tumblingWindowSize);
@@ -64,7 +64,7 @@ TEST_F(KeyedThreadLocalSliceStoreTest, assignTumblingWindow) {
 TEST_F(KeyedThreadLocalSliceStoreTest, assignSlidingWindow) {
     auto slidingWindowSize = 100;
     auto slidingWindowSlide = 10;
-    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, slidingWindowSize, slidingWindowSlide, 100);
+    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, slidingWindowSize, slidingWindowSlide);
     for (uint64_t ts = 1; ts < 1000; ts = ts + 10) {
         auto& slice = sliceStore.findSliceByTs(ts);
         ASSERT_TRUE(slice->getStart() % slidingWindowSize == 0 || slice->getStart() % slidingWindowSlide == 0);
@@ -76,7 +76,7 @@ TEST_F(KeyedThreadLocalSliceStoreTest, assignSlidingWindow) {
 TEST_F(KeyedThreadLocalSliceStoreTest, assignSlidingWindowIregularSlide) {
     auto slidingWindowSize = 100;
     auto slidingWindowSlide = 30;
-    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, slidingWindowSize, slidingWindowSlide, 100);
+    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, slidingWindowSize, slidingWindowSlide);
     for (uint64_t ts = 1; ts < 1000; ts = ts + 10) {
         auto& slice = sliceStore.findSliceByTs(ts);
         ASSERT_TRUE(slice->getStart() % slidingWindowSize == 0 || slice->getStart() % slidingWindowSlide == 0);
@@ -88,7 +88,7 @@ TEST_F(KeyedThreadLocalSliceStoreTest, assignSlidingWindowIregularSlide) {
 
 TEST_F(KeyedThreadLocalSliceStoreTest, invalidTs) {
     auto tumblingWindowSize = 100;
-    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, tumblingWindowSize, tumblingWindowSize, 100);
+    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, tumblingWindowSize, tumblingWindowSize);
     sliceStore.setLastWatermark(42);
     ASSERT_ANY_THROW(sliceStore.findSliceByTs(10));
 }
@@ -96,7 +96,7 @@ TEST_F(KeyedThreadLocalSliceStoreTest, invalidTs) {
 TEST_F(KeyedThreadLocalSliceStoreTest, assignAndDeleteTest) {
     auto slidingWindowSize = 100;
     auto slidingWindowSlide = 10;
-    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, slidingWindowSize, slidingWindowSlide, 100);
+    auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, slidingWindowSize, slidingWindowSlide);
     // assign 100 slices
     for (uint64_t ts = 1; ts < 1000; ts = ts + 10) {
         sliceStore.findSliceByTs(ts);
