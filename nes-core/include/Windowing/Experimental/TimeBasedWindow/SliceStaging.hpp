@@ -14,17 +14,19 @@
 
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGING_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGING_HPP_
-#include <Exceptions/WindowProcessingException.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
 #include <cinttypes>
 #include <memory>
 #include <mutex>
+#include <map>
 
 namespace NES::Windowing::Experimental {
 
 /**
  * @brief The slice staging area is used as an area for the merging of the local slices.
  * Whenever a thread local slice store received a watermark it is assigning all slices that end before the particular slice to the stating area.
- * As multiple threads can concurrently append slices, we synchronize assessses.
+ * As multiple threads can concurrently append slices, we synchronize accesses.
  */
 class SliceStaging {
   public:
@@ -36,47 +38,23 @@ class SliceStaging {
 
     /**
      * @brief Appends the state of a slice to the staging area.
-     * @param sliceIndex index of the slice
+     * @param sliceEndTs we use the slice endTs as an index for the map of slices
      * @param entries the entries of the slice.
      * @return returns the number of threads already appended a slice to the staging area.
      */
-    std::tuple<uint64_t, uint64_t> addToSlice(uint64_t sliceIndex, std::unique_ptr<std::vector<Runtime::TupleBuffer>> entries) {
-        const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-        if (!slicePartitionMap.contains(sliceIndex)) {
-            slicePartitionMap[sliceIndex] = std::make_unique<Partition>();
-        }
-        auto& partition = slicePartitionMap[sliceIndex];
-        for (auto& entryBuffer : (*entries.get())) {
-            partition->buffers.emplace_back(entryBuffer);
-        }
-        partition->addedSlices++;
-
-        return {partition->addedSlices, partition->buffers.size()};
-    }
+    std::tuple<uint64_t, uint64_t> addToSlice(uint64_t sliceEndTs, std::unique_ptr<std::vector<Runtime::TupleBuffer>> entries);
 
     /**
      * @brief Extracts a partition from the staging area.
-     * @param sliceIndex
+     * @param sliceEndTs
      * @return
      */
-    std::unique_ptr<Partition> erasePartition(uint64_t sliceIndex) {
-        const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-        if (!slicePartitionMap.contains(sliceIndex)) {
-            throw WindowProcessingException("Slice Index " + std::to_string(sliceIndex) + "not available");
-        }
-        auto value = std::move(slicePartitionMap[sliceIndex]);
-        auto iter = slicePartitionMap.find(sliceIndex);
-        slicePartitionMap.erase(iter);
-        return value;
-    }
+    std::unique_ptr<Partition> erasePartition(uint64_t sliceEndTs);
 
     /**
      * @brief Clears all elements in the staging area.
      */
-    void clear() {
-        const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-        slicePartitionMap.clear();
-    }
+    void clear();
 
   private:
     std::mutex sliceStagingMutex;

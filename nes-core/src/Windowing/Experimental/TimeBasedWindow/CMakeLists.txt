@@ -17,4 +17,5 @@ add_source_files(nes-core
         KeyedThreadLocalSliceStore.cpp
         KeyedSlice.cpp
         KeyedGlobalSliceStore.cpp
+        SliceStaging.cpp
 )

@@ -16,17 +16,14 @@
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
 namespace NES::Windowing::Experimental {
 
-KeyedSlice::KeyedSlice(std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory,
-                       uint64_t start,
-                       uint64_t end,
-                       uint64_t index)
-    : start(start), end(end), index(index), state(hashMapFactory->create()) {}
-KeyedSlice::KeyedSlice(std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory) : KeyedSlice(hashMapFactory, 0, 0, 0) {}
+KeyedSlice::KeyedSlice(std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory, uint64_t start, uint64_t end)
+    : start(start), end(end), state(hashMapFactory->create()) {}
 
-void KeyedSlice::reset(uint64_t start, uint64_t end, uint64_t index) {
+KeyedSlice::KeyedSlice(std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory) : KeyedSlice(hashMapFactory, 0, 0) {}
+
+void KeyedSlice::reset(uint64_t start, uint64_t end) {
     this->start = start;
     this->end = end;
-    this->index = index;
     this->state.clear();
 }
 std::ostream& operator<<(std::ostream& os, const KeyedSlice& slice) {

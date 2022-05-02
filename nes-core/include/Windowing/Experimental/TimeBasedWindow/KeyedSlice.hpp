@@ -31,7 +31,7 @@ class KeyedSlice {
      * @param end of the slice
      * @param index of the slice (currently we assume that we can calculate a slice index, to which a specific stream event is assigned).
      */
-    KeyedSlice(std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory, uint64_t start, uint64_t end, uint64_t index);
+    KeyedSlice(std::shared_ptr<NES::Experimental::HashMapFactory> hashMapFactory, uint64_t start, uint64_t end);
 
     /**
      * @brief Constructor to create a uninitialized slice.
@@ -52,19 +52,12 @@ class KeyedSlice {
     inline uint64_t getEnd() const { return end; }
 
     /**
-     * @brief Index of the slice.
-     * @return uint64_t
-     */
-    inline uint64_t getIndex() const { return index; }
-
-
-    /**
      * @brief Checks if a slice covers a specific ts.
      * A slice cover a cover a range from [startTs, endTs - 1]
      * @param ts
      * @return
      */
-    inline bool coversTs(uint64_t ts) const { return start <= ts && end> ts; }
+    inline bool coversTs(uint64_t ts) const { return start <= ts && end > ts; }
 
     /**
      * @brief State of the slice.
@@ -76,15 +69,13 @@ class KeyedSlice {
      * @brief Reinitialize slice.
      * @param start
      * @param end
-     * @param index
      */
-    void reset(uint64_t start, uint64_t end, uint64_t index);
+    void reset(uint64_t start, uint64_t end);
     friend std::ostream& operator<<(std::ostream& os, const KeyedSlice& slice);
 
   private:
     uint64_t start;
     uint64_t end;
-    uint64_t index;
     NES::Experimental::Hashmap state;
 };
 

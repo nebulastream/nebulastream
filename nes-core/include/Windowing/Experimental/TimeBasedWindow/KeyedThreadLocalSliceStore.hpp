@@ -40,8 +40,7 @@ class KeyedThreadLocalSliceStore {
   public:
     explicit KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory,
                                         uint64_t windowSize,
-                                        uint64_t windowSlide,
-                                        uint64_t numberOfPreallocatedSlices);
+                                        uint64_t windowSlide);
 
     /**
      * @brief Calculates the start of a slice for a specific timestamp ts.
@@ -96,13 +95,13 @@ class KeyedThreadLocalSliceStore {
             // We are in case 1. thus we have to prepend a new slice
             auto newSliceStart = getSliceStartTs(ts);
             auto newSliceEnd = getSliceEndTs(ts);
-            auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd, 0);
+            auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
             return slices.emplace_front(std::move(newSlice));
         } else if ((*sliceIter)->getStart() < ts && (*sliceIter)->getEnd() <= ts) {
             // We are in case 2. thus we have to append a new slice after the current iterator
             auto newSliceStart = getSliceStartTs(ts);
             auto newSliceEnd = getSliceEndTs(ts);
-            auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd, 0);
+            auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
             auto slice = slices.emplace(sliceIter.base(), std::move(newSlice));
             return *slice;
         } else if ((*sliceIter)->coversTs(ts)) {
@@ -116,7 +115,7 @@ class KeyedThreadLocalSliceStore {
         }
     }
 
-    auto getSlices() { return &slices; };
+    auto& getSlices() { return slices; };
 
     /**
      * @brief Returns the slice end ts for the first slice in the slice store.
@@ -154,19 +153,12 @@ class KeyedThreadLocalSliceStore {
     uint64_t getNumberOfSlices();
 
   private:
-    /**
-     * @brief Appends a new slice to the end of the slice store.
-     * @throws WindowProcessingException if the slice store is full
-     */
-    //KeyedSlicePtr& insertSlice(uint64_t sliceIndex);
-
-    KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs, uint64_t sliceIndex);
+    KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs);
 
   private:
     NES::Experimental::HashMapFactoryPtr hashMapFactory;
     const uint64_t windowSize;
     const uint64_t windowSlide;
-    KeyedSlicePtr currentSlice;
     std::list<KeyedSlicePtr> slices;
     uint64_t lastWatermarkTs = 0;
 };
