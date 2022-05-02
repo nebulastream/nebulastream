@@ -579,7 +579,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 
     // The plan should have two pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getPipelines().size(), 2U);
+    EXPECT_EQ(plan->getPipelines().size(), 3U);
 };
 
 // @Reviewers: This is the Pipeline code generated for the build and probe pipelines, for direct review:
