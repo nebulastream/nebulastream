@@ -1091,11 +1091,11 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 }
 
 /**
- * The ExternalOperatorQuery test and PythonUDFPipelineStage class
- * invoke the python interpreter and will fail if python UDF are not enabled
+ * The ExternalOperatorQuery test and PythonUdfPipelineStage class
+ * invoke the Python interpreter and will fail if Python UDF are not enabled
  */
 #ifdef PYTHON_UDF_ENABLED
-class PythonUDFPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
+class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
     struct InputRecord {
         int64_t test$id;
@@ -1107,28 +1107,31 @@ class PythonUDFPipelineStage : public Runtime::Execution::ExecutablePipelineStag
                             Runtime::WorkerContext& wc) override {
         auto record = buffer.getBuffer<InputRecord>();
 
-        //Access python script located in nes-core/tests/test_data
-        const char pyUDFName[] = "PythonUDF";
-        const char pyUDFLocation[] = "test_data/";
+        // Access Python script located in nes-core/tests/test_data
+        const char pyUdfName[] = "PythonUdf";
+        const char pyUdfLocation[] = "test_data/";
         const char pyFuncName[] = "add42";
         PyObject *pyName, *pyModule, *pyFunc, *pyArgs, *pyValue;
 
         Py_Initialize();
-        PyList_Insert(PySys_GetObject("path"), 0, PyUnicode_FromString(pyUDFLocation));
-        pyName = PyUnicode_FromString(pyUDFName);
+        PyList_Insert(PySys_GetObject("path"), 0, PyUnicode_FromString(pyUdfLocation));
+        pyName = PyUnicode_FromString(pyUdfName);
         pyModule = PyImport_Import(pyName);
+        // When a PyObject is no longer needed, we need to decrease the reference counter
+        // so that the Python garbage collector knows when to free an object.
+        // Initializing a PyObject sets the reference counter to 1, so no Py_INCREF() is needed.
         Py_DECREF(pyName);
         if (pyModule != nullptr) {
             pyFunc = PyObject_GetAttrString(pyModule, pyFuncName);
             if (pyFunc && PyCallable_Check(pyFunc)) {
-                // Iterate over tuples and add 42 to test$value via python UDF
+                // Iterate over tuples and add 42 to test$value via Python Udf
                 for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
                     pyArgs = PyTuple_New(1);
                     pyValue = PyLong_FromLong(record[i].test$value);
                     if (!pyValue) {
-                        Py_DECREF(pyArgs);
-                        Py_DECREF(pyModule);
+                        Py_Finalize(); // Frees all memory allocated
                         NES_ERROR("Unable to convert value");
+                        return ExecutionResult::Error;
                     }
                     PyTuple_SetItem(pyArgs, 0, pyValue);
                     // The python function call happens here
@@ -1138,30 +1141,30 @@ class PythonUDFPipelineStage : public Runtime::Execution::ExecutablePipelineStag
                         record[i].test$value = PyLong_AsLong(pyValue);
                         Py_DECREF(pyValue);
                     } else {
-                        Py_DECREF(pyFunc);
-                        Py_DECREF(pyModule);
-                        PyErr_Print();
+                        Py_Finalize();
                         NES_ERROR( "Function call failed\n");
+                        return ExecutionResult::Error;
                     }
                 }
             } else {
                 if (PyErr_Occurred()) {
                     PyErr_Print();
                 }
+                Py_Finalize();
                 NES_ERROR("Cannot find function " << pyFuncName);
+                return ExecutionResult::Error;
             }
-            Py_XDECREF(pyFunc);
-            Py_DECREF(pyModule);
         } else {
             PyErr_Print();
-            NES_ERROR( "Failed to load " << pyUDFName);
+            Py_Finalize();
+            NES_ERROR("Failed to load " << pyUdfName);
+            return ExecutionResult::Error;
+        }
+        if (Py_FinalizeEx() < 0) {
             return ExecutionResult::Error;
         }
         ctx.emitBuffer(buffer, wc);
-        if (Py_FinalizeEx() < 0) {
-            return ExecutionResult::Ok;
-        }
-        return ExecutionResult::Error;
+        return ExecutionResult::Ok;
     }
 };
 
@@ -1195,7 +1198,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
 
-    auto customPipelineStage = std::make_shared<PythonUDFPipelineStage>();
+    auto customPipelineStage = std::make_shared<PythonUdfPipelineStage>();
     auto externalOperator =
         NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 

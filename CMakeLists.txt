@@ -209,7 +209,7 @@ if (NES_BUILD_BENCHMARKS)
 endif ()
 
 # Add Python UDF support
-option(ENABLE_PYTHON_UDF "Build supporting python UDF" OFF)
+option(ENABLE_PYTHON_UDF "Build supporting Python UDF" OFF)
 message(STATUS "Python UDF support: ${ENABLE_PYTHON_UDF}")
 if (ENABLE_PYTHON_UDF)
     add_compile_definitions(PYTHON_UDF_ENABLED)
