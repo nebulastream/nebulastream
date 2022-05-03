@@ -112,11 +112,25 @@ bool isDouble(PhysicalTypePtr physicalType);
 bool isArray(PhysicalTypePtr physicalType);
 
 /**
+ * @brief Function to check if the physical type is a array
+ * @param physicalType
+ * @return true if the physical type is a tensor
+ */
+bool isTensor(PhysicalTypePtr physicalType);
+
+/**
  * @brief Gets the component physical type of an array
  * @param physicalType
  * @return true if the physical type of an array
  */
 PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType);
+
+/**
+ * @brief Gets the component physical type of an array
+ * @param physicalType
+ * @return true if the physical type of a tensor
+ */
+PhysicalTypePtr getTensorComponent(PhysicalTypePtr physicalType);
 
 /**
  * @brief Function to check that a compile-time type is the same as a particular physical type.
@@ -153,6 +167,8 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType) {
         return isDouble(std::move(physicalType));
     } else if constexpr (std::is_pointer_v<Type>) {
         return isArray(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getArrayComponent(physicalType));
+    } else if constexpr (std::is_pointer_v<Type>) {
+        return isTensor(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getTensorComponent(physicalType));
     } else if constexpr (std::is_base_of_v<NESType, Type>) {
         return physicalType->isArrayType();
     }

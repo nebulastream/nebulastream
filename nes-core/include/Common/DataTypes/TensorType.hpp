@@ -33,10 +33,10 @@ class TensorType : public DataType {
      * @brief constructs a new Tensor
      * @param shape gives the shape of the tensor, i.e. the number of elements in each dimension where the position i of the int in the vector describes the size of ith
      * dimension, the length of the vector gives the rank of the tensor, i.e. the number of dimensions of a tensor (terminology confirms to tensorflow's terminology)
-     * @param dataType data type of the entries in tensor, currently limited to numeric data types
+     * @param component data type of the entries in tensor, currently limited to numeric data types
      * @param tensorMemoryFormat the type of underlying data structure for saving in memory, the tensor should use
      */
-    inline TensorType(std::vector<std::size_t> shape, DataTypePtr dataType, TensorMemoryFormat tensorType) noexcept : shape(shape), dataType(std::move(dataType)), tensorType(tensorType) {}
+    inline TensorType(std::vector<std::size_t> shape, DataTypePtr component, TensorMemoryFormat tensorType) noexcept : shape(shape), component(std::move(component)), tensorType(tensorType) {}
 
     virtual ~TensorType() = default;
 
@@ -69,7 +69,7 @@ class TensorType : public DataType {
 
 
     std::vector<std::size_t> const shape;
-    DataTypePtr const dataType;
+    DataTypePtr const component;
     TensorMemoryFormat const tensorType;
 
 };

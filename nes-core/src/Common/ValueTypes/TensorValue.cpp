@@ -12,22 +12,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/TensorType.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/ValueTypes/TensorValue.hpp>
 
 namespace NES {
 
-bool TensorType::isEquals(DataTypePtr otherDataType) {
-    if (otherDataType->isTensor()) {
-        auto const otherTensor = as<TensorType>(otherDataType);
-        return shape == otherTensor->shape && component->isEquals(otherTensor->component)
-            && tensorType == otherTensor->tensorType;
-    }
-    return false;
+std::string TensorValue::toString() const noexcept { return "TensorValue"; }
+
+bool TensorValue::isEquals(ValueTypePtr other) const noexcept {
+    return dataType->isEquals(other->dataType) && values == std::dynamic_pointer_cast<TensorValue>(other)->values;
 }
-
-DataTypePtr TensorType::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
-
-std::string TensorType::toString() { return "Tensor"; }
 
 }// namespace NES

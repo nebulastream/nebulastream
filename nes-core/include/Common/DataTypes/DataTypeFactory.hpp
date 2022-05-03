@@ -14,8 +14,8 @@
 
 #ifndef NES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
 #define NES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/TensorType.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <vector>
 namespace NES {
@@ -25,6 +25,9 @@ using DataTypePtr = std::shared_ptr<DataType>;
 
 class ArrayType;
 using ArrayPtr = std::shared_ptr<ArrayType>;
+
+class TensorType;
+using TensorPtr = std::shared_ptr<TensorType>;
 
 class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;

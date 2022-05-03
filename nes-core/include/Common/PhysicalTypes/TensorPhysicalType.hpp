@@ -24,16 +24,64 @@ class TensorPhysicalType final : public PhysicalType {
 
   public:
     inline TensorPhysicalType(DataTypePtr dataType,
-                              uint16_t shape,
+                              std::vector<uint16_t> shape,
                               PhysicalTypePtr component,
                               TensorMemoryFormat tensorMemoryFormat) noexcept
-        : PhysicalType(std::move(dataType)), shape(std::move(shape)), physicalComponentType(std::move(component)), tensorMemoryFormat(tensorMemoryFormat) {}
+        : PhysicalType(std::move(dataType)), shape(std::move(shape)), physicalComponentType(std::move(component)), tensorMemoryFormat(tensorMemoryFormat) {
+        for (auto dimension : shape) {
+            totalSize *= dimension;
+        }
+    }
 
     virtual ~TensorPhysicalType() = default;
 
+    /**
+     * @brief Factory function to create a new ArrayType Physical Type.
+     * @param type the logical data type.
+     * @param length the length of the array.
+     * @param component the physical component type of this array.
+     * @return PhysicalTypePtr
+     */
+    static inline PhysicalTypePtr create(const DataTypePtr& type, uint64_t length, PhysicalTypePtr const& component) noexcept {
+        return std::make_shared<TensorPhysicalType>(type, length, component);
+    }
 
+    /**
+    * @brief Indicates if this is a tensor data type.
+    * @return true if type is tensor
+    */
+    [[nodiscard]] bool isTensorType() const noexcept final { return true; }
 
-    std::vector<uint16_t> shape;
+    /**
+     * @brief Returns the number of bytes occupied by this data type.
+     * @return uint64_t
+     */
+    [[nodiscard]] uint64_t size() const final;
+
+    /**
+     * @brief Converts the binary representation of this value to a string.
+     * @param rawData a pointer to the raw value
+     * @return string
+     */
+    std::string convertRawToString(void const* rawData) const noexcept final;
+
+    /**
+     * @brief Converts the binary representation of this value to a string without filling
+     * up the difference between the length of the string and the end of the schema definition
+     * with unrelated characters
+     * @param rawData a pointer to the raw value
+     * @return string
+    */
+    std::string convertRawToStringWithoutFill(void const* rawData) const noexcept final;
+
+    /**
+     * @brief Returns the string representation of this physical data type.
+     * @return string
+     */
+    [[nodiscard]] std::string toString() const noexcept final;
+
+    size_t totalSize = 1;
+    const std::vector<uint16_t> shape;
     PhysicalTypePtr const physicalComponentType;
     TensorMemoryFormat tensorMemoryFormat;
 };

@@ -13,6 +13,7 @@
 */
 
 #include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/TensorType.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -88,6 +89,11 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayPtr& arrayType) {
     auto const componentType = getPhysicalType(arrayType->component);
     return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
+}
+
+PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TensorPtr& tensorType) {
+    auto const componentType = getPhysicalType(tensorType->component);
+    return ArrayPhysicalType::create(tensorType, tensorType->shape, componentType);
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const CharPtr& charType) {

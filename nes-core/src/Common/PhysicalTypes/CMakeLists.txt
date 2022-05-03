@@ -18,4 +18,5 @@ add_source_files(nes-core
         PhysicalTypeFactory.cpp
         DefaultPhysicalTypeFactory.cpp
         PhysicalTypeUtil.cpp
-)
+        TensorPhysicalType.cpp
+        )

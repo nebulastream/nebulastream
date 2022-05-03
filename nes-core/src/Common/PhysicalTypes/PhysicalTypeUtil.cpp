@@ -13,6 +13,7 @@
 */
 
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/PhysicalTypes/TensorPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
@@ -69,6 +70,11 @@ bool isDouble(PhysicalTypePtr physicalType) {
 bool isArray(PhysicalTypePtr physicalType) { return physicalType->isArrayType(); }
 PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType) {
     return std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType)->physicalComponentType;
+}
+
+bool isTensor(PhysicalTypePtr physicalType) { return physicalType->isTensorType(); }
+PhysicalTypePtr getTensorComponent(PhysicalTypePtr physicalType) {
+    return std::dynamic_pointer_cast<TensorPhysicalType>(physicalType)->physicalComponentType;
 }
 
 }// namespace NES::PhysicalTypes

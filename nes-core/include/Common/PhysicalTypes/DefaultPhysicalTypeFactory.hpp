@@ -25,6 +25,9 @@ using IntegerPtr = std::shared_ptr<Integer>;
 class ArrayType;
 using ArrayPtr = std::shared_ptr<ArrayType>;
 
+class TensorType;
+using TensorPtr = std::shared_ptr<TensorType>;
+
 class Float;
 using FloatPtr = std::shared_ptr<Float>;
 
@@ -73,6 +76,13 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     * @return PhysicalTypePtr
     */
     PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType);
+
+    /**
+    * @brief Translates a array data type into a corresponding physical type.
+    * @param tensorType
+    * @return PhysicalTypePtr
+    */
+    PhysicalTypePtr getPhysicalType(const TensorPtr& tensorType);
 };
 
 }// namespace NES

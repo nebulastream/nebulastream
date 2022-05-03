@@ -21,11 +21,10 @@ limitations under the License.
 
 namespace NES::ExecutableTypes {
 
-//Todo: add checks: dimensions, out of bounds, etc.
 //Todo: add iterators
 
 template<typename T, std::size_t numberOfDimensions, std::size_t totalSize, typename = std::enable_if_t<!std::is_pointer_v<T> && std::is_arithmetic_v<T>>>
-class Tensor : public Array<T, numberOfDimensions> {
+class Tensor : public Array<T, totalSize> {
   public:
     /**
      * Public, externally visible type of this tensor
