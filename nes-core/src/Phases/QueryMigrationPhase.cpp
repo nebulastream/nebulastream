@@ -87,7 +87,6 @@ bool Experimental::QueryMigrationPhase::execute(const MigrateQueryRequestPtr& re
                 if(req->getMigrationType() == MigrationType::MIGRATION_WITH_BUFFERING){
                     bool success = workerRPCClient->bufferData(rpcAddress,querySubplan->getQuerySubPlanId(), networkSourceDescriptor->getNesPartition().getOperatorId());
                     if(success){
-
                     }
                     else{
                         //workerRPCClient->unbufferData //handle
