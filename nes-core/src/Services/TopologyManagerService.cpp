@@ -17,7 +17,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <Geolocation/LocationIndex.hpp>
+#include <Spatial/LocationIndex.hpp>
 #include <Services/AbstractHealthCheckService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>

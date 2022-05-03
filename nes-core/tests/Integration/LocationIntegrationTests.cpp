@@ -23,8 +23,8 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
-#include <Geolocation/LocationIndex.hpp>
-#include <Geolocation/LocationService.hpp>
+#include <Spatial/LocationIndex.hpp>
+#include <Spatial/NodeLocationWrapper.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>

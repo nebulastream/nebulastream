@@ -21,8 +21,6 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/HealthCheckRPCServer.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
-#include <Geolocation/LocationProviderCSV.hpp>
-#include <Geolocation/LocationService.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -31,6 +29,8 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
+#include <Spatial/NodeLocationWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
@@ -60,7 +60,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationService(std::make_shared<NES::Experimental::Mobility::LocationService>(workerConfig->isMobile, workerConfig->locationCoordinates)),
+      locationService(std::make_shared<NES::Experimental::Mobility::NodeLocationWrapper>(workerConfig->isMobile, workerConfig->locationCoordinates)),
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
       enableMonitoring(workerConfig->enableMonitoring.getValue()),
       numberOfQueues(workerConfig->numberOfQueues.getValue()),

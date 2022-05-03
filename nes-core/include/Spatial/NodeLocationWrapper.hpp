@@ -14,7 +14,7 @@
 #ifndef NES_GEOLOCATION_LOCATIONSERVICE_HPP
 #define NES_GEOLOCATION_LOCATIONSERVICE_HPP
 
-#include <Geolocation/LocationProvider.hpp>
+#include <Spatial/LocationProvider.hpp>
 #include <memory>
 #include <vector>
 #include <Util/Experimental/LocationProviderType.hpp>
@@ -29,10 +29,10 @@ class Location;
 using LocationPtr = std::shared_ptr<Location>;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
-class LocationService {
+class NodeLocationWrapper {
   public:
 
-    explicit LocationService( bool isMobile, Location fieldNodeLoc);
+    explicit NodeLocationWrapper( bool isMobile, Location fieldNodeLoc);
 
     /**
      * Experimental

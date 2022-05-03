@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Geolocation/LocationIndex.hpp>
+#include <Spatial/LocationIndex.hpp>
 #include <Topology/TopologyNode.hpp>
 #ifdef S2DEF
 #include <s2/s2closest_point_query.h>
