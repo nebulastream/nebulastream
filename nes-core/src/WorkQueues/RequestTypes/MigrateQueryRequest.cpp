@@ -30,5 +30,5 @@ std::string MigrateQueryRequest::toString() {
     return "MigrateQueryRequest { QueryId: " + std::to_string(getQueryId()) + ", Topology Node: " + std::to_string(nodeId)
         + ", withBuffer: " + std::to_string(migrationType) + "}";
 }
-TopologyNodeId MigrateQueryRequest::getTopologyNode() { return nodeId; }
+TopologyNodeId MigrateQueryRequest::getTopologyNodeId() { return nodeId; }
 }// namespace NES::Experimental

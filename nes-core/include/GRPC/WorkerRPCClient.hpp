@@ -166,10 +166,10 @@ class WorkerRPCClient {
      * Once buffering starts, the Network Sink no longer sends data downstream
      * @param ipAddress
      * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
-     * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
+     * @param operatorId : Operator ID of the NES Partition. This ID is shared between partitions of network source and sink pairs. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    static bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
+    static bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t operatorId);
 
     /**
      * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
@@ -178,7 +178,7 @@ class WorkerRPCClient {
      * @param newHostname : the hostname of the node that the NetworkSink should send data to
      * @param newPort : the port of the node that the NetworkSink should send data to
      * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
-     * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
+     * @param operatorId : Operator ID of the NES Partition. This ID is shared between partitions of network source and sink pairs. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
     static bool updateNetworkSink(const std::string& address,
@@ -186,7 +186,7 @@ class WorkerRPCClient {
                                   const std::string& newHostname,
                                   uint32_t newPort,
                                   uint64_t querySubPlanId,
-                                  uint64_t uniqueNetworkSinDescriptorId);
+                                  uint64_t operatorId);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return

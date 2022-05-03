@@ -573,7 +573,7 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
         //make sure that query sub plan has network sink with specified id
         auto it = std::find_if(sinks.begin(), sinks.end(), [uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink) {
             Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
-            return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
+            return networkSink && networkSink->getNesPartition().getOperatorId() == uniqueNetworkSinkDescriptorId;
         });
         if (it != sinks.end()) {
             auto networkSink = *it;
@@ -609,7 +609,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
         auto it =
             std::find_if(networkSinks.begin(), networkSinks.end(), [uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink) {
                 Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
-                return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
+                return networkSink && networkSink->getNesPartition().getOperatorId() == uniqueNetworkSinkDescriptorId;
             });
         if (it != networkSinks.end()) {
             auto networkSink = *it;

@@ -119,6 +119,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     uint64_t getUniqueNetworkSinkDescriptorId();
 
+    NesPartition getNesPartition();
+
     /**
      * @brief method to return the node engine pointer
      * @return node engine pointer

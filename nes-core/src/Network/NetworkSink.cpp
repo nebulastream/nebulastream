@@ -159,4 +159,6 @@ OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetwor
 
 Runtime::NodeEnginePtr NetworkSink::getNodeEngine() { return nodeEngine; }
 
+NesPartition NetworkSink::getNesPartition() { return nesPartition; }
+
 }// namespace NES::Network

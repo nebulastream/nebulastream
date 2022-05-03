@@ -50,46 +50,94 @@ Experimental::QueryMigrationPhase::create(GlobalExecutionPlanPtr globalExecution
     return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(std::move(globalExecutionPlan),std::move(topology), std::move(workerRPCClient), std::move(queryPlacementPhase)));
 }
 bool Experimental::QueryMigrationPhase::execute(const MigrateQueryRequestPtr& req) {
-    NES_DEBUG("QueryMigrationPhase: execute migration");
-    TopologyNodeId markedTopNodeId = req->getTopologyNode();
-    QueryId queryId = req->getQueryId();
-    //check if path exists
-    auto path = findPath(queryId,markedTopNodeId);
-    if(path.empty()){
-        NES_ERROR("QueryMigrationPhase: no path found between child and parent nodes. No path to migrate subqueries to");
-        return false;
+    TopologyNodeId nodeId = req->getTopologyNodeId();
+    NES_DEBUG("QueryMigrationPhase: migrating queries on topology node with ID: " << nodeId);
+    ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
+    if(!executionNode){
+        NES_DEBUG("QueryMigrationPhase: no corresponding execution node to topology node with ID: " << nodeId << ". Topology Node can be taken down for maintenance immediately.");
+        return true;
     }
+    //TODO: all of the following logic assumes that there is only one query with a single query sub plan deployed.
+    //TODO: furthermore, the query sub plan has only one upstream and one downstream execution node.
+    //Given an execution node, we want to migrate all query sub plans on it to viable nodes.
+    //Given a query sub plan, a viable alternate node is:
+    // 1. reachable by all upstream nodes from which the query sub plan receives data.
+    // 2. can reach all downstream nodes to which the query sub plan sends data.
+    // The existence of such a node is checked through the placement phase          //TODO: check through findPath. Check if enough resources are available on path.
+    // How Migration is performed:
+    // Step 1: For the source operators of a query sub plan, find the corresponding sinks that send data to them.
+    //              These sinks are the ones which receive bufferData and/or reconfigure messages.
+    // Step 2: Once corresponding sinks are found, send bufferData and/or reconfigure message.
+    // Step 3: Do partial placement
+    // Step 4: Unbuffer Data
 
-    auto markedExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(markedTopNodeId);
-    //subqueries of a query that need to be migrated
-    auto subqueries = markedExecutionNode->getQuerySubPlans(queryId);
-    globalExecutionPlan->removeExecutionNode(markedTopNodeId);
-    if(req->getMigrationType() == MigrationType::MIGRATION_WITH_BUFFERING){
-        return executeMigrationWithBuffer(subqueries, markedExecutionNode );
+    auto queryIdsAndSubPlans = executionNode->getAllQuerySubPlans();
+    //Each query can be made up of several query sub plans
+    for(auto const &[queryId,querySubplans] : queryIdsAndSubPlans){
+        //for each query sub plan of a query, find the sources
+        for(QueryPlanPtr querySubplan : querySubplans) {
+            //all sources must be Network Sources
+            for (SourceLogicalOperatorNodePtr sourceOperator : querySubplan->getSourceOperators()){
+                auto networkSourceDescriptor = sourceOperator->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>();
+                TopologyNodeId sinkTopologyNodeId = networkSourceDescriptor->getNodeLocation().getNodeId();
+                TopologyNodePtr sinkTopologyNode = topology->findNodeWithId(sinkTopologyNodeId);
+                auto ipAddress = sinkTopologyNode->getIpAddress();
+                auto grpcPort = sinkTopologyNode->getGrpcPort();
+                std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+                if(req->getMigrationType() == MigrationType::MIGRATION_WITH_BUFFERING){
+                    bool success = workerRPCClient->bufferData(rpcAddress,querySubplan->getQuerySubPlanId(), networkSourceDescriptor->getNesPartition().getOperatorId());
+                    if(success){
+
+                    }
+                    else{
+                        //workerRPCClient->unbufferData //handle
+                    }
+                }
+            }
+
+
+
+            //find all Network Sinks corresponding to Network Sources.
+
+        }
     }
-    return executeMigrationWithoutBuffer(subqueries, markedExecutionNode);
+//    NES_DEBUG("QueryMigrationPhase: execute migration");
+//    TopologyNodeId markedTopNodeId = req->getTopologyNode();
+//    QueryId queryId = req->getQueryId();
+//    //check if path exists
+//    auto path = findPath(queryId,markedTopNodeId);
+//    if(path.empty()){
+//        NES_ERROR("QueryMigrationPhase: no path found between child and parent nodes. No path to migrate subqueries to");
+//        return false;
+//    }
+//
+//    auto markedExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(markedTopNodeId);
+//    //subqueries of a query that need to be migrated
+//    auto subqueries = markedExecutionNode->getQuerySubPlans(queryId);
+//    //random clean up, not a good spot for this
+//    //globalExecutionPlan->removeExecutionNode(markedTopNodeId);
+//    if(req->getMigrationType() == MigrationType::MIGRATION_WITH_BUFFERING){
+//        return executeMigrationWithBuffer(subqueries, markedExecutionNode );
+//    }
+//    return executeMigrationWithoutBuffer(subqueries, markedExecutionNode);
 
 }
 
 bool Experimental::QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans, const ExecutionNodePtr& markedNode) {
-    NES_ERROR("With Buffer");
 
     auto queryId = queryPlans[0]->getQueryId();
 
     for (const auto& queryPlan : queryPlans) {
+        //source operators will always be Network Sources
         auto sourceOperators = queryPlan->getSourceOperators();
         std::map<OperatorId, Experimental::QueryMigrationPhase::InformationForFindingSink>  mapOfNetworkSourceIdToInfoForFindingNetworkSink = getInfoForAllSinks(sourceOperators, queryId);
         NES_DEBUG("QueryMigrationPhase: Sending buffer requests");
         sendBufferRequests(mapOfNetworkSourceIdToInfoForFindingNetworkSink);
 
-        NES_ERROR("QueryMigrationPhase: Beginning Migration : " << time);
         std::vector<ExecutionNodePtr> exeNodes = executePartialPlacement(queryPlan);
         if(exeNodes.size() == 0){
             NES_ERROR("QueryMigrationPhase: No execution nodes made");
             throw Exceptions::RuntimeException("QueryMigrationPhase: No execution nodes created during partial placement");
-        }
-        for(auto& exeNode: exeNodes){
-            NES_ERROR("QueryMigrationPhase: Occupied Resources on new Nodes: " <<exeNode->getOccupiedResources(1));
         }
         NES_ERROR("PartialP Placement successul");
         bool deploySuccess = deployQuery(queryId,exeNodes);
@@ -222,6 +270,7 @@ TopologyNodePtr Experimental::QueryMigrationPhase::findNewNodeLocationOfNetworkS
 std::map<OperatorId,Experimental::QueryMigrationPhase::InformationForFindingSink> Experimental::QueryMigrationPhase::getInfoForAllSinks(const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators, QueryId queryId) {
     std::map<OperatorId,QueryMigrationPhase::InformationForFindingSink> mapOfNetworkSourceIdToInfoForFindingNetworkSink;
     for(const SourceLogicalOperatorNodePtr& sourceOperator:sourceOperators){
+        //SourceLogicalOperatorNode must always be a NetworkSource, which means the following cast should always succeed
         auto networkSourceDescriptor = sourceOperator->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>();
         TopologyNodeId sinkTopolgoyNodeId = networkSourceDescriptor->getNodeLocation().getNodeId();
         TopologyNodePtr sinkTopologyNode = topology->findNodeWithId(sinkTopolgoyNodeId);

@@ -61,6 +61,12 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      */
     NesPartition getNesPartition() const;
 
+    /**
+     * NodeLocation contains information about where a NetworkSource receives data from.
+     * It unintuitively has nothing to do with where it itsself is located.
+     * NodeLocation is set during BasePlacement
+     * @return
+     */
     NodeLocation getNodeLocation() const;
 
     /**

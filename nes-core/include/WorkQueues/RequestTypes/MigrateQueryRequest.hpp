@@ -45,7 +45,7 @@ class MigrateQueryRequest : public Request {
          * @brief gets the topology node on which the query can be found
          * @return topology node id
          */
-    TopologyNodeId getTopologyNode();
+    TopologyNodeId getTopologyNodeId();
 
   private:
     explicit MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType);

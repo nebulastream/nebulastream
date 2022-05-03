@@ -63,6 +63,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
 
     /**
      * @brief getter for the node location
+     * NodeLocation is where the NetworkSink sends data to. It has nothing to do with where it itsself is located.
      * @return the node location
      */
     NodeLocation getNodeLocation() const;
