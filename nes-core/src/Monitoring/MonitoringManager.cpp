@@ -19,7 +19,7 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/Storage/MetricStore.hpp>
+#include <Monitoring/Storage/NewestEntryMetricStore.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -31,9 +31,14 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPt
     : MonitoringManager(workerClient, topology, true) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
-    : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
-      enableMonitoring(enableMonitoring) {
-    NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring);
+    : MonitoringManager(workerClient, topology, std::make_shared<NewestEntryMetricStore>(), enableMonitoring) {}
+
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
+                                     TopologyPtr topology,
+                                     MetricStorePtr metricStore,
+                                     bool enableMonitoring)
+    : metricStore(metricStore), workerClient(workerClient), topology(topology), enableMonitoring(enableMonitoring) {
+    NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring << ", storage=" << toString(metricStore->getType()));
 }
 
 MonitoringManager::~MonitoringManager() {
@@ -111,8 +116,8 @@ web::json::value MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId)
                             + std::to_string(node->getId()));
 }
 
-std::unordered_map<MetricType, MetricPtr> MonitoringManager::getMonitoringDataFromMetricStore(uint64_t node) {
-    return metricStore->getNewestMetrics(node);
+StoredNodeMetricsPtr MonitoringManager::getMonitoringDataFromMetricStore(uint64_t node) {
+    return metricStore->getAllMetrics(node);
 }
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metrics) {

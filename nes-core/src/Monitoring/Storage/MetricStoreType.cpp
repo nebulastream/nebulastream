@@ -12,9 +12,16 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_CORE_INCLUDE_MONITORING_STORAGE_METRICSTORESTRATEGY_HPP
-#define NES_NES_CORE_INCLUDE_MONITORING_STORAGE_METRICSTORESTRATEGY_HPP
+#include <Monitoring/Storage/MetricStoreType.hpp>
 
-enum MetricStoreStrategy { NEWEST };
+namespace NES {
 
-#endif//NES_NES_CORE_INCLUDE_MONITORING_STORAGE_METRICSTORESTRATEGY_HPP
+std::string toString(MetricStoreType type) {
+    switch (type) {
+        case MetricStoreType::AllEntries: return "allEntries";
+        case MetricStoreType::NewestEntry: return "newestEntry";
+        default: return "unknown";
+    }
+};
+
+}// namespace NES

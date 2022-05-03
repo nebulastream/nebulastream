@@ -79,13 +79,13 @@ web::json::value MonitoringService::requestNewestMonitoringDataFromMetricStoreAs
     auto root = topology->getRoot();
 
     NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
-    auto parsedValues = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
+    StoredNodeMetricsPtr parsedValues = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
     metricsJson[std::to_string(root->getId())] = MetricUtils::toJson(parsedValues);
 
     for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(tNode->getId()));
-        auto tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
+        StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
         metricsJson[std::to_string(tNode->getId())] = MetricUtils::toJson(tMetrics);
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());

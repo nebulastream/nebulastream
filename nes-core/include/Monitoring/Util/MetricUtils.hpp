@@ -46,6 +46,13 @@ class MetricUtils {
      * @return json of metrics
      */
     static web::json::value toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics);
+
+    /**
+     * Converts a map of metric types to metrics into json.
+     * @param metrics
+     * @return json of metrics
+     */
+    static web::json::value toJson(StoredNodeMetricsPtr metrics);
 };
 
 }// namespace NES
