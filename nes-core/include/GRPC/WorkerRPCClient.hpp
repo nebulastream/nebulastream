@@ -205,6 +205,8 @@ class WorkerRPCClient {
      */
     bool checkHealth(const std::string& address, std::string healthServiceName);
 
+    Experimental::Mobility::Location getLocation(const std::string& adress);
+
   private:
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;

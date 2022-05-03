@@ -31,6 +31,11 @@ namespace NES {
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
+namespace Experimental::Mobility {
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
+}
+
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
     WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent);
@@ -54,9 +59,12 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
 
+    Status GetLocation(ServerContext*, const GetLocationRequest* request, Coordinates* reply) override;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
+    NES::Experimental::Mobility::LocationServicePtr locationService;
 };
 
 }// namespace NES
