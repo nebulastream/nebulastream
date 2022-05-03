@@ -17,7 +17,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
 #include <memory>
 
 namespace NES {
@@ -29,31 +28,28 @@ namespace PhysicalOperators {
  */
 class PhysicalKeyedTumblingWindowSink : public PhysicalUnaryOperator {
   public:
-    PhysicalKeyedTumblingWindowSink(
-        OperatorId id,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler);
+    PhysicalKeyedTumblingWindowSink(OperatorId id,
+                                    SchemaPtr inputSchema,
+                                    SchemaPtr outputSchema,
+                                    Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalKeyedTumblingWindowSink>
-    create(SchemaPtr inputSchema,
-           SchemaPtr outputSchema,
-           std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler) {
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
         return std::make_shared<PhysicalKeyedTumblingWindowSink>(Util::getNextOperatorId(),
                                                                  inputSchema,
                                                                  outputSchema,
-                                                                 keyedEventTimeWindowHandler);
+                                                                 windowDefinition);
+    }
+
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition(){
+        return windowDefinition;
     }
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> getWindowHandler() {
-        return keyedEventTimeWindowHandler;
-    }
-
   private:
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler;
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
 }// namespace PhysicalOperators

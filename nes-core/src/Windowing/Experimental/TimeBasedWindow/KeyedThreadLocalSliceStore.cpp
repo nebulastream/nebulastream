@@ -19,7 +19,7 @@ namespace NES::Windowing::Experimental {
 KeyedThreadLocalSliceStore::KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory,
                                                        uint64_t windowSize,
                                                        uint64_t windowSlide)
-    : hashMapFactory(hashMapFactory), windowSize(windowSize), windowSlide(windowSlide){};
+    : hashMapFactory(hashMapFactory), windowSize(windowSize), windowSlide(windowSlide), slices(){};
 
 KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
     return std::make_unique<KeyedSlice>(hashMapFactory, startTs, endTs);

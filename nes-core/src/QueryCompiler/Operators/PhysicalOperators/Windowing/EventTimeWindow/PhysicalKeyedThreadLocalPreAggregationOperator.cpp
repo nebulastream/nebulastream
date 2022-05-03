@@ -22,7 +22,7 @@ PhysicalKeyedThreadLocalPreAggregationOperator::PhysicalKeyedThreadLocalPreAggre
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler)
+    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 std::string PhysicalKeyedThreadLocalPreAggregationOperator::toString() const {

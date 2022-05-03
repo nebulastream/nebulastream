@@ -57,6 +57,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
@@ -332,14 +333,14 @@ void DefaultGeneratableOperatorProvider::lowerKeyedTumblingWindowSink(
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto sink = operatorNode->as<PhysicalOperators::PhysicalKeyedTumblingWindowSink>();
 
-    auto windowAggregationDescriptor = sink->getWindowHandler()->getWindowDefinition()->getWindowAggregation();
+    auto windowAggregationDescriptor = sink->getWindowDefinition()->getWindowAggregation();
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableAggregations;
     for (auto agg : windowAggregationDescriptor) {
         generatableAggregations.emplace_back(lowerWindowAggregation(agg));
     }
     auto generatableOperator = GeneratableOperators::GeneratableKeyedTumblingWindowSink::create(sink->getInputSchema(),
                                                                                                 sink->getOutputSchema(),
-                                                                                                sink->getWindowHandler(),
+                                                                                                sink->getWindowDefinition(),
                                                                                                 generatableAggregations);
     queryPlan->replaceOperator(sink, generatableOperator);
 }

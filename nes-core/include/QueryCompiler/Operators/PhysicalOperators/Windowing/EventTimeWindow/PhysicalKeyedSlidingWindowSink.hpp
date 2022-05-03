@@ -18,7 +18,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <memory>
 
 namespace NES {
@@ -34,12 +34,12 @@ class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public Abst
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler);
+        Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler);
 
     static std::shared_ptr<PhysicalKeyedSlidingWindowSink>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler) {
+           Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
         return std::make_shared<PhysicalKeyedSlidingWindowSink>(Util::getNextOperatorId(),
                                                                 inputSchema,
                                                                 outputSchema,
@@ -49,12 +49,12 @@ class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public Abst
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> getWindowHandler() {
+    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr getWindowHandler() {
         return keyedEventTimeWindowHandler;
     }
 
   private:
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler;
+    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler;
 };
 
 }// namespace PhysicalOperators

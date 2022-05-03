@@ -13,7 +13,10 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        KeyedEventTimeWindowHandler.cpp
+        KeyedGlobalSliceStoreAppendOperatorHandler.cpp
+        KeyedThreadLocalPreAggregationOperatorHandler.cpp
+        KeyedSliceMergingOperatorHandler.cpp
+        KeyedSlidingWindowSinkOperatorHandler.cpp
         KeyedThreadLocalSliceStore.cpp
         KeyedSlice.cpp
         KeyedGlobalSliceStore.cpp

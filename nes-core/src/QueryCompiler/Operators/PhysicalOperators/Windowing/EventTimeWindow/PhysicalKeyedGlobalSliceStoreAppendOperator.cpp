@@ -22,7 +22,7 @@ PhysicalKeyedGlobalSliceStoreAppendOperator::PhysicalKeyedGlobalSliceStoreAppend
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler)
+    std::shared_ptr<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler> keyedEventTimeWindowHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractEmitOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 

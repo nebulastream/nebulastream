@@ -48,8 +48,8 @@ class KeyedThreadLocalSliceStore {
      * @return uint64_t slice start
      */
     inline uint64_t getSliceStartTs(uint64_t ts) {
-        auto nextWindowStart = ts - (ts) % windowSize;
-        auto nextSlideStart = ts - (ts) % windowSlide;
+        auto nextSlideStart = ts - ((ts) % windowSlide);
+        auto nextWindowStart = ts - ((ts - windowSize) % windowSlide);
         return std::max(nextWindowStart, nextSlideStart);
     }
 
@@ -59,8 +59,8 @@ class KeyedThreadLocalSliceStore {
      * @return uint64_t slice end
      */
     inline uint64_t getSliceEndTs(uint64_t ts) {
-        auto nextWindowStart = ts + (windowSize - (ts) % windowSize);
-        auto nextSlideStart = ts + (windowSlide - (ts) % windowSlide);
+        auto nextSlideStart = ts + windowSlide - ((ts) % windowSlide);
+        auto nextWindowStart = ts + windowSlide - ((ts - windowSize) % windowSlide);
         return std::min(nextWindowStart, nextSlideStart);
     }
 

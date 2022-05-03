@@ -14,6 +14,7 @@
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedSlidingWindowSink.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
@@ -24,7 +25,7 @@ GeneratableOperatorPtr
 GeneratableKeyedSlidingWindowSink::create(OperatorId id,
                                           SchemaPtr inputSchema,
                                           SchemaPtr outputSchema,
-                                          Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                          Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableKeyedSlidingWindowSink>(GeneratableKeyedSlidingWindowSink(id,
                                                                                                  std::move(inputSchema),
@@ -36,7 +37,7 @@ GeneratableKeyedSlidingWindowSink::create(OperatorId id,
 GeneratableOperatorPtr
 GeneratableKeyedSlidingWindowSink::create(SchemaPtr inputSchema,
                                           SchemaPtr outputSchema,
-                                          Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                          Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -49,7 +50,7 @@ GeneratableKeyedSlidingWindowSink::GeneratableKeyedSlidingWindowSink(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
