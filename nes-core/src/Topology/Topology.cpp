@@ -13,7 +13,7 @@
 */
 
 #include <Common/Location.hpp>
-#include <Geolocation/LocationIndex.hpp>
+#include <Spatial/LocationIndex.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>

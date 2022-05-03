@@ -11,19 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Geolocation/LocationService.hpp>
-#include <Geolocation/LocationProviderCSV.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
+#include <Spatial/NodeLocationWrapper.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Experimental::Mobility {
 
-LocationService::LocationService(bool isMobile, Location fieldNodeLoc ) {
+NodeLocationWrapper::NodeLocationWrapper(bool isMobile, Location fieldNodeLoc ) {
     this->isMobile = isMobile;
     this->fixedLocationCoordinates = std::make_shared<Location>(fieldNodeLoc);
 }
 
-bool LocationService::createLocationProvider(LocationProviderType type, std::string config) {
+bool NodeLocationWrapper::createLocationProvider(LocationProviderType type, std::string config) {
     if (config.empty()) {
         NES_FATAL_ERROR("isMobile flag is set, but there is no proper configuration for the location source. exiting");
         exit(EXIT_FAILURE);
@@ -43,15 +43,15 @@ bool LocationService::createLocationProvider(LocationProviderType type, std::str
     return true;
 }
 
-void LocationService::setCoordinatorRPCClient(CoordinatorRPCClientPtr rpcClientPtr) {
+void NodeLocationWrapper::setCoordinatorRPCClient(CoordinatorRPCClientPtr rpcClientPtr) {
     this->coordinatorRpcClient = rpcClientPtr;
 }
 
-bool LocationService::isFieldNode() { return fixedLocationCoordinates->isValid() && !isMobile; }
+bool NodeLocationWrapper::isFieldNode() { return fixedLocationCoordinates->isValid() && !isMobile; }
 
-bool LocationService::isMobileNode() const { return isMobile; };
+bool NodeLocationWrapper::isMobileNode() const { return isMobile; };
 
-bool LocationService::setFixedLocationCoordinates(const Location& geoLoc) {
+bool NodeLocationWrapper::setFixedLocationCoordinates(const Location& geoLoc) {
     if (isMobile) {
         return false;
     }
@@ -59,7 +59,7 @@ bool LocationService::setFixedLocationCoordinates(const Location& geoLoc) {
     return true;
 }
 
-Location LocationService::getLocation() {
+Location NodeLocationWrapper::getLocation() {
     if (isMobile) {
         if (locationProvider) {
             return locationProvider->getCurrentLocation().first;
@@ -71,12 +71,11 @@ Location LocationService::getLocation() {
     return *fixedLocationCoordinates;
 }
 
-std::vector<std::pair<uint64_t, Location>>
-LocationService::getNodeIdsInRange(Location coord, double radius) {
+std::vector<std::pair<uint64_t, Location>> NodeLocationWrapper::getNodeIdsInRange(Location coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 
-std::vector<std::pair<uint64_t, Location>> LocationService::getNodeIdsInRange(double radius) {
+std::vector<std::pair<uint64_t, Location>> NodeLocationWrapper::getNodeIdsInRange(double radius) {
     auto coord = getLocation();
     if (coord.isValid()) {
         return getNodeIdsInRange(coord, radius);

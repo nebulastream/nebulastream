@@ -39,8 +39,8 @@ namespace Experimental::Mobility {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
 
-class LocationService;
-using LocationServicePtr = std::shared_ptr<LocationService>;
+class NodeLocationWrapper;
+using LocationServicePtr = std::shared_ptr<NodeLocationWrapper>;
 }// namespace Experimental::Mobility
 
 class WorkerRPCServer;

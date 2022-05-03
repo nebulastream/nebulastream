@@ -21,7 +21,7 @@
 #include <Configurations/Worker/LocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Geolocation/LocationProviderCSV.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <map>
