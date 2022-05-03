@@ -23,6 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
+#include <
 
 namespace NES {
 
@@ -444,6 +445,17 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
         NES_ERROR(" WorkerRPCClient::checkHealth error=" << status.error_code() << ": " << status.error_message());
         return response.status();
     }
+}
+
+NES::Experimental::Mobility::Location WorkerRPCClient::getLocation(const std::string& adress) {
+    NES_DEBUG("WorkerRPCClient: Reequesting location from " << adress)
+    ClientContext context;
+    Coordinates reply;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(adress, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->GetLocation(&context, {}, &reply);
+    return true;
 }
 
 }// namespace NES

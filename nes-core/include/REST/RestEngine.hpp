@@ -79,6 +79,11 @@ using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 
 class MaintenanceController;
 typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
+
+namespace Mobility {
+class MobilityController;
+using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
+}
 }//namespace Experimental
 
 class UdfCatalogController;
@@ -150,6 +155,7 @@ class RestEngine {
     TopologyControllerPtr topologyController;
     UdfCatalogControllerPtr udfCatalogController;
     Experimental::MaintenanceControllerPtr maintenanceController;
+    Experimental::Mobility::MonitoringControllerPtr mobilityController;
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;

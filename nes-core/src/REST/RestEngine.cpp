@@ -117,6 +117,9 @@ void RestEngine::handleGet(web::http::http_request request) {
         } else if (paths[0] == "topology") {
             topologyController->handleGet(paths, request);
             return;
+        } else if (paths[0] == "mobility") {
+            mobilityController->handleGet(paths, request);
+            return;
         } else if (paths[0] == UdfCatalogController::path_prefix) {
             udfCatalogController->handleGet(paths, request);
             return;

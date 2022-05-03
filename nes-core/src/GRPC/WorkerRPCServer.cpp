@@ -20,6 +20,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <cpprest/json.h>
 #include <utility>
+#include <Geolocation/LocationService.hpp>
 
 namespace NES {
 
@@ -167,5 +168,13 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
         reply->set_success(false);
         return Status::CANCELLED;
     }
+}
+
+Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, Coordinates* reply) {
+    (void) request;
+    auto loc = locationService->getLocation();
+    reply->set_lat(loc.getLatitude());
+    reply->set_lng(loc.getLongitude());
+    return Status::OK;
 }
 }// namespace NES
