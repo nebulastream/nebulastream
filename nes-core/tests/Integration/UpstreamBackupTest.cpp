@@ -449,7 +449,6 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-
     NES_INFO("UpstreamBackupTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
