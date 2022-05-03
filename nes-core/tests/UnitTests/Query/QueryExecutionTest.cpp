@@ -1111,9 +1111,10 @@ class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         const char pyUdfName[] = "PythonUdf";
         const char pyUdfLocation[] = "test_data/";
         const char pyFuncName[] = "add42";
-        PyObject *pyName, *pyModule, *pyFunc, *pyArgs, *pyValue;
+        PyObject *pyName, *pyModule, *pyFunc, *pyArgs, *pyValue, *pyLocation;
 
         Py_Initialize();
+        pyLocation = PyUnicode_FromString(pyUdfLocation);
         PyList_Insert(PySys_GetObject("path"), 0, PyUnicode_FromString(pyUdfLocation));
         pyName = PyUnicode_FromString(pyUdfName);
         pyModule = PyImport_Import(pyName);
@@ -1121,6 +1122,7 @@ class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         // so that the Python garbage collector knows when to free an object.
         // Initializing a PyObject sets the reference counter to 1, so no Py_INCREF() is needed.
         Py_DECREF(pyName);
+        Py_DECREF(pyLocation);
         if (pyModule != nullptr) {
             pyFunc = PyObject_GetAttrString(pyModule, pyFuncName);
             if (pyFunc && PyCallable_Check(pyFunc)) {
@@ -1142,7 +1144,7 @@ class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStag
                         Py_DECREF(pyValue);
                     } else {
                         Py_Finalize();
-                        NES_ERROR( "Function call failed\n");
+                        NES_ERROR("Function call failed");
                         return ExecutionResult::Error;
                     }
                 }
