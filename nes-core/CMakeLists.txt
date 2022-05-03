@@ -18,6 +18,7 @@ include(GNUInstallDirs)
 set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
 set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
 
+
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nes-grpc/)
 file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
 foreach (PROTO_FILE ${PROTO_FILES})
