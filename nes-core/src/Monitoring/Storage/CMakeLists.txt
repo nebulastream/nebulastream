@@ -13,5 +13,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        MetricStore.cpp
-)
+        AllEntriesMetricStore.cpp
+        MetricStoreType.cpp
+        NewestEntryMetricStore.cpp
+        )

@@ -44,7 +44,7 @@ class NetworkCollector : public MetricCollector {
      * @brief Read the Network metrics based on the underlying utility systems reader and return the metrics.
      * @return The metrics object
      */
-    const Metric readMetric() const override;
+    MetricPtr readMetric() override;
 
   private:
     AbstractSystemResourcesReaderPtr resourceReader;

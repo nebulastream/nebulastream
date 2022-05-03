@@ -26,7 +26,7 @@
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Storage/MetricStore.hpp>
+#include <Monitoring/Storage/NewestEntryMetricStore.hpp>
 
 namespace NES {
 using namespace Configurations;
@@ -84,8 +84,8 @@ TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
 
     for (auto type : monitoringPlan->getMetricTypes()) {
         auto collector = monitoringCatalog->getMetricCollector(type);
-        Metric metric = collector->readMetric();
-        metricsJson[toString(metric.getMetricType())] = asJson(metric);
+        MetricPtr metric = collector->readMetric();
+        metricsJson[toString(metric->getMetricType())] = asJson(metric);
     }
     NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: " << metricsJson);
 }

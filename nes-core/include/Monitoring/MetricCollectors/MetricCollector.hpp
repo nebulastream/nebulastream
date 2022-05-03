@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
 #define NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
 
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 
@@ -57,7 +58,7 @@ class MetricCollector {
      * @param tupleBuffer The tuple buffer
      * @return True if successful, else false
      */
-    virtual const Metric readMetric() const = 0;
+    virtual MetricPtr readMetric() = 0;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;

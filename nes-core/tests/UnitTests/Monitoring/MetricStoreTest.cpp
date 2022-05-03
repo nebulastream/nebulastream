@@ -16,18 +16,18 @@
 #include <gtest/gtest.h>
 
 #include <Monitoring/MonitoringCatalog.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Storage/MetricStore.hpp>
+#include <Monitoring/Storage/AllEntriesMetricStore.hpp>
+#include <Monitoring/Storage/NewestEntryMetricStore.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 
 namespace NES {
 using namespace Configurations;
@@ -58,21 +58,45 @@ class MetricStoreTest : public Testing::NESBaseTest {
     void TearDown() override { std::cout << "MetricStoreTest: Tear down MetricStoreTest test case." << std::endl; }
 };
 
-TEST_F(MetricStoreTest, testMetricStore) {
+TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
     uint64_t nodeId = 0;
-    auto metricStore = std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST);
+    auto metricStore = std::make_shared<NewestEntryMetricStore>();
     auto networkCollector = NetworkCollector();
 
     uint64_t myInt = 12345;
     std::string myString = "testString";
-    MetricPtr networkMetrics = std::make_shared<Metric>(networkCollector.readMetric());
+    MetricPtr networkMetrics = networkCollector.readMetric();
+
+    metricStore->addMetrics(nodeId, networkMetrics);
+    metricStore->addMetrics(nodeId, std::make_shared<Metric>(myInt));
+    metricStore->addMetrics(nodeId, std::make_shared<Metric>(myString));
+
+    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
+    NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetrics));
+    ASSERT_EQ(storedMetrics->size(), 2);
+    ASSERT_EQ(storedMetrics->at(MetricType::UnknownMetric)->size(), 1);
+
+    metricStore->removeMetrics(nodeId);
+    ASSERT_FALSE(metricStore->hasMetrics(nodeId));
+}
+
+TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
+    uint64_t nodeId = 0;
+    auto metricStore = std::make_shared<AllEntriesMetricStore>();
+    auto networkCollector = NetworkCollector();
+
+    uint64_t myInt = 12345;
+    std::string myString = "testString";
+    MetricPtr networkMetrics = networkCollector.readMetric();
 
     metricStore->addMetrics(nodeId, std::make_shared<Metric>(myInt));
     metricStore->addMetrics(nodeId, std::make_shared<Metric>(myString));
     metricStore->addMetrics(nodeId, networkMetrics);
 
-    auto storedMetrics = metricStore->getNewestMetrics(nodeId);
-    ASSERT_EQ(storedMetrics.size(), 2);
+    auto storedMetrics = metricStore->getAllMetrics(nodeId);
+    NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetrics));
+    ASSERT_EQ(storedMetrics->size(), 2);
+    ASSERT_EQ(storedMetrics->at(MetricType::UnknownMetric)->size(), 2);
 
     metricStore->removeMetrics(nodeId);
     ASSERT_FALSE(metricStore->hasMetrics(nodeId));

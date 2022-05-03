@@ -184,7 +184,12 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
         auto json = jsons[std::to_string(i)];
         ASSERT_TRUE(json.has_field("registration"));
         json = json["registration"];
-        ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+
+        for (int j = 0; j < (int) json.size(); j++) {
+            auto data = json.at(j)["value"];
+            ASSERT_TRUE(
+                MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), data));
+        }
     }
 
     bool retStopWrk1 = wrk1->stop(false);
@@ -258,7 +263,83 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
         auto json = jsons[std::to_string(i)];
         ASSERT_TRUE(json.has_field("registration"));
         json = json["registration"];
-        ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        for (int j = 0; j < (int) json.size(); j++) {
+            auto data = json.at(j)["value"];
+            ASSERT_TRUE(
+                MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), data));
+        }
+    }
+
+    bool retStopWrk1 = wrk1->stop(false);
+    ASSERT_TRUE(retStopWrk1);
+
+    bool retStopWrk2 = wrk2->stop(false);
+    ASSERT_TRUE(retStopWrk2);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    ASSERT_TRUE(retStopCord);
+}
+
+TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->enableMonitoring = (true);
+    coordinatorConfig->restPort = *restPort;
+    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf1->enableMonitoring = (true);
+    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf2->enableMonitoring = (true);
+
+    cout << "start coordinator" << endl;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    ASSERT_NE(port, 0ull);
+    cout << "coordinator started successfully" << endl;
+
+    cout << "start worker 1" << endl;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
+    ASSERT_TRUE(retStart1);
+    cout << "worker1 started successfully" << endl;
+
+    cout << "start worker 2" << endl;
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    ASSERT_TRUE(retStart2);
+    cout << "worker2 started successfully" << endl;
+
+    bool retConWrk1 = wrk1->connect();
+    ASSERT_TRUE(retConWrk1);
+    cout << "worker 1 connected " << endl;
+
+    bool retConWrk2 = wrk2->connect();
+    ASSERT_TRUE(retConWrk2);
+    cout << "worker 2 connected " << endl;
+
+    // requesting the monitoring data
+    auto const nodeNumber = static_cast<std::size_t>(3U);
+    ASSERT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
+    auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+
+    ASSERT_EQ(jsons.size(), nodeNumber);
+    auto rootId = crd->getTopology()->getRoot()->getId();
+    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+
+    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
+        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+                 + std::to_string(port + 10));
+        auto json = jsons[std::to_string(i)];
+        ASSERT_TRUE(json.has_field("registration"));
+        json = json["registration"];
+        for (int j = 0; j < (int) json.size(); j++) {
+            auto data = json.at(j)["value"];
+            ASSERT_TRUE(
+                MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), data));
+        }
     }
 
     bool retStopWrk1 = wrk1->stop(false);

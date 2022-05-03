@@ -42,8 +42,10 @@ class MonitoringManager {
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param workerClient RPC client
      * @param topology the topology
+     * @param metricStore the metric store
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
+    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, MetricStorePtr metricStore, bool enableMonitoring);
     MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
     MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
     MonitoringManager(const MonitoringManager&) = default;
@@ -77,7 +79,7 @@ class MonitoringManager {
      * @param nodeId
      * @return the grouped metric values
     */
-    std::unordered_map<MetricType, MetricPtr> getMonitoringDataFromMetricStore(uint64_t nodeId);
+    StoredNodeMetricsPtr getMonitoringDataFromMetricStore(uint64_t nodeId);
 
     /**
      * @brief Receive arbitrary monitoring data from a given node.

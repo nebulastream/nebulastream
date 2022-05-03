@@ -50,4 +50,24 @@ web::json::value MetricUtils::toJson(std::unordered_map<MetricType, std::shared_
     return metricsJson;
 }
 
+web::json::value MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
+    web::json::value metricsJson{};
+    for (auto metricTypeEntry : *metrics.get()) {
+        std::shared_ptr<std::vector<MetricEntryPtr>> metricVec = metricTypeEntry.second;
+        web::json::value arr{};
+        int i = 0;
+        for (const auto& metric : *metricTypeEntry.second.get()) {
+            web::json::value jsonMetricVal{};
+            uint64_t timestamp = metric->first;
+            MetricPtr metricVal = metric->second;
+            web::json::value jMetric = asJson(metricVal);
+            jsonMetricVal["timestamp"] = web::json::value::number(timestamp);
+            jsonMetricVal["value"] = jMetric;
+            arr[i++] = jsonMetricVal;
+        }
+        metricsJson[toString(metricTypeEntry.first)] = arr;
+    }
+    return metricsJson;
+}
+
 }// namespace NES

@@ -12,59 +12,57 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
-#define NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
+#ifndef NES_NES_CORE_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
+#define NES_NES_CORE_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Monitoring/Storage/MetricStoreType.hpp>
 #include <cstdint>
 #include <unordered_map>
+#include <vector>
 
 namespace NES {
-
-enum MetricStoreStrategy { NEWEST };
-enum MetricCollectorType {};
-
 /**
-* @brief The MetricStore that stores all the metrics for monitoring.
+* @brief The NewestEntryMetricStore that stores all the metrics for monitoring.
 */
-class MetricStore {
+class AbstractMetricStore {
   public:
-    explicit MetricStore(MetricStoreStrategy storeType);
+    //  -- dtor --
+    virtual ~AbstractMetricStore() = default;
+
+    /**
+     * @brief Returns the type of storage.
+     * @return The storage type.
+     */
+    virtual MetricStoreType getType() const = 0;
 
     /**
      * @brief Add a metric for a given node by ID
      * @param nodeId
      * @param metrics
     */
-    void addMetrics(uint64_t nodeId, MetricPtr metrics);
+    virtual void addMetrics(uint64_t nodeId, MetricPtr metrics) = 0;
 
     /**
-     * @brief Get most recent metric in store
+     * @brief Get newest metrics from store
      * @param nodeId
      * @return the metric
     */
-    std::unordered_map<MetricType, MetricPtr> getNewestMetrics(uint64_t nodeId);
+    virtual StoredNodeMetricsPtr getAllMetrics(uint64_t nodeId) = 0;
 
     /**
      * @brief Remove all metrics for a given node.
      * @param true if metric existed and was removed, else false
     */
-    bool removeMetrics(uint64_t nodeId);
+    virtual bool removeMetrics(uint64_t nodeId) = 0;
 
     /**
      * Checks if any kind of metrics are stored for a given node
      * @param nodeId
      * @return True if exists, else false
     */
-    bool hasMetrics(uint64_t nodeId);
-
-  private:
-    MetricStoreStrategy storeType;
-    std::unordered_map<uint64_t, std::unordered_map<MetricType, MetricPtr>> storedMetrics;
+    virtual bool hasMetrics(uint64_t nodeId) = 0;
 };
-
-using MetricStorePtr = std::shared_ptr<MetricStore>;
-
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
+#endif//NES_NES_CORE_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_

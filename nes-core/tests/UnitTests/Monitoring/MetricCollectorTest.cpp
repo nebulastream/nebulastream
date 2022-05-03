@@ -67,10 +67,10 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 
 TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
     auto networkCollector = NetworkCollector();
-    Metric networkMetric = networkCollector.readMetric();
-    ASSERT_EQ(networkMetric.getMetricType(), MetricType::WrappedNetworkMetrics);
+    MetricPtr networkMetric = networkCollector.readMetric();
+    ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
 
-    NetworkMetricsWrapper wrappedMetric = networkMetric.getValue<NetworkMetricsWrapper>();
+    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
         auto bufferSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
@@ -91,10 +91,10 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
     auto readMetrics = reader->readNetworkStats();
 
     auto networkCollector = NetworkCollector();
-    Metric networkMetric = networkCollector.readMetric();
-    ASSERT_EQ(networkMetric.getMetricType(), MetricType::WrappedNetworkMetrics);
+    MetricPtr networkMetric = networkCollector.readMetric();
+    ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
 
-    NetworkMetricsWrapper wrappedMetric = networkMetric.getValue<NetworkMetricsWrapper>();
+    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
     ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
@@ -115,10 +115,10 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
 
 TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
     auto cpuCollector = CpuCollector();
-    Metric cpuMetric = cpuCollector.readMetric();
-    ASSERT_EQ(cpuMetric.getMetricType(), MetricType::WrappedCpuMetrics);
+    MetricPtr cpuMetric = cpuCollector.readMetric();
+    ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
 
-    CpuMetricsWrapper wrappedMetric = cpuMetric.getValue<CpuMetricsWrapper>();
+    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
         auto bufferSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes() * wrappedMetric.size();
@@ -138,10 +138,10 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
 TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
     auto readMetrics = reader->readCpuStats();
     auto cpuCollector = CpuCollector();
-    Metric cpuMetric = cpuCollector.readMetric();
-    ASSERT_EQ(cpuMetric.getMetricType(), MetricType::WrappedCpuMetrics);
+    MetricPtr cpuMetric = cpuCollector.readMetric();
+    ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
 
-    CpuMetricsWrapper wrappedMetric = cpuMetric.getValue<CpuMetricsWrapper>();
+    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
     ASSERT_EQ(readMetrics.size(), wrappedMetric.size());
 
     if (reader->getReaderType() != SystemResourcesReaderType::AbstractReader) {
@@ -162,9 +162,9 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
 
 TEST_F(MetricCollectorTest, testDiskCollector) {
     auto diskCollector = DiskCollector();
-    Metric diskMetric = diskCollector.readMetric();
-    DiskMetrics typedMetric = diskMetric.getValue<DiskMetrics>();
-    ASSERT_EQ(diskMetric.getMetricType(), MetricType::DiskMetric);
+    MetricPtr diskMetric = diskCollector.readMetric();
+    DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
+    ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
     auto bufferSize = DiskMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);
@@ -180,9 +180,9 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
 
 TEST_F(MetricCollectorTest, testMemoryCollector) {
     auto memoryCollector = MemoryCollector();
-    Metric memoryMetric = memoryCollector.readMetric();
-    MemoryMetrics typedMetric = memoryMetric.getValue<MemoryMetrics>();
-    ASSERT_EQ(memoryMetric.getMetricType(), MetricType::MemoryMetric);
+    MetricPtr memoryMetric = memoryCollector.readMetric();
+    MemoryMetrics typedMetric = memoryMetric->getValue<MemoryMetrics>();
+    ASSERT_EQ(memoryMetric->getMetricType(), MetricType::MemoryMetric);
     auto bufferSize = MemoryMetrics::getSchema("")->getSchemaSizeInBytes();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     writeToBuffer(typedMetric, tupleBuffer, 0);

@@ -44,7 +44,7 @@ class MonitoringAgent {
      * If monitoring is disabled an empty vector will be returned.
      * @return the metrics of the monitoring plan
     */
-    std::vector<Metric> getMetricsFromPlan();
+    std::vector<MetricPtr> getMetricsFromPlan();
 
     /**
      * @brief Returns all metrics defined by the plan as a unified JSON.
