@@ -18,7 +18,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -34,12 +34,12 @@ class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOpera
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler);
+        Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler);
 
     static std::shared_ptr<PhysicalOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler) {
+           Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler) {
         return std::make_shared<PhysicalKeyedThreadLocalPreAggregationOperator>(Util::getNextOperatorId(),
                                                                                 inputSchema,
                                                                                 outputSchema,
@@ -49,12 +49,12 @@ class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOpera
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> getWindowHandler() {
+    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr getWindowHandler() {
         return keyedEventTimeWindowHandler;
     }
 
   private:
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler;
+    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler;
     SchemaPtr inputSchema;
 };
 

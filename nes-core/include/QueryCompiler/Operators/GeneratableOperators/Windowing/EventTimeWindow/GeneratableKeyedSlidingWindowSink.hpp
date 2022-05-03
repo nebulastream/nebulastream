@@ -15,7 +15,6 @@
 #define NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_WINDOWING_GENERATABLEKEYEDSLIDINGWINDOWSINK_HPP_
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -32,7 +31,7 @@ class GeneratableKeyedSlidingWindowSink : public GeneratableOperator {
      */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
-                                         Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                         Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
     /**
@@ -46,7 +45,7 @@ class GeneratableKeyedSlidingWindowSink : public GeneratableOperator {
     static GeneratableOperatorPtr create(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
-                                         Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                         Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
@@ -57,10 +56,10 @@ class GeneratableKeyedSlidingWindowSink : public GeneratableOperator {
     GeneratableKeyedSlidingWindowSink(OperatorId id,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
-                                      Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                      Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr operatorHandler,
                                       std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr windowHandler;
+    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr windowHandler;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

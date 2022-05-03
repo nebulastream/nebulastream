@@ -17,6 +17,7 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
@@ -24,7 +25,7 @@ GeneratableOperatorPtr GeneratableKeyedSliceMergingOperator::create(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableKeyedSliceMergingOperator>(
         GeneratableKeyedSliceMergingOperator(id,
@@ -37,7 +38,7 @@ GeneratableOperatorPtr GeneratableKeyedSliceMergingOperator::create(
 GeneratableOperatorPtr GeneratableKeyedSliceMergingOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -50,7 +51,7 @@ GeneratableKeyedSliceMergingOperator::GeneratableKeyedSliceMergingOperator(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}

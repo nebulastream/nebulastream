@@ -259,7 +259,7 @@ inline Hashmap::Entry* Hashmap::findOrCreate(K key, hash_t hash) {
 }
 template<class KeyType>
 inline uint8_t* Hashmap::getEntry(KeyType& key) {
-    const auto h = hasher(key, Experimental::Hash<Experimental::CRC32Hash>::SEED);
+    const auto h = hasher(key, NES::Experimental::Hash<NES::Experimental::CRC32Hash>::SEED);
     auto entry = findOrCreate<KeyType, false>(key, h);
     return getKeyPtr(entry);
 }

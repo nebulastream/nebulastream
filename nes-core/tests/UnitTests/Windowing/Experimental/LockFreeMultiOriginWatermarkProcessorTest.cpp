@@ -46,7 +46,7 @@ class LockFreeWatermarkManagerTest : public Testing::TestWithErrorHandling<testi
 
 TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterTest) {
     auto updates = 10000;
-    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create(1);
+    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create({0});
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
@@ -69,7 +69,7 @@ TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterTest) {
 TEST_F(LockFreeWatermarkManagerTest, concurrentWatermarkUpdaterTest) {
     const auto updates = 100000;
     const auto threadsCount = 10;
-    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create(1);
+    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create({0});
 
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
@@ -109,7 +109,7 @@ TEST_F(LockFreeWatermarkManagerTest, concurrentWatermarkUpdaterTest) {
 TEST_F(LockFreeWatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
     auto updates = 10000;
     auto origins = 10;
-    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create(10);
+    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create({0,1,2,3,4,5,6,7,8,9});
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
@@ -165,7 +165,7 @@ TEST_F(LockFreeWatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTe
     const auto updates = 100000;
     const auto origins = 10;
     const auto threadsCount = 10;
-    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
+    auto watermarkManager = Experimental::LockFreeMultiOriginWatermarkProcessor::create({0,1,2,3,4,5,6,7,8,9});
 
     // preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;

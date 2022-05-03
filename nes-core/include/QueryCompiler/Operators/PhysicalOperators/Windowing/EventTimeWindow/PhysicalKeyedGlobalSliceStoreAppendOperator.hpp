@@ -17,7 +17,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <memory>
 
 namespace NES {
@@ -33,12 +33,12 @@ class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler);
+        Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler);
 
     static std::shared_ptr<PhysicalKeyedGlobalSliceStoreAppendOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler) {
+           Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
         return std::make_shared<PhysicalKeyedGlobalSliceStoreAppendOperator>(Util::getNextOperatorId(),
                                                                              inputSchema,
                                                                              outputSchema,
@@ -48,12 +48,12 @@ class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> getWindowHandler() {
+    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr getWindowHandler() {
         return keyedEventTimeWindowHandler;
     }
 
   private:
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler;
+    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler;
 };
 
 }// namespace PhysicalOperators

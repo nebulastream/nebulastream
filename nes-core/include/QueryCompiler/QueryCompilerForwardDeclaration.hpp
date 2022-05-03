@@ -89,8 +89,17 @@ class AbstractWindowHandler;
 using AbstractWindowHandlerPtr = std::shared_ptr<AbstractWindowHandler>;
 
 namespace Experimental {
-class KeyedEventTimeWindowHandler;
-using KeyedEventTimeWindowHandlerPtr = std::shared_ptr<KeyedEventTimeWindowHandler>;
+class KeyedSliceMergingOperatorHandler;
+using KeyedSliceMergingOperatorHandlerPtr = std::shared_ptr<KeyedSliceMergingOperatorHandler>;
+
+class KeyedThreadLocalPreAggregationOperatorHandler;
+using KeyedThreadLocalPreAggregationOperatorHandlerPtr = std::shared_ptr<KeyedThreadLocalPreAggregationOperatorHandler>;
+
+class KeyedGlobalSliceStoreAppendOperatorHandler;
+using KeyedGlobalSliceStoreAppendOperatorHandlerPtr = std::shared_ptr<KeyedGlobalSliceStoreAppendOperatorHandler>;
+
+class KeyedSlidingWindowSinkOperatorHandler;
+using KeyedSlidingWindowSinkOperatorHandlerPtr = std::shared_ptr<KeyedSlidingWindowSinkOperatorHandler>;
 }// namespace Experimental
 
 }// namespace Windowing

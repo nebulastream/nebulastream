@@ -62,7 +62,7 @@
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
 #include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>

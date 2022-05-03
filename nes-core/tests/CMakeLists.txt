@@ -69,15 +69,9 @@ add_executable(lock-free-multi-origin-watermark-processor-test "UnitTests/Window
 target_link_libraries(lock-free-multi-origin-watermark-processor-test nes nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME lock-free-multi-origin-watermark-processor-test COMMAND lock-free-multi-origin-watermark-processor-test)
 
-
-add_executable(lock-free-watermark-processor-test "UnitTests/Windowing/Experimental/LockFreeWatermarkProcessorTest.cpp")
-target_link_libraries(lock-free-watermark-processor-test nes nes-tests-util ${GTEST_LIBRARIES})
-add_test(NAME lock-free-watermark-processor-test COMMAND lock-free-watermark-processor-test)
-
 add_executable(keyed-thread-local-slice-store-test "UnitTests/Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStoreTest.cpp")
 target_link_libraries(keyed-thread-local-slice-store-test nes nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME keyed-thread-local-slice-store-test COMMAND keyed-thread-local-slice-store-test)
-
 
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")

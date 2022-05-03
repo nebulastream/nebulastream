@@ -15,6 +15,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
@@ -23,7 +24,7 @@ GeneratableOperatorPtr GeneratableKeyedGlobalSliceStoreAppendOperator::create(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableKeyedGlobalSliceStoreAppendOperator>(
         GeneratableKeyedGlobalSliceStoreAppendOperator(id,
@@ -36,7 +37,7 @@ GeneratableOperatorPtr GeneratableKeyedGlobalSliceStoreAppendOperator::create(
 GeneratableOperatorPtr GeneratableKeyedGlobalSliceStoreAppendOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -49,7 +50,7 @@ GeneratableKeyedGlobalSliceStoreAppendOperator::GeneratableKeyedGlobalSliceStore
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}

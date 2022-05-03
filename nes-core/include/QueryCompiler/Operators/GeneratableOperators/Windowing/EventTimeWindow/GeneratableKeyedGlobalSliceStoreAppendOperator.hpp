@@ -15,7 +15,7 @@
 #define NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_WINDOWING_GENERATABLEKKEYEDGLOBALSLICESTOREAPPEN_HPP_
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -32,7 +32,7 @@ class GeneratableKeyedGlobalSliceStoreAppendOperator : public GeneratableOperato
      */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
-                                         Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                         Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
     /**
@@ -46,7 +46,7 @@ class GeneratableKeyedGlobalSliceStoreAppendOperator : public GeneratableOperato
     static GeneratableOperatorPtr create(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
-                                         Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+                                         Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
@@ -58,10 +58,10 @@ class GeneratableKeyedGlobalSliceStoreAppendOperator : public GeneratableOperato
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+        Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr windowHandler;
+    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr windowHandler;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

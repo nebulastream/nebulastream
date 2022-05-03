@@ -16,6 +16,7 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
@@ -23,7 +24,7 @@ GeneratableOperatorPtr GeneratableKeyedThreadLocalPreAggregationOperator::create
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableKeyedThreadLocalPreAggregationOperator>(
         GeneratableKeyedThreadLocalPreAggregationOperator(id,
@@ -36,7 +37,7 @@ GeneratableOperatorPtr GeneratableKeyedThreadLocalPreAggregationOperator::create
 GeneratableOperatorPtr GeneratableKeyedThreadLocalPreAggregationOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
@@ -49,7 +50,7 @@ GeneratableKeyedThreadLocalPreAggregationOperator::GeneratableKeyedThreadLocalPr
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
+    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr operatorHandler,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}

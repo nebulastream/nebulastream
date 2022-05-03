@@ -18,17 +18,15 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalKeyedTumblingWindowSink::PhysicalKeyedTumblingWindowSink(
-    OperatorId id,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
-      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
+PhysicalKeyedTumblingWindowSink::PhysicalKeyedTumblingWindowSink(OperatorId id,
+                                                                 SchemaPtr inputSchema,
+                                                                 SchemaPtr outputSchema,
+                                                                 Windowing::LogicalWindowDefinitionPtr windowDefinition)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), windowDefinition(windowDefinition) {}
 
 std::string PhysicalKeyedTumblingWindowSink::toString() const { return "PhysicalKeyedTumblingWindowSink"; }
 
-OperatorNodePtr PhysicalKeyedTumblingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
+OperatorNodePtr PhysicalKeyedTumblingWindowSink::copy() { return create(inputSchema, outputSchema, windowDefinition); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
