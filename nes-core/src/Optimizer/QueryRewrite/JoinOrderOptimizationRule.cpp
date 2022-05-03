@@ -380,7 +380,7 @@ namespace NES::Optimizer {
         // JVS durch Baum traversen bis source node nicht mehr nullptr ist.
         // JVS note: my approach currently ignores additional filter + watermark assigner etc.
 
-        // set the root node properly
+/*        // set the root node properly
         if (finalPlan != nullptr){
             // additional check!
             if (finalPlan->getLeftChild() == nullptr && finalPlan->getRightChild() == nullptr){
@@ -391,42 +391,25 @@ namespace NES::Optimizer {
             }
         }
 
-        // we have now a new root Operator which is a join. Let's traverse the tree downwards to create children, grandchildren etc.
-
-        // lets try something out
-        newPlan->prependOperatorAsLeafNode(std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(finalPlan->getLeftChild()->getJoinPredicate(), OperatorId())));
-     //   newPlan->prependOperatorAsLeafNode(std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(finalPlan->getJoinPredicate(), OperatorId())));
-
-        NES_DEBUG(newPlan->toString());
+        // we have now a new root Operator which is a join. Let's traverse the tree downwards to create children, grandchildren
 
 
+        NES_DEBUG(newPlan->toString());*/
 
-
-        /*
+        JoinLogicalOperatorNodePtr topJoin;
         if (finalPlan != nullptr){
             // additional check!
             if (finalPlan->getLeftChild() == nullptr && finalPlan->getRightChild() == nullptr){
                 return oldPlan;
             }
-            topPlan = buildQueryPlan(finalPlan->getLeftChild(), finalPlan->getRightChild(), finalPlan->getJoinPredicate(), sourceOperators, joinEdges);
+            topJoin = constructJoin(finalPlan->getLeftChild(), finalPlan->getRightChild(), finalPlan->getJoinPredicate(), sourceOperators, joinEdges);
         } else{
             NES_DEBUG("FinalPlan is nullptr - returning old plan")
             return oldPlan;
         }
 
-     //   newPlan->replaceRootOperator(newPlan->getRootOperators()[0], topJoin);
-        */
-
-        // JVS I think I need to start by building a queryplanptr already when this function is called
-
-
-        // JVS cases:
-        // 1. We acknowledge the children to be joins => build both join operators and append them as leaves.
-        // 2. We acknowledge the children to be sources = get source operators and append as leaves.
-
-        // => this implies we somehow need to know at which node we are currently at.
-        // mb i should not do this recursively but rather using a while loop instead.
-
+        newPlan->replaceRootOperator(newPlan->getRootOperators()[0], topJoin);
+        NES_DEBUG(newPlan->toString());
 
         return newPlan;
 
@@ -448,7 +431,7 @@ namespace NES::Optimizer {
 
 
     }
-    // JVS This function is currently unused, as we can't retrieve proper QueryPlans. It also misses finding the other needed parts e.g. filter operator.
+    // JVS alter this function to add nested calls as child nodes to a node. ; misses yet all other operators (!= source and join)
     JoinLogicalOperatorNodePtr JoinOrderOptimizationRule::constructJoin(const AbstractJoinPlanOperatorPtr& leftChild,
                                                                         const AbstractJoinPlanOperatorPtr& rightChild,
                                                                         Join::LogicalJoinDefinitionPtr joinDefinition,
@@ -461,82 +444,86 @@ namespace NES::Optimizer {
 
         // Check if we are dealing with a source OR a join respectively for left and right child
         // leftChild
-        SourceLogicalOperatorNodePtr correspondingNodeLeft; // If leftChild == source, find corresponding SourceLogicalOperatorNodePtr in sources array
-        JoinLogicalOperatorNodePtr leftJoin; // if leftChild == join, construct a join by invoked a recursion with its children.
+        SourceLogicalOperatorNodePtr leftSourceNode; // If leftChild == source, find corresponding SourceLogicalOperatorNodePtr in sources array
+        JoinLogicalOperatorNodePtr leftJoinNode; // if leftChild == join, construct a join by invoked a recursion with its children.
         if (leftChild->getSourceNode()!=nullptr){
             // source
             for (auto source: sources){
                 // iterate over sources to find matching source (by id)
                 if(leftChild->getSourceNode()->getId() == source->getId()){
-                    correspondingNodeLeft = source;
+                    leftSourceNode = source;
                     break;
                 }
             }
         } else{
             // join
-            leftJoin = constructJoin(leftChild->getLeftChild(), leftChild->getRightChild(), leftChild->getJoinPredicate(), sources, joinEdges);
+            leftJoinNode = constructJoin(leftChild->getLeftChild(), leftChild->getRightChild(), leftChild->getJoinPredicate(), sources, joinEdges);
         }
 
         // rightChild
-        SourceLogicalOperatorNodePtr correspondingNodeRight;
-        JoinLogicalOperatorNodePtr rightJoin;
+        SourceLogicalOperatorNodePtr rightSourceNode;
+        JoinLogicalOperatorNodePtr rightJoinNode;
         if(rightChild->getSourceNode()!=nullptr){
             // source
             for(auto source: sources){
                 if(rightChild->getSourceNode()->getId() == source->getId()){
-                    correspondingNodeRight = source;
+                    rightSourceNode = source;
                     break;
                 }
             }
         }else{
             // join
-            rightJoin = constructJoin(rightChild->getLeftChild(), leftChild->getRightChild(), rightChild->getJoinPredicate(), sources, joinEdges);
+            rightJoinNode = constructJoin(rightChild->getLeftChild(), leftChild->getRightChild(), rightChild->getJoinPredicate(), sources, joinEdges);
         }
 
         // List all 4 cases possible and construct respective JoinLogicalOperatorNode
 
         Join::LogicalJoinDefinitionPtr newJoinDefinition;
-        if(correspondingNodeLeft != nullptr && correspondingNodeRight != nullptr){
-            NES_DEBUG("Dealing with two sources: " << correspondingNodeLeft->getSourceDescriptor()->getLogicalSourceName() << " and " << correspondingNodeRight->getSourceDescriptor()->getLogicalSourceName());
+        if(leftSourceNode != nullptr && rightSourceNode != nullptr){
+            NES_DEBUG("Dealing with two sources: " << leftSourceNode->getSourceDescriptor()->getLogicalSourceName() << " and " << rightSourceNode->getSourceDescriptor()->getLogicalSourceName());
             // both sources
             newJoinDefinition = joinDefinition;
             // JVS replace later with proper Id counter
             uint32_t id = reinterpret_cast<uint64_t>(&newJoinDefinition);
-            return std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, id));
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, id)); // jvs how to id.
 
+            // add left and right source as children to newly constructed Join.
+            join->addChild(leftSourceNode);
+            join->addChild(rightSourceNode);
 
-            // JVS Change: We need to  append sources as leaf nodes to the QueryPlan object.
+            return join;
 
-
-            //return std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, id)); // jvs how to id?
         }
-        else if(leftJoin != nullptr && rightJoin != nullptr){
-            NES_DEBUG("Dealing with two joins. On the left we join fields : " << leftJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << leftJoin->getJoinDefinition()->getRightJoinKey()->getFieldName());
-            NES_DEBUG("On The right we join field: " << rightJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightJoin->getJoinDefinition()->getRightJoinKey()->getFieldName())
+        else if(leftJoinNode != nullptr && rightJoinNode != nullptr){
+            NES_DEBUG("Dealing with two joins. On the left we join fields : " << leftJoinNode->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << leftJoinNode->getJoinDefinition()->getRightJoinKey()->getFieldName());
+            NES_DEBUG("On The right we join field: " << rightJoinNode->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightJoinNode->getJoinDefinition()->getRightJoinKey()->getFieldName())
             // both joins
             // join of joins...
-            // jvs alter constructJoin by also handing over joinDefinition from AbstractJoinPlanOperator
             newJoinDefinition = joinDefinition;
 
             // JVS construct join from newJoinDefinition and return that
             uint32_t id = reinterpret_cast<uint64_t>(&newJoinDefinition);
-            return std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, id)); // jvs how to id?
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, id)); // jvs how to id?
 
+            // add left and right join to this.
+            join->addChild(leftJoinNode);
+            join->addChild(rightJoinNode);
 
-            // JVS Change: We need to take the current QueryPlan Object and add two subplans to it: leftSubplan and RightSubplan.
+            return join;
+
 
         }
             // left Join, right Source
-        else if(leftJoin != nullptr && correspondingNodeRight != nullptr){
+        else if(leftJoinNode != nullptr && rightSourceNode != nullptr){
             NES_DEBUG("Joining a left join and a right source");
-            NES_DEBUG("On the left we join with the product of join : " << leftJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << leftJoin->getJoinDefinition()->getRightJoinKey()->getFieldName());
-            NES_DEBUG("On the right we join with " << correspondingNodeRight->getSourceDescriptor()->getLogicalSourceName());
+            NES_DEBUG("On the left we join with the product of join : " << leftJoinNode->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << leftJoinNode->getJoinDefinition()->getRightJoinKey()->getFieldName());
+            NES_DEBUG("On the right we join with " << rightSourceNode->getSourceDescriptor()->getLogicalSourceName());
         }
         // left Source, right join
-        else if (correspondingNodeLeft != nullptr && rightJoin != nullptr){
+        else if (leftSourceNode != nullptr && rightJoinNode != nullptr){
             NES_DEBUG("Joining a left source and a right join");
-            NES_DEBUG("On the left we join with " << correspondingNodeLeft->getSourceDescriptor()->getLogicalSourceName());
-            NES_DEBUG("On the right we join with the product of join : " << rightJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightJoin->getJoinDefinition()->getRightJoinKey()->getFieldName());
+            NES_DEBUG("On the left we join with " << leftSourceNode->getSourceDescriptor()->getLogicalSourceName());
+            NES_DEBUG("On the right we join with the product of join : " << rightJoinNode->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightJoinNode->getJoinDefinition()->getRightJoinKey()->getFieldName());
         }
         else {
             NES_DEBUG("Moinsen, bin der Markus!");
