@@ -339,7 +339,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   memorySourceType->getGatheringValue(),
                                                   memorySourceType->getGatheringMode(),
                                                   memorySourceType->getSourceAffinity(),
-                                                  memorySourceType->getTaskQueueId());
+                                                  memorySourceType->getTaskQueueId(),
+                                                  logicalSourceName,
+                                                  physicalSourceName);
         }
         case BENCHMARK_SOURCE: {
             auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();
@@ -351,7 +353,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                      benchmarkSourceType->getGatheringMode(),
                                                      benchmarkSourceType->getSourceMode(),
                                                      benchmarkSourceType->getSourceAffinity(),
-                                                     benchmarkSourceType->getTaskQueueId());
+                                                     benchmarkSourceType->getTaskQueueId(),
+                                                     logicalSourceName,
+                                                     physicalSourceName);
         }
         case STATIC_DATA_SOURCE: {
             auto staticDataSourceType = physicalSourceType->as<NES::Experimental::StaticDataSourceType>();
@@ -367,7 +371,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   lambdaSourceType->getGatheringValue(),
                                                   lambdaSourceType->getGatheringMode(),
                                                   lambdaSourceType->getSourceAffinity(),
-                                                  lambdaSourceType->getTaskQueueId());
+                                                  lambdaSourceType->getTaskQueueId(),
+                                                  logicalSourceName,
+                                                  physicalSourceName);
         }
         case MATERIALIZEDVIEW_SOURCE: {
             auto materializeView =

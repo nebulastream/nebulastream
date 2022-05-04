@@ -24,8 +24,9 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
     uint64_t gatheringValue,
     GatheringMode::Value gatheringMode,
     uint64_t sourceAffinity,
-    uint64_t taskQueueId)
-    : SourceDescriptor(std::move(schema)), generationFunction(std::move(generationFunction)),
+    uint64_t taskQueueId,
+    std::string logicalSourceName, std::string physicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), generationFunction(std::move(generationFunction)),
       numBuffersToProcess(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
       sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
@@ -36,7 +37,9 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     uint64_t gatheringValue,
     GatheringMode::Value gatheringMode,
     uint64_t sourceAffinity,
-    uint64_t taskQueueId) {
+    uint64_t taskQueueId,
+    std::string logicalSourceName,
+    std::string physicalSourceName) {
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<LambdaSourceDescriptor>(schema,
                                                     std::move(generationFunction),
@@ -44,7 +47,9 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
                                                     gatheringValue,
                                                     gatheringMode,
                                                     sourceAffinity,
-                                                    taskQueueId);
+                                                    taskQueueId,
+                                                    logicalSourceName,
+                                                    physicalSourceName);
 }
 std::string LambdaSourceDescriptor::toString() { return "LambdaSourceDescriptor"; }
 
@@ -72,7 +77,11 @@ SourceDescriptorPtr LambdaSourceDescriptor::copy() {
                                                std::move(generationFunction),
                                                numBuffersToProcess,
                                                gatheringValue,
-                                               gatheringMode);
+                                               gatheringMode,
+                                               sourceAffinity,
+                                               taskQueueId,
+                                               logicalSourceName,
+                                               physicalSourceName);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }

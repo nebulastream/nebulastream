@@ -39,7 +39,9 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                     uint64_t gatheringValue,
                                     GatheringMode::Value gatheringMode,
                                     uint64_t sourceAffinity,
-                                    uint64_t taskQueueId);
+                                    uint64_t taskQueueId,
+                                    std::string logicalSourceName,
+                                    std::string physicalSourceName);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -55,7 +57,9 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                                           uint64_t gatheringValue,
                                                           GatheringMode::Value gatheringMode,
                                                           uint64_t sourceAffinity = 0,
-                                                          uint64_t taskQueueId = 0);
+                                                          uint64_t taskQueueId = 0,
+                                                          std::string logicalSourceName = "",
+                                                          std::string physicalSourceName = "");
 
     /**
      * @brief Provides the string representation of the memory source
