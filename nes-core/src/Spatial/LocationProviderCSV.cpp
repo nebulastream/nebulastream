@@ -95,7 +95,6 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     //we use the fraction to interpolate the point on path where the device is located if it
     //travels at constant speed from prevWaypoint to nextWaypoint
     S2LatLng resultS2(path.Interpolate(fraction));
-    //Index::Experimental::Location result(resultS2.lat().degrees(), resultS2.lng().degrees());
     auto result = std::make_shared<Index::Experimental::Location>(resultS2.lat().degrees(), resultS2.lng().degrees());
 
     NES_TRACE("Retrieving s2-interpolated location");

@@ -90,4 +90,4 @@ bool Location::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
 
-}// namespace NES::Spatial::Mobility::Experimental
+}// namespace NES::Spatial::Index::Experimental

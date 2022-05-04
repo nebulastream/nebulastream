@@ -37,7 +37,7 @@ class RegistrationMetrics;
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}// namespace Spatial::Mobility::Experimental
+}// namespace Spatial::Spatial::Experimental
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.

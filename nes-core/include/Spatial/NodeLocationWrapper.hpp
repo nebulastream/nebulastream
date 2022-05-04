@@ -14,7 +14,6 @@
 #ifndef NES_GEOLOCATION_LOCATIONSERVICE_HPP
 #define NES_GEOLOCATION_LOCATIONSERVICE_HPP
 
-#include <Spatial/LocationProvider.hpp>
 #include <memory>
 #include <vector>
 #include <Util/Experimental/LocationProviderType.hpp>
@@ -29,6 +28,7 @@ class Location;
 using LocationPtr = std::shared_ptr<Location>;
 }
 namespace NES::Spatial::Mobility::Experimental {
+class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class NodeLocationWrapper {
@@ -38,16 +38,16 @@ class NodeLocationWrapper {
 
     /**
      * Experimental
-     * @brief construct a mobile worker location source. This function is experimental.
-     * @param type defines the the subclass of locationsource to be used
-     * @param config the config parameters for the location source
+     * @brief construct a mobile worker location provider. This function is experimental.
+     * @param type defines the the subclass of locationProvider to be used
+     * @param config the config parameters for the location provider
      * @return
      */
     bool createLocationProvider(LocationProviderType type, std::string config);
 
     /**
      * Experimental
-     * Set the rpcClient which this Location Service can use to communicate with the coordinator
+     * Set the rpcClient which this LocationWrapper can use to communicate with the coordinator
      * @param rpcClientPtr
      */
     void setCoordinatorRPCClient(CoordinatorRPCClientPtr rpcClientPtr);

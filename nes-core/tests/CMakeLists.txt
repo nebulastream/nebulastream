@@ -550,7 +550,7 @@ target_link_libraries(async-task-executor-ut nes-tests)
 add_test(NAME async-task-executor-ut COMMAND async-task-executor-ut)
 
 ### Location Provider CSV Tests ###
-add_executable(location-provider-csv-unit-tests "UnitTests/Geolocation/LocationProviderCSVTest.cpp")
+add_executable(location-provider-csv-unit-tests "UnitTests/Spatial/LocationProviderCSVTest.cpp")
 target_link_libraries(location-provider-csv-unit-tests nes-tests)
 add_test(NAME location-provider-csv-unit-tests COMMAND location-provider-csv-unit-tests)
 
