@@ -47,6 +47,11 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
+namespace Spatial::Index::Experimental {
+class Location;
+using LocationPtr = std::shared_ptr<Location>;
+}// namespace Spatial::Index::Experimental
+
 enum RpcClientModes { Register, Unregister, Start, Stop };
 
 class WorkerRPCClient {
@@ -205,7 +210,7 @@ class WorkerRPCClient {
      */
     bool checkHealth(const std::string& address, std::string healthServiceName);
 
-    Experimental::Mobility::Location getLocation(const std::string& adress);
+    NES::Spatial::Index::Experimental::Location getLocation(const std::string& adress);
 
   private:
 };

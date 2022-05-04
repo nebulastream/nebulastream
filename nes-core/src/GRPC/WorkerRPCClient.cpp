@@ -23,7 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
-#include <
+#include <Common/Location.hpp>
 
 namespace NES {
 
@@ -447,7 +447,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-NES::Experimental::Mobility::Location WorkerRPCClient::getLocation(const std::string& adress) {
+Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::string& adress) {
     NES_DEBUG("WorkerRPCClient: Reequesting location from " << adress)
     ClientContext context;
     Coordinates reply;
@@ -455,7 +455,7 @@ NES::Experimental::Mobility::Location WorkerRPCClient::getLocation(const std::st
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, {}, &reply);
-    return true;
+    return {reply.lat(), reply.lng()};
 }
 
 }// namespace NES
