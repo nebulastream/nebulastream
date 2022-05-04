@@ -36,7 +36,7 @@ using TestHarnessWorkerConfigurationPtr = std::shared_ptr<TestHarnessWorkerConfi
 class TestHarnessWorkerConfiguration {
 
   public:
-    enum TestHarnessWorkerSourceType { CSVSource, MemorySource, NonSource };
+    enum TestHarnessWorkerSourceType { CSVSource, MemorySource, LambdaSource, NonSource };
 
     static TestHarnessWorkerConfigurationPtr create(WorkerConfigurationPtr workerConfiguration, uint32_t workerId) {
         return std::make_shared<TestHarnessWorkerConfiguration>(
@@ -59,6 +59,8 @@ class TestHarnessWorkerConfiguration {
 
     const WorkerConfigurationPtr& getWorkerConfiguration() const { return workerConfiguration; }
     TestHarnessWorkerSourceType getSourceType() const { return sourceType; }
+    PhysicalSourceTypePtr getPhysicalSourceType() const { return physicalSource; }
+    void setPhysicalSourceType(PhysicalSourceTypePtr physicalSource) { this->physicalSource = physicalSource; }
     const std::vector<uint8_t*>& getRecords() const { return records; }
     void addRecord(uint8_t* record) { records.push_back(record); }
     uint32_t getWorkerId() const { return workerId; }
@@ -87,6 +89,7 @@ class TestHarnessWorkerConfiguration {
     std::vector<uint8_t*> records;
     uint32_t workerId;
     NesWorkerPtr nesWorker;
+    PhysicalSourceTypePtr physicalSource;
 };
 
 }// namespace NES

@@ -1790,7 +1790,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
         calls++;
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, "ingestionrate");
+    auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("input1", "test_stream1", lambdaSourceType);
     wrkConf->physicalSources.add(physicalSource);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));

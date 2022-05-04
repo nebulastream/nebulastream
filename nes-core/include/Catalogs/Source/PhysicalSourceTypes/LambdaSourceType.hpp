@@ -34,10 +34,9 @@ class LambdaSourceType : public PhysicalSourceType {
   public:
     /**
      * @brief Factory method of LambdaSourceType
-     * @param sourceType the type of the source
-     * @param physicalSourceName the name of the physical source
-     * @param logicalSourceName the name of the logical source
      * @param lambda function that produces the buffer
+     * @param numBuffersToProduce The number of buffers, which are produced by this lambda source.
+     * @param gatheringValue The gatheringValue
      * @param sourceAffinity: sourceAffinity
      * @param taskQueueId: taskQueueId
      * @return a constructed LambdaSourceType
@@ -46,7 +45,7 @@ class LambdaSourceType : public PhysicalSourceType {
     create(std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProduce,
            uint64_t gatheringValue,
-           const std::string& gatheringMode,
+           GatheringMode::Value gatheringMode,
            uint64_t sourceAffinity = 0,
            uint64_t taskQueueId = 0);
 

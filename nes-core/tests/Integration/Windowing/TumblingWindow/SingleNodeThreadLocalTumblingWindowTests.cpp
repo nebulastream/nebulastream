@@ -76,21 +76,35 @@ TEST_F(SingleNodeThreadLocalTumblingWindowTests, testSimpleTumblingWindow) {
                           ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
-
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
+    // R"(Query::from("window"))";
 
-    testHarness.addLogicalSource("window", testSchema)
-        .attachWorkerWithMemorySourceToCoordinator("window");
-
-
-    testHarness.pushElement<InputValue>({2000, 1, 1},2);
+    auto lambdaSource = LambdaSourceType::create(
+        [](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+            NES_DEBUG("LambdaSource: Create buffer " << numberOfTuplesToProduce)
+            auto inputValue = (InputValue*) buffer.getBuffer();
+            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+                inputValue[i].value = 1;
+                inputValue[i].id = 1;
+                inputValue[i].timestamp = 1;
+            }
+            buffer.setNumberOfTuples(numberOfTuplesToProduce);
+        },
+        1,
+        0,
+        GatheringMode ::INTERVAL_MODE);
+    auto workerConfiguration = WorkerConfiguration::create();
+    workerConfiguration->queryCompiler.windowingStrategy =
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+    workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     testHarness.validate().setupTopology();
-
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 1},
                                           {2000, 3000, 1, 2},
@@ -101,9 +115,8 @@ TEST_F(SingleNodeThreadLocalTumblingWindowTests, testSimpleTumblingWindow) {
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
-
 
 }// namespace NES

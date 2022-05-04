@@ -223,7 +223,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
         NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce - 1].toString());
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, "interval");
+    auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
     workerConfig->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
