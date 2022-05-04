@@ -89,8 +89,9 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                            numThreads,
                            std::move(hardwareManager),
                            stateManager,
-                           std::move(workerToCoreMapping)),
-      numberOfQueues(numberOfQueues), numberOfThreadsPerQueue(numberOfThreadsPerQueue) {
+                           std::move(workerToCoreMapping))  ,
+      numberOfQueues(numberOfQueues),
+      numberOfThreadsPerQueue(numberOfThreadsPerQueue){
 
     NES_DEBUG("QueryManger: use static mode for numberOfQueues=" << numberOfQueues << " numThreads=" << numThreads
                                                                  << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue);
@@ -312,20 +313,17 @@ uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
-bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId, OperatorId sourceOperatorId) {
-    auto qep = sourceToQEPMapping.find(sourceOperatorId);
-    if (qep != sourceToQEPMapping.end()) {
-        //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
-        auto newReconf = ReconfigurationMessage(queryId,
-                                                qep->second->getQuerySubPlanId(),
+bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t, OperatorId sourceOperatorId) {
+    std::scoped_lock lock(queryMutex);
+    auto qeps = sourceToQEPMapping[sourceOperatorId];
+    for (auto& qep : qeps) {
+        auto newReconf = ReconfigurationMessage(qep->getQueryId(),
+                                                qep->getQuerySubPlanId(),
                                                 Runtime::ReconfigurationType::PropagateEpoch,
-                                                qep->second,
+                                                qep,
                                                 std::make_any<uint64_t>(epochBarrier));
-        qep->second->postReconfigurationCallback(newReconf);
-        return true;
-    } else {
-        NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no source was found");
-        return false;
+        qep->postReconfigurationCallback(newReconf);
     }
+    return true;
 }
 }// namespace NES::Runtime

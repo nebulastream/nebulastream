@@ -66,27 +66,30 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
 }
 void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason) {
     std::unique_lock lock(queryMutex);
-    auto qepToFail = sourceToQEPMapping[failedSource->getOperatorId()];
-    lock.unlock();
-    // we cant fail a query from a source because failing a query eventually calls stop on the failed query
-    // this means we are going to call join on the source thread
-    // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
-    auto future =
-        asyncTaskExecutor
-            ->runAsync(
-                [this](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
-                    if (failQuery(qepToFail)) {
-                        return qepToFail;
+
+    bool retFinal = true;
+    for (auto qep : sourceToQEPMapping[failedSource->getOperatorId()]) {
+        auto qepToFail = qep;
+        // we cant fail a query from a source because failing a query eventually calls stop on the failed query
+        // this means we are going to call join on the source thread
+        // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
+        auto future =
+            asyncTaskExecutor
+                ->runAsync(
+                    [this](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
+                        if (failQuery(qepToFail)) {
+                            return qepToFail;
+                        }
+                        return nullptr;
+                    },
+                    std::move(qepToFail))
+                .thenAsync([this, reason](Execution::ExecutableQueryPlanPtr failedQep) {
+                    if (failedQep && failedQep->getStatus() == Execution::ExecutableQueryPlanStatus::ErrorState) {
+                        queryStatusListener->notifyQueryFailure(failedQep->getQueryId(), failedQep->getQuerySubPlanId(), reason);
                     }
-                    return nullptr;
-                },
-                std::move(qepToFail))
-            .thenAsync([this, reason](Execution::ExecutableQueryPlanPtr failedQep) {
-                if (failedQep && failedQep->getStatus() == Execution::ExecutableQueryPlanStatus::ErrorState) {
-                    queryStatusListener->notifyQueryFailure(failedQep->getQueryId(), failedQep->getQuerySubPlanId(), reason);
-                }
-                return true;
-            });
+                    return true;
+                });
+    }
 }
 
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline, const std::string& errorMessage) {
@@ -95,14 +98,18 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
 
 void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
-    auto& qep = sourceToQEPMapping[source->getOperatorId()];
-    NES_ASSERT2_FMT(qep, "invalid query plan for source " << source->getOperatorId());
-    qep->notifySourceCompletion(source, terminationType);
-    if (terminationType == QueryTerminationType::Graceful) {
-        queryStatusListener->notifySourceTermination(qep->getQueryId(),
-                                                     qep->getQuerySubPlanId(),
-                                                     source->getOperatorId(),
-                                                     terminationType);
+    //THIS is now shutting down all
+    for (auto entry : sourceToQEPMapping[source->getOperatorId()]) {
+        std::cout << " NOFITFY operator id=" << source->getOperatorId() << "plan id=" << entry->getQueryId()
+                  << " subplan=" << entry->getQuerySubPlanId() << std::endl;
+
+        entry->notifySourceCompletion(source, terminationType);
+        if (terminationType == QueryTerminationType::Graceful) {
+            queryStatusListener->notifySourceTermination(entry->getQueryId(),
+                                                         entry->getQuerySubPlanId(),
+                                                         source->getOperatorId(),
+                                                         terminationType);
+        }
     }
 }
 

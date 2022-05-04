@@ -437,14 +437,15 @@ template<typename Predicate = std::equal_to<uint64_t>>
             count = std::count(content.begin(), content.end(), '\n');
             if (expectedlines.size() != count) {
                 NES_DEBUG("checkoutputortimeout: number of expected lines " << expectedlines.size() << " not reached yet with "
-                                                                            << count << " lines content=" << content);
+                                                                            << count << " lines content=" << content << " file=" << outputFilePath);
                 continue;
             }
 
             if (content.size() != expectedContent.size()) {
                 NES_DEBUG("checkoutputortimeout: number of chars " << expectedContent.size()
                                                                    << " not reached yet with chars content=" << content.size()
-                                                                   << " lines content=" << content);
+                                                                   << " lines content=" << content
+                          << " file=" << outputFilePath);
                 continue;
             }
 

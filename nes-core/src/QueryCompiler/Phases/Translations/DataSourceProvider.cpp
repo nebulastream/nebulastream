@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
@@ -30,12 +31,33 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                         SourceDescriptorPtr sourceDescriptor,
                                         Runtime::NodeEnginePtr nodeEngine,
                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
-    return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
-                                                            originId,
-                                                            std::move(sourceDescriptor),
-                                                            std::move(nodeEngine),
-                                                            compilerOptions->getNumSourceLocalBuffers(),
-                                                            std::move(successors));
+    if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
+        return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
+                                                                originId,
+                                                                std::move(sourceDescriptor),
+                                                                std::move(nodeEngine),
+                                                                compilerOptions->getNumSourceLocalBuffers(),
+                                                                std::move(successors));
+    }
+    NES_ASSERT(sourceDescriptor->getLogicalSourceName() != "", "The source name is not allowed to be null");
+
+    auto searchEntry = std::make_pair(sourceDescriptor->getLogicalSourceName(), sourceDescriptor->getPhysicalSourceName());
+    if (sourceDescriptorToDataSourceMap.contains(searchEntry)) {
+        NES_WARNING("using already existing source for source sharing for logical name "
+                    << sourceDescriptor->getLogicalSourceName());
+        sourceDescriptorToDataSourceMap[searchEntry]->addExecutableSuccessors(successors);
+        return sourceDescriptorToDataSourceMap[searchEntry];
+    } else {
+        NES_WARNING("Create first source for source sharing for logical name " << sourceDescriptor->getLogicalSourceName());
+        auto source = ConvertLogicalToPhysicalSource::createDataSource(operatorId,
+                                                                       originId,
+                                                                       std::move(sourceDescriptor),
+                                                                       std::move(nodeEngine),
+                                                                       compilerOptions->getNumSourceLocalBuffers(),
+                                                                       std::move(successors));
+        sourceDescriptorToDataSourceMap[searchEntry] = source;
+        return source;
+    }
 }
 
 }// namespace NES::QueryCompilation

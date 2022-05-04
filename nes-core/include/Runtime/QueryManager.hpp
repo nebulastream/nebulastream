@@ -43,6 +43,7 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 
 #ifdef ENABLE_PAPI_PROFILER
 #include <Runtime/Profiler/PAPIProfiler.hpp>
@@ -410,7 +411,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
-    std::unordered_map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceToQEPMapping;// source sharing disabled
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
@@ -426,6 +426,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
 
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
+
+    std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;// source sharing disabled
 
     StateManagerPtr stateManager;
 #ifdef ENABLE_PAPI_PROFILER

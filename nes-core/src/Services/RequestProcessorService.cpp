@@ -271,7 +271,7 @@ bool RequestProcessorService::isQueryProcessorRunning() {
 
 void RequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
-    NES_FATAL_ERROR("Request Processor Service is shutting down! No further requests can be processed!");
+    NES_INFO("Request Processor Service is shutting down! No further requests can be processed!");
     if (queryProcessorRunning) {
         this->queryProcessorRunning = false;
         queryRequestQueue->insertPoisonPill();
