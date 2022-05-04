@@ -145,7 +145,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     inRangeAtWorker = wrk2->getLocationWrapper()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
     EXPECT_EQ(inRangeAtWorker.at(1).first, wrk4->getWorkerId());
-    EXPECT_EQ(inRangeAtWorker.at(1).second, wrk4->getLocationWrapper()->getLocation());
+    EXPECT_EQ(inRangeAtWorker.at(1).second, *(wrk4->getLocationWrapper()->getLocation()));
 
     //when looking within a radius of 500km we will find all nodes again
     inRangeAtWorker = wrk2->getLocationWrapper()->getNodeIdsInRange(500.0);
@@ -228,8 +228,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(wrk1->getLocationWrapper()->isFieldNode(), false);
     EXPECT_EQ(wrk2->getLocationWrapper()->isFieldNode(), true);
 
-    EXPECT_EQ(wrk1->getLocationWrapper()->getLocation(), NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
-    EXPECT_EQ(wrk2->getLocationWrapper()->getLocation(), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_EQ(*(wrk1->getLocationWrapper()->getLocation()), NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
+    EXPECT_EQ(*(wrk2->getLocationWrapper()->getLocation()), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());

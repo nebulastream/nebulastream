@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Spatial/LocationProviderCSV.hpp>
+#include <Common/Location.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
@@ -45,7 +46,7 @@ LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(Index::Experimental::Location::fromString(locString), time);
+        std::pair waypoint(std::make_shared<Index::Experimental::Location>(Index::Experimental::Location::fromString(locString)), time);
         waypoints.push_back(waypoint);
     }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
@@ -54,7 +55,7 @@ LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
     nextWaypoint = waypoints.begin();
 }
 
-std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
+std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getCurrentLocation() {
     //get the time the request is made so we can compare it to the timestamps in the list of waypoints
     Timestamp requestTime = getTimestamp();
 
@@ -76,8 +77,8 @@ std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurr
 
     //if we have not reached the final position yet, we draw the path between the last waypoint we passed and the next waypoint ahead of us
     //as an s2 polyline
-    S2Point prev(S2LatLng::FromDegrees(prevWaypoint->first.getLatitude(), prevWaypoint->first.getLongitude()));
-    S2Point post(S2LatLng::FromDegrees(nextWaypoint->first.getLatitude(), nextWaypoint->first.getLongitude()));
+    S2Point prev(S2LatLng::FromDegrees(prevWaypoint->first->getLatitude(), prevWaypoint->first->getLongitude()));
+    S2Point post(S2LatLng::FromDegrees(nextWaypoint->first->getLatitude(), nextWaypoint->first->getLongitude()));
     std::vector<S2Point> pointVec;
     pointVec.push_back(prev);
     pointVec.push_back(post);
@@ -94,16 +95,17 @@ std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurr
     //we use the fraction to interpolate the point on path where the device is located if it
     //travels at constant speed from prevWaypoint to nextWaypoint
     S2LatLng resultS2(path.Interpolate(fraction));
-    Index::Experimental::Location result(resultS2.lat().degrees(), resultS2.lng().degrees());
+    //Index::Experimental::Location result(resultS2.lat().degrees(), resultS2.lng().degrees());
+    auto result = std::make_shared<Index::Experimental::Location>(resultS2.lat().degrees(), resultS2.lng().degrees());
 
     NES_TRACE("Retrieving s2-interpolated location");
-    NES_TRACE("Location: " << result.toString() << "; Time: " << prevWaypoint->second)
+    NES_TRACE("Location: " << result->toString() << "; Time: " << prevWaypoint->second)
 
     return {result, requestTime};
 #else
     //if the s2 library is not available we return the time and place of the previous waypoint as our last known position.
     NES_TRACE("S2 not used, returning most recently passed waypoint from csv")
-    NES_TRACE("Location: " << prevWaypoint->first.toString() << "; Time: " << prevWaypoint->second)
+    NES_TRACE("Location: " << prevWaypoint->first->toString() << "; Time: " << prevWaypoint->second)
     return *prevWaypoint;
 #endif
 }

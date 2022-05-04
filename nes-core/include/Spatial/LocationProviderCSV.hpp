@@ -44,7 +44,7 @@ class LocationProviderCSV : public LocationProvider {
      * most recent of the timestamps lying in the past
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation() override;
+    std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation() override;
 
     /**
      *
@@ -54,8 +54,8 @@ class LocationProviderCSV : public LocationProvider {
 
   private:
     Timestamp startTime;
-    std::vector<std::pair<Index::Experimental::Location, Timestamp>> waypoints;
-    std::vector<std::pair<Index::Experimental::Location, Timestamp>>::iterator nextWaypoint;
+    std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>> waypoints;
+    std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>::iterator nextWaypoint;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 
