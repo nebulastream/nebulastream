@@ -117,6 +117,6 @@ class LocationIndex {
     S2PointIndex<TopologyNodePtr> nodePointIndex;
 #endif
 };
-}//namespace Spatial::Mobility::Experimental
+}//namespace Spatial::Index::Experimental
 }//namespace NES
 #endif//NES_GEOLOCATION_LOCATIONINDEX_HPP

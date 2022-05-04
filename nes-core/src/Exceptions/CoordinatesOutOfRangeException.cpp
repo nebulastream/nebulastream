@@ -15,4 +15,4 @@
 
 namespace NES::Spatial::Index::Experimental {
 const char* CoordinatesOutOfRangeException::what() const noexcept { return "Invalid latitude or longitude"; }
-}// namespace NES::Spatial::Mobility::Experimental
+}// namespace NES::Spatial::Index::Experimental

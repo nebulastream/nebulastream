@@ -29,7 +29,6 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Spatial/LocationProviderCSV.hpp>
 #include <Spatial/NodeLocationWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>

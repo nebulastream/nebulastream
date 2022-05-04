@@ -41,4 +41,4 @@ namespace NES::Configurations::Spatial::Index::Experimental {
     }
     return {200, 200};
 }
-}//namespace NES::Configurations::Spatial::Mobility::Experimental
+}//namespace NES::Configurations::Spatial::Index::Experimental

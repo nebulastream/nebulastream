@@ -21,7 +21,7 @@
 namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}// namespace NES::Spatial::Mobility::Experimental
+}// namespace NES::Spatial::Index::Experimental
 
 namespace NES::Configurations::Spatial::Index::Experimental {
 
@@ -45,5 +45,5 @@ class LocationFactory {
      */
     static ::NES::Spatial::Index::Experimental::Location createFromYaml(Yaml::Node& yamlConfig);
 };
-}// namespace NES::Configurations::Spatial::Mobility::Experimental
+}// namespace NES::Configurations::Spatial::Index::Experimental
 #endif//NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP

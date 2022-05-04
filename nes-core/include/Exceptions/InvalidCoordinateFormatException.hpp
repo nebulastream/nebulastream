@@ -24,5 +24,5 @@ class InvalidCoordinateFormatException : public std::exception {
     const char* what() const noexcept;
 };
 
-}// namespace NES::Spatial::Mobility::Experimental
+}// namespace NES::Spatial::Index::Experimental
 #endif//NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP
