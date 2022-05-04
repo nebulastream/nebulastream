@@ -25,10 +25,12 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
                                                uint64_t gatheringValue,
                                                GatheringMode::Value gatheringMode,
                                                uint64_t sourceAffinity,
-                                               uint64_t taskQueueId)
-    : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
-      numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {
+                                               uint64_t taskQueueId,
+                                               std::string logicalSourceName,
+                                               std::string physicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), memoryArea(std::move(memoryArea)),
+      memoryAreaSize(memoryAreaSize), numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue),
+      gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }
 
@@ -39,7 +41,9 @@ std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const Sch
                                                                        uint64_t gatheringValue,
                                                                        GatheringMode::Value gatheringMode,
                                                                        uint64_t sourceAffinity,
-                                                                       uint64_t taskQueueId) {
+                                                                       uint64_t taskQueueId,
+                                                                       std::string logicalSourceName,
+                                                                       std::string physicalSourceName) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<MemorySourceDescriptor>(schema,
@@ -49,7 +53,9 @@ std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const Sch
                                                     gatheringValue,
                                                     gatheringMode,
                                                     sourceAffinity,
-                                                    taskQueueId);
+                                                    taskQueueId,
+                                                    logicalSourceName,
+                                                    physicalSourceName);
 }
 std::string MemorySourceDescriptor::toString() { return "MemorySourceDescriptor"; }
 
@@ -79,7 +85,11 @@ SourceDescriptorPtr MemorySourceDescriptor::copy() {
                                                memoryAreaSize,
                                                numBuffersToProcess,
                                                gatheringValue,
-                                               gatheringMode);
+                                               gatheringMode,
+                                               sourceAffinity,
+                                               taskQueueId,
+                                               logicalSourceName,
+                                               physicalSourceName);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
