@@ -158,11 +158,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
                                              Join::LogicalJoinDefinitionPtr joinDefinition,
                                              const std::vector<SourceLogicalOperatorNodePtr> sources,
                                              const std::vector<Join::JoinEdgePtr> joinEdges);
-    QueryPlanPtr buildQueryPlan( const AbstractJoinPlanOperatorPtr& leftChild,
-                                 const AbstractJoinPlanOperatorPtr& rightChild,
-                                 const Join::LogicalJoinDefinitionPtr joinDefinition,
-                                 const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                 const std::vector<Join::JoinEdgePtr> joinEdges);
+    NodePtr getPotentialParentNodes(NodePtr sharedPtr);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_

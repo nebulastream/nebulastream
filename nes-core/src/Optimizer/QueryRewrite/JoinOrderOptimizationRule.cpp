@@ -63,10 +63,15 @@ namespace NES::Optimizer {
             // print joinEdges
             NES_DEBUG(listJoinEdges(joinEdges));
 
-            // Construct dynamic programming table and retrieve best optimization order
+            // Construct dynamic programming table and retrieve the best optimization order
             AbstractJoinPlanOperatorPtr finalPlan = optimizeJoinOrder(sources, joinEdges);
 
-            // JVS to also take into account all subplans aka the extra operators, we can just retrieve from queryPlan the subplan ids.
+            // extract join order from final plan
+            std::any joinOrder = extractJoinOrder(finalPlan);
+
+            // print join order
+            std::cout << printJoinOrder(joinOrder) << std::endl;
+
             queryPlan = updateJoinOrder(queryPlan, finalPlan, sourceOperators, joinEdges);
 
             NES_DEBUG(queryPlan->toString());
@@ -352,57 +357,31 @@ namespace NES::Optimizer {
     }
 
 
-    // in-place change, because constructing a new QueryPlan is prohibited
-    // JVS Iterate through joinOrder and alter step-by-step the QueryPlan
+    // JVS note: my approach currently ignores additional filter + watermark assigner etc.
+    // Builds a new query plan based on the updated joinOrder.
     QueryPlanPtr JoinOrderOptimizationRule::updateJoinOrder(QueryPlanPtr oldPlan,
                                                             AbstractJoinPlanOperatorPtr finalPlan,
                                                             const std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
                                                             const std::vector<Join::JoinEdgePtr> joinEdges) {
-        // joinOrder = {{R, PS}, {S, PS}}
-        // joinOrder[0] = {R, PS}
-        // joinOrder[0][0] = R
-        // ignore warnins
-        NES_DEBUG(sourceOperators.size());
-        NES_DEBUG(joinEdges.size());
 
 
-        // extract join order from final plan // jvs might be irrelevant
-        std::any joinOrder = extractJoinOrder(finalPlan);
-
-        // print join ORder // JVS nice to have but also irrelevant
-        std::cout << printJoinOrder(joinOrder) << std::endl;
 
         // copy current plan
         QueryPlanPtr newPlan = oldPlan.get()->copy();
 
-        // get source nodes from plan
-        QueryPlanPtr topPlan;
-        // JVS durch Baum traversen bis source node nicht mehr nullptr ist.
-        // JVS note: my approach currently ignores additional filter + watermark assigner etc.
-
-/*        // set the root node properly
-        if (finalPlan != nullptr){
-            // additional check!
-            if (finalPlan->getLeftChild() == nullptr && finalPlan->getRightChild() == nullptr){
-                return oldPlan;
-            }else{
-                newPlan->replaceRootOperator(newPlan->getRootOperators()[0],
-                                                       std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(finalPlan->getJoinPredicate(), OperatorId())));
-            }
-        }
-
-        // we have now a new root Operator which is a join. Let's traverse the tree downwards to create children, grandchildren
-
-
-        NES_DEBUG(newPlan->toString());*/
-
+        // Check if we have a finalPlan
         JoinLogicalOperatorNodePtr topJoin;
         if (finalPlan != nullptr){
             // additional check!
             if (finalPlan->getLeftChild() == nullptr && finalPlan->getRightChild() == nullptr){
                 return oldPlan;
             }
-            topJoin = constructJoin(finalPlan->getLeftChild(), finalPlan->getRightChild(), finalPlan->getJoinPredicate(), sourceOperators, joinEdges);
+            // Recursibely construct joins based on Children nodes.
+            topJoin = constructJoin(finalPlan->getLeftChild(),
+                                    finalPlan->getRightChild(),
+                                    finalPlan->getJoinPredicate(),
+                                    sourceOperators,
+                                    joinEdges);
         } else{
             NES_DEBUG("FinalPlan is nullptr - returning old plan")
             return oldPlan;
@@ -414,6 +393,8 @@ namespace NES::Optimizer {
         return newPlan;
 
     }
+
+    // simple join order print method, which will show the proposed "optimal" join order.
     std::string JoinOrderOptimizationRule::printJoinOrder(std::any joinOrder) {
         std::stringstream ss;
         if (joinOrder.type() == typeid(std::vector<std::any>)){
@@ -431,13 +412,14 @@ namespace NES::Optimizer {
 
 
     }
-    // JVS alter this function to add nested calls as child nodes to a node. ; misses yet all other operators (!= source and join)
+
+    // Method recursively constructs join operators
+    // JVS add on source level the addition of necessary operators like WM Assigner or filter.
     JoinLogicalOperatorNodePtr JoinOrderOptimizationRule::constructJoin(const AbstractJoinPlanOperatorPtr& leftChild,
                                                                         const AbstractJoinPlanOperatorPtr& rightChild,
                                                                         Join::LogicalJoinDefinitionPtr joinDefinition,
                                                                         const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                                                        const std::vector<Join::JoinEdgePtr> joinEdges
-                                                                        ) {
+                                                                        const std::vector<Join::JoinEdgePtr> joinEdges) {
 
 
 
@@ -457,7 +439,11 @@ namespace NES::Optimizer {
             }
         } else{
             // join
-            leftJoinNode = constructJoin(leftChild->getLeftChild(), leftChild->getRightChild(), leftChild->getJoinPredicate(), sources, joinEdges);
+            leftJoinNode = constructJoin(leftChild->getLeftChild(),
+                                         leftChild->getRightChild(),
+                                         leftChild->getJoinPredicate(),
+                                         sources,
+                                         joinEdges);
         }
 
         // rightChild
@@ -473,23 +459,25 @@ namespace NES::Optimizer {
             }
         }else{
             // join
-            rightJoinNode = constructJoin(rightChild->getLeftChild(), leftChild->getRightChild(), rightChild->getJoinPredicate(), sources, joinEdges);
+            rightJoinNode = constructJoin(rightChild->getLeftChild(),
+                                          rightChild->getRightChild(),
+                                          rightChild->getJoinPredicate(),
+                                          sources,
+                                          joinEdges);
         }
 
         // List all 4 cases possible and construct respective JoinLogicalOperatorNode
-
-        Join::LogicalJoinDefinitionPtr newJoinDefinition;
         if(leftSourceNode != nullptr && rightSourceNode != nullptr){
             NES_DEBUG("Dealing with two sources: " << leftSourceNode->getSourceDescriptor()->getLogicalSourceName() << " and " << rightSourceNode->getSourceDescriptor()->getLogicalSourceName());
             // both sources
-            newJoinDefinition = joinDefinition;
-            // JVS replace later with proper Id counter
-            uint32_t id = reinterpret_cast<uint64_t>(&newJoinDefinition);
-            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, id)); // jvs how to id.
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
+
 
             // add left and right source as children to newly constructed Join.
-            join->addChild(leftSourceNode);
-            join->addChild(rightSourceNode);
+            // these sources may have additional parent nodes like a watermark assigner or a filter. by calling getPotentialParentNodes()
+            // we retrieve them and return the parent the furthest ancestor node before the join
+            join->addChild(getPotentialParentNodes(leftSourceNode ));
+            join->addChild(getPotentialParentNodes(rightSourceNode));
 
             return join;
 
@@ -499,11 +487,7 @@ namespace NES::Optimizer {
             NES_DEBUG("On The right we join field: " << rightJoinNode->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightJoinNode->getJoinDefinition()->getRightJoinKey()->getFieldName())
             // both joins
             // join of joins...
-            newJoinDefinition = joinDefinition;
-
-            // JVS construct join from newJoinDefinition and return that
-            uint32_t id = reinterpret_cast<uint64_t>(&newJoinDefinition);
-            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(newJoinDefinition, id)); // jvs how to id?
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
 
             // add left and right join to this.
             join->addChild(leftJoinNode);
@@ -515,37 +499,54 @@ namespace NES::Optimizer {
         }
             // left Join, right Source
         else if(leftJoinNode != nullptr && rightSourceNode != nullptr){
+            // jvs nicht vergessen rightSourceNode getPotentialParentNodes zu callen
+
             NES_DEBUG("Joining a left join and a right source");
             NES_DEBUG("On the left we join with the product of join : " << leftJoinNode->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << leftJoinNode->getJoinDefinition()->getRightJoinKey()->getFieldName());
             NES_DEBUG("On the right we join with " << rightSourceNode->getSourceDescriptor()->getLogicalSourceName());
+
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
+
+            // add left join and right source to this
+            join->addChild(leftJoinNode);
+            join->addChild(getPotentialParentNodes(rightSourceNode));
+
+            return join;
+
+
         }
         // left Source, right join
         else if (leftSourceNode != nullptr && rightJoinNode != nullptr){
+
             NES_DEBUG("Joining a left source and a right join");
             NES_DEBUG("On the left we join with " << leftSourceNode->getSourceDescriptor()->getLogicalSourceName());
             NES_DEBUG("On the right we join with the product of join : " << rightJoinNode->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightJoinNode->getJoinDefinition()->getRightJoinKey()->getFieldName());
+
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
+
+            // add left source and right join to this;
+            join->addChild(getPotentialParentNodes(leftSourceNode));
+            join->addChild(rightJoinNode);
+
+            return join;
         }
         else {
-            NES_DEBUG("Moinsen, bin der Markus!");
+            NES_ERROR("Join Children neither sources nor joins. Cannot optimize.");
         }
 
-
-
-        // JVS return ptr of JoinLogicalOperatorNode
         return NES::JoinLogicalOperatorNodePtr();
     }
 
-/*
-    QueryPlanPtr JoinOrderOptimizationRule::buildQueryPlan(const AbstractJoinPlanOperatorPtr& leftChild,
-                                                           const AbstractJoinPlanOperatorPtr& rightChild,
-                                                           const Join::LogicalJoinDefinitionPtr joinDefinition,
-                                                           const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                                           const std::vector<Join::JoinEdgePtr> joinEdges) {
+    NodePtr JoinOrderOptimizationRule::getPotentialParentNodes(NodePtr sharedPtr) {
 
-
-
-        return NES::QueryPlanPtr();
-    } */
-
+        NodePtr currentNodePtr = sharedPtr;
+        auto parents = currentNodePtr->getParents();
+        while(!parents[0]->instanceOf<JoinLogicalOperatorNode>()){
+            // as long as the currentNode is not a join replace it with the parent node.
+            currentNodePtr = parents[0]; // set currentNode to parentNode
+            parents = currentNodePtr->getParents(); // next parents
+        }
+        return currentNodePtr;
+    }
     }// namespace NES::Optimizer
 
