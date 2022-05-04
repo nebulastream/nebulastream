@@ -17,9 +17,9 @@
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 
-namespace NES::Configurations::Experimental::Mobility {
+namespace NES::Configurations::Spatial::Index::Experimental {
 
-::NES::Experimental::Mobility::Location LocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
+::NES::Spatial::Index::Experimental::Location LocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
     std::string coordStr;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
         if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {
@@ -30,15 +30,15 @@ namespace NES::Configurations::Experimental::Mobility {
     if (coordStr.empty()) {
         return {200, 200};
     }
-    return ::NES::Experimental::Mobility::Location::fromString(coordStr);
+    return ::NES::Spatial::Index::Experimental::Location::fromString(coordStr);
 }
 
 //TODO 2655 make this function work. it currently returns the standard value even if another value is supplied via yaml
-::NES::Experimental::Mobility::Location LocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
+::NES::Spatial::Index::Experimental::Location LocationFactory::createFromYaml(Yaml::Node& yamlConfig) {
     auto configString = yamlConfig[LOCATION_COORDINATES_CONFIG].As<std::string>();
     if (!configString.empty() && configString != "\n") {
-        return ::NES::Experimental::Mobility::Location::fromString(configString);
+        return ::NES::Spatial::Index::Experimental::Location::fromString(configString);
     }
     return {200, 200};
 }
-}//namespace NES::Configurations::Experimental::Mobility
+}//namespace NES::Configurations::Spatial::Mobility::Experimental

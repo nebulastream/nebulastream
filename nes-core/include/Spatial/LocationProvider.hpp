@@ -17,10 +17,12 @@
 #include <cstdint>
 #include <utility>
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 class Location;
-using Timestamp = uint64_t;
+}
 
+namespace NES::Spatial::Mobility::Experimental {
+using Timestamp = uint64_t;
 /**
  * @brief this class represents an interface to obtain a mobile devices current position
  */
@@ -35,8 +37,8 @@ class LocationProvider {
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual std::pair<Location, Timestamp> getCurrentLocation() = 0;
+    virtual std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation() = 0;
 };
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental
 
 #endif//NES_GEOLOCATION_LOCATIONPROVIDER_HPP

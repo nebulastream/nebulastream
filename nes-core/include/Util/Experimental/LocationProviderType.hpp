@@ -16,7 +16,7 @@
 #define NES_UTIL_EXPERIMENTAL_LOCATIONPROVIDERTYPE_HPP
 
 #include <string>
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Mobility::Experimental {
 enum class LocationProviderType {
     NONE = 0,   // no location provider
     CSV = 1,    //simulate location with coordinates read from csv

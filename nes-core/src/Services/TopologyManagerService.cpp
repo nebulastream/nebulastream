@@ -40,7 +40,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                               int64_t dataPort,
                                               uint16_t numberOfSlots,
                                               bool isMobile,
-                                              Experimental::Mobility::Location fixedCoordinates) {
+                                              Spatial::Index::Experimental::Location fixedCoordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -205,15 +205,15 @@ uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNode
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of furture movement
 
-std::vector<std::pair<TopologyNodePtr, Experimental::Mobility::Location>>
-TopologyManagerService::getNodesInRange(Experimental::Mobility::Location center, double radius) {
+std::vector<std::pair<TopologyNodePtr, Spatial::Index::Experimental::Location>>
+TopologyManagerService::getNodesInRange(Spatial::Index::Experimental::Location center, double radius) {
     return topology->getLocationIndex()->getNodesInRange(center, radius);
 }
 
-std::vector<std::pair<uint64_t, Experimental::Mobility::Location>>
-TopologyManagerService::getNodesIdsInRange(Experimental::Mobility::Location center, double radius) {
+std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>>
+TopologyManagerService::getNodesIdsInRange(Spatial::Index::Experimental::Location center, double radius) {
     auto list = getNodesInRange(center, radius);
-    std::vector<std::pair<uint64_t, Experimental::Mobility::Location>> nodeIDsInRange{};
+    std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>> nodeIDsInRange{};
     nodeIDsInRange.reserve(list.size());
     for (auto elem : list) {
         nodeIDsInRange.emplace_back(std::pair(elem.first->getId(), elem.second));

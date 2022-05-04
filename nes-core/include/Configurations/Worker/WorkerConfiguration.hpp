@@ -164,8 +164,8 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Experimental::Mobility::Location,
-               Configurations::Experimental::Mobility::LocationFactory>
+    WrapOption<NES::Spatial::Index::Experimental::Location,
+               Configurations::Spatial::Index::Experimental::LocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
@@ -178,9 +178,9 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
      * a simulation
      */
-    EnumOption<NES::Experimental::Mobility::LocationProviderType> locationSourceType = {
+    EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType> locationSourceType = {
         LOCATION_SOURCE_TYPE_CONFIG,
-        NES::Experimental::Mobility::LocationProviderType::CSV,
+        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV,
         "the kind of interface which the  mobile worker gets its geolocation info from"};
 
     /**

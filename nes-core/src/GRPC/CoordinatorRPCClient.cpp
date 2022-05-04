@@ -381,7 +381,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         const RegistrationMetrics& registrationMetrics,
-                                        Experimental::Mobility::Location fixedCoordinates,
+                                        Spatial::Index::Experimental::Location fixedCoordinates,
                                         bool isMobile) {
 
     RegisterNodeRequest request;
@@ -473,8 +473,8 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, Experimental::Mobility::Location>>
-CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::Location coord, double radius) {
+std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>>
+CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::Location coord, double radius) {
     GetNodesInRangeRequest request;
     Coordinates* pCoordinates = request.mutable_coord();
     pCoordinates->set_lat(coord.getLatitude());
@@ -485,7 +485,7 @@ CoordinatorRPCClient::getNodeIdsInRange(Experimental::Mobility::Location coord, 
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    std::vector<std::pair<uint64_t, Experimental::Mobility::Location>> nodesInRange;
+    std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>> nodesInRange;
     for (NodeGeoInfo nodeInfo : *reply.mutable_nodes()) {
         nodesInRange.emplace_back(nodeInfo.id(), nodeInfo.coord());
     }

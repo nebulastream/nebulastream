@@ -18,7 +18,7 @@
 
 class Coordinates;
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 
 /**
  * @brief a representation of geographical location used to specify the fixed location of field nodes
@@ -119,6 +119,6 @@ class Location {
     double longitude;
 };
 
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental
 
 #endif//NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_

@@ -34,10 +34,10 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 class RegistrationMetrics;
 
-namespace Experimental::Mobility {
+namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}// namespace Experimental::Mobility
+}// namespace Spatial::Mobility::Experimental
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
@@ -125,7 +125,7 @@ class CoordinatorRPCClient {
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       const RegistrationMetrics& registrationMetrics,
-                      NES::Experimental::Mobility::Location fixedCoordinates,
+                      NES::Spatial::Index::Experimental::Location fixedCoordinates,
                       bool isMobile);
 
     /**
@@ -173,8 +173,8 @@ class CoordinatorRPCClient {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding fixed coordinates as Location objects
      */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::Location>>
-    getNodeIdsInRange(NES::Experimental::Mobility::Location coord, double radius);
+    std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>>
+    getNodeIdsInRange(NES::Spatial::Index::Experimental::Location coord, double radius);
 
     /**
      * @brief method to let the Coordinator know of errors and exceptions

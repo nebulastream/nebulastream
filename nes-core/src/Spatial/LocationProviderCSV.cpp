@@ -21,7 +21,7 @@
 #include <s2/s2polyline.h>
 #endif
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Mobility::Experimental {
 
 LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
     std::string csvLine;
@@ -45,7 +45,7 @@ LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(Location::fromString(locString), time);
+        std::pair waypoint(Index::Experimental::Location::fromString(locString), time);
         waypoints.push_back(waypoint);
     }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");
@@ -54,7 +54,7 @@ LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
     nextWaypoint = waypoints.begin();
 }
 
-std::pair<Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
+std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
     //get the time the request is made so we can compare it to the timestamps in the list of waypoints
     Timestamp requestTime = getTimestamp();
 
@@ -94,7 +94,7 @@ std::pair<Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
     //we use the fraction to interpolate the point on path where the device is located if it
     //travels at constant speed from prevWaypoint to nextWaypoint
     S2LatLng resultS2(path.Interpolate(fraction));
-    Location result(resultS2.lat().degrees(), resultS2.lng().degrees());
+    Index::Experimental::Location result(resultS2.lat().degrees(), resultS2.lng().degrees());
 
     NES_TRACE("Retrieving s2-interpolated location");
     NES_TRACE("Location: " << result.toString() << "; Time: " << prevWaypoint->second)
@@ -110,4 +110,4 @@ std::pair<Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
 
 Timestamp LocationProviderCSV::getStarttime() const { return startTime; }
 
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental

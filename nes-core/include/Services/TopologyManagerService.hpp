@@ -56,7 +56,7 @@ class TopologyManagerService {
                           int64_t dataPort,
                           uint16_t numberOfSlots,
                           bool isMobile,
-                          NES::Experimental::Mobility::Location fixedCoordinates);
+                          NES::Spatial::Index::Experimental::Location fixedCoordinates);
 
     /**
     * @brief unregister an existing node
@@ -96,8 +96,8 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing a pointer to the topology node and the nodes location
      */
-    std::vector<std::pair<TopologyNodePtr, NES::Experimental::Mobility::Location>>
-    getNodesInRange(NES::Experimental::Mobility::Location center, double radius);
+    std::vector<std::pair<TopologyNodePtr, NES::Spatial::Index::Experimental::Location>>
+    getNodesInRange(NES::Spatial::Index::Experimental::Location center, double radius);
 
     /**
      * Experimental
@@ -106,8 +106,8 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location
      */
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::Location>>
-    getNodesIdsInRange(NES::Experimental::Mobility::Location center, double radius);
+    std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>>
+    getNodesIdsInRange(NES::Spatial::Index::Experimental::Location center, double radius);
 
     /**
      * Method to return the root node

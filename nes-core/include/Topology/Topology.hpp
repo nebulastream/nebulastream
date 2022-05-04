@@ -30,7 +30,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Experimental::Mobility {
+namespace Spatial::Index::Experimental {
 class LocationIndex;
 using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 }
@@ -200,7 +200,7 @@ class Topology {
      * Getter for accessing the location index linked to this topology
      * @return A smart pointer to the LocationIndex
      */
-    NES::Experimental::Mobility::LocationIndexPtr getLocationIndex();
+    NES::Spatial::Index::Experimental::LocationIndexPtr getLocationIndex();
 
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
@@ -220,7 +220,7 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
-    NES::Experimental::Mobility::LocationIndexPtr locationIndex;
+    NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
 
 };
 }// namespace NES

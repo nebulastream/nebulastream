@@ -13,6 +13,6 @@
 */
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 const char* CoordinatesOutOfRangeException::what() const noexcept { return "Invalid latitude or longitude"; }
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental
