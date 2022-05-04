@@ -127,9 +127,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNod
 #endif
 }
 
-std::vector<std::pair<TopologyNodePtr, Location>>
-LocationIndex::getNodesInRange(Location center,
-                                                                                                                double radius) {
+std::vector<std::pair<TopologyNodePtr, Location>>LocationIndex::getNodesInRange(Location center, double radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
