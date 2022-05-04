@@ -442,6 +442,107 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+TEST_F(QueryDeploymentTest, testSourceSharing) {
+    std::string markerFile = "/tmp/start.source";
+
+    const int result = std::filesystem::remove(markerFile.c_str());
+    if( result == 0 ){
+        printf( "success\n" );
+    } else {
+        printf( "%s\n", strerror( errno ) ); // No such file or directory
+    }
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    //register logical source qnv
+    //    std::string schema =
+    //        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    //    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
+
+    auto schema = Schema::create()
+                      ->addField(createField("win1", UINT64))
+                      ->addField(createField("id1", UINT64))
+                      ->addField(createField("timestamp", UINT64));
+
+    auto logicalSource = LogicalSource::create("window1", schema);
+    coordinatorConfig->logicalSources.add(logicalSource);
+
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setGatheringInterval(1000);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setNumberOfBuffersToProduce(6);
+    auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
+    workerConfig1->physicalSources.add(physicalSource1);
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfig1);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+
+    //    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    //    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    //    EXPECT_TRUE(retStart1);
+    //    NES_INFO("testSourceSharing: Worker1 started successfully");
+
+    std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
+    remove(outputFilePath1.c_str());
+
+    std::string outputFilePath2 = getTestResourceFolder() / "testOutput2.out";
+    remove(outputFilePath2.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    NES_INFO("testSourceSharing: Submit query");
+
+    string query1 =
+        R"(Query::from("window1")
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId1 =
+        queryService->validateAndQueueAddRequest(query1, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+
+    string query2 =
+        R"(Query::from("window1")
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId2 =
+        queryService->validateAndQueueAddRequest(query2, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+
+    std::ofstream output(markerFile);
+
+    //
+    string expectedContent1 = "window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER\n"
+                              "1,1,1000\n"
+                              "1,12,1001\n"
+                              "1,4,1002\n"
+                              "2,1,2000\n"
+                              "2,11,2001\n"
+                              "2,16,2002\n";
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath2));
+
+    NES_DEBUG("testSourceSharing: Remove query 1");
+    //    queryService->validateAndQueueStopRequest(queryId1);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+
+    NES_DEBUG("testSourceSharing: Remove query 2");
+    //    queryService->validateAndQueueStopRequest(queryId2);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+
+    NES_DEBUG("testSourceSharing: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_DEBUG("testSourceSharing: Test finished");
+}
+
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     struct Test {
         uint32_t id;

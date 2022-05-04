@@ -197,6 +197,12 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
 
     /**
+     * @brief Add a list of successor pipelines.
+     */
+    void addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines);
+
+
+    /**
      * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
      * @tparam Derived the class type that we want to cast the shared ptr
      * @return this instance casted to the desired shared_ptr<Derived> type

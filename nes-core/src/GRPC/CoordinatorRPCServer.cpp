@@ -92,7 +92,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
                                                                     physicalSourceDefinition.physicalsourcename(),
                                                                     physicalSourceDefinition.logicalsourcename());
         if (!success) {
-            NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource success");
+            NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource failed");
             reply->set_success(false);
             return Status::CANCELLED;
         }

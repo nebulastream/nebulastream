@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <filesystem>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -27,6 +27,12 @@
 #include <future>
 #include <iostream>
 #include <thread>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
+
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <numa.h>
@@ -39,6 +45,16 @@ namespace NES {
 
 std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
     return executableSuccessors;
+}
+
+
+void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines)
+{
+    //TODO: Make this threadsafe
+    for(auto &pipe: newPipelines)
+    {
+        executableSuccessors.push_back(pipe);
+    }
 }
 
 DataSource::DataSource(SchemaPtr pSchema,
@@ -140,7 +156,10 @@ bool DataSource::start() {
             });
         }
     }
-    thread->detach();
+    if(thread)
+    {
+        thread->detach();
+    }
     return prom.get_future().get();
 }
 
@@ -250,9 +269,6 @@ void DataSource::close() {
 }
 
 void DataSource::runningRoutine() {
-    // TODO delete this startup delay
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
     try {
         if (gatheringMode == GatheringMode::INTERVAL_MODE) {
             runningRoutineWithGatheringInterval();

@@ -17,11 +17,22 @@
 
 namespace NES {
 
-CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, CSVSourceTypePtr sourceConfig)
-    : SourceDescriptor(std::move(schema)), csvSourceType(std::move(sourceConfig)) {}
+CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
+                                         CSVSourceTypePtr sourceConfig,
+                                         std::string logicalSourceName,
+                                         std::string physicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), csvSourceType(std::move(sourceConfig)) {}
 
-SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, CSVSourceTypePtr csvSourceType) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(csvSourceType)));
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
+                                                CSVSourceTypePtr csvSourceType,
+                                                std::string logicalSourceName,
+                                                std::string physicalSourceName) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(csvSourceType), logicalSourceName, physicalSourceName));
+}
+
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
+                                                CSVSourceTypePtr csvSourceType) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(csvSourceType), "", ""));
 }
 
 CSVSourceTypePtr CsvSourceDescriptor::getSourceConfig() const { return csvSourceType; }
@@ -37,7 +48,7 @@ bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 std::string CsvSourceDescriptor::toString() { return "CsvSourceDescriptor(" + csvSourceType->toString() + ")"; }
 
 SourceDescriptorPtr CsvSourceDescriptor::copy() {
-    auto copy = CsvSourceDescriptor::create(schema->copy(), csvSourceType);
+    auto copy = CsvSourceDescriptor::create(schema->copy(), csvSourceType, logicalSourceName, physicalSourceName);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
