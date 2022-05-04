@@ -33,6 +33,8 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @param numBuffersToProduce number of buffers to produce
      * @param gatheringValue gathering value
      * @param gatheringMode gathering mode
+     * @param sourceAffinity sourceAffinity
+     * @param taskQueueId taskQueueId
      */
     explicit LambdaSourceDescriptor(
         SchemaPtr schema,

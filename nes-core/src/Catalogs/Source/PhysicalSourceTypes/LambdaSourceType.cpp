@@ -32,15 +32,13 @@ LambdaSourceTypePtr LambdaSourceType::create(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
-    const std::string& gatheringMode,
+    GatheringMode::Value gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId) {
-
-    auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
     return std::make_shared<LambdaSourceType>(LambdaSourceType(std::move(generationFunction),
                                                                numBuffersToProcess,
                                                                gatheringValue,
-                                                               gatheringModeEnum,
+                                                               gatheringMode,
                                                                sourceAffinity,
                                                                taskQueueId));
 }

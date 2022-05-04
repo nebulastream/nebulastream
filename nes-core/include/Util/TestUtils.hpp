@@ -209,6 +209,7 @@ static constexpr auto sleepDuration = std::chrono::milliseconds(250);
             case QueryStatus::SoftStopTriggered:
             case QueryStatus::Stopped:
             case QueryStatus::Running: {
+                NES_DEBUG("Query started");
                 return true;
             }
             case QueryStatus::Failed: {
@@ -334,7 +335,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
      * @param queryCatalogService: the catalog containig the queries in the system
      * @return true if successful
      */
-[[nodiscard]] bool checkStoppedOrTimeout(QueryId queryId,
+[[nodiscard]] bool heckStoppedOrTimeout(QueryId queryId,
                                          const QueryCatalogServicePtr& queryCatalogService,
                                          std::chrono::seconds timeout = defaultTimeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
@@ -366,9 +367,15 @@ template<typename Predicate = std::equal_to<uint64_t>>
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         NES_DEBUG("checkFailedOrTimeout: check query status.");
-        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
+        auto entry = queryCatalogService->getEntryForQuery(queryId);
+        if (entry->getQueryStatus() == QueryStatus::Failed) {
+            // the query failed so we return true as a failure append during execution.
             NES_DEBUG("checkStoppedOrTimeout: status reached failed");
             return true;
+        } else if (entry->getQueryStatus() == QueryStatus::Stopped) {
+            // the query already stopped so we can just leave the function and check the result.
+            NES_DEBUG("checkStoppedOrTimeout: status reached stopped");
+            return false;
         }
         NES_DEBUG("checkFailedOrTimeout: status not reached as status is="
                   << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
@@ -491,10 +498,19 @@ template<typename T>
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
         std::this_thread::sleep_for(sleepDuration);
         NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file " << outputFilePath);
+
+        auto entry = queryCatalogService->getEntryForQuery(queryId);
+        if (entry->getQueryStatus() == QueryStatus::Failed) {
+            // the query failed so we return true as a failure append during execution.
+            NES_DEBUG("checkStoppedOrTimeout: status reached failed");
+            return false;
+        }
+
+        auto isQueryStopped =  entry->getQueryStatus() == QueryStatus::Stopped;
+
+        // check if result is ready.
         std::ifstream ifs(outputFilePath);
-        if (TestUtils::checkFailedOrTimeout(queryId, queryCatalogService, std::chrono::seconds(1))) {
-            throw Exceptions::RuntimeException("Query "s + std::to_string(queryId) + " is failed");
-        } else if (ifs.good() && ifs.is_open()) {
+        if (ifs.good() && ifs.is_open()) {
             NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: file " << outputFilePath << " open and good");
             std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
             // check the length of the output file
@@ -520,11 +536,15 @@ template<typename T>
                 NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines "
                           << expectedNumberOfContent << " not reached yet with " << currentContent.size()
                           << " lines content=" << content);
-                continue;
+
             }
             NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
                       "number of content");
             return true;
+        }
+        if(isQueryStopped){
+            NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: query stopped but content not ready");
+            return false;
         }
     }
     NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: expected result not reached within set timeout content");
