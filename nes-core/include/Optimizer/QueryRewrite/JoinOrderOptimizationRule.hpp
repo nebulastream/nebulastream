@@ -101,7 +101,6 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      */
     void setCosts(AbstractJoinPlanOperatorPtr plan);
 
-    // TODO write description once you have better understanding
     /**
      * @brief for a specific level of joins (number of involved logical streams) add all possible combinations of levels
      * e.g. imagine we have consider all combination where we have 2 involved joins. We can only join them by joining sources of level 1 (base sources) with level 2 sources (already joined once)
@@ -129,6 +128,10 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      */
     bool isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved, std::set<OptimizerPlanOperatorPtr> rightInvolved, Join::JoinEdgePtr edge);
 
+    /**
+     * @brief adds hardcoded join selectivities to joinEdges
+     * @param joinEdges
+     */
     void getHardCodedJoinSelectivities(std::vector<Join::JoinEdgePtr> joinEdges);
     /**
      * @brief extracts a list of join steps of the root plan (AbstractJoinPlanOperatorPtr) in a recursive manner
@@ -138,26 +141,45 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      */
     std::any extractJoinOrder(AbstractJoinPlanOperatorPtr root);
 
-
-
     /**
      * @brief function that alters an existing query plan to become a new, updated version with the optimal join ordering according to our cost model.
      @param oldPlan - the pre-existing query plan that is copied and altered
+     @param finalPlan - the altered query plan
+     @param sourceOperators - sources of the original plan which have been derived already in an earlier step (reused here to save time)
      */
     QueryPlanPtr updateJoinOrder(QueryPlanPtr oldPlan,
                                  AbstractJoinPlanOperatorPtr finalPlan,
-                                 const std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
-                                 const std::vector<Join::JoinEdgePtr> joinEdges);
+                                 const std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
     /**
-     * provides the joinOrder in a readable string format. -- is invoked recursvely
+     * provides the joinOrder in a readable string format. -- is invoked recursively
      * @param joinOrder
      */
     std::string printJoinOrder(std::any joinOrder);
+
+    /**
+     * @brief recursively constructs JoinLogicalOperaterNodes and adding leftChild and rightChild respectively as Children.
+     * Children can be either another JoinLogicalOperatorNode or the base-case a SourceLogicalOperatorNode
+     * In case of a JoinLogicalOperatorNode we again recurse to the next level of the optimal plan and add the children.
+     * In case of a SourceLogicalOperatorNode, first, it is checked, whether in the original plan there are parent operators
+     * between the join and the source. these are then added calling getPotentialParentNodes.
+     * This method also covers cases where one child is a join and the other one a mere source.
+     * @param leftChild - leftChild of an AbstractJoinPlanOperator (join or source)
+     * @param rightChild - rightChild of an AbstractJoinPlanOperator (join or source)
+     * @param joinDefinition - Defines which attributes are to join
+     * @param sources - List of source nodes in the original queryplan which is to be exchanged be the altered one.
+     * @return
+     */
     JoinLogicalOperatorNodePtr constructJoin(const AbstractJoinPlanOperatorPtr& leftChild,
                                              const AbstractJoinPlanOperatorPtr& rightChild,
                                              Join::LogicalJoinDefinitionPtr joinDefinition,
-                                             const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                             const std::vector<Join::JoinEdgePtr> joinEdges);
+                                             const std::vector<SourceLogicalOperatorNodePtr> sources);
+
+
+    /**
+     * @brief Adds the parent nodes to a NodePtr until a JoinLogicalOperatorNode is found
+     * @param sharedPtr - usually a SourceLogicalOperatorNode
+     * @return  Topmost node in the hierarchy before a JoinLogicalOperatorNode
+     */
     NodePtr getPotentialParentNodes(NodePtr sharedPtr);
 };
 } // namespace NES::Optimizer
