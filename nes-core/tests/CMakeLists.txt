@@ -585,6 +585,11 @@ target_link_libraries(window-deployment-test nes-tests)
 add_test(NAME window-deployment-test COMMAND window-deployment-test)
 
 ### windowDeploymentTest ###
+add_executable(single-node-thread-local-tumbling-window-tests "Integration/Windowing/TumblingWindow/SingleNodeThreadLocalTumblingWindowTests.cpp")
+target_link_libraries(single-node-thread-local-tumbling-window-tests nes-tests)
+add_test(NAME single-node-thread-local-tumbling-window-tests COMMAND single-node-thread-local-tumbling-window-tests)
+
+### concurrent window deployment test ###
 add_executable(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")
 target_link_libraries(concurrent-window-deployment-test nes-tests)
 add_test(NAME concurrent-window-deployment-test COMMAND concurrent-window-deployment-test)

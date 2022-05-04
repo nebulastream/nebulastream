@@ -85,7 +85,7 @@ class TestHarness {
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1)
         : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-          memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
+          memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess),
           physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
           testHarnessResourcePath(testHarnessResourcePath) {}
 
@@ -336,9 +336,9 @@ class TestHarness {
             memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
         }
 
-        NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
-                        "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
-                            << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
+        // NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
+        //                 "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
+        //                    << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         auto memorySourceType =
             MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, "interval");
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
@@ -524,7 +524,7 @@ class TestHarness {
     uint16_t rpcPort;
     uint64_t memSrcFrequency;
     uint64_t memSrcNumBuffToProcess;
-    uint64_t bufferSize;
+  //  uint64_t bufferSize;
     NesCoordinatorPtr nesCoordinator;
     std::vector<LogicalSourcePtr> logicalSources;
     std::vector<TestHarnessWorkerConfigurationPtr> testHarnessWorkerConfigurations;

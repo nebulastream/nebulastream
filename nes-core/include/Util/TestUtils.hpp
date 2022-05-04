@@ -50,7 +50,7 @@ namespace NES {
  */
 namespace TestUtils {
 
-static constexpr auto defaultTimeout = std::chrono::seconds(60);
+static constexpr auto defaultTimeout = std::chrono::seconds(5);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 // in milliseconds
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
@@ -365,7 +365,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_DEBUG("checkFailedOrTimeout: check query status");
+        NES_DEBUG("checkFailedOrTimeout: check query status.");
         if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
             NES_DEBUG("checkStoppedOrTimeout: status reached failed");
             return true;
