@@ -26,6 +26,10 @@ namespace NES {
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
+namespace Spatial::Index::Experimental {
+using LocationPtr = std::shared_ptr<Location>;
+}
+
 /**
  * @brief This class represents information about a physical node participating in the NES infrastructure
  */
@@ -158,7 +162,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    std::optional<NES::Spatial::Index::Experimental::Location> getCoordinates();
+    NES::Spatial::Index::Experimental::LocationPtr getCoordinates();
 
     /**
      * Experimental
@@ -200,7 +204,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
-    std::optional<NES::Spatial::Index::Experimental::Location> fixedCoordinates;
+    NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
     bool isMobile;
 
     /**

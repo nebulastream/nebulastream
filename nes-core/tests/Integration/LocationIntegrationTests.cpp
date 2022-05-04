@@ -122,12 +122,12 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
     //checking coordinates
-    EXPECT_EQ(node2->getCoordinates().value(), NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092));
+    EXPECT_EQ(*(node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node3);
-    EXPECT_EQ(geoTopology->getClosestNodeTo(node4->getCoordinates().value()).value(), node4);
+    EXPECT_EQ(geoTopology->getClosestNodeTo(*(node4->getCoordinates())).value(), node4);
     geoTopology->updateFieldNodeCoordinates(node2, NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node2);
-    EXPECT_EQ(node2->getCoordinates().value(), NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
+    EXPECT_EQ(*(node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
     auto inRange =
@@ -240,8 +240,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(node1->isFieldNode(), false);
     EXPECT_EQ(node2->isFieldNode(), true);
 
-    EXPECT_EQ(node1->getCoordinates(), nullopt);
-    EXPECT_EQ(node2->getCoordinates(), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_FALSE(node1->getCoordinates());
+    EXPECT_EQ(*(node2->getCoordinates()), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);

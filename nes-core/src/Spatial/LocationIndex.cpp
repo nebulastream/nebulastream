@@ -54,12 +54,12 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
 
 bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 #ifdef S2DEF
-    auto geoLocOpt = node->getCoordinates();
-    if (!geoLocOpt.has_value()) {
+    auto geoLocPtr = node->getCoordinates();
+    if (!geoLocPtr) {
         NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
         return false;
     }
-    auto geoLoc = geoLocOpt.value();
+    auto geoLoc = *geoLocPtr;
     S2Point point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude()));
     nodePointIndex.Remove(point, node);
     return true;
@@ -90,14 +90,14 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const Location& g
 
 std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
-    auto GeoLocOpt = nodePtr->getCoordinates();
+    auto GeoLocPtr = nodePtr->getCoordinates();
 
-    if (!GeoLocOpt.has_value()) {
+    if (!GeoLocPtr) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");
         return {};
     }
 
-    auto geoLoc = GeoLocOpt.value();
+    auto geoLoc = *GeoLocPtr;
 
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));

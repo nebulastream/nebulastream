@@ -126,9 +126,9 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-bool TopologyNode::isFieldNode() { return fixedCoordinates.has_value(); }
+bool TopologyNode::isFieldNode() { return (bool) fixedCoordinates; }
 
-std::optional<Spatial::Index::Experimental::Location> TopologyNode::getCoordinates() {
+Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
     if (isMobile) {
         //todo issue #2722: return the current location of the mobile node
         return {};
@@ -140,7 +140,9 @@ void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
     setFixedCoordinates(Spatial::Index::Experimental::Location(latitude, longitude));
 }
 
-void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location geoLoc) { fixedCoordinates = geoLoc; }
+void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location geoLoc) {
+    fixedCoordinates = std::make_shared<Spatial::Index::Experimental::Location>(geoLoc);
+}
 
 void TopologyNode::setMobile(bool isMobile) { this->isMobile = isMobile; }
 
