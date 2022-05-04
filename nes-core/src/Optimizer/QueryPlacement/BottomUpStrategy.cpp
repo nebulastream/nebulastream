@@ -26,6 +26,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+#include "Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp"
+#include "Topology/TopologyNodeId.hpp"
+#include "Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp"
 
 namespace NES::Optimizer {
 
@@ -45,7 +48,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                  FaultToleranceType faultToleranceType,
                                                  LineageType lineageType,
                                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamOperators, [[maybe_unused]] bool partialPlacement) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed
@@ -77,16 +80,19 @@ void BottomUpStrategy::performOperatorPlacement(QueryId queryId,
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
 
         // 1. If pinned up stream node was already placed then place all its downstream operators
-        if (pinnedUpStreamOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedUpStreamOperator->getProperty(PLACED))) {
+        if (pinnedUpStreamOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedUpStreamOperator->getProperty(PLACED))) { //When would this be the case? BottomUp this would never happen?
             //Fetch the execution node storing the operator
             operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
-                placeOperator(queryId, downStreamNode->as<OperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators);
+                if(pinnedUpStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<NetworkSinkDescriptor>()){
+                    candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
+                }
+                placeOperator(queryId, downStreamNode->as<OperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators); //take exe node of where the OP is placed and try to place downstrea OP on it
             }
         } else {// 2. If pinned operator is not placed then start by placing the operator
             if (candidateTopologyNode->getAvailableResources() == 0
-                && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
+                && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) { //why is this second case neccesary
                 NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
                 throw log4cxx::helpers::Exception(
                     "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
@@ -102,20 +108,21 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
                                      TopologyNodePtr candidateTopologyNode,
                                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
+    if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) { //how can you reach an operator that has already been placed?
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
         return;
     }
 
-    if (!operatorToExecutionNodeMap.contains(operatorNode->getId())) {
+    if (!operatorToExecutionNodeMap.contains(operatorNode->getId())) { //how is this different from an OP already being placed? If its on an execution node, it is placed. Logically this doesnt make sense to me
 
         NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
-        if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>())
+        if ((operatorNode->hasMultipleChildrenOrParents() && !operatorNode->instanceOf<SourceLogicalOperatorNode>()) //describe in english what this means and when it would happen
             || operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
             NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
             //Check if all children operators already placed
             NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");
-            std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
+            std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode); //here we use the word placed to mean found on an execution node, which above we apparently dont?
+            //if we have a sink, make sure all children are placed. If not, return
             if (childTopologyNodes.empty()) {
                 NES_WARNING(
                     "BottomUpStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are placed.");
@@ -190,7 +197,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
         auto operatorCopy = operatorNode->copy();
         if (candidateQueryPlan->getRootOperators().empty()) {
             candidateQueryPlan->appendOperatorAsNewRoot(operatorCopy);
-        } else {
+        } else { // explain this loop, what is the purpose of this?
             auto children = operatorNode->getChildren();
             for (const auto& child : children) {
                 auto rootOperators = candidateQueryPlan->getRootOperators();
@@ -233,7 +240,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
         NES_DEBUG("BottomUpStrategy: Reducing the node remaining CPU capacity by 1");
         // Reduce the processing capacity by 1
         // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
-        candidateTopologyNode->reduceResources(1);
+        candidateTopologyNode->reduceResources(1); //doesnt this reduce capacity by two effectively?
         topology->reduceResources(candidateTopologyNode->getId(), 1);
     } else {
         candidateTopologyNode = operatorToExecutionNodeMap[operatorNode->getId()]->getTopologyNode();
@@ -245,7 +252,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
                                                                 return pinnedDownStreamOperator->getId() == operatorNode->getId();
                                                             });
 
-    if (isOperatorAPinnedDownStreamOperator != pinnedDownStreamOperators.end()) {
+    if (isOperatorAPinnedDownStreamOperator != pinnedDownStreamOperators.end()) { //all this really means, is there are no more parent OP to place??
         NES_DEBUG("BottomUpStrategy: Found pinned downstream operator. Skipping placement of further operators.");
         return;
     }

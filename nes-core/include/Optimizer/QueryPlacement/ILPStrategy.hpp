@@ -47,7 +47,8 @@ class ILPStrategy : public BasePlacementStrategy {
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes,
+                                   bool partialPlacement = false) override;
 
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                            TopologyPtr topology,

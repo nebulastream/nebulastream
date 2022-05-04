@@ -47,7 +47,8 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                 FaultToleranceType faultToleranceType,
                                                 LineageType lineageType,
                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                                const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                                const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                                [[maybe_unused]] bool partialPlacement) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Find the path where operators need to be placed

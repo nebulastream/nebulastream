@@ -335,7 +335,8 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
                                             FaultToleranceType /*faultToleranceType*/,
                                             LineageType /*lineageType*/,
                                             const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
-                                            const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
+                                            const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/,
+                                            bool /*partialPlacement*/) {
     NES_NOT_IMPLEMENTED();
 }
 

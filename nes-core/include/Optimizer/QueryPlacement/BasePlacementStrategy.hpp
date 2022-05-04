@@ -120,7 +120,8 @@ class BasePlacementStrategy {
                                            FaultToleranceType faultToleranceType,
                                            LineageType lineageType,
                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                           const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
+                                           const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                           bool partialPlacement = false) = 0;
 
     /**
      * @brief Sets pinned node to the operator's property
