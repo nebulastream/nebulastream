@@ -18,6 +18,8 @@ on:
       - synchronize
       - opened
       - reopened
+    branches:
+      - master
     paths-ignore:
       - nes-core/include/Version/version.hpp
       - README.md
