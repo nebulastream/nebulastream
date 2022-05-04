@@ -31,9 +31,9 @@ namespace NES {
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-namespace Experimental::Mobility {
-class LocationService;
-using LocationServicePtr = std::shared_ptr<LocationService>;
+namespace Spatial::Mobility::Experimental {
+class NodeLocationWrapper;
+using NodeLocationWrapperPtr = std::shared_ptr<NodeLocationWrapper>;
 }
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
@@ -64,7 +64,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
   private:
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
-    NES::Experimental::Mobility::LocationServicePtr locationService;
+    NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
 };
 
 }// namespace NES

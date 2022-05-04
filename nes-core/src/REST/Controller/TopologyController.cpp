@@ -192,11 +192,11 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
         currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
         currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
         if (!currentNode->isMobileNode()) {
-            std::optional<Experimental::Mobility::Location> locOpt = currentNode->getCoordinates();
-            if (locOpt.has_value()) {
+            Spatial::Index::Experimental::LocationPtr locPtr = currentNode->getCoordinates();
+            if (locPtr) {
                 auto arrJson = web::json::value::array(2);
-                arrJson[0] = locOpt->getLatitude();
-                arrJson[1] = locOpt->getLongitude();
+                arrJson[0] = locPtr->getLatitude();
+                arrJson[1] = locPtr->getLongitude();
                 currentNodeJsonValue["location"] = arrJson;
             } else {
                 currentNodeJsonValue["location"] = web::json::value::null();
