@@ -15,7 +15,7 @@
 #define NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP
 #include <exception>
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 
 /**
  * @brief an exception indicating that the entered string is not of the format "<double>, <double>"
@@ -24,5 +24,5 @@ class InvalidCoordinateFormatException : public std::exception {
     const char* what() const noexcept;
 };
 
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental
 #endif//NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP

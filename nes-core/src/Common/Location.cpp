@@ -19,7 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 
 Location::Location() {
     latitude = std::numeric_limits<double>::quiet_NaN();
@@ -90,4 +90,4 @@ bool Location::checkValidityOfCoordinates(double latitude, double longitude) {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
 
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental

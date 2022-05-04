@@ -16,11 +16,11 @@
 #include <Spatial/NodeLocationWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Mobility::Experimental {
 
-NodeLocationWrapper::NodeLocationWrapper(bool isMobile, Location fieldNodeLoc ) {
+NodeLocationWrapper::NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc ) {
     this->isMobile = isMobile;
-    this->fixedLocationCoordinates = std::make_shared<Location>(fieldNodeLoc);
+    this->fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(fieldNodeLoc);
 }
 
 bool NodeLocationWrapper::createLocationProvider(LocationProviderType type, std::string config) {
@@ -51,15 +51,15 @@ bool NodeLocationWrapper::isFieldNode() { return fixedLocationCoordinates->isVal
 
 bool NodeLocationWrapper::isMobileNode() const { return isMobile; };
 
-bool NodeLocationWrapper::setFixedLocationCoordinates(const Location& geoLoc) {
+bool NodeLocationWrapper::setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc) {
     if (isMobile) {
         return false;
     }
-    fixedLocationCoordinates = std::make_shared<Location>(geoLoc);
+    fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(geoLoc);
     return true;
 }
 
-Location NodeLocationWrapper::getLocation() {
+Index::Experimental::Location NodeLocationWrapper::getLocation() {
     if (isMobile) {
         if (locationProvider) {
             return locationProvider->getCurrentLocation().first;
@@ -71,11 +71,11 @@ Location NodeLocationWrapper::getLocation() {
     return *fixedLocationCoordinates;
 }
 
-std::vector<std::pair<uint64_t, Location>> NodeLocationWrapper::getNodeIdsInRange(Location coord, double radius) {
+std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrapper::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 
-std::vector<std::pair<uint64_t, Location>> NodeLocationWrapper::getNodeIdsInRange(double radius) {
+std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrapper::getNodeIdsInRange(double radius) {
     auto coord = getLocation();
     if (coord.isValid()) {
         return getNodeIdsInRange(coord, radius);
@@ -83,4 +83,4 @@ std::vector<std::pair<uint64_t, Location>> NodeLocationWrapper::getNodeIdsInRang
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};
 }
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental

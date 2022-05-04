@@ -24,7 +24,7 @@
 
 namespace NES {
 
-Topology::Topology() : rootNode(nullptr), locationIndex(std::make_shared<NES::Experimental::Mobility::LocationIndex>()) {}
+Topology::Topology() : rootNode(nullptr), locationIndex(std::make_shared<NES::Spatial::Index::Experimental::LocationIndex>()) {}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
@@ -602,7 +602,7 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
     return nullptr;
 }
 
-NES::Experimental::Mobility::LocationIndexPtr Topology::getLocationIndex() {
+NES::Spatial::Index::Experimental::LocationIndexPtr Topology::getLocationIndex() {
     return locationIndex;
 }
 }// namespace NES

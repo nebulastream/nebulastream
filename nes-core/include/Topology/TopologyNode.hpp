@@ -158,7 +158,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    std::optional<NES::Experimental::Mobility::Location> getCoordinates();
+    std::optional<NES::Spatial::Index::Experimental::Location> getCoordinates();
 
     /**
      * Experimental
@@ -175,7 +175,7 @@ class TopologyNode : public Node {
      * @param geoLoc: the Geographical location of the node
      * @return true on success
      */
-    void setFixedCoordinates(NES::Experimental::Mobility::Location geoLoc);
+    void setFixedCoordinates(NES::Spatial::Index::Experimental::Location geoLoc);
 
     /**
      * Experimental
@@ -200,7 +200,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
-    std::optional<NES::Experimental::Mobility::Location> fixedCoordinates;
+    std::optional<NES::Spatial::Index::Experimental::Location> fixedCoordinates;
     bool isMobile;
 
     /**

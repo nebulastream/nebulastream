@@ -60,7 +60,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationService(std::make_shared<NES::Experimental::Mobility::NodeLocationWrapper>(workerConfig->isMobile, workerConfig->locationCoordinates)),
+      locationWrapper(std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile, workerConfig->locationCoordinates)),
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
       enableMonitoring(workerConfig->enableMonitoring.getValue()),
       numberOfQueues(workerConfig->numberOfQueues.getValue()),
@@ -215,10 +215,10 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
-    if (locationService->isMobileNode()) {
+    if (locationWrapper->isMobileNode()) {
         NES_DEBUG("Creating location source");
         bool success =
-            locationService->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
+            locationWrapper->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
 
         NES_DEBUG("create location source= " << success);
         NES_ASSERT(success, "cannot create location source");
@@ -289,7 +289,7 @@ bool NesWorker::connect() {
     std::string address = coordinatorIp + ":" + std::to_string(coordinatorPort);
 
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
-    locationService->setCoordinatorRPCClient(coordinatorRpcClient);
+    locationWrapper->setCoordinatorRPCClient(coordinatorRpcClient);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
 
@@ -300,8 +300,8 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  numberOfSlots,
                                                                  registrationMetrics,
-                                                                 locationService->getLocation(),
-                                                                 locationService->isMobileNode());
+                                                                 locationWrapper->getLocation(),
+                                                                 locationWrapper->isMobileNode());
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
@@ -502,8 +502,8 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-NES::Experimental::Mobility::LocationServicePtr NesWorker::getLocationIndex() {
-    return locationService;
+NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr NesWorker::getLocationWrapper() {
+    return locationWrapper;
 }
 
 

@@ -24,15 +24,17 @@ class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 }
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
+}
+namespace NES::Spatial::Mobility::Experimental {
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class NodeLocationWrapper {
   public:
 
-    explicit NodeLocationWrapper( bool isMobile, Location fieldNodeLoc);
+    explicit NodeLocationWrapper( bool isMobile, Index::Experimental::Location fieldNodeLoc);
 
     /**
      * Experimental
@@ -67,7 +69,7 @@ class NodeLocationWrapper {
      * containing a nullopt_t if the node does not have a location
      * @return optional containing the Location
      */
-    Location getLocation();
+    Index::Experimental::Location getLocation();
 
     /**
      * Experimental
@@ -76,7 +78,7 @@ class NodeLocationWrapper {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, Location>> getNodeIdsInRange(Location coord, double radius);
+    std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(Index::Experimental::Location coord, double radius);
 
     /**
      * Experimental
@@ -84,21 +86,21 @@ class NodeLocationWrapper {
      * @param radius = radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, Location>> getNodeIdsInRange(double radius);
+    std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(double radius);
 
     /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
      * @param geoLoc: The new fixed Location to be set
      * @return success of operation
      */
-    bool setFixedLocationCoordinates(const Location& geoLoc);
+    bool setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc);
 
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    LocationPtr fixedLocationCoordinates;
+    Index::Experimental::LocationPtr fixedLocationCoordinates;
     bool isMobile;
     LocationProviderPtr locationProvider;
 };
 
-}//namespace NES::Experimental::Mobility
+}//namespace NES::Spatial::Mobility::Experimental
 #endif//NES_GEOLOCATION_LOCATIONSERVICE_HPP

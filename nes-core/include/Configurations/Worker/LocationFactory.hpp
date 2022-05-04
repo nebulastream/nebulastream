@@ -18,12 +18,12 @@
 #include <memory>
 #include <string>
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental
 
-namespace NES::Configurations::Experimental::Mobility {
+namespace NES::Configurations::Spatial::Index::Experimental {
 
 class LocationFactory {
 
@@ -35,7 +35,7 @@ class LocationFactory {
      * if the string was empty
      */
 
-    static ::NES::Experimental::Mobility::Location createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
+    static ::NES::Spatial::Index::Experimental::Location createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief obtains a Geographical location objects from yaml config
@@ -43,7 +43,7 @@ class LocationFactory {
      * @return A geographical location with the coordinates from the config entry, or <200, 200> (representing invalid coordinates)
      * if the string was empty
      */
-    static ::NES::Experimental::Mobility::Location createFromYaml(Yaml::Node& yamlConfig);
+    static ::NES::Spatial::Index::Experimental::Location createFromYaml(Yaml::Node& yamlConfig);
 };
-}// namespace NES::Configurations::Experimental::Mobility
+}// namespace NES::Configurations::Spatial::Mobility::Experimental
 #endif//NES_CONFIGURATIONS_WORKER_LOCATIONFACTORY_HPP

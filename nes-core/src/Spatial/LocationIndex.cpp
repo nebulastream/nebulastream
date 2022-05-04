@@ -19,7 +19,7 @@
 #include <s2/s2latlng.h>
 #endif
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Index::Experimental {
 
 LocationIndex::LocationIndex() = default;
 

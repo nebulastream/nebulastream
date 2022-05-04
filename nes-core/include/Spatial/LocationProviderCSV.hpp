@@ -18,7 +18,7 @@
 #include <Spatial/LocationProvider.hpp>
 #include <vector>
 
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Mobility::Experimental {
 
 /**
  * @brief this class reads locations and timestamps from a csv file and simulates the behaviour of a geolocation interface
@@ -44,7 +44,7 @@ class LocationProviderCSV : public LocationProvider {
      * most recent of the timestamps lying in the past
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    std::pair<Location, Timestamp> getCurrentLocation() override;
+    std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation() override;
 
     /**
      *
@@ -54,9 +54,9 @@ class LocationProviderCSV : public LocationProvider {
 
   private:
     Timestamp startTime;
-    std::vector<std::pair<Location, Timestamp>> waypoints;
-    std::vector<std::pair<Location, Timestamp>>::iterator nextWaypoint;
+    std::vector<std::pair<Index::Experimental::Location, Timestamp>> waypoints;
+    std::vector<std::pair<Index::Experimental::Location, Timestamp>>::iterator nextWaypoint;
 };
-}// namespace NES::Experimental::Mobility
+}// namespace NES::Spatial::Mobility::Experimental
 
 #endif//NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP

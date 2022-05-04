@@ -41,7 +41,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->dataport(),
                                                   request->numberofslots(),
                                                   request->ismobile(),
-                                                  NES::Experimental::Mobility::Location(request->coordinates()));
+                                                  NES::Spatial::Index::Experimental::Location(request->coordinates()));
     } else {
         /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
         of geographical location */
@@ -50,7 +50,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->dataport(),
                                                   request->numberofslots(),
                                                   request->ismobile(),
-                                                  NES::Experimental::Mobility::Location());
+                                                  NES::Spatial::Index::Experimental::Location());
     }
 
     auto registrationMetrics =
@@ -238,8 +238,8 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
-    std::vector<std::pair<uint64_t, NES::Experimental::Mobility::Location>> inRange =
-        topologyManagerService->getNodesIdsInRange(NES::Experimental::Mobility::Location(request->coord()),
+    std::vector<std::pair<uint64_t, NES::Spatial::Index::Experimental::Location>> inRange =
+        topologyManagerService->getNodesIdsInRange(NES::Spatial::Index::Experimental::Location(request->coord()),
                                                    request->radius());
 
     for (auto elem : inRange) {

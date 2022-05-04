@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Util/Experimental/LocationProviderType.hpp>
-namespace NES::Experimental::Mobility {
+namespace NES::Spatial::Mobility::Experimental {
 LocationProviderType stringToLocationProviderType(const std::string providerTypeString) {
     if (providerTypeString == "NONE") {
         return LocationProviderType::NONE;

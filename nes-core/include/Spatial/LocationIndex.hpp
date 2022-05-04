@@ -28,7 +28,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-namespace Experimental::Mobility {
+namespace Spatial::Index::Experimental {
 
 const int DEFAULT_SEARCH_RADIUS = 50;
 class Location;
@@ -117,6 +117,6 @@ class LocationIndex {
     S2PointIndex<TopologyNodePtr> nodePointIndex;
 #endif
 };
-}//namespace Experimental::Mobility
+}//namespace Spatial::Mobility::Experimental
 }//namespace NES
 #endif//NES_GEOLOCATION_LOCATIONINDEX_HPP
