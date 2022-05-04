@@ -16,9 +16,11 @@
 
 #include <cstdint>
 #include <utility>
+#include <memory>
 
 namespace NES::Spatial::Index::Experimental {
 class Location;
+using LocationPtr = std::shared_ptr<Location>;
 }
 
 namespace NES::Spatial::Mobility::Experimental {
@@ -37,7 +39,7 @@ class LocationProvider {
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation() = 0;
+    virtual std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation() = 0;
 };
 }// namespace NES::Spatial::Mobility::Experimental
 

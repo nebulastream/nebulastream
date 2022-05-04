@@ -59,7 +59,7 @@ bool NodeLocationWrapper::setFixedLocationCoordinates(const Index::Experimental:
     return true;
 }
 
-Index::Experimental::Location NodeLocationWrapper::getLocation() {
+Index::Experimental::LocationPtr NodeLocationWrapper::getLocation() {
     if (isMobile) {
         if (locationProvider) {
             return locationProvider->getCurrentLocation().first;
@@ -68,7 +68,7 @@ Index::Experimental::Location NodeLocationWrapper::getLocation() {
         NES_WARNING("Node is mobile but does not have a location source");
         return {};
     }
-    return *fixedLocationCoordinates;
+    return fixedLocationCoordinates;
 }
 
 std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrapper::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
@@ -77,8 +77,8 @@ std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrap
 
 std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrapper::getNodeIdsInRange(double radius) {
     auto coord = getLocation();
-    if (coord.isValid()) {
-        return getNodeIdsInRange(coord, radius);
+    if (coord->isValid()) {
+        return getNodeIdsInRange(*coord, radius);
     }
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};

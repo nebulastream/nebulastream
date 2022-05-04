@@ -69,7 +69,7 @@ class NodeLocationWrapper {
      * containing a nullopt_t if the node does not have a location
      * @return optional containing the Location
      */
-    Index::Experimental::Location getLocation();
+    Index::Experimental::LocationPtr getLocation();
 
     /**
      * Experimental
