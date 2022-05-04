@@ -1131,7 +1131,7 @@ class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStag
                     pyArgs = PyTuple_New(1);
                     pyValue = PyLong_FromLong(record[i].test$value);
                     if (!pyValue) {
-                        Py_Finalize(); // Frees all memory allocated
+                        Py_Finalize();// Frees all memory allocated
                         NES_ERROR("Unable to convert value");
                         return ExecutionResult::Error;
                     }
