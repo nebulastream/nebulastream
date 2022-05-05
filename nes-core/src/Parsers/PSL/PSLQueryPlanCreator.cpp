@@ -12,6 +12,9 @@
     limitations under the License.
 */
 #include <Parsers/PSL/PSLQueryPlanCreator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES::Parsers {
 
@@ -164,10 +167,17 @@ void PSLQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext* c
     */
 void PSLQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context) {
     const std::vector<NES::OperatorNodePtr>& rootOperators = query.getQueryPlan()->getRootOperators();
-
+    // TODO check if this code works and results in the desired query plan.
+    // Furthermore I'm not sure if it is supported by the backend.
     for (std::shared_ptr<NES::SinkDescriptor> tmpItr : sinks) {
-        std::shared_ptr<NES::SinkDescriptor> sink = tmpItr;
-        query.multipleSink(sink, rootOperators);
+        std::shared_ptr<NES::SinkDescriptor> sinkDescriptor = tmpItr;
+        OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
+
+        for (auto &rootOperator : rootOperators){
+            op->addChild(rootOperator);
+            query.getQueryPlan()->removeAsRootOperator(rootOperator);
+        }
+        query.getQueryPlan()->addRootOperator(op);
     }
     NesCEPBaseListener::exitSinkList(context);
 }
