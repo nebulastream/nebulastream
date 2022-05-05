@@ -50,25 +50,14 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
-    : workerConfig(workerConfig), coordinatorIp(workerConfig->coordinatorIp.getValue()),
-      localWorkerIp(workerConfig->localWorkerIp.getValue()), workerToCoreMapping(workerConfig->workerPinList.getValue()),
-      queuePinList(workerConfig->queuePinList.getValue()), coordinatorPort(workerConfig->coordinatorPort.getValue()),
-      localWorkerRpcPort(workerConfig->rpcPort.getValue()), localWorkerZmqPort(workerConfig->dataPort.getValue()),
-      numberOfSlots(workerConfig->numberOfSlots.getValue()), numWorkerThreads(workerConfig->numWorkerThreads.getValue()),
-      numberOfBuffersInGlobalBufferManager(workerConfig->numberOfBuffersInGlobalBufferManager.getValue()),
-      numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
-      numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
-      bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationWrapper(
-          std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
-                                                                                      workerConfig->locationCoordinates)),
-      queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
-      enableMonitoring(workerConfig->enableMonitoring.getValue()), numberOfQueues(workerConfig->numberOfQueues.getValue()),
-      numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
-      queryManagerMode(workerConfig->queryManagerMode.getValue()) {
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
-    NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
+    NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
+    rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
+    locationWrapper =
+        std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
+                                                                                    workerConfig->locationCoordinates);
 }
 
 NesWorker::~NesWorker() { stop(true); }
@@ -136,54 +125,27 @@ uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking "
-              << blocking << " coordinatorIp=" << coordinatorIp << " coordinatorPort=" << coordinatorPort << " localWorkerIp="
-              << localWorkerIp << " localWorkerRpcPort=" << localWorkerRpcPort << " localWorkerZmqPort=" << localWorkerZmqPort);
+              << blocking << " coordinatorIp=" << workerConfig->coordinatorIp.getValue() << " coordinatorPort="
+              << workerConfig->coordinatorPort.getValue() << " localWorkerIp=" << workerConfig->localWorkerIp.getValue()
+              << " localWorkerRpcPort=" << localWorkerRpcPort << " localWorkerZmqPort=" << workerConfig->dataPort.getValue());
     NES_DEBUG("NesWorker::start: start Runtime");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
-    std::vector<PhysicalSourcePtr> physicalSources;
-    for (auto physicalSource : workerConfig->physicalSources.getValues()) {
-        physicalSources.push_back(physicalSource);
-    }
-
     try {
-        auto workerConfigurations = WorkerConfiguration::create();
-        workerConfigurations->localWorkerIp.setValue(localWorkerIp);
-        workerConfigurations->dataPort.setValue(localWorkerZmqPort);
-        for (auto source : physicalSources)
-            workerConfigurations->physicalSources.add(source);
-        workerConfigurations->numWorkerThreads.setValue(numWorkerThreads);
-        workerConfigurations->bufferSizeInBytes.setValue(bufferSizeInBytes);
-        workerConfigurations->numberOfBuffersInGlobalBufferManager.setValue(numberOfBuffersInGlobalBufferManager);
-        workerConfigurations->numberOfBuffersInSourceLocalBufferPool.setValue(numberOfBuffersInSourceLocalBufferPool);
-        workerConfigurations->numberOfBuffersPerWorker.setValue(numberOfBuffersPerWorker);
-        workerConfigurations->queryCompiler.compilationStrategy.setValue(queryCompilerConfiguration.compilationStrategy);
-        workerConfigurations->queryCompiler.outputBufferOptimizationLevel.setValue(
-            queryCompilerConfiguration.outputBufferOptimizationLevel);
-        workerConfigurations->queryCompiler.pipeliningStrategy.setValue(queryCompilerConfiguration.pipeliningStrategy);
-        workerConfigurations->queryCompiler.windowingStrategy.setValue(queryCompilerConfiguration.windowingStrategy);
-        workerConfigurations->numaAwareness.setValue(enableNumaAwareness);
-        workerConfigurations->workerPinList.setValue(workerToCoreMapping);
-        workerConfigurations->numberOfQueues.setValue(numberOfQueues);
-        workerConfigurations->numberOfThreadsPerQueue.setValue(numberOfThreadsPerQueue);
-        workerConfigurations->queryManagerMode.setValue(queryManagerMode);
-
-        nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
-                         .setQueryStatusListener(this->inherited0::shared_from_this())
-                         .build();
+        nodeEngine =
+            Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
 
         NES_DEBUG("NesWorker: Node engine started successfully");
-        monitoringAgent = MonitoringAgent::create(enableMonitoring);
-        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << enableMonitoring);
+        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
+        monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
         throw log4cxx::helpers::Exception("NesWorker error while starting node engine");
     }
 
-    rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
     NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address=" << rpcAddress << ":"
                                                                                             << localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
@@ -194,7 +156,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: buildAndStartGRPCServer: end listening");
     }));
     localWorkerRpcPort.store(promRPC->get_future().get());
-    rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort.load());
+    rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
     NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":"
                                                                                           << localWorkerRpcPort.load());
     if (withConnect) {
@@ -203,7 +165,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("connected= " << con);
         NES_ASSERT(con, "cannot connect");
     }
-    if (!workerConfig->physicalSources.getValues().empty()) {
+
+    auto configPhysicalSources = workerConfig->physicalSources.getValues();
+    if (!configPhysicalSources.empty()) {
+        std::vector<PhysicalSourcePtr> physicalSources;
+        for (auto physicalSource : configPhysicalSources) {
+            physicalSources.push_back(physicalSource);
+        }
         NES_DEBUG("NesWorker: start with register source");
         bool success = registerPhysicalSources(physicalSources);
         NES_DEBUG("registered= " << success);
@@ -286,19 +254,18 @@ bool NesWorker::stop(bool) {
 }
 
 bool NesWorker::connect() {
-    std::string address = coordinatorIp + ":" + std::to_string(coordinatorPort);
-
-    coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
+    std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
+    coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
     locationWrapper->setCoordinatorRPCClient(coordinatorRpcClient);
-    std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
+    std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
 
-    NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
+    NES_DEBUG("NesWorker::connect() with server coordinatorAddress= " << coordinatorAddress << " localaddress=" << localAddress);
 
-    bool successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
+    bool successPRCRegister = coordinatorRpcClient->registerNode(workerConfig->localWorkerIp.getValue(),
                                                                  localWorkerRpcPort.load(),
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
-                                                                 numberOfSlots,
+                                                                 workerConfig->numberOfSlots,
                                                                  registrationMetrics,
                                                                  *(locationWrapper->getLocation()),
                                                                  locationWrapper->isMobileNode());

@@ -245,42 +245,23 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     void handleRpcs(WorkerRPCServer& service);
 
+    const Configurations::WorkerConfigurationPtr workerConfig;
+    std::atomic<uint16_t> localWorkerRpcPort;
+    std::string rpcAddress;
+    NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
+    std::atomic<bool> isRunning{false};
+    TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
+    HealthCheckServicePtr healthCheckService;
+
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
-
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    const Configurations::WorkerConfigurationPtr workerConfig;
     std::atomic<bool> connected{false};
     bool withParent{false};
     uint32_t parentId;
-    std::string rpcAddress;
-    std::string coordinatorIp;
-    std::string localWorkerIp;
-    std::string workerToCoreMapping;
-    std::string queuePinList;
-    uint16_t coordinatorPort;
-    std::atomic<uint16_t> localWorkerRpcPort;
-    uint16_t localWorkerZmqPort;
-    uint16_t numberOfSlots;
-    uint16_t numWorkerThreads;
-    uint32_t numberOfBuffersInGlobalBufferManager;
-    uint32_t numberOfBuffersPerWorker;
-    uint32_t numberOfBuffersInSourceLocalBufferPool;
-    uint64_t bufferSizeInBytes;
-
-    NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
-    Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
-    bool enableNumaAwareness{false};
-    bool enableMonitoring;
-    uint64_t numberOfQueues;
-    uint64_t numberOfThreadsPerQueue;
-    Runtime::QueryExecutionMode queryManagerMode;
-    std::atomic<bool> isRunning{false};
-    TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
-    HealthCheckServicePtr healthCheckService;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
