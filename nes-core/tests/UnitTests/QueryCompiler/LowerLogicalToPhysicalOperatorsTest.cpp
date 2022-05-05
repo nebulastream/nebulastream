@@ -412,15 +412,12 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleJoinQuery) {
 TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleBatchJoinQuery) {
     Experimental::BatchJoinLogicalOperatorNodePtr batchJoinOp1;
     {
-        auto joinType = Join::Experimental::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
-
         Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef =
                 Join::Experimental::LogicalBatchJoinDefinition::create(
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 1,
-                1,
-                joinType);
+                1);
 
         batchJoinOp1 = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
     }

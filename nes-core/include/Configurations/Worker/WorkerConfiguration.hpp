@@ -198,13 +198,10 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
+    /**
+     * @brief Factory function for a worker config
+     */
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
-
-    static std::shared_ptr<WorkerConfiguration> create(uint64_t numberOfBuffersInGlobalBufferManager) {
-        auto cfg = std::make_shared<WorkerConfiguration>();
-        cfg->numberOfBuffersInGlobalBufferManager.setValue(numberOfBuffersInGlobalBufferManager);
-        return cfg;
-    }
 
     /**
      * @brief Configuration numberOfQueues.

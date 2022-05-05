@@ -374,8 +374,7 @@ Query& Query::join(const Query& subQueryRhs,
 
 Query& Query::batchJoin(const Query& subQueryRhs,
                    ExpressionItem onProbeKey,
-                   ExpressionItem onBuildKey,
-                   Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType) {
+                   ExpressionItem onBuildKey) {
     NES_DEBUG("Query: batchJoinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
@@ -406,8 +405,7 @@ Query& Query::batchJoin(const Query& subQueryRhs,
                                                                 buildKeyFieldAccess,
                                                                 probeKeyFieldAccess,
                                                                 1,
-                                                                1,
-                                                                joinType);
+                                                                1);
 
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
@@ -438,8 +436,7 @@ Query& Query::batchJoinWith(const Query& subQueryRhs,
                        ExpressionItem onBuildKey) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
 
-    Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType = Join::Experimental::LogicalBatchJoinDefinition::INNER_JOIN;
-    return Query::batchJoin(subQueryRhs, onProbeKey, onBuildKey, joinType);
+    return Query::batchJoin(subQueryRhs, onProbeKey, onBuildKey);
 }
 
 Query& Query::andWith(const Query& subQueryRhs,

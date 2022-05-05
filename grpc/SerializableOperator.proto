@@ -509,22 +509,12 @@ message SerializableOperator{
     Batch Join Details contains properties for the batch join operator
   */
   message BatchJoinDetails {
-
-    message JoinTypeCharacteristic {
-      enum JoinType{
-        INNER_JOIN = 0;
-        CARTESIAN_PRODUCT = 1;
-      }
-      JoinType jointype = 1;
-    }
-
     SerializableExpression onBuildKey = 1;
     SerializableExpression onProbeKey = 2;
-    SerializableExpression buildSchema = 3; // todo @reviewers following the above convention this should be called buildStreamType but I think Schema is more precise
+    SerializableExpression buildSchema = 3;
     SerializableExpression probeSchema = 4;
     uint64 numberOfInputEdgesBuild = 5;
     uint64 numberOfInputEdgesProbe = 6;
-    JoinTypeCharacteristic jointype = 7;
   }
 
   google.protobuf.Any details = 1;
