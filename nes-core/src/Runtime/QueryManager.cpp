@@ -308,8 +308,6 @@ uint64_t AbstractQueryManager::getNodeId() const { return nodeEngineId; }
 
 bool AbstractQueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 
-uint16_t AbstractQueryManager::getNumThreads() const { return numThreads; }
-
 uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }

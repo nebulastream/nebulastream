@@ -844,7 +844,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
         EXPECT_EQ(resultRecordIndexFields3[i], expectedTuple2);
     }
 
-    ASSERT_TRUE(plan->stop());
+    cleanUpPlan(plan);
     testSink->cleanupBuffers();// need to be called manually here
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1478,7 +1478,6 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
         sleep(1);
     }
     ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
-    //plan->stop();
 
     auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
