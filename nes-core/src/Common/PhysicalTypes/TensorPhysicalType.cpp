@@ -62,4 +62,14 @@ std::string TensorPhysicalType::convertRawToStringWithoutFill(const void* rawDat
     return str.str();
 }
 
+std::string TensorPhysicalType::toString() const noexcept {
+    std::stringstream sstream;
+    sstream << physicalComponentType->toString() << '[';
+    for (auto dim : shape) {
+        sstream << dim << ',';
+    }
+    sstream << ']';
+    return sstream.str();
+}
+
 }// namespace NES

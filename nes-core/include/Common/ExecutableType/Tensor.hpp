@@ -12,11 +12,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_TENSOR_HPP
-#define NES_TENSOR_HPP
+#ifndef NES_INCLUDE_COMMON_EXECUTABLETYPE_TENSOR_HPP
+#define NES_INCLUDE_COMMON_EXECUTABLETYPE_TENSOR_HPP
 
-#include <Common/ExecutableType/Array.hpp>
 #include <Common/ExecutableType/NESType.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <memory>
 
 namespace NES::ExecutableTypes {
@@ -46,6 +46,7 @@ class Tensor : public Array<T, totalSize> {
      */
     template<typename... Dims>
     Tensor(Dims... dims) {
+        //Todo: dims*dims... needs to be == as realSize
         tensor = std::make_shared<Array<T, realSize>>();
         create(1, dims...);
     }
@@ -87,7 +88,7 @@ class Tensor : public Array<T, totalSize> {
      * @brief method for creating a dense tensor from an underlying array
      * @param currentDimension
      */
-    void create(size_t currentDimension) {
+    void create(size_t) {
     }
     /**
      * @brief
@@ -117,7 +118,7 @@ class Tensor : public Array<T, totalSize> {
      * @param currentDim
      * @return
      */
-    [[nodiscard]] int getIndex(size_t currentDim) const {
+    [[nodiscard]] int getIndex(size_t) const {
         return 0;
     }
 
@@ -125,4 +126,4 @@ class Tensor : public Array<T, totalSize> {
 
 }// namespace NES::ExecutableTypes
 
-#endif//NES_TENSOR_HPP
+#endif//NES__INCLUDE_COMMON_EXECUTABLETYPE_TENSOR_HPP

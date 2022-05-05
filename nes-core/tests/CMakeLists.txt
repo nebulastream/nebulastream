@@ -97,6 +97,11 @@ add_executable(array-type-tests "UnitTests/QueryCompiler/ArrayTypeTest.cpp")
 target_link_libraries(array-type-tests nes-tests)
 add_test(NAME array-type-tests COMMAND array-type-tests)
 
+### TensorType Test ###
+add_executable(tensor-type-tests "UnitTests/QueryCompiler/TensorTypeTest.cpp")
+target_link_libraries(tensor-type-tests nes-tests)
+add_test(NAME tensor-type-tests COMMAND tensor-type-tests)
+
 ### DataTypeFactory Test ###
 add_executable(data-type-factory-tests "UnitTests/QueryCompiler/DataTypeFactoryTests.cpp")
 target_link_libraries(data-type-factory-tests nes-tests)

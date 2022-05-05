@@ -115,6 +115,19 @@ std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(Seria
     return std::make_shared<ArrayType>(arrayDetails.dimensions(), componentType);
 }
 
+std::shared_ptr<TensorType> DataTypeSerializationUtil::deserializeTensorType(SerializableDataType* serializedDataType) {
+    // for arrays get additional information from the SerializableDataType_TensorDetails
+    auto tensorDetails = SerializableDataType_TensorDetails();
+    serializedDataType->details().UnpackTo(&tensorDetails);
+
+    //get component data type
+    auto componentType = deserializeDataType(tensorDetails.release_componenttype());
+    std::vector< std::size_t> shape(tensorDetails.shape().begin(), tensorDetails.shape().end());
+    TensorMemoryFormat tensorType = static_cast<TensorMemoryFormat>(tensorDetails.tensormemorytype());
+    return std::make_shared<TensorType>(shape, componentType, tensorType);
+}
+
+
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType,
                                                                      SerializableDataValue* serializedDataValue) {
 

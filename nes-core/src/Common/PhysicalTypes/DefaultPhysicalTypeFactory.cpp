@@ -20,6 +20,7 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/PhysicalTypes/TensorPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -93,7 +94,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayPtr& arra
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const TensorPtr& tensorType) {
     auto const componentType = getPhysicalType(tensorType->component);
-    return ArrayPhysicalType::create(tensorType, tensorType->shape, componentType);
+    return TensorPhysicalType::create(tensorType, tensorType->shape, componentType, tensorType->tensorMemoryFormat);
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const CharPtr& charType) {

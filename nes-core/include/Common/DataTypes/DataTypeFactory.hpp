@@ -159,7 +159,7 @@ class DataTypeFactory {
      * @param component data type of the entries in tensor, currently limited to numeric data types
      * @param tensorMemoryFormat the type of underlying data structure for saving in memory, the tensor should use
      */
-    static DataTypePtr createTensor(std::vector<uint16_t> shape, const DataTypePtr& component, TensorMemoryFormat tensorType);
+    static DataTypePtr createTensor(std::vector<std::size_t> shape, const DataTypePtr& component, TensorMemoryFormat tensorType);
 
     /**
     * @brief Creates a new Char data type.

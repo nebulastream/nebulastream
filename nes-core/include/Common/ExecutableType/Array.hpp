@@ -158,7 +158,7 @@ class ArrayBase : public std::array<T, s>, public NESType {
  * @see ArrayBase<T, size>
  */
 template<typename T, std::size_t size, typename = std::enable_if_t<!std::is_pointer_v<T> && std::is_arithmetic_v<T>>>
-class Array final : public ArrayBase<T, size> {
+class Array : public ArrayBase<T, size> {
   public:
     using ArrayBase<T, size>::ArrayBase;
 };

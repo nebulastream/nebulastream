@@ -29,6 +29,20 @@ message SerializableDataType{
     CHAR = 3;
     ARRAY = 4;
     BOOLEAN = 5;
+    TENSOR = 6;
+  }
+
+  /**
+  Details for tensor data types
+   */
+  message TensorDetails{
+    // Enum for the tensor type
+    enum TensorMemoryType{
+        DENSE = 0;
+    }
+    TensorMemoryType tensorMemoryType = 1;
+    SerializableDataType componentType = 2;
+    repeated uint64 shape = 3;
   }
 
   /**

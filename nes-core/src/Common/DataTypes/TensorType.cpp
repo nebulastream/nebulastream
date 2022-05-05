@@ -21,7 +21,7 @@ bool TensorType::isEquals(DataTypePtr otherDataType) {
     if (otherDataType->isTensor()) {
         auto const otherTensor = as<TensorType>(otherDataType);
         return shape == otherTensor->shape && component->isEquals(otherTensor->component)
-            && tensorType == otherTensor->tensorType;
+            && tensorMemoryFormat == otherTensor->tensorMemoryFormat;
     }
     return false;
 }

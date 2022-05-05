@@ -24,7 +24,7 @@ class TensorPhysicalType final : public PhysicalType {
 
   public:
     inline TensorPhysicalType(DataTypePtr dataType,
-                              std::vector<uint16_t> shape,
+                              std::vector<size_t> shape,
                               PhysicalTypePtr component,
                               TensorMemoryFormat tensorMemoryFormat) noexcept
         : PhysicalType(std::move(dataType)), shape(std::move(shape)), physicalComponentType(std::move(component)), tensorMemoryFormat(tensorMemoryFormat) {
@@ -42,8 +42,8 @@ class TensorPhysicalType final : public PhysicalType {
      * @param component the physical component type of this array.
      * @return PhysicalTypePtr
      */
-    static inline PhysicalTypePtr create(const DataTypePtr& type, uint64_t length, PhysicalTypePtr const& component) noexcept {
-        return std::make_shared<TensorPhysicalType>(type, length, component);
+    static inline PhysicalTypePtr create(const DataTypePtr& type, std::vector<size_t> shape, PhysicalTypePtr const& component, TensorMemoryFormat tensorMemoryFormat) noexcept {
+        return std::make_shared<TensorPhysicalType>(type, shape, component, tensorMemoryFormat);
     }
 
     /**
@@ -81,7 +81,7 @@ class TensorPhysicalType final : public PhysicalType {
     [[nodiscard]] std::string toString() const noexcept final;
 
     size_t totalSize = 1;
-    const std::vector<uint16_t> shape;
+    const std::vector<size_t> shape;
     PhysicalTypePtr const physicalComponentType;
     TensorMemoryFormat tensorMemoryFormat;
 };

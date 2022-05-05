@@ -21,6 +21,8 @@ namespace NES {
 
 class ArrayType;
 
+class TensorType;
+
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
 
@@ -53,6 +55,9 @@ class DataTypeSerializationUtil {
 
     /// @brief: Typed deserialization of what is known to be an array.
     static std::shared_ptr<ArrayType> deserializeArrayType(SerializableDataType* serializedDataType);
+
+    /// @brief: Typed deserialization of what is known to be a tensor.
+    static std::shared_ptr<TensorType> deserializeTensorType(SerializableDataType* serializedDataType);
 
     /**
      * @brief Serializes a value type and all its children to a SerializableDataValue object.

@@ -36,7 +36,7 @@ class TensorType : public DataType {
      * @param component data type of the entries in tensor, currently limited to numeric data types
      * @param tensorMemoryFormat the type of underlying data structure for saving in memory, the tensor should use
      */
-    inline TensorType(std::vector<std::size_t> shape, DataTypePtr component, TensorMemoryFormat tensorType) noexcept : shape(shape), component(std::move(component)), tensorType(tensorType) {}
+    inline TensorType(std::vector<std::size_t> shape, DataTypePtr component, TensorMemoryFormat tensorType) noexcept : shape(shape), component(std::move(component)), tensorMemoryFormat(tensorType) {}
 
     virtual ~TensorType() = default;
 
@@ -70,7 +70,7 @@ class TensorType : public DataType {
 
     std::vector<std::size_t> const shape;
     DataTypePtr const component;
-    TensorMemoryFormat const tensorType;
+    TensorMemoryFormat const tensorMemoryFormat;
 
 };
 
