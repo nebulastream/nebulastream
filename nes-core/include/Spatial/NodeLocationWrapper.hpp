@@ -95,6 +95,8 @@ class NodeLocationWrapper {
      */
     bool setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc);
 
+    LocationProviderPtr getLocationProvider();
+
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::LocationPtr fixedLocationCoordinates;

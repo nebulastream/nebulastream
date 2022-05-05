@@ -94,7 +94,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
 }
 
 void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& portPromise) {
-    WorkerRPCServer service(nodeEngine, monitoringAgent);
+    WorkerRPCServer service(nodeEngine, monitoringAgent, locationWrapper);
     ServerBuilder builder;
     int actualRpcPort;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials(), &actualRpcPort);

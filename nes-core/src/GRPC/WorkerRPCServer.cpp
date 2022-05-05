@@ -24,8 +24,8 @@
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent)
-    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)) {
+WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent, NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr nodeLocationWrapper)
+    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)), locationWrapper(nodeLocationWrapper) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -172,6 +172,8 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
 
 Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, Coordinates* reply) {
     (void) request;
+    NES_DEBUG("WorkerRPCServer received location request")
+    //auto loc = nodeEngine->getLocation();
     auto loc = locationWrapper->getLocation();
     reply->set_lat(loc->getLatitude());
     reply->set_lng(loc->getLongitude());

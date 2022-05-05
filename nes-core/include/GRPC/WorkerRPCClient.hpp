@@ -210,7 +210,7 @@ class WorkerRPCClient {
      */
     bool checkHealth(const std::string& address, std::string healthServiceName);
 
-    NES::Spatial::Index::Experimental::Location getLocation(const std::string& adress);
+    static NES::Spatial::Index::Experimental::LocationPtr getLocation(const std::string& adress);
 
   private:
 };
