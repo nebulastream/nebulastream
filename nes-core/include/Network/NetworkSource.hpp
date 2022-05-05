@@ -92,7 +92,7 @@ class NetworkSource : public DataSource {
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
     /**
-     * @brief API method called upon receiving an event.
+     * @brief API method called upon receiving an event (from downstream).
      * @warning Can not send event upstream across network, when being called without worker context.
      * @param event
      */

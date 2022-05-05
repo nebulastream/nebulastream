@@ -199,8 +199,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     uint64_t getNodeId() const;
 
-    uint16_t getNumThreads() const;
-
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
      * @return true if the reconfiguration task was added correctly on the worker queue

@@ -243,7 +243,7 @@ void NetworkSource::onEvent(Runtime::BaseEvent&) {
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
     NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: " << this->operatorId);
-    if (event.getEventType() == Runtime::EventType::startSourceEvent) {
+    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
         senderChannel->sendEvent<Runtime::StartSourceEvent>();
     }

@@ -162,13 +162,13 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
 
 
     /**
-     * @brief API method called upon receiving an event
+     * @brief API method called upon receiving an event (from downstream)
      * @param event
      */
     void onEvent(Runtime::BaseEvent& event) override;
 
     /**
-     * @brief API method called upon receiving an event
+     * @brief API method called upon receiving an event (from downstream)
      * @param event
      */
     void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef);
