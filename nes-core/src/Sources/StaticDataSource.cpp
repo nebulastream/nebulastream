@@ -113,11 +113,15 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
 }
 
 bool StaticDataSource::start() {
+    std::unique_lock lock(startConfigMutex);
+
     startCalled = true;
     if (lateStart) {
         NES_DEBUG("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: " << this->operatorId);
         return true; // we didn't start but still signal a success
     }
+
+    lock.unlock();
     NES_DEBUG("StaticDataSource::start called; lateStart==false. Starting now. operatorId: " << this->operatorId);
     return startStaticDataSourceManually();
 }
@@ -127,10 +131,13 @@ bool StaticDataSource::startStaticDataSourceManually() {
 }
 
 void StaticDataSource::onEvent(Runtime::BaseEvent & event) {
+    std::unique_lock lock(startConfigMutex);
+
     NES_DEBUG("StaticDataSource::onEvent(event) called. operatorId: " << this->operatorId);
-    if (event.getEventType() == Runtime::EventType::startSourceEvent) {
+    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         NES_DEBUG("StaticDataSource: received startSourceEvent. operatorId: " << this->operatorId);
         if (startCalled) {
+            lock.unlock();
             NES_DEBUG("StaticDataSource::onEvent: start() method was previously called but delayed. Starting source now.");
             startStaticDataSourceManually();
         } else {

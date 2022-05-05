@@ -143,7 +143,7 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     auto qep = queryManager->getQueryExecutionPlan(querySubPlanId);
     qep->onEvent(event);
 
-    if (event.getEventType() == Runtime::EventType::startSourceEvent) {
+    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
         // todo jm continue here. how to obtain local worker context?
     }
 }

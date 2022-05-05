@@ -53,7 +53,7 @@ namespace TestUtils {
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
-static constexpr auto defaultCooldown = std::chrono::milliseconds(3000); // 3000 milliseconds after last task, the query should be done.
+static constexpr auto defaultCooldown = std::chrono::seconds(3); // 3s after last processed task, the query should be done.
 
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);

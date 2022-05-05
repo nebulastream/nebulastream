@@ -105,6 +105,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
     /* message & late start system */
     bool lateStart;
     bool startCalled = false;
+    mutable std::mutex startConfigMutex;
 
     /* preloading */
     bool eagerLoading = true;
