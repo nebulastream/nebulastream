@@ -252,6 +252,58 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                 }
             })
             .wait();
+    } else if (path[1] == "updateLogicalSource-ex") {
+
+        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: REST received request to update Logical Source via Protobuf "
+                  << message.to_string());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    // extract protobuf message from http body
+                    std::shared_ptr<SerializableNamedSchema> protobufMessage = std::make_shared<SerializableNamedSchema>();
+
+                    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
+                        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: invalid Protobuf message");
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("Invalid Protobuf message");
+                        errorMessageImpl(message, errorResponse);
+                        return;
+                    }
+
+                    NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: Start trying to update logical source");
+                    // decode protobuf message into c++ obj repr
+                    SerializableSchema* schema = protobufMessage->mutable_schema();
+                    SchemaPtr deserializedSchema = SchemaSerializationUtil::deserializeSchema(schema);
+                    std::string sourceName = protobufMessage->sourcename();
+
+                    // try to add the user supplied source
+                    bool updated = sourceCatalog->updatedLogicalSource(sourceName, deserializedSchema);
+
+                    if (updated) {
+                        //Prepare the response
+                        web::json::value result{};
+                        result["Success"] = web::json::value::boolean(updated);
+                        successMessageImpl(message, result);
+                    } else {
+                        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: unable to find source "
+                                  + sourceName);
+                        throw std::invalid_argument("Unable to update logical source " + sourceName);
+                    }
+                    return;
+
+                } catch (const std::exception& exc) {
+                    NES_ERROR("SourceCatalogController: handlePost -updateLogicalSource: Exception occurred while trying to add new "
+                              "logical source"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    NES_ERROR("RestServer: Unable to start REST server unknown exception.");
+                    internalServerErrorImpl(message);
+                    return;
+                }
+            })
+            .wait();
     } else {
         resourceNotFoundImpl(message);
     }
