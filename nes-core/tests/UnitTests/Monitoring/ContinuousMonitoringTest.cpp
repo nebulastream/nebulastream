@@ -26,7 +26,7 @@
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Storage/NewestEntryMetricStore.hpp>
+#include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 
 namespace NES {
 using namespace Configurations;

@@ -23,7 +23,7 @@
 
 namespace NES {
 /**
-* @brief The NewestEntryMetricStore that stores all the metrics for monitoring.
+* @brief The LatestEntriesMetricStore that stores all the metrics for monitoring.
 */
 class AbstractMetricStore {
   public:
