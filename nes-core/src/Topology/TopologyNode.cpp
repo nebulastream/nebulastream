@@ -16,6 +16,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
+#include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES {
 
@@ -134,8 +135,9 @@ bool TopologyNode::isFieldNode() { return (bool) fixedCoordinates; }
 
 Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
     if (isMobile) {
-        //todo issue #2722: return the current location of the mobile node
-        return {};
+        std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
+        NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
+        return WorkerRPCClient::getLocation(destAddress);
     }
     return fixedCoordinates;
 }

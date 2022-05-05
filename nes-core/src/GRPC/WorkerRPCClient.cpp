@@ -447,7 +447,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::string& adress) {
+Spatial::Index::Experimental::LocationPtr WorkerRPCClient::getLocation(const std::string& adress) {
     NES_DEBUG("WorkerRPCClient: Reequesting location from " << adress)
     ClientContext context;
     Coordinates reply;
@@ -455,7 +455,7 @@ Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::s
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, {}, &reply);
-    return {reply.lat(), reply.lng()};
+    return std::make_shared<Spatial::Index::Experimental::Location>(reply.lat(), reply.lng());
 }
 
 }// namespace NES
