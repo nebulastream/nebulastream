@@ -57,8 +57,13 @@ GeneratableKeyedSliceMergingOperator::GeneratableKeyedSliceMergingOperator(
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
 void GeneratableKeyedSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
-    pipeline->registerOperatorHandler(windowHandler);
-    GeneratableOperator::generateOpen(codegen, pipeline);
+    auto windowOperatorIndex = pipeline->registerOperatorHandler(windowHandler);
+    codegen->generateKeyedSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
+                                                         outputSchema,
+                                                         pipeline,
+                                                         id,
+                                                         windowOperatorIndex,
+                                                         windowAggregation);
 }
 
 void GeneratableKeyedSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

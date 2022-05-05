@@ -15,27 +15,29 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
 KeyedSliceMergingOperatorHandler::KeyedSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
-    : windowDefinition(windowDefinition) {
+    : sliceStaging(std::make_shared<SliceStaging>()), windowDefinition(windowDefinition) {
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
 
 void KeyedSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,
-                                      NES::Experimental::HashMapFactoryPtr hashmapFactory) {
+                                             NES::Experimental::HashMapFactoryPtr hashmapFactory) {
     this->factory = hashmapFactory;
 }
 
 NES::Experimental::Hashmap KeyedSliceMergingOperatorHandler::getHashMap() { return factory->create(); }
 
-void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                             Runtime::StateManagerPtr,
+                                             uint32_t) {
     NES_DEBUG("start KeyedSliceMergingOperatorHandler");
     activeCounter++;
 }
@@ -50,10 +52,8 @@ void KeyedSliceMergingOperatorHandler::stop(Runtime::Execution::PipelineExecutio
     }
 }
 
-KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(uint64_t sliceIndex) {
-    auto startTs = sliceIndex;
-    auto endTs = (sliceIndex + 1);
-    return std::make_unique<KeyedSlice>(factory, startTs, endTs);
+KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {
+    return std::make_unique<KeyedSlice>(factory, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 };
 
 }// namespace NES::Windowing::Experimental

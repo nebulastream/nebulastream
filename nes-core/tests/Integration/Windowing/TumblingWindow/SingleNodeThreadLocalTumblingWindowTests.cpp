@@ -45,11 +45,21 @@ using namespace Configurations;
 /**
  * @brief In this test we assess the correctness of the thread local tumbling window
  */
-class SingleNodeThreadLocalTumblingWindowTests : public Testing::NESBaseTest {
+class SingleNodeThreadLocalTumblingWindowTests : public Testing::NESBaseTest, public ::testing::WithParamInterface<int> {
   public:
+    WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SingleNodeThreadLocalTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SingleNodeThreadLocalTumblingWindowTests test class.");
+    }
+
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        workerConfiguration = WorkerConfiguration::create();
+        workerConfiguration->queryCompiler.windowingStrategy =
+            QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
+        workerConfiguration->queryCompiler.compilationStrategy =
+            QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
     }
 };
 
@@ -69,7 +79,23 @@ struct Output {
     }
 };
 
-TEST_F(SingleNodeThreadLocalTumblingWindowTests, testSimpleTumblingWindow) {
+PhysicalSourceTypePtr createSimpleInputStream(uint64_t numberOfBuffers) {
+    return LambdaSourceType::create(
+        [](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+            auto inputValue = (InputValue*) buffer.getBuffer();
+            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+                inputValue[i].value = 1;
+                inputValue[i].id = 1;
+                inputValue[i].timestamp = 1;
+            }
+            buffer.setNumberOfTuples(numberOfTuplesToProduce);
+        },
+        numberOfBuffers,
+        0,
+        GatheringMode ::INTERVAL_MODE);
+}
+/*
+TEST_F(SingleNodeThreadLocalTumblingWindowTests, testSingleTumblingWindowSingleBuffer) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
@@ -80,24 +106,7 @@ TEST_F(SingleNodeThreadLocalTumblingWindowTests, testSimpleTumblingWindow) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     // R"(Query::from("window"))";
 
-    auto lambdaSource = LambdaSourceType::create(
-        [](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            NES_DEBUG("LambdaSource: Create buffer " << numberOfTuplesToProduce)
-            auto inputValue = (InputValue*) buffer.getBuffer();
-            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
-                inputValue[i].value = 1;
-                inputValue[i].id = 1;
-                inputValue[i].timestamp = 1;
-            }
-            buffer.setNumberOfTuples(numberOfTuplesToProduce);
-        },
-        1,
-        0,
-        GatheringMode ::INTERVAL_MODE);
-    auto workerConfiguration = WorkerConfiguration::create();
-    workerConfiguration->queryCompiler.windowingStrategy =
-        QueryCompilation::QueryCompilerOptions::WindowingStrategy::THREAD_LOCAL;
-    workerConfiguration->queryCompiler.compilationStrategy = QueryCompilation::QueryCompilerOptions::CompilationStrategy::DEBUG;
+    auto lambdaSource = createSimpleInputStream(1);
     auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("window", testSchema)
                            .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
@@ -106,17 +115,67 @@ TEST_F(SingleNodeThreadLocalTumblingWindowTests, testSimpleTumblingWindow) {
 
     testHarness.validate().setupTopology();
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 1, 1},
-                                          {2000, 3000, 1, 2},
-                                          {1000, 2000, 4, 1},
-                                          {2000, 3000, 11, 2},
-                                          {1000, 2000, 12, 1},
-                                          {2000, 3000, 16, 2}};
+    std::vector<Output> expectedOutput = {{0, 1000, 1, 170}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
+
+TEST_F(SingleNodeThreadLocalTumblingWindowTests, testSingleTumblingWindowMultiBuffer) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
+    auto lambdaSource = createSimpleInputStream(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+    std::vector<Output> expectedOutput = {{0, 1000, 1, 17000}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+ */
+
+TEST_P(SingleNodeThreadLocalTumblingWindowTests, testSingleTumblingWindowMultiBufferConcurrent) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
+    workerConfiguration->numWorkerThreads = GetParam();
+    ;
+    auto lambdaSource = createSimpleInputStream(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+    std::vector<Output> expectedOutput = {{0, 1000, 1, 17000}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+INSTANTIATE_TEST_CASE_P(testSingleTumblingWindowMultiBufferConcurrentTest,
+                        SingleNodeThreadLocalTumblingWindowTests,
+                        ::testing::Values(1, 2, 4),
+                        [](const testing::TestParamInfo<SingleNodeThreadLocalTumblingWindowTests::ParamType>& info) {
+                            std::string name = std::to_string(info.param) + "Worker";
+                            return name;
+                        });
 
 }// namespace NES

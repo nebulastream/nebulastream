@@ -127,6 +127,14 @@ class CCodeGenerator : public CodeGenerator {
                                                 uint64_t windowOperatorIndex,
                                                 std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> ptr) override;
 
+    uint64_t generateKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                    SchemaPtr,
+                                                    PipelineContextPtr context,
+                                                    uint64_t id,
+                                                    uint64_t windowOperatorIndex,
+                                                    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
+
+
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
@@ -524,7 +532,7 @@ class CCodeGenerator : public CodeGenerator {
                                                std::vector<StatementPtr>& statements,
                                                const std::string& capacityVarName);
     ExpressionStatementPtr createGetEntryCall(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context);
-};
+   };
 }// namespace QueryCompilation
 }// namespace NES
 

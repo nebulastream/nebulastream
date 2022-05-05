@@ -79,7 +79,8 @@ void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runt
                     NES_DEBUG("Deploy merge task for slice " << slice->getEnd() << " with " << numberOfBuffers << " buffers.");
                     auto buffer = wctx.allocateTupleBuffer();
                     auto task = buffer.getBuffer<SliceMergeTask>();
-                    task->sliceEnd = slice->getEnd();
+                    task->startSlice = slice->getStart();
+                    task->endSlice = slice->getEnd();
                     buffer.setNumberOfTuples(1);
                     ctx.dispatchBuffer(buffer);
                 } else {
@@ -97,8 +98,35 @@ void KeyedThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::Pi
     NES_DEBUG("start ThreadLocalPreAggregationWindowHandler");
 }
 
-void KeyedThreadLocalPreAggregationOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+void KeyedThreadLocalPreAggregationOperatorHandler::stop(
+    Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
     NES_DEBUG("shutdown ThreadLocalPreAggregationWindowHandler");
+    auto sliceStaging = this->weakSliceStaging.lock();
+    if (!sliceStaging) {
+        return;
+    }
+
+    for (auto& threadLocalSliceStore : threadLocalSliceStores) {
+        for (auto& slice : threadLocalSliceStore.getSlices()) {
+            auto& sliceState = slice->getState();
+            // each worker adds its local state to the staging area
+            auto [addedPartitionsToSlice, numberOfBuffers] =
+                sliceStaging->addToSlice(slice->getEnd(), sliceState.extractEntries());
+            if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
+                if (numberOfBuffers != 0) {
+                    NES_DEBUG("Deploy merge task for slice " << slice->getEnd() << " with " << numberOfBuffers << " buffers.");
+                    auto buffer = pipelineExecutionContext->getBufferManager()->getBufferBlocking();
+                    auto task = buffer.getBuffer<SliceMergeTask>();
+                    task->startSlice = slice->getStart();
+                    task->endSlice = slice->getEnd();
+                    buffer.setNumberOfTuples(1);
+                    pipelineExecutionContext->dispatchBuffer(buffer);
+                } else {
+                    NES_DEBUG("Slice " << slice->getEnd() << " is empty. Don't deploy merge task.");
+                }
+            }
+        }
+    }
     this->threadLocalSliceStores.clear();
 }
 

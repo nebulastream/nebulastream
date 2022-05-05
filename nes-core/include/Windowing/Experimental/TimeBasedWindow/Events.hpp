@@ -5,7 +5,8 @@ namespace NES::Windowing::Experimental {
 class SliceMergeTask {
   public:
     uint64_t sequenceNumber;
-    uint64_t sliceEnd;
+    uint64_t startSlice;
+    uint64_t endSlice;
 };
 
 class WindowTriggerTask {

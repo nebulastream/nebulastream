@@ -889,7 +889,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement =
@@ -1006,15 +1006,16 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
             .copy());
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedSliceMergingOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
                                        .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
     context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
 
-    // auto partitions = windowOperatorHandler->getSliceStaging().erasePartition(mergeTask->sliceIndex);
-    auto sliceIndex = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "sliceIndex");
+    // auto partitions = windowOperatorHandler->getSliceStaging().erasePartition(mergeTask->sliceEnd);
+    auto sliceIndex = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "endSlice");
+    auto sliceStart = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "startSlice");
     auto getSliceStagingCall = call("getSliceStaging");
     auto erasePartitionCall = call("erasePartition");
     erasePartitionCall->addParameter(VarRef(mergeTask).accessPtr(VarRef(sliceIndex)));
@@ -1026,7 +1027,7 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
 
     auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
     auto createSliceCall = call("createKeyedSlice");
-    createSliceCall->addParameter(VarRef(mergeTask).accessPtr(VarRef(sliceIndex)));
+    createSliceCall->addParameter(VarRef(mergeTask));
     context->code->variableInitStmts.push_back(
         VarDeclStatement(globalSlice).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(createSliceCall)).copy());
 
@@ -1055,7 +1056,7 @@ bool CCodeGenerator::generateCodeForSliceStoreAppend(PipelineContextPtr context,
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
@@ -1245,7 +1246,7 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(
             .copy());
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
@@ -2776,6 +2777,77 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
     setupScope->addStatement(statement.copy());
 }
 
+
+uint64_t CCodeGenerator::generateKeyedSliceMergingOperatorSetup(
+    Windowing::LogicalWindowDefinitionPtr window,
+    SchemaPtr,
+    PipelineContextPtr context,
+    uint64_t id,
+    uint64_t windowOperatorIndex,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> ) {
+
+    auto tf = getTypeFactory();
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    VariableDeclaration varDeclarationPipelineExecutionContext =
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+
+    context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+
+
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+
+    // create a new setup scope for this operator
+    auto setupScope = context->createSetupScope();
+
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedSliceMergingOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement =
+        VarDeclStatement(windowOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    setupScope->addStatement(windowOperatorStatement.copy());
+
+    // getWindowDefinition
+    auto windowDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowDefinition");
+    auto getWindowDefinitionCall = call("getWindowDefinition");
+    auto windowDefinitionStatement = VarDeclStatement(windowDefDeclaration)
+                                         .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    // create struct for entry
+    // consists of keys and aggregation values
+    //StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, windowAggregation);
+    //context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
+
+    auto createCall = call("std::make_shared<Experimental::HashMapFactory>");
+    auto getBufferManagerCall = call("getBufferManager");
+    createCall->addParameter(VarRefStatement(context->code->varDeclarationExecutionContext).accessRef(getBufferManagerCall));
+
+    uint64_t keysSize = getKeySpaceSize(window);
+    uint64_t aggValueSize = getAggregationValueSize(window);
+    auto constantKeySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(keysSize)));
+    createCall->addParameter(constantKeySize);
+    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(aggValueSize)));
+    createCall->addParameter(constantValueSize);
+
+    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
+    createCall->addParameter(constantNumberOfEntries);
+
+    auto hashMapFactory = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashMapFactory");
+
+    auto hashMapFactoryStatement = VarDeclStatement(hashMapFactory).assign(createCall);
+    setupScope->addStatement(hashMapFactoryStatement.copy());
+
+    auto setupWindowHandler = call("setup");
+    setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
+    setupWindowHandler->addParameter(VarRef(hashMapFactory));
+    setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
+    return 0;
+}
+
 uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     Windowing::LogicalWindowDefinitionPtr window,
     SchemaPtr,
@@ -2794,7 +2866,7 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 
