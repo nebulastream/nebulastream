@@ -62,7 +62,7 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
 
     NES::Experimental::Hashmap getHashMap();
 
-    KeyedSlicePtr createKeyedSlice(uint64_t sliceIndex);
+    KeyedSlicePtr createKeyedSlice(SliceMergeTask* sliceMergeTask);
 
     ~KeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 

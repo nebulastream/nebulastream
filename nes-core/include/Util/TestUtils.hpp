@@ -203,20 +203,22 @@ static constexpr auto sleepDuration = std::chrono::milliseconds(250);
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
+            case QueryStatus::Deployed:
+            case QueryStatus::Running: {
+                NES_DEBUG("Query started");
+                return true;
+            }
             case QueryStatus::MarkedForHardStop:
             case QueryStatus::MarkedForSoftStop:
             case QueryStatus::SoftStopCompleted:
             case QueryStatus::SoftStopTriggered:
             case QueryStatus::Stopped:
-            case QueryStatus::Running: {
-                NES_DEBUG("Query started");
-                return true;
-            }
             case QueryStatus::Failed: {
                 NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
                 return false;
             }
             default: {
+                NES_ERROR("Expected: Running or Scheduling but found " + QueryStatus::toString(status));
                 break;
             }
         }
@@ -336,8 +338,8 @@ template<typename Predicate = std::equal_to<uint64_t>>
      * @return true if successful
      */
 [[nodiscard]] bool heckStoppedOrTimeout(QueryId queryId,
-                                         const QueryCatalogServicePtr& queryCatalogService,
-                                         std::chrono::seconds timeout = defaultTimeout) {
+                                        const QueryCatalogServicePtr& queryCatalogService,
+                                        std::chrono::seconds timeout = defaultTimeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -506,7 +508,7 @@ template<typename T>
             return false;
         }
 
-        auto isQueryStopped =  entry->getQueryStatus() == QueryStatus::Stopped;
+        auto isQueryStopped = entry->getQueryStatus() == QueryStatus::Stopped;
 
         // check if result is ready.
         std::ifstream ifs(outputFilePath);
@@ -537,12 +539,13 @@ template<typename T>
                           << expectedNumberOfContent << " not reached yet with " << currentContent.size()
                           << " lines content=" << content);
 
+            } else {
+                NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
+                          "number of content");
+                return true;
             }
-            NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: number of content in output file match expected "
-                      "number of content");
-            return true;
         }
-        if(isQueryStopped){
+        if (isQueryStopped) {
             NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout: query stopped but content not ready");
             return false;
         }

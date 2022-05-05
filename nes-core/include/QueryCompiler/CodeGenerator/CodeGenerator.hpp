@@ -158,6 +158,14 @@ class CodeGenerator {
         uint64_t windowOperatorIndex,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregationFunctions) = 0;
 
+    virtual uint64_t generateKeyedSliceMergingOperatorSetup(
+        Windowing::LogicalWindowDefinitionPtr window,
+        SchemaPtr,
+        PipelineContextPtr context,
+        uint64_t id,
+        uint64_t windowOperatorIndex,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) = 0;
+
     /**
      * @brief Code generation for the thread local pre aggregation for keyed windows.
      * @param window The window definition, which contains all properties of the window.
