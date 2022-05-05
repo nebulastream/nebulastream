@@ -101,7 +101,7 @@ void BenchmarkSource::open() {
 void BenchmarkSource::runningRoutine() {
     try {
         open();
-
+        
         NES_INFO("Going to produce " << numberOfTuplesToProduce);
 
         for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
@@ -150,6 +150,7 @@ void BenchmarkSource::runningRoutine() {
             buffer.setNumberOfTuples(numberOfTuplesToProduce);
             generatedTuples += numberOfTuplesToProduce;
             generatedBuffers++;
+            currentPositionInBytes += bufferSize;
 
             for (const auto& successor : executableSuccessors) {
                 queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
