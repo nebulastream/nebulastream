@@ -58,7 +58,7 @@ class MetricCollector {
      * @param tupleBuffer The tuple buffer
      * @return True if successful, else false
      */
-    virtual MetricPtr readMetric() = 0;
+    virtual const MetricPtr readMetric() const = 0;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;

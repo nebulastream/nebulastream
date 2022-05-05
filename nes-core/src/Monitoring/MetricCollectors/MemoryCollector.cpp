@@ -41,7 +41,7 @@ bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr MemoryCollector::getSchema() { return schema; }
 
-MetricPtr MemoryCollector::readMetric() {
+const MetricPtr MemoryCollector::readMetric() const {
     return std::make_shared<Metric>(resourceReader->readMemoryStats(), MetricType::MemoryMetric);
 }
 

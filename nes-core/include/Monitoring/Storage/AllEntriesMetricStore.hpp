@@ -41,7 +41,7 @@ class AllEntriesMetricStore : public AbstractMetricStore {
     void addMetrics(uint64_t nodeId, MetricPtr metrics) override;
 
     /**
-     * @brief Get newest metrics from store
+     * @brief Get latest metrics from store
      * @param nodeId
      * @return the metric
     */

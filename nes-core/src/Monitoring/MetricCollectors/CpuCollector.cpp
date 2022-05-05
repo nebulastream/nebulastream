@@ -41,7 +41,7 @@ bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr CpuCollector::getSchema() { return schema; }
 
-MetricPtr CpuCollector::readMetric() {
+const MetricPtr CpuCollector::readMetric() const {
     return std::make_shared<Metric>(resourceReader->readCpuStats(), MetricType::WrappedCpuMetrics);
 }
 

@@ -281,6 +281,7 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
 }
 
 TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
+    // WIP of issue #2620
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
