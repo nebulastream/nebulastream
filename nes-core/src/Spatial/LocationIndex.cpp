@@ -24,17 +24,17 @@ namespace NES::Spatial::Index::Experimental {
 LocationIndex::LocationIndex() = default;
 
 bool LocationIndex::initializeFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc) {
-   return setFieldNodeCoordinates(node, geoLoc);
+    return setFieldNodeCoordinates(node, geoLoc);
 }
 
 bool LocationIndex::updateFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc) {
 #ifdef S2DEF
-        if(removeNodeFromSpatialIndex(node)) {
-            return setFieldNodeCoordinates(node, geoLoc);
-        }
-        return false;
-#else
+    if (removeNodeFromSpatialIndex(node)) {
         return setFieldNodeCoordinates(node, geoLoc);
+    }
+    return false;
+#else
+    return setFieldNodeCoordinates(node, geoLoc);
 #endif
 }
 
@@ -127,7 +127,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNod
 #endif
 }
 
-std::vector<std::pair<TopologyNodePtr, Location>>LocationIndex::getNodesInRange(Location center, double radius) {
+std::vector<std::pair<TopologyNodePtr, Location>> LocationIndex::getNodesInRange(Location center, double radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -157,4 +157,4 @@ size_t LocationIndex::getSizeOfPointIndex() {
     return {};
 #endif
 }
-}
+}// namespace NES::Spatial::Index::Experimental

@@ -19,7 +19,8 @@
 
 namespace NES::Configurations::Spatial::Index::Experimental {
 
-::NES::Spatial::Index::Experimental::Location LocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
+::NES::Spatial::Index::Experimental::Location
+LocationFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams) {
     std::string coordStr;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
         if (it->first == LOCATION_COORDINATES_CONFIG && !it->second.empty()) {

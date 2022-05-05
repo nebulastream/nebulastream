@@ -59,10 +59,11 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
-      locationWrapper(std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile, workerConfig->locationCoordinates)),
+      locationWrapper(
+          std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
+                                                                                      workerConfig->locationCoordinates)),
       queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
-      enableMonitoring(workerConfig->enableMonitoring.getValue()),
-      numberOfQueues(workerConfig->numberOfQueues.getValue()),
+      enableMonitoring(workerConfig->enableMonitoring.getValue()), numberOfQueues(workerConfig->numberOfQueues.getValue()),
       numberOfThreadsPerQueue(workerConfig->numberOfThreadsPerQueue.getValue()),
       queryManagerMode(workerConfig->queryManagerMode.getValue()) {
     setThreadName("NesWorker");
@@ -501,9 +502,6 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
-NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr NesWorker::getLocationWrapper() {
-    return locationWrapper;
-}
-
+NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr NesWorker::getLocationWrapper() { return locationWrapper; }
 
 }// namespace NES

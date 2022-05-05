@@ -60,8 +60,7 @@ Location Location::fromString(const std::string& coordinates) {
 
 Location::operator std::tuple<double, double>() { return std::make_tuple(latitude, longitude); };
 
-Location::Location(std::tuple<double, double> coordTuple)
-    : Location(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
+Location::Location(std::tuple<double, double> coordTuple) : Location(std::get<0>(coordTuple), std::get<1>(coordTuple)) {}
 
 Location::operator Coordinates() const {
     Coordinates coordinates;

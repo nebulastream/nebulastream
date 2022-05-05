@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Spatial/LocationProviderCSV.hpp>
 #include <Common/Location.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <fstream>
@@ -46,7 +46,8 @@ LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(std::make_shared<Index::Experimental::Location>(Index::Experimental::Location::fromString(locString)), time);
+        std::pair waypoint(std::make_shared<Index::Experimental::Location>(Index::Experimental::Location::fromString(locString)),
+                           time);
         waypoints.push_back(waypoint);
     }
     NES_DEBUG("read " << waypoints.size() << " waypoints from csv");

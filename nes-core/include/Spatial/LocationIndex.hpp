@@ -101,7 +101,6 @@ class LocationIndex {
     size_t getSizeOfPointIndex();
 
   private:
-
     /**
      * Experimental
      * @brief This method sets the location of a field node and adds it to the spatial index. No check for existing entries is

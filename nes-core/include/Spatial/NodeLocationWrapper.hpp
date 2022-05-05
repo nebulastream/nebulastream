@@ -14,27 +14,26 @@
 #ifndef NES_GEOLOCATION_LOCATIONSERVICE_HPP
 #define NES_GEOLOCATION_LOCATIONSERVICE_HPP
 
+#include <Util/Experimental/LocationProviderType.hpp>
 #include <memory>
 #include <vector>
-#include <Util/Experimental/LocationProviderType.hpp>
 
 namespace NES {
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
-}
+}// namespace NES
 
 namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}
+}// namespace NES::Spatial::Index::Experimental
 namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class NodeLocationWrapper {
   public:
-
-    explicit NodeLocationWrapper( bool isMobile, Index::Experimental::Location fieldNodeLoc);
+    explicit NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc);
 
     /**
      * Experimental
@@ -78,7 +77,8 @@ class NodeLocationWrapper {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(Index::Experimental::Location coord, double radius);
+    std::vector<std::pair<uint64_t, Index::Experimental::Location>> getNodeIdsInRange(Index::Experimental::Location coord,
+                                                                                      double radius);
 
     /**
      * Experimental

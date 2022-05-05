@@ -15,13 +15,13 @@
 #define NES_GEOLOCATION_LOCATIONPROVIDER_HPP
 
 #include <cstdint>
-#include <utility>
 #include <memory>
+#include <utility>
 
 namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}
+}// namespace NES::Spatial::Index::Experimental
 
 namespace NES::Spatial::Mobility::Experimental {
 using Timestamp = uint64_t;

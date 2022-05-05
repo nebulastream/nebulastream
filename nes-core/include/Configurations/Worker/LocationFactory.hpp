@@ -35,7 +35,8 @@ class LocationFactory {
      * if the string was empty
      */
 
-    static ::NES::Spatial::Index::Experimental::Location createFromString(std::string, std::map<std::string, std::string>& commandLineParams);
+    static ::NES::Spatial::Index::Experimental::Location createFromString(std::string,
+                                                                          std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief obtains a Geographical location objects from yaml config

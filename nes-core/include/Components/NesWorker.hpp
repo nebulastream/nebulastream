@@ -38,7 +38,7 @@ namespace NES {
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}
+}// namespace Spatial::Index::Experimental
 
 namespace Spatial::Mobility::Experimental {
 class NodeLocationWrapper;

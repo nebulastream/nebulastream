@@ -33,7 +33,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 namespace Spatial::Index::Experimental {
 class LocationIndex;
 using LocationIndexPtr = std::shared_ptr<LocationIndex>;
-}
+}// namespace Spatial::Index::Experimental
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
@@ -221,7 +221,6 @@ class Topology {
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
     NES::Spatial::Index::Experimental::LocationIndexPtr locationIndex;
-
 };
 }// namespace NES
 #endif// NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
