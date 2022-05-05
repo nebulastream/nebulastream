@@ -327,4 +327,18 @@ bool SourceCatalog::updatedLogicalSource(std::string& sourceName, std::string& s
     return true;
 }
 
+bool SourceCatalog::updatedLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr) {
+    std::unique_lock lock(catalogMutex);
+    //check if source already exist
+    NES_DEBUG("SourceCatalog: search for logical source in addLogicalSource() " << logicalSourceName);
+
+    if (!containsLogicalSource(logicalSourceName)) {
+        NES_ERROR("SourceCatalog: Unable to find logical source " << logicalSourceName << " to update.");
+        return false;
+    }
+    NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
+    logicalSourceNameToSchemaMapping[logicalSourceName] = std::move(schemaPtr);
+    return true;
+}
+
 }// namespace NES
