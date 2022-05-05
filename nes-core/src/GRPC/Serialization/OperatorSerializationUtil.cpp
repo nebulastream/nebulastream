@@ -657,12 +657,6 @@ OperatorSerializationUtil::serializeBatchJoinOperator(const Experimental::BatchJ
     joinDetails.set_numberofinputedgesbuild(joinDefinition->getNumberOfInputEdgesBuild());
     joinDetails.set_numberofinputedgesprobe(joinDefinition->getNumberOfInputEdgesProbe());
 
-    if (joinDefinition->getJoinType() == Join::Experimental::LogicalBatchJoinDefinition::JoinType::INNER_JOIN) {
-        joinDetails.mutable_jointype()->set_jointype(SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
-    } else if (joinDefinition->getJoinType() == Join::Experimental::LogicalBatchJoinDefinition::JoinType::CARTESIAN_PRODUCT) {
-        joinDetails.mutable_jointype()->set_jointype(
-            SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
-    }
     return joinDetails;
 }
 
@@ -944,15 +938,6 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
 Experimental::BatchJoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeBatchJoinOperator(
         SerializableOperator_BatchJoinDetails* joinDetails, OperatorId operatorId) {
 
-    auto serializedJoinType = joinDetails->jointype();
-    // check which jointype is set
-    // default: INNER_JOIN
-    Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType = Join::Experimental::LogicalBatchJoinDefinition::INNER_JOIN;
-    // with Cartesian Product is set, change join type
-    if (serializedJoinType.jointype() == SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT) {
-        joinType = Join::Experimental::LogicalBatchJoinDefinition::CARTESIAN_PRODUCT;
-    }
-
     auto buildKeyAccessExpression =
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onbuildkey())->as<FieldAccessExpressionNode>();
     auto probeKeyAccessExpression =
@@ -960,8 +945,7 @@ Experimental::BatchJoinLogicalOperatorNodePtr OperatorSerializationUtil::deseria
     auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(buildKeyAccessExpression,
                                                               probeKeyAccessExpression,
                                                               joinDetails->numberofinputedgesprobe(),
-                                                              joinDetails->numberofinputedgesbuild(),
-                                                              joinType);
+                                                              joinDetails->numberofinputedgesbuild());
     auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<Experimental::BatchJoinLogicalOperatorNode>();
     return retValue;
 

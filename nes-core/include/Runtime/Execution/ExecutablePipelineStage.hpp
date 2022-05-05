@@ -52,7 +52,7 @@ class ExecutablePipelineStage {
     * @param pipelineExecutionContext
     * @return 0 if no error occurred.
     */
-    virtual uint32_t start(PipelineExecutionContext& pipelineExecutionContext); // todo jm use to start second source
+    virtual uint32_t start(PipelineExecutionContext& pipelineExecutionContext);
 
     /**
     * @brief Must be called exactly once per worker thread and initializes worker local state.

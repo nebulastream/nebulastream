@@ -20,30 +20,26 @@ namespace NES::Join::Experimental {
 LogicalBatchJoinDefinition::LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr keyTypeBuild,
                                              FieldAccessExpressionNodePtr keyTypeProbe,
                                              uint64_t numberOfInputEdgesLeft,
-                                             uint64_t numberOfInputEdgesRight,
-                                             JoinType joinType)
+                                             uint64_t numberOfInputEdgesRight)
     : keyTypeBuild(std::move(keyTypeBuild)), keyTypeProbe(std::move(keyTypeProbe)),
       numberOfInputEdgesBuild(numberOfInputEdgesLeft),
-      numberOfInputEdgesProbe(numberOfInputEdgesRight), joinType(joinType) {
+      numberOfInputEdgesProbe(numberOfInputEdgesRight) {
 
     NES_ASSERT(this->keyTypeBuild, "Invalid left join key type");
     NES_ASSERT(this->keyTypeProbe, "Invalid right join key type");
 
     NES_ASSERT(this->numberOfInputEdgesBuild > 0, "Invalid number of left edges");
     NES_ASSERT(this->numberOfInputEdgesProbe > 0, "Invalid number of right edges");
-    NES_ASSERT((this->joinType == INNER_JOIN || this->joinType == CARTESIAN_PRODUCT), "Invalid Join Type");
 }
 
 LogicalBatchJoinDefinitionPtr LogicalBatchJoinDefinition::create(const FieldAccessExpressionNodePtr& keyTypeBuild,
                                                        const FieldAccessExpressionNodePtr& keyTypeProbe,
                                                        uint64_t numberOfInputEdgesLeft,
-                                                       uint64_t numberOfInputEdgesRight,
-                                                       JoinType joinType) {
+                                                       uint64_t numberOfInputEdgesRight) {
     return std::make_shared<Join::Experimental::LogicalBatchJoinDefinition>(keyTypeBuild,
                                                               keyTypeProbe,
                                                               numberOfInputEdgesLeft,
-                                                              numberOfInputEdgesRight,
-                                                              joinType);
+                                                              numberOfInputEdgesRight);
 }
 
 FieldAccessExpressionNodePtr LogicalBatchJoinDefinition::getBuildJoinKey() { return keyTypeBuild; }
@@ -53,8 +49,6 @@ FieldAccessExpressionNodePtr LogicalBatchJoinDefinition::getProbeJoinKey() { ret
 SchemaPtr LogicalBatchJoinDefinition::getBuildSchema() { return buildSchema; }
 
 SchemaPtr LogicalBatchJoinDefinition::getProbeSchema() { return probeSchema; }
-
-Join::Experimental::LogicalBatchJoinDefinition::JoinType LogicalBatchJoinDefinition::getJoinType() const { return joinType; }
 
 uint64_t LogicalBatchJoinDefinition::getNumberOfInputEdgesBuild() const { return numberOfInputEdgesBuild; }
 

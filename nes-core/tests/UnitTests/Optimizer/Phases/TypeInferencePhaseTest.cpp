@@ -1024,15 +1024,12 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<JoinLogicalOperatorNode>()[0];
     Experimental::BatchJoinLogicalOperatorNodePtr batchJoinOp;
     {
-        auto joinType = Join::Experimental::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
-
         Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef =
                 Join::Experimental::LogicalBatchJoinDefinition::create(
                         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id1")->as<FieldAccessExpressionNode>(),
                         FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id2")->as<FieldAccessExpressionNode>(),
                         1,
-                        1,
-                        joinType);
+                        1);
 
         batchJoinOp = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
     }
