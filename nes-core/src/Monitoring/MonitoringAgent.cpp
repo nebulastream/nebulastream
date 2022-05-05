@@ -56,7 +56,7 @@ void MonitoringAgent::startContinuousMonitoring(NesWorkerPtr) {
     }
 }
 
-std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() {
+const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
     std::vector<MetricPtr> output;
     if (enabled) {
         NES_DEBUG("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");

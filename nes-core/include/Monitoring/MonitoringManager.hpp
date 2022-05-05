@@ -46,7 +46,18 @@ class MonitoringManager {
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
     MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, MetricStorePtr metricStore, bool enableMonitoring);
+    /**
+     * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
+     * @param workerClient RPC client
+     * @param topology the topology
+     * @param enableMonitoring flag to indicate if monitoring is enabled or not
+     */
     MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
+    /**
+     * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
+     * @param workerClient RPC client
+     * @param topology the topology
+     */
     MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
     MonitoringManager(const MonitoringManager&) = default;
     MonitoringManager(MonitoringManager&&) = default;

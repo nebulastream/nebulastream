@@ -42,7 +42,7 @@ bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr DiskCollector::getSchema() { return schema; }
 
-MetricPtr DiskCollector::readMetric() {
+const MetricPtr DiskCollector::readMetric() const {
     return std::make_shared<Metric>(resourceReader->readDiskStats(), MetricType::DiskMetric);
 }
 

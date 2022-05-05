@@ -62,6 +62,7 @@ class ContinuousMonitoringTest : public Testing::NESBaseTest {
 };
 
 TEST_F(ContinuousMonitoringTest, testRuntimeConcepts) {
+    // WIP of issue #2620
     web::json::value metricsJson{};
     std::vector<Metric> metrics;
 

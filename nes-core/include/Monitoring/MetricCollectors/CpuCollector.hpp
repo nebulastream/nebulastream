@@ -44,7 +44,7 @@ class CpuCollector : public MetricCollector {
      * @brief Read the CPU metrics based on the underlying utility systems reader and return the metrics.
      * @return The metrics object
      */
-    MetricPtr readMetric() override;
+    const MetricPtr readMetric() const override;
 
   private:
     AbstractSystemResourcesReaderPtr resourceReader;
