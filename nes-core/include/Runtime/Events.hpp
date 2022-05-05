@@ -22,7 +22,7 @@ class ExchangeProtocol;
 }
 namespace NES::Runtime {
 /// this enum defines the event that can occur in the system runtime
-enum class EventType : uint8_t { kInvalidEvent, kCustomEvent, startSourceEvent };
+enum class EventType : uint8_t { kInvalidEvent, kCustomEvent, kStartSourceEvent };
 
 template<typename T>
 concept IsNesEvent = requires(T t) {
@@ -89,7 +89,7 @@ class StartSourceEvent : public BaseEvent {
     /**
      * @brief creates a custom events that lets static data sources start sending data.
      */
-    explicit StartSourceEvent() : BaseEvent(EventType::startSourceEvent) {}
+    explicit StartSourceEvent() : BaseEvent(EventType::kStartSourceEvent) {}
 
     // todo only for compliance, don't call!
     uint8_t* data() override { return nullptr; }

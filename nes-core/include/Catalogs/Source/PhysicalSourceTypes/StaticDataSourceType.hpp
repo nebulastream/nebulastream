@@ -79,7 +79,7 @@ class StaticDataSourceType : public PhysicalSourceType {
     uint64_t numBuffersToProcess;// todo not used right now [#2493]
     SourceMode::Value sourceMode;
     uint64_t taskQueueId;// todo not used right now [#2493]
-    bool lateStart;
+    const bool lateStart;
 };
 }// namespace NES::Experimental
 #endif// NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_

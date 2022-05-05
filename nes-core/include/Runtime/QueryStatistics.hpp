@@ -14,19 +14,21 @@
 
 #ifndef NES_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
 #define NES_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+
 #include <atomic>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+
 namespace NES::Runtime {
 
 class QueryStatistics;
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 class QueryStatistics {
-  public:
-    QueryStatistics(uint64_t queryId, uint64_t subQueryId) : queryId(queryId), subQueryId(subQueryId){};
+public:
+    QueryStatistics(uint64_t queryId, uint64_t subQueryId) : queryId(queryId), subQueryId(subQueryId) {};
 
     QueryStatistics(const QueryStatistics& other);
 
@@ -37,33 +39,33 @@ class QueryStatistics {
     [[nodiscard]] uint64_t getProcessedTasks() const;
 
     /**
-   * @brief getter for processedTuple
-   * @return processedTuple
-   */
+    * @brief getter for processedTuple
+    * @return processedTuple
+    */
     [[nodiscard]] uint64_t getProcessedTuple() const;
 
     /**
-   * @brief getter for processedBuffers
-   * @return processedBuffers
-   */
+    * @brief getter for processedBuffers
+    * @return processedBuffers
+    */
     [[nodiscard]] uint64_t getProcessedBuffers() const;
 
     /**
-   * @brief getter for timestampQueryStart
-   * @return timestampQueryStart  In MS.
-   */
+    * @brief getter for timestampQueryStart
+    * @return timestampQueryStart  In MS.
+    */
     [[nodiscard]] uint64_t getTimestampQueryStart() const;
 
     /**
-   * @brief getter for timestampFirstProcessedTask
-   * @return timestampFirstProcessedTask  In MS.
-   */
+    * @brief getter for timestampFirstProcessedTask
+    * @return timestampFirstProcessedTask  In MS.
+    */
     [[nodiscard]] uint64_t getTimestampFirstProcessedTask() const;
 
     /**
-   * @brief getter for timestampLastProcessedTask
-   * @return timestampLastProcessedTask  In MS.
-   */
+    * @brief getter for timestampLastProcessedTask
+    * @return timestampLastProcessedTask  In MS.
+    */
     [[nodiscard]] uint64_t getTimestampLastProcessedTask() const;
 
     /**
@@ -78,15 +80,15 @@ class QueryStatistics {
     void setProcessedTasks(uint64_t processedTasks);
 
     /**
-   * @brief setter for processedTuple
-   */
+    * @brief setter for processedTuple
+    */
     void setProcessedTuple(uint64_t processedTuple);
 
     /**
     * @brief setter for timestampQueryStart
     * @param timestampQueryStart In MS.
     * @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
-   */
+    */
     void setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite);
 
 
@@ -94,18 +96,18 @@ class QueryStatistics {
     * @brief setter for timestampFirstProcessedTask
     * @param timestampFirstProcessedTask In MS.
     * @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
-   */
+    */
     void setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite);
 
     /**
-   * @brief setter for timestampLastProcessedTask
+    * @brief setter for timestampLastProcessedTask
     * @param timestampLastProcessedTask In MS.
-   */
+    */
     void setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask);
 
     /**
-  * @brief increment processedBuffers
-  */
+    * @brief increment processedBuffers
+    */
     void incProcessedBuffers();
 
     /**
@@ -114,8 +116,8 @@ class QueryStatistics {
     void incProcessedTasks();
 
     /**
-   * @brief increment processedTuple
-   */
+    * @brief increment processedTuple
+    */
     void incProcessedTuple(uint64_t tupleCnt);
 
     /**
@@ -168,9 +170,9 @@ class QueryStatistics {
     void incProcessedWatermarks();
 
     /**
-  * @brief setter for processedBuffers
-  * @return processedBuffers
-  */
+    * @brief setter for processedBuffers
+    * @return processedBuffers
+    */
     void setProcessedBuffers(uint64_t processedBuffers);
 
     /**
@@ -209,7 +211,7 @@ class QueryStatistics {
      */
     void clear();
 
-  private:
+private:
     std::atomic<uint64_t> processedTasks = 0;
     std::atomic<uint64_t> processedTuple = 0;
     std::atomic<uint64_t> processedBuffers = 0;
@@ -223,7 +225,6 @@ class QueryStatistics {
     std::atomic<uint64_t> timestampFirstProcessedTask = 0;
     std::atomic<uint64_t> timestampLastProcessedTask = 0;
 
-  private:
     std::atomic<uint64_t> queryId = 0;
     std::atomic<uint64_t> subQueryId = 0;
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;

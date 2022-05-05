@@ -65,7 +65,7 @@ class Statement {
      */
     [[nodiscard]] virtual CodeExpressionPtr getCode() const = 0;
 
-    /** todo why do we have this function and in child class ExpressionStatement::copy() ?
+    /**
      * @brief method to create a copy of this statement
      * @return copy of statement
      */
