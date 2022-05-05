@@ -27,31 +27,15 @@ namespace NES::Join::Experimental {
 class LogicalBatchJoinDefinition { // todo jm its dumb that this is in the windowing dir
 
   public:
-    /**
-     * With this enum we distinguish between options to compose two streams, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
-     * Thus, INNER_JOIN combines two tuples in case they share a common key attribute
-     * CARTESIAN_PRODUCT combines two tuples regardless if they share a common attribute.
-     *
-     * Example:
-     * Stream1: {(key1,2),(key2,3)}
-     * Stream2: {(key1,2),(key2,3)}
-     *
-     * INNER_JOIN: {(Key1,2,2), (key2,3,3)}
-     * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
-     *
-     */
-    enum JoinType { INNER_JOIN, CARTESIAN_PRODUCT }; // <-- todo duplicate to LogicalJoinDefinition::JoinType
     static LogicalBatchJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& keyTypeBuild,
                                            const FieldAccessExpressionNodePtr& keyTypeProbe,
                                            uint64_t numberOfInputEdgesLeft,
-                                           uint64_t numberOfInputEdgesRight,
-                                           JoinType joinType);
+                                           uint64_t numberOfInputEdgesRight);
 
     explicit LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr keyTypeBuild,
                                    FieldAccessExpressionNodePtr keyTypeProbe,
                                    uint64_t numberOfInputEdgesLeft,
-                                   uint64_t numberOfInputEdgesRight,
-                                   JoinType joinType);
+                                   uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on build join key
@@ -72,12 +56,6 @@ class LogicalBatchJoinDefinition { // todo jm its dumb that this is in the windo
    * @brief getter probe schema
    */
     SchemaPtr getProbeSchema();
-
-    /**
-     * @brief getter for the join type
-     * @return jointype
-    */
-    [[nodiscard]] JoinType getJoinType() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this
@@ -122,7 +100,6 @@ class LogicalBatchJoinDefinition { // todo jm its dumb that this is in the windo
     SchemaPtr outputSchema{nullptr};
     uint64_t numberOfInputEdgesBuild;
     uint64_t numberOfInputEdgesProbe;
-    JoinType joinType;
 };
 
 using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;

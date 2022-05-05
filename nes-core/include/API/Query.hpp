@@ -149,13 +149,13 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
+/**
+* @brief BatchJoinOperatorBuilder.
+* @note Initialize as Join between originalQuery and subQueryRhs.
+* @note In contrast to the JoinOperatorBuilder only .where() and .key() need to be applied to join the query.
+* @note No windowing is required.
+*/
 namespace Experimental::BatchJoinOperatorBuilder {
-    /**
-     * @brief BatchJoinOperatorBuilder.
-     * @note Initialize as Join between originalQuery and subQueryRhs.
-     * @note In contrast to the JoinOperatorBuilder only .where() and .key() need to be applied to join the query.
-     * @note No windowing is required.
-     */
 
 class JoinWhere;
 
@@ -495,7 +495,6 @@ class Query {
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the Join operation
-     * @brief This methods adds the joinType to the join operator and calls the join function to add the operator to a query
      * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
      * @param subQueryRhs subQuery to be joined
      * @param onLeftKey key attribute of the left stream
@@ -559,13 +558,11 @@ class Query {
      * @param subQueryRhs subQuery to be joined
      * @param onProbeKey key attribute of the left stream
      * @param onBuildKey key attribute of the right stream
-     * @param joinType the definition of how the composition of the streams should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the query
      */
     Query& batchJoin(const Query& subQueryRhs,
                 ExpressionItem onProbeKey,
-                ExpressionItem onBuildKey,
-                Join::Experimental::LogicalBatchJoinDefinition::JoinType joinType);
+                ExpressionItem onBuildKey);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
