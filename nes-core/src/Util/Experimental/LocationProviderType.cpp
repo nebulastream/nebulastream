@@ -29,4 +29,4 @@ std::string toString(const LocationProviderType providerType) {
         case LocationProviderType::INVALID: return "INVALID";
     }
 }
-}
+}// namespace NES::Spatial::Mobility::Experimental

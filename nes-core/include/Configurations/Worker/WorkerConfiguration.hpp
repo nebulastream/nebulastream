@@ -21,8 +21,8 @@
 #include <Configurations/Worker/LocationFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Spatial/LocationProviderCSV.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <map>
 #include <string>
@@ -164,8 +164,7 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief location coordinate of the node if any
      */
-    WrapOption<NES::Spatial::Index::Experimental::Location,
-               Configurations::Spatial::Index::Experimental::LocationFactory>
+    WrapOption<NES::Spatial::Index::Experimental::Location, Configurations::Spatial::Index::Experimental::LocationFactory>
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**

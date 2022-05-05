@@ -18,7 +18,7 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-NodeLocationWrapper::NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc ) {
+NodeLocationWrapper::NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc) {
     this->isMobile = isMobile;
     this->fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(fieldNodeLoc);
 }
@@ -33,8 +33,7 @@ bool NodeLocationWrapper::createLocationProvider(LocationProviderType type, std:
         case LocationProviderType::NONE:
             NES_FATAL_ERROR("Trying to create location provider but provider type is set to NONE")
             exit(EXIT_FAILURE);
-        case LocationProviderType::CSV: locationProvider = std::make_shared<LocationProviderCSV>(config);
-            break;
+        case LocationProviderType::CSV: locationProvider = std::make_shared<LocationProviderCSV>(config); break;
         case LocationProviderType::INVALID:
             NES_FATAL_ERROR("Trying to create location provider but provider type is invalid")
             exit(EXIT_FAILURE);
@@ -71,7 +70,8 @@ Index::Experimental::LocationPtr NodeLocationWrapper::getLocation() {
     return fixedLocationCoordinates;
 }
 
-std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrapper::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
+std::vector<std::pair<uint64_t, Index::Experimental::Location>>
+NodeLocationWrapper::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 

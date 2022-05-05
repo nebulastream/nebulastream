@@ -13,9 +13,9 @@
 */
 
 #include <Common/Location.hpp>
-#include <Spatial/LocationIndex.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
@@ -602,7 +602,5 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
     return nullptr;
 }
 
-NES::Spatial::Index::Experimental::LocationIndexPtr Topology::getLocationIndex() {
-    return locationIndex;
-}
+NES::Spatial::Index::Experimental::LocationIndexPtr Topology::getLocationIndex() { return locationIndex; }
 }// namespace NES

@@ -125,7 +125,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     EXPECT_EQ(*(node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node3);
     EXPECT_EQ(geoTopology->getClosestNodeTo(*(node4->getCoordinates())).value(), node4);
-    geoTopology->updateFieldNodeCoordinates(node2, NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
+    geoTopology->updateFieldNodeCoordinates(node2,
+                                            NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getClosestNodeTo(node4), node2);
     EXPECT_EQ(*(node2->getCoordinates()), NES::Spatial::Index::Experimental::Location(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 3);
@@ -136,7 +137,8 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     auto inRangeAtWorker = wrk2->getLocationWrapper()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //moving node 3 to hamburg (more than 100km away
-    geoTopology->updateFieldNodeCoordinates(node3, NES::Spatial::Index::Experimental::Location(53.559524264262194, 10.039384739854102));
+    geoTopology->updateFieldNodeCoordinates(node3,
+                                            NES::Spatial::Index::Experimental::Location(53.559524264262194, 10.039384739854102));
 
     //node 3 should not have any nodes within a radius of 100km
     EXPECT_EQ(geoTopology->getClosestNodeTo(node3, 100).has_value(), false);
@@ -156,10 +158,10 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
 
     //location far away from all the other nodes should not have any closest node
-    EXPECT_EQ(geoTopology
-                  ->getClosestNodeTo(NES::Spatial::Index::Experimental::Location(-53.559524264262194, -10.039384739854102), 100)
-                  .has_value(),
-                  false);
+    EXPECT_EQ(
+        geoTopology->getClosestNodeTo(NES::Spatial::Index::Experimental::Location(-53.559524264262194, -10.039384739854102), 100)
+            .has_value(),
+        false);
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -228,7 +230,8 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(wrk1->getLocationWrapper()->isFieldNode(), false);
     EXPECT_EQ(wrk2->getLocationWrapper()->isFieldNode(), true);
 
-    EXPECT_EQ(*(wrk1->getLocationWrapper()->getLocation()), NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
+    EXPECT_EQ(*(wrk1->getLocationWrapper()->getLocation()),
+              NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
     EXPECT_EQ(*(wrk2->getLocationWrapper()->getLocation()), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
