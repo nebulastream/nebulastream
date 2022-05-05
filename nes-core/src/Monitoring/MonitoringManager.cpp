@@ -19,7 +19,7 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/Storage/NewestEntryMetricStore.hpp>
+#include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -31,7 +31,7 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPt
     : MonitoringManager(workerClient, topology, true) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
-    : MonitoringManager(workerClient, topology, std::make_shared<NewestEntryMetricStore>(), enableMonitoring) {}
+    : MonitoringManager(workerClient, topology, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
                                      TopologyPtr topology,

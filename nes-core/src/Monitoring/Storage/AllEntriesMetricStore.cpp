@@ -24,6 +24,7 @@ AllEntriesMetricStore::AllEntriesMetricStore() { NES_DEBUG("AllEntriesMetricStor
 MetricStoreType AllEntriesMetricStore::getType() const { return AllEntries; }
 
 void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
+    std::unique_lock lock(storeMutex);
     NES_DEBUG("AllEntriesMetricStore: Adding metric of type " << toString(metric->getMetricType()));
     uint64_t timestamp = duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     if (storedMetrics.contains(nodeId)) {
@@ -54,6 +55,7 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
 }
 
 bool AllEntriesMetricStore::removeMetrics(uint64_t nodeId) {
+    std::unique_lock lock(storeMutex);
     if (storedMetrics.contains(nodeId)) {
         storedMetrics.erase(nodeId);
         return true;
@@ -61,8 +63,14 @@ bool AllEntriesMetricStore::removeMetrics(uint64_t nodeId) {
     return false;
 }
 
-bool AllEntriesMetricStore::hasMetrics(uint64_t nodeId) { return storedMetrics.contains(nodeId); }
+bool AllEntriesMetricStore::hasMetrics(uint64_t nodeId) {
+    std::unique_lock lock(storeMutex);
+    return storedMetrics.contains(nodeId);
+}
 
-StoredNodeMetricsPtr AllEntriesMetricStore::getAllMetrics(uint64_t nodeId) { return storedMetrics[nodeId]; }
+StoredNodeMetricsPtr AllEntriesMetricStore::getAllMetrics(uint64_t nodeId) {
+    std::unique_lock lock(storeMutex);
+    return storedMetrics[nodeId];
+}
 
 }// namespace NES

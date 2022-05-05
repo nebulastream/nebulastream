@@ -26,7 +26,7 @@
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Storage/AllEntriesMetricStore.hpp>
-#include <Monitoring/Storage/NewestEntryMetricStore.hpp>
+#include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
 namespace NES {
@@ -60,7 +60,7 @@ class MetricStoreTest : public Testing::NESBaseTest {
 
 TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
     uint64_t nodeId = 0;
-    auto metricStore = std::make_shared<NewestEntryMetricStore>();
+    auto metricStore = std::make_shared<LatestEntriesMetricStore>();
     auto networkCollector = NetworkCollector();
 
     uint64_t myInt = 12345;

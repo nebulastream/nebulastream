@@ -13,18 +13,19 @@
 */
 
 #include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Storage/NewestEntryMetricStore.hpp>
+#include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sys/time.h>
 
 namespace NES {
 
-NewestEntryMetricStore::NewestEntryMetricStore() { NES_DEBUG("NewestEntryMetricStore: Init NewestMetricStore"); }
+LatestEntriesMetricStore::LatestEntriesMetricStore() { NES_DEBUG("LatestEntriesMetricStore: Init NewestMetricStore"); }
 
-MetricStoreType NewestEntryMetricStore::getType() const { return NewestEntry; }
+MetricStoreType LatestEntriesMetricStore::getType() const { return NewestEntry; }
 
-void NewestEntryMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
-    NES_DEBUG("NewestEntryMetricStore: Adding metric of type " << toString(metric->getMetricType()));
+void LatestEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
+    std::unique_lock lock(storeMutex);
+    NES_DEBUG("LatestEntriesMetricStore: Adding metric of type " << toString(metric->getMetricType()));
     uint64_t timestamp = time(NULL);
     if (storedMetrics.contains(nodeId)) {
         StoredNodeMetricsPtr nodeMetrics = storedMetrics[nodeId];
@@ -47,7 +48,8 @@ void NewestEntryMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
     }
 }
 
-bool NewestEntryMetricStore::removeMetrics(uint64_t nodeId) {
+bool LatestEntriesMetricStore::removeMetrics(uint64_t nodeId) {
+    std::unique_lock lock(storeMutex);
     if (storedMetrics.contains(nodeId)) {
         storedMetrics.erase(nodeId);
         return true;
@@ -55,8 +57,14 @@ bool NewestEntryMetricStore::removeMetrics(uint64_t nodeId) {
     return false;
 }
 
-bool NewestEntryMetricStore::hasMetrics(uint64_t nodeId) { return storedMetrics.contains(nodeId); }
+bool LatestEntriesMetricStore::hasMetrics(uint64_t nodeId) {
+    std::unique_lock lock(storeMutex);
+    return storedMetrics.contains(nodeId);
+}
 
-StoredNodeMetricsPtr NewestEntryMetricStore::getAllMetrics(uint64_t nodeId) { return storedMetrics[nodeId]; }
+StoredNodeMetricsPtr LatestEntriesMetricStore::getAllMetrics(uint64_t nodeId) {
+    std::unique_lock lock(storeMutex);
+    return storedMetrics[nodeId];
+}
 
 }// namespace NES

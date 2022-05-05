@@ -62,6 +62,7 @@ class AllEntriesMetricStore : public AbstractMetricStore {
 
   private:
     std::unordered_map<uint64_t, StoredNodeMetricsPtr> storedMetrics;
+    mutable std::mutex storeMutex;
 };
 
 }// namespace NES

@@ -20,12 +20,12 @@
 namespace NES {
 
 /**
-* @brief The NewestEntryMetricStore that stores all the metrics for monitoring.
+* @brief The LatestEntriesMetricStore that stores all the metrics for monitoring.
 */
-class NewestEntryMetricStore : public AbstractMetricStore {
+class LatestEntriesMetricStore : public AbstractMetricStore {
   public:
-    explicit NewestEntryMetricStore();
-    ~NewestEntryMetricStore() = default;
+    explicit LatestEntriesMetricStore();
+    ~LatestEntriesMetricStore() = default;
 
     /**
      * @brief Returns the type of storage.
@@ -62,6 +62,7 @@ class NewestEntryMetricStore : public AbstractMetricStore {
 
   private:
     std::unordered_map<uint64_t, StoredNodeMetricsPtr> storedMetrics;
+    mutable std::mutex storeMutex;
 };
 
 }// namespace NES
