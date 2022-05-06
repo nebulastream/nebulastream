@@ -16,10 +16,10 @@
 #include <cpprest/json.h>
 #include <Spatial/LocationIndex.hpp>
 
-namespace NES::Spatial::Index {
-LocationService::LocationService(LocationIndexPtr locationWrapper) : locationWrapper(locationWrapper) {};
+namespace NES::Spatial::Index::Experimental {
+LocationService::LocationService(LocationIndexPtr locationWrapper) : locationIndex(locationWrapper) {};
 
 web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
-
+    return locationIndex->getMobileNodeLocationssAsJson();
 }
 }

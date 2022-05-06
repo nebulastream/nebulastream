@@ -20,7 +20,7 @@ namespace web::json {
 class value;
 }// namespace web::json
 
-namespace NES::Spatial::Index {
+namespace NES::Spatial::Index::Experimental {
 class LocationIndex;
 using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 
@@ -30,7 +30,7 @@ class LocationService {
 
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
   private:
-    LocationIndexPtr locationWrapper;
+    LocationIndexPtr locationIndex;
 };
 }
 

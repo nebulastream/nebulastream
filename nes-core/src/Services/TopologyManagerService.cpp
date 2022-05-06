@@ -79,7 +79,13 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                                                             << fixedCoordinates.getLongitude());
         topology->getLocationIndex()->initializeFieldNodeCoordinates(newTopologyNode, fixedCoordinates);
     } else {
-        NES_DEBUG("added node does not have a geographical location");
+        NES_DEBUG("added node is a non field node");
+        if (newTopologyNode->isMobileNode()) {
+            topology->getLocationIndex()->addMobileNode(newTopologyNode);
+            NES_DEBUG("added node is a mobile node");
+        } else {
+            NES_DEBUG("added node is a non mobile node");
+        }
     }
 
     if (healthCheckService) {
