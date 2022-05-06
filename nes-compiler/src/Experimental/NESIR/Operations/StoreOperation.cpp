@@ -16,14 +16,17 @@
 
 namespace NES {
 
-StoreOperation::StoreOperation(void* outputBufferPtr, std::vector<OperationPtr> valuesToStore, std::vector<uint64_t> outputBufferIndexes)
-    : Operation(OperationType::StoreOp), outputBufferPtr(outputBufferPtr), valuesToStore(valuesToStore), outputBufferIndexes(outputBufferIndexes) {}
+StoreOperation::StoreOperation(void* outputBufferPtr, OperationPtr valueToStore, uint64_t outputBufferIdx, Operation::BasicType type)
+    : Operation(OperationType::StoreOp), outputBufferPtr(outputBufferPtr), valueToStore(valueToStore),
+    outputBufferIdx(outputBufferIdx), type(type) {}
 
 void* StoreOperation::getOutputBuffer() { return outputBufferPtr; }
 
-std::vector<OperationPtr> StoreOperation::getValuesToStore() { return valuesToStore; }
+OperationPtr StoreOperation::getValueToStore() { return valueToStore; }
 
-std::vector<uint64_t> StoreOperation::getOutputBufferIndexes() { return outputBufferIndexes; }
+uint64_t StoreOperation::getOutputBufferIdx() { return outputBufferIdx; }
+
+Operation::BasicType StoreOperation::getType() { return type; };
 
 bool StoreOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::StoreOp; }
 }// namespace NES

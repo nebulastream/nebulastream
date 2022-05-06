@@ -23,22 +23,17 @@ namespace NES {
 
 class BasicBlock {
   public:
-    enum BasicBlockType{LoopBasicBlock, IfBasicBlock};
 
     /**
      * @brief BasicBlock used for control flow in NES IR
      * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlock : The BasicBlock that is next in the control flow of the execution.
      */
-    explicit BasicBlock(BasicBlockType basicBlockType, std::vector<OperationPtr> operations);
+    explicit BasicBlock(std::vector<OperationPtr> operations);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::vector<OperationPtr> getOperations();
-    [[nodiscard]] BasicBlockType getBlockType() const;
-    //    void addOperations(std::vector<Operations> Operations);
-    //    void addNextBlock(BasicBlock);
 
   private:
-    BasicBlockType basicBlockType;
     std::vector<OperationPtr> operations;
 };
 using BasicBlockPtr = std::unique_ptr<BasicBlock>;

@@ -23,9 +23,6 @@ class IfBasicBlock : public BasicBlock {
     IfBasicBlock(const std::vector<OperationPtr>& operations, BasicBlockPtr nextIfBlock, BasicBlockPtr nextElseBlock);
     ~IfBasicBlock() override = default;
 
-    bool classof(const BasicBlock *Block);
-
-
   private:
     BasicBlockPtr nextIfBlock;
     BasicBlockPtr nextElseBlock;

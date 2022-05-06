@@ -12,29 +12,31 @@
     limitations under the License.
 */
 
-#ifndef NES_STOREOPERATION_HPP
-#define NES_STOREOPERATION_HPP
+#ifndef NES_ADDRESSOPERATION_HPP
+#define NES_ADDRESSOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <vector>
 
 namespace NES {
-class StoreOperation : public Operation{
-  public:
-    explicit StoreOperation(void* outputBufferPtr, OperationPtr valueToStore, uint64_t outputBufferIdx, Operation::BasicType type);
-    ~StoreOperation() override = default;
+class AddressOperation : public Operation {
+public:
+    explicit AddressOperation(Operation::BasicType dataType, void* baseAddress, uint64_t widthOffset, uint64_t fieldOffset);
+    ~AddressOperation() override = default;
 
-    void* getOutputBuffer();
-    OperationPtr getValueToStore();
-    uint64_t getOutputBufferIdx();
-    Operation::BasicType getType();
-    static bool classof(const Operation* Op);
+    Operation::BasicType getDataType();
 
-  private:
-    void* outputBufferPtr;
-    OperationPtr valueToStore;
-    uint64_t outputBufferIdx;
-    Operation::BasicType type;
+    void* getBaseAddress();
+    uint64_t getWidthOffset();
+    uint64_t getFieldOffset();
+
+    static bool classof(const Operation *Op);
+private:
+    Operation::BasicType dataType;
+    void* baseAddress;
+    uint64_t widthOffset;
+    uint64_t fieldOffset;
 };
 }// namespace NES
-#endif//NES_STOREOPERATION_HPP
+
+#endif//NES_ADDRESSOPERATION_HPP

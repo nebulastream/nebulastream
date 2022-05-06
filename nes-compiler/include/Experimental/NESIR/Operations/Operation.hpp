@@ -42,7 +42,7 @@ class Operation {
         CHARARRAY = 33,
         STRUCT    = 34
     };
-    enum OperationType{AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp};
+    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp};
 
     explicit Operation(OperationType opType);
     virtual ~Operation() = default;

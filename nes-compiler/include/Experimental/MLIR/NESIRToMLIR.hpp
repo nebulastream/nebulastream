@@ -15,12 +15,14 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 
-#include <Experimental/NESIR/BasicBlocks/LoopBasicBlock.hpp>
+#include <Experimental/NESIR/NESIR.hpp>
 #include <Experimental/NESIR/BasicBlocks/IfBasicBlock.hpp>
 
+#include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/AddIntOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
+#include <Experimental/NESIR/Operations/AddressOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/PredicateOperation.hpp>
 
@@ -56,11 +58,7 @@ class MLIRGenerator {
     MLIRGenerator(mlir::MLIRContext &context);
     ~MLIRGenerator() = default;
 
-    /**
-     * @brief Recursively iterates over a NES abstraction tree to generate MLIR
-     * @return An MLIR module that contains the generated 'execute' function.
-     */
-    mlir::ModuleOp generateMLIR(std::shared_ptr<NES::LoopBasicBlock> rootNode);
+    mlir::ModuleOp generateModuleFromNESIR(NES::NESIR* nesIR);
 
 private:
     // MLIR variables
@@ -70,34 +68,34 @@ private:
     FuncOp executeFunction;
     // NES Variables
     mlir::LLVM::GlobalOp inputBufferGlobal;
+    mlir::Value inputBufferIntPtr;
     mlir::LLVM::GlobalOp outputBufferGlobal;
     // Utility
+    mlir::Value currentRecordIdx;
     mlir::Value constZero;
+    mlir::Value constOne;
     mlir::RewriterBase::InsertPoint *globalInsertPoint;
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;
     llvm::StringMap<mlir::Value> printfStrings;
 
-    //Todo Adapt to NESIR approach
-    // - generateMLIR(LoopBasicBlock) [ ]
-    //   - entry point (for now)
-    // - generateMLIR(IfBasicBlock)
-    //   - not needed (for now)
-    // - generateMLIR(Operation)
-    //   - AddOperation   [ ]
-    //   - LoadOperation  [ ]
-    //   - StoreOperation [ ]
-    //   - ConstantIntOp  [ ]
+
+    void createTupleBuffer(std::vector<NES::Operation::BasicType> types, const std::string& identifier);
+
+    void generateMLIR(NES::BasicBlockPtr basicBlock);
 
     /**
      * @brief Calls the specific generate function based on currentNode's type.
      * @param parentBlock MLIR Block that new operation is inserted into.
      */
-    void generateMLIR(const NES::OperationPtr& operation);
-    void generateMLIR(std::shared_ptr<NES::ConstantIntOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::AddIntOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::StoreOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
+    Value generateMLIR(const NES::OperationPtr& operation);
+
+    Value generateMLIR(std::shared_ptr<NES::LoopOperation> operation);
+    Value generateMLIR(std::shared_ptr<NES::ConstantIntOperation> operation);
+    Value generateMLIR(std::shared_ptr<NES::AddIntOperation> operation);
+    Value generateMLIR(std::shared_ptr<NES::StoreOperation> operation);
+    Value generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
+    Value generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
 
     /**
      * @brief Prints content of a tuple from within MLIR.
@@ -116,13 +114,6 @@ private:
      * @return Value: GEP address of global string.
      */
     Value createGlobalString(Location loc, StringRef name, StringRef value);
-
-    /**
-     * @brief Inserts Input- and OutputBuffer pointers globally.
-     * @param types: Field types of buffers.
-     */
-    void insertTupleBuffer(std::vector<NES::Operation::BasicType> types);
-
 
     /**
      * @brief Print a single value from the TupleBuffer.

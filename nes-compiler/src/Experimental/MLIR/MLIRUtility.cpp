@@ -116,7 +116,7 @@ int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags*
     return 0;
 }
 
-int MLIRUtility::loadAndProcessMLIR(const std::shared_ptr<NES::LoopBasicBlock>& loopBasicBlock, DebugFlags* debugFlags) {
+int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
 
     // Todo find a good place to load the required Dialects
     // Load all Dialects required to process/generate the required MLIR.
@@ -130,7 +130,7 @@ int MLIRUtility::loadAndProcessMLIR(const std::shared_ptr<NES::LoopBasicBlock>& 
     } else {
         // create NESAbstraction for testing and an MLIRGenerator
         auto MLIRGen = new MLIRGenerator(context);
-        module = MLIRGen->generateMLIR(loopBasicBlock); //Todo use real
+        module = MLIRGen->generateModuleFromNESIR(nesIR); //Todo use real
         printMLIRModule(module, debugFlags);
     }
 
@@ -189,7 +189,7 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols,
         printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-            //    llvmIRModule->print(llvm::errs(), nullptr);
+            llvmIRModule->print(llvm::errs(), nullptr);
             return optimizedModule;
         };
     }
@@ -210,9 +210,9 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols,
     engine->registerSymbols(runtimeSymbolMap);
 
     // Invoke the JIT-compiled function.
-    int result = 0;
-    auto invocationResult = engine->invoke("execute", 42, mlir::ExecutionEngine::Result<int>(result));
-    printf("Result: %d\n", result);
+    int64_t result = 0;
+    auto invocationResult = engine->invoke("execute", 42, mlir::ExecutionEngine::Result<int64_t>(result));
+    printf("Result: %ld\n", result);
 
     if (invocationResult) {
         llvm::errs() << "JIT invocation failed\n";

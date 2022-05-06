@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/LoadOperation.hpp>
-
+#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <utility>
 namespace NES {
+LoopOperation::LoopOperation(std::vector<OperationPtr> operations, uint64_t upperLimit)
+    : Operation(Operation::LoopOp), operations(operations), upperLimit(upperLimit) {}
 
-LoadOperation::LoadOperation(OperationPtr addressOp)
-    : Operation(OperationType::LoadOp), addressOp(addressOp) {}
+std::vector<OperationPtr> LoopOperation::getOperations() { return operations; };
 
-OperationPtr LoadOperation::getAddressOp() { return addressOp; }
+uint64_t LoopOperation::getUpperLimit() const { return upperLimit; }
 
-bool LoadOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
+bool LoopOperation::classof(const Operation *Op) {
+    return Op->getOperationType() == Operation::LoopOp;
+}
 
 }// namespace NES

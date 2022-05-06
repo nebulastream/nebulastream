@@ -16,10 +16,9 @@
 #include <utility>
 
 namespace NES {
-BasicBlock::BasicBlock(BasicBlock::BasicBlockType basicBlockType, std::vector<OperationPtr> operations)
-    : basicBlockType(basicBlockType), operations(std::move(operations)) {}
+BasicBlock::BasicBlock(std::vector<OperationPtr> operations)
+    : operations(std::move(operations)) {}
 
 std::vector<OperationPtr> BasicBlock::getOperations() { return operations; }
 
-BasicBlock::BasicBlockType BasicBlock::getBlockType() const { return basicBlockType; }
 }// namespace NES

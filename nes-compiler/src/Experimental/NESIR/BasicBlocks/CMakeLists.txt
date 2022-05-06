@@ -13,6 +13,5 @@
 
 add_source_files(nes-compiler
         BasicBlock.cpp
-        LoopBasicBlock.cpp
         IfBasicBlock.cpp
 )

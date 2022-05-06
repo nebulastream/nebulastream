@@ -20,14 +20,14 @@
 namespace NES {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(uint64_t fieldIdx);
+    explicit LoadOperation(OperationPtr addressOp);
     ~LoadOperation() override = default;
 
-    [[nodiscard]] uint64_t getFieldIdx() const;
+    OperationPtr getAddressOp();
+
     static bool classof(const Operation *Op);
   private:
-    const uint64_t fieldIdx; //fixme: Could also be identifier. Could be general index (also used by LoopBlock to load record?).
-
+    OperationPtr addressOp;
 };
 }// namespace NES
 #endif//NES_LOADOPERATION_HPP

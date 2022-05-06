@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/LoadOperation.hpp>
+#include <Experimental/NESIR/NESIR.hpp>
+#include <utility>
 
 namespace NES {
 
-LoadOperation::LoadOperation(OperationPtr addressOp)
-    : Operation(OperationType::LoadOp), addressOp(addressOp) {}
+NESIR::NESIR(BasicBlockPtr rootBlock, std::vector<ExternalDataSourcePtr>  externalDataSources) :
+    rootBlock(std::move(rootBlock)), externalDataSources(std::move(externalDataSources)) {}
 
-OperationPtr LoadOperation::getAddressOp() { return addressOp; }
+BasicBlockPtr NESIR::getRootBlock() {
+    return std::move(rootBlock);
+}
 
-bool LoadOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
+std::vector<ExternalDataSourcePtr> NESIR::getExternalDataSources() { return externalDataSources; }
 
 }// namespace NES

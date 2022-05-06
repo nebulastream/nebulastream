@@ -15,13 +15,13 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
-#ifdef MLIR_COMPILER
-#include <Experimental/NESIR/BasicBlocks/LoopBasicBlock.hpp>
+#include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Mangling.h>
+#include <Experimental/NESIR/NESIR.hpp>
 
 
 class MLIRUtility {
@@ -53,7 +53,7 @@ class MLIRUtility {
         * @param debugFlags: Determine whether and how to print/write MLIR.
         * @return int: 1 if error occurred, else 0
         */
-        int loadAndProcessMLIR(const std::shared_ptr<NES::LoopBasicBlock>& loopBasicBlock,
+        int loadAndProcessMLIR(NES::NESIR* nesIR,
                                DebugFlags *debugFlags = nullptr);
 
         int loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags);
@@ -84,5 +84,4 @@ class MLIRUtility {
         static std::string insertComments(const std::string &moduleString);
 
 };
-#endif //MLIR_COMPILER
 #endif //NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_

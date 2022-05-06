@@ -12,32 +12,32 @@
     limitations under the License.
 */
 
-#ifndef NES_LOOPBASICBLOCK_HPP
-#define NES_LOOPBASICBLOCK_HPP
+#ifndef NES_LOOPOPERATION_HPP
+#define NES_LOOPOPERATION_HPP
 
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Operations/Operation.hpp>
+#include <vector>
 
 namespace NES {
 /**
  * @brief Iterates over a buffer. Loads a record on each iteration. Contains operations which are nested inside of the LoopBlock.
  * Points to other BasicBlocks if there is control flow.
  */
-class LoopBasicBlock : public BasicBlock {
+class LoopOperation : public Operation {
   public:
-    LoopBasicBlock(std::vector<OperationPtr> operators, BasicBlockPtr nextBlock, void* inputBufferPtr, uint64_t upperLimit);
-    ~LoopBasicBlock() override = default;
+    LoopOperation(std::vector<OperationPtr> operations, uint64_t upperLimit);
+    ~LoopOperation() override = default;
 
+    std::vector<OperationPtr> getOperations();
     [[nodiscard]] uint64_t getUpperLimit() const;
-    void* getInputBufferPtr();
-    static bool classof(const BasicBlock *Block);
+    static bool classof(const Operation *Block);
 
   private:
-    BasicBlockPtr nextBlock;
-    void* inputBufferPtr; // Cannot include TupleBuffer currently
+    std::vector<OperationPtr> operations;
     uint64_t upperLimit;
 
 
 
 };
 }// namespace NES
-#endif//NES_LOOPBASICBLOCK_HPP
+#endif//NES_LoopOperation_HPP

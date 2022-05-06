@@ -17,9 +17,7 @@ namespace NES {
 NES::IfBasicBlock::IfBasicBlock(const std::vector<OperationPtr>& operations,
                                 NES::BasicBlockPtr nextIfBlock,
                                 NES::BasicBlockPtr nextElseBlock)
-    : BasicBlock(BasicBlockType::IfBasicBlock, operations), nextIfBlock(std::move(nextIfBlock)),
+    : BasicBlock(operations), nextIfBlock(std::move(nextIfBlock)),
       nextElseBlock(std::move(nextElseBlock)) {}
-
-bool IfBasicBlock::classof(const BasicBlock* Block) { return Block->getBlockType() == BasicBlock::IfBasicBlock; }
 
 }// namespace NES

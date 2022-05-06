@@ -18,4 +18,6 @@ add_source_files(nes-compiler
         AddIntOperation.cpp
         PredicateOperation.cpp
         ConstantIntOperation.cpp
+        LoopOperation.cpp
+        AddressOperation.cpp
 )
