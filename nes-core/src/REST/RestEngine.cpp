@@ -21,6 +21,7 @@
 #include <REST/Controller/SourceCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
+#include <REST/Controller/LocationController.hpp>
 #include <REST/RestEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/details/http_server.h>

@@ -94,6 +94,8 @@ class LocationIndex {
      */
     std::vector<std::pair<TopologyNodePtr, Location>> getNodesInRange(Location center, double radius);
 
+    void addMobileNode(TopologyNodePtr node);
+
     /**
      * Experimental
      * @return the amount of field nodes (non mobile nodes with a known location) in the system
@@ -114,6 +116,7 @@ class LocationIndex {
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;
+    std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
 #endif
 };
 }//namespace Spatial::Index::Experimental
