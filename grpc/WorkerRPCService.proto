@@ -78,6 +78,7 @@ message StartQueryReply {
 
 message StopQueryRequest {
   uint64 queryId = 1;
+  uint64 queryTerminationType = 2;
 }
 
 message StopQueryReply {

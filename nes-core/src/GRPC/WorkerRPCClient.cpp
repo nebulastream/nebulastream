@@ -16,7 +16,6 @@
 
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -258,11 +257,12 @@ bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId
     return true;
 }
 
-bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId) {
+bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType) {
     NES_DEBUG("WorkerRPCClient::markQueryForStop address=" << address << " queryId=" << queryId);
 
     StopQueryRequest request;
     request.set_queryid(queryId);
+    request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopQueryReply reply;
     ClientContext context;
@@ -281,11 +281,12 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId) {
     throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
 }
 
-bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
+bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType, const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::stopQueryAsync address=" << address << " queryId=" << queryId);
 
     StopQueryRequest request;
     request.set_queryid(queryId);
+    request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopQueryReply reply;
     ClientContext context;
