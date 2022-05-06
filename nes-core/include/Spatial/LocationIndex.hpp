@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
+#include <cpprest/json.h>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -96,6 +97,10 @@ class LocationIndex {
 
     void addMobileNode(TopologyNodePtr node);
 
+    std::vector<std::pair<uint64_t, Location>> getMobileNodeLocations();
+
+    web::json::value getMobileNodeLocationssAsJson();
+
     /**
      * Experimental
      * @return the amount of field nodes (non mobile nodes with a known location) in the system
@@ -113,10 +118,10 @@ class LocationIndex {
      */
     bool setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
 
+    std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;
-    std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
 #endif
 };
 }//namespace Spatial::Index::Experimental

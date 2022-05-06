@@ -13,6 +13,7 @@
 */
 #include <Spatial/LocationIndex.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <unordered_map>
 #ifdef S2DEF
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
@@ -151,6 +152,23 @@ std::vector<std::pair<TopologyNodePtr, Location>> LocationIndex::getNodesInRange
 
 void LocationIndex::addMobileNode(TopologyNodePtr node) {
     mobileNodes.insert({node->getId(), node});
+}
+
+std::vector<std::pair<uint64_t, Location>> LocationIndex::getMobileNodeLocations() {
+    std::vector<std::pair<uint64_t, Location>> locVector;
+    locVector.reserve(mobileNodes.size());
+    for (const auto& elem : mobileNodes) {
+        locVector.emplace_back(elem.first, *(elem.second->getCoordinates()));
+    }
+    return locVector;
+}
+web::json::value LocationIndex::getMobileNodeLocationssAsJson() {
+    auto nodeVector = getMobileNodeLocations();
+    web::json::value locMapJson;
+    for (const auto& elem : nodeVector) {
+        locMapJson[elem.first] = web::json::value(elem.second.toString());
+    }
+    return locMapJson;
 }
 
 size_t LocationIndex::getSizeOfPointIndex() {
