@@ -15,14 +15,22 @@
 #ifndef NES_LOCATIONCONTROLLER_HPP
 #define NES_LOCATIONCONTROLLER_HPP
 #include <memory>
+#include <REST/Controller/BaseController.hpp>
+
 namespace NES::Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 
-class LocationController {
+class LocationController : public BaseController {
   public:
     LocationController(LocationServicePtr locationService);
 
+    /**
+     * Handling the Get requests for the locations
+     * @param path : the url of the rest request
+     * @param message : the user message
+     */
+    void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
   private:
     LocationServicePtr locationService;
 };

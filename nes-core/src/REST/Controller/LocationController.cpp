@@ -12,4 +12,27 @@
     limitations under the License.
 */
 
-#include "REST/Controller/LocationController.hpp"
+#include "Util/Logger/Logger.hpp"
+#include <REST/Controller/LocationController.hpp>
+#include <utility>
+
+namespace NES::Spatial::Index::Experimental {
+
+LocationController::LocationController(LocationServicePtr locationService) : locationService(std::move(locationService)) {
+    NES_DEBUG("LocationController: Initializing");
+}
+
+void LocationController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
+    NES_DEBUG("LocationController: Processing GET request")
+    //todo: check max length of path (3?)
+    if (path.size() > 1 && path.size() < 4) {
+        if (path[1] == "allMobile") {
+            NES_DEBUG("LocationController: GET location of all mobile nodes")
+
+        }
+        //todo: implement getter for individual nodes
+        resourceNotFoundImpl(message);
+    }
+    resourceNotFoundImpl(message);
+}
+}

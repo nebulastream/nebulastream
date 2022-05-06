@@ -149,6 +149,10 @@ std::vector<std::pair<TopologyNodePtr, Location>> LocationIndex::getNodesInRange
 #endif
 }
 
+void LocationIndex::addMobileNode(TopologyNodePtr node) {
+    mobileNodes.insert({node->getId(), node});
+}
+
 size_t LocationIndex::getSizeOfPointIndex() {
 #ifdef S2DEF
     return nodePointIndex.num_points();
