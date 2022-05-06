@@ -15,11 +15,25 @@
 #include <Services/LocationService.hpp>
 #include <cpprest/json.h>
 #include <Spatial/LocationIndex.hpp>
+#include <Common/Location.hpp>
 
 namespace NES::Spatial::Index::Experimental {
-LocationService::LocationService(LocationIndexPtr locationWrapper) : locationIndex(locationWrapper) {};
+LocationService::LocationService(LocationIndexPtr locationIndex) : locationIndex(locationIndex) {};
 
 web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
-    return locationIndex->getMobileNodeLocationssAsJson();
+    auto nodeVector = locationIndex->getMobileNodeLocations();
+    web::json::value locMapJson;
+    size_t count = 0;
+    for (const auto& elem : nodeVector) {
+        web::json::value nodeInfo;
+        nodeInfo["id"] = web::json::value(elem.first);
+        web::json::value locJson;
+        locJson[0] = elem.second.getLatitude();
+        locJson[1] = elem.second.getLongitude();
+        nodeInfo["location"] = web::json::value(locJson);
+        locMapJson[count] = web::json::value(nodeInfo);
+        ++count;
+    }
+    return locMapJson;
 }
 }

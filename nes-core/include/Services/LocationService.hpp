@@ -16,6 +16,7 @@
 #define NES_LOCATIONSERVICE_HPP
 
 #include <memory>
+#include <cpprest/json.h>
 namespace web::json {
 class value;
 }// namespace web::json
@@ -26,7 +27,7 @@ using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 
 class LocationService {
   public:
-    LocationService(LocationIndexPtr locationWrapper);
+    LocationService(LocationIndexPtr locationIndex);
 
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
   private:

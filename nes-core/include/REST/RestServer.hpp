@@ -58,6 +58,11 @@ class MaintenanceService;
 using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 }//namespace Experimental
 
+namespace Spatial::Index::Experimental {
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
+}
+
 /**
  * @brief : This class is responsible for starting the REST server.
  */
@@ -83,7 +88,8 @@ class RestServer {
                const NES::Experimental::MaintenanceServicePtr& maintenanceService,
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
-               const Runtime::BufferManagerPtr& bufferManager);
+               const Runtime::BufferManagerPtr& bufferManager,
+               const NES::Spatial::Index::Experimental::LocationServicePtr& locationServicePtr);
 
     /**
    * @brief method to start the rest server

@@ -40,7 +40,8 @@ RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
                        const Experimental::MaintenanceServicePtr& maintenanceService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
-                       const Runtime::BufferManagerPtr bufferManager) {
+                       const Runtime::BufferManagerPtr bufferManager,
+                       const Spatial::Index::Experimental::LocationServicePtr& locationService) {
     sourceCatalogController = std::make_shared<SourceCatalogController>(sourceCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalogService, coordinator, globalQueryPlan);
     queryController = std::make_shared<QueryController>(queryService, queryCatalogService, globalExecutionPlan);
@@ -49,6 +50,7 @@ RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
     topologyController = std::make_shared<TopologyController>(topology);
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
     maintenanceController = std::make_shared<Experimental::MaintenanceController>(maintenanceService);
+    locationController = std::make_shared<Spatial::Index::Experimental::LocationController>(locationService);
 }
 
 void RestEngine::initRestOpHandlers() {

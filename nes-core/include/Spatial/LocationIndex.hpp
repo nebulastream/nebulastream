@@ -16,7 +16,6 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <cpprest/json.h>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -98,8 +97,6 @@ class LocationIndex {
     void addMobileNode(TopologyNodePtr node);
 
     std::vector<std::pair<uint64_t, Location>> getMobileNodeLocations();
-
-    web::json::value getMobileNodeLocationssAsJson();
 
     /**
      * Experimental

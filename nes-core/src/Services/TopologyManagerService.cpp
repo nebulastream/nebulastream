@@ -114,6 +114,8 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
         healthCheckService->removeNodeFromHealthCheck(physicalNode);
     }
 
+    topology->getLocationIndex()->removeNodeFromSpatialIndex(physicalNode);
+
     NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
     bool successTopology = topology->removePhysicalNode(physicalNode);

@@ -54,6 +54,9 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
 }
 
 bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
+    if (node->isMobileNode()) {
+        mobileNodes.erase(node->getId());
+    }
 #ifdef S2DEF
     auto geoLocPtr = node->getCoordinates();
     if (!geoLocPtr) {
@@ -161,14 +164,6 @@ std::vector<std::pair<uint64_t, Location>> LocationIndex::getMobileNodeLocations
         locVector.emplace_back(elem.first, *(elem.second->getCoordinates()));
     }
     return locVector;
-}
-web::json::value LocationIndex::getMobileNodeLocationssAsJson() {
-    auto nodeVector = getMobileNodeLocations();
-    web::json::value locMapJson;
-    for (const auto& elem : nodeVector) {
-        locMapJson[elem.first] = web::json::value(elem.second.toString());
-    }
-    return locMapJson;
 }
 
 size_t LocationIndex::getSizeOfPointIndex() {
