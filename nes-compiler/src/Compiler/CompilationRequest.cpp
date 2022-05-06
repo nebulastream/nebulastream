@@ -30,16 +30,18 @@ CompilationRequest::CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
                                        bool profileCompilation,
                                        bool profileExecution,
                                        bool optimizeCompilation,
-                                       bool debug)
+                                       bool debug,
+                                       bool sourceSharing)
     : sourceCode(std::move(sourceCode)), name(std::move(name)), profileCompilation(profileCompilation),
-      profileExecution(profileExecution), optimizeCompilation(optimizeCompilation), debug(debug) {}
+      profileExecution(profileExecution), optimizeCompilation(optimizeCompilation), debug(debug), sourceSharing(sourceSharing) {}
 
 std::shared_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<SourceCode> sourceCode,
                                                                std::string identifier,
                                                                bool profileCompilation,
                                                                bool profileExecution,
                                                                bool optimizeCompilation,
-                                                               bool debug) {
+                                                               bool debug,
+                                                               bool sourceSharing) {
 
     // creates a unique name for a compilation request.
     auto time = std::time(nullptr);
@@ -57,12 +59,15 @@ std::shared_ptr<CompilationRequest> CompilationRequest::create(std::unique_ptr<S
                                                 profileCompilation,
                                                 profileExecution,
                                                 optimizeCompilation,
-                                                debug);
+                                                debug,
+                                                sourceSharing);
 };
 
 bool CompilationRequest::enableOptimizations() const { return optimizeCompilation; }
 
 bool CompilationRequest::enableDebugging() const { return debug; }
+
+bool CompilationRequest::enableSourceSharing() const { return sourceSharing; }
 
 bool CompilationRequest::enableCompilationProfiling() const { return profileCompilation; }
 

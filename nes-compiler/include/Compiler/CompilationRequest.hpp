@@ -39,7 +39,8 @@ class CompilationRequest {
                        bool profileCompilation,
                        bool profileExecution,
                        bool optimizeCompilation,
-                       bool debug);
+                       bool debug,
+                       bool sourceSharing);
 
     /**
      * @brief Creates a new @CompilationRequest.
@@ -56,7 +57,8 @@ class CompilationRequest {
                                                       bool profileCompilation,
                                                       bool profileExecution,
                                                       bool optimizeCompilation,
-                                                      bool debug);
+                                                      bool debug,
+                                                      bool sourceSharing = false);
 
     /**
      * @brief Returns the source code artifact
@@ -68,22 +70,32 @@ class CompilationRequest {
      * @brief Indicates if debugging should be enabled.
      * @return debug flag
      */
+    [[nodiscard]] bool enableSourceSharing() const;
+
+    /**
+     * @brief Indicates if debugging should be enabled.
+     * @return debug flag
+     */
     [[nodiscard]] bool enableDebugging() const;
+
     /**
      * @brief Indicates if optimizations should be enabled.
      * @return optimization flag
      */
     [[nodiscard]] bool enableOptimizations() const;
+
     /**
      * @brief Indicates if the compilation process should be profiled.
      * @return profile compilation flag
      */
     [[nodiscard]] bool enableCompilationProfiling() const;
+
     /**
      * @brief Indicates if the execution should be profiled.
      * @return profile compilation flag
      */
     [[nodiscard]] bool enableExecutionProfiling() const;
+
     /**
      * @brief Returns the identifier
      * @return name
@@ -97,6 +109,7 @@ class CompilationRequest {
     const bool profileExecution;
     const bool optimizeCompilation;
     const bool debug;
+    const bool sourceSharing;
 };
 
 }// namespace NES::Compiler

@@ -786,7 +786,8 @@ void assertKiller() {
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
-                         numberOfBuffersPerWorker) {}
+                         numberOfBuffersPerWorker,
+                         false) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
             ASSERT_TRUE(stop(false));
@@ -833,7 +834,8 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
-                         numberOfBuffersPerWorker) {}
+                         numberOfBuffersPerWorker,
+                         false) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();
@@ -909,7 +911,8 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
-                         numberOfBuffersPerWorker) {}
+                         numberOfBuffersPerWorker,
+                         false) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             const auto* str = exception->what();

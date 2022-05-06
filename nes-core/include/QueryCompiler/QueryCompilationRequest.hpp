@@ -50,6 +50,17 @@ class QueryCompilationRequest {
     bool isOptimizeEnabled() const;
 
     /**
+     * @brief Enable source sharing for this query.
+     */
+    void enableSourceSharing();
+
+    /**
+     * @brief Checks if source sharing is enabled
+     * @return bool
+     */
+    bool isSourceSharingEnabled() const;
+
+    /**
     * @brief Enable debugging for this query.
     */
     void enableDump();
@@ -79,6 +90,7 @@ class QueryCompilationRequest {
     bool debug;
     bool optimize;
     bool dumpQueryPlans;
+    bool sourceSharing;
 };
 }// namespace QueryCompilation
 }// namespace NES

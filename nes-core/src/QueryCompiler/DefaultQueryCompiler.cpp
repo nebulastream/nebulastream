@@ -103,7 +103,9 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         timer.pause();
         NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
 
-        auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
+        auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan,
+                                                                          request->getNodeEngine(),
+                                                                          request->isSourceSharingEnabled());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();

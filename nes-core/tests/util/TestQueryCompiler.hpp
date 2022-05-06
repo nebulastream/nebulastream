@@ -101,7 +101,7 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
                         OriginId originId,
                         SourceDescriptorPtr sourceDescriptor,
                         Runtime::NodeEnginePtr nodeEngine,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override {
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors, bool) override {
         if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
             auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
             return testSourceDescriptor->create(operatorId,
@@ -110,7 +110,7 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
                                                 compilerOptions->getNumSourceLocalBuffers(),
                                                 successors);
         }
-        return DataSourceProvider::lower(operatorId, originId, sourceDescriptor, nodeEngine, successors);
+        return DataSourceProvider::lower(operatorId, originId, sourceDescriptor, nodeEngine, successors, false);
     }
 };
 

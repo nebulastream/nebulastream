@@ -152,6 +152,11 @@ class WorkerConfiguration : public BaseConfiguration {
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
 
     /**
+     * @brief Enables source sharing
+     * */
+    BoolOption enableSourceSharing = {ENABLE_SOURCE_SHARING_CONFIG, false, "Enable source sharing"};
+
+    /**
      * @brief Enables the statistic output
      */
     BoolOption enableStatisticOuput = {ENABLE_STATISTIC_OUTPUT_CONFIG, false, "Enable statistic output"};
@@ -261,6 +266,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &queryManagerMode,
+                &enableSourceSharing,
                 &configPath,
                 &workerHealthCheckWaitTime,
                 &enableStatisticOuput};
