@@ -275,7 +275,8 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          0,
                          64,
                          64,
-                         12),
+                         12,
+                         false),
               nesPartition(nesPartition), completed(completed), bufferCnt(bufferCnt) {}
 
         ~MockedNodeEngine() = default;

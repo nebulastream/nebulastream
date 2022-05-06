@@ -38,7 +38,8 @@ class DataSourceProvider {
                                 OriginId originId,
                                 SourceDescriptorPtr sourceDescriptor,
                                 Runtime::NodeEnginePtr nodeEngine,
-                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                                bool sourceSharing);
 
     virtual ~DataSourceProvider() = default;
 

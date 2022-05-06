@@ -318,7 +318,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
-                        uint64_t numberOfBuffersPerWorker);
+                        uint64_t numberOfBuffersPerWorker,
+                        bool sourceSharing);
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;
@@ -340,6 +341,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
     [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
     [[maybe_unused]] uint32_t numberOfBuffersPerWorker;
+    bool sourceSharing;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

@@ -70,7 +70,8 @@ LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(const
 }
 
 Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
-                                                                                  const Runtime::NodeEnginePtr& nodeEngine) {
+                                                                                  const Runtime::NodeEnginePtr& nodeEngine,
+                                                                                  bool sourceSharing) {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
@@ -78,7 +79,14 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
     //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines) {
-        processSource(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
+        processSource(pipeline,
+                      sources,
+                      sinks,
+                      executablePipelines,
+                      nodeEngine,
+                      pipelineQueryPlan,
+                      pipelineToExecutableMap,
+                      sourceSharing);
     }
 
     return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
@@ -129,7 +137,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
+    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap,
+    bool sourceSharing) {
 
     if (!pipeline->isSourcePipeline()) {
         NES_ERROR("This is not a source pipeline.");
@@ -178,7 +187,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
                                         sourceOperator->getOriginId(),
                                         sourceDescriptor,
                                         nodeEngine,
-                                        executableSuccessorPipelines);
+                                        executableSuccessorPipelines,
+                                        sourceSharing);
 
     // Add this source as a predecessor to the pipeline execution context's of all its children.
     // This way you can navigate upstream.
@@ -190,7 +200,6 @@ void LowerToExecutableQueryPlanPhase::processSource(
         }
         // note: we do not register predecessors for DataSinks.
     }
-
     sources.emplace_back(source);
 }
 
@@ -323,7 +332,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
 #endif
         case CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-//            return CsvSourceDescriptor::create(schema, csvSourceType);
+            //            return CsvSourceDescriptor::create(schema, csvSourceType);
             return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
         }
         case SENSE_SOURCE: {

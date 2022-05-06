@@ -29,9 +29,13 @@ void QueryCompilationRequest::enableDebugging() { this->debug = true; }
 
 void QueryCompilationRequest::enableOptimizations() { this->optimize = true; }
 
+void QueryCompilationRequest::enableSourceSharing(){ this->sourceSharing = true; }
+
 bool QueryCompilationRequest::isDebugEnabled() const { return debug; }
 
 bool QueryCompilationRequest::isOptimizeEnabled() const { return optimize; }
+
+bool QueryCompilationRequest::isSourceSharingEnabled() const { return sourceSharing; }
 
 bool QueryCompilationRequest::isDumpEnabled() const { return dumpQueryPlans; }
 

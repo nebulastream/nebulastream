@@ -56,7 +56,8 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
-                       uint64_t numberOfBuffersPerWorker)
+                       uint64_t numberOfBuffersPerWorker,
+                       bool sourceSharing)
     : physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
       queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
@@ -64,7 +65,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
       materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker), sourceSharing(sourceSharing) {
 
     NES_TRACE("Runtime() id=" << nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared
@@ -116,6 +117,12 @@ bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, inherited1::shared_from_this());
     request->enableDump();
+    if(sourceSharing)
+    {
+        NES_WARNING("Enable Source Sharing");
+        request->enableSourceSharing();
+    }
+
     auto result = queryCompiler->compileQuery(request);
     try {
         auto executablePlan = result->getExecutableQueryPlan();

@@ -454,10 +454,6 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    //register logical source qnv
-    //    std::string schema =
-    //        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    //    crd->getSourceCatalogService()->registerLogicalSource("window1", window);
 
     auto schema = Schema::create()
                       ->addField(createField("win1", UINT64))
@@ -469,6 +465,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig1->enableSourceSharing = true;
 
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
