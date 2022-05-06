@@ -37,12 +37,15 @@ class Operation {
         CHAR    = 8,
         VOID    = 9,
 
+        // Pointer Types
+        INT8PTR = 10,
+
         //DerivedTypes
         ARRAY     = 32,
         CHARARRAY = 33,
         STRUCT    = 34
     };
-    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp};
+    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp, FunctionOp};
 
     explicit Operation(OperationType opType);
     virtual ~Operation() = default;

@@ -66,7 +66,8 @@ std::string MLIRUtility::insertComments(const std::string& moduleString) {
 
 void MLIRUtility::printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, DebugFlags* debugFlags) {
     if (!debugFlags) {
-        mlirModule->dump();
+        printf("No debug flags.\n");
+//        mlirModule->dump();
     } else {
         // Print location names and replace mlir::LLVM::UndefOp(s) with comments.
         std::string mlirString;
@@ -159,9 +160,8 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
  * @param module: MLIR module that contains the 'execute' function.
  * @return int: 1 if error occurred, else 0
  */
-int MLIRUtility::runJit(const std::vector<std::string>& symbols,
-                        const std::vector<llvm::JITTargetAddress>& jitAddresses,
-                        bool useProxyFunctions) {
+int MLIRUtility::runJit(const std::vector<std::string>& symbols, const std::vector<llvm::JITTargetAddress>& jitAddresses,
+                        bool useProxyFunctions, int8_t* inputBufferPtr, int8_t* outputBufferPtr) {
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -211,7 +211,7 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols,
 
     // Invoke the JIT-compiled function.
     int64_t result = 0;
-    auto invocationResult = engine->invoke("execute", 42, mlir::ExecutionEngine::Result<int64_t>(result));
+    auto invocationResult = engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
     printf("Result: %ld\n", result);
 
     if (invocationResult) {

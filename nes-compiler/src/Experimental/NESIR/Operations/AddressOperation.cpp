@@ -15,16 +15,13 @@
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 
 namespace NES {
-AddressOperation::AddressOperation(Operation::BasicType dataType, void* baseAddress, uint64_t widthOffset,
-                                   uint64_t fieldOffset) : Operation(NES::Operation::AddressOp),
-                                                           dataType(dataType), baseAddress(baseAddress),
-                                                           widthOffset(widthOffset), fieldOffset(fieldOffset) {}
+AddressOperation::AddressOperation(Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset)
+    : Operation(NES::Operation::AddressOp), dataType(dataType), recordWidth(getRecordWidth), fieldOffset(fieldOffset) {}
 
-void* AddressOperation::getBaseAddress() { return baseAddress; }
 
 Operation::BasicType AddressOperation::getDataType() { return dataType; }
 
-uint64_t AddressOperation::getWidthOffset() { return widthOffset; }
+uint64_t AddressOperation::getRecordWidth() { return recordWidth; }
 
 uint64_t AddressOperation::getFieldOffset() { return fieldOffset; };
 

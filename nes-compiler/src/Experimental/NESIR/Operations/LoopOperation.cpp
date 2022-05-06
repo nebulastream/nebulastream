@@ -15,12 +15,10 @@
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <utility>
 namespace NES {
-LoopOperation::LoopOperation(std::vector<OperationPtr> operations, uint64_t upperLimit)
-    : Operation(Operation::LoopOp), operations(operations), upperLimit(upperLimit) {}
+LoopOperation::LoopOperation(BasicBlockPtr loopBlock)
+    : Operation(Operation::LoopOp), loopBasicBlock(std::move(loopBlock)) {}
 
-std::vector<OperationPtr> LoopOperation::getOperations() { return operations; };
-
-uint64_t LoopOperation::getUpperLimit() const { return upperLimit; }
+BasicBlockPtr LoopOperation::getLoopBasicBlock() { return std::move(loopBasicBlock); }
 
 bool LoopOperation::classof(const Operation *Op) {
     return Op->getOperationType() == Operation::LoopOp;

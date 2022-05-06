@@ -16,6 +16,7 @@
 #define NES_LOOPOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <vector>
 
 namespace NES {
@@ -25,19 +26,14 @@ namespace NES {
  */
 class LoopOperation : public Operation {
   public:
-    LoopOperation(std::vector<OperationPtr> operations, uint64_t upperLimit);
+    LoopOperation(BasicBlockPtr loopBlock);
     ~LoopOperation() override = default;
 
-    std::vector<OperationPtr> getOperations();
-    [[nodiscard]] uint64_t getUpperLimit() const;
-    static bool classof(const Operation *Block);
+    BasicBlockPtr getLoopBasicBlock();
+    static bool classof(const Operation *Op);
 
   private:
-    std::vector<OperationPtr> operations;
-    uint64_t upperLimit;
-
-
-
+    BasicBlockPtr loopBasicBlock;
 };
 }// namespace NES
 #endif//NES_LoopOperation_HPP

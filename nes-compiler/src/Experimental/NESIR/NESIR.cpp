@@ -17,11 +17,11 @@
 
 namespace NES {
 
-NESIR::NESIR(BasicBlockPtr rootBlock, std::vector<ExternalDataSourcePtr>  externalDataSources) :
-    rootBlock(std::move(rootBlock)), externalDataSources(std::move(externalDataSources)) {}
+NESIR::NESIR(OperationPtr rootOperation, std::vector<ExternalDataSourcePtr>  externalDataSources) :
+    rootOperation(std::move(rootOperation)), externalDataSources(std::move(externalDataSources)) {}
 
-BasicBlockPtr NESIR::getRootBlock() {
-    return std::move(rootBlock);
+OperationPtr NESIR::getRootOperation() {
+    return std::move(rootOperation);
 }
 
 std::vector<ExternalDataSourcePtr> NESIR::getExternalDataSources() { return externalDataSources; }

@@ -20,4 +20,5 @@ add_source_files(nes-compiler
         ConstantIntOperation.cpp
         LoopOperation.cpp
         AddressOperation.cpp
+        FunctionOperation.cpp
 )

@@ -18,6 +18,7 @@
 #include <Experimental/NESIR/NESIR.hpp>
 #include <Experimental/NESIR/BasicBlocks/IfBasicBlock.hpp>
 
+#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/AddIntOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
@@ -44,6 +45,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 
 using namespace mlir;
 
@@ -65,11 +67,10 @@ private:
     std::shared_ptr<OpBuilder> builder;
     MLIRContext *context;
     mlir::ModuleOp theModule;
-    FuncOp executeFunction;
     // NES Variables
-    mlir::LLVM::GlobalOp inputBufferGlobal;
-    mlir::Value inputBufferIntPtr;
-    mlir::LLVM::GlobalOp outputBufferGlobal;
+    std::unordered_map<std::string, Value> functionArgs;
+    std::unordered_map<std::string, Value> loadedValues;
+    mlir::Value numTuples;
     // Utility
     mlir::Value currentRecordIdx;
     mlir::Value constZero;
@@ -80,8 +81,6 @@ private:
     llvm::StringMap<mlir::Value> printfStrings;
 
 
-    void createTupleBuffer(std::vector<NES::Operation::BasicType> types, const std::string& identifier);
-
     void generateMLIR(NES::BasicBlockPtr basicBlock);
 
     /**
@@ -90,6 +89,7 @@ private:
      */
     Value generateMLIR(const NES::OperationPtr& operation);
 
+    Value generateMLIR(std::shared_ptr<NES::FunctionOperation> operation);
     Value generateMLIR(std::shared_ptr<NES::LoopOperation> operation);
     Value generateMLIR(std::shared_ptr<NES::ConstantIntOperation> operation);
     Value generateMLIR(std::shared_ptr<NES::AddIntOperation> operation);
@@ -97,30 +97,7 @@ private:
     Value generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
     Value generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
 
-    /**
-     * @brief Prints content of a tuple from within MLIR.
-     * @param currentTuple: The tuple to print.
-     * @param indice : Which fields of the tuple to print.
-     * @param type : The field types.
-     */
-    void debugBufferPrint(mlir::Value currentTuple, std::vector<uint64_t> indices,
-                     std::vector<NES::Operation::BasicType> types);
-
-    /**
-     * @brief Create a Global String object.
-     * @param loc: NamedLocation for debugging purposes.
-     * @param name: Name of the global string.
-     * @param value: String value.
-     * @return Value: GEP address of global string.
-     */
-    Value createGlobalString(Location loc, StringRef name, StringRef value);
-
-    /**
-     * @brief Print a single value from the TupleBuffer.
-     * @param printedValue: Address of a TupleBuffer value.
-     * @param type: Type of the value.
-     */
-    void insertValuePrint(mlir::Value printedValue, NES::Operation::BasicType type);
+    Value insertProxyCall(const std::string& funcName, const std::string& ptrName, NES::Operation::BasicType returnType);
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.

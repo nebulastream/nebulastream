@@ -21,20 +21,18 @@
 namespace NES {
 class AddressOperation : public Operation {
 public:
-    explicit AddressOperation(Operation::BasicType dataType, void* baseAddress, uint64_t widthOffset, uint64_t fieldOffset);
+    explicit AddressOperation(Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset);
     ~AddressOperation() override = default;
 
     Operation::BasicType getDataType();
 
-    void* getBaseAddress();
-    uint64_t getWidthOffset();
+    uint64_t getRecordWidth();
     uint64_t getFieldOffset();
 
     static bool classof(const Operation *Op);
 private:
     Operation::BasicType dataType;
-    void* baseAddress;
-    uint64_t widthOffset;
+    uint64_t recordWidth;
     uint64_t fieldOffset;
 };
 }// namespace NES

@@ -25,6 +25,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
+#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 #include <Experimental/NESIR/Operations/AddIntOperation.hpp>
@@ -47,70 +48,75 @@ __attribute__((always_inline)) void printValueFromMLIR(uint64_t value) {
     printf("Add Result: %ld\n\n", value);
 }
 
-    void printBuffer(std::vector<Operation::BasicType> types,
-                     uint64_t numTuples, int8_t *bufferPointer) {
-        for(uint64_t i = 0; i < numTuples; ++i) {
-            printf("------------\nTuple Nr. %lu\n------------\n", i+1);
-            for(auto type : types) {
-                switch(type) {
-                    case Operation::BasicType::INT1: {
-                        printf("Value(INT32): %d \n", *bufferPointer);
-                        bufferPointer += 1;
-                        break;
-                    }
-                    case Operation::BasicType::INT8: {
-                        printf("Value(INT32): %d \n", *bufferPointer);
-                        bufferPointer += 1;
-                        break;
-                    }
-                    case Operation::BasicType::INT16: {
-                        int16_t *value = (int16_t*) bufferPointer;
-                        printf("Value(INT32): %d \n", *value);
-                        bufferPointer += 2;
-                        break;
-                    }
-                    case Operation::BasicType::INT32: {
-                        int32_t *value = (int32_t*) bufferPointer;
-                        printf("Value(INT32): %d \n", *value);
-                        bufferPointer += 4;
-                        break;
-                    }
-                    case Operation::BasicType::INT64: {
-                        int64_t *value = (int64_t*) bufferPointer;
-                        printf("Value(INT32): %ld \n", *value);
-                        bufferPointer += 8;
-                        break;
-                    }
-                    case Operation::BasicType::BOOLEAN: {
-                        bool *value = (bool*) bufferPointer;
-                        printf("Value(BOOL): %s \n", (*value) ? "true" : "false");
-                        bufferPointer += 1;
-                        break;
-                    }
-                    case Operation::BasicType::CHAR: {
-                        char *value = (char*) bufferPointer;
-                        printf("Value(CHAR): %c \n", *value);
-                        bufferPointer += 1;
-                        break;
-                    }
-                    case Operation::BasicType::FLOAT: {
-                        float *value = (float*) bufferPointer;
-                        printf("Value(FLOAT): %f \n", *value);
-                        bufferPointer += 4;
-                        break;
-                    }
-                    case Operation::BasicType::DOUBLE: {
-                        double *value = (double*) bufferPointer;
-                        printf("Value(DOUBLE): %f \n", *value);
-                        bufferPointer += 8;
-                        break;
-                    }
-                    default:
-                        break;
+void printBuffer(std::vector<Operation::BasicType> types,
+                 uint64_t numTuples, int8_t *bufferPointer) {
+    for(uint64_t i = 0; i < numTuples; ++i) {
+        printf("------------\nTuple Nr. %lu\n------------\n", i+1);
+        for(auto type : types) {
+            switch(type) {
+                case Operation::BasicType::INT1: {
+                    printf("Value(INT32): %d \n", *bufferPointer);
+                    bufferPointer += 1;
+                    break;
                 }
+                case Operation::BasicType::INT8: {
+                    printf("Value(INT32): %d \n", *bufferPointer);
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::INT16: {
+                    int16_t *value = (int16_t*) bufferPointer;
+                    printf("Value(INT32): %d \n", *value);
+                    bufferPointer += 2;
+                    break;
+                }
+                case Operation::BasicType::INT32: {
+                    int32_t *value = (int32_t*) bufferPointer;
+                    printf("Value(INT32): %d \n", *value);
+                    bufferPointer += 4;
+                    break;
+                }
+                case Operation::BasicType::INT64: {
+                    int64_t *value = (int64_t*) bufferPointer;
+                    printf("Value(INT32): %ld \n", *value);
+                    bufferPointer += 8;
+                    break;
+                }
+                case Operation::BasicType::BOOLEAN: {
+                    bool *value = (bool*) bufferPointer;
+                    printf("Value(BOOL): %s \n", (*value) ? "true" : "false");
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::CHAR: {
+                    char *value = (char*) bufferPointer;
+                    printf("Value(CHAR): %c \n", *value);
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::FLOAT: {
+                    float *value = (float*) bufferPointer;
+                    printf("Value(FLOAT): %f \n", *value);
+                    bufferPointer += 4;
+                    break;
+                }
+                case Operation::BasicType::DOUBLE: {
+                    double *value = (double*) bufferPointer;
+                    printf("Value(DOUBLE): %f \n", *value);
+                    bufferPointer += 8;
+                    break;
+                }
+                default:
+                    break;
             }
         }
     }
+}
+
+extern "C" __attribute__((always_inline)) uint64_t getNumTuples(void *tupleBufferPointer) {
+    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(tupleBufferPointer);
+    return tupleBuffer->getNumberOfTuples();
+}
 
 void* getInputBuffer(NES::Runtime::BufferManager* buffMgr) {
     const uint64_t numTuples = 2;
@@ -144,17 +150,16 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
     memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
     inputBuffer.setNumberOfTuples(numTuples);
-    auto inputBufferRawDataPointer = inputBuffer.getBuffer<int64_t>();
+    auto inputBufferRawDataPointer = inputBuffer.getBuffer<int8_t>();
 
 
     auto outputBuffer = buffMgr->getBufferBlocking();
     void* outputBufferPtr = std::addressof(outputBuffer);
-    void* inputBufferPtr = std::addressof(inputBuffer);
 
     auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
 
     // Add Operation
-    auto addressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, inputBufferPtr, 0, 0);
+    auto addressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 9, 1);
     auto loadOp = std::make_shared<LoadOperation>(addressOp);
     auto constOp = std::make_shared<ConstantIntOperation>(9);
     auto addOp = std::make_shared<AddIntOperation>(std::move(loadOp), std::move(constOp));
@@ -162,21 +167,21 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     auto storeOp = std::make_shared<StoreOperation>(outputBufferPtr, addOp, 0, NES::Operation::BasicType::INT64);
     // Loop BasicBlock
     std::vector<OperationPtr> loopOps{storeOp};
-    NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(loopOps, numTuples);
+    BasicBlockPtr loopBlock = std::make_unique<BasicBlock>(loopOps);
+    NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(std::move(loopBlock));
 
     std::vector<OperationPtr> rootBlockOps{loopOperation};
-    NES::BasicBlockPtr rootBlock = std::make_unique<NES::BasicBlock>(rootBlockOps);
+    NES::BasicBlockPtr executeBodyBlock = std::make_unique<NES::BasicBlock>(rootBlockOps);
+
+    std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{ "inputBuffer", "outputBuffer"};
+    auto executeFuncOp = std::make_shared<FunctionOperation>("execute", std::move(executeBodyBlock),
+                                                             executeArgTypes, executeArgNames, Operation::INT64);
 
     // Creating NESIR
-    std::vector<Operation::BasicType> inputBufferTypes{Operation::INT64};
-    auto inputBufferSource = std::make_shared<NES::ExternalDataSource>(
-            NES::ExternalDataSource::ExternalDataSourceType::TupleBuffer, "inputBuffer", inputBufferTypes);
-    auto outputBufferSource = std::make_shared<NES::ExternalDataSource>(
-            NES::ExternalDataSource::ExternalDataSourceType::TupleBuffer, "outputBuffer", inputBufferTypes);
-    std::vector<ExternalDataSourcePtr> externalDataSources{inputBufferSource, outputBufferSource};
-    NES::NESIR nesIR(std::move(rootBlock), externalDataSources);
+    std::vector<ExternalDataSourcePtr> externalDataSources{};
+    NES::NESIR nesIR(executeFuncOp, externalDataSources);
     std::cout << externalDataSources.size() << '\n';
-//    printf("Upper Limit: %ld\n", loopBlock->getUpperLimit());
 
     //Todo NESIRToMLIR and try to create MLIR module from NESIR
     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
@@ -184,15 +189,15 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     assert(loadedModuleSuccess == 0);
 
     // Register buffers and functions with JIT and run module.
-    const std::vector<std::string> symbolNames{"inputBuffer", "outputBuffer", "printValueFromMLIR"};
+    const std::vector<std::string> symbolNames{"InputTupleBuffer", "getNumTuples", "printValueFromMLIR"};
     // Order must match symbolNames order!
     const std::vector<llvm::JITTargetAddress> jitAddresses{
-            llvm::pointerToJITTargetAddress(inputBufferRawDataPointer),
-            llvm::pointerToJITTargetAddress(outputBufferPointer),
+        llvm::pointerToJITTargetAddress(std::addressof(inputBuffer)),
+            llvm::pointerToJITTargetAddress(&getNumTuples),
             llvm::pointerToJITTargetAddress(&printValueFromMLIR)
     };
-    mlirUtility->runJit(symbolNames, jitAddresses, false);
-    std::vector<Operation::BasicType> types{Operation::INT8};
+    mlirUtility->runJit(symbolNames, jitAddresses, false, inputBufferRawDataPointer, outputBufferPointer);
+    std::vector<Operation::BasicType> types{Operation::INT64};
     printBuffer(types, numTuples, outputBufferPointer);
 }
 
