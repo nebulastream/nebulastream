@@ -77,7 +77,7 @@ Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* requ
 
 Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request, StopQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StopQuery: got request for " << request->queryid());
-    bool success = nodeEngine->stopQuery(request->queryid());
+    bool success = nodeEngine->stopQuery(request->queryid(), Runtime::QueryTerminationType(request->queryterminationtype()));
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);

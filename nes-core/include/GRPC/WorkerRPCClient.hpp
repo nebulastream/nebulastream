@@ -16,6 +16,7 @@
 #define NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
 #include <Plans/Query/QueryId.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
@@ -117,17 +118,25 @@ class WorkerRPCClient {
 
     /**
      * @brief method to stop a query
+     * @param address address of the new worker
      * @param queryId to stop
+     * @param terminationType termination type of the query
      * @return bool indicating success
      */
-    static bool stopQuery(const std::string& address, QueryId queryId);
+    static bool stopQuery(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief method to stop a query asynchronously
+     * @param address : address of the worker
      * @param queryId to stop
+     * @param terminationType: the termination type
+     * @param cq: completion queue of grpc requests
      * @return bool indicating success
      */
-    static bool stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    static bool stopQueryAsync(const std::string& address,
+                               QueryId queryId,
+                               Runtime::QueryTerminationType terminationType,
+                               const CompletionQueuePtr& cq);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.
