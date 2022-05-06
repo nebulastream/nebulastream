@@ -85,6 +85,8 @@ typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
 namespace Spatial::Index::Experimental {
 class LocationController;
 using LocationControllerPtr = std::shared_ptr<LocationController>;
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
 }
 
 class UdfCatalogController;
@@ -103,9 +105,10 @@ class RestEngine {
                const Experimental::MaintenanceServicePtr& maintenanceService,
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
-               const Runtime::BufferManagerPtr bufferManager);
+               const Runtime::BufferManagerPtr bufferManager,
+               const Spatial::Index::Experimental::LocationServicePtr& locationService);
 
-    void handleGet(web::http::http_request request);
+        void handleGet(web::http::http_request request);
     void handlePost(web::http::http_request request);
     void handleDelete(web::http::http_request request);
     void handlePut(web::http::http_request request);

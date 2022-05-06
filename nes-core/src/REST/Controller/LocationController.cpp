@@ -15,6 +15,7 @@
 #include "Util/Logger/Logger.hpp"
 #include <REST/Controller/LocationController.hpp>
 #include <utility>
+#include <Services/LocationService.hpp>
 
 namespace NES::Spatial::Index::Experimental {
 
@@ -28,7 +29,8 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
     if (path.size() > 1 && path.size() < 4) {
         if (path[1] == "allMobile") {
             NES_DEBUG("LocationController: GET location of all mobile nodes")
-
+            auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
+            successMessageImpl(message, locationsJson);
         }
         //todo: implement getter for individual nodes
         resourceNotFoundImpl(message);

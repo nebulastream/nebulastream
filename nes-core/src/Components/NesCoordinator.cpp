@@ -31,6 +31,7 @@
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Services/LocationService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
@@ -128,6 +129,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                                  queryCatalogService,
                                                                                  queryRequestQueue,
                                                                                  globalExecutionPlan);
+    locationService = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology->getLocationIndex());
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -218,7 +220,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               maintenanceService,
                                               globalQueryPlan,
                                               udfCatalog,
-                                              worker->getNodeEngine()->getBufferManager());
+                                              worker->getNodeEngine()->getBufferManager(),
+                                              locationService);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking

@@ -38,7 +38,8 @@ RestServer::RestServer(std::string host,
                        const Experimental::MaintenanceServicePtr& maintenanceService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
-                       const Runtime::BufferManagerPtr& bufferManager)
+                       const Runtime::BufferManagerPtr& bufferManager,
+                       const Spatial::Index::Experimental::LocationServicePtr& locationService)
     : restEngine(std::make_shared<RestEngine>(sourceCatalog,
                                               coordinator,
                                               queryCatalogService,
@@ -49,7 +50,8 @@ RestServer::RestServer(std::string host,
                                               maintenanceService,
                                               globalQueryPlan,
                                               udfCatalog,
-                                              bufferManager)),
+                                              bufferManager,
+                                              locationService)),
       host(std::move(host)), port(port) {}
 
 bool RestServer::start() {

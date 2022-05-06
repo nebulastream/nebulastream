@@ -181,8 +181,8 @@ const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string IS_MOBILE_CONFIG = "isMobile";
-const std::string LOCATION_SOURCE_CONFIG = "locationSourceType";
-const std::string LOCATION_SOURCE_TYPE_CONFIG = "locationSourceConfig";
+const std::string LOCATION_SOURCE_CONFIG = "locationSourceConfig";
+const std::string LOCATION_SOURCE_TYPE_CONFIG = "locationSourceType";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
