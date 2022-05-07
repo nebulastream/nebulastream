@@ -280,7 +280,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
             if (status == Execution::ExecutableQueryPlanStatus::Invalid) {
-                NES_WARNING("Query" << qepId << " was already removed or never deployed");
+                NES_WARNING("Query " << qepId << " was already removed or never deployed");
                 return;
             }
             NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped

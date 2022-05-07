@@ -97,6 +97,14 @@ bool ExecutablePipeline::stop(QueryTerminationType) {
     return expected == PipelineStatus::PipelineStopped;
 }
 
+bool ExecutablePipeline::fail() {
+    auto expected = PipelineStatus::PipelineRunning;
+    if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineFailed)) {
+        return executablePipelineStage->stop(*pipelineContext.get()) == 0;
+    }
+    return expected == PipelineStatus::PipelineFailed;
+}
+
 bool ExecutablePipeline::isRunning() const { return pipelineStatus.load() == PipelineStatus::PipelineRunning; }
 
 const std::vector<SuccessorExecutablePipeline>& ExecutablePipeline::getSuccessors() const { return successorPipelines; }
@@ -185,6 +193,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
             context.setObjectRefCnt(this, refCnt);
             break;
         }
+        case FailEndOfStream:
         case HardEndOfStream:
         case SoftEndOfStream: {
             if (context.decreaseObjectRefCnt(this) == 1) {
@@ -206,7 +215,31 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case FailEndOfStream: {
-            NES_NOT_IMPLEMENTED();
+            auto prevProducerCounter = activeProducers.fetch_sub(1);
+            if (prevProducerCounter == 1) {//all producers sent EOS
+                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+                    operatorHandler->postReconfigurationCallback(task);
+                }
+                fail();
+                queryManager->notifyPipelineCompletion(querySubPlanId,
+                                                       shared_from_this<ExecutablePipeline>(),
+                                                       Runtime::QueryTerminationType::Failure);
+                for (const auto& successorPipeline : successorPipelines) {
+                    if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+                        auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, task.getType(), *pipe);
+                        queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
+                        NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: "
+                                  << querySubPlanId << " stage id: " << (*pipe)->getPipelineId()
+                                  << " got FailEndOfStream  with nextPipeline");
+                    } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
+                        auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, task.getType(), *sink);
+                        queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
+                        NES_DEBUG("Going to reconfigure next sink belonging to subplanId: "
+                                  << querySubPlanId << " sink id: " << (*sink)->toString()
+                                  << " got FailEndOfStream  with nextPipeline");
+                    }
+                }
+            }
         }
         case HardEndOfStream:
         case SoftEndOfStream: {

@@ -92,7 +92,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
 /**
  * This test checks if we can run a valid query after a query failed
  */
-TEST_F(QueryFailureTest, testExecutingOnFaultAndOneCorrectQuery) {
+TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -150,16 +150,6 @@ TEST_F(QueryFailureTest, testExecutingOnFaultAndOneCorrectQuery) {
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
                              "1,1\n"
                              "1,1\n"
                              "1,1\n"
