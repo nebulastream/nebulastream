@@ -144,7 +144,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
             continue;
         }
-        NES_DEBUG("AbstractQueryManager: start sink " << sink);
+        NES_DEBUG("AbstractQueryManager: start sink " << sink->toString());
         sink->setup();
     }
 

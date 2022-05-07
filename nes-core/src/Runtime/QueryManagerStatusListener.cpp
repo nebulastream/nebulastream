@@ -66,30 +66,23 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
 }
 void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason) {
     std::unique_lock lock(queryMutex);
-
-    bool retFinal = true;
-    for (auto qep : sourceToQEPMapping[failedSource->getOperatorId()]) {
-        auto qepToFail = qep;
-        // we cant fail a query from a source because failing a query eventually calls stop on the failed query
-        // this means we are going to call join on the source thread
-        // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
-        auto future =
-            asyncTaskExecutor
-                ->runAsync(
-                    [this](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
-                        if (failQuery(qepToFail)) {
-                            return qepToFail;
-                        }
-                        return nullptr;
-                    },
-                    std::move(qepToFail))
-                .thenAsync([this, reason](Execution::ExecutableQueryPlanPtr failedQep) {
-                    if (failedQep && failedQep->getStatus() == Execution::ExecutableQueryPlanStatus::ErrorState) {
-                        queryStatusListener->notifyQueryFailure(failedQep->getQueryId(), failedQep->getQuerySubPlanId(), reason);
-                    }
-                    return true;
-                });
-    }
+    auto qepToFail = sourceToQEPMapping[failedSource->getOperatorId()];
+    lock.unlock();
+    // we cant fail a query from a source because failing a query eventually calls stop on the failed query
+    // this means we are going to call join on the source thread
+    // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
+    auto future = asyncTaskExecutor->runAsync(
+        [this, reason](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
+            NES_DEBUG("Going to fail query id=" << qepToFail->getQuerySubPlanId()
+                                                << " subplan=" << qepToFail->getQuerySubPlanId());
+            if (failQuery(qepToFail)) {
+                NES_DEBUG("Failed query id=" << qepToFail->getQuerySubPlanId() << " subplan=" << qepToFail->getQuerySubPlanId());
+                queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), qepToFail->getQuerySubPlanId(), reason);
+                return qepToFail;
+            }
+            return nullptr;
+        },
+        std::move(qepToFail));
 }
 
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline, const std::string& errorMessage) {

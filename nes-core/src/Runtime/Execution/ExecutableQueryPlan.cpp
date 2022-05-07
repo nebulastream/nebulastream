@@ -77,13 +77,14 @@ bool ExecutableQueryPlan::fail() {
     bool ret = true;
     auto expected = Execution::ExecutableQueryPlanStatus::Running;
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::ErrorState)) {
-        NES_DEBUG("QueryExecutionPlan: fail " << queryId << " " << querySubPlanId);
+        NES_DEBUG("QueryExecutionPlan: fail query=" << queryId << " sublplan=" << querySubPlanId);
         for (auto& stage : pipelines) {
-            if (!stage->stop(QueryTerminationType::Failure)) {
+            if (!stage->fail()) {
                 NES_ERROR("QueryExecutionPlan: fail failed for stage " << stage);
                 ret = false;
             }
         }
+        qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
     }
 
     if (!ret) {
@@ -112,13 +113,13 @@ bool ExecutableQueryPlan::setup() {
 }
 
 bool ExecutableQueryPlan::start(const StateManagerPtr& stateManager) {
-    NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
+    NES_DEBUG("QueryExecutionPlan: start query=" << queryId << " subplan=" << querySubPlanId);
     auto expected = Execution::ExecutableQueryPlanStatus::Deployed;
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Running)) {
         for (auto& stage : pipelines) {
             NES_DEBUG("ExecutableQueryPlan::start qep=" << stage->getQuerySubPlanId() << " pipe=" << stage->getPipelineId());
             if (!stage->start(stateManager)) {
-                NES_ERROR("QueryExecutionPlan: start failed! " << queryId << " " << querySubPlanId);
+                NES_ERROR("QueryExecutionPlan: start failed! query=" << queryId << " subplan=" << querySubPlanId);
                 this->stop();
                 return false;
             }
