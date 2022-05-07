@@ -110,6 +110,12 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     bool stop(QueryTerminationType terminationType);
 
     /**
+     * @brief Fails pipeline stage
+     * @return
+     */
+    bool fail();
+
+    /**
     * @brief Get id of pipeline stage
     * @return
     */
