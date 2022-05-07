@@ -98,6 +98,8 @@ private:
     Value generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
 
     Value insertProxyCall(const std::string& funcName, const std::string& ptrName, NES::Operation::BasicType returnType);
+    Value getDataBuffer();
+    Value insertGetNumTuplesFunction();
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.

@@ -56,7 +56,8 @@ class MLIRUtility {
         int loadAndProcessMLIR(NES::NESIR* nesIR,
                                DebugFlags *debugFlags = nullptr);
 
-        int loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags);
+        int loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags = nullptr);
+        int loadModuleFromStrings(const std::string &mlirString, const std::string &mlirString2, DebugFlags *debugFlags);
 
         /**
          * @brief Takes symbols and JITAddresses and JIT runs created module.
@@ -65,7 +66,7 @@ class MLIRUtility {
          * @return int: 1 if error occurred, else 0
          */
         int runJit(const std::vector<std::string> &llvmIRModule,
-                const std::vector<llvm::JITTargetAddress> &jitAddresses, bool useProxyFunctions, int8_t* inputBufferPtr = nullptr,
+                const std::vector<llvm::JITTargetAddress> &jitAddresses, bool useProxyFunctions, void* inputBufferPtr = nullptr,
                    int8_t* outputBufferPtr = nullptr);
 
         /**

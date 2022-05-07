@@ -115,7 +115,13 @@ void printBuffer(std::vector<Operation::BasicType> types,
 
 extern "C" __attribute__((always_inline)) uint64_t getNumTuples(void *tupleBufferPointer) {
     NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(tupleBufferPointer);
+    printf("Num Tuples: %ld", tupleBuffer->getNumberOfTuples());
     return tupleBuffer->getNumberOfTuples();
+}
+
+extern "C" __attribute__((always_inline)) int8_t* getDataBuffer(void *tupleBufferPointer) {
+    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(tupleBufferPointer);
+    return tupleBuffer->getBuffer<int8_t>();
 }
 
 void* getInputBuffer(NES::Runtime::BufferManager* buffMgr) {
@@ -174,7 +180,7 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     NES::BasicBlockPtr executeBodyBlock = std::make_unique<NES::BasicBlock>(rootBlockOps);
 
     std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
-    std::vector<std::string> executeArgNames{ "inputBuffer", "outputBuffer"};
+    std::vector<std::string> executeArgNames{ "InputBuffer", "outputBuffer"};
     auto executeFuncOp = std::make_shared<FunctionOperation>("execute", std::move(executeBodyBlock),
                                                              executeArgTypes, executeArgNames, Operation::INT64);
 
@@ -189,14 +195,13 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     assert(loadedModuleSuccess == 0);
 
     // Register buffers and functions with JIT and run module.
-    const std::vector<std::string> symbolNames{"InputTupleBuffer", "getNumTuples", "printValueFromMLIR"};
+    const std::vector<std::string> symbolNames{"getDataBuffer", "printValueFromMLIR"};
     // Order must match symbolNames order!
     const std::vector<llvm::JITTargetAddress> jitAddresses{
-        llvm::pointerToJITTargetAddress(std::addressof(inputBuffer)),
-            llvm::pointerToJITTargetAddress(&getNumTuples),
-            llvm::pointerToJITTargetAddress(&printValueFromMLIR)
+            llvm::pointerToJITTargetAddress(&getDataBuffer),
+            llvm::pointerToJITTargetAddress(&printValueFromMLIR),
     };
-    mlirUtility->runJit(symbolNames, jitAddresses, false, inputBufferRawDataPointer, outputBufferPointer);
+    mlirUtility->runJit(symbolNames, jitAddresses, false, std::addressof(inputBuffer), outputBufferPointer);
     std::vector<Operation::BasicType> types{Operation::INT64};
     printBuffer(types, numTuples, outputBufferPointer);
 }

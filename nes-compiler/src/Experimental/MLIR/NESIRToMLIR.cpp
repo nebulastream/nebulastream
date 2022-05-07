@@ -32,6 +32,7 @@ limitations under the License.
 #include "llvm/Transforms/Utils/Cloning.h"
 #include <cstdint>
 #include <memory>
+#include <mlir/Parser.h>
 #include <vector>
 
 using namespace mlir;
@@ -105,37 +106,66 @@ FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string& name,
     builder->restoreInsertionPoint(*globalInsertPoint);
     // Create function in global scope. Return reference.
     builder->create<LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, LLVM::Linkage::External, false);
+
     return SymbolRefAttr::get(context, name);
+}
+
+Value MLIRGenerator::insertGetNumTuplesFunction() {
+    std::string moduleStr2 = R"mlir(
+        func private @getNumTuples(%arg0: !llvm.ptr<i8>) -> index {
+            %0 = llvm.mlir.constant(1 : i32) : i32
+            %1 = llvm.mlir.constant(0 : i64) : i64
+            %2 = llvm.bitcast %arg0 : !llvm.ptr<i8> to !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
+            %3 = llvm.load %2 : !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
+            %4 = llvm.getelementptr %3[%1, 1] : (!llvm.ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>, i64) -> !llvm.ptr<i32>
+            %5 = llvm.load %4 : !llvm.ptr<i32>
+            %6 = llvm.zext %5 : i32 to i64
+            %7 = builtin.unrealized_conversion_cast %6 : i64 to index
+            return %7 : index
+        }
+    )mlir";
+    auto simpleModule = parseSourceString(moduleStr2, context);
+    auto getNumFuncOp = static_cast<mlir::FuncOp>(simpleModule->getOps().begin()->getBlock()->getOperations().front().clone());
+    theModule.push_back(getNumFuncOp); //Todo could try to use move
+    return builder->create<mlir::CallOp>(getNameLoc("memberCall"), getNumFuncOp, functionArgs["InputBuffer"]).getResult(0);
+}
+
+Value MLIRGenerator::getDataBuffer() {
+    auto currentInsertionPoint = builder->saveInsertionPoint();
+    builder->restoreInsertionPoint(*globalInsertPoint);
+
+    auto getDataBufferType = mlir::FunctionType::get(context, LLVM::LLVMPointerType::get(builder->getI8Type()),
+                                                     LLVM::LLVMPointerType::get(builder->getI8Type()));
+    //Todo find way to add external linkage?
+    auto proxyFunc = builder->create<mlir::FuncOp>(theModule.getLoc(), "getDataBuffer", getDataBufferType,
+                                                   builder->getStringAttr("private"));
+
+    // Load object address locally. Call proxy member function with objectPtr.
+    builder->restoreInsertionPoint(currentInsertionPoint);
+//    Value objectPtr = builder->create<LLVM::AddressOfOp>(getNameLoc("loadPtr"), functionArgs["InputBuffer"]);
+    return builder->create<mlir::CallOp>(getNameLoc("memberCall"), proxyFunc, functionArgs["InputBuffer"]).getResult(0);
 }
 
 Value MLIRGenerator::insertProxyCall(const std::string& funcName,
                                      const std::string& ptrName,
                                      NES::Operation::BasicType returnType) {
-    printf("KEK: %d", returnType);
-    // We cannot use LLVM::LLVMVoidType or MLIR::OpaqueType to get a void*.
-    // Instead we represent void* via int8*.
+
+    // Todo use return type
+    printf("Return type: %d", returnType);
+    printf("Return type: %s", ptrName.c_str());
     auto currentInsertionPoint = builder->saveInsertionPoint();
     builder->restoreInsertionPoint(*globalInsertPoint);
 
-    // Create global function signature. Get Address of inserted object pointer.
-//    auto proxyFunc = insertExternalFunction(funcName, 64, {}, true); //Todo varArgs necessary?
-    auto numTuplesType = mlir::FunctionType::get(context, LLVM::LLVMPointerType::get(
-                                                              LLVM::LLVMPointerType::get(builder->getI8Type())),
+    auto numTuplesType = mlir::FunctionType::get(context, LLVM::LLVMPointerType::get(builder->getI8Type()),
                                                  builder->getIndexType());
     //Todo find way to add external linkage?
-    auto proxyFunc = builder->create<mlir::FuncOp>(theModule.getLoc(), funcName, numTuplesType, builder->getStringAttr("private"));//, LLVM::Linkage::External, false);
-
-    auto objectGEP = builder->create<LLVM::GlobalOp>(getNameLoc("TB Pointer"),
-                                                     LLVM::LLVMPointerType::get(builder->getIntegerType(8)),
-                                                     false,
-                                                     LLVM::Linkage::External,
-                                                     StringRef{ptrName},
-                                                     Attribute{});
+    auto proxyFunc = builder->create<mlir::FuncOp>(theModule.getLoc(), funcName, numTuplesType,
+                                                   builder->getStringAttr("private"));
 
     // Load object address locally. Call proxy member function with objectPtr.
     builder->restoreInsertionPoint(currentInsertionPoint);
-    Value objectPtr = builder->create<LLVM::AddressOfOp>(getNameLoc("loadPtr"), objectGEP);
-    return builder->create<mlir::CallOp>(getNameLoc("memberCall"), proxyFunc, objectPtr).getResult(0);
+//    Value objectPtr = builder->create<LLVM::AddressOfOp>(getNameLoc("loadPtr"), functionArgs["InputBuffer"]);
+    return builder->create<mlir::CallOp>(getNameLoc("memberCall"), proxyFunc, functionArgs["InputBuffer"]).getResult(0);
 }
 
 //==---------------------------------==//
@@ -228,8 +258,9 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functi
     for (int i = 0; i < (int) functionOperation->getInputArgNames().size(); ++i) {
         functionArgs.emplace(std::pair{functionOperation->getInputArgNames().at(i), functionArgsIterator[i]});
     }
-
-    numTuples = insertProxyCall("getNumTuples", "InputTupleBuffer", NES::Operation::BasicType::INT64);
+//    numTuples = insertProxyCall("getNumTuples", "InputTupleBuffer", NES::Operation::BasicType::INT64);
+    numTuples = insertGetNumTuplesFunction();
+    functionArgs.emplace(std::pair{"inputBuffer", getDataBuffer()});
 
     // Generate MLIR for operations in function body (BasicBlock)
     generateMLIR(functionOperation->getFunctionBasicBlock());
@@ -264,7 +295,7 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOperat
     insertComment("// Main For Loop");
     //Todo numTuples -> index for upperBoundArg
 //    auto fixedUpperBound = builder->create<arith::BitcastOp>(getNameLoc("fixedUB"), builder->getIndexType(), numTuples);
-    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, numTuples, stepSize, iterationVariable);
+    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, stepSize, stepSize, iterationVariable);
 
     // Set Insertion Point (IP) to inside of loop body. Process child node. Restore IP on return.
     auto currentInsertionPoint = builder->saveInsertionPoint();

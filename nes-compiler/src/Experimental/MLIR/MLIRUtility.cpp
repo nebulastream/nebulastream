@@ -27,6 +27,7 @@
 #include "mlir/Parser.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
+#include "mlir/Target/LLVMIR/LLVMTranslationInterface.h"
 #include "mlir/Transforms/Passes.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JITSymbol.h"
@@ -97,8 +98,44 @@ int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags*
     context.loadDialect<mlir::scf::SCFDialect>();
     module = parseSourceString(mlirString, &context);
 
-    printf("Kek %d", debugFlags->comments);
-    printMLIRModule(module, debugFlags);
+    if(debugFlags) { printf("Kek %d", debugFlags->comments); }
+//    auto opIterator = module->getOps().begin()->getBlock()->getOperations().begin();
+//    opIterator->dump();
+    module->dump();
+    if (!module) {
+        llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
+        return 1;
+    }
+
+    mlir::PassManager passManager(&context);
+    applyPassManagerCLOptions(passManager);
+    passManager.addPass(mlir::createInlinerPass());
+    passManager.addPass(mlir::createLowerToCFGPass());
+    passManager.addPass(mlir::createLowerToLLVMPass());
+
+    if (mlir::failed(passManager.run(*module))) {
+        return 1;
+    }
+    return 0;
+}
+
+//Todo remove!!
+int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags) {
+//    auto texst = mlir::UnrealizedConversionCastOp();
+//    auto whatDialect = mlir::UnrealizedConversionCastOp()->getDialect();
+//    mlir::LLVMTranslationDialectInterface testTransInt(mlir::UnrealizedConversionCastOp()->getDialect());
+//    context.loadDialect<testTransInt.getDialect()>();
+    context.loadDialect<mlir::StandardOpsDialect>();
+    context.loadDialect<mlir::LLVM::LLVMDialect>();
+    context.loadDialect<mlir::scf::SCFDialect>();
+
+    module = parseSourceString(mlirString, &context);
+    auto module2 = parseSourceString(mlirString2, &context);
+
+    if(debugFlags) { printf("Kek %d", debugFlags->comments); }
+//    auto opIterator = module2->getOps().begin()->getBlock()->getOperations().front();
+//    module-> push_back(module2->getOps().begin()->getBlock()->getOperations().front().clone());
+    module->dump();
 
     if (!module) {
         llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
@@ -124,6 +161,7 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
+//    context.loadDialect<>()
     // Generate MLIR for the sample NESAbstraction or load from file.
     if (debugFromFile) {
         assert(!mlirFilepath.empty() && "No MLIR filename to read from given.");
@@ -161,13 +199,14 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
  * @return int: 1 if error occurred, else 0
  */
 int MLIRUtility::runJit(const std::vector<std::string>& symbols, const std::vector<llvm::JITTargetAddress>& jitAddresses,
-                        bool useProxyFunctions, int8_t* inputBufferPtr, int8_t* outputBufferPtr) {
+                        bool useProxyFunctions, void* inputBufferPtr, int8_t* outputBufferPtr) {
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*module->getContext());
+    module->dump();
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
     llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer;
