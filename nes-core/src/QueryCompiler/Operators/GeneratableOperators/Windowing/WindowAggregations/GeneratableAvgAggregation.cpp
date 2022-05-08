@@ -48,6 +48,24 @@ void GeneratableAvgAggregation::compileLiftCombine(CompoundStatementPtr currentC
     currentCode->addStatement(updateSumStatement.copy());
     currentCode->addStatement(updateCountStatement.copy());
 }
+void GeneratableAvgAggregation::compileLift(CompoundStatementPtr currentCode,
+                                            BinaryOperatorStatement partialValueRef,
+                                            RecordHandlerPtr recordHandler) {
+
+    auto fieldReference =
+        recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+
+    auto addSumFunctionCall = FunctionCallStatement("addToSum");
+    addSumFunctionCall.addParameter(*fieldReference);
+    auto updateSumStatement = partialValueRef.accessRef(addSumFunctionCall);
+
+    auto setCountFunctionCall = FunctionCallStatement("addToCount");
+    auto updateCountStatement = partialValueRef.accessRef(setCountFunctionCall);
+
+    currentCode->addStatement(updateSumStatement.copy());
+    currentCode->addStatement(updateCountStatement.copy());
+
+}
 
 void GeneratableAvgAggregation::compileCombine(CompoundStatementPtr currentCode,
                                                VarRefStatement partialValueRef1,

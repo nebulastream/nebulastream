@@ -46,6 +46,9 @@ class GeneratableAvgAggregation : public GeneratableWindowAggregation {
 
     ExpressionStatementPtr lower(ExpressionStatementPtr partialValue) override;
     VariableDeclarationPtr getPartialAggregate() override;
+    void compileLift(CompoundStatementPtr currentCode,
+                     BinaryOperatorStatement partialValueRef,
+                     RecordHandlerPtr recordHandler) override;
 };
 
 }// namespace GeneratableOperators

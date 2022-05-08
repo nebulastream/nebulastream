@@ -48,6 +48,9 @@ class GeneratableMinAggregation : public GeneratableWindowAggregation {
      */
     void
     compileCombine(CompoundStatementPtr currentCode, VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) override;
+    void compileLift(CompoundStatementPtr currentCode,
+                     BinaryOperatorStatement partialValueRef,
+                     RecordHandlerPtr recordHandler) override;
 };
 
 }// namespace GeneratableOperators

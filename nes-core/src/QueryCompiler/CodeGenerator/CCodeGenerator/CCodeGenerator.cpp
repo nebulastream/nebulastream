@@ -889,7 +889,8 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandler>");
+    auto getOperatorHandlerCall =
+        call("getOperatorHandler<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement =
@@ -931,19 +932,79 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     findSliceByTs->addParameter(tsVariableDeclaration);
     auto sliceAssignmentStatement = VarDeclStatement(slice).assign(VarRef(threadLocalState).accessRef(findSliceByTs));
     context->code->currentCodeInsertionPoint->addStatement(sliceAssignmentStatement.copy());
-    auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
+
+    auto keyTuple = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "keyTuple");
+    auto makeKeyTupleCall = call("std::make_tuple");
+    for (auto& keyDeclaration : keyDeclarations) {
+        makeKeyTupleCall->addParameter(keyDeclaration);
+    }
+    context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(keyTuple).assign(makeKeyTupleCall).copy());
+
     auto getState = call("getState");
-    auto getEntry = createGetEntryCall(window, context);
-    auto entryAssignmentStatement = VarDeclStatement(entry).assign(
-        TypeCast(VarRef(slice).accessPtr(getState).accessRef(getEntry), tf->createPointer(partialAggregationEntry.getType())));
+    auto hash = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hash");
+    auto calculateHashCall = call("calculateHash");
+    calculateHashCall->addParameter(VarRef(keyTuple));
+    auto hashCalculationStatement = VarDeclStatement(hash).assign(VarRef(slice).accessPtr(getState).accessRef(calculateHashCall));
+    context->code->currentCodeInsertionPoint->addStatement(hashCalculationStatement.copy());
+
+    // auto* entry = findOneEntry<K, useTags>(key, hash);
+    auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
+    auto findOneEntryCall = call("findOneEntry<>");
+    findOneEntryCall->addParameter(VarRef(keyTuple));
+    findOneEntryCall->addParameter(VarRef(hash));
+    auto entryAssignmentStatement = VarDeclStatement(entry).assign(VarRef(slice).accessPtr(getState).accessRef(findOneEntryCall));
     context->code->currentCodeInsertionPoint->addStatement(entryAssignmentStatement.copy());
 
-    for (auto& agg : aggregation) {
-        agg->compileLiftCombine(context->code->currentCodeInsertionPoint,
-                                VarRef(entry).accessPtr(VarRef(agg->getPartialAggregate())),
-                                recordHandler);
+    auto ifElseStatement = IFELSE(!VarRef(entry));
+    {
+        auto entryNotSetCase = ifElseStatement.getTrueCaseCompoundStatement();
+        // no entry for this key exists, so we create a new one
+        auto insertEntry = call("insertEntry");
+        insertEntry->addParameter(VarRef(hash));
+        auto entryCreationStatement = VarRef(entry).assign(VarRef(slice).accessPtr(getState).accessRef(insertEntry));
+        entryNotSetCase->addStatement(entryCreationStatement.copy());
+        auto partialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "partialValue");
+        auto getKeyPtrCall = call("getKeyPtr");
+        getKeyPtrCall->addParameter(VarRef(entry));
+        auto partialValueAssignment = VarDeclStatement(partialValue)
+                                          .assign(TypeCast(VarRef(slice).accessPtr(getState).accessRef(getKeyPtrCall),
+                                                           tf->createPointer(partialAggregationEntry.getType())));
+        entryNotSetCase->addStatement(partialValueAssignment.copy());
+        auto keyVariableDeclaration = getKeyDeclarations(window, tf);
+        for (auto& key : window->getKeys()) {
+            auto partialVariableDeclaration = VariableDeclaration::create(tf->createDataType(key->getStamp()), key->getFieldName());
+            auto keyAssignmentStatement = VarRef(partialValue).accessPtr(VarRef(partialVariableDeclaration)).assign(recordHandler->getAttribute(key->getFieldName()));
+            entryNotSetCase->addStatement(keyAssignmentStatement.copy());
+        }
+
+        // set default partial values
+        for (auto& agg : aggregation) {
+            agg->compileLift(entryNotSetCase,
+                                    VarRef(partialValue).accessPtr(VarRef(agg->getPartialAggregate())),
+                                    recordHandler);
+        }
     }
 
+    {
+        auto entryExistsCase = ifElseStatement.getFalseCaseCompoundStatement();
+
+        // entry is valid case
+        auto partialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "partialValue");
+        auto getKeyPtrCall = call("getKeyPtr");
+        getKeyPtrCall->addParameter(VarRef(entry));
+
+        auto partialValueAssignment = VarDeclStatement(partialValue)
+                                          .assign(TypeCast(VarRef(slice).accessPtr(getState).accessRef(getKeyPtrCall),
+                                                           tf->createPointer(partialAggregationEntry.getType())));
+
+        entryExistsCase->addStatement(partialValueAssignment.copy());
+        for (auto& agg : aggregation) {
+            agg->compileLiftCombine(entryExistsCase,
+                                    VarRef(partialValue).accessPtr(VarRef(agg->getPartialAggregate())),
+                                    recordHandler);
+        }
+    }
+    context->code->currentCodeInsertionPoint->addStatement(ifElseStatement.createCopy());
     auto triggerThreadLocalStateCall = call("triggerThreadLocalState");
     triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationWorkerContext));
     triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationExecutionContext));
@@ -951,6 +1012,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     triggerThreadLocalStateCall->addParameter(getOriginId(context->code->varDeclarationInputBuffer));
     triggerThreadLocalStateCall->addParameter(getSequenceNumber(context->code->varDeclarationInputBuffer));
     triggerThreadLocalStateCall->addParameter(getWatermark(context->code->varDeclarationInputBuffer));
+
     auto triggerThreadLocalStateCallCallStatement =
         VarRef(windowOperatorHandlerDeclaration).accessPtr(triggerThreadLocalStateCall);
 
@@ -1164,15 +1226,73 @@ std::shared_ptr<ForLoopStatement> CCodeGenerator::keyedSliceMergeLoop(
                 makeTuple->addParameter(VarRef(entry).accessPtr(VarRef(keyDeclaration)));
             }
             scanBody->addStatement(VarDeclStatement(tuple).assign(makeTuple).copy());
-            auto getEntry = call("getEntry<>");
-            getEntry->addParameter(VarRef(tuple));
-            auto globalEntryAssignmentStatement = VarDeclStatement(globalEntry)
-                                                      .assign(TypeCast(VarRef(globalSliceState).accessRef(getEntry),
-                                                                       tf->createPointer(partialAggregationEntry.getType())));
+
+
+            auto hash = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hash");
+            auto calculateHashCall = call("calculateHash");
+            calculateHashCall->addParameter(VarRef(tuple));
+            auto hashCalculationStatement = VarDeclStatement(hash).assign(VarRef(globalSliceState).accessRef(calculateHashCall));
+            scanBody->addStatement(hashCalculationStatement.copy());
+
+            // auto* entry = findOneEntry<K, useTags>(key, hash);
+            auto findOneEntryCall = call("findOneEntry<>");
+            findOneEntryCall->addParameter(VarRef(tuple));
+            findOneEntryCall->addParameter(VarRef(hash));
+            auto globalEntryAssignmentStatement = VarDeclStatement(globalEntry).assign(VarRef(globalSliceState).accessRef(findOneEntryCall));
+
+
+           // auto getEntry = call("getEntry<>");
+           // getEntry->addParameter(VarRef(tuple));
+         //   auto globalEntryAssignmentStatement = VarDeclStatement(globalEntry)
+                                            //          .assign(TypeCast(VarRef(globalSliceState).accessRef(getEntry),
+                                             //                          tf->createPointer(partialAggregationEntry.getType())));
             scanBody->addStatement(globalEntryAssignmentStatement.copy());
-            for (auto& agg : aggregation) {
-                agg->compileCombine(scanBody, VarRef(globalEntry), VarRef(entry));
+
+            auto ifElseStatement = IFELSE(!VarRef(globalEntry));
+            {
+                auto entryNotSetCase = ifElseStatement.getTrueCaseCompoundStatement();
+                // no entry for this key exists, so we create a new one
+                auto insertEntry = call("insertEntry");
+                insertEntry->addParameter(VarRef(hash));
+                auto entryCreationStatement = VarRef(globalEntry).assign(VarRef(globalSliceState).accessRef(insertEntry));
+                entryNotSetCase->addStatement(entryCreationStatement.copy());
+                auto partialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "partialValue");
+                auto getKeyPtrCall = call("getKeyPtr");
+                getKeyPtrCall->addParameter(VarRef(globalEntry));
+                auto partialValueAssignment = VarDeclStatement(partialValue)
+                                                  .assign(TypeCast(VarRef(globalSliceState).accessRef(getKeyPtrCall),
+                                                                   tf->createPointer(partialAggregationEntry.getType())));
+                entryNotSetCase->addStatement(partialValueAssignment.copy());
+
+                auto memcopyCall = call("std::memcpy");
+                memcopyCall->addParameter(VarRef(partialValue));
+                memcopyCall->addParameter(VarRef(entry));
+                uint64_t entryContentSize = getKeySpaceSize(window) +  getAggregationValueSize(window);
+                memcopyCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(entryContentSize))));
+                entryNotSetCase->addStatement(memcopyCall);
+
             }
+
+            {
+                auto entryExistsCase = ifElseStatement.getFalseCaseCompoundStatement();
+
+                // entry is valid case
+                auto partialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "partialValue");
+                auto getKeyPtrCall = call("getKeyPtr");
+                getKeyPtrCall->addParameter(VarRef(globalEntry));
+
+                auto partialValueAssignment = VarDeclStatement(partialValue)
+                                                  .assign(TypeCast(VarRef(globalSliceState).accessRef(getKeyPtrCall),
+                                                                   tf->createPointer(partialAggregationEntry.getType())));
+
+                entryExistsCase->addStatement(partialValueAssignment.copy());
+                for (auto& agg : aggregation) {
+                    agg->compileCombine(entryExistsCase, VarRef(partialValue), VarRef(entry));
+                }
+            }
+            scanBody->addStatement(ifElseStatement.createCopy());
+
+
         }
         loopBody->addStatement(scanLoop);
     }
@@ -2777,14 +2897,13 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
     setupScope->addStatement(statement.copy());
 }
 
-
-uint64_t CCodeGenerator::generateKeyedSliceMergingOperatorSetup(
-    Windowing::LogicalWindowDefinitionPtr window,
-    SchemaPtr,
-    PipelineContextPtr context,
-    uint64_t id,
-    uint64_t windowOperatorIndex,
-    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> ) {
+uint64_t
+CCodeGenerator::generateKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                       SchemaPtr,
+                                                       PipelineContextPtr context,
+                                                       uint64_t id,
+                                                       uint64_t windowOperatorIndex,
+                                                       std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
 
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
@@ -2793,7 +2912,6 @@ uint64_t CCodeGenerator::generateKeyedSliceMergingOperatorSetup(
         VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
 
     context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
-
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
 
@@ -2866,7 +2984,8 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
-    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandler>");
+    auto getOperatorHandlerCall =
+        call("getOperatorHandler<Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 

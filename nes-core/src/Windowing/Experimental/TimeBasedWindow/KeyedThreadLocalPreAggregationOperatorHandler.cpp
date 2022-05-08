@@ -88,6 +88,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runt
                 }
             }
         }
+        threadLocalSliceStore.removeSlicesUntilTs(newGlobalWatermark);
         threadLocalSliceStore.setLastWatermark(newGlobalWatermark);
     }
 }

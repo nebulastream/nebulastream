@@ -12,10 +12,13 @@
     limitations under the License.
 */
 
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
@@ -47,6 +50,15 @@ void GeneratableSumAggregation::compileCombine(CompoundStatementPtr currentCode,
     auto updatedPartial = partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
                               .assign(partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
                                       + partialValueRef2.accessPtr(VarRef(getPartialAggregate())));
+    currentCode->addStatement(updatedPartial.copy());
+}
+void GeneratableSumAggregation::compileLift(CompoundStatementPtr currentCode,
+                                            BinaryOperatorStatement partialValueRef,
+                                            RecordHandlerPtr recordHandler) {
+    auto fieldReference =
+        recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto tf = GeneratableTypesFactory();
+    auto updatedPartial = partialValueRef.assign(fieldReference);
     currentCode->addStatement(updatedPartial.copy());
 }
 }// namespace NES::QueryCompilation::GeneratableOperators

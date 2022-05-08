@@ -337,7 +337,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
      * @param queryCatalogService: the catalog containig the queries in the system
      * @return true if successful
      */
-[[nodiscard]] bool heckStoppedOrTimeout(QueryId queryId,
+[[nodiscard]] bool checkStoppedOrTimeout(QueryId queryId,
                                         const QueryCatalogServicePtr& queryCatalogService,
                                         std::chrono::seconds timeout = defaultTimeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
@@ -531,7 +531,9 @@ template<typename T>
 
             if (expectedNumberOfContent != currentContentSize) {
                 if (currentContentSize > expectedNumberOfContent) {
-                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result");
+                    NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result: "
+                              "currentContentSize: "
+                              << currentContentSize << " - expectedNumberOfContent: " << expectedNumberOfContent);
                     return false;
                 }
 

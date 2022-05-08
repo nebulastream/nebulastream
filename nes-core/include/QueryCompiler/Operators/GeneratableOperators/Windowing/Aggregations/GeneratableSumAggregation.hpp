@@ -40,6 +40,10 @@ class GeneratableSumAggregation : public GeneratableWindowAggregation {
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,
                             RecordHandlerPtr recordHandler) override;
+
+    void compileLift(CompoundStatementPtr currentCode,
+                     BinaryOperatorStatement partialValueRef,
+                     RecordHandlerPtr recordHandler) override;
     /**
      * @brief Generate code for combine function to combine multiple pre-aggregates to each other
      * @param currentCode

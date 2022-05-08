@@ -2151,7 +2151,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
         return;
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(func, 100, 0, "interval");
+    auto lambdaSourceType = LambdaSourceType::create(func, 100, 0, GatheringMode::INTERVAL_MODE);
     auto physicalSource = PhysicalSource::create("schema", "Source_phy", lambdaSourceType);
     workerConfig->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
