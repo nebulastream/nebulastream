@@ -44,7 +44,7 @@ class KeyedGlobalSliceStoreAppendOperatorHandler
     using inherited1 = Runtime::Reconfigurable;
 
   public:
-    KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
+    KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
 

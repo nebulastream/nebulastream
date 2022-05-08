@@ -57,6 +57,7 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
 
@@ -306,17 +307,20 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
             operatorNode->insertBetweenThisAndChildNodes(merging);
 
             if (windowDefinition->getWindowType()->isTumblingWindow()) {
-                auto windowSink =
-                    PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema, windowOutputSchema, windowDefinition);
+                auto windowSink = PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
+                                                                                             windowOutputSchema,
+                                                                                             windowDefinition);
                 operatorNode->replace(windowSink);
                 return;
             }
             if (windowDefinition->getWindowType()->isSlidingWindow()) {
-
+                auto globalSliceStore = std::make_shared<Windowing::Experimental::KeyedGlobalSliceStore>();
                 auto slidingWindowSinkOperator =
-                    std::make_shared<Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandler>(windowDefinition);
+                    std::make_shared<Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandler>(windowDefinition,
+                                                                                                     globalSliceStore);
                 auto globalSliceStoreAppendOperator =
-                    std::make_shared<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition);
+                    std::make_shared<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler>(windowDefinition,
+                                                                                                          globalSliceStore);
 
                 auto globalSliceStoreAppend =
                     PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,

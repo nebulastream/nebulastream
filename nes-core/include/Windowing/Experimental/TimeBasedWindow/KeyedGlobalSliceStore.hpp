@@ -17,6 +17,7 @@
 #include <Exceptions/WindowProcessingException.hpp>
 #include <Windowing/Experimental/SeqenceLog.hpp>
 #include <Windowing/Watermark/WatermarkProcessor.hpp>
+#include <list>
 #include <cinttypes>
 #include <map>
 #include <memory>
@@ -51,11 +52,14 @@ class KeyedGlobalSliceStore {
      * @param sliceIndex
      */
     void finalizeSlice(uint64_t sequenceNumber, uint64_t sliceIndex);
+    ~KeyedGlobalSliceStore();
     void clear();
+
+    std::vector<KeyedSliceSharedPtr> getSlicesForWindow(uint64_t startTs, uint64_t endTs);
 
   private:
     std::mutex sliceStagingMutex;
-    std::map<uint64_t, KeyedSliceSharedPtr> sliceMap;
+    std::list<KeyedSliceSharedPtr> slices;
     WatermarkProcessor sliceAddSequenceLog;
     WatermarkProcessor sliceTriggerSequenceLog;
     uint64_t slicesPerWindow;

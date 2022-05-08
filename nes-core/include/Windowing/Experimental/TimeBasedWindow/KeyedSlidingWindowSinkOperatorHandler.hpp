@@ -44,7 +44,7 @@ class KeyedSlidingWindowSinkOperatorHandler
     using inherited1 = Runtime::Reconfigurable;
 
   public:
-    KeyedSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
+    KeyedSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, std::shared_ptr<KeyedGlobalSliceStore>& globalSliceStore);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
 
@@ -58,16 +58,18 @@ class KeyedSlidingWindowSinkOperatorHandler
 
     NES::Experimental::Hashmap getHashMap();
 
-    KeyedSlicePtr createKeyedSlice(uint64_t sliceIndex);
+    KeyedSlicePtr createKeyedSlice(WindowTriggerTask* sliceMergeTask);
 
-    KeyedGlobalSliceStore& getGlobalSliceStore() { return *globalSliceStore.lock(); }
+    std::vector<KeyedSliceSharedPtr> getSlicesForWindow(uint64_t startTs);
+
+    KeyedGlobalSliceStore& getGlobalSliceStore() { return *globalSliceStore; }
 
     ~KeyedSlidingWindowSinkOperatorHandler() { NES_DEBUG("Destruct KeyedEventTimeWindowHandler"); }
 
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore;
+    std::shared_ptr<KeyedGlobalSliceStore> globalSliceStore;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
 };

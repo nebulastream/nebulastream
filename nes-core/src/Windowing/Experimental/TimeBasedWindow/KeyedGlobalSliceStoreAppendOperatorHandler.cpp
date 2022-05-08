@@ -22,8 +22,9 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
-KeyedGlobalSliceStoreAppendOperatorHandler::KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
-    : windowDefinition(windowDefinition) {
+KeyedGlobalSliceStoreAppendOperatorHandler::KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                                                                       std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore)
+    : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
@@ -48,7 +49,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
         return;
     }
     // add pre-aggregated slice to slice store
-    auto [oldMaxSliceIndex, newMaxSliceIndex] = global->addSlice(sequenceNumber, 0, std::move(slice));
+    auto [oldMaxSliceIndex, newMaxSliceIndex] = global->addSlice(sequenceNumber, slice->getEnd(), std::move(slice));
     // check if we can trigger window computation
     if (newMaxSliceIndex > oldMaxSliceIndex) {
         auto buffer = wctx.allocateTupleBuffer();
@@ -65,6 +66,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
 
 void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop KeyedGlobalSliceStoreAppendOperatorHandler");
+
 }
 
 KeyedSlicePtr KeyedGlobalSliceStoreAppendOperatorHandler::createKeyedSlice(uint64_t sliceIndex) {
