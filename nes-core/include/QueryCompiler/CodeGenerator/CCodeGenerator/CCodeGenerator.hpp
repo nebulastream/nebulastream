@@ -134,6 +134,13 @@ class CCodeGenerator : public CodeGenerator {
                                                     uint64_t windowOperatorIndex,
                                                     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
 
+    uint64_t generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                            SchemaPtr,
+                                                            PipelineContextPtr context,
+                                                            uint64_t id,
+                                                            uint64_t windowOperatorIndex,
+                                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) override;
+
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.

@@ -17,9 +17,9 @@
 
 #include <Runtime/TupleBuffer.hpp>
 #include <cinttypes>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <map>
 
 namespace NES::Windowing::Experimental {
 
@@ -32,8 +32,10 @@ class SliceStaging {
   public:
     class Partition {
       public:
+        Partition(uint64_t sliceIndex) : sliceIndex(sliceIndex) {}
         std::vector<Runtime::TupleBuffer> buffers;
         uint64_t addedSlices = 0;
+        const uint64_t sliceIndex;
     };
 
     /**
@@ -58,6 +60,7 @@ class SliceStaging {
 
   private:
     std::mutex sliceStagingMutex;
+    uint64_t sliceIndex;
     std::map<uint64_t, std::unique_ptr<Partition>> slicePartitionMap;
 };
 }// namespace NES::Windowing::Experimental

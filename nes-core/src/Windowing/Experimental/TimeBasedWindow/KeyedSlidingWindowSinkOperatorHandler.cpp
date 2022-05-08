@@ -14,8 +14,8 @@ limitations under the License.
 
 #include <Runtime/WorkerContext.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -23,33 +23,37 @@ limitations under the License.
 namespace NES::Windowing::Experimental {
 
 KeyedSlidingWindowSinkOperatorHandler::KeyedSlidingWindowSinkOperatorHandler(
-    const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
-    : windowDefinition(windowDefinition) {
+    const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+    std::shared_ptr<KeyedGlobalSliceStore>& globalSliceStore)
+    : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
 
 void KeyedSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,
-                                                       NES::Experimental::HashMapFactoryPtr hashmapFactory) {
+                                                  NES::Experimental::HashMapFactoryPtr hashmapFactory) {
     this->factory = hashmapFactory;
 }
 
 NES::Experimental::Hashmap KeyedSlidingWindowSinkOperatorHandler::getHashMap() { return factory->create(); }
 
 void KeyedSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                                       Runtime::StateManagerPtr,
-                                                       uint32_t) {
+                                                  Runtime::StateManagerPtr,
+                                                  uint32_t) {
     NES_DEBUG("start KeyedSlidingWindowSinkOperatorHandler");
 }
 
 void KeyedSlidingWindowSinkOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop KeyedSlidingWindowSinkOperatorHandler");
+    globalSliceStore->clear();
+    globalSliceStore.reset();
 }
 
-KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(uint64_t sliceIndex) {
-    auto startTs = sliceIndex;
-    auto endTs = (sliceIndex + 1);
-    return std::make_unique<KeyedSlice>(factory, startTs, endTs);
+KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(WindowTriggerTask* sliceMergeTask) {
+    return std::make_unique<KeyedSlice>(factory, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
+}
+std::vector<KeyedSliceSharedPtr> KeyedSlidingWindowSinkOperatorHandler::getSlicesForWindow(uint64_t startTs) {
+    return globalSliceStore->getSlicesForWindow(startTs, startTs + windowSize);
 };
 
 }// namespace NES::Windowing::Experimental

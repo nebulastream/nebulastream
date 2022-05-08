@@ -1115,19 +1115,21 @@ bool CCodeGenerator::generateCodeForSliceStoreAppend(PipelineContextPtr context,
     auto tf = getTypeFactory();
     auto code = context->code;
     auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
+    auto partitions = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "partitions");
+    auto sliceIndex = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "sliceIndex");
 
     auto windowOperatorHandlerDeclaration =
-        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler2");
     auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
                                        .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
-    // context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
     auto triggerSliceMergingCall = call("triggerSliceMerging");
     triggerSliceMergingCall->addParameter(VarRef(code->varDeclarationWorkerContext));
     triggerSliceMergingCall->addParameter(VarRef(code->varDeclarationExecutionContext));
-    triggerSliceMergingCall->addParameter(VarRef(globalSlice).accessPtr(call("getIndex")));
+    triggerSliceMergingCall->addParameter(VarRef(partitions).accessPtr(VarRef(sliceIndex)));
     auto moveCall = call("std::move");
     moveCall->addParameter(VarRef(globalSlice));
     triggerSliceMergingCall->addParameter(moveCall);
@@ -1381,7 +1383,7 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(
 
     auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
     auto createSliceCall = call("createKeyedSlice");
-    createSliceCall->addParameter(VarRef(mergeTask).accessPtr(VarRef(startSlice)));
+    createSliceCall->addParameter(VarRef(mergeTask));
     context->code->variableInitStmts.push_back(
         VarDeclStatement(globalSlice).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(createSliceCall)).copy());
 
@@ -1389,30 +1391,44 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(
     context->code->variableInitStmts.push_back(
         VarDeclStatement(globalSliceState).assign(VarRef(globalSlice).accessPtr(call("getState"))).copy());
 
-    auto globalSliceLoop = std::make_shared<FOR>((VarRef(startSlice) <= (VarRef(mergeTask).accessPtr(VarRef(endSlice)))).copy(),
-                                                 (++VarRef(startSlice)).copy());
+    auto windowSlices = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowSlices");
+    auto getSlicesForWindowCall = call("getSlicesForWindow");
+    getSlicesForWindowCall->addParameter(VarRef(startSlice));
+    context->code->variableInitStmts.push_back(
+        VarDeclStatement(windowSlices).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getSlicesForWindowCall)).copy());
+
+
+
+    auto sliceIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()),
+                                    "sliceIndex",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
+            .copy());
+
+    auto globalSliceLoop = std::make_shared<FOR>(
+        sliceIndex,
+        (VarRef(sliceIndex) < (VarRef(windowSlices).accessRef(call("size")))).copy(),
+        (++VarRef(sliceIndex)).copy());
     {
         auto body = globalSliceLoop->getCompoundStatement();
 
         // buffers = (*windowOperatorHandler->getGlobalSliceStore().getSlice(0)->getState().getEntries().get())
-        auto getGlobalSliceStoreCall = call("getGlobalSliceStore");
-        auto hasSliceCall = call("hasSlice");
-        hasSliceCall->addParameter(VarRef(startSlice));
+        //auto getGlobalSliceStoreCall = call("getGlobalSliceStore");
+        //auto hasSliceCall = call("hasSlice");
+        //hasSliceCall->addParameter(VarRef(startSlice));
 
         // if(!windowOperatorHandler->getGlobalSliceStore().hasSlice(0)) continue;
-        auto ifStm = IF(!VarRef(windowOperatorHandlerDeclaration).accessPtr(getGlobalSliceStoreCall).accessRef(hasSliceCall));
-        ifStm.getCompoundStatement()->addStatement(Continue().createCopy());
-        body->addStatement(ifStm.createCopy());
+        //auto ifStm = IF(!VarRef(windowOperatorHandlerDeclaration).accessPtr(getGlobalSliceStoreCall).accessRef(hasSliceCall));
+        //ifStm.getCompoundStatement()->addStatement(Continue().createCopy());
+        //body->addStatement(ifStm.createCopy());
 
-        auto getSliceCall = call("getSlice");
-        getSliceCall->addParameter(VarRef(startSlice));
+        //auto getSliceCall = call("getSlice");
+        //getSliceCall->addParameter(VarRef(startSlice));
         auto getStateCall = call("getState");
         auto getEntriesCall = call("getEntries");
         auto getCall = call("get");
         auto pointerRefCall = call("*");
-        pointerRefCall->addParameter(VarRef(windowOperatorHandlerDeclaration)
-                                         .accessPtr(getGlobalSliceStoreCall)
-                                         .accessRef(getSliceCall)
+        pointerRefCall->addParameter(VarRef(windowSlices)[VarRef(sliceIndex)]
                                          .accessPtr(getStateCall)
                                          .accessRef(getEntriesCall)
                                          .accessRef(getCall));
@@ -2921,6 +2937,75 @@ CCodeGenerator::generateKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowD
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
     auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedSliceMergingOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement =
+        VarDeclStatement(windowOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    setupScope->addStatement(windowOperatorStatement.copy());
+
+    // getWindowDefinition
+    auto windowDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowDefinition");
+    auto getWindowDefinitionCall = call("getWindowDefinition");
+    auto windowDefinitionStatement = VarDeclStatement(windowDefDeclaration)
+                                         .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    // create struct for entry
+    // consists of keys and aggregation values
+    //StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, windowAggregation);
+    //context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
+
+    auto createCall = call("std::make_shared<Experimental::HashMapFactory>");
+    auto getBufferManagerCall = call("getBufferManager");
+    createCall->addParameter(VarRefStatement(context->code->varDeclarationExecutionContext).accessRef(getBufferManagerCall));
+
+    uint64_t keysSize = getKeySpaceSize(window);
+    uint64_t aggValueSize = getAggregationValueSize(window);
+    auto constantKeySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(keysSize)));
+    createCall->addParameter(constantKeySize);
+    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(aggValueSize)));
+    createCall->addParameter(constantValueSize);
+
+    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
+    createCall->addParameter(constantNumberOfEntries);
+
+    auto hashMapFactory = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashMapFactory");
+
+    auto hashMapFactoryStatement = VarDeclStatement(hashMapFactory).assign(createCall);
+    setupScope->addStatement(hashMapFactoryStatement.copy());
+
+    auto setupWindowHandler = call("setup");
+    setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
+    setupWindowHandler->addParameter(VarRef(hashMapFactory));
+    setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
+    return 0;
+}
+
+uint64_t
+CCodeGenerator::generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                       SchemaPtr,
+                                                       PipelineContextPtr context,
+                                                       uint64_t id,
+                                                       uint64_t windowOperatorIndex,
+                                                       std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
+
+    auto tf = getTypeFactory();
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    VariableDeclaration varDeclarationPipelineExecutionContext =
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+
+    context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+
+    // create a new setup scope for this operator
+    auto setupScope = context->createSetupScope();
+
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandler>");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 

@@ -21,7 +21,7 @@ std::tuple<uint64_t, uint64_t> SliceStaging::addToSlice(uint64_t sliceEndTs,
                                                         std::unique_ptr<std::vector<Runtime::TupleBuffer>> entries) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     if (!slicePartitionMap.contains(sliceEndTs)) {
-        slicePartitionMap[sliceEndTs] = std::make_unique<Partition>();
+        slicePartitionMap[sliceEndTs] = std::make_unique<Partition>(++sliceIndex);
     }
     auto& partition = slicePartitionMap[sliceEndTs];
     for (auto& entryBuffer : (*entries.get())) {

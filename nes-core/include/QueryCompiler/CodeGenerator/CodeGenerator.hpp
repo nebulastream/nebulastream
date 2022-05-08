@@ -269,6 +269,13 @@ class CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
+    virtual uint64_t generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                     SchemaPtr,
+                                                     PipelineContextPtr context,
+                                                     uint64_t id,
+                                                     uint64_t windowOperatorIndex,
+                                                     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) =0;
+
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
     * @param join The join definition, which contains all properties of the window.

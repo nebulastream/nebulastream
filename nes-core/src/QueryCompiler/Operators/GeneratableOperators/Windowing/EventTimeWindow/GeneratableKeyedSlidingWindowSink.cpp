@@ -55,13 +55,18 @@ GeneratableKeyedSlidingWindowSink::GeneratableKeyedSlidingWindowSink(
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
-void GeneratableKeyedSlidingWindowSink::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {
-    //   auto windowDefinition = windowHandler->getWindowDefinition();
-    //codegen->generateWindowSetup(windowDefinition, outputSchema, context, id, windowHandler);
+void GeneratableKeyedSlidingWindowSink::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
+    codegen->generateKeyedSlidingWindowOperatorSetup(windowHandler->getWindowDefinition(),
+                                                    outputSchema,
+                                                     context,
+                                                    id,
+                                                    windowOperatorIndex,
+                                                    windowAggregation);
 }
 
 void GeneratableKeyedSlidingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto handler = context->registerOperatorHandler(windowHandler);
+    auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForKeyedSlidingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
     windowHandler = nullptr;

@@ -20,18 +20,44 @@ namespace NES::Windowing::Experimental {
 std::tuple<uint64_t, uint64_t>
 KeyedGlobalSliceStore::addSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSliceSharedPtr slice) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    NES_ASSERT(!sliceMap.contains(sliceIndex), "Slice is not contained");
-    sliceMap[sliceIndex] = slice;
+    //NES_ASSERT(!sliceMap.contains(sliceIndex), "Slice is not contained");
+    auto sliceIter = slices.rbegin();
+    while (sliceIter != slices.rend() && (*sliceIter)->getStart() > slice->getStart()) {
+        sliceIter++;
+    }
+    if (sliceIter == slices.rend()) {
+        // We are in case 1. thus we have to prepend a new slice
+        slices.emplace_front(std::move(slice));
+    } else if ((*sliceIter)->getStart() < slice->getStart()) {
+        slices.emplace(sliceIter.base(), std::move(slice));
+    } else {
+        throw WindowProcessingException("");
+    }
     auto lastMaxSliceIndex = sliceAddSequenceLog.getCurrentWatermark();
     sliceAddSequenceLog.updateWatermark(sliceIndex, sequenceNumber);
     auto newMaxSliceIndex = sliceAddSequenceLog.getCurrentWatermark();
     return {lastMaxSliceIndex, newMaxSliceIndex};
 }
 
-KeyedSliceSharedPtr KeyedGlobalSliceStore::getSlice(uint64_t sliceIndex) {
+KeyedSliceSharedPtr KeyedGlobalSliceStore::getSlice(uint64_t sliceEnd) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    NES_ASSERT(sliceMap.contains(sliceIndex), "slice is not contained");
-    return sliceMap[sliceIndex];
+    //NES_ASSERT(sliceMap.contains(sliceIndex), "slice is not contained");
+    //return sliceMap[sliceIndex];
+    auto sliceIter = slices.begin();
+    while (sliceIter != slices.end() && (*sliceIter)->getEnd() < sliceEnd) {
+
+        if ((*sliceIter)->getEnd() == sliceEnd) {
+            return (*sliceIter);
+        }
+        sliceIter++;
+    }
+    throw WindowProcessingException("slice dose not exists");
+}
+
+KeyedGlobalSliceStore::~KeyedGlobalSliceStore(){
+    const std::lock_guard<std::mutex> lock(sliceStagingMutex);
+    NES_DEBUG("~KeyedGlobalSliceStore")
+    slices.clear();
 }
 
 void KeyedGlobalSliceStore::finalizeSlice(uint64_t sequenceNumber, uint64_t sliceIndex) {
@@ -52,18 +78,34 @@ void KeyedGlobalSliceStore::finalizeSlice(uint64_t sequenceNumber, uint64_t slic
     // remove all slices which are between lastFinalizedSliceIndex and newFinalizedSliceIndex.
     // at this point we are sure that we will never use them again.
     for (auto si = lastFinalizedSliceIndex; si < newFinalizedSliceIndex; si++) {
-        assert(sliceMap.contains(si));
-        sliceMap.erase(si);
+        //assert(sliceMap.contains(si));
+        // sliceMap.erase(si);
     }
 }
-bool KeyedGlobalSliceStore::hasSlice(uint64_t sliceIndex) {
+bool KeyedGlobalSliceStore::hasSlice(uint64_t) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    return sliceMap.contains(sliceIndex);
+    //  return sliceMap.contains(sliceIndex);
+    return true;
 }
 
 void KeyedGlobalSliceStore::clear() {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    sliceMap.clear();
+    //sliceMap.clear();
+}
+
+std::vector<KeyedSliceSharedPtr> KeyedGlobalSliceStore::getSlicesForWindow(uint64_t startTs, uint64_t endTs) {
+    auto slicesInWindow = std::vector<KeyedSliceSharedPtr>();
+    auto sliceIter = slices.begin();
+    while (sliceIter != slices.end()) {
+        if ((*sliceIter)->getEnd() > endTs) {
+            break;
+        }
+        if ((*sliceIter)->getStart() >= startTs && (*sliceIter)->getStart() <= endTs) {
+            slicesInWindow.emplace_back(*sliceIter);
+        }
+        sliceIter++;
+    }
+    return slicesInWindow;
 }
 
 }// namespace NES::Windowing::Experimental
