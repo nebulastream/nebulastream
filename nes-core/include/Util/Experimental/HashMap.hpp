@@ -104,6 +104,11 @@ class Hashmap {
      */
     uint8_t* getValuePtr(Entry* entry) { return ((uint8_t*) entry) + valueOffset; };
 
+    template<class T>
+    T* getValuePtr(Entry* entry) {
+        return (T*) getValuePtr(entry);
+    };
+
     /**
      * @brief Returns the first entry of the chain for the given hash
      */
@@ -116,6 +121,7 @@ class Hashmap {
     inline Entry* find_chain_tagged(hash_t hash);
     /// Insert entry into chain for the given hash
     inline void insert(Entry* entry, hash_t hash);
+    inline Hashmap::Entry* insertEntry(hash_t hash);
     /// Insert entry into chain for the given hash
     /// Updates tag
     inline void insert_tagged(Entry* entry, hash_t hash);
@@ -124,10 +130,19 @@ class Hashmap {
     inline Entry* findOneEntry(const K& key, hash_t h);
 
     template<class KeyType>
+    inline auto calculateHash(KeyType& key) const;
+
+    template<class KeyType>
     inline uint8_t* getEntry(KeyType& key);
+
+    template<class KeyType, class ValueType>
+    inline uint8_t* getEntryWithDefault(KeyType& key, ValueType&& defaultValue);
 
     template<typename K, bool useTags>
     Hashmap::Entry* findOrCreate(K key, hash_t hash);
+
+    template<typename K, typename V, bool useTags>
+    inline Hashmap::Entry* findOrCreateWithDefault(K key, hash_t hash, V defaultValue);
 
     /// Removes all elements from the hashtable
     inline void clear();
@@ -226,7 +241,7 @@ void inline Hashmap::clear() {
     storageBuffers = std::make_unique<std::vector<Runtime::TupleBuffer>>();
 }
 
-template<typename K, bool useTags>
+template<typename K, bool useTags = false>
 inline Hashmap::Entry* Hashmap::findOneEntry(const K& key, hash_t h) {
     Entry* entry;
     if (useTags) {
@@ -245,6 +260,27 @@ inline Hashmap::Entry* Hashmap::findOneEntry(const K& key, hash_t h) {
     return nullptr;
 }
 
+template<typename K, typename V, bool useTags>
+inline Hashmap::Entry* Hashmap::findOrCreateWithDefault(K key, hash_t hash, V defaultValue) {
+    auto entry = findOneEntry<K, useTags>(key, hash);
+    if (!entry) {
+        auto newEntry = allocateNewEntry();
+        newEntry->hash = hash;
+        *getKeyPtr<K>(newEntry) = key;
+        *getValuePtr<V>(newEntry) = defaultValue;
+        insert(newEntry, hash);
+        return newEntry;
+    }
+    return entry;
+}
+
+Hashmap::Entry* Hashmap::insertEntry(hash_t hash) {
+    auto newEntry = allocateNewEntry();
+    newEntry->hash = hash;
+    insert(newEntry, hash);
+    return newEntry;
+}
+
 template<typename K, bool useTags>
 inline Hashmap::Entry* Hashmap::findOrCreate(K key, hash_t hash) {
     auto entry = findOneEntry<K, useTags>(key, hash);
@@ -257,10 +293,23 @@ inline Hashmap::Entry* Hashmap::findOrCreate(K key, hash_t hash) {
     }
     return entry;
 }
+
+template<class KeyType>
+inline auto Hashmap::calculateHash(KeyType& key) const {
+    return hasher(key, NES::Experimental::Hash<NES::Experimental::CRC32Hash>::SEED);
+}
+
 template<class KeyType>
 inline uint8_t* Hashmap::getEntry(KeyType& key) {
     const auto h = hasher(key, NES::Experimental::Hash<NES::Experimental::CRC32Hash>::SEED);
     auto entry = findOrCreate<KeyType, false>(key, h);
+    return getKeyPtr(entry);
+}
+
+template<class KeyType, class ValueType>
+inline uint8_t* Hashmap::getEntryWithDefault(KeyType& key, ValueType&& defaultValue) {
+    const auto h = hasher(key, NES::Experimental::Hash<NES::Experimental::CRC32Hash>::SEED);
+    auto entry = findOrCreateWithDefault<KeyType, false>(key, h, defaultValue);
     return getKeyPtr(entry);
 }
 

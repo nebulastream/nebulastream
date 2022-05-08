@@ -28,6 +28,11 @@ GeneratableWindowAggregationPtr
 GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
     return std::make_shared<GeneratableMedianAggregation>(aggregationDescriptor);
 }
+void GeneratableMedianAggregation::compileLift(CompoundStatementPtr ,
+                                               BinaryOperatorStatement ,
+                                               RecordHandlerPtr ) {
+    NES_NOT_IMPLEMENTED();
+}
 
 void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
                                                       BinaryOperatorStatement partialRef,

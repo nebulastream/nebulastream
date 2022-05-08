@@ -17,6 +17,11 @@
 #include <sstream>
 
 namespace NES::QueryCompilation {
+
+IfElseStatement::IfElseStatement(const Statement& condExpr)
+    : conditionalExpression(condExpr.createCopy()), trueCaseStatement(std::make_shared<CompoundStatement>()),
+      falseCaseStatement(std::make_shared<CompoundStatement>()) {}
+
 IfElseStatement::IfElseStatement(const Statement& condExpr, const Statement& condTrueStmt, const Statement& condFalseStmt)
     : conditionalExpression(condExpr.createCopy()), trueCaseStatement(std::make_shared<CompoundStatement>()),
       falseCaseStatement(std::make_shared<CompoundStatement>()) {

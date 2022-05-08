@@ -39,7 +39,14 @@ void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto ifStatement = IF(partialRef > *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
-
+void GeneratableMinAggregation::compileLift(CompoundStatementPtr currentCode,
+                                            BinaryOperatorStatement partialValueRef,
+                                            RecordHandlerPtr recordHandler) {
+    auto fieldReference =
+        recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto updatedPartial = partialValueRef.assign(fieldReference);
+    currentCode->addStatement(updatedPartial.copy());
+}
 void GeneratableMinAggregation::compileCombine(CompoundStatementPtr currentCode,
                                                VarRefStatement globalPartial,
                                                VarRefStatement localPartial) {

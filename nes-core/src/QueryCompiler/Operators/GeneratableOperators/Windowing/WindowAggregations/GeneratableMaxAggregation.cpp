@@ -39,6 +39,15 @@ void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto ifStatement = IF(partialRef < *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
+void GeneratableMaxAggregation::compileLift(CompoundStatementPtr currentCode,
+                                            BinaryOperatorStatement partialValueRef,
+                                            RecordHandlerPtr recordHandler) {
+    auto fieldReference =
+        recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+
+    auto updatedPartial = partialValueRef.assign(fieldReference);
+    currentCode->addStatement(updatedPartial.copy());
+}
 
 void GeneratableMaxAggregation::compileCombine(CompoundStatementPtr currentCode,
                                                VarRefStatement globalPartial,
