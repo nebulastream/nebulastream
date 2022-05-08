@@ -110,71 +110,47 @@ FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string& name,
     return SymbolRefAttr::get(context, name);
 }
 
-Value MLIRGenerator::insertGetNumTuplesFunction() {
+void MLIRGenerator::insertClassMemberFunctions() {
     std::string moduleStr2 = R"mlir(
-        func private @getNumTuples(%arg0: !llvm.ptr<i8>) -> index {
-            %0 = llvm.mlir.constant(1 : i32) : i32
-            %1 = llvm.mlir.constant(0 : i64) : i64
-            %2 = llvm.bitcast %arg0 : !llvm.ptr<i8> to !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
-            %3 = llvm.load %2 : !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
-            %4 = llvm.getelementptr %3[%1, 1] : (!llvm.ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>, i64) -> !llvm.ptr<i32>
-            %5 = llvm.load %4 : !llvm.ptr<i32>
-            %6 = llvm.zext %5 : i32 to i64
-            %7 = builtin.unrealized_conversion_cast %6 : i64 to index
-            return %7 : index
+        module {
+            func private @getNumTuples(%arg0: !llvm.ptr<i8>) -> index {
+                %0 = llvm.mlir.constant(1 : i32) : i32
+                %1 = llvm.mlir.constant(0 : i64) : i64
+                %2 = llvm.bitcast %arg0 : !llvm.ptr<i8> to !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
+                %3 = llvm.load %2 : !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
+                %4 = llvm.getelementptr %3[%1, 1] : (!llvm.ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>, i64) -> !llvm.ptr<i32>
+                %5 = llvm.load %4 : !llvm.ptr<i32>
+                %6 = llvm.zext %5 : i32 to i64
+                %7 = arith.index_cast %6 : i64 to index
+                return %7 : index
+            }
+            func private @getDataBuffer(%arg0: !llvm.ptr<i8>) -> !llvm.ptr<i8> {
+                %0 = llvm.mlir.constant(8 : i64) : i64
+                %1 = llvm.getelementptr %arg0[%0] : (!llvm.ptr<i8>, i64) -> !llvm.ptr<i8>
+                %2 = llvm.bitcast %1 : !llvm.ptr<i8> to !llvm.ptr<ptr<i8>>
+                %3 = llvm.load %2 : !llvm.ptr<ptr<i8>>
+                llvm.return %3 : !llvm.ptr<i8>
+            }
         }
     )mlir";
     auto simpleModule = parseSourceString(moduleStr2, context);
-    auto getNumFuncOp = static_cast<mlir::FuncOp>(simpleModule->getOps().begin()->getBlock()->getOperations().front().clone());
-    theModule.push_back(getNumFuncOp); //Todo could try to use move
-    return builder->create<mlir::CallOp>(getNameLoc("memberCall"), getNumFuncOp, functionArgs["InputBuffer"]).getResult(0);
-}
-
-Value MLIRGenerator::getDataBuffer() {
-    auto currentInsertionPoint = builder->saveInsertionPoint();
-    builder->restoreInsertionPoint(*globalInsertPoint);
-
-    auto getDataBufferType = mlir::FunctionType::get(context, LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                     LLVM::LLVMPointerType::get(builder->getI8Type()));
-    //Todo find way to add external linkage?
-    auto proxyFunc = builder->create<mlir::FuncOp>(theModule.getLoc(), "getDataBuffer", getDataBufferType,
-                                                   builder->getStringAttr("private"));
-
-    // Load object address locally. Call proxy member function with objectPtr.
-    builder->restoreInsertionPoint(currentInsertionPoint);
-//    Value objectPtr = builder->create<LLVM::AddressOfOp>(getNameLoc("loadPtr"), functionArgs["InputBuffer"]);
-    return builder->create<mlir::CallOp>(getNameLoc("memberCall"), proxyFunc, functionArgs["InputBuffer"]).getResult(0);
-}
-
-Value MLIRGenerator::insertProxyCall(const std::string& funcName,
-                                     const std::string& ptrName,
-                                     NES::Operation::BasicType returnType) {
-
-    // Todo use return type
-    printf("Return type: %d", returnType);
-    printf("Return type: %s", ptrName.c_str());
-    auto currentInsertionPoint = builder->saveInsertionPoint();
-    builder->restoreInsertionPoint(*globalInsertPoint);
-
-    auto numTuplesType = mlir::FunctionType::get(context, LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                 builder->getIndexType());
-    //Todo find way to add external linkage?
-    auto proxyFunc = builder->create<mlir::FuncOp>(theModule.getLoc(), funcName, numTuplesType,
-                                                   builder->getStringAttr("private"));
-
-    // Load object address locally. Call proxy member function with objectPtr.
-    builder->restoreInsertionPoint(currentInsertionPoint);
-//    Value objectPtr = builder->create<LLVM::AddressOfOp>(getNameLoc("loadPtr"), functionArgs["InputBuffer"]);
-    return builder->create<mlir::CallOp>(getNameLoc("memberCall"), proxyFunc, functionArgs["InputBuffer"]).getResult(0);
+    auto proxyOpIterator = simpleModule->getOps().begin()->getBlock()->getOperations().begin();
+    auto getNumFuncOp = static_cast<mlir::FuncOp>(proxyOpIterator->clone());
+    theModule.push_back(getNumFuncOp);//Todo could try to use move
+    ++proxyOpIterator;
+    auto getDataBufferOp = static_cast<mlir::FuncOp>(proxyOpIterator->clone());
+    theModule.push_back(getDataBufferOp);
+    valueMap.emplace(std::pair{"numTuples", builder->create<mlir::CallOp>(getNameLoc("memberCall"), getNumFuncOp, valueMap["InputBuffer"]).getResult(0)});
+    valueMap.emplace(std::pair{"inputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"), getDataBufferOp, valueMap["InputBuffer"]).getResult(0)});
 }
 
 //==---------------------------------==//
 //==-- MAIN WORK - Generating MLIR --==//
 //==---------------------------------==//
 MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context) : context(&context) {
+    // Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
     builder = std::make_shared<OpBuilder>(&context);
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
-
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
     // Insert printFromMLIR function for debugging use.
@@ -182,11 +158,7 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context) : context(&context) {
 };
 
 mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(NES::NESIR* nesIR) {
-    //Todo load TupleBuffer as int64 pointer
     generateMLIR(nesIR->getRootOperation());
-
-    //Todo should perform this on higher level!!!
-    // Check if module is valid and return.
     theModule->dump();
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
@@ -196,11 +168,7 @@ mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(NES::NESIR* nesIR) {
 }
 
 void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock) {
-    // Fixme: Instead of having a 'rootBlock' we have a rootOperation
-    //  - We start generating MLIR from NESIR by calling generateMLIR(rootOperation)
-    //   - an Operation can have BasicBlocks (LoopOperation, IfOperation)
-    //    - if an Operation has a BasicBlock, we adjust the insertionPoint during MLIRGeneration
-    //    - INTUITION: An Operation with a BasicBlock creates a new scope.
+    //Todo change scopes of current InsertionPoint here!
     for (const auto& operation : basicBlock->getOperations()) {
         generateMLIR(operation);
     }
@@ -225,17 +193,6 @@ Value MLIRGenerator::generateMLIR(const NES::OperationPtr& operation) {
 }
 
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functionOperation) {
-
-    //Todo establish TupleBuffer as input
-    // - [ ] call getNumTuples() to get the number of tuples available in TB -> proxy first, later INLINE
-    //   - we do NOT need to get recordWidth or similar, because SCHEMA IS STATIC! -> can statically set via AddressOperation
-    // - [ ] set numTuples as upper limit of ForLoop!
-    // - [ ] use TupleBuffer* as input instead of int8_t* for execute()
-    //   - [ ] call getBuffer proxy function to get dataBufferPtr as int8_t
-    //   - [ ] connect to previously established flow
-    // - [ ] use more elegant way to add JIT symbols and function addresses
-    //   - how to do it in general?
-
     // Generate execute function. Set input/output types and get its entry block.
     llvm::SmallVector<mlir::Type, 4> inputTypes(0);
     for (auto inputArg : functionOperation->getInputArgs()) {
@@ -253,14 +210,12 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functi
     // Set InsertPoint to beginning of the execute function.
     builder->setInsertionPointToStart(&mlirFunction.getBody().front());
 
-    // Store references to function args in the functionArgs map.
-    auto functionArgsIterator = mlirFunction.args_begin();
+    // Store references to function args in the valueMap map.
+    auto valueMapIterator = mlirFunction.args_begin();
     for (int i = 0; i < (int) functionOperation->getInputArgNames().size(); ++i) {
-        functionArgs.emplace(std::pair{functionOperation->getInputArgNames().at(i), functionArgsIterator[i]});
+        valueMap.emplace(std::pair{functionOperation->getInputArgNames().at(i), valueMapIterator[i]});
     }
-//    numTuples = insertProxyCall("getNumTuples", "InputTupleBuffer", NES::Operation::BasicType::INT64);
-    numTuples = insertGetNumTuplesFunction();
-    functionArgs.emplace(std::pair{"inputBuffer", getDataBuffer()});
+    insertClassMemberFunctions();
 
     // Generate MLIR for operations in function body (BasicBlock)
     generateMLIR(functionOperation->getFunctionBasicBlock());
@@ -272,7 +227,6 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functi
     return constZero;
 }
 
-// Todo define entry point here. Is return correct?
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOperation) {
     //==------------------------------==//
     //==--------- LOOP HEAD ----------==//
@@ -284,18 +238,16 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOperat
     // Define index variables for loop. Define the loop iteration variable
     Value iterationVariable = getConstInt(getNameLoc("IterationVar"), 64, 0);
 
-//    auto upperBound = numTuples.dyn_cast<arith::ConstantIndexOp>();
+    //    auto upperBound = numTuples.dyn_cast<arith::ConstantIndexOp>();
     auto lowerBound = builder->create<arith::ConstantIndexOp>(getNameLoc("lowerBound"), 0);
     auto stepSize = builder->create<arith::ConstantIndexOp>(getNameLoc("stepSize"), 1);
-//    auto upperBound = builder->create<LLVM::ConstantOp>(getNameLoc("fakeUpperBound"), builder->getIndexType(), builder->getI64IntegerAttr(2));
 
     //==------------------------------==//
     //==--------- LOOP BODY ----------==//
     //==------------------------------==//
     insertComment("// Main For Loop");
-    //Todo numTuples -> index for upperBoundArg
-//    auto fixedUpperBound = builder->create<arith::BitcastOp>(getNameLoc("fixedUB"), builder->getIndexType(), numTuples);
-    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, stepSize, stepSize, iterationVariable);
+    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, valueMap["numTuples"],
+                                               stepSize, iterationVariable);
 
     // Set Insertion Point (IP) to inside of loop body. Process child node. Restore IP on return.
     auto currentInsertionPoint = builder->saveInsertionPoint();
@@ -313,7 +265,7 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOperat
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp) {
     printf("ConstIntValue: %ld\n", constIntOp->getConstantIntValue());
     //    builder->clearInsertionPoint();
-    // TODO use dynamic type from NESIR
+    // TODO use dynamic type from NESIR, not simply I64
     Value constVal = builder->create<LLVM::ConstantOp>(getNameLoc("Constant Op"),
                                                        builder->getIntegerType(64),
                                                        builder->getI64IntegerAttr(constIntOp->getConstantIntValue()));
@@ -333,17 +285,16 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp) {
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp) {
     printf("Address Op field offset: %ld\n", addressOp->getFieldOffset());
     // Calculate current offset //Todo dynamically calculate offset -> also for multiple types/fields
-    //        Value globalArrayPtr = builder->create<LLVM::AddressOfOp>(getNameLoc("loadedArray"), inputBufferPtr);
     Value recordOffset = builder->create<LLVM::MulOp>(getNameLoc("recordOffset"),
                                                       currentRecordIdx,
                                                       getConstInt(getNameLoc("1"), 64, addressOp->getRecordWidth()));
     Value fieldOffset = builder->create<LLVM::AddOp>(getNameLoc("fieldOffset"),
                                                      recordOffset,
                                                      getConstInt(getNameLoc("1"), 64, addressOp->getFieldOffset()));
-    //return I8* to first byte of field data
+    // Return I8* to first byte of field data
     Value elementAddress = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                         LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                        functionArgs["inputBuffer"],
+                                                        valueMap["inputBuffer"],
                                                         ArrayRef<Value>({fieldOffset}));
     return builder->create<LLVM::BitcastOp>(getNameLoc("I64 addr"),
                                             LLVM::LLVMPointerType::get(builder->getI64Type()),
@@ -363,7 +314,7 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::StoreOperation> storeOp) 
     //        Value fieldPointer = builder->create<LLVM::AddressOfOp>(getNameLoc("loadedArray"), outputBufferGlobal);
     Value castedAddress = builder->create<LLVM::BitcastOp>(getNameLoc("Casted Address"),
                                                            LLVM::LLVMPointerType::get(builder->getI64Type()),
-                                                           functionArgs["outputBuffer"]);
+                                                           valueMap["outputBuffer"]);
     //        Value indexWithOffset = builder->create<LLVM::MulOp>(getNameLoc("indexWithOffset"),
     //                                                             getConstInt(getNameLoc("const 8"), 32, 8), currentRecordIdx);
     auto outputPtr = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),

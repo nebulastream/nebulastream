@@ -67,10 +67,8 @@ private:
     std::shared_ptr<OpBuilder> builder;
     MLIRContext *context;
     mlir::ModuleOp theModule;
-    // NES Variables
-    std::unordered_map<std::string, Value> functionArgs;
-    std::unordered_map<std::string, Value> loadedValues;
-    mlir::Value numTuples;
+    // Map that contains execute input args, function call results and intermediary results from NESIR Operations.
+    std::unordered_map<std::string, Value> valueMap;
     // Utility
     mlir::Value currentRecordIdx;
     mlir::Value constZero;
@@ -97,9 +95,10 @@ private:
     Value generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
     Value generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
 
-    Value insertProxyCall(const std::string& funcName, const std::string& ptrName, NES::Operation::BasicType returnType);
-    Value getDataBuffer();
-    Value insertGetNumTuplesFunction();
+    /**
+     * @brief Inserts mlir versions of frequently needed class member functions.
+     */
+    void insertClassMemberFunctions();
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.
