@@ -19,7 +19,7 @@ namespace NES {
 FailQueryRequest::FailQueryRequest(QueryId queryId) : Request(queryId) {}
 
 FailQueryRequestPtr FailQueryRequest::create(QueryId queryId) {
-    return std::make_shared<FailQueryRequest>(new FailQueryRequest(queryId));
+    return std::make_shared<FailQueryRequest>(FailQueryRequest(queryId));
 }
 
 std::string FailQueryRequest::toString() { return "FailQueryRequest { QueryId: " + std::to_string(getQueryId()) + "}"; }
