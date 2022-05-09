@@ -21,18 +21,18 @@ namespace NES {
 
 class ConstantIntOperation : public Operation {
   public:
-    enum ConstIntType {int32, int64};//, uint32, uint64};
-    explicit ConstantIntOperation(int64_t constantValue);
+    explicit ConstantIntOperation(int64_t constantValue, int8_t numBits);
     ~ConstantIntOperation() override = default;
 
     int64_t getConstantIntValue();
+    int8_t getNumBits();
 
     template<class T>
     T getIntegerViaType();
     static bool classof(const Operation* Op);
   private:
     int64_t constantValue;
-    ConstIntType type;
+    int8_t numBits;
 };
 
 }// namespace NES

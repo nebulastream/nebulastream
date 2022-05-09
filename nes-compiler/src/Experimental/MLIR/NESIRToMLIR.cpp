@@ -33,6 +33,7 @@ limitations under the License.
 #include <cstdint>
 #include <memory>
 #include <mlir/Parser.h>
+#include <unordered_map>
 #include <vector>
 
 using namespace mlir;
@@ -56,8 +57,8 @@ mlir::Type MLIRGenerator::getMLIRType(NES::Operation::BasicType type) {
     }
 }
 
-mlir::Value MLIRGenerator::getConstInt(Location loc, int numBits, int64_t value) {
-    return builder->create<LLVM::ConstantOp>(loc,
+mlir::Value MLIRGenerator::getConstInt(const std::string& location, int numBits, int64_t value) {
+    return builder->create<LLVM::ConstantOp>(getNameLoc(location),
                                              builder->getIntegerType(numBits),
                                              builder->getIntegerAttr(builder->getIndexType(), value));
 }
@@ -110,7 +111,8 @@ FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string& name,
     return SymbolRefAttr::get(context, name);
 }
 
-std::vector<mlir::FuncOp> MLIRGenerator::insertClassMemberFunctions(mlir::MLIRContext& context) {
+std::vector<mlir::FuncOp> MLIRGenerator::GetMemberFunctions(mlir::MLIRContext& context) {
+    // Important: This needs to be synced with Operation::MemberFunctions
     std::string moduleStr2 = R"mlir(
         module {
             func private @getNumTuples(%arg0: !llvm.ptr<i8>) -> index {
@@ -133,28 +135,26 @@ std::vector<mlir::FuncOp> MLIRGenerator::insertClassMemberFunctions(mlir::MLIRCo
             }
         }
     )mlir";
-    std::vector<mlir::FuncOp> classMemberFunctions;
+    std::vector<mlir::FuncOp> memberFunctions;
     auto simpleModule = parseSourceString(moduleStr2, &context);
     auto proxyOpIterator = simpleModule->getOps().begin()->getBlock()->getOperations().begin();
     
     for(;proxyOpIterator != simpleModule->getOps().begin()->getBlock()->getOperations().end(); proxyOpIterator++) {
-        classMemberFunctions.push_back(static_cast<mlir::FuncOp>(proxyOpIterator->clone()));
+        memberFunctions.push_back(static_cast<mlir::FuncOp>(proxyOpIterator->clone()));
     }
-    return classMemberFunctions;
+    return memberFunctions;
 }
 
 //==---------------------------------==//
 //==-- MAIN WORK - Generating MLIR --==//
 //==---------------------------------==//
-MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncOp>& classMemberFunctions)
-    : context(&context), classMemberFunctions(classMemberFunctions) {
-
-
+MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncOp>& memberFunctions)
+    : context(&context), memberFunctions(memberFunctions) {
     // Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
     builder = std::make_shared<OpBuilder>(&context);
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
     // Insert all needed MemberClassFunctions into the MLIR module.
-    for(auto memberFunction : classMemberFunctions) {
+    for(auto memberFunction : memberFunctions) {
         theModule.push_back(memberFunction);
     }
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
@@ -174,7 +174,6 @@ mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(NES::NESIR* nesIR) {
 }
 
 void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock) {
-    //Todo change scopes of current InsertionPoint here!
     for (const auto& operation : basicBlock->getOperations()) {
         generateMLIR(operation);
     }
@@ -219,70 +218,57 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functi
     // Store references to function args in the valueMap map.
     auto valueMapIterator = mlirFunction.args_begin();
     for (int i = 0; i < (int) functionOperation->getInputArgNames().size(); ++i) {
-        valueMap.emplace(std::pair{functionOperation->getInputArgNames().at(i), valueMapIterator[i]});
+        functionValuesMap.emplace(std::pair{functionOperation->getName() + functionOperation->getInputArgNames().at(i), valueMapIterator[i]});
     }
-    // Store container for getNumberOfTuples and getDataBuffer function results in valueMap.
-    valueMap.emplace(std::pair{"numTuples", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                classMemberFunctions[ClassMemberFunctions::GetNumTuples], valueMap["InputBuffer"]).getResult(0)});
-    valueMap.emplace(std::pair{"inputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                classMemberFunctions[ClassMemberFunctions::GetDataBuffer], valueMap["InputBuffer"]).getResult(0)});
+    std::unordered_map<NES::OperationPtr*, Value> addressValueMap;
+    
+    // Handles special execute() function case. We could also handle this by emplacing MemberFunctionResults when needed.
+    if(functionOperation->getName() == "execute") {
+        functionValuesMap.emplace(std::pair{"numTuples", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                    memberFunctions[NES::Operation::GetNumTuples], functionValuesMap["executeInputBuffer"]).getResult(0)});
+        functionValuesMap.emplace(std::pair{"inputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                    memberFunctions[NES::Operation::GetDataBuffer], functionValuesMap["executeInputBuffer"]).getResult(0)});   
+        functionValuesMap.emplace(std::pair{"outputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                    memberFunctions[NES::Operation::GetDataBuffer], functionValuesMap["executeOutputBuffer"]).getResult(0)});   
+    }
 
     // Generate MLIR for operations in function body (BasicBlock)
     generateMLIR(functionOperation->getFunctionBasicBlock());
 
     // Insert return into 'execute' function block. This is the FINAL return.
-    builder->create<LLVM::ReturnOp>(getNameLoc("return"), constZero);//return zero if successful
+    builder->create<LLVM::ReturnOp>(getNameLoc("return"), getConstInt("return", 64, 0));//return zero if successful
 
     theModule.push_back(mlirFunction);
-    return constZero;
+    return mlir::Value();
 }
 
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOperation) {
-    //==------------------------------==//
-    //==--------- LOOP HEAD ----------==//
-    //==------------------------------==//
-    // Create 0 constant accessible in execute function scope
-    constZero = getConstInt(getNameLoc("constant32Zero"), 64, 0);
-    constOne = getConstInt(getNameLoc("const64One"), 64, 1);
-
-    // Define index variables for loop. Define the loop iteration variable
-    Value iterationVariable = getConstInt(getNameLoc("IterationVar"), 64, 0);
+    // -=LOOP HEAD=-
+    // Define index variables for loop.
     auto lowerBound = builder->create<arith::ConstantIndexOp>(getNameLoc("lowerBound"), 0);
     auto stepSize = builder->create<arith::ConstantIndexOp>(getNameLoc("stepSize"), 1);
+    // Create Loop Operation. Save InsertionPoint(IP) of parent's BasicBlock
+    insertComment("// For Loop Start");
+    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, functionValuesMap["numTuples"], stepSize);
+    auto parentBlockInsertionPoint = builder->saveInsertionPoint();
 
-    //==------------------------------==//
-    //==--------- LOOP BODY ----------==//
-    //==------------------------------==//
-    insertComment("// Main For Loop");
-    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, valueMap["numTuples"],
-                                               stepSize, iterationVariable);
-
-    // Set Insertion Point (IP) to inside of loop body. Process child node. Restore IP on return.
-    auto currentInsertionPoint = builder->saveInsertionPoint();
+    // -=LOOP BODY=-
+    // Set Insertion Point(IP) to loop BasicBlock. Process all Operations in loop BasicBlock. Restore IP to parent's BasicBlock.
     builder->setInsertionPointToStart(forLoop.getBody());
-    currentRecordIdx = forLoop.getRegionIterArgs().begin()[0];
+    currentRecordIdx = builder->create<arith::IndexCastOp>(getNameLoc("InductionVar Cast"), builder->getI64Type(), forLoop.getInductionVar());
     generateMLIR(loopOperation->getLoopBasicBlock());
-    Value increasedIdx = builder->create<LLVM::AddOp>(getNameLoc("++iterationVar"), currentRecordIdx, constOne);
-    builder->create<scf::YieldOp>(getNameLoc("yieldOperation"), increasedIdx);
+    builder->restoreInsertionPoint(parentBlockInsertionPoint);
 
-    builder->restoreInsertionPoint(currentInsertionPoint);
-
-    return constZero;
+    return mlir::Value();
 }
 
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp) {
-    printf("ConstIntValue: %ld\n", constIntOp->getConstantIntValue());
-    //    builder->clearInsertionPoint();
-    // TODO use dynamic type from NESIR, not simply I64
-    Value constVal = builder->create<LLVM::ConstantOp>(getNameLoc("Constant Op"),
-                                                       builder->getIntegerType(64),
-                                                       builder->getI64IntegerAttr(constIntOp->getConstantIntValue()));
+    printf("ConstIntOp");
+    Value constVal = getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue());
     return constVal;
 }
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp) {
-    printf("Is add op: %d\n", addOp->classof(addOp.get()));
-
-    //Todo cannot call RHS twice
+    printf("AddOp");
     Value additionResult =
         builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), generateMLIR(addOp->getLHS()), generateMLIR(addOp->getRHS()));
     auto printValFunc = insertExternalFunction("printValueFromMLIR", 0, {}, true);
@@ -291,44 +277,33 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp) {
 }
 
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp) {
-    printf("Address Op field offset: %ld\n", addressOp->getFieldOffset());
-    // Calculate current offset //Todo dynamically calculate offset -> also for multiple types/fields
+    printf("AddressOp");
     Value recordOffset = builder->create<LLVM::MulOp>(getNameLoc("recordOffset"),
                                                       currentRecordIdx,
-                                                      getConstInt(getNameLoc("1"), 64, addressOp->getRecordWidth()));
+                                                      getConstInt("1", 64, addressOp->getRecordWidth()));
     Value fieldOffset = builder->create<LLVM::AddOp>(getNameLoc("fieldOffset"),
                                                      recordOffset,
-                                                     getConstInt(getNameLoc("1"), 64, addressOp->getFieldOffset()));
+                                                     getConstInt("1", 64, addressOp->getFieldOffset()));
+    std::string bufferName = (addressOp->getIsInputBuffer()) ? "inputBuffer" : "outputBuffer";
     // Return I8* to first byte of field data
     Value elementAddress = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                         LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                        valueMap["inputBuffer"],
+                                                        functionValuesMap[bufferName],
                                                         ArrayRef<Value>({fieldOffset}));
-    return builder->create<LLVM::BitcastOp>(getNameLoc("I64 addr"),
-                                            LLVM::LLVMPointerType::get(builder->getI64Type()),
+    return builder->create<LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
+                                            LLVM::LLVMPointerType::get(getMLIRType(addressOp->getDataType())),
                                             elementAddress);
 }
 
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoadOperation> loadOp) {
-    printf("Load Op.\n");
+    printf("LoadOp.\n");
     Value loadedVal = builder->create<LLVM::LoadOp>(getNameLoc("loadedValue"), generateMLIR(loadOp->getAddressOp()));
-    //        Value zextVal = builder->create<LLVM::ZExtOp>(getNameLoc("zext"), builder->getI64Type(), loadedVal);
     return loadedVal;
 }
 
 Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::StoreOperation> storeOp) {
-    printf("OutputBufferIdx[0]: %ld\n", storeOp->getOutputBufferIdx());
-    //Todo calculate store offset -> should require another addressOfOp
-    //        Value fieldPointer = builder->create<LLVM::AddressOfOp>(getNameLoc("loadedArray"), outputBufferGlobal);
-    Value castedAddress = builder->create<LLVM::BitcastOp>(getNameLoc("Casted Address"),
-                                                           LLVM::LLVMPointerType::get(builder->getI64Type()),
-                                                           valueMap["outputBuffer"]);
-    //        Value indexWithOffset = builder->create<LLVM::MulOp>(getNameLoc("indexWithOffset"),
-    //                                                             getConstInt(getNameLoc("const 8"), 32, 8), currentRecordIdx);
-    auto outputPtr = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),
-                                                  LLVM::LLVMPointerType::get(builder->getI64Type()),
-                                                  castedAddress,
-                                                  ArrayRef<Value>({currentRecordIdx}));
-    builder->create<LLVM::StoreOp>(getNameLoc("outputStore"), generateMLIR(storeOp->getValueToStore()), outputPtr);
-    return constZero;// Todo: this should not return a value.
+    printf("StoreOp\n");
+    builder->create<LLVM::StoreOp>(getNameLoc("outputStore"), generateMLIR(storeOp->getValueToStore()), 
+                                   generateMLIR(storeOp->getAddressOp()));
+    return mlir::Value();
 }

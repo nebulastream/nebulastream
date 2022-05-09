@@ -51,12 +51,11 @@ using namespace mlir;
 
 class MLIRGenerator {
     public:
-    enum ClassMemberFunctions{GetNumTuples, GetDataBuffer};
 
     /**
      * @brief Inserts mlir versions of frequently needed class member functions.
      */
-    static std::vector<mlir::FuncOp> insertClassMemberFunctions(mlir::MLIRContext& context);
+    static std::vector<mlir::FuncOp> GetMemberFunctions(mlir::MLIRContext& context);
 
     /**
      * @brief Enables converting a NESAbstraction to executable MLIR code.
@@ -64,7 +63,7 @@ class MLIRGenerator {
      * @param MLIRModule The MLIR module that the generated MLIR is inserted into.
      * @param rootNode The first node of the NES abstraction.
      */
-    MLIRGenerator(mlir::MLIRContext &context, std::vector<mlir::FuncOp>& classMemberFunctions);
+    MLIRGenerator(mlir::MLIRContext &context, std::vector<mlir::FuncOp>& memberFunctions);
     ~MLIRGenerator() = default;
 
     mlir::ModuleOp generateModuleFromNESIR(NES::NESIR* nesIR);
@@ -76,12 +75,12 @@ class MLIRGenerator {
     MLIRContext *context;
     mlir::ModuleOp theModule;
     // Map that contains execute input args, function call results and intermediary results from NESIR Operations.
-    std::vector<mlir::FuncOp> classMemberFunctions;
+    std::vector<mlir::FuncOp> memberFunctions;
+    std::unordered_map<std::string, Value> functionValuesMap;
     std::unordered_map<std::string, Value> valueMap;
+    std::unordered_map<NES::OperationPtr*, Value> addressValueMap;
     // Utility
     mlir::Value currentRecordIdx;
-    mlir::Value constZero;
-    mlir::Value constOne;
     mlir::RewriterBase::InsertPoint *globalInsertPoint;
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;
@@ -144,7 +143,7 @@ class MLIRGenerator {
      * @param value: Value of the returned Integer.
      * @return mlir::Value: Constant MLIR Integer value
      */
-    mlir::Value getConstInt(Location loc, int numBits, int64_t value);
+    mlir::Value getConstInt(const std::string &location, int numBits, int64_t value);
 
     /**
      * @brief Get the Bit Width from a basic NES type.

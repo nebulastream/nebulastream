@@ -45,6 +45,7 @@ class Operation {
         CHARARRAY = 33,
         STRUCT    = 34
     };
+    enum MemberFunctions{GetNumTuples, GetDataBuffer};
     enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp, FunctionOp};
 
     explicit Operation(OperationType opType);

@@ -135,7 +135,6 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
 
     // Create InputBuffer and fill it with data.
     auto inputBuffer = buffMgr->getBufferBlocking();
-    // Create testTupleStruct. Load inputBuffer with testTupleStruct. Write sample array with testTupleStruct to inputBuffer.
     struct __attribute__((packed)) testTupleStruct{
         int8_t a;
         int64_t b;
@@ -144,40 +143,38 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
     memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
     inputBuffer.setNumberOfTuples(numTuples);
-    auto inputBufferRawDataPointer = inputBuffer.getBuffer<int8_t>();
-
 
     auto outputBuffer = buffMgr->getBufferBlocking();
-    void* outputBufferPtr = std::addressof(outputBuffer);
-
-    auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
 
     // Add Operation
-    auto addressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 9, 1);
+    auto addressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 9, 1, true);
     auto loadOp = std::make_shared<LoadOperation>(addressOp);
-    auto constOp = std::make_shared<ConstantIntOperation>(9);
+    auto constOp = std::make_shared<ConstantIntOperation>(9, 64);
     auto addOp = std::make_shared<AddIntOperation>(std::move(loadOp), std::move(constOp));
+
     // Store Operation
-    auto storeOp = std::make_shared<StoreOperation>(outputBufferPtr, addOp, 0, NES::Operation::BasicType::INT64);
+    auto storeAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 8, 0, false);
+    auto storeOp = std::make_shared<StoreOperation>(addOp, storeAddressOp);
+
     // Loop BasicBlock
     std::vector<OperationPtr> loopOps{storeOp};
     BasicBlockPtr loopBlock = std::make_unique<BasicBlock>(loopOps);
     NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(std::move(loopBlock));
 
-    std::vector<OperationPtr> rootBlockOps{loopOperation};
-    NES::BasicBlockPtr executeBodyBlock = std::make_unique<NES::BasicBlock>(rootBlockOps);
-
+    // Execute Function
+    std::vector<OperationPtr> executeBlockOps{loopOperation};
+    NES::BasicBlockPtr executeBodyBlock = std::make_unique<NES::BasicBlock>(executeBlockOps);
     std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
-    std::vector<std::string> executeArgNames{ "InputBuffer", "outputBuffer"};
+    std::vector<std::string> executeArgNames{ "InputBuffer", "OutputBuffer"};
     auto executeFuncOp = std::make_shared<FunctionOperation>("execute", std::move(executeBodyBlock),
                                                              executeArgTypes, executeArgNames, Operation::INT64);
 
-    // Creating NESIR
+    // NESIR
     std::vector<ExternalDataSourcePtr> externalDataSources{};
     NES::NESIR nesIR(executeFuncOp, externalDataSources);
     std::cout << externalDataSources.size() << '\n';
 
-    //Todo NESIRToMLIR and try to create MLIR module from NESIR
+    // NESIR to MLIR
     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(&nesIR);
     assert(loadedModuleSuccess == 0);
@@ -188,10 +185,13 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     const std::vector<llvm::JITTargetAddress> jitAddresses{
             llvm::pointerToJITTargetAddress(&printValueFromMLIR),
     };
-    mlirUtility->runJit(symbolNames, jitAddresses, false, std::addressof(inputBuffer), outputBufferPointer);
+    mlirUtility->runJit(symbolNames, jitAddresses, false, std::addressof(inputBuffer), std::addressof(outputBuffer));
+
+    // Print OutputBuffer after execution.
     std::vector<Operation::BasicType> types{Operation::INT64};
+    auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }
 
 
-}// namespace NES::Compiler
+}// namespace NES

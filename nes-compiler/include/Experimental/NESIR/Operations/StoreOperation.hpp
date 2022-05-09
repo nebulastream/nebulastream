@@ -21,20 +21,16 @@
 namespace NES {
 class StoreOperation : public Operation{
   public:
-    explicit StoreOperation(void* outputBufferPtr, OperationPtr valueToStore, uint64_t outputBufferIdx, Operation::BasicType type);
+    explicit StoreOperation(OperationPtr valueToStore, OperationPtr addressOp);
     ~StoreOperation() override = default;
 
-    void* getOutputBuffer();
     OperationPtr getValueToStore();
-    uint64_t getOutputBufferIdx();
-    Operation::BasicType getType();
+    OperationPtr getAddressOp();
     static bool classof(const Operation* Op);
 
   private:
-    void* outputBufferPtr;
     OperationPtr valueToStore;
-    uint64_t outputBufferIdx;
-    Operation::BasicType type;
+    OperationPtr addressOp;
 };
 }// namespace NES
 #endif//NES_STOREOPERATION_HPP

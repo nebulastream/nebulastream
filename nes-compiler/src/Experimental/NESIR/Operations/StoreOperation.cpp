@@ -12,21 +12,16 @@
     limitations under the License.
 */
 
+#include "Experimental/NESIR/Operations/Operation.hpp"
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 
 namespace NES {
 
-StoreOperation::StoreOperation(void* outputBufferPtr, OperationPtr valueToStore, uint64_t outputBufferIdx, Operation::BasicType type)
-    : Operation(OperationType::StoreOp), outputBufferPtr(outputBufferPtr), valueToStore(valueToStore),
-    outputBufferIdx(outputBufferIdx), type(type) {}
-
-void* StoreOperation::getOutputBuffer() { return outputBufferPtr; }
+StoreOperation::StoreOperation(OperationPtr valueToStore, OperationPtr addressOp)
+    : Operation(OperationType::StoreOp), valueToStore(valueToStore), addressOp(addressOp) {}
 
 OperationPtr StoreOperation::getValueToStore() { return valueToStore; }
-
-uint64_t StoreOperation::getOutputBufferIdx() { return outputBufferIdx; }
-
-Operation::BasicType StoreOperation::getType() { return type; };
+OperationPtr StoreOperation::getAddressOp() { return addressOp; }
 
 bool StoreOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::StoreOp; }
 }// namespace NES

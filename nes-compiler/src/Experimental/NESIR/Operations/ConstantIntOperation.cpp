@@ -12,22 +12,31 @@
     limitations under the License.
 */
 
+#include "Experimental/NESIR/Operations/Operation.hpp"
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
+#include <cstdint>
 
 namespace NES {
 
-ConstantIntOperation::ConstantIntOperation(int64_t constantValue)
-    : Operation(OperationType::ConstantOp), constantValue(constantValue){}
+ConstantIntOperation::ConstantIntOperation(int64_t constantValue, int8_t numBits)
+    : Operation(OperationType::ConstantOp), constantValue(constantValue), numBits(numBits){}
 
-bool ConstantIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstantOp; }
 int64_t ConstantIntOperation::getConstantIntValue() { return constantValue; }
+int8_t ConstantIntOperation::getNumBits() { return numBits; }
+bool ConstantIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstantOp; }
 
 template<class T>
 T ConstantIntOperation::getIntegerViaType() {
-    switch(type) {
-        case int32:
+    switch(numBits) {
+        case 8:
+            return (int8_t) constantValue;
+        case 16:
+            return (int16_t) constantValue;
+        case 32:
             return (int32_t) constantValue;
-        case int64:
+        case 64:
+            return constantValue;
+        default:
             return constantValue;
     }
 }

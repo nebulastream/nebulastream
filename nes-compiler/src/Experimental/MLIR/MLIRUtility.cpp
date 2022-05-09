@@ -169,8 +169,8 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
     } else {
         // create NESAbstraction for testing and an MLIRGenerator
         // Insert functions necessary to get information from TupleBuffer objects and more.
-        auto classMemberFunctions = MLIRGenerator::insertClassMemberFunctions(context);
-        auto MLIRGen = new MLIRGenerator(context, classMemberFunctions);
+        auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
+        auto MLIRGen = new MLIRGenerator(context, memberFunctions);
         module = MLIRGen->generateModuleFromNESIR(nesIR);
         printMLIRModule(module, debugFlags);
     }
@@ -201,14 +201,13 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
  * @return int: 1 if error occurred, else 0
  */
 int MLIRUtility::runJit(const std::vector<std::string>& symbols, const std::vector<llvm::JITTargetAddress>& jitAddresses,
-                        bool useProxyFunctions, void* inputBufferPtr, int8_t* outputBufferPtr) {
+                        bool useProxyFunctions, void* inputBufferPtr, void* outputBufferPtr) {
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*module->getContext());
-    module->dump();
 
     /// Link proxyFunctions into MLIR module. Optimize MLIR module.
     llvm::function_ref<llvm::Error(llvm::Module*)> printOptimizingTransformer;
@@ -230,7 +229,7 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols, const std::vect
         printOptimizingTransformer = [](llvm::Module* llvmIRModule) {
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
-            llvmIRModule->print(llvm::errs(), nullptr);
+            // llvmIRModule->print(llvm::errs(), nullptr);
             return optimizedModule;
         };
     }

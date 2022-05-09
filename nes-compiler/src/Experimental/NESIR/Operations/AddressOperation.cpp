@@ -15,8 +15,9 @@
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 
 namespace NES {
-AddressOperation::AddressOperation(Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset)
-    : Operation(NES::Operation::AddressOp), dataType(dataType), recordWidth(getRecordWidth), fieldOffset(fieldOffset) {}
+AddressOperation::AddressOperation(Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset, bool isInputBuffer)
+    : Operation(NES::Operation::AddressOp), dataType(dataType), recordWidth(getRecordWidth), fieldOffset(fieldOffset), 
+    isInputBuffer(isInputBuffer) {}
 
 
 Operation::BasicType AddressOperation::getDataType() { return dataType; }
@@ -24,6 +25,8 @@ Operation::BasicType AddressOperation::getDataType() { return dataType; }
 uint64_t AddressOperation::getRecordWidth() { return recordWidth; }
 
 uint64_t AddressOperation::getFieldOffset() { return fieldOffset; };
+
+bool AddressOperation::getIsInputBuffer() { return isInputBuffer; };
 
 bool NES::AddressOperation::classof(const NES::Operation *Op) {
     return Op->getOperationType() == OperationType::AddressOp;

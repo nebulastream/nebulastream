@@ -67,7 +67,7 @@ class MLIRUtility {
          */
         int runJit(const std::vector<std::string> &llvmIRModule,
                 const std::vector<llvm::JITTargetAddress> &jitAddresses, bool useProxyFunctions, void* inputBufferPtr = nullptr,
-                   int8_t* outputBufferPtr = nullptr);
+                   void* outputBufferPtr = nullptr);
 
         /**
          * @brief Can print a module and write it to a file, depending on debugFlags.
