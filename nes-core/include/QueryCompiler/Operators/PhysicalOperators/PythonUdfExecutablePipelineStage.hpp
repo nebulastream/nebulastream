@@ -33,17 +33,22 @@ using Runtime::WorkerContext;
  */
 class PythonUdfExecutablePipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
+    /**
+     *
+     * @param inputSchema
+     * @param outputSchema
+     */
     PythonUdfExecutablePipelineStage(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema);
     ~PythonUdfExecutablePipelineStage() override;
     ExecutionResult
     execute(Runtime::TupleBuffer& buffer, Runtime::Execution::PipelineExecutionContext& ctx, Runtime::WorkerContext& wc) override;
 
   private:
-    // TODO make configurable -> also add to some config file?
-    const char* udfDirectory = "test_data/";
-    const char* udfFilename = "PythonUdf";
-    const char* pythonFunctionName = "add42";
-    const char* pathName = "path";
+    // TODO make configurable via config file ideally
+    const char* udfDirectory = "test_data/"; // directory which contains the udf file
+    const char* udfFilename = "PythonUdf"; // name of the udf file
+    const char* pythonFunctionName = "add42"; // function name that is called
+    const char* pythonSystemPathKey = "path"; // keyword to set the Py system path
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
 };

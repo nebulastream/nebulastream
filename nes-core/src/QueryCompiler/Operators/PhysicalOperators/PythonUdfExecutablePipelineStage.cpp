@@ -25,27 +25,6 @@ PythonUdfExecutablePipelineStage::PythonUdfExecutablePipelineStage(const SchemaP
     this->outputSchema = outputSchema;
 }
 
-/**
- * t = {x: int, y: float, z: bool}
- *
- * Select sum(pyFunction(t.x)) From trips t -> Query::from("trips").apply(Sum(udf(pyFunction(t.x))))
- *                                          ->                     .apply(Sum(udf(pyFunction, Attribute("x"))))
- *
- * Select z From trips t Where pyFunction(t.x, t.y) > 10
- *                                          -> Query::from("trips").filter(udf(t.x, t.y) > 10)
- *                                          -> Query::from("trips").filter(udf(pyFunction, Attribute("x"), Attribute("y")) > 10)
- *
- * First goal: Query::from("trips").map(Attribute("x") = udf(...))
- *
- * def pyFunction(x, y):
- *      return x * y
- *
- *
- * def pyFunction2(x: int, y: int, z: char, b: bool):
- *      if b:
- *          ...
- */
-
 ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                           Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
                                                           Runtime::WorkerContext& workerContext) {
@@ -57,7 +36,7 @@ ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupl
     //TODO move init process out of execute
     Py_Initialize();
     pyUdfDirectory = PyUnicode_FromString(this->udfDirectory);
-    PyList_Insert(PySys_GetObject(this->pathName), 0, pyUdfDirectory);
+    PyList_Insert(PySys_GetObject(this->pythonSystemPathKey), 0, pyUdfDirectory);
     pyName = PyUnicode_FromString(this->udfFilename);
     pyModule = PyImport_Import(pyName);
     // When a PyObject is no longer needed, we need to decrease the reference counter
