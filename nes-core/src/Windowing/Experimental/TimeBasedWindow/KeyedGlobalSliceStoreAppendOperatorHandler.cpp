@@ -22,51 +22,70 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
-KeyedGlobalSliceStoreAppendOperatorHandler::KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                                                                       std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore)
+KeyedGlobalSliceStoreAppendOperatorHandler::KeyedGlobalSliceStoreAppendOperatorHandler(
+    const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+    std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
 
 void KeyedGlobalSliceStoreAppendOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,
-                                          NES::Experimental::HashMapFactoryPtr hashmapFactory) {
+                                                       NES::Experimental::HashMapFactoryPtr hashmapFactory) {
     this->factory = hashmapFactory;
 }
 
 NES::Experimental::Hashmap KeyedGlobalSliceStoreAppendOperatorHandler::getHashMap() { return factory->create(); }
 
-void KeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+void KeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                                       Runtime::StateManagerPtr,
+                                                       uint32_t) {
     NES_DEBUG("start KeyedGlobalSliceStoreAppendOperatorHandler");
 }
 
 void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
-                                                    Runtime::Execution::PipelineExecutionContext& ctx,
-                                                    uint64_t sequenceNumber,
-                                                    KeyedSlicePtr slice) {
+                                                                     Runtime::Execution::PipelineExecutionContext& ctx,
+                                                                     uint64_t sequenceNumber,
+                                                                     KeyedSlicePtr slice) {
     auto global = globalSliceStore.lock();
     if (!global) {
         return;
     }
     // add pre-aggregated slice to slice store
-    auto [oldMaxSliceIndex, newMaxSliceIndex] = global->addSlice(sequenceNumber, slice->getEnd(), std::move(slice));
+    auto windows = global->addSliceAndCollectWindows(sequenceNumber, std::move(slice), windowSize, windowSlide);
     // check if we can trigger window computation
-    if (newMaxSliceIndex > oldMaxSliceIndex) {
+    for (auto& window : windows) {
         auto buffer = wctx.allocateTupleBuffer();
         auto task = buffer.getBuffer<WindowTriggerTask>();
         // we trigger the completion of all windows that end between startSlice and <= endSlice.
-        NES_DEBUG("Deploy window trigger task for slice  ( " << oldMaxSliceIndex << "-" << newMaxSliceIndex << ")");
-        task->startSlice = oldMaxSliceIndex;
-        task->endSlice = newMaxSliceIndex;
-        task->sequenceNumber = newMaxSliceIndex;
+        NES_DEBUG("Deploy window trigger task for slice  ( " << window.startTs << "-" << window.endTs << ")");
+        task->windowStart = window.startTs;
+        task->windowEnd = window.endTs;
+        task->sequenceNumber = window.sequenceNumber;
         buffer.setNumberOfTuples(1);
         ctx.dispatchBuffer(buffer);
     }
 }
 
-void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr ctx) {
     NES_DEBUG("stop KeyedGlobalSliceStoreAppendOperatorHandler");
+    auto global = globalSliceStore.lock();
+    if (!global) {
+        return;
+    }
 
+    auto windows = global->triggerAllInflightWindows(windowSize, windowSlide);
+    for (auto& window : windows) {
+        auto buffer = ctx->getBufferManager()->getBufferBlocking();
+        auto task = buffer.getBuffer<WindowTriggerTask>();
+        // we trigger the completion of all windows that end between startSlice and <= endSlice.
+        NES_DEBUG("Deploy window trigger task for slice  ( " << window.startTs << "-" << window.endTs << ")");
+        task->windowStart = window.startTs;
+        task->windowEnd = window.endTs;
+        task->sequenceNumber = window.sequenceNumber;
+        buffer.setNumberOfTuples(1);
+        ctx->dispatchBuffer(buffer);
+    }
 }
 
 KeyedSlicePtr KeyedGlobalSliceStoreAppendOperatorHandler::createKeyedSlice(uint64_t sliceIndex) {
