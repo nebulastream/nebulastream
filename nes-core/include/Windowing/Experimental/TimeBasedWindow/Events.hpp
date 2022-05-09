@@ -12,8 +12,8 @@ class SliceMergeTask {
 class WindowTriggerTask {
   public:
     uint64_t sequenceNumber;
-    uint64_t startSlice;
-    uint64_t endSlice;
+    uint64_t windowStart;
+    uint64_t windowEnd;
 };
 
 }

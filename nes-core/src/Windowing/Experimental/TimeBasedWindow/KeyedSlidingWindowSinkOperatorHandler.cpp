@@ -49,11 +49,11 @@ void KeyedSlidingWindowSinkOperatorHandler::stop(Runtime::Execution::PipelineExe
     globalSliceStore.reset();
 }
 
-KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(WindowTriggerTask* sliceMergeTask) {
-    return std::make_unique<KeyedSlice>(factory, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
+KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(WindowTriggerTask* windowTriggerTask) {
+    return std::make_unique<KeyedSlice>(factory, windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
-std::vector<KeyedSliceSharedPtr> KeyedSlidingWindowSinkOperatorHandler::getSlicesForWindow(uint64_t startTs) {
-    return globalSliceStore->getSlicesForWindow(startTs, startTs + windowSize);
+std::vector<KeyedSliceSharedPtr> KeyedSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* windowTriggerTask) {
+    return globalSliceStore->getSlicesForWindow(windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 };
 
 }// namespace NES::Windowing::Experimental

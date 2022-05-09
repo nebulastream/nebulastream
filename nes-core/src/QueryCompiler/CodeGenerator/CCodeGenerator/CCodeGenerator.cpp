@@ -1375,11 +1375,11 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(
                                        .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
     context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
 
-    auto startSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "startSlice");
+   // auto startSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "startSlice");
     auto endSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "endSlice");
 
-    auto assignment = VarDeclStatement(startSlice).assign(VarRef(mergeTask).accessPtr(VarRef(startSlice)));
-    context->code->variableInitStmts.push_back(assignment.copy());
+    //auto assignment = VarDeclStatement(startSlice).assign(VarRef(mergeTask).accessPtr(VarRef(startSlice)));
+   // context->code->variableInitStmts.push_back(assignment.copy());
 
     auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
     auto createSliceCall = call("createKeyedSlice");
@@ -1393,7 +1393,7 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(
 
     auto windowSlices = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowSlices");
     auto getSlicesForWindowCall = call("getSlicesForWindow");
-    getSlicesForWindowCall->addParameter(VarRef(startSlice));
+    getSlicesForWindowCall->addParameter(VarRef(mergeTask));
     context->code->variableInitStmts.push_back(
         VarDeclStatement(windowSlices).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getSlicesForWindowCall)).copy());
 

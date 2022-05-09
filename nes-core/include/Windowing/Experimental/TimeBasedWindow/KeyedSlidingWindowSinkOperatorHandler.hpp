@@ -60,7 +60,7 @@ class KeyedSlidingWindowSinkOperatorHandler
 
     KeyedSlicePtr createKeyedSlice(WindowTriggerTask* sliceMergeTask);
 
-    std::vector<KeyedSliceSharedPtr> getSlicesForWindow(uint64_t startTs);
+    std::vector<KeyedSliceSharedPtr> getSlicesForWindow(WindowTriggerTask* windowTriggerTask);
 
     KeyedGlobalSliceStore& getGlobalSliceStore() { return *globalSliceStore; }
 

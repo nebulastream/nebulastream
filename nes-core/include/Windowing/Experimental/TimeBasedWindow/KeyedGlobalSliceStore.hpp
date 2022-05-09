@@ -17,14 +17,20 @@
 #include <Exceptions/WindowProcessingException.hpp>
 #include <Windowing/Experimental/SeqenceLog.hpp>
 #include <Windowing/Watermark/WatermarkProcessor.hpp>
-#include <list>
 #include <cinttypes>
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
 namespace NES::Windowing::Experimental {
 class KeyedSlice;
 using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
+
+struct Window {
+    uint64_t startTs;
+    uint64_t endTs;
+    uint64_t sequenceNumber;
+};
 
 /**
  * @brief The global slice store that contains the final slice.
@@ -36,7 +42,11 @@ class KeyedGlobalSliceStore {
      * @param sliceIndex index of the slice
      * @param slice
      */
-    std::tuple<uint64_t, uint64_t> addSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSliceSharedPtr slice);
+    std::vector<Window>
+    addSliceAndCollectWindows(uint64_t sequenceNumber,
+                                                     KeyedSliceSharedPtr slice,
+                                                     uint64_t windowSize,
+                                                     uint64_t windowSlide) ;
 
     /**
      * @brief Looksup an individual slice by the slice index
@@ -56,13 +66,16 @@ class KeyedGlobalSliceStore {
     void clear();
 
     std::vector<KeyedSliceSharedPtr> getSlicesForWindow(uint64_t startTs, uint64_t endTs);
-
+    std::vector<Window> triggerAllInflightWindows(uint64_t windowSize, uint64_t windowSlide);
   private:
     std::mutex sliceStagingMutex;
     std::list<KeyedSliceSharedPtr> slices;
     WatermarkProcessor sliceAddSequenceLog;
     WatermarkProcessor sliceTriggerSequenceLog;
     uint64_t slicesPerWindow;
+    uint64_t emittedWindows = 0;
+    std::vector<Window> triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t startEndTs, uint64_t endEndTs);
+
 };
 
 }// namespace NES::Windowing::Experimental
