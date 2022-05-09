@@ -264,6 +264,106 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowSingleBuf
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window")
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
+            .byKey(Attribute("id"))
+            .apply(Sum(Attribute("value"))))";
+    auto lambdaSource = createSimpleInputStream(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+    std::vector<Output> expectedOutput = {{0, 1000, 0, 17000}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowMultiBuffer) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window")
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(100)))
+            .byKey(Attribute("id"))
+            .apply(Sum(Attribute("value"))))";
+    auto dg = DataGenerator(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+
+    std::vector<Output> expectedOutput = {};
+
+    for (uint64_t windowStart = 0; windowStart <= 16000; windowStart = windowStart + 100) {
+        expectedOutput.push_back({windowStart, windowStart + 1000, 1, 1000});
+    }
+    expectedOutput.push_back({16100, 17100, 1, 900});
+    expectedOutput.push_back({16200, 17200, 1, 800});
+    expectedOutput.push_back({16300, 17300, 1, 700});
+    expectedOutput.push_back({16400, 17400, 1, 600});
+    expectedOutput.push_back({16500, 17500, 1, 500});
+    expectedOutput.push_back({16600, 17600, 1, 400});
+    expectedOutput.push_back({16700, 17700, 1, 300});
+    expectedOutput.push_back({16800, 17800, 1, 200});
+    expectedOutput.push_back({16900, 17900, 1, 100});
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window")
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(300)))
+            .byKey(Attribute("id"))
+            .apply(Sum(Attribute("value"))))";
+    auto dg = DataGenerator(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+
+    std::vector<Output> expectedOutput = {};
+    expectedOutput.push_back({0, 1000, 1, 900});
+    for (uint64_t windowStart = 300; windowStart <= 16000; windowStart = windowStart + 300) {
+        expectedOutput.push_back({windowStart, windowStart + 1000, 1, 1000});
+    }
+    expectedOutput.push_back({16200, 17200, 1, 800});
+    expectedOutput.push_back({16500, 17500, 1, 500});
+    expectedOutput.push_back({16800, 17800, 1, 200});
+
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+
 INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
                         SingleNodeThreadLocalSlidingWindowTests,
                         ::testing::Values(1, 2, 4),
