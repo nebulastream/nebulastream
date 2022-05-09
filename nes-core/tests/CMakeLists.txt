@@ -223,12 +223,6 @@ if(NES_USE_MLIR)
             MLIRMemRefToLLVM
             MLIRExecutionEngine
             )
-
-    add_executable(mlir-tuplebuffer-test "UnitTests/MLIR_Experimental/MLIRTupleBufferTest.cpp")
-    target_link_libraries(mlir-tuplebuffer-test
-            nes-tests)
-    add_test(NAME mlir-tuplebuffer-test COMMAND mlir-tuplebuffer-test)
-
     add_executable(mlir-nesir-test "UnitTests/MLIR_Experimental/MLIRNESIRTest.cpp")
     target_link_libraries(mlir-nesir-test
             nes-tests)

@@ -51,23 +51,32 @@ using namespace mlir;
 
 class MLIRGenerator {
     public:
+    enum ClassMemberFunctions{GetNumTuples, GetDataBuffer};
+
+    /**
+     * @brief Inserts mlir versions of frequently needed class member functions.
+     */
+    static std::vector<mlir::FuncOp> insertClassMemberFunctions(mlir::MLIRContext& context);
+
     /**
      * @brief Enables converting a NESAbstraction to executable MLIR code.
      * @param MLIRBuilder Builder that provides functionalities to generate MLIR.
      * @param MLIRModule The MLIR module that the generated MLIR is inserted into.
      * @param rootNode The first node of the NES abstraction.
      */
-    MLIRGenerator(mlir::MLIRContext &context);
+    MLIRGenerator(mlir::MLIRContext &context, std::vector<mlir::FuncOp>& classMemberFunctions);
     ~MLIRGenerator() = default;
 
     mlir::ModuleOp generateModuleFromNESIR(NES::NESIR* nesIR);
 
-private:
+
+  private:
     // MLIR variables
     std::shared_ptr<OpBuilder> builder;
     MLIRContext *context;
     mlir::ModuleOp theModule;
     // Map that contains execute input args, function call results and intermediary results from NESIR Operations.
+    std::vector<mlir::FuncOp> classMemberFunctions;
     std::unordered_map<std::string, Value> valueMap;
     // Utility
     mlir::Value currentRecordIdx;
@@ -94,11 +103,6 @@ private:
     Value generateMLIR(std::shared_ptr<NES::StoreOperation> operation);
     Value generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
     Value generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
-
-    /**
-     * @brief Inserts mlir versions of frequently needed class member functions.
-     */
-    void insertClassMemberFunctions();
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.

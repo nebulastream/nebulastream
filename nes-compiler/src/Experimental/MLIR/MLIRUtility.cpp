@@ -168,8 +168,10 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
         module = mlir::parseSourceFile(mlirFilepath, &context);
     } else {
         // create NESAbstraction for testing and an MLIRGenerator
-        auto MLIRGen = new MLIRGenerator(context);
-        module = MLIRGen->generateModuleFromNESIR(nesIR); //Todo use real
+        // Insert functions necessary to get information from TupleBuffer objects and more.
+        auto classMemberFunctions = MLIRGenerator::insertClassMemberFunctions(context);
+        auto MLIRGen = new MLIRGenerator(context, classMemberFunctions);
+        module = MLIRGen->generateModuleFromNESIR(nesIR);
         printMLIRModule(module, debugFlags);
     }
 

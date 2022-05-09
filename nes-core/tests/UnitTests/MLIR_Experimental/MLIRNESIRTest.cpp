@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#ifdef MLIR_COMPILER
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -196,4 +195,3 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
 
 
 }// namespace NES::Compiler
-#endif //MLIR_COMPILER

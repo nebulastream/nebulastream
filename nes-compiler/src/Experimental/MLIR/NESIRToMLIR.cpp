@@ -110,7 +110,7 @@ FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string& name,
     return SymbolRefAttr::get(context, name);
 }
 
-void MLIRGenerator::insertClassMemberFunctions() {
+std::vector<mlir::FuncOp> MLIRGenerator::insertClassMemberFunctions(mlir::MLIRContext& context) {
     std::string moduleStr2 = R"mlir(
         module {
             func private @getNumTuples(%arg0: !llvm.ptr<i8>) -> index {
@@ -133,24 +133,30 @@ void MLIRGenerator::insertClassMemberFunctions() {
             }
         }
     )mlir";
-    auto simpleModule = parseSourceString(moduleStr2, context);
+    std::vector<mlir::FuncOp> classMemberFunctions;
+    auto simpleModule = parseSourceString(moduleStr2, &context);
     auto proxyOpIterator = simpleModule->getOps().begin()->getBlock()->getOperations().begin();
-    auto getNumFuncOp = static_cast<mlir::FuncOp>(proxyOpIterator->clone());
-    theModule.push_back(getNumFuncOp);//Todo could try to use move
-    ++proxyOpIterator;
-    auto getDataBufferOp = static_cast<mlir::FuncOp>(proxyOpIterator->clone());
-    theModule.push_back(getDataBufferOp);
-    valueMap.emplace(std::pair{"numTuples", builder->create<mlir::CallOp>(getNameLoc("memberCall"), getNumFuncOp, valueMap["InputBuffer"]).getResult(0)});
-    valueMap.emplace(std::pair{"inputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"), getDataBufferOp, valueMap["InputBuffer"]).getResult(0)});
+    
+    for(;proxyOpIterator != simpleModule->getOps().begin()->getBlock()->getOperations().end(); proxyOpIterator++) {
+        classMemberFunctions.push_back(static_cast<mlir::FuncOp>(proxyOpIterator->clone()));
+    }
+    return classMemberFunctions;
 }
 
 //==---------------------------------==//
 //==-- MAIN WORK - Generating MLIR --==//
 //==---------------------------------==//
-MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context) : context(&context) {
+MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncOp>& classMemberFunctions)
+    : context(&context), classMemberFunctions(classMemberFunctions) {
+
+
     // Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
     builder = std::make_shared<OpBuilder>(&context);
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
+    // Insert all needed MemberClassFunctions into the MLIR module.
+    for(auto memberFunction : classMemberFunctions) {
+        theModule.push_back(memberFunction);
+    }
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
     // Insert printFromMLIR function for debugging use.
@@ -215,7 +221,11 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functi
     for (int i = 0; i < (int) functionOperation->getInputArgNames().size(); ++i) {
         valueMap.emplace(std::pair{functionOperation->getInputArgNames().at(i), valueMapIterator[i]});
     }
-    insertClassMemberFunctions();
+    // Store container for getNumberOfTuples and getDataBuffer function results in valueMap.
+    valueMap.emplace(std::pair{"numTuples", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                classMemberFunctions[ClassMemberFunctions::GetNumTuples], valueMap["InputBuffer"]).getResult(0)});
+    valueMap.emplace(std::pair{"inputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                classMemberFunctions[ClassMemberFunctions::GetDataBuffer], valueMap["InputBuffer"]).getResult(0)});
 
     // Generate MLIR for operations in function body (BasicBlock)
     generateMLIR(functionOperation->getFunctionBasicBlock());
@@ -237,8 +247,6 @@ Value MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOperat
 
     // Define index variables for loop. Define the loop iteration variable
     Value iterationVariable = getConstInt(getNameLoc("IterationVar"), 64, 0);
-
-    //    auto upperBound = numTuples.dyn_cast<arith::ConstantIndexOp>();
     auto lowerBound = builder->create<arith::ConstantIndexOp>(getNameLoc("lowerBound"), 0);
     auto stepSize = builder->create<arith::ConstantIndexOp>(getNameLoc("stepSize"), 1);
 
