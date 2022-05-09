@@ -66,6 +66,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         if (request->isDumpEnabled()) {
             dumpContext->registerDumpHandler(VizDumpHandler::create());
         }
+
         timer.start();
         NES_DEBUG("compile query with id: " << queryId << " subPlanId: " << subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
