@@ -363,6 +363,34 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowIrigular
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+TEST_P(SingleNodeThreadLocalSlidingWindowTests, testSingleMultiKeySlidingWindow) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("key1", DataTypeFactory::createUInt64())
+                          ->addField("key2", DataTypeFactory::createUInt64())
+                          ->addField("key3", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValueMultiKeys), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window")
+            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Seconds(1)))
+            .byKey(Attribute("key1"),Attribute("key2"),Attribute("key3")).apply(Sum(Attribute("value"))))";
+    auto dg = DataGeneratorMultiKey(1, 102);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+    std::vector<OutputMultiKeys> expectedOutput;
+    for (uint64_t k = 0; k < 102; k++) {
+        expectedOutput.push_back({0, 1000, k, k, k, 1});
+    }
+    std::vector<OutputMultiKeys> actualOutput = testHarness.getOutput<OutputMultiKeys>(102, "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
 
 INSTANTIATE_TEST_CASE_P(testSingleNodeConcurrentTumblingWindowTest,
                         SingleNodeThreadLocalSlidingWindowTests,
