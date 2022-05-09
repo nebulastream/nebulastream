@@ -146,18 +146,35 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
 
     auto outputBuffer = buffMgr->getBufferBlocking();
 
-    // Add Operation
-    auto addressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 9, 1, true);
-    auto loadOp = std::make_shared<LoadOperation>(addressOp);
-    auto constOp = std::make_shared<ConstantIntOperation>(9, 64);
-    auto addOp = std::make_shared<AddIntOperation>(std::move(loadOp), std::move(constOp));
+    //Todo BIG ISSUE:
+    // - use loop-based MLIR Generation Approach
+    // - currently CREATION: (addressOp+(addressOp->loadOp + constOp)->addOp)->storeOp->loopBB->loopOp->funcBB->funcOp->NESIR
+    // - currently GENERATION: NESIR->funcOp->funcBB->loopOp->loopBB->storeOP
+    //                             -> addressOp
+    //                             -> addOp
+    //                                  -> constOp
+    //                                  -> loadOp->addressOp
+    // Goal: Mimic CREATION in GENERATION
+    // - NEW GENERATION (Idea: insert Ops on one level until hitting BB):
+    // 1,2,3   NESIR->funcOp(Op1)->funcBB(getOPs)
+    // 4,5                     loopOp(Op1)->loopBB(getOPs)
+    // 6                         addressOp(Op1) ~InputBuff~
+    // 7                         loadOp[Op1](Op2) -> ACCESS: addressOpMap[&Op1]
+    // 8                         constOp(Op3)
+    // 9                         addOp[Op2,Op3](Op4) -> ACCESS: addressOpMap[&Op2] and addressOpMap[&Op3]
+    // 10                        addressOp(Op5) ~OutputBuff~
+    // 11                        storeOp[Op4,Op5](Op6) -> ACCESS: addressOpMap[&Op4] and addressOpMap[&Op5]                   
 
-    // Store Operation
-    auto storeAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 8, 0, false);
-    auto storeOp = std::make_shared<StoreOperation>(addOp, storeAddressOp);
+    // Loop BasicBlock Operations
+    auto inputAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 9, 1, true);
+    auto loadOp = std::make_shared<LoadOperation>(inputAddressOp);
+    auto constOp = std::make_shared<ConstantIntOperation>(9, 64);
+    auto addOp = std::make_shared<AddIntOperation>(loadOp, constOp);
+    auto outputAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 8, 0, false);
+    auto storeOp = std::make_shared<StoreOperation>(addOp, outputAddressOp);
 
     // Loop BasicBlock
-    std::vector<OperationPtr> loopOps{storeOp};
+    std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, constOp, addOp, outputAddressOp, storeOp};
     BasicBlockPtr loopBlock = std::make_unique<BasicBlock>(loopOps);
     NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(std::move(loopBlock));
 

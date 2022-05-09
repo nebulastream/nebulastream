@@ -15,10 +15,10 @@
 #include <Experimental/NESIR/Operations/AddIntOperation.hpp>
 namespace NES {
 AddIntOperation::AddIntOperation(OperationPtr lhs, OperationPtr rhs)
-    : Operation(OperationType::AddOp), lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+    : Operation(OperationType::AddOp), lhs(lhs), rhs(rhs) {}
 
 bool AddIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
-OperationPtr AddIntOperation::getLHS() { return std::move(lhs); }
-OperationPtr AddIntOperation::getRHS() { return std::move(rhs); }
+OperationPtr AddIntOperation::getLHS() { return lhs; }
+OperationPtr AddIntOperation::getRHS() { return rhs; }
 }// namespace NES

@@ -78,7 +78,7 @@ class MLIRGenerator {
     std::vector<mlir::FuncOp> memberFunctions;
     std::unordered_map<std::string, Value> functionValuesMap;
     std::unordered_map<std::string, Value> valueMap;
-    std::unordered_map<NES::OperationPtr*, Value> addressValueMap;
+    std::unordered_map<NES::OperationPtr, Value> addressValueMap;
     // Utility
     mlir::Value currentRecordIdx;
     mlir::RewriterBase::InsertPoint *globalInsertPoint;
@@ -93,15 +93,14 @@ class MLIRGenerator {
      * @brief Calls the specific generate function based on currentNode's type.
      * @param parentBlock MLIR Block that new operation is inserted into.
      */
-    Value generateMLIR(const NES::OperationPtr& operation);
-
-    Value generateMLIR(std::shared_ptr<NES::FunctionOperation> operation);
-    Value generateMLIR(std::shared_ptr<NES::LoopOperation> operation);
-    Value generateMLIR(std::shared_ptr<NES::ConstantIntOperation> operation);
-    Value generateMLIR(std::shared_ptr<NES::AddIntOperation> operation);
-    Value generateMLIR(std::shared_ptr<NES::StoreOperation> operation);
-    Value generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
-    Value generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
+    void generateMLIR(const NES::OperationPtr& operation);
+    void generateMLIR(std::shared_ptr<NES::FunctionOperation> operation);
+    void generateMLIR(std::shared_ptr<NES::LoopOperation> operation);
+    void generateMLIR(std::shared_ptr<NES::ConstantIntOperation> operation);
+    void generateMLIR(std::shared_ptr<NES::AddIntOperation> operation);
+    void generateMLIR(std::shared_ptr<NES::StoreOperation> operation);
+    void generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
+    void generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.
