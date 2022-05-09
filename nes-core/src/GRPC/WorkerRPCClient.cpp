@@ -281,7 +281,10 @@ bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId, Run
     throw log4cxx::helpers::Exception("Error while WorkerRPCClient::markQueryForStop");
 }
 
-bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId, Runtime::QueryTerminationType terminationType, const CompletionQueuePtr& cq) {
+bool WorkerRPCClient::stopQueryAsync(const std::string& address,
+                                     QueryId queryId,
+                                     Runtime::QueryTerminationType terminationType,
+                                     const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::stopQueryAsync address=" << address << " queryId=" << queryId);
 
     StopQueryRequest request;
