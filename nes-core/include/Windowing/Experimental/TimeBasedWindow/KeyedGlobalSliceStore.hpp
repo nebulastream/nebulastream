@@ -72,7 +72,7 @@ class KeyedGlobalSliceStore {
     std::list<KeyedSliceSharedPtr> slices;
     WatermarkProcessor sliceAddSequenceLog;
     WatermarkProcessor sliceTriggerSequenceLog;
-    uint64_t slicesPerWindow;
+    uint64_t lastWindowStart = UINT64_MAX;
     uint64_t emittedWindows = 0;
     std::vector<Window> triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t startEndTs, uint64_t endEndTs);
 

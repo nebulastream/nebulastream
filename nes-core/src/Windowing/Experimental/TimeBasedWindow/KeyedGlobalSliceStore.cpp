@@ -22,6 +22,7 @@ std::vector<Window> KeyedGlobalSliceStore::addSliceAndCollectWindows(uint64_t se
                                                                      uint64_t windowSize,
                                                                      uint64_t windowSlide) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
+
     //NES_ASSERT(!sliceMap.contains(sliceIndex), "Slice is not contained");
     auto sliceEnd = slice->getEnd();
     auto sliceStart = slice->getStart();
@@ -42,31 +43,46 @@ std::vector<Window> KeyedGlobalSliceStore::addSliceAndCollectWindows(uint64_t se
     auto newMaxSliceEnd = sliceAddSequenceLog.getCurrentWatermark();
 
     /*std::vector<Window> windows;
-    // trigger all windows, for which the list of slices contains the slice end.
-    for (auto& cSlice : slices) {
-        if (cSlice->getEnd() > newMaxSliceEnd) {
-            break;
-        }
-        if (cSlice->getEnd() >= lastMaxSliceEnd && cSlice->getEnd() <= newMaxSliceEnd) {
-            if (cSlice->getEnd() > windowSize && cSlice->getEnd() % windowSlide == 0) {
-                // this slice terminates a window, thus we can trigger it
-                Window window = {cSlice->getEnd() - windowSize, cSlice->getEnd(), ++emittedWindows};
-                windows.emplace_back(std::move(window));
-            }
-        }
-    }*/
+    */
 
     return triggerInflightWindows(windowSize, windowSlide, lastMaxSliceEnd, newMaxSliceEnd);
 }
 
 std::vector<Window>
-KeyedGlobalSliceStore::triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t startEndTs, uint64_t endEndTs) {
+KeyedGlobalSliceStore::triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t lastEndTs, uint64_t endEndTs) {
 
     std::vector<Window> windows;
-    auto lastWindowStart = startEndTs - (startEndTs + windowSize) % windowSize;
-    for (uint64_t windowStart = lastWindowStart; windowStart + windowSize < endEndTs; windowStart += windowSlide) {
+    /* auto currentLastWindowStart = lastWindowStart - (lastWindowStart + windowSize) % windowSize;
+    if (__builtin_sub_overflow(currentLastWindowStart, windowSize, &currentLastWindowStart)) {
+        currentLastWindowStart = 0;
+    }
+    for (uint64_t windowStart = currentLastWindowStart;
+         windowStart + windowSize <= endEndTs;
+         windowStart += windowSlide) {
         Window window = {windowStart, windowStart + windowSize, ++emittedWindows};
         windows.emplace_back(std::move(window));
+    }*/
+
+    // trigger all windows, for which the list of slices contains the slice end.
+    uint64_t maxWindowEndTs = lastEndTs;
+    if (__builtin_sub_overflow(maxWindowEndTs, windowSize, &maxWindowEndTs)) {
+        maxWindowEndTs = 0;
+    }
+
+    for (auto& slice : slices) {
+        if (slice->getStart() + windowSize > endEndTs) {
+            break;
+        }
+        if (slice->getStart() >= maxWindowEndTs && slice->getEnd() <= endEndTs) {
+            auto windowStart = slice->getStart();
+            auto windowEnd = slice->getStart() + windowSize;
+            // check if it is a valid window
+            if ((lastWindowStart == UINT64_MAX || lastWindowStart < windowStart)
+                && ((windowStart % windowSlide) == 0)) {
+                windows.emplace_back<Window>({windowStart, windowEnd, ++emittedWindows});
+                lastWindowStart = windowStart;
+            }
+        }
     }
 
     return windows;
@@ -106,7 +122,7 @@ void KeyedGlobalSliceStore::finalizeSlice(uint64_t sequenceNumber, uint64_t slic
     // this is given by current sliceIndex - slicesPerWindow
     // to prevent overflows we use __builtin_sub_overflow to check if an overflow happened
     uint64_t finalizeSliceIndex;
-    if (__builtin_sub_overflow(sliceIndex, slicesPerWindow, &finalizeSliceIndex)) {
+    if (__builtin_sub_overflow(sliceIndex, 0, &finalizeSliceIndex)) {
         finalizeSliceIndex = 0;
     }
 

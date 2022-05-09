@@ -115,7 +115,8 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
                 sliceStaging->addToSlice(slice->getEnd(), sliceState.extractEntries());
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
-                    NES_DEBUG("Deploy merge task for slice " << slice->getEnd() << " with " << numberOfBuffers << " buffers.");
+                    NES_DEBUG("Deploy merge task for slice (" << slice->getStart() << "-" << slice->getEnd() << ") with "
+                                                              << numberOfBuffers << " buffers.");
                     auto buffer = pipelineExecutionContext->getBufferManager()->getBufferBlocking();
                     auto task = buffer.getBuffer<SliceMergeTask>();
                     task->startSlice = slice->getStart();
