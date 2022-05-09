@@ -26,6 +26,8 @@ add_source_files(nes-core
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp
+        PhysicalPythonUdfOperator.cpp
+        PythonUdfExecutablePipelineStage.cpp
 )
 
 add_subdirectory(Windowing)
