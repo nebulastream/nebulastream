@@ -27,8 +27,8 @@ class FailQueryRequest : public Request {
   public:
     /**
      * @brief Create instance of  FailQueryRequest
-     * @param queryId : the id of query to be restarted
-     * @return shared pointer to the instance of restart query request
+     * @param queryId : the id of query to fail
+     * @return shared pointer to the instance of fail query request
      */
     static FailQueryRequestPtr create(QueryId queryId);
 
