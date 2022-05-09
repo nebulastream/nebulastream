@@ -53,6 +53,8 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <iostream>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
 #ifdef PYTHON_UDF_ENABLED
 #include "Python.h"
 #endif
@@ -1095,82 +1097,8 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
  * invoke the Python interpreter and will fail if Python UDF are not enabled
  */
 #ifdef PYTHON_UDF_ENABLED
-class PythonUdfPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
-  public:
-    struct InputRecord {
-        int64_t test$id;
-        int64_t test$one;
-        int64_t test$value;
-    };
-    ExecutionResult execute(Runtime::TupleBuffer& buffer,
-                            Runtime::Execution::PipelineExecutionContext& ctx,
-                            Runtime::WorkerContext& wc) override {
-        auto record = buffer.getBuffer<InputRecord>();
 
-        // Access Python script located in nes-core/tests/test_data
-        const char pyUdfName[] = "PythonUdf";
-        const char pyUdfLocation[] = "test_data/";
-        const char pyFuncName[] = "add42";
-        PyObject *pyName, *pyModule, *pyFunc, *pyArgs, *pyValue, *pyLocation;
-
-        Py_Initialize();
-        pyLocation = PyUnicode_FromString(pyUdfLocation);
-        PyList_Insert(PySys_GetObject("path"), 0, PyUnicode_FromString(pyUdfLocation));
-        pyName = PyUnicode_FromString(pyUdfName);
-        pyModule = PyImport_Import(pyName);
-        // When a PyObject is no longer needed, we need to decrease the reference counter
-        // so that the Python garbage collector knows when to free an object.
-        // Initializing a PyObject sets the reference counter to 1, so no Py_INCREF() is needed.
-        Py_DECREF(pyName);
-        Py_DECREF(pyLocation);
-        if (pyModule != nullptr) {
-            pyFunc = PyObject_GetAttrString(pyModule, pyFuncName);
-            if (pyFunc && PyCallable_Check(pyFunc)) {
-                // Iterate over tuples and add 42 to test$value via Python Udf
-                for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-                    pyArgs = PyTuple_New(1);
-                    pyValue = PyLong_FromLong(record[i].test$value);
-                    if (!pyValue) {
-                        Py_Finalize();// Frees all memory allocated
-                        NES_ERROR("Unable to convert value");
-                        return ExecutionResult::Error;
-                    }
-                    PyTuple_SetItem(pyArgs, 0, pyValue);
-                    // The python function call happens here
-                    pyValue = PyObject_CallObject(pyFunc, pyArgs);
-                    Py_DECREF(pyArgs);
-                    if (pyValue != nullptr) {
-                        record[i].test$value = PyLong_AsLong(pyValue);
-                        Py_DECREF(pyValue);
-                    } else {
-                        Py_Finalize();
-                        NES_ERROR("Function call failed");
-                        return ExecutionResult::Error;
-                    }
-                }
-            } else {
-                if (PyErr_Occurred()) {
-                    PyErr_Print();
-                }
-                Py_Finalize();
-                NES_ERROR("Cannot find function " << pyFuncName);
-                return ExecutionResult::Error;
-            }
-        } else {
-            PyErr_Print();
-            Py_Finalize();
-            NES_ERROR("Failed to load " << pyUdfName);
-            return ExecutionResult::Error;
-        }
-        if (Py_FinalizeEx() < 0) {
-            return ExecutionResult::Error;
-        }
-        ctx.emitBuffer(buffer, wc);
-        return ExecutionResult::Ok;
-    }
-};
-
-TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
+TEST_F(QueryExecutionTest, ExternalPythonUdfQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
@@ -1200,11 +1128,13 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
 
-    auto customPipelineStage = std::make_shared<PythonUdfPipelineStage>();
-    auto externalOperator =
-        NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
+    auto pythonUdfPipelineStage = std::make_shared<PythonUdfExecutablePipelineStage>(testSchema, SchemaPtr());
 
-    filterOperator->insertBetweenThisAndParentNodes(externalOperator);
+    auto pythonUdfOperator =
+        NES::QueryCompilation::PhysicalOperators::PhysicalPythonUdfOperator::create(testSchema, SchemaPtr(),
+                                                                                                        pythonUdfPipelineStage);
+
+    filterOperator->insertBetweenThisAndParentNodes(pythonUdfOperator);
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
@@ -1237,7 +1167,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
             Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
         for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
             // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex + 42);
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
         }
     }

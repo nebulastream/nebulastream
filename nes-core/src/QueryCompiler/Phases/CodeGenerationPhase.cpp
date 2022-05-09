@@ -19,6 +19,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
@@ -58,6 +59,15 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     if (rootOperator->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
         auto physicalExternalOperator = rootOperator->as<PhysicalOperators::PhysicalExternalOperator>();
         auto pipelineStage = physicalExternalOperator->getExecutablePipelineStage();
+        // todo register operator handler
+        auto executableOperator = ExecutableOperator::create(pipelineStage, {});
+        pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
+        return pipeline;
+    }
+    // same as for external operators
+    if (rootOperator->instanceOf<PhysicalOperators::PhysicalPythonUdfOperator>()) {
+        auto PhysicalPythonUdfOperator = rootOperator->as<PhysicalOperators::PhysicalPythonUdfOperator>();
+        auto pipelineStage = PhysicalPythonUdfOperator->getExecutablePipelineStage();
         // todo register operator handler
         auto executableOperator = ExecutableOperator::create(pipelineStage, {});
         pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
