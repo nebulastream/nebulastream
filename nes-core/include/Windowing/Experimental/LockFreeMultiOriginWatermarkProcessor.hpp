@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+
 namespace NES::Experimental {
 
 using OriginId = uint64_t;
