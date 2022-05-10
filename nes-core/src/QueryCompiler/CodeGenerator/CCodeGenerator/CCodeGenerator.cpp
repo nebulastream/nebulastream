@@ -1525,7 +1525,6 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(
     Windowing::LogicalWindowDefinitionPtr window,
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
     PipelineContextPtr context,
-    uint64_t,
     SchemaPtr resultSchema) {
     auto tf = getTypeFactory();
     auto code = context->code;

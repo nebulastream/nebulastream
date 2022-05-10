@@ -17,6 +17,7 @@
 
 #include <Util/Logger/Logger.hpp>
 #include <algorithm>
+#include <array>
 #include <assert.h>
 #include <atomic>
 #include <memory>

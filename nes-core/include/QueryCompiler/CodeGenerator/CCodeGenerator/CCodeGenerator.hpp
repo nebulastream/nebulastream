@@ -172,7 +172,6 @@ class CCodeGenerator : public CodeGenerator {
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
-        uint64_t windowOperatorIndex,
         SchemaPtr ptr) override;
 
     bool generateCodeForKeyedSlidingWindowSink(

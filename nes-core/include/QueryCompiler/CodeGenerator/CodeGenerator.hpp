@@ -225,7 +225,6 @@ class CodeGenerator {
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
-        uint64_t windowOperatorIndex,
         SchemaPtr schema) = 0;
 
     /**
