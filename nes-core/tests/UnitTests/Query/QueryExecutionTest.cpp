@@ -1128,7 +1128,7 @@ TEST_F(QueryExecutionTest, PythonUdfQuery) {
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
 
-    auto pythonUdfPipelineStage = std::make_shared<PythonUdfExecutablePipelineStage>(testSchema, SchemaPtr());
+    auto pythonUdfPipelineStage = std::make_shared<PythonUdfExecutablePipelineStage>(testSchema);
 
     auto pythonUdfOperator =
         NES::QueryCompilation::PhysicalOperators::PhysicalPythonUdfOperator::create(testSchema, SchemaPtr(),
