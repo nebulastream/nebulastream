@@ -83,9 +83,76 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 };
 
 /*
+ * @brief test data buffering at all nodes
+ */
+TEST_F(UpstreamBackupTest, DISABLED_testDataBufferingAtAllNodes) {
+    NES_INFO("UpstreamBackupTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("UpstreamBackupTest: Coordinator started successfully");
+
+    //Setup Worker
+    NES_INFO("UpstreamBackupTest: Start worker 1");
+    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
+    workerConfig->physicalSources.add(physicalSource1);
+
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
+    remove(outputFilePath.c_str());
+
+    // The query contains a watermark assignment with 50 ms allowed lateness
+    NES_INFO("UpstreamBackupTest: Submit query");
+    string query =
+        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+    wrk1->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
+    wrk2->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, timestamp);
+
+    NES_INFO("UpstreamBackupTest: Remove query");
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_INFO("UpstreamBackupTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("UpstreamBackupTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("UpstreamBackupTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("UpstreamBackupTest: Test finished");
+}
+/*
  * @brief test timestamp of watermark processor
  */
-TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
+TEST_F(UpstreamBackupTest, DISABLED_testTimestampWatermarkProcessor) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -170,7 +237,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 /*
  * @brief test message passing between sink-coordinator-sources
  */
-TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
+TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -239,9 +306,92 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 }
 
 /*
+ * @brief test if data is deleted after propagate epoch is called
+ */
+TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
+    NES_INFO("UpstreamBackupTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("UpstreamBackupTest: Coordinator started successfully");
+
+    //Setup Worker
+    NES_INFO("UpstreamBackupTest: Start worker 1");
+    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
+    workerConfig->physicalSources.add(physicalSource1);
+
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
+    remove(outputFilePath.c_str());
+
+    // The query contains a watermark assignment with 50 ms allowed lateness
+    NES_INFO("UpstreamBackupTest: Submit query");
+    string query =
+        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    //insert tuple buffers to check later if they are trimmed
+    for (uint64_t i = 0; i < numberOfTupleBuffers; i++) {
+        auto buffer = bufferManager->getUnpooledBuffer(timestamp);
+        buffer->setWatermark(timestamp + i);
+        buffer->setOriginId(1);
+        buffer->setSequenceNumber(1 + i);
+        wrk1->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
+        wrk2->getNodeEngine()->getBufferStorage()->insertBuffer(queryId, 0, buffer.value());
+    }
+    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == numberOfTupleBuffers);
+
+    //get sink
+    auto querySubPlanIds = crd->getNodeEngine()->getSubQueryIds(queryId);
+    for (auto querySubPlanId : querySubPlanIds) {
+        auto sinks = crd->getNodeEngine()->getExecutableQueryPlan(querySubPlanId)->getSinks();
+        for (auto& sink : sinks) {
+            sink->notifyEpochTermination(timestamp + numberOfTupleBuffers);
+        }
+    }
+    //check if buffers got trimmed
+    EXPECT_TRUE(wrk1->getNodeEngine()->getBufferStorage()->getStorageSize() == 0);
+    EXPECT_TRUE(wrk2->getNodeEngine()->getBufferStorage()->getStorageSize() == 0);
+
+    NES_INFO("UpstreamBackupTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_INFO("UpstreamBackupTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("UpstreamBackupTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("UpstreamBackupTest: Test finished");
+}
+
+/*
  * @brief test if upstream backup doesn't fail
  */
-TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
+TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
