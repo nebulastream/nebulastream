@@ -97,7 +97,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 /*
  * @brief test data buffering at all nodes
  */
-TEST_F(UpstreamBackupTest, testDataBufferingAtAllNodes) {
+TEST_F(UpstreamBackupTest, DISABLED_testDataBufferingAtAllNodes) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -164,7 +164,7 @@ TEST_F(UpstreamBackupTest, testDataBufferingAtAllNodes) {
 /*
  * @brief test timestamp of watermark processor
  */
-TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
+TEST_F(UpstreamBackupTest, DISABLED_testTimestampWatermarkProcessor) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -249,7 +249,7 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 /*
  * @brief test message passing between sink-coordinator-sources
  */
-TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
+TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -320,7 +320,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 /*
  * @brief test if data is deleted after propagate epoch is called
  */
-TEST_F(UpstreamBackupTest, testTrimmingAfterPropagateEpoch) {
+TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -407,7 +407,7 @@ TEST_F(UpstreamBackupTest, testTrimmingAfterPropagateEpoch) {
 /*
  * @brief test if upstream backup doesn't fail
  */
-TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
+TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
