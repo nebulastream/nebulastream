@@ -29,7 +29,7 @@ class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 /**
- * @brief The KeyedGlobalSliceStoreAppendOperatorHandler.
+ * @brief The KeyedGlobalSliceStoreAppendOperatorHandler, which appends merged slices to the global slice store.
  */
 class KeyedGlobalSliceStoreAppendOperatorHandler
     : public Runtime::Execution::OperatorHandler,
@@ -41,6 +41,8 @@ class KeyedGlobalSliceStoreAppendOperatorHandler
     KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                                std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore);
 
+    ~KeyedGlobalSliceStoreAppendOperatorHandler();
+
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
 
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition() { return windowDefinition; };
@@ -51,16 +53,18 @@ class KeyedGlobalSliceStoreAppendOperatorHandler
 
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+     * @brief This function triggers the slice merging and appends the merged slice to the global slice store.
+     * Based on this function, we can trigger the final window aggregation, for sliding windows.
+     * @param wctx WorkerContext
+     * @param ctx PipelineExecutionContext
+     * @param sequenceNumber
+     * @param mergedSlice
+     */
     void triggerSliceMerging(Runtime::WorkerContext& wctx,
                              Runtime::Execution::PipelineExecutionContext& ctx,
                              uint64_t sequenceNumber,
-                             KeyedSlicePtr slice);
-
-    KeyedSlicePtr createKeyedSlice(uint64_t sliceIndex);
-
-    KeyedGlobalSliceStore& getGlobalSliceStore() { return *globalSliceStore.lock(); }
-
-    ~KeyedGlobalSliceStoreAppendOperatorHandler() { NES_DEBUG("Destruct KeyedEventTimeWindowHandler"); }
+                             KeyedSlicePtr mergedSlice);
 
   private:
     uint64_t windowSize;

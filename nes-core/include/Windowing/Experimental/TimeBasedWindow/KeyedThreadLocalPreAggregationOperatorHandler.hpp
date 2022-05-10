@@ -86,7 +86,7 @@ class KeyedThreadLocalPreAggregationOperatorHandler
      */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition() { return windowDefinition; };
 
-    ~KeyedThreadLocalPreAggregationOperatorHandler() { NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler"); }
+    ~KeyedThreadLocalPreAggregationOperatorHandler();
 
   private:
     uint64_t windowSize;

@@ -65,6 +65,7 @@ KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(WindowTrig
 std::vector<KeyedSliceSharedPtr> KeyedSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* windowTriggerTask) {
     NES_DEBUG("getSlicesForWindow " << windowTriggerTask->windowStart << " - " << windowTriggerTask->windowEnd);
     return globalSliceStore->getSlicesForWindow(windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
-};
+}
+Windowing::LogicalWindowDefinitionPtr KeyedSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
 
 }// namespace NES::Windowing::Experimental

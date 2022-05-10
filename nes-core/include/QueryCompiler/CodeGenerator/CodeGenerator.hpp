@@ -289,12 +289,13 @@ class CodeGenerator {
     * @param aggregationFunctions the aggregation functions
     * @return
     */
-    virtual uint64_t generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                     SchemaPtr,
-                                                     PipelineContextPtr context,
-                                                     uint64_t id,
-                                                     uint64_t windowOperatorIndex,
-                                                     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) =0;
+    virtual uint64_t
+    generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                            SchemaPtr,
+                                            PipelineContextPtr context,
+                                            uint64_t id,
+                                            uint64_t windowOperatorIndex,
+                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
@@ -337,7 +338,6 @@ class CodeGenerator {
                                           PipelineContextPtr context,
                                           Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                           QueryCompilation::JoinBuildSide buildSide) = 0;
-
     /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.

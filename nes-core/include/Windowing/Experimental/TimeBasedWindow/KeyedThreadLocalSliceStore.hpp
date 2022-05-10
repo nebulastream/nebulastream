@@ -115,6 +115,10 @@ class KeyedThreadLocalSliceStore {
         }
     }
 
+    /**
+     * @brief Gets a reference to all slices
+     * @return std::list<KeyedSlicePtr>
+     */
     auto& getSlices() { return slices; };
 
     /**

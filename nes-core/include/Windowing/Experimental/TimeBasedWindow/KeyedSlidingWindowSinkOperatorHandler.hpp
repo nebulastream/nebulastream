@@ -46,7 +46,7 @@ class KeyedSlidingWindowSinkOperatorHandler
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
 
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() { return windowDefinition; };
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
