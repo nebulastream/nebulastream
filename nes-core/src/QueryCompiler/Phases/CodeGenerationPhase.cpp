@@ -19,12 +19,13 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <utility>
-
+#ifdef PYTHON_UDF_ENABLED
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
+#endif
 namespace NES::QueryCompilation {
 
 CodeGenerationPhase::CodeGenerationPhase(CodeGeneratorPtr codeGenerator,
@@ -64,6 +65,7 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
         return pipeline;
     }
+#ifdef PYTHON_UDF_ENABLED
     // same as for external operators
     if (rootOperator->instanceOf<PhysicalOperators::PhysicalPythonUdfOperator>()) {
         auto PhysicalPythonUdfOperator = rootOperator->as<PhysicalOperators::PhysicalPythonUdfOperator>();
@@ -73,7 +75,7 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
         return pipeline;
     }
-
+#endif
     generate(rootOperator, [this, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateOpen(codeGenerator, context);
     });
