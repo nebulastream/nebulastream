@@ -13,6 +13,9 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSlidingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
+#include <memory>
 
 namespace NES {
 namespace QueryCompilation {
@@ -25,6 +28,16 @@ PhysicalKeyedSlidingWindowSink::PhysicalKeyedSlidingWindowSink(
     Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
+
+std::shared_ptr<PhysicalKeyedSlidingWindowSink> PhysicalKeyedSlidingWindowSink::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    return std::make_shared<PhysicalKeyedSlidingWindowSink>(Util::getNextOperatorId(),
+                                                            inputSchema,
+                                                            outputSchema,
+                                                            keyedEventTimeWindowHandler);
+}
 
 std::string PhysicalKeyedSlidingWindowSink::toString() const { return "PhysicalKeyedSlidingWindowSink"; }
 

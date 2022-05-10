@@ -15,25 +15,17 @@
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDEVENTTIMETHREADLOCALWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDEVENTTIMETHREADLOCALWINDOWHANDLER_HPP_
 
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/ExecutionResult.hpp>
-#include <Runtime/Reconfigurable.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <State/StateVariable.hpp>
-#include <Util/Experimental/HashMap.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
-#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/Events.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
+namespace NES::Experimental {
+class HashMapFactory;
+using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
+class LockFreeMultiOriginWatermarkProcessor;
+}// namespace NES::Experimental
 
 namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStore;
+class SliceStaging;
 
 /**
  * @brief The KeyedThreadLocalPreAggregationOperator provides an operator handler to perform slice-based pre-aggregation of tumbling and sliding windows.
@@ -57,7 +49,6 @@ class KeyedThreadLocalPreAggregationOperatorHandler
      * @param hashmapFactory HashMapFactoryPtr
      */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
-
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,

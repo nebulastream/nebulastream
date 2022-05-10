@@ -51,6 +51,8 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>\n"
                           "#include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>\n"
                           "#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>\n"
+                          "#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>\n"
+                          "#include <Windowing/Experimental/TimeBasedWindow/WindowProcessingTasks.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>\n"

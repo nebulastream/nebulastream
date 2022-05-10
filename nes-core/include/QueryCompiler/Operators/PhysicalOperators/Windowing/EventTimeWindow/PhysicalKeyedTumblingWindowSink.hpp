@@ -16,9 +16,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_EVENTTIMEWINDOW_PHYSICALKEYEDTUMBLINGWINDOWSINK_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <memory>
-
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
@@ -34,16 +31,9 @@ class PhysicalKeyedTumblingWindowSink : public PhysicalUnaryOperator {
                                     Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     static std::shared_ptr<PhysicalKeyedTumblingWindowSink>
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-        return std::make_shared<PhysicalKeyedTumblingWindowSink>(Util::getNextOperatorId(),
-                                                                 inputSchema,
-                                                                 outputSchema,
-                                                                 windowDefinition);
-    }
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition(){
-        return windowDefinition;
-    }
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
     std::string toString() const override;
     OperatorNodePtr copy() override;

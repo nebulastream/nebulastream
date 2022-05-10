@@ -158,6 +158,16 @@ class CodeGenerator {
         uint64_t windowOperatorIndex,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregationFunctions) = 0;
 
+    /**
+    * @brief Code generation for the setup of the slice merging operator.
+    * @param window The window definition, which contains all properties of the window.
+    * @param windowOutputSchema the result schema
+    * @param context The context of the current pipeline.
+    * @param id operator id
+    * @param windowOperatorIndex index of the window handler
+    * @param aggregationFunctions the aggregation functions
+    * @return
+    */
     virtual uint64_t generateKeyedSliceMergingOperatorSetup(
         Windowing::LogicalWindowDefinitionPtr window,
         SchemaPtr,
@@ -269,6 +279,16 @@ class CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
+    /**
+    * @brief Code generation for the setup of the keyed sliding window sink operator.
+    * @param window The window definition, which contains all properties of the window.
+    * @param windowOutputSchema the result schema
+    * @param context The context of the current pipeline.
+    * @param id operator id
+    * @param windowOperatorIndex index of the window handler
+    * @param aggregationFunctions the aggregation functions
+    * @return
+    */
     virtual uint64_t generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
                                                      SchemaPtr,
                                                      PipelineContextPtr context,

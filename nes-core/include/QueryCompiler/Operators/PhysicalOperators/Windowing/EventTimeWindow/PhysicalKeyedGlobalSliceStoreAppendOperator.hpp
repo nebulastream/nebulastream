@@ -16,10 +16,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_EVENTTIMEWINDOW_PHYSICALKEYEDGLOBALSLICESTOREAPPENDOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
-#include <memory>
-
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
@@ -38,13 +34,7 @@ class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator
     static std::shared_ptr<PhysicalKeyedGlobalSliceStoreAppendOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
-        return std::make_shared<PhysicalKeyedGlobalSliceStoreAppendOperator>(Util::getNextOperatorId(),
-                                                                             inputSchema,
-                                                                             outputSchema,
-                                                                             keyedEventTimeWindowHandler);
-    }
-
+           Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler);
     std::string toString() const override;
     OperatorNodePtr copy() override;
 

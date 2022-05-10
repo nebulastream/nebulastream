@@ -27,7 +27,7 @@ namespace NES {
 class LambdaSourceDescriptor : public SourceDescriptor {
   public:
     /**
-     * @brief Ctor of a LambdaSourceDescriptor
+     * @brief Constructor for a LambdaSourceDescriptor
      * @param schema the schema of the source
      * @param lambda function
      * @param numBuffersToProduce number of buffers to produce

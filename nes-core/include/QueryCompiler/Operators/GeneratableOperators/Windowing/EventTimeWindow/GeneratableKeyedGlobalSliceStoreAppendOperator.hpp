@@ -15,7 +15,6 @@
 #define NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_WINDOWING_GENERATABLEKKEYEDGLOBALSLICESTOREAPPEN_HPP_
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {

@@ -16,9 +16,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_EVENTTIMEWINDOW_PHYSICALKEYEDTHREADLOCALPREAGGREGATIONOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -39,12 +36,7 @@ class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOpera
     static std::shared_ptr<PhysicalOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler) {
-        return std::make_shared<PhysicalKeyedThreadLocalPreAggregationOperator>(Util::getNextOperatorId(),
-                                                                                inputSchema,
-                                                                                outputSchema,
-                                                                                keyedEventTimeWindowHandler);
-    }
+           Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;

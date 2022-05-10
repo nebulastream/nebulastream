@@ -14,26 +14,20 @@
 
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGINGWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGINGWINDOWHANDLER_HPP_
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/ExecutionResult.hpp>
-#include <Runtime/Reconfigurable.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <State/StateVariable.hpp>
-#include <Util/Experimental/HashMap.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
-#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/Events.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
+
+namespace NES::Experimental {
+class HashMapFactory;
+using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
+class LockFreeMultiOriginWatermarkProcessor;
+}// namespace NES::Experimental
 
 namespace NES::Windowing::Experimental {
-
-class KeyedThreadLocalSliceStore;
+class KeyedSlice;
+class SliceMergeTask;
+using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
+class KeyedGlobalSliceStore;
+class SliceStaging;
 
 /**
  * @brief The SliceStagingWindowHandler implements a thread local strategy to compute window aggregates for tumbling and sliding windows.
@@ -59,8 +53,6 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
                uint32_t localStateVariableId) override;
 
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
-
-    NES::Experimental::Hashmap getHashMap();
 
     KeyedSlicePtr createKeyedSlice(SliceMergeTask* sliceMergeTask);
 

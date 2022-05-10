@@ -13,7 +13,9 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
-
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
+#include <memory>
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
@@ -26,6 +28,16 @@ PhysicalKeyedSliceMergingOperator::PhysicalKeyedSliceMergingOperator(
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 std::string PhysicalKeyedSliceMergingOperator::toString() const { return "PhysicalKeyedSliceMergingOperator"; }
+
+std::shared_ptr<PhysicalKeyedSliceMergingOperator> PhysicalKeyedSliceMergingOperator::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    return std::make_shared<PhysicalKeyedSliceMergingOperator>(Util::getNextOperatorId(),
+                                                               inputSchema,
+                                                               outputSchema,
+                                                               keyedEventTimeWindowHandler);
+}
 
 OperatorNodePtr PhysicalKeyedSliceMergingOperator::copy() {
     return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
