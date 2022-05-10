@@ -65,6 +65,6 @@ std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const Compil
     return handleRequest(request);
 }
 
-JITCompiler::~JITCompiler() { NES_DEBUG("~JITCompiler") }
+JITCompiler::~JITCompiler() { NES_DEBUG("~JITCompiler"); }
 
 }// namespace NES::Compiler

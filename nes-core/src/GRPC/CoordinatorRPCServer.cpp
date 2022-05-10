@@ -214,8 +214,12 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
                                                 QueryFailureNotificationReply* reply) {
     try {
         NES_ERROR("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: "
-                  << request->queryid() << "Id of worker: " << request->workerid()
+                  << request->queryid() << " subplan: " << request->subqueryid() << " Id of worker: " << request->workerid()
                   << " Reason for failure: " << request->errormsg());
+
+        NES_ASSERT2_FMT(!request->errormsg().empty(),
+                        "Cannot fail query without error message " << request->queryid() << " subplan: " << request->subqueryid()
+                                                                   << " from worker: " << request->workerid());
 
         auto sharedQueryId = request->queryid();
         auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId);

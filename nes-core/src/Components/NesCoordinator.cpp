@@ -258,6 +258,29 @@ bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
+
+        NES_DEBUG("NesCoordinator::stop health check");
+        healthCheckService->stopHealthCheck();
+
+        bool successShutdownWorker = worker->stop(force);
+        if (!successShutdownWorker) {
+            NES_ERROR("NesCoordinator::stop node engine stop not successful");
+            NES_THROW_RUNTIME_ERROR("NesCoordinator::stop error while stopping node engine");
+        }
+        NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
+
+
+        queryRequestProcessorService->shutDown();
+        if (queryRequestProcessorThread->joinable()) {
+            NES_DEBUG("NesCoordinator: join queryRequestProcessorThread");
+            queryRequestProcessorThread->join();
+            NES_DEBUG("NesCoordinator: joined queryRequestProcessorThread");
+        } else {
+            NES_ERROR("NesCoordinator: query processor thread not joinable");
+            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
+        }
+
+
         NES_DEBUG("NesCoordinator: stopping rest server");
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
@@ -274,25 +297,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
 
-        queryRequestProcessorService->shutDown();
-        if (queryRequestProcessorThread->joinable()) {
-            NES_DEBUG("NesCoordinator: join rpcThread");
-            queryRequestProcessorThread->join();
-        } else {
-            NES_ERROR("NesCoordinator: query processor thread not joinable");
-            NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
-        }
-
-        bool successShutdownWorker = worker->stop(force);
-        if (!successShutdownWorker) {
-            NES_ERROR("NesCoordinator::stop node engine stop not successful");
-            NES_THROW_RUNTIME_ERROR("NesCoordinator::stop error while stopping node engine");
-        }
-        NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
-
-        NES_DEBUG("NesCoordinator::stop health check");
-        healthCheckService->stopHealthCheck();
-
         NES_DEBUG("NesCoordinator: stopping rpc server");
         rpcServer->Shutdown();
 
@@ -307,6 +311,8 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");
         }
+
+
         return true;
     }
     NES_DEBUG("NesCoordinator: already stopped");

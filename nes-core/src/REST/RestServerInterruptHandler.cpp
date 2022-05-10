@@ -29,7 +29,7 @@ void RestServerInterruptHandler::handleUserInterrupt(int signal) {
     NES_DEBUG("handleUserInterrupt");
     if (signal == SIGTERM) {
         NES_DEBUG("SIGINT trapped ...");
-        condition.notify_one();
+        condition.notify_all();
     }
 }
 
