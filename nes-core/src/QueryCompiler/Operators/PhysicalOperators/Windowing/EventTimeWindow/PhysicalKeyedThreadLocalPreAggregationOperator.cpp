@@ -13,7 +13,9 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
-
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
@@ -27,6 +29,16 @@ PhysicalKeyedThreadLocalPreAggregationOperator::PhysicalKeyedThreadLocalPreAggre
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 std::string PhysicalKeyedThreadLocalPreAggregationOperator::toString() const {
     return "PhysicalKeyedThreadLocalPreAggregationOperator";
+}
+
+std::shared_ptr<PhysicalOperator> PhysicalKeyedThreadLocalPreAggregationOperator::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::KeyedThreadLocalPreAggregationOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    return std::make_shared<PhysicalKeyedThreadLocalPreAggregationOperator>(Util::getNextOperatorId(),
+                                                                            inputSchema,
+                                                                            outputSchema,
+                                                                            keyedEventTimeWindowHandler);
 }
 
 OperatorNodePtr PhysicalKeyedThreadLocalPreAggregationOperator::copy() {

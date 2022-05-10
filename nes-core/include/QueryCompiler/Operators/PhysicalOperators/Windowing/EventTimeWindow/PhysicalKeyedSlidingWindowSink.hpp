@@ -14,12 +14,8 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_EVENTTIMEWINDOW_PHYSICALKEYEDSLIDINGWINDOWSINK_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_EVENTTIMEWINDOW_PHYSICALKEYEDSLIDINGWINDOWSINK_HPP_
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
-#include <memory>
 
 namespace NES {
 namespace QueryCompilation {
@@ -39,12 +35,7 @@ class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public Abst
     static std::shared_ptr<PhysicalKeyedSlidingWindowSink>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
-        return std::make_shared<PhysicalKeyedSlidingWindowSink>(Util::getNextOperatorId(),
-                                                                inputSchema,
-                                                                outputSchema,
-                                                                keyedEventTimeWindowHandler);
-    }
+           Windowing::Experimental::KeyedSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler);
 
     std::string toString() const override;
     OperatorNodePtr copy() override;

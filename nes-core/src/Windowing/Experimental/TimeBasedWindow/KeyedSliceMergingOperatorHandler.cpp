@@ -12,11 +12,24 @@
     limitations under the License.
 */
 
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/ExecutionResult.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <State/StateVariable.hpp>
+#include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
+#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
@@ -32,8 +45,6 @@ void KeyedSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecuti
                                              NES::Experimental::HashMapFactoryPtr hashmapFactory) {
     this->factory = hashmapFactory;
 }
-
-NES::Experimental::Hashmap KeyedSliceMergingOperatorHandler::getHashMap() { return factory->create(); }
 
 void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                              Runtime::StateManagerPtr,

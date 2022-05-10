@@ -13,6 +13,8 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <memory>
 
 namespace NES {
 namespace QueryCompilation {
@@ -23,6 +25,18 @@ PhysicalKeyedTumblingWindowSink::PhysicalKeyedTumblingWindowSink(OperatorId id,
                                                                  SchemaPtr outputSchema,
                                                                  Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), windowDefinition(windowDefinition) {}
+
+std::shared_ptr<PhysicalKeyedTumblingWindowSink>
+PhysicalKeyedTumblingWindowSink::create(SchemaPtr inputSchema,
+                                        SchemaPtr outputSchema,
+                                        Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+    return std::make_shared<PhysicalKeyedTumblingWindowSink>(Util::getNextOperatorId(),
+                                                             inputSchema,
+                                                             outputSchema,
+                                                             windowDefinition);
+}
+
+Windowing::LogicalWindowDefinitionPtr PhysicalKeyedTumblingWindowSink::getWindowDefinition() { return windowDefinition; }
 
 std::string PhysicalKeyedTumblingWindowSink::toString() const { return "PhysicalKeyedTumblingWindowSink"; }
 

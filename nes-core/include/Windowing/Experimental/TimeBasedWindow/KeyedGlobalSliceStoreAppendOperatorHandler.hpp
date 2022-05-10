@@ -14,37 +14,32 @@
 
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_GLOBALSLICESTOREWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_GLOBALSLICESTOREWINDOWHANDLER_HPP_
-#include <Windowing/Experimental/TimeBasedWindow/Events.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/ExecutionResult.hpp>
-#include <Runtime/Reconfigurable.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <State/StateVariable.hpp>
-#include <Util/Experimental/HashMap.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
-#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
+
+namespace NES::Experimental {
+class HashMapFactory;
+using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
+class LockFreeMultiOriginWatermarkProcessor;
+}// namespace NES::Experimental
 
 namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStore;
+class KeyedGlobalSliceStore;
+class KeyedSlice;
+using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 /**
  * @brief The KeyedGlobalSliceStoreAppendOperatorHandler.
  */
 class KeyedGlobalSliceStoreAppendOperatorHandler
     : public Runtime::Execution::OperatorHandler,
-                                      public detail::virtual_enable_shared_from_this<KeyedGlobalSliceStoreAppendOperatorHandler, false> {
+      public detail::virtual_enable_shared_from_this<KeyedGlobalSliceStoreAppendOperatorHandler, false> {
     using inherited0 = detail::virtual_enable_shared_from_this<KeyedGlobalSliceStoreAppendOperatorHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:
-    KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore);
+    KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+                                               std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
 
@@ -60,8 +55,6 @@ class KeyedGlobalSliceStoreAppendOperatorHandler
                              Runtime::Execution::PipelineExecutionContext& ctx,
                              uint64_t sequenceNumber,
                              KeyedSlicePtr slice);
-
-    NES::Experimental::Hashmap getHashMap();
 
     KeyedSlicePtr createKeyedSlice(uint64_t sliceIndex);
 

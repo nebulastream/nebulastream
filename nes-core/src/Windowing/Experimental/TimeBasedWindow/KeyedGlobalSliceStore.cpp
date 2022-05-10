@@ -17,7 +17,7 @@
 #include <forward_list>
 namespace NES::Windowing::Experimental {
 
-std::vector<Window> KeyedGlobalSliceStore::addSliceAndCollectWindows(uint64_t sequenceNumber,
+std::vector<Window> KeyedGlobalSliceStore::addSliceAndTriggerWindows(uint64_t sequenceNumber,
                                                                      KeyedSliceSharedPtr slice,
                                                                      uint64_t windowSize,
                                                                      uint64_t windowSlide) {
@@ -41,10 +41,6 @@ std::vector<Window> KeyedGlobalSliceStore::addSliceAndCollectWindows(uint64_t se
     auto lastMaxSliceEnd = sliceAddSequenceLog.getCurrentWatermark();
     sliceAddSequenceLog.updateWatermark(sliceEnd, sequenceNumber);
     auto newMaxSliceEnd = sliceAddSequenceLog.getCurrentWatermark();
-
-    /*std::vector<Window> windows;
-    */
-
     return triggerInflightWindows(windowSize, windowSlide, lastMaxSliceEnd, newMaxSliceEnd);
 }
 
@@ -52,17 +48,6 @@ std::vector<Window>
 KeyedGlobalSliceStore::triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t lastEndTs, uint64_t endEndTs) {
 
     std::vector<Window> windows;
-    /* auto currentLastWindowStart = lastWindowStart - (lastWindowStart + windowSize) % windowSize;
-    if (__builtin_sub_overflow(currentLastWindowStart, windowSize, &currentLastWindowStart)) {
-        currentLastWindowStart = 0;
-    }
-    for (uint64_t windowStart = currentLastWindowStart;
-         windowStart + windowSize <= endEndTs;
-         windowStart += windowSlide) {
-        Window window = {windowStart, windowStart + windowSize, ++emittedWindows};
-        windows.emplace_back(std::move(window));
-    }*/
-
     // trigger all windows, for which the list of slices contains the slice end.
     uint64_t maxWindowEndTs = lastEndTs;
     if (__builtin_sub_overflow(maxWindowEndTs, windowSize, &maxWindowEndTs)) {
@@ -77,14 +62,12 @@ KeyedGlobalSliceStore::triggerInflightWindows(uint64_t windowSize, uint64_t wind
             auto windowStart = slice->getStart();
             auto windowEnd = slice->getStart() + windowSize;
             // check if it is a valid window
-            if ((lastWindowStart == UINT64_MAX || lastWindowStart < windowStart)
-                && ((windowStart % windowSlide) == 0)) {
+            if ((lastWindowStart == UINT64_MAX || lastWindowStart < windowStart) && ((windowStart % windowSlide) == 0)) {
                 windows.emplace_back<Window>({windowStart, windowEnd, ++emittedWindows});
                 lastWindowStart = windowStart;
             }
         }
     }
-
     return windows;
 }
 
@@ -92,21 +75,6 @@ std::vector<Window> KeyedGlobalSliceStore::triggerAllInflightWindows(uint64_t wi
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     auto lastMaxSliceEnd = sliceAddSequenceLog.getCurrentWatermark();
     return triggerInflightWindows(windowSize, windowSlide, lastMaxSliceEnd, slices.back()->getEnd() + windowSize);
-}
-
-KeyedSliceSharedPtr KeyedGlobalSliceStore::getSlice(uint64_t sliceEnd) {
-    const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    //NES_ASSERT(sliceMap.contains(sliceIndex), "slice is not contained");
-    //return sliceMap[sliceIndex];
-    auto sliceIter = slices.begin();
-    while (sliceIter != slices.end() && (*sliceIter)->getEnd() < sliceEnd) {
-
-        if ((*sliceIter)->getEnd() == sliceEnd) {
-            return (*sliceIter);
-        }
-        sliceIter++;
-    }
-    throw WindowProcessingException("slice dose not exists");
 }
 
 KeyedGlobalSliceStore::~KeyedGlobalSliceStore() {
@@ -136,16 +104,6 @@ void KeyedGlobalSliceStore::finalizeSlice(uint64_t sequenceNumber, uint64_t slic
         //assert(sliceMap.contains(si));
         // sliceMap.erase(si);
     }
-}
-bool KeyedGlobalSliceStore::hasSlice(uint64_t) {
-    const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    //  return sliceMap.contains(sliceIndex);
-    return true;
-}
-
-void KeyedGlobalSliceStore::clear() {
-    const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    //sliceMap.clear();
 }
 
 std::vector<KeyedSliceSharedPtr> KeyedGlobalSliceStore::getSlicesForWindow(uint64_t startTs, uint64_t endTs) {

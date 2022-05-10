@@ -45,6 +45,13 @@ class GeneratableWindowAggregation {
                                     BinaryOperatorStatement partialValueRef,
                                     RecordHandlerPtr recordHandler) = 0;
 
+    /**
+     * @brief Generate code to initialize a window aggregate, based on the initial value.
+     * @param currentCode current code pointer
+     * @param partialValueRef partial value ref
+     * @param inputStruct input struct
+     * @param inputRef input value reference
+     */
     virtual void compileLift(CompoundStatementPtr currentCode,
                                     BinaryOperatorStatement partialValueRef,
                                     RecordHandlerPtr recordHandler) = 0;

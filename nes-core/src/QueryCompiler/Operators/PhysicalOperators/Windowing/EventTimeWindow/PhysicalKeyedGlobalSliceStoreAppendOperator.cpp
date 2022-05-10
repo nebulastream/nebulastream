@@ -13,6 +13,9 @@
 */
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
+#include <memory>
 
 namespace NES {
 namespace QueryCompilation {
@@ -25,6 +28,16 @@ PhysicalKeyedGlobalSliceStoreAppendOperator::PhysicalKeyedGlobalSliceStoreAppend
     std::shared_ptr<Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandler> keyedEventTimeWindowHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractEmitOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
+
+std::shared_ptr<PhysicalKeyedGlobalSliceStoreAppendOperator> PhysicalKeyedGlobalSliceStoreAppendOperator::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::Experimental::KeyedGlobalSliceStoreAppendOperatorHandlerPtr keyedEventTimeWindowHandler) {
+    return std::make_shared<PhysicalKeyedGlobalSliceStoreAppendOperator>(Util::getNextOperatorId(),
+                                                                         inputSchema,
+                                                                         outputSchema,
+                                                                         keyedEventTimeWindowHandler);
+}
 
 std::string PhysicalKeyedGlobalSliceStoreAppendOperator::toString() const {
     return "PhysicalKeyedGlobalSliceStoreAppendOperator";

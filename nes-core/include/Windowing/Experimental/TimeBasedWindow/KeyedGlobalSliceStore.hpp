@@ -37,24 +37,26 @@ struct Window {
  */
 class KeyedGlobalSliceStore {
   public:
-    /**
-     * @brief Add a new slice to the slice store
-     * @param sliceIndex index of the slice
-     * @param slice
-     */
-    std::vector<Window>
-    addSliceAndCollectWindows(uint64_t sequenceNumber,
-                                                     KeyedSliceSharedPtr slice,
-                                                     uint64_t windowSize,
-                                                     uint64_t windowSlide) ;
+    ~KeyedGlobalSliceStore();
 
     /**
-     * @brief Looksup an individual slice by the slice index
-     * @param sliceIndex index of the slice
-     * @return KeyedSlicePtr
+     * @brief Add a new slice to the slice store and trigger all windows, which trigger, because we added this slice.
+     * @param sequenceNumber index of the slice
+     * @param slice the slice, which we want to add to the slice store
+     * @param windowSize the window size
+     * @param windowSlide the window slide
+     * @return std::vector<Window>
      */
-    KeyedSliceSharedPtr getSlice(uint64_t sliceIndex);
-    bool hasSlice(uint64_t sliceIndex);
+    std::vector<Window>
+    addSliceAndTriggerWindows(uint64_t sequenceNumber, KeyedSliceSharedPtr slice, uint64_t windowSize, uint64_t windowSlide);
+
+    /**
+     * @brief Trigger all inflight window, which are covered by at least one slice in the the slice store
+     * @param windowSize the window size
+     * @param windowSlide the window slide
+     * @return std::vector<Window>
+     */
+    std::vector<Window> triggerAllInflightWindows(uint64_t windowSize, uint64_t windowSlide);
 
     /**
      * @brief Triggers a specific slice and garbage collects all slices
@@ -62,19 +64,23 @@ class KeyedGlobalSliceStore {
      * @param sliceIndex
      */
     void finalizeSlice(uint64_t sequenceNumber, uint64_t sliceIndex);
-    ~KeyedGlobalSliceStore();
-    void clear();
 
+    /**
+     * @brief Returns a list of slices, which can be used to access a single slice.
+     * @param startTs window start
+     * @param endTs window end
+     * @return std::vector<KeyedSliceSharedPtr>
+     */
     std::vector<KeyedSliceSharedPtr> getSlicesForWindow(uint64_t startTs, uint64_t endTs);
-    std::vector<Window> triggerAllInflightWindows(uint64_t windowSize, uint64_t windowSlide);
+
   private:
+    std::vector<Window> triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t startEndTs, uint64_t endEndTs);
     std::mutex sliceStagingMutex;
     std::list<KeyedSliceSharedPtr> slices;
     WatermarkProcessor sliceAddSequenceLog;
     WatermarkProcessor sliceTriggerSequenceLog;
     uint64_t lastWindowStart = UINT64_MAX;
     uint64_t emittedWindows = 0;
-    std::vector<Window> triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t startEndTs, uint64_t endEndTs);
 
 };
 

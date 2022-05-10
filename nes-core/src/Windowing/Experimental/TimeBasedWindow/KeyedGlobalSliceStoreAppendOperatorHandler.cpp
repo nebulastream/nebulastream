@@ -12,11 +12,24 @@
     limitations under the License.
 */
 
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/ExecutionResult.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <State/StateVariable.hpp>
+#include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
+#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
@@ -35,8 +48,6 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::setup(Runtime::Execution::Pipel
     this->factory = hashmapFactory;
 }
 
-NES::Experimental::Hashmap KeyedGlobalSliceStoreAppendOperatorHandler::getHashMap() { return factory->create(); }
-
 void KeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                        Runtime::StateManagerPtr,
                                                        uint32_t) {
@@ -48,11 +59,9 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
                                                                      uint64_t sequenceNumber,
                                                                      KeyedSlicePtr slice) {
     auto global = globalSliceStore.lock();
-    if (!global) {
-        return;
-    }
+    NES_ASSERT(global, "globalSliceStore is not valid anymore");
     // add pre-aggregated slice to slice store
-    auto windows = global->addSliceAndCollectWindows(sequenceNumber, std::move(slice), windowSize, windowSlide);
+    auto windows = global->addSliceAndTriggerWindows(sequenceNumber, std::move(slice), windowSize, windowSlide);
     // check if we can trigger window computation
     for (auto& window : windows) {
         auto buffer = wctx.allocateTupleBuffer();
