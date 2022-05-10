@@ -135,6 +135,4 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
     tupleBuffer.setNumberOfTuples(tupleCount);
 }
 
-Parser::~Parser() { NES_DEBUG("Parser::Parsertroyed Parser"); }
-
 }//namespace NES
