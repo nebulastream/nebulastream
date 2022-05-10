@@ -100,9 +100,9 @@ static constexpr auto sleepDuration = std::chrono::milliseconds(250);
 
 [[nodiscard]] std::string enableDebug() { return "--logLevel=LOG_DEBUG"; }
 
-[[nodiscard]] std::string workerHealthCheckWaitTime(uint64_t workerWaitTime) { return "--workerConfig->workerHealthCheckWaitTime=" + std::to_string(workerWaitTime); }
+[[nodiscard]] std::string workerHealthCheckWaitTime(uint64_t workerWaitTime) { return "--workerHealthCheckWaitTime=" + std::to_string(workerWaitTime); }
 
-[[nodiscard]] std::string coordinatorHealthCheckWaitTime(uint64_t coordinatorWaitTime) { return "--coordinatorConfiguration->coordinatorHealthCheckWaitTime=" + std::to_string(coordinatorWaitTime); }
+[[nodiscard]] std::string coordinatorHealthCheckWaitTime(uint64_t coordinatorWaitTime) { return "--coordinatorHealthCheckWaitTime=" + std::to_string(coordinatorWaitTime); }
 
     /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
