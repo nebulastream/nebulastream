@@ -2,8 +2,6 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
 #include <memory>
 namespace NES::Interpreter{
-enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN, LOAD, STORE };
-
 
 class ValueRef {
   public:
@@ -29,6 +27,8 @@ struct ValueRefHasher {
         return hashVal;
     }
 };
+
+ValueRef createNextRef();
 
 }
 

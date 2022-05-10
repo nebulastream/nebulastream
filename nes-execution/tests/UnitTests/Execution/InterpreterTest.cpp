@@ -22,7 +22,7 @@
 #include <Interpreter/Operators/Scan.hpp>
 #include <Interpreter/Operators/Selection.hpp>
 #include <Interpreter/SSACreationPhase.hpp>
-#include <Interpreter/Trace/Tracer.hpp>
+#include <Interpreter/Trace/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <execinfo.h>
 #include <gtest/gtest.h>
@@ -84,7 +84,6 @@ TEST_F(InterpreterTest, functionCallTest) {
 }
 */
 
-
 void assignmentOperator() {
     auto iw = Value<>(1);
     auto iw2 = Value<>(2);
@@ -96,7 +95,8 @@ TEST_F(InterpreterTest, assignmentOperatorTest) {
         assignmentOperator();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    auto basicBlocks = executionTrace.getBlocks();
+    std::cout << *executionTrace.get() << std::endl;
+    auto basicBlocks = executionTrace->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
     ASSERT_EQ(block0.operations[0].op, CONST);
@@ -104,21 +104,22 @@ TEST_F(InterpreterTest, assignmentOperatorTest) {
     ASSERT_EQ(block0.operations[2].op, ADD);
     ASSERT_EQ(block0.operations[3].op, RETURN);
 }
-/*
-void arithmeticExpression(TraceContext* tracer) {
-    Value iw = Value(1, tracer);
-    Value iw2 = Value(2, tracer);
-    Value iw3 = Value(3, tracer);
+
+void arithmeticExpression() {
+    Value iw = Value(1);
+    Value iw2 = Value(2);
+    Value iw3 = Value(3);
     auto result = iw - iw3 + 2 * iw2 / iw;
 }
 
-
 TEST_F(InterpreterTest, arithmeticExpressionTest) {
-    auto executionTrace = traceFunction([](auto* tc) {
-        arithmeticExpression(tc);
+    auto executionTrace = traceFunction([]() {
+        arithmeticExpression();
     });
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    auto basicBlocks = executionTrace.getBlocks();
+    std::cout << *executionTrace.get() << std::endl;
+    auto basicBlocks = executionTrace->getBlocks();
+
     ASSERT_EQ(basicBlocks.size(), 1);
     auto block0 = basicBlocks[0];
 
@@ -131,9 +132,8 @@ TEST_F(InterpreterTest, arithmeticExpressionTest) {
     ASSERT_EQ(block0.operations[5].op, MUL);
     ASSERT_EQ(block0.operations[6].op, DIV);
     ASSERT_EQ(block0.operations[7].op, ADD);
-    std::cout << executionTrace << std::endl;
 }
-
+/*
 void logicalExpressionLessThan(TraceContext* tracer) {
     Value iw = Value(1, tracer);
     auto result = iw < 2;

@@ -7,7 +7,8 @@
 
 namespace NES::Interpreter::Operations {
 
-std::unique_ptr<Any> MulOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp) {
+    template<typename Left, typename Right>
+    auto MulOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& rightExp) {
     if (instanceOf<Integer>(leftExp) && instanceOf<Integer>(rightExp)) {
         auto leftValue = cast<Integer>(leftExp);
         auto rightValue = cast<Integer>(rightExp);

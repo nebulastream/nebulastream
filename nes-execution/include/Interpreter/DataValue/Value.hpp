@@ -4,23 +4,22 @@
 #include <Interpreter/DataValue/Boolean.hpp>
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
+#include <Interpreter/Operations/AndOp.hpp>
+#include <Interpreter/Operations/DivOp.hpp>
+#include <Interpreter/Operations/EqualsOp.hpp>
+#include <Interpreter/Operations/LessThenOp.hpp>
+#include <Interpreter/Operations/MulOp.hpp>
+#include <Interpreter/Operations/NegateOp.hpp>
+#include <Interpreter/Operations/OrOp.hpp>
+#include <Interpreter/Operations/SubOp.hpp>
+#include <Interpreter/Trace/OpCode.hpp>
+#include <Interpreter/Trace/TraceContext.hpp>
 #include <Interpreter/Trace/TraceManager.hpp>
 #include <Interpreter/Trace/ValueRef.hpp>
 #include <Interpreter/Util/Casting.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
 namespace NES::Interpreter {
-
-namespace Operations {
-std::unique_ptr<Any> AndOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
-std::unique_ptr<Any> DivOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
-std::unique_ptr<Any> EqualsOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
-std::unique_ptr<Any> LessThan(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
-std::unique_ptr<Any> MulOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
-std::unique_ptr<Any> OrOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
-std::unique_ptr<Any> SubOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp);
-std::unique_ptr<Any> NegateOp(const std::unique_ptr<Any>& leftExp);
-}// namespace Operations
 
 class BaseValue {
   public:
@@ -29,17 +28,12 @@ class BaseValue {
 template<class ValueType = Any>
 class Value : BaseValue {
   public:
-    //Value(std::unique_ptr<Any>& wrappedValue, TraceContext* traceContext)
-    //    : value(std::move(wrappedValue)), traceContext(traceContext), ref(traceContext->createNextRef()){};
-     Value(std::unique_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(){};
+    Value(std::unique_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(createNextRef()){};
 
-     Value(std::unique_ptr<ValueType>& wrappedValue) : value(std::move(wrappedValue)), ref(0, 0){};
-
-
-    Value(int value)
-        : Value(std::make_unique<Integer>(value)){
-            //traceContext->trace(CONST, *this, *this);
-        };
+    Value(int value) : Value(std::make_unique<Integer>(value)) {
+        Trace(CONST, *this, *this);
+        //traceContext->trace(CONST, *this, *this);
+    };
 
     Value(int64_t value)
         : Value(std::make_unique<Integer>(value)){
@@ -63,17 +57,10 @@ class Value : BaseValue {
     // copy assignment
     Value& operator=(const Value& other) { return *this = Value(other); }
 
-
     // move assignment
     template<class OType>
     Value& operator=(Value<OType>&& other) noexcept {
-        // if (traceContext) {
-        //     Trace(OpCode::ASSIGN, other, *this);
-        //traceContext->getExecutionTrace().traceAssignment(srcRef, other.ref);
-        //}
         this->value = cast<ValueType>(other.value);
-      //  std::swap(value, other.value);
-        //std::swap(ref, other.ref);
         return *this;
     }
 
@@ -100,12 +87,31 @@ class Value : BaseValue {
     ValueRef ref;
 };
 
-
 template<class ValueType>
-void Trace(OpCode, const Value<ValueType>&, Value<ValueType>&){};
+void Trace(OpCode op, const Value<ValueType>& input, Value<ValueType>& result) {
+    auto ctx = getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        if (op == OpCode::CONST) {
+            auto constValue = input.value->copy();
+            auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
+            ctx->trace(operation);
+        } else if (op == CMP) {
+            ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
+        } else {
+            auto operation = Operation(op, result.ref, {input.ref});
+            ctx->trace(operation);
+        }
+    }
+};
 
-template<class ValueType>
-void Trace(OpCode, const Value<ValueType>&, const Value<ValueType>&, Value<ValueType>&){};
+template<class ValueLeft, class ValueRight, class ValueReturn>
+void Trace(OpCode op, const Value<ValueLeft>& left, const Value<ValueRight>& right, Value<ValueReturn>& result) {
+    auto ctx = getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        auto operation = Operation(op, result.ref, {left.ref, right.ref});
+        ctx->trace(operation);
+    }
+};
 
 template<class T>
 concept IsValueType = std::is_base_of<BaseValue, T>::value;
@@ -136,7 +142,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator+(const LHS& left, const RHS& right) {
     auto result = Operations::AddOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    //Trace(OpCode::ADD, left, right, resValue);
+    Trace(OpCode::ADD, left, right, resValue);
     return resValue;
 };
 

@@ -7,7 +7,8 @@
 
 namespace NES::Interpreter::Operations {
 
-std::unique_ptr<Any> NegateOp(const std::unique_ptr<Any>& value) {
+template<typename Value>
+auto NegateOp(const std::unique_ptr<Value>& value) {
     if (instanceOf<Boolean>(value)) {
         auto boolValue = cast<Boolean>(value);
         return std::make_unique<Boolean>(!boolValue->value);
@@ -15,6 +16,6 @@ std::unique_ptr<Any> NegateOp(const std::unique_ptr<Any>& value) {
     NES_THROW_RUNTIME_ERROR("no matching execution");
 }
 
-}// namespace NES::Interpreter
+}// namespace NES::Interpreter::Operations
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATIONS_NEGATEOP_HPP_

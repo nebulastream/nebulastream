@@ -7,7 +7,8 @@
 
 namespace NES::Interpreter::Operations {
 
-std::unique_ptr<Any> DivOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp) {
+template<typename Left, typename Right>
+auto DivOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& rightExp) {
     if (instanceOf<Integer>(leftExp) && instanceOf<Integer>(rightExp)) {
         auto leftValue = cast<Integer>(leftExp);
         auto rightValue = cast<Integer>(rightExp);
@@ -16,6 +17,6 @@ std::unique_ptr<Any> DivOp(const std::unique_ptr<Any>& leftExp, const std::uniqu
     NES_THROW_RUNTIME_ERROR("no matching execution");
 }
 
-}// namespace NES::Interpreter
+}// namespace NES::Interpreter::Operations
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATIONS_DIVBOP_HPP_

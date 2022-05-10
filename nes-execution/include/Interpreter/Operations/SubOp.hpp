@@ -7,7 +7,8 @@
 
 namespace NES::Interpreter::Operations {
 
-std::unique_ptr<Any> SubOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp) {
+template<typename Left, typename Right>
+auto SubOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& rightExp) {
     if (instanceOf<Integer>(leftExp) && instanceOf<Integer>(rightExp)) {
         auto leftValue = cast<Integer>(leftExp);
         auto rightValue = cast<Integer>(rightExp);
@@ -15,6 +16,8 @@ std::unique_ptr<Any> SubOp(const std::unique_ptr<Any>& leftExp, const std::uniqu
     }
     NES_THROW_RUNTIME_ERROR("no matching execution");
 }
+
+
 
 }// namespace NES::Interpreter
 

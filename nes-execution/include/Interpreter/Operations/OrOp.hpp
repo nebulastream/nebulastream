@@ -7,7 +7,8 @@
 
 namespace NES::Interpreter::Operations {
 
-std::unique_ptr<Any> OrOp(const std::unique_ptr<Any>& leftExp, const std::unique_ptr<Any>& rightExp) {
+template<typename Left, typename Right>
+auto OrOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& rightExp) {
     if (instanceOf<Boolean>(leftExp) && instanceOf<Boolean>(rightExp)) {
         auto leftValue = cast<Boolean>(leftExp);
         auto rightValue = cast<Boolean>(rightExp);

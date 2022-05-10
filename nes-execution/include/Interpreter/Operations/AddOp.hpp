@@ -17,6 +17,6 @@ auto AddOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& r
     NES_THROW_RUNTIME_ERROR("no matching execution");
 }
 
-}// namespace NES::Interpreter
+}// namespace NES::Interpreter::Operations
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATIONS_ADDOP_HPP_

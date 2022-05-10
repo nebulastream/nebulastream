@@ -1,13 +1,15 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
-#include <Interpreter/Trace/Tracer.hpp>
+#include <Interpreter/Trace/TraceContext.hpp>
+#include <Interpreter/Trace/ExecutionTrace.hpp>
+#include <Interpreter/Trace/OperationRef.hpp>
 #include <set>
 
 namespace NES::Interpreter {
 
 class SSACreationPhase {
   public:
-    ExecutionTrace apply(ExecutionTrace&& trace) {
+    std::shared_ptr<ExecutionTrace> apply(std::shared_ptr<ExecutionTrace> trace) {
         auto phaseContext = SSACreationPhaseContext(std::move(trace));
         return phaseContext.process();
     };
@@ -15,9 +17,9 @@ class SSACreationPhase {
   private:
     class SSACreationPhaseContext {
       public:
-        SSACreationPhaseContext(ExecutionTrace&& trace) : trace(std::move(trace)){};
-        ExecutionTrace process() {
-            auto& returnBlock = trace.getBlock(trace.returnRef->blockId);
+        SSACreationPhaseContext(std::shared_ptr<ExecutionTrace> trace) : trace(std::move(trace)){};
+        std::shared_ptr<ExecutionTrace> process() {
+            auto& returnBlock = trace->getBlock(trace->returnRef->blockId);
             processBlock(returnBlock);
             removeAssignments();
             return std::move(trace);
@@ -44,7 +46,7 @@ class SSACreationPhase {
                 // add to parameters in parent blocks
                 for (auto& predecessor : block.predecessors) {
                     // add to final call
-                    auto& predBlock = trace.getBlock(predecessor);
+                    auto& predBlock = trace->getBlock(predecessor);
                     auto& lastOperation = predBlock.operations.back();
                     if (lastOperation.op == JMP || lastOperation.op == CMP) {
                         for (auto& input : lastOperation.input) {
@@ -67,7 +69,7 @@ class SSACreationPhase {
         };
 
         void removeAssignments() {
-            for (Block& block : trace.getBlocks()) {
+            for (Block& block : trace->getBlocks()) {
                 std::unordered_map<ValueRef, ValueRef, ValueRefHasher> assignmentMap;
                 for (uint64_t i = 0; i < block.operations.size(); i++) {
                     auto& operation = block.operations[i];
@@ -114,14 +116,14 @@ class SSACreationPhase {
             }
             processedBlocks.emplace(block.blockId);
             for (auto pred : block.predecessors) {
-                auto& predBlock = trace.getBlock(pred);
+                auto& predBlock = trace->getBlock(pred);
                 if (!processedBlocks.contains(pred))
                     processBlock(predBlock);
             }
         }
 
       private:
-        ExecutionTrace trace;
+        std::shared_ptr<ExecutionTrace> trace;
         std::set<uint32_t> processedBlocks;
     };
 };
