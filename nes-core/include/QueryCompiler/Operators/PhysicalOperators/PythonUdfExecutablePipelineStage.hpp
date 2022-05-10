@@ -34,11 +34,10 @@ using Runtime::WorkerContext;
 class PythonUdfExecutablePipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
     /**
-     *
-     * @param inputSchema
-     * @param outputSchema
+     * @brief The constructor for a pipeline stage executing Python Udf
+     * @param inputSchema input schema pointer
      */
-    PythonUdfExecutablePipelineStage(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema);
+    explicit PythonUdfExecutablePipelineStage(const SchemaPtr& inputSchema);
     ~PythonUdfExecutablePipelineStage() override;
     ExecutionResult
     execute(Runtime::TupleBuffer& buffer, Runtime::Execution::PipelineExecutionContext& ctx, Runtime::WorkerContext& wc) override;
@@ -50,7 +49,6 @@ class PythonUdfExecutablePipelineStage : public Runtime::Execution::ExecutablePi
     const char* pythonFunctionName = "add42"; // function name that is called
     const char* pythonSystemPathKey = "path"; // keyword to set the Py system path
     SchemaPtr inputSchema;
-    SchemaPtr outputSchema;
 };
 
 }// namespace NES

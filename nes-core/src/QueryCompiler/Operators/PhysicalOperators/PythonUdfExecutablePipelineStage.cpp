@@ -20,9 +20,8 @@ limitations under the License.
 
 namespace NES {
 
-PythonUdfExecutablePipelineStage::PythonUdfExecutablePipelineStage(const SchemaPtr& inputSchema, const SchemaPtr& outputSchema) {
+PythonUdfExecutablePipelineStage::PythonUdfExecutablePipelineStage(const SchemaPtr& inputSchema) {
     this->inputSchema = inputSchema;
-    this->outputSchema = outputSchema;
 }
 
 ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
@@ -49,9 +48,11 @@ ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupl
         if (pyFunc && PyCallable_Check(pyFunc)) {
             // Iterate over tuples
             for (uint64_t t = 0; t < dynamicTupleBuffer.getNumberOfTuples(); t++) {
-                // Iterate over elements in tuple
+                // Iterate over fields in tuple
+                //For now, we apply the udf for every tuple element, but will be changed
                 for (uint64_t i = 0; i < this->inputSchema->getSize(); i++) {
                     pyArgs = PyTuple_New(1);
+                    // We cover the simple case of using int for now
                     pyValue = PyLong_FromLong(dynamicTupleBuffer[t][i].read<int64_t>());
                     if (!pyValue) {
                         Py_Finalize();// Frees all memory allocated
