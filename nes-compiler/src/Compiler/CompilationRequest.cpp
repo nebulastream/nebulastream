@@ -76,5 +76,11 @@ bool CompilationRequest::enableExecutionProfiling() const { return profileExecut
 std::string CompilationRequest::getName() const { return name; }
 
 const std::shared_ptr<SourceCode> CompilationRequest::getSourceCode() const { return sourceCode; }
+bool CompilationRequest::operator==(const CompilationRequest& rhs) const {
+    return sourceCode == rhs.sourceCode && name == rhs.name && profileCompilation == rhs.profileCompilation
+        && profileExecution == rhs.profileExecution && optimizeCompilation == rhs.optimizeCompilation && debug == rhs.debug
+        && sourceSharing == rhs.sourceSharing;
+}
+bool CompilationRequest::operator!=(const CompilationRequest& rhs) const { return !(rhs == *this); }
 
 }// namespace NES::Compiler

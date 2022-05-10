@@ -41,6 +41,8 @@ class CompilationRequest {
                        bool optimizeCompilation,
                        bool debug,
                        bool sourceSharing);
+    bool operator==(const CompilationRequest& rhs) const;
+    bool operator!=(const CompilationRequest& rhs) const;
 
     /**
      * @brief Creates a new @CompilationRequest.
