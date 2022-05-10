@@ -17,7 +17,7 @@ TraceContext* getThreadLocalTraceContext() { return &threadLocalTraceContext; }
 
 TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()) {
     reset();
-    startAddress = (uint64_t) (__builtin_return_address(1));
+    startAddress = (uint64_t) (__builtin_return_address(2));
     std::cout << startAddress << std::endl;
 }
 
@@ -193,7 +193,8 @@ void TraceContext::trace(Operation& operation) {
     if (!isExpectedOperation(operation.op)) {
         auto tag = createTag();
         if (auto ref = isKnownOperation(tag)) {
-            std::cout << executionTrace << std::endl;
+            std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
+            std::cout << *executionTrace.get() << std::endl;
             auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
             auto mergeOperation = mergeBlock.operations.front();
             currentOperationCounter = 1;

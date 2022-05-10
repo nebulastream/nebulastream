@@ -35,14 +35,8 @@ class Value : BaseValue {
         //traceContext->trace(CONST, *this, *this);
     };
 
-    Value(int64_t value)
-        : Value(std::make_unique<Integer>(value)){
-            //traceContext->trace(CONST, *this, *this);
-        };
-    Value(bool value)
-        : Value(std::make_unique<Boolean>(value)){
-            // traceContext->trace(CONST, *this, *this);
-        };
+    Value(int64_t value) : Value(std::make_unique<Integer>(value)) { Trace(CONST, *this, *this); };
+    Value(bool value) : Value(std::make_unique<Boolean>(value)) { Trace(CONST, *this, *this); };
 
     // copy constructor
     template<class OType>
@@ -60,6 +54,8 @@ class Value : BaseValue {
     // move assignment
     template<class OType>
     Value& operator=(Value<OType>&& other) noexcept {
+        auto operation = Operation(ASSIGN, this->ref, {other.ref});
+        getThreadLocalTraceContext()->trace(operation);
         this->value = cast<ValueType>(other.value);
         return *this;
     }
