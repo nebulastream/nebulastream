@@ -74,12 +74,12 @@ namespace NES {
 class TestHarness {
   public:
     /**
-         * @brief The constructor of TestHarness
-         * @param numWorkers number of worker (each for one physical source) to be used in the test
-         * @param queryWithoutSink query string to test (without the sink operator)
-         * @param restPort port for the rest service
-         * @param rpcPort for for the grpc
-         */
+     * @brief The constructor of TestHarness
+     * @param numWorkers number of worker (each for one physical source) to be used in the test
+     * @param queryWithoutSink query string to test (without the sink operator)
+     * @param restPort port for the rest service
+     * @param rpcPort for for the grpc
+     */
     explicit TestHarness(std::string queryWithoutSink,
                          uint16_t restPort,
                          uint16_t rpcPort,
@@ -385,9 +385,9 @@ class TestHarness {
             memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
         }
 
-        // NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
-        //                 "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
-        //                    << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
+        NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
+                        "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
+                            << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         auto memorySourceType =
             MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, "interval");
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
@@ -511,7 +511,8 @@ class TestHarness {
                                                        ->toString());
         if (outputSchemaSizeInBytes != sizeof(T)) {
             NES_FATAL_ERROR("The size of output struct does not match output schema."
-                            " Output struct:" << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
+                            " Output struct:"
+                            << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
             ADD_FAILURE();
             return std::vector<T>();
         }
@@ -580,7 +581,7 @@ class TestHarness {
     uint16_t rpcPort;
     uint64_t memSrcFrequency;
     uint64_t memSrcNumBuffToProcess;
-    //  uint64_t bufferSize;
+    uint64_t bufferSize;
     NesCoordinatorPtr nesCoordinator;
     std::vector<LogicalSourcePtr> logicalSources;
     std::vector<TestHarnessWorkerConfigurationPtr> testHarnessWorkerConfigurations;

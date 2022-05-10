@@ -31,12 +31,12 @@ class GeneratableMedianAggregation : public GeneratableWindowAggregation {
      * @return GeneratableWindowAggregationPtr
      */
     static GeneratableWindowAggregationPtr create(const Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+
     /**
      * @brief Generates code for window aggregate
      * @param currentCode current code pointer
-     * @param partialValueRef partial value ref
-     * @param inputStruct input struct
-     * @param inputRef input value reference
+     * @param partialRef partial value ref
+     * @param recordHandler record handler
      */
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,

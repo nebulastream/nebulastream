@@ -96,11 +96,8 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::Execution::Pipeli
         ctx->dispatchBuffer(buffer);
     }
 }
-
-KeyedSlicePtr KeyedGlobalSliceStoreAppendOperatorHandler::createKeyedSlice(uint64_t sliceIndex) {
-    auto startTs = sliceIndex;
-    auto endTs = (sliceIndex + 1);
-    return std::make_unique<KeyedSlice>(factory, startTs, endTs);
-};
+KeyedGlobalSliceStoreAppendOperatorHandler::~KeyedGlobalSliceStoreAppendOperatorHandler() {
+    NES_DEBUG("Destruct KeyedEventTimeWindowHandler");
+}
 
 }// namespace NES::Windowing::Experimental

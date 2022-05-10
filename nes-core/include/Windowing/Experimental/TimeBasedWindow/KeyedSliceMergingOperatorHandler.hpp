@@ -42,6 +42,11 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
 
+    /**
+     * @brief Get a reference to the slice staging.
+     * @note This should be only called from the generated code.
+     * @return SliceStaging
+     */
     inline SliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     inline std::weak_ptr<SliceStaging> getSliceStagingPtr() { return sliceStaging; }
@@ -54,9 +59,14 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
 
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+     * @brief Creates a new keyed slice for a specific slice merge task
+     * @param sliceMergeTaskS liceMergeTask
+     * @return KeyedSlicePtr
+     */
     KeyedSlicePtr createKeyedSlice(SliceMergeTask* sliceMergeTask);
 
-    ~KeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
+    ~KeyedSliceMergingOperatorHandler();
 
   private:
     std::atomic<uint32_t> activeCounter;

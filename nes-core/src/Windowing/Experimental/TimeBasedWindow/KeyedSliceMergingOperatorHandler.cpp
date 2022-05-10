@@ -65,6 +65,7 @@ void KeyedSliceMergingOperatorHandler::stop(Runtime::Execution::PipelineExecutio
 
 KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {
     return std::make_unique<KeyedSlice>(factory, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
-};
+}
+KeyedSliceMergingOperatorHandler::~KeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 
 }// namespace NES::Windowing::Experimental
