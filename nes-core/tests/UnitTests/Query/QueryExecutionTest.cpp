@@ -1093,12 +1093,12 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 }
 
 /**
- * The ExternalOperatorQuery test and PythonUdfPipelineStage class
+ * The PythonUdfQuery test and PythonUdfPipelineStage class
  * invoke the Python interpreter and will fail if Python UDF are not enabled
  */
 #ifdef PYTHON_UDF_ENABLED
 
-TEST_F(QueryExecutionTest, ExternalPythonUdfQuery) {
+TEST_F(QueryExecutionTest, PythonUdfQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
