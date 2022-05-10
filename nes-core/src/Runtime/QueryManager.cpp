@@ -310,12 +310,17 @@ bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t qu
     auto qep = sourceToQEPMapping.find(sourceOperatorId);
     if (qep != sourceToQEPMapping.end()) {
         //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
-        auto newReconf = ReconfigurationMessage(queryId,
-                                                qep->second->getQuerySubPlanId(),
-                                                Runtime::ReconfigurationType::PropagateEpoch,
-                                                qep->second,
-                                                std::make_any<uint64_t>(epochBarrier));
-        qep->second->postReconfigurationCallback(newReconf);
+        auto sinks = qep->second->getSinks();
+        for (auto sink : sinks) {
+            if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+                auto newReconf = ReconfigurationMessage(queryId,
+                                                        qep->second->getQuerySubPlanId(),
+                                                        Runtime::ReconfigurationType::PropagateEpoch,
+                                                        qep->second,
+                                                        std::make_any<uint64_t>(epochBarrier));
+                addReconfigurationMessage(queryId, qep->second->getQuerySubPlanId(), newReconf);
+            }
+        }
         return true;
     } else {
         NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no source was found");

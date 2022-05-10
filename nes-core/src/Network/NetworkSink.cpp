@@ -55,7 +55,7 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        nodeEngine->getBufferStorage()->insertBuffer(queryId, nesPartition.getPartitionId(), inputBuffer);
+        workerContext.insertIntoStorage(inputBuffer);
     }
     if (channel) {
         return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
@@ -100,6 +100,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
+            workerContext.createStorage();
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
                                                                       << Runtime::NesThread::getId() << " ref cnt "
                                                                       << task.getUserData<uint32_t>());
@@ -115,6 +116,12 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
+            break;
+        }
+        case Runtime::PropagateEpoch: {
+            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
+            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId);
+            workerContext.trimStorage(task.getUserData<uint64_t>());
             break;
         }
         default: {

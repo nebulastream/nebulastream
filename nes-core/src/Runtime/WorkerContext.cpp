@@ -61,6 +61,23 @@ void WorkerContext::storeNetworkChannel(Network::OperatorId id, Network::Network
     dataChannels[id] = std::move(channel);
 }
 
+void WorkerContext::createStorage() {
+    storage = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>();
+}
+
+void WorkerContext::insertIntoStorage(NES::Runtime::TupleBuffer buffer) {
+    storage.push(buffer);
+}
+
+void WorkerContext::trimStorage(uint64_t timestamp) {
+    if (!storage.empty()) {
+        while (!storage.empty() && storage.top().getWatermark() < timestamp) {
+            NES_TRACE("BufferStorage: Delete tuple with watermark" << storage.top().getWatermark());
+            storage.pop();
+        }
+    }
+}
+    
 bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {

@@ -181,16 +181,6 @@ bool ExecutableQueryPlan::stop() {
 void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
-        case PropagateEpoch: {
-            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId);
-            auto networkSinks = getSinks();
-            for (const DataSinkPtr& sink : networkSinks) {
-                Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
-                networkSink->getNodeEngine()->getBufferStorage()->trimBuffer(queryId, task.getUserData<uint64_t>());
-            }
-            break;
-        }
         case FailEndOfStream: {
             NES_DEBUG("Executing FailEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             NES_ASSERT2_FMT((numOfTerminationTokens.fetch_sub(1) == 1),

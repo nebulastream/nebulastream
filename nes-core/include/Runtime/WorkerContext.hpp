@@ -18,11 +18,15 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <cstdint>
 #include <memory>
+#include <queue>
 #include <unordered_map>
 
 namespace NES::Runtime {
+
 
 class AbstractBufferProvider;
 
@@ -45,6 +49,8 @@ class WorkerContext {
     LocalBufferPoolPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
+    ///queue of tuple buffers that were processed by the thread
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter> storage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -105,6 +111,23 @@ class WorkerContext {
      * @param channel the output channel
      */
     void storeNetworkChannel(Network::OperatorId id, Network::NetworkChannelPtr&& channel);
+
+    /**
+     * @brief This method creates a network storage for a thread
+     */
+    void createStorage();
+
+    /**
+     * @brief This method inserts a tuple buffer into the storage
+     * @param TupleBuffer tuple buffer
+     */
+    void insertIntoStorage(NES::Runtime::TupleBuffer buffer);
+
+    /**
+     * @brief This method deletes a tuple buffer from the storage
+     * @param timestamp timestamp
+     */
+    void trimStorage(uint64_t timestamp);
 
     /**
      * @brief removes a registered network channel with a termination type
