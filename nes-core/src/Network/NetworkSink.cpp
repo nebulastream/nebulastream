@@ -54,11 +54,12 @@ SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        workerContext.insertIntoStorage(inputBuffer);
-    }
     if (channel) {
-        return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+        if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+            workerContext.insertIntoStorage(inputBuffer);
+        }
+        return success;
     }
     NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
     return false;
