@@ -32,7 +32,8 @@ class Parser {
    * @param physicalTypes vector with physical data types
    */
     explicit Parser(std::vector<PhysicalTypePtr> physicalTypes);
-    virtual ~Parser();
+
+    virtual ~Parser() = default;
 
     /**
    * @brief takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer

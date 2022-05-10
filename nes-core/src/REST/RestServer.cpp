@@ -17,7 +17,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <REST/RestEngine.hpp>
-#include <REST/RestServerInterruptHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 
@@ -55,24 +54,29 @@ RestServer::RestServer(std::string host,
       host(std::move(host)), port(port) {}
 
 bool RestServer::start() {
-
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
-    RestServerInterruptHandler::hookUserInterruptHandler();
     restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
         // wait for server initialization...
-        restEngine->accept().wait();
-        NES_DEBUG("RestServer: Server started");
+        auto listener = restEngine->accept();
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
-        RestServerInterruptHandler::waitForUserInterrupt();
-        restEngine->shutdown();
+        listener.wait();
+        {
+            std::unique_lock lock(mutex);
+            while (!stopRequested) {
+                cvar.wait(lock);
+            }
+        }
         restEngine.reset();
+        shutdownPromise.set_value(true);
         NES_DEBUG("RestServer: after waitForUserInterrupt");
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
+        shutdownPromise.set_exception(std::make_exception_ptr(e));
         return false;
     } catch (...) {
         NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+        shutdownPromise.set_exception(std::current_exception());
         return false;
     }
     return true;
@@ -80,8 +84,14 @@ bool RestServer::start() {
 
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
-    RestServerInterruptHandler::handleUserInterrupt(SIGTERM);
-    return true;
+    {
+        std::unique_lock lock(mutex);
+        stopRequested = true;
+    }
+    auto task = restEngine->shutdown();
+    task.wait();
+    cvar.notify_all();
+    return shutdownPromise.get_future().get();
 }
 
 }// namespace NES

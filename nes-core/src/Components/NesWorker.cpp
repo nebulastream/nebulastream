@@ -167,7 +167,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
         bool con = connect();
-        NES_DEBUG("connected= " << con);
+
         NES_ASSERT(con, "cannot connect");
     }
 
@@ -341,7 +341,7 @@ const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration(
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     NES_ASSERT(!physicalSources.empty(), "invalid physical sources");
     bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
+
     NES_ASSERT(con, "cannot connect");
     bool success = coordinatorRpcClient->registerPhysicalSources(physicalSources);
     NES_ASSERT(success, "failed to register source");
@@ -351,7 +351,7 @@ bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& ph
 
 bool NesWorker::addParent(uint64_t parentId) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
+
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->addParent(parentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
@@ -360,7 +360,7 @@ bool NesWorker::addParent(uint64_t parentId) {
 
 bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
+
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
     if (!success) {
@@ -373,7 +373,7 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
 
 bool NesWorker::removeParent(uint64_t parentId) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
+
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->removeParent(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success);
@@ -414,7 +414,7 @@ bool NesWorker::notifyQueryStatusChange(QueryId queryId,
                                << subQueryId);
         return coordinatorRpcClient->notifySoftStopCompleted(queryId, subQueryId);
     } else if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::ErrorState) {
-        return coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, 0, 0, ""s);
+        return true;// rpc to coordinator executed from async runner
     }
     return false;
 }
@@ -438,7 +438,6 @@ bool NesWorker::notifySourceTermination(QueryId queryId,
 
 bool NesWorker::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, std::string errorMsg) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, getWorkerId(), 0, errorMsg);
     NES_DEBUG("NesWorker::notifyQueryFailure success=" << success);
@@ -447,7 +446,6 @@ bool NesWorker::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, std::s
 
 bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->notifyEpochTermination(timestamp, queryId);
     NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
@@ -456,8 +454,8 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
 
 bool NesWorker::notifyErrors(uint64_t workerId, std::string errorMsg) {
     bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
+    NES_DEBUG("NesWorker::sendErrors worker " << workerId << " going to send error=" << errorMsg);
     bool success = coordinatorRpcClient->sendErrors(workerId, errorMsg);
     NES_DEBUG("NesWorker::sendErrors success=" << success);
     return success;
@@ -474,7 +472,7 @@ void NesWorker::onFatalError(int signalNumber, std::string callstack) {
     errorMsg =
         "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + callstack;
     //send it to Coordinator
-    this->notifyErrors(this->getWorkerId(), errorMsg);
+    notifyErrors(getWorkerId(), errorMsg);
 #ifdef ENABLE_CORE_DUMPER
     detail::createCoreDump();
 #endif

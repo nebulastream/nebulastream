@@ -16,7 +16,10 @@
 #define NES_INCLUDE_REST_RESTSERVER_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <condition_variable>
+#include <future>
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace NES {
@@ -101,12 +104,18 @@ class RestServer {
    * @brief method to stop rest server
    * @return bool indicating sucesss
    */
-    static bool stop();
+    bool stop();
 
   private:
     RestEnginePtr restEngine;
     std::string host;
     uint16_t port;
+
+    std::condition_variable cvar;
+    std::mutex mutex;
+
+    bool stopRequested{false};
+    std::promise<bool> shutdownPromise;
 };
 }// namespace NES
 
