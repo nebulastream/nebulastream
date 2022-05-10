@@ -398,6 +398,47 @@ TEST_P(SingleNodeThreadLocalTumblingWindowTests, testTumblingWindowMin) {
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+/*
+TEST_P(SingleNodeThreadLocalTumblingWindowTests, testTumblingWindowMedian) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window")
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
+            .byKey(Attribute("id")).apply(Median(Attribute("value"))))";
+    auto dg = DataGenerator(100);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", dg.getSource(), workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+    testHarness.validate().setupTopology();
+    std::vector<Output> expectedOutput = {{0, 1000, 1, 1},
+                                          {1000, 2000, 1, 1},
+                                          {2000, 3000, 1, 1},
+                                          {3000, 4000, 1, 1},
+                                          {4000, 5000, 1, 1},
+                                          {5000, 6000, 1, 1},
+                                          {6000, 7000, 1, 1},
+                                          {7000, 8000, 1, 1},
+                                          {8000, 9000, 1, 1},
+                                          {9000, 10000, 1, 1},
+                                          {10000, 11000, 1, 1},
+                                          {11000, 12000, 1, 1},
+                                          {12000, 13000, 1, 1},
+                                          {13000, 14000, 1, 1},
+                                          {14000, 15000, 1, 1},
+                                          {15000, 16000, 1, 1},
+                                          {16000, 17000, 1, 1}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+*/
 TEST_P(SingleNodeThreadLocalTumblingWindowTests, testTumblingWindowMax) {
     auto testSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
