@@ -11,11 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <filesystem>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <Util/KalmanFilter.hpp>
@@ -23,15 +27,11 @@
 #include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
+#include <filesystem>
 #include <functional>
 #include <future>
 #include <iostream>
 #include <thread>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
@@ -47,12 +47,9 @@ std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExec
     return executableSuccessors;
 }
 
-
-void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines)
-{
+void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines) {
     //TODO: Make this threadsafe
-    for(auto &pipe: newPipelines)
-    {
+    for (auto& pipe : newPipelines) {
         executableSuccessors.push_back(pipe);
     }
 }
@@ -101,8 +98,14 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 }
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
+   uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
-        queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
+        if (!sourceSharing) {
+            queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
+        } else {
+            NES_WARNING("push task for queueid=" << queueId << " successor=" << &successor);
+            queryManager->addWorkForNextPipeline(buffer, successor, queueId++);
+        }
     }
 }
 
@@ -156,8 +159,7 @@ bool DataSource::start() {
             });
         }
     }
-    if(thread)
-    {
+    if (thread) {
         thread->detach();
     }
     return prom.get_future().get();

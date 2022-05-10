@@ -67,6 +67,7 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                                                            compilerOptions->getNumSourceLocalBuffers(),
                                                                            std::move(successors));
             sourceDescriptorToDataSourceMap[searchEntry] = source;
+            source->setSourceSharing(true);
             return source;
         }
     }
