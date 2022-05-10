@@ -52,6 +52,9 @@ class GeneratableMedianAggregation : public GeneratableWindowAggregation {
     void compileLift(CompoundStatementPtr currentCode,
                      BinaryOperatorStatement partialValueRef,
                      RecordHandlerPtr recordHandler) override;
+    VariableDeclarationPtr getPartialAggregate() override;
+
+
 };
 
 }// namespace GeneratableOperators

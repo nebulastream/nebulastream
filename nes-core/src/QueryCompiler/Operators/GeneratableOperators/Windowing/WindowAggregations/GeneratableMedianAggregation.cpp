@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp"
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
@@ -28,10 +29,12 @@ GeneratableWindowAggregationPtr
 GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
     return std::make_shared<GeneratableMedianAggregation>(aggregationDescriptor);
 }
-void GeneratableMedianAggregation::compileLift(CompoundStatementPtr ,
-                                               BinaryOperatorStatement ,
+void GeneratableMedianAggregation::compileLift(CompoundStatementPtr currentCode,
+                                               BinaryOperatorStatement partialRef,
                                                RecordHandlerPtr ) {
-    NES_NOT_IMPLEMENTED();
+    auto newCall = FunctionCallStatement("new NES::Windowing::PartialMedian");
+    newCall.addParameter(*partialRef);
+    currentCode->addStatement(newCall.copy());
 }
 
 void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
@@ -48,6 +51,13 @@ void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr curre
     auto updatedPartial = partialRef.accessRef(pushBackFunctionCall);
 
     currentCode->addStatement(updatedPartial.copy());
+}
+
+VariableDeclarationPtr GeneratableMedianAggregation::getPartialAggregate() {
+    auto tf = GeneratableTypesFactory();
+    return std::make_shared<VariableDeclaration>(
+        VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::PartialMedian"),
+                                    "median_value"));
 }
 
 void GeneratableMedianAggregation::compileCombine(CompoundStatementPtr currentCode,
