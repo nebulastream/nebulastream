@@ -16,7 +16,7 @@ namespace NES::Experimental {
 
 LockFreeMultiOriginWatermarkProcessor::LockFreeMultiOriginWatermarkProcessor(const std::vector<OriginId> origins)
     : origins(std::move(origins)) {
-    for (uint64_t i = 0; i < origins.size(); i++) {
+    for (uint64_t i = 0; i < this->origins.size(); i++) {
         watermarkProcessors.emplace_back(std::make_shared<Util::NonBlockingMonotonicSeqQueue<OriginId>>());
     }
 };

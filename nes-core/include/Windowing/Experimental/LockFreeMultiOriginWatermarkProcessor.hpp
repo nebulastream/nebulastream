@@ -15,6 +15,9 @@
 #ifndef NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_
 #define NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_LOCKFREEMULTIORIGINWATERMARKPROCESSOR_HPP_
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <cstdint>
+#include <memory>
+#include <vector>
 namespace NES::Experimental {
 
 using OriginId = uint64_t;
@@ -47,7 +50,7 @@ class LockFreeMultiOriginWatermarkProcessor {
 
   private:
     const std::vector<OriginId> origins;
-    std::vector<std::shared_ptr<Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors;
+    std::vector<std::shared_ptr<Util::NonBlockingMonotonicSeqQueue<OriginId>>> watermarkProcessors = {};
 };
 
 }// namespace NES::Experimental
