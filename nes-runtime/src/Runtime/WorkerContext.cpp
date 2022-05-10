@@ -75,7 +75,7 @@ void WorkerContext::createStorage(Network::PartitionId nesPartitionId) {
 }
 
 void WorkerContext::insertIntoStorage(Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
-    storage[nesPartitionId].push(buffer);
+    //storage[nesPartitionId].push(buffer);
 }
 
 void WorkerContext::trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp) {
