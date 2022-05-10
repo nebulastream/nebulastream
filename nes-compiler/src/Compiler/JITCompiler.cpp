@@ -26,7 +26,7 @@ namespace NES::Compiler {
 JITCompiler::JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers)
     : languageCompilers(std::move(languageCompilers)) {}
 
-std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const CompilationRequest> request) const {
+std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const CompilationRequest> request) {
     if (request->getSourceCode() == nullptr) {
         throw CompilerException("No source code provided");
     }
@@ -38,13 +38,23 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
     }
 
     auto compiler = languageCompiler->second;
-    auto asyncResult = std::async(std::launch::async, [compiler, request]() {
-        return compiler->compile(request);
+    auto asyncResult = std::async(std::launch::async, [compiler, request, this]() {
+        if (compilationReuseMap.contains(request->getSourceCode()->getCode())) {
+            auto result = compilationReuseMap.find(request->getSourceCode()->getCode());
+            std::cout << "Reuse existing binary" << std::endl;
+            return result->second;
+        } else {
+            auto result = compiler->compile(request);
+            std::string code = request->getSourceCode()->getCode();
+            auto par = std::pair<std::string, CompilationResult>(code, result);
+            compilationReuseMap.insert(par);
+            return result;
+        }
     });
     return asyncResult;
 }
 
-std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
+std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const CompilationRequest> request) {
     return handleRequest(request);
 }
 

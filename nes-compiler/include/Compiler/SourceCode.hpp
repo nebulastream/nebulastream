@@ -22,6 +22,8 @@ namespace NES::Compiler {
  */
 class SourceCode {
   public:
+    bool operator==(const SourceCode& rhs) const;
+    bool operator!=(const SourceCode& rhs) const;
     /**
      * @brief Constructor to create a new source code artifact.
      * @param language the language of this source code artifact.

@@ -25,5 +25,7 @@ SourceCode::SourceCode(std::string language, std::string code) : code(std::move(
 const std::string& SourceCode::getLanguage() const { return language; }
 
 const std::string& SourceCode::getCode() const { return code; }
+bool SourceCode::operator==(const SourceCode& rhs) const { return code == rhs.code && language == rhs.language; }
+bool SourceCode::operator!=(const SourceCode& rhs) const { return !(rhs == *this); }
 
 }// namespace NES::Compiler

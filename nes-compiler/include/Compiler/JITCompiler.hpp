@@ -35,7 +35,7 @@ class JITCompiler {
      * @param request Compilation request
      * @return Future of the CompilationResult
      */
-    [[nodiscard]] std::future<CompilationResult> compile(std::shared_ptr<const CompilationRequest> request) const;
+    [[nodiscard]] std::future<CompilationResult> compile(std::shared_ptr<const CompilationRequest> request);
 
     ~JITCompiler();
 
@@ -45,8 +45,9 @@ class JITCompiler {
      * @param request Compilation request
      * @return Future of the CompilationResult
      */
-    [[nodiscard]] std::future<CompilationResult> handleRequest(std::shared_ptr<const CompilationRequest> request) const;
+    [[nodiscard]] std::future<CompilationResult> handleRequest(std::shared_ptr<const CompilationRequest> request);
     const std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
+    std::map<std::string, CompilationResult> compilationReuseMap;
 };
 
 }// namespace NES::Compiler
