@@ -191,6 +191,13 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                     NES_DEBUG("SourceCatalogController: handlePost -addLogicalSource: Successfully added new logical Source ?"
                               << added);
 
+                    if (!added) {
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("Logical Source name: " + sourceName + " already exists!");
+                        errorMessageImpl(message, errorResponse);
+                        return;
+                    }
+
                     //forward return value to client
                     web::json::value result{};
                     result["Success"] = web::json::value::boolean(added);
