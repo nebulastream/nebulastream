@@ -71,13 +71,10 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     }
 
     auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
-    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
-        workerContext.insertIntoStorage(inputBuffer);
-    }
     if (channel) {
         auto success = channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-        if (success) {
-            insertIntoStorageCallback(inputBuffer, workerContext);
+        if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+            workerContext.insertIntoStorage(nesPartition.getPartitionId(), inputBuffer);
         }
         return success;
     }
@@ -121,7 +118,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
-            workerContext.createStorage();
+            workerContext.createStorage(nesPartition.getPartitionId());
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
                                                                       << Runtime::NesThread::getId() << " ref cnt "
                                                                       << task.getUserData<uint32_t>());
@@ -143,7 +140,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         case Runtime::PropagateEpoch: {
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId);
-            workerContext.trimStorage(task.getUserData<uint64_t>());
+            workerContext.trimStorage(task.getUserData<uint64_t>(), nesPartition.getPartitionId());
             break;
         }
         case Runtime::StartBuffering: {
