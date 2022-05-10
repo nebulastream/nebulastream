@@ -323,7 +323,7 @@ bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, uint64_t qu
                 auto newReconf = ReconfigurationMessage(queryId,
                                                         qep->second->getQuerySubPlanId(),
                                                         Runtime::ReconfigurationType::PropagateEpoch,
-                                                        qep->second,
+                                                        sink,
                                                         std::make_any<uint64_t>(epochBarrier));
                 addReconfigurationMessage(queryId, qep->second->getQuerySubPlanId(), newReconf);
             }

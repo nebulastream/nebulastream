@@ -70,19 +70,22 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-void WorkerContext::createStorage() {
-    storage = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>();
+void WorkerContext::createStorage(Network::PartitionId nesPartitionId) {
+    this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>();
 }
 
-void WorkerContext::insertIntoStorage(NES::Runtime::TupleBuffer buffer) {
-    storage.push(buffer);
+void WorkerContext::insertIntoStorage(Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
+    storage[nesPartitionId].push(buffer);
 }
 
-void WorkerContext::trimStorage(uint64_t timestamp) {
-    if (!storage.empty()) {
-        while (!storage.empty() && storage.top().getWatermark() < timestamp) {
-            NES_TRACE("BufferStorage: Delete tuple with watermark" << storage.top().getWatermark());
-            storage.pop();
+void WorkerContext::trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp) {
+    auto iteratorPartitionId = this->storage.find(nesPartitionId);
+    if (iteratorPartitionId != this->storage.end()) {
+        if (!iteratorPartitionId->second.empty()) {
+            while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() < timestamp) {
+                NES_TRACE("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
+                iteratorPartitionId->second.pop();
+            }
         }
     }
 }

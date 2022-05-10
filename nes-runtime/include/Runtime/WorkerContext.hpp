@@ -58,7 +58,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     ///queue of tuple buffers that were processed by the thread
-    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter> storage;
+    std::unordered_map<Network::PartitionId, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>> storage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -143,20 +143,23 @@ class WorkerContext {
 
     /**
      * @brief This method creates a network storage for a thread
+     * @param nesPartitionId partition id
      */
-    void createStorage();
+    void createStorage(Network::PartitionId nesPartitionId);
 
     /**
      * @brief This method inserts a tuple buffer into the storage
+     * @param nesPartitionId partition id
      * @param TupleBuffer tuple buffer
      */
-    void insertIntoStorage(NES::Runtime::TupleBuffer buffer);
+    void insertIntoStorage(Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer);
 
     /**
      * @brief This method deletes a tuple buffer from the storage
+     * @param nesPartitionId partition id
      * @param timestamp timestamp
      */
-    void trimStorage(uint64_t timestamp);
+    void trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp);
 
     /**
      * @brief removes a registered network channel with a termination type
