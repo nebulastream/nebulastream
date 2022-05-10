@@ -249,6 +249,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
     [[nodiscard]] virtual bool fail();
 
+    void setSourceSharing(bool value){sourceSharing = value;};
+
   protected:
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
@@ -272,6 +274,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     std::promise<bool> completedPromise;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
+    bool sourceSharing = false;
+
     /**
      * @brief Emits a tuple buffer to the successors.
      * @param buffer
