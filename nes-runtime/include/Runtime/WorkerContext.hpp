@@ -21,6 +21,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <cstdint>
 #include <folly/ThreadLocal.h>
 #include <memory>
@@ -56,7 +57,8 @@ class WorkerContext {
     WorkerContextBufferProviderPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
-    std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
+    ///queue of tuple buffers that were processed by the thread
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter> storage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
@@ -127,26 +129,6 @@ class WorkerContext {
     void storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel);
 
     /**
-      * @brief This method creates a network storage for a thread
-      * @param nesPartitionId partition
-      */
-    void createStorage(Network::NesPartition nesPartition);
-
-    /**
-      * @brief This method inserts a tuple buffer into the storage
-      * @param nesPartition partition
-      * @param TupleBuffer tuple buffer
-      */
-    void insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer);
-
-    /**
-      * @brief This method deletes a tuple buffer from the storage
-      * @param nesPartition partition
-      * @param timestamp timestamp
-      */
-    void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
-
-    /**
      * @brief get the oldest buffered tuple for the specified partition
      * @param nesPartition partition
      * @return an optional containing the tuple or nullopt if the storage is empty
@@ -158,6 +140,23 @@ class WorkerContext {
      * @param nesPartition partition
      */
     void removeTopTupleFromStorage(Network::NesPartition nesPartition);
+
+    /**
+     * @brief This method creates a network storage for a thread
+     */
+    void createStorage();
+
+    /**
+     * @brief This method inserts a tuple buffer into the storage
+     * @param TupleBuffer tuple buffer
+     */
+    void insertIntoStorage(NES::Runtime::TupleBuffer buffer);
+
+    /**
+     * @brief This method deletes a tuple buffer from the storage
+     * @param timestamp timestamp
+     */
+    void trimStorage(uint64_t timestamp);
 
     /**
      * @brief removes a registered network channel with a termination type

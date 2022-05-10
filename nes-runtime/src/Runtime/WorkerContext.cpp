@@ -70,42 +70,24 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-void WorkerContext::createStorage(Network::NesPartition nesPartition) {
-    this->storage[nesPartition] = std::make_shared<BufferStorage>();
+void WorkerContext::createStorage() {
+    storage = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>();
 }
 
-void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::Runtime::TupleBuffer buffer) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->insertBuffer(buffer);
-    } else {
-        NES_WARNING("No buffer storage found for partition " << nesPartition << ", buffer was dropped");
+void WorkerContext::insertIntoStorage(NES::Runtime::TupleBuffer buffer) {
+    storage.push(buffer);
+}
+
+void WorkerContext::trimStorage(uint64_t timestamp) {
+    if (!storage.empty()) {
+        while (!storage.empty() && storage.top().getWatermark() < timestamp) {
+            NES_TRACE("BufferStorage: Delete tuple with watermark" << storage.top().getWatermark());
+            storage.pop();
+        }
     }
 }
 
-void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->trimBuffer(timestamp);
-    }
-}
-
-std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        return this->storage[nesPartition]->getTopElementFromQueue();
-    }
-    return {};
-}
-
-void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition) {
-    auto iteratorPartitionId = this->storage.find(nesPartition);
-    if (iteratorPartitionId != this->storage.end()) {
-        this->storage[nesPartition]->removeTopElementFromQueue();
-    }
-}
-
-bool WorkerContext::releaseNetworkChannel(NES::OperatorId id, Runtime::QueryTerminationType terminationType) {
+bool WorkerContext::releaseNetworkChannel(Network::OperatorId id, Runtime::QueryTerminationType terminationType) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {

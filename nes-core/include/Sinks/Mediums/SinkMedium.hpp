@@ -26,6 +26,8 @@
 
 namespace NES {
 
+const uint32_t buffersPerEpoch = 1000;
+
 enum SinkMediumTypes {
     ZMQ_SINK,
     PRINT_SINK,
@@ -179,7 +181,6 @@ class SinkMedium : public Runtime::Reconfigurable {
   protected:
     SinkFormatPtr sinkFormat;
     uint32_t bufferCount;
-    uint32_t buffersPerEpoch;
     bool append{
         false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
     std::atomic_bool schemaWritten{false};// TODO same here
