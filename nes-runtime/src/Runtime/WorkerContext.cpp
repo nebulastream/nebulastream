@@ -75,10 +75,11 @@ void WorkerContext::createStorage(Network::PartitionId nesPartitionId) {
 }
 
 void WorkerContext::insertIntoStorage(Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
-    //storage[nesPartitionId].push(buffer);
+    storage[nesPartitionId].push(buffer);
 }
 
 void WorkerContext::trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp) {
+    return;
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         if (!iteratorPartitionId->second.empty()) {
