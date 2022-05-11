@@ -303,11 +303,6 @@ add_executable(pattern-query-plan-tests "UnitTests/Plans/Query/PatternParsingSer
 target_link_libraries(pattern-query-plan-tests nes-tests)
 add_test(NAME pattern-query-plan-tests COMMAND pattern-query-plan-tests)
 
-### Pattern Query Plan Tests ###
-add_executable(pattern-query-plan-tests "UnitTests/Plans/Query/PatternParsingServiceTest.cpp" ../src/API/NePSLPattern.cpp ../include/API/NePSLPattern.h)
-target_link_libraries(pattern-query-plan-tests nes ${GTEST_LIBRARIES})
-add_test(NAME pattern-query-plan-tests COMMAND pattern-query-plan-tests)
-
 # SimplePatternTest
 add_nes_integration_test(simple-pattern-test "Integration/SimplePatternTest.cpp")
 
