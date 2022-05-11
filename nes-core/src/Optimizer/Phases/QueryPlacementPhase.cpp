@@ -14,8 +14,8 @@
 
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
-#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
@@ -58,7 +58,11 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     auto placementStrategyPtr =
         PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, z3Context);
 
+    return initiatePlacement(std::move(placementStrategyPtr), sharedQueryPlan);
+}
 
+bool QueryPlacementPhase::initiatePlacement(BasePlacementStrategyPtr placementStrategyPtr,
+                                            const SharedQueryPlanPtr& sharedQueryPlan) {
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
@@ -82,43 +86,23 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
     NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+
     return success;
 }
 
 // TODO 2487: reduce code duplication
-bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, std::vector<std::vector<bool>> placementMatrix) {
+bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy,
+                                  const SharedQueryPlanPtr& sharedQueryPlan,
+                                  std::vector<std::vector<bool>> matrix) {
     NES_INFO("QueryPlacementPhase: Perform query placement phase for shared query plan "
              + std::to_string(sharedQueryPlan->getSharedQueryId()));
 
     NES_ASSERT(placementStrategy == PlacementStrategy::Manual, "This call only works for manual placement");
 
     auto manualPlacementStrategy = ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-    manualPlacementStrategy->setBinaryMapping(placementMatrix);
+    manualPlacementStrategy->setBinaryMapping(matrix);
 
-    auto queryId = sharedQueryPlan->getSharedQueryId();
-    auto queryPlan = sharedQueryPlan->getQueryPlan();
-    auto faultToleranceType = queryPlan->getFaultToleranceType();
-    auto lineageType = queryPlan->getLineageType();
-    NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
-
-    //1. Fetch all upstream pinned operators
-    auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);
-
-    //2. Fetch all downstream pinned operators
-    auto downStreamPinnedOperators = getDownStreamPinnedOperators(upStreamPinnedOperators);
-
-    //3. Check if all operators are pinned
-    if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
-        throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
-    }
-
-    bool success = manualPlacementStrategy->updateGlobalExecutionPlan(queryId,
-                                                                   faultToleranceType,
-                                                                   lineageType,
-                                                                   upStreamPinnedOperators,
-                                                                   downStreamPinnedOperators);
-    NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
-    return success;
+    return initiatePlacement(std::move(manualPlacementStrategy), sharedQueryPlan);
 }
 
 bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators) {

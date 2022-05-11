@@ -47,6 +47,8 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace NES
 
 namespace NES::Optimizer {
+class BasePlacementStrategy;
+using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
 
 class QueryPlacementPhase;
 using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
@@ -88,12 +90,13 @@ class QueryPlacementPhase {
      * selected query placement strategy
      * @param placementStrategy : name of the placement strategy
      * @param sharedQueryPlan : the shared query plan to place
-     * @param placementMatrix : the 2D matrix defining the placement
+     * @param matrix : the 2D matrix defining the placement
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
-    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, std::vector<std::vector<bool>> placementMatrix);
+    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, std::vector<std::vector<bool>> matrix);
 
+    bool initiatePlacement(BasePlacementStrategyPtr placementStrategyPtr, const SharedQueryPlanPtr& sharedQueryPlan);
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
