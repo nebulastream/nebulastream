@@ -80,7 +80,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp");
     auto globalQueryPlan = crd->getGlobalQueryPlan();//necessary?
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
