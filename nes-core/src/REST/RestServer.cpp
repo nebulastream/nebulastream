@@ -58,9 +58,9 @@ bool RestServer::start() {
     restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
         // wait for server initialization...
-        auto listener = restEngine->accept();
+        auto task = restEngine->accept();
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
-        listener.wait();
+        task.wait();
         {
             std::unique_lock lock(mutex);
             while (!stopRequested) {
@@ -84,13 +84,13 @@ bool RestServer::start() {
 
 bool RestServer::stop() {
     NES_DEBUG("RestServer::stop");
+    auto task = restEngine->shutdown();
+    task.wait();
     {
         std::unique_lock lock(mutex);
         stopRequested = true;
+        cvar.notify_all();
     }
-    auto task = restEngine->shutdown();
-    task.wait();
-    cvar.notify_all();
     return shutdownPromise.get_future().get();
 }
 
