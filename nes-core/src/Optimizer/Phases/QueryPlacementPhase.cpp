@@ -58,11 +58,6 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     auto placementStrategyPtr =
         PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, z3Context);
 
-    return initiatePlacement(std::move(placementStrategyPtr), sharedQueryPlan);
-}
-
-bool QueryPlacementPhase::initiatePlacement(BasePlacementStrategyPtr placementStrategyPtr,
-                                            const SharedQueryPlanPtr& sharedQueryPlan) {
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
@@ -88,20 +83,6 @@ bool QueryPlacementPhase::initiatePlacement(BasePlacementStrategyPtr placementSt
     NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 
     return success;
-}
-
-bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy,
-                                  const SharedQueryPlanPtr& sharedQueryPlan,
-                                  NES::Optimizer::PlacementMatrix matrix) {
-    NES_INFO("QueryPlacementPhase: Perform query placement phase for shared query plan "
-             + std::to_string(sharedQueryPlan->getSharedQueryId()));
-
-    NES_ASSERT(placementStrategy == PlacementStrategy::Manual, "This call only works for manual placement");
-
-    auto manualPlacementStrategy = ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-    manualPlacementStrategy->setBinaryMapping(matrix);
-
-    return initiatePlacement(std::move(manualPlacementStrategy), sharedQueryPlan);
 }
 
 bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators) {

@@ -87,19 +87,6 @@ class QueryPlacementPhase {
      * @throws QueryPlacementException
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
-
-    /**
-     * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
-     * selected query placement strategy
-     * @param placementStrategy : name of the placement strategy
-     * @param sharedQueryPlan : the shared query plan to place
-     * @param matrix : the 2D matrix defining the placement
-     * @return true is placement successful.
-     * @throws QueryPlacementException
-     */
-    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, NES::Optimizer::PlacementMatrix matrix);
-
-    bool initiatePlacement(BasePlacementStrategyPtr placementStrategyPtr, const SharedQueryPlanPtr& sharedQueryPlan);
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
