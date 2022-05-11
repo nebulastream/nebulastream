@@ -160,7 +160,7 @@ class BasePlacementStrategy {
      */
     void addNetworkSourceAndSinkOperators(QueryId queryId,
                                           const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                          const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                          const std::vector<OperatorNodePtr>& pinnedDownStreamOperators, bool partialPlacement = false);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
@@ -227,7 +227,7 @@ class BasePlacementStrategy {
      */
     void placeNetworkOperator(QueryId queryId,
                               const OperatorNodePtr& upStreamOperator,
-                              const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                              const std::vector<OperatorNodePtr>& pinnedDownStreamOperators, bool partialPlacement = false);
 
     /**
      * Check if operator present in the given collection
