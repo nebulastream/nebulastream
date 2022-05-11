@@ -85,7 +85,7 @@ void BottomUpStrategy::performOperatorPlacement(QueryId queryId,
             operatorToExecutionNodeMap[pinnedUpStreamOperator->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
             //Place all downstream nodes
             for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
-                if(pinnedUpStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<NetworkSinkDescriptor>()){
+                if(pinnedUpStreamOperator->instanceOf<SourceLogicalOperatorNode>() && pinnedUpStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()){
                     candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
                 }
                 placeOperator(queryId, downStreamNode->as<OperatorNode>(), candidateTopologyNode, pinnedDownStreamOperators); //take exe node of where the OP is placed and try to place downstrea OP on it
@@ -110,6 +110,9 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) { //how can you reach an operator that has already been placed?
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
+        if(operatorNode->instanceOf<SinkLogicalOperatorNode>() && operatorNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<NetworkSinkDescriptor>()){
+            operatorToExecutionNodeMap[operatorNode->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID)));
+        }
         return;
     }
 

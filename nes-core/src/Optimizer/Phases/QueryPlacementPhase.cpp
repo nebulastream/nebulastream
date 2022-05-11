@@ -83,7 +83,8 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                    faultToleranceType,
                                                                    lineageType,
                                                                    upStreamPinnedOperators,
-                                                                   downStreamPinnedOperators);
+                                                                   downStreamPinnedOperators,
+                                                                   true);
     NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return success;
 }
