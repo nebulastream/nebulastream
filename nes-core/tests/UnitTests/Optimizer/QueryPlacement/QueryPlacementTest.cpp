@@ -55,7 +55,6 @@
 using namespace NES;
 using namespace z3;
 using namespace Configurations;
-using PlacementMatrix = std::vector<std::vector<bool>>;
 
 class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
@@ -139,7 +138,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         }
     }
 
-    static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, PlacementMatrix matrix) {
+    static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix matrix) {
         matrix.size();
         std::vector<TopologyNodePtr> topologyNodes;
         auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
@@ -809,7 +808,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
-    PlacementMatrix binaryMapping = {{true, false, false, false, false},
+    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
                                      {false, true, true, false, false},
                                      {false, false, false, true, true}};
 
@@ -870,7 +869,7 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
-    PlacementMatrix binaryMapping = {{true, false, false, false, false},
+    NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
                                      {false, true, true, false, false},
                                      {false, false, false, true, true}};
 

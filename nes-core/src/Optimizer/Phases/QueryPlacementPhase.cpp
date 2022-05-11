@@ -92,7 +92,7 @@ bool QueryPlacementPhase::initiatePlacement(BasePlacementStrategyPtr placementSt
 
 bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy,
                                   const SharedQueryPlanPtr& sharedQueryPlan,
-                                  std::vector<std::vector<bool>> matrix) {
+                                  NES::Optimizer::PlacementMatrix matrix) {
     NES_INFO("QueryPlacementPhase: Perform query placement phase for shared query plan "
              + std::to_string(sharedQueryPlan->getSharedQueryId()));
 
@@ -165,7 +165,7 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
     return downStreamPinnedOperators;
 }
 
-void QueryPlacementPhase::setPlacementMatrix(const std::vector<std::vector<bool>>& placementMatrix) {
+void QueryPlacementPhase::setPlacementMatrix(const NES::Optimizer::PlacementMatrix & placementMatrix) {
     QueryPlacementPhase::placementMatrix = placementMatrix;
 }
 
