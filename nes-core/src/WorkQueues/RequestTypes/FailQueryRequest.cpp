@@ -17,12 +17,17 @@
 
 namespace NES {
 
-FailQueryRequest::FailQueryRequest(QueryId queryId) : Request(queryId) {}
+FailQueryRequest::FailQueryRequest(QueryId queryId, const std::string& failureReason)
+    : Request(queryId), failureReason(failureReason) {}
 
-FailQueryRequestPtr FailQueryRequest::create(QueryId queryId) {
-    return std::make_shared<FailQueryRequest>(FailQueryRequest(queryId));
+FailQueryRequestPtr FailQueryRequest::create(QueryId queryId, const std::string& failureReason) {
+    return std::make_shared<FailQueryRequest>(FailQueryRequest(queryId, failureReason));
 }
 
-std::string FailQueryRequest::toString() { return "FailQueryRequest { QueryId: " + std::to_string(getQueryId()) + "}"; }
+std::string FailQueryRequest::getFailureReason() { return failureReason; }
+
+std::string FailQueryRequest::toString() {
+    return "FailQueryRequest { QueryId: " + std::to_string(getQueryId()) + ", Failure Reason: " + failureReason + "}";
+}
 
 }// namespace NES

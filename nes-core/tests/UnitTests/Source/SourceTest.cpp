@@ -1849,7 +1849,8 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalogService();
-    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -1927,7 +1928,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES_DEBUG("start=" << start << " stop=" << stop);
 
     NES_INFO("SourceTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
+    queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;

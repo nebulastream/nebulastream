@@ -28,6 +28,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <log4cxx/helpers/exception.h>
@@ -79,7 +80,9 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
         for (const auto& nesRequest : nesRequests) {
             QueryId queryId = nesRequest->getQueryId();
             if (nesRequest->instanceOf<StopQueryRequest>()) {
-
+                NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
+                globalQueryPlan->removeQuery(queryId);
+            } else if (nesRequest->instanceOf<FailQueryRequest>()) {
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
             } else if (nesRequest->instanceOf<RunQueryRequest>()) {

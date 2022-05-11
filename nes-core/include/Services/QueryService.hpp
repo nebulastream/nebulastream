@@ -67,25 +67,10 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    QueryId validateAndQueueAddRequest(const std::string& queryString,
-                                       const std::string& placementStrategyName,
-                                       const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                                       const LineageType lineage = LineageType::NONE);
-
-    /**
-     * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryString : query in string form.
-     * @param placementStrategyName : name of the placement strategy to be used.
-     * @param faultTolerance : fault-tolerance guarantee for the given query.
-     * @param lineage : lineage type for the given query.
-     * @return queryId : query id of the valid input query.
-     * @throws InvalidQueryException : when query string is not valid.
-     * @throws InvalidArgumentException : when the placement strategy is not valid.
-     */
-    std::future<QueryId> validateAndQueueAddRequestAsync(const std::string& queryString,
-                                                         const std::string& placementStrategyName,
-                                                         const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                                                         const LineageType lineage = LineageType::NONE);
+    QueryId validateAndQueueAddQueryRequest(const std::string& queryString,
+                                            const std::string& placementStrategyName,
+                                            const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                            const LineageType lineage = LineageType::NONE);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -103,19 +88,13 @@ class QueryService {
                             const LineageType lineage = LineageType::NONE);
 
     /**
-     * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryString : queryIdAndCatalogEntryMapping in string format
-     * @param queryPlan : Query Plan Pointer Object
-     * @param placementStrategyName : Name of the placement strategy
-     * @param faultTolerance : fault-tolerance guarantee for the given query.
-     * @param lineage : lineage type for the given query.
-     * @return query id
+     * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.
+     * @param queryId : query id of the query to be stopped.
+     * @returns: true if successful
+     * @throws QueryNotFoundException : when query id is not found in the query catalog.
+     * @throws InvalidQueryStatusException : when the query is found to be in an invalid state.
      */
-    std::future<QueryId> addQueryRequestAsync(const std::string& queryString,
-                                              const QueryPlanPtr& queryPlan,
-                                              const std::string& placementStrategyName,
-                                              const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
-                                              const LineageType lineage = LineageType::NONE);
+    bool validateAndQueueStopQueryRequest(QueryId queryId);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -124,9 +103,10 @@ class QueryService {
      * @throws QueryNotFoundException : when query id is not found in the query catalog.
      * @throws InvalidQueryStatusException : when the query is found to be in an invalid state.
      */
-    bool validateAndQueueStopRequest(QueryId queryId);
+    bool validateAndQueueFailQueryRequest(QueryId queryId, const std::string& failureReason);
 
   private:
+
     /**
      * Assign unique operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process

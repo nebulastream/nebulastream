@@ -298,9 +298,9 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId);
 
         for (const auto& queryId : queryIds) {
-            bool stopped = queryService->validateAndQueueStopRequest(queryId);
-            if (!stopped) {
-                NES_ERROR("Failed to stop query " << queryId);
+            bool markedForFailure = queryService->validateAndQueueFailQueryRequest(queryId, request->errormsg());
+            if (!markedForFailure) {
+                NES_ERROR("Failed to mark query for failure " << queryId);
             }
         }
         reply->set_success(true);

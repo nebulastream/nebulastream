@@ -161,10 +161,10 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= "
                               << userQuery << ", strategyName= " << placementStrategyName
                               << ", faultTolerance= " << faultToleranceString << ", lineage= " << lineageString);
-                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery,
-                                                                               placementStrategyName,
-                                                                               faultToleranceMode,
-                                                                               lineageMode);
+                    QueryId queryId = queryService->validateAndQueueAddQueryRequest(userQuery,
+                                                                                    placementStrategyName,
+                                                                                    faultToleranceMode,
+                                                                                    lineageMode);
 
                     //Prepare the response
                     web::json::value restResponse{};
@@ -266,7 +266,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
     if (path[1] == "stop-query") {
         NES_DEBUG("QueryController: Request received for stoping a query");
         try {
-            bool success = queryService->validateAndQueueStopRequest(queryId);
+            bool success = queryService->validateAndQueueStopQueryRequest(queryId);
             //Prepare the response
             web::json::value result{};
             result["success"] = web::json::value::boolean(success);
