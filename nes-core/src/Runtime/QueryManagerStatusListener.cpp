@@ -100,8 +100,8 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
     std::unique_lock lock(queryMutex);
     //THIS is now shutting down all
     for (auto entry : sourceToQEPMapping[source->getOperatorId()]) {
-        std::cout << " NOFITFY operator id=" << source->getOperatorId() << "plan id=" << entry->getQueryId()
-                  << " subplan=" << entry->getQuerySubPlanId() << std::endl;
+//        std::cout << " NOFITFY operator id=" << source->getOperatorId() << "plan id=" << entry->getQueryId()
+//                  << " subplan=" << entry->getQuerySubPlanId() << std::endl;
 
         entry->notifySourceCompletion(source, terminationType);
         if (terminationType == QueryTerminationType::Graceful) {

@@ -56,13 +56,12 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
 
             sourceToQEPMapping[sourceOperatorId].push_back(qep);
 
-            for (auto [id, qeps] : sourceToQEPMapping) {
-
-                std::cout << "AFTER operator id=" << id << " with no values=" << qeps.size() << std::endl;
-                for (auto& elem : qeps) {
-                    std::cout << "plan id=" << elem->getQueryId() << " subplan=" << elem->getQuerySubPlanId() << std::endl;
-                }
-            }
+//            for (auto [id, qeps] : sourceToQEPMapping) {
+//                std::cout << "AFTER operator id=" << id << " with no values=" << qeps.size() << std::endl;
+//                for (auto& elem : qeps) {
+//                    std::cout << "plan id=" << elem->getQueryId() << " subplan=" << elem->getQuerySubPlanId() << std::endl;
+//                }
+//            }
         }
     }
 
