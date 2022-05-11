@@ -450,12 +450,18 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
 Spatial::Index::Experimental::LocationPtr WorkerRPCClient::getLocation(const std::string& adress) {
     NES_DEBUG("WorkerRPCClient: Reequesting location from " << adress)
     ClientContext context;
-    Coordinates reply;
+    GetLocationReply reply;
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(adress, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, {}, &reply);
-    return std::make_shared<Spatial::Index::Experimental::Location>(reply.lat(), reply.lng());
+    //todo: coordinates is 0 0 here
+    // todo: do we use the valid attribute here or can we use has_coord?
+    if (reply.has_coord()) {
+        auto coord = reply.coord();
+        return std::make_shared<Spatial::Index::Experimental::Location>(coord.lat(), coord.lng());
+    }
+    return std::make_shared<Spatial::Index::Experimental::Location>();
 }
 
 }// namespace NES

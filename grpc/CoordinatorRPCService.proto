@@ -14,6 +14,7 @@
 
 syntax = "proto3";
 import "SerializableDataType.proto";
+import "Spatial.proto";
 
 // The greeting service definition.
 service CoordinatorRPCService {
@@ -154,15 +155,6 @@ message RemoveParentRequest {
 
 message RemoveParentReply {
   bool success = 1;
-}
-
-message Coordinates {
-  double lat = 1;
-  double lng = 2;
-}
-message NodeGeoInfo {
-  uint64 id = 1;
-  Coordinates coord = 2;
 }
 
 message GetNodesInRangeRequest {

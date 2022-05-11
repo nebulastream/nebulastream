@@ -170,13 +170,13 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
     }
 }
 
-Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, Coordinates* reply) {
+Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) {
     (void) request;
     NES_DEBUG("WorkerRPCServer received location request")
-    //auto loc = nodeEngine->getLocation();
     auto loc = locationWrapper->getLocation();
-    reply->set_lat(loc->getLatitude());
-    reply->set_lng(loc->getLongitude());
+    Coordinates* coord = reply->mutable_coord();
+    coord->set_lat(loc->getLatitude());
+    coord->set_lng(loc->getLongitude());
     return Status::OK;
 }
 }// namespace NES

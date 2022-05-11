@@ -59,7 +59,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) override;
 
-    Status GetLocation(ServerContext*, const GetLocationRequest* request, Coordinates* reply) override;
+    Status GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) override;
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

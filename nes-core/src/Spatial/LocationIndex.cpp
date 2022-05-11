@@ -161,7 +161,11 @@ std::vector<std::pair<uint64_t, Location>> LocationIndex::getMobileNodeLocations
     std::vector<std::pair<uint64_t, Location>> locVector;
     locVector.reserve(mobileNodes.size());
     for (const auto& elem : mobileNodes) {
-        locVector.emplace_back(elem.first, *(elem.second->getCoordinates()));
+        LocationPtr loc = elem.second->getCoordinates();
+        if (loc->isValid()) {
+            //todo: make this vector contain pointers not the objects themselves
+            locVector.emplace_back(elem.first, *loc);
+        }
     }
     return locVector;
 }
