@@ -21,7 +21,6 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/BufferStorage.hpp>
 #include <cstdint>
 #include <folly/ThreadLocal.h>
 #include <memory>
