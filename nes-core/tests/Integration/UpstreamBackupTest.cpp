@@ -407,7 +407,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
 /*
  * @brief test if upstream backup doesn't fail
  */
-TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
+TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -417,7 +417,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeFinite);
+    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
     workerConfig->physicalSources.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -442,7 +442,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::AT_LEAST_ONCE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -450,6 +450,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("UpstreamBackupTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("UpstreamBackupTest: Stop worker 1");
