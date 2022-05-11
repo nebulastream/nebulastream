@@ -14,8 +14,7 @@
 
 syntax = "proto3";
 import "SerializableQueryPlan.proto";
-//todo: put coordinates in extra file
-import "CoordinatorRPCService.proto";
+import "Spatial.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
@@ -36,7 +35,7 @@ service WorkerRPCService {
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 
-  rpc GetLocation(GetLocationRequest) returns (Coordinates) {}
+  rpc GetLocation(GetLocationRequest) returns (GetLocationReply) {}
 }
 
 message DeployQueryRequest {
@@ -135,5 +134,8 @@ message BufferReply {
 }
 
 message GetLocationRequest {
-  bool stuff = 1;
+}
+
+message GetLocationReply {
+  Coordinates coord = 1;
 }
