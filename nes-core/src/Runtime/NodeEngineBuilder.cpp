@@ -129,7 +129,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             for (auto i = 0u; i < numberOfQueues; ++i) {
                 bufferManagers.push_back(
                     std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-                                                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue(),
+                                                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues,
                                                     hardwareManager->getGlobalAllocator()));
             }
         }
