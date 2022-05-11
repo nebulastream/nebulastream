@@ -60,6 +60,12 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     void setFaultToleranceType(FaultToleranceType::Value faultToleranceType);
 
     /**
+     * @brief setter for fault-tolerance type
+     * @param fault-tolerance type
+     */
+    void setFaultToleranceType(FaultToleranceType faultToleranceType);
+
+    /**
      * @brief getter for number of origins
      * @return number of origins
      */
