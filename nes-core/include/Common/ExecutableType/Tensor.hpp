@@ -49,6 +49,7 @@ class Tensor : public Array<T, totalSize> {
         //Todo: dims*dims... needs to be == as realSize
         tensor = std::make_shared<Array<T, realSize>>();
         create(1, dims...);
+        checkTotalSizeSameAsDims();
     }
     /**
      * @brief [] operator for indexing and obtaining the correct tensor values
@@ -120,6 +121,17 @@ class Tensor : public Array<T, totalSize> {
      */
     [[nodiscard]] int getIndex(size_t) const {
         return 0;
+    }
+
+    template<typename... Dims>
+    inline void checkTotalSizeSameAsDims() const{
+        size_t size = 1;
+        for(auto dim : shape){
+            size *= dim;
+        }
+        if (size != totalSize){
+            throw std::out_of_range("Dimensions and total size do not match.");
+        }
     }
 
 };

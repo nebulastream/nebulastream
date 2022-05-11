@@ -38,7 +38,7 @@ TEST_F(TensorTypeTest, testCheckNullTerminator) {
     // From supertype's constructor
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 1, 5>(5)));
     //todo: make this throw an exception
-    //EXPECT_THROW((ExecutableTypes::Tensor<int, 1, 5>(10)), std::runtime_error);
+    EXPECT_THROW((ExecutableTypes::Tensor<int, 1, 5>(10)), std::out_of_range);
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 2, 8>(2,4)));
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 3, 30>(2,3,5)));
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 4, 80>(2,4,5,2)));
