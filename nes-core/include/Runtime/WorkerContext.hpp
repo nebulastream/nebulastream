@@ -16,10 +16,10 @@
 #define NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/BufferStorage.hpp>
 #include <cstdint>
 #include <memory>
 #include <queue>
