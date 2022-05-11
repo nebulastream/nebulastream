@@ -319,10 +319,11 @@ bool ILPStrategy::placeOperators(QueryPlanPtr queryPlan,
     }
 
     // apply the placement from the specified binary mapping
-    auto assignSuccess = assignMappingToTopology(topology, queryPlan, binaryMapping);
-    if (!assignSuccess) {
-        return false;
-    }
+    // TODO 2487: use the new interface
+    // auto assignSuccess = assignMappingToTopology(topology, queryPlan, binaryMapping);
+//    if (!assignSuccess) {
+//        return false;
+//    }
     //addNetworkSourceAndSinkOperators(queryPlan);
     return true;
 }

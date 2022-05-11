@@ -15,6 +15,7 @@
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
+#include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
@@ -31,8 +32,9 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
             // #2485        case PlacementStrategy::ILP:
             //            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
         case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::TopDown:
-            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::Manual: return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+
             // #2486        case PlacementStrategy::IFCOP:
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
             // FIXME: enable them with issue #755

@@ -26,13 +26,11 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
   public:
     ~ManualPlacementStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
-
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
     static std::unique_ptr<ManualPlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
@@ -48,7 +46,6 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                      TopologyPtr topology,
                                      TypeInferencePhasePtr typeInferencePhase);
-
     // stores the binary mapping  of the current strategy
     PlacementMatrix binaryMapping;
 };

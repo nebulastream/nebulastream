@@ -12,8 +12,13 @@
     limitations under the License.
 */
 
+#include "Exceptions/QueryPlacementException.hpp"
+#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <utility>
 
 namespace NES::Optimizer {
@@ -31,28 +36,18 @@ ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr glo
                                                  NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
     : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
 
-bool ManualPlacementStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
-    // check if user has specify binary mapping for placement
-    if (binaryMapping.empty()) {
-        NES_ERROR("ManualPlacementStrategy::updateGlobalExecutionPlan: binary mapping is not set");
-        return false;
-    }
-
-    // apply the placement from the specified binary mapping
-    assignMappingToTopology(topology, queryPlan, this->binaryMapping);
-    //addNetworkSourceAndSinkOperators(queryPlan);
-    return runTypeInferencePhase(queryPlan->getQueryId(), queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
-}
-
 void ManualPlacementStrategy::setBinaryMapping(PlacementMatrix userDefinedBinaryMapping) {
     this->binaryMapping = std::move(userDefinedBinaryMapping);
 }
 
-bool ManualPlacementStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
-                                                        FaultToleranceType /*faultToleranceType*/,
-                                                        LineageType /*lineageType*/,
-                                                        const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
-                                                        const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
-    NES_NOT_IMPLEMENTED();
-}
+bool ManualPlacementStrategy::updateGlobalExecutionPlan(
+    QueryId queryId /*queryId*/,
+    FaultToleranceType faultToleranceType /*faultToleranceType*/,
+    LineageType lineageType /*lineageType*/,
+    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
+    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+
+    auto bottomUpStrategy = BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+    return bottomUpStrategy->updateGlobalExecutionPlan(queryId, faultToleranceType, lineageType, pinnedUpStreamOperators, pinnedDownStreamOperators);
+};
 }// namespace NES::Optimizer
