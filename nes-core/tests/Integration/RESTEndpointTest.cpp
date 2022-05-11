@@ -110,7 +110,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -150,7 +150,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
 
     NES_INFO("RESTEndpointTest: Remove query");
-    //queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     stopWorker(*wrk1);
@@ -314,7 +314,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
@@ -345,7 +345,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     EXPECT_TRUE(catalogEntries.at(0).has_string_field("queryString"));
 
     NES_INFO("RESTEndpointTest: Remove query");
-    //queryService->validateAndQueueStopRequest(queryId);
+    //queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     stopWorker(*wrk1);

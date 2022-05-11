@@ -27,6 +27,7 @@
 #include <Util/PlacementStrategy.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/RequestQueue.hpp>
+#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <log4cxx/helpers/exception.h>
@@ -47,10 +48,10 @@ QueryService::QueryService(QueryCatalogServicePtr queryCatalogService,
                                                                          optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
-QueryId QueryService::validateAndQueueAddRequest(const std::string& queryString,
-                                                 const std::string& placementStrategyName,
-                                                 const FaultToleranceType faultTolerance,
-                                                 const LineageType lineage) {
+QueryId QueryService::validateAndQueueAddQueryRequest(const std::string& queryString,
+                                                      const std::string& placementStrategyName,
+                                                      const FaultToleranceType faultTolerance,
+                                                      const LineageType lineage) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -141,15 +142,26 @@ QueryId QueryService::addQueryRequest(const std::string& queryString,
     throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
 }
 
-bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
+bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
     //Check and mark query for hard stop
     bool success = queryCatalogService->checkAndMarkForHardStop(queryId);
 
     //If success then queue the hard stop request
     if (success) {
-        auto queryCatalogEntry = queryCatalogService->getEntryForQuery(queryId);
         auto request = StopQueryRequest::create(queryId);
+        return queryRequestQueue->add(request);
+    }
+    return false;
+}
+
+bool QueryService::validateAndQueueFailQueryRequest(QueryId queryId, const std::string& failureReason) {
+    //Check if query exists
+    auto exists = queryCatalogService->getEntryForQuery(queryId);
+
+    //If success then queue the hard stop request
+    if (exists) {
+        auto request = FailQueryRequest::create(queryId, failureReason);
         return queryRequestQueue->add(request);
     }
     return false;

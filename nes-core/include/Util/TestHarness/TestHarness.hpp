@@ -487,10 +487,10 @@ class TestHarness {
         if (lineageMode == LineageType::INVALID) {
             NES_THROW_RUNTIME_ERROR("TestHarness: unable to find given lineage type");
         }
-        QueryId queryId = queryService->validateAndQueueAddRequest(queryString,
-                                                                   std::move(placementStrategyName),
-                                                                   faultToleranceMode,
-                                                                   lineageMode);
+        QueryId queryId = queryService->validateAndQueueAddQueryRequest(queryString,
+                                                                        std::move(placementStrategyName),
+                                                                        faultToleranceMode,
+                                                                        lineageMode);
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalogService)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");

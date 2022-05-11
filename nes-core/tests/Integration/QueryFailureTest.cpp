@@ -84,7 +84,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query=" << query);
     QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 }
@@ -134,8 +134,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     string query1 = R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query=" << query1);
-    QueryId queryId1 =
-        queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, "BottomUp");
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
 
@@ -144,8 +143,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
         + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId2 =
-        queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    QueryId queryId2 = queryService->validateAndQueueAddQueryRequest(query2, "BottomUp");
 
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 

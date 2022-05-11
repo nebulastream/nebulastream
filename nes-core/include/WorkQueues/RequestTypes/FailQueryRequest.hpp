@@ -28,14 +28,19 @@ class FailQueryRequest : public Request {
     /**
      * @brief Create instance of  FailQueryRequest
      * @param queryId : the id of query to fail
+     * @param failureReason: reason for query failure
      * @return shared pointer to the instance of fail query request
      */
-    static FailQueryRequestPtr create(QueryId queryId);
+    static FailQueryRequestPtr create(QueryId queryId, const std::string& failureReason);
+
+    std::string getFailureReason();
 
     std::string toString() override;
 
   private:
-    explicit FailQueryRequest(QueryId queryId);
+    explicit FailQueryRequest(QueryId queryId, const std::string& failureReason);
+
+    std::string failureReason;
 };
 
 }// namespace NES

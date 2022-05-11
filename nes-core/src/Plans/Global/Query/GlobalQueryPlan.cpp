@@ -38,7 +38,7 @@ bool GlobalQueryPlan::addQueryPlan(const QueryPlanPtr& queryPlan) {
     return true;
 }
 
-void GlobalQueryPlan::removeQuery(QueryId queryId) {
+void GlobalQueryPlan::removeQuery(QueryId queryId, QueryStatus::Value queryStatus) {
     NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
     //Check if the query id present in the Global query Plan
     if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
@@ -49,10 +49,19 @@ void GlobalQueryPlan::removeQuery(QueryId queryId) {
             throw log4cxx::helpers::Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
                                               + " from shared query plan with id " + std::to_string(sharedQueryId));
         }
+
+        if(queryStatus == QueryStatus::MarkedForHardStop){
+            //Remove because user requested it
+        } else if (queryStatus == QueryStatus::MarkedForSoftStop){
+            //Remove because query finishes
+        } else if (queryStatus == QueryStatus::Failed){
+            //Remove because query failed
+        }
+
         //Remove from the queryId to shared query id map
         queryIdToSharedQueryIdMap.erase(queryId);
     } else {
-        // Check if the query is in the list of query plans and remove it
+        // Check if the query is in the list of query plans to add and then remove it
         queryPlansToAdd.erase(
             std::find_if(queryPlansToAdd.begin(), queryPlansToAdd.end(), [&queryId](const QueryPlanPtr& queryPlan) {
                 return queryPlan->getQueryId() == queryId;
