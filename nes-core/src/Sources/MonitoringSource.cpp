@@ -28,25 +28,23 @@
 
 namespace NES {
 
-MonitoringSource::MonitoringSource(const MetricCollectorPtr& metricCollector,
+MonitoringSource::MonitoringSource(MetricCollectorPtr metricCollector,
+                                   std::chrono::milliseconds waitTime,
                                    Runtime::BufferManagerPtr bufferManager,
                                    Runtime::QueryManagerPtr queryManager,
-                                   const uint64_t numbersOfBufferToProduce,
-                                   uint64_t sourceGatheringInterval,
                                    OperatorId operatorId,
                                    OriginId originId,
                                    size_t numSourceLocalBuffers,
                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : DefaultSource(Schema::create(),
-                    std::move(bufferManager),
-                    std::move(queryManager),
-                    numbersOfBufferToProduce,
-                    sourceGatheringInterval,
-                    operatorId,
-                    originId,
-                    numSourceLocalBuffers,
-                    std::move(successors)),
-      metricCollector(metricCollector) {
+    : DataSource(Schema::create(),
+                 bufferManager,
+                 queryManager,
+                 operatorId,
+                 originId,
+                 numSourceLocalBuffers,
+                 GatheringMode::INTERVAL_MODE,
+                 successors),
+      metricCollector(metricCollector), waitTime(waitTime) {
     schema = metricCollector->getSchema();
     NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());
 }
@@ -75,6 +73,8 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     return buf;
 }
 
+MetricCollectorType MonitoringSource::getCollectorType() { return metricCollector->getType(); }
+
 SourceType MonitoringSource::getType() const { return MONITORING_SOURCE; }
 
 std::string MonitoringSource::toString() const {
@@ -83,5 +83,6 @@ std::string MonitoringSource::toString() const {
        << ")";
     return ss.str();
 }
+std::chrono::milliseconds MonitoringSource::getWaitTime() const { return waitTime; }
 
 }// namespace NES

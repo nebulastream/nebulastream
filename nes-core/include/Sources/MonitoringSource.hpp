@@ -15,17 +15,19 @@
 #ifndef NES_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
 #define NES_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
 
-#include <Sources/DefaultSource.hpp>
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Sources/DataSource.hpp>
 #include <chrono>
 
 namespace NES {
-class MonitoringSource : public DefaultSource {
+
+class MonitoringSource : public DataSource {
   public:
-    MonitoringSource(const MetricCollectorPtr& metricCollector,
+    MonitoringSource(MetricCollectorPtr metricCollector,
+                     std::chrono::milliseconds waitTime,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
-                     uint64_t numbersOfBufferToProduce,
-                     uint64_t sourceGatheringInterval,
                      OperatorId operatorId,
                      OriginId originId,
                      size_t numSourceLocalBuffers,
@@ -35,6 +37,9 @@ class MonitoringSource : public DefaultSource {
 
     std::optional<Runtime::TupleBuffer> receiveData() override;
 
+    MetricCollectorType getCollectorType();
+    std::chrono::milliseconds getWaitTime() const;
+
     /**
      * @brief override the toString method for the binary source
      * @return returns string describing the binary source
@@ -43,6 +48,7 @@ class MonitoringSource : public DefaultSource {
 
   private:
     MetricCollectorPtr metricCollector;
+    std::chrono::milliseconds waitTime;
 };
 
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;

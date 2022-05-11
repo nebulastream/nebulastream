@@ -132,6 +132,14 @@ message SerializablePhysicalSourceType{
     uint32 id = 1;
   }
 
+  /**
+  The serializable wrapper for the materialized view source config object
+  */
+  message SerializableMonitoringSourceType {
+    uint64 metricCollectorType = 1;
+    uint64 waitTime = 2;
+  }
+
   google.protobuf.Any specificPhysicalSourceType = 2;
 }
 
@@ -216,6 +224,11 @@ message SerializableOperator{
 
     message SerializableMaterializedViewSourceDescriptor {
       uint64 id = 1;
+    }
+
+    message SerializableMonitoringSourceDescriptor {
+      uint64 metricCollectorType = 1;
+      uint64 waitTime = 2;
     }
 
     google.protobuf.Any sourceDescriptor = 1;

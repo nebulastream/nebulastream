@@ -21,6 +21,7 @@ add_source_files(nes-core
         CsvSourceDescriptor.cpp
         DefaultSourceDescriptor.cpp
         LogicalSourceDescriptor.cpp
+        MonitoringSourceDescriptor.cpp
         NetworkSourceDescriptor.cpp
         OPCSourceDescriptor.cpp
         MemorySourceDescriptor.cpp

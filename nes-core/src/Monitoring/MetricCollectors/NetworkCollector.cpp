@@ -29,6 +29,8 @@ NetworkCollector::NetworkCollector()
     NES_INFO("NetworkCollector: Init NetworkCollector with schema " << schema->toString());
 }
 
+MetricCollectorType NetworkCollector::getType() { return NETWORK_COLLECTOR; }
+
 bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();

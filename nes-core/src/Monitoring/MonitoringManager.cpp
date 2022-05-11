@@ -179,6 +179,10 @@ bool MonitoringManager::registerMonitoringLogical(SourceCatalogPtr) {
 
 bool MonitoringManager::setupContinuousMonitoring(SourceCatalogPtr sourceCatalog) {
     auto success = true;
+
+
+
+
     //register logical source
     registerMonitoringLogical(sourceCatalog);
     return success;

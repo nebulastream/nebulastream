@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -33,6 +34,7 @@
 #include <Sources/MQTTSource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Sources/MonitoringSource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/ZmqSource.hpp>
@@ -127,6 +129,15 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
         }
         case MEMORY_SOURCE: {
             NES_ASSERT(false, "not supported because MemorySouce must be used only for local development or testing");
+        }
+        case MONITORING_SOURCE: {
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating monitoring source");
+            const MonitoringSourcePtr monitoringSource = std::dynamic_pointer_cast<MonitoringSource>(dataSource);
+            const SourceDescriptorPtr monitoringSourceDescriptor =
+                MonitoringSourceDescriptor::create(monitoringSource->getSchema(),
+                                                   monitoringSource->getWaitTime(),
+                                                   monitoringSource->getCollectorType());
+            return monitoringSourceDescriptor;
         }
         default: {
             NES_ERROR("ConvertPhysicalToLogicalSource: Unknown Data Source Type " << srcType);
