@@ -47,18 +47,6 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                                      TopologyPtr topology,
                                      TypeInferencePhasePtr typeInferencePhase);
     /**
-     * @brief Get the candidate query plan where input operator is to be appended
-     * @param queryId : the query id
-     * @param operatorNode : the candidate operator
-     * @param executionNode : the execution node where operator is to be placed
-     * @return the query plan to which the input operator is to be appended
-     */
-    static QueryPlanPtr
-    getCandidateQueryPlan(QueryId queryId,
-                          const OperatorNodePtr& operatorNode,
-                          const ExecutionNodePtr& executionNode);
-
-    /**
      * @brief Try to place input operator on the input topology node
      * @param queryId :  the query id
      * @param operatorNode : the input operator to place
@@ -69,13 +57,6 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                        const OperatorNodePtr& operatorNode,
                        TopologyNodePtr candidateTopologyNode,
                        const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
-
-    /**
-     * @brief Get topology node where all children operators of the input operator are placed
-     * @param operatorNode: the input operator
-     * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
-     */
-    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode);
 
     // stores the binary mapping  of the current strategy
     PlacementMatrix binaryMapping;
