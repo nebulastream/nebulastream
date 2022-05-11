@@ -36,9 +36,9 @@
 #include <future>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <iomanip>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -192,6 +192,22 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot create location source");
     }
 
+    if (workerConfig->enableStatisticOuput) {
+        statisticOutputThread = std::make_shared<std::thread>(([this]() {
+            NES_DEBUG("NesWorker: start statistic collection");
+            while (isRunning) {
+                auto ts = std::chrono::system_clock::now();
+                auto timeNow = std::chrono::system_clock::to_time_t(ts);
+                auto stats = nodeEngine->getQueryStatistics(true);
+                for (auto& query : stats) {
+                    std::cout << "Statistics " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
+                              << query.getQueryStatisticsAsString() << std::endl;
+                }
+                sleep(1);
+            }
+            NES_DEBUG("NesWorker: statistic collection end");
+        }));
+    }
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
         signal(SIGINT, termFunc);
@@ -246,6 +262,12 @@ bool NesWorker::stop(bool) {
         }
         rpcServer.reset();
         rpcThread.reset();
+        if(statisticOutputThread && statisticOutputThread->joinable())
+        {
+            NES_DEBUG("NesWorker: statistic collection thread join");
+            statisticOutputThread->join();
+        }
+        statisticOutputThread.reset();
 
         return successShutdownNodeEngine;
     }

@@ -152,6 +152,11 @@ class WorkerConfiguration : public BaseConfiguration {
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
 
     /**
+     * @brief Enables the statistic output
+     */
+    BoolOption enableStatisticOuput = {ENABLE_STATISTIC_OUTPUT_CONFIG, false, "Enable statistic output"};
+
+    /**
      * @brief Sets configuration properties for the query compiler.
      */
     QueryCompilerConfiguration queryCompiler = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};
@@ -247,7 +252,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &queryManagerMode,
-                &configPath};
+                &configPath,
+                &enableStatisticOuput};
     }
 };
 }// namespace Configurations

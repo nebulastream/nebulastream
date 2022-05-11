@@ -255,6 +255,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
+    std::shared_ptr<std::thread> statisticOutputThread;
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
