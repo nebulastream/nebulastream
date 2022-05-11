@@ -79,7 +79,6 @@ void WorkerContext::insertIntoStorage(Network::PartitionId nesPartitionId, NES::
 }
 
 void WorkerContext::trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp) {
-    return;
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         if (!iteratorPartitionId->second.empty()) {
