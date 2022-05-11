@@ -213,7 +213,6 @@ option(ENABLE_PYTHON_UDF "Build supporting Python UDF" OFF)
 message(STATUS "Python UDF support: ${ENABLE_PYTHON_UDF}")
 if (ENABLE_PYTHON_UDF)
     add_compile_definitions(PYTHON_UDF_ENABLED)
-    set(Python_ADDITIONAL_VERSIONS 3.8)
     find_package(PythonLibs 3 REQUIRED)
     include_directories(${PYTHON_INCLUDE_DIRS})
     # Python needs to link against libutil. "python3-config --ldflags" will give the recommended flags
