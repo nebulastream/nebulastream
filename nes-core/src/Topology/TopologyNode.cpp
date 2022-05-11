@@ -48,9 +48,13 @@ void TopologyNode::increaseResources(uint16_t freedCapacity) {
 }
 
 void TopologyNode::reduceResources(uint16_t usedCapacity) {
-    NES_ASSERT(usedCapacity <= resources, "PhysicalNode: amount of resources to be used can't be more than actual resources");
-    NES_ASSERT(usedCapacity <= (resources - usedResources),
-               "PhysicalNode: amount of resources to be used can't be more than available resources");
+    if (usedCapacity <= resources) {
+        NES_WARNING("PhysicalNode: amount of resources to be used should not be more than actual resources");
+    }
+
+    if (usedCapacity <= (resources - usedResources)) {
+        NES_WARNING("PhysicalNode: amount of resources to be used should not be more than available resources");
+    }
     usedResources = usedResources + usedCapacity;
 }
 

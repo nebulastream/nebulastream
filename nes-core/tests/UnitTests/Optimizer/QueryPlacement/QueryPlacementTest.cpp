@@ -851,9 +851,9 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     }
 }
 
-// Test manual placement with limited resources
-// TODO 2487 enable this test
-TEST_F(QueryPlacementTest, DISABLED_testManualPlacementLimitedResources) {
+// Test manual placement with limited resources. The manual placement should place the operator depending on the mapping
+// without considering availability of the nodes
+TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
     setupTopologyAndSourceCatalog({1, 1, 1});
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();

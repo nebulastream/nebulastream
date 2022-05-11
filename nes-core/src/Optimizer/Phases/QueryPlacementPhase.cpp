@@ -90,7 +90,6 @@ bool QueryPlacementPhase::initiatePlacement(BasePlacementStrategyPtr placementSt
     return success;
 }
 
-// TODO 2487: reduce code duplication
 bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy,
                                   const SharedQueryPlanPtr& sharedQueryPlan,
                                   std::vector<std::vector<bool>> matrix) {
