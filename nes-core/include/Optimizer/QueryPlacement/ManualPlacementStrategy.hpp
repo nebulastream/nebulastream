@@ -42,6 +42,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
      */
     void setBinaryMapping(PlacementMatrix userDefinedBinaryMapping);
 
+    static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix matrix);
   private:
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                      TopologyPtr topology,

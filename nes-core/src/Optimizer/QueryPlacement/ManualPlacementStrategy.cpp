@@ -20,6 +20,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <log4cxx/helpers/exception.h>
@@ -42,6 +43,31 @@ ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr glo
 
 void ManualPlacementStrategy::setBinaryMapping(PlacementMatrix userDefinedBinaryMapping) {
     this->binaryMapping = std::move(userDefinedBinaryMapping);
+}
+
+void ManualPlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix matrix) {
+    matrix.size();
+    std::vector<TopologyNodePtr> topologyNodes;
+    auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
+    for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
+        topologyNodes.emplace_back((*itr)->as<TopologyNode>());
+    }
+
+    auto operators = QueryPlanIterator(std::move(queryPlan)).snapshot();
+
+    for (uint64_t i = 0; i < topologyNodes.size(); i++) {
+        auto currentMatrixRow = matrix[i];
+
+        for (uint64_t j = 0; j < operators.size(); j++) {
+            if (currentMatrixRow[j]) {
+                operators[j]->as<OperatorNode>()->addProperty("PINNED_NODE_ID", topologyNodes[i]->getId());
+            }
+        }
+    }
+
+    for (auto op : operators) {
+        NES_DEBUG("Assigned operator id: " << std::any_cast<uint64_t>(op->as<OperatorNode>()->getProperty("PINNED_NODE_ID")));
+    }
 }
 
 void ManualPlacementStrategy::placeOperator(QueryId queryId,

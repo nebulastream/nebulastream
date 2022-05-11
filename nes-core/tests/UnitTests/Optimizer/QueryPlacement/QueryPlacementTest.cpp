@@ -137,33 +137,6 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
             }
         }
     }
-
-    static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix matrix) {
-        matrix.size();
-        std::vector<TopologyNodePtr> topologyNodes;
-        auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
-        for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
-            topologyNodes.emplace_back((*itr)->as<TopologyNode>());
-        }
-
-        auto operators = QueryPlanIterator(std::move(queryPlan)).snapshot();
-
-        //        NES_ASSERT(topologyNodes.size() == operators.size(), "Size missmatch between topology and operators");
-
-        for (uint64_t i = 0; i < topologyNodes.size(); i++) {
-            auto currentMatrixRow = matrix[i];
-
-            for (uint64_t j = 0; j < operators.size(); j++) {
-                if (currentMatrixRow[j]) {
-                    operators[j]->as<OperatorNode>()->addProperty("PINNED_NODE_ID", topologyNodes[i]->getId());
-                }
-            }
-        }
-
-        for (auto op : operators) {
-            NES_DEBUG("Assigned operator id: " << std::any_cast<uint64_t>(op->as<OperatorNode>()->getProperty("PINNED_NODE_ID")));
-        }
-    }
 };
 
 /* Test query placement with bottom up strategy  */
@@ -812,11 +785,11 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
                                      {false, true, true, false, false},
                                      {false, false, false, true, true}};
 
-    pinOperators(queryPlan, topology, binaryMapping);
+    NES::Optimizer::ManualPlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
 
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::Manual, sharedQueryPlan, binaryMapping);
+    queryPlacementPhase->execute(NES::PlacementStrategy::Manual, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
@@ -873,11 +846,11 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
                                      {false, true, true, false, false},
                                      {false, false, false, true, true}};
 
-    pinOperators(queryPlan, topology, binaryMapping);
+    NES::Optimizer::ManualPlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
 
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
-    queryPlacementPhase->execute(NES::PlacementStrategy::Manual, sharedQueryPlan, binaryMapping);
+    queryPlacementPhase->execute(NES::PlacementStrategy::Manual, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion
