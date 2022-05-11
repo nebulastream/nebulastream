@@ -28,35 +28,35 @@
 #include <iostream>
 namespace NES::Experimental {
 
-struct __attribute__((packed)) record_customer {
-    uint64_t C_CUSTKEY;
-    char C_NAME[25 + 1];
-    char C_ADDRESS[40 + 1];
-    uint64_t C_NATIONKEY;
-    char C_PHONE[15 + 1];
-    double C_ACCTBAL;
-    char C_MKTSEGMENT[10 + 1];
-    char C_COMMENT[117 + 1];
-};
-struct __attribute__((packed)) record_nation {
-    uint64_t N_NATIONKEY;
-    char N_NAME[25 + 1];
-    uint64_t N_REGIONKEY;
-    char N_COMMENT[152 + 1];
-};
-struct __attribute__((packed)) record_integers_0 {
-    uint64_t id;
-    uint64_t value;
-};
-struct __attribute__((packed)) record_integers_1 {
-    uint64_t id;
-    uint64_t one;
-    uint64_t value;
-};
-
 
 class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
-  public:
+public:
+    struct __attribute__((packed)) record_customer {
+        uint64_t C_CUSTKEY;
+        char C_NAME[25 + 1];
+        char C_ADDRESS[40 + 1];
+        uint64_t C_NATIONKEY;
+        char C_PHONE[15 + 1];
+        double C_ACCTBAL;
+        char C_MKTSEGMENT[10 + 1];
+        char C_COMMENT[117 + 1];
+    };
+    struct __attribute__((packed)) record_nation {
+        uint64_t N_NATIONKEY;
+        char N_NAME[25 + 1];
+        uint64_t N_REGIONKEY;
+        char N_COMMENT[152 + 1];
+    };
+    struct __attribute__((packed)) record_integers_0 {
+        uint64_t id;
+        uint64_t value;
+    };
+    struct __attribute__((packed)) record_integers_1 {
+        uint64_t id;
+        uint64_t one;
+        uint64_t value;
+    };
+
     const std::string table_path_customer_l0200 = "./test_data/tpch_l0200_customer.tbl";
     const std::string table_path_customer_s0001 = "./test_data/tpch_s0001_customer.tbl";
     const std::string table_path_nation_s0001 = "./test_data/tpch_s0001_nation.tbl";
@@ -81,39 +81,39 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
     void SetUp() {
         Testing::NESBaseTest::SetUp();
         schema_customer = Schema::create()
-                              ->addField("C_CUSTKEY", BasicType::UINT64)
-                              ->addField("C_NAME", DataTypeFactory::createFixedChar(25 + 1))   // var text
-                              ->addField("C_ADDRESS", DataTypeFactory::createFixedChar(40 + 1))// var text
-                              ->addField("C_NATIONKEY", BasicType::UINT64)
-                              ->addField("C_PHONE", DataTypeFactory::createFixedChar(15 + 1))     // fixed text
-                              ->addField("C_ACCTBAL", DataTypeFactory::createDouble())            // decimal
-                              ->addField("C_MKTSEGMENT", DataTypeFactory::createFixedChar(10 + 1))// fixed text
-                              ->addField("C_COMMENT", DataTypeFactory::createFixedChar(117 + 1))  // var text
-            ;
+                ->addField("C_CUSTKEY", BasicType::UINT64)
+                ->addField("C_NAME", DataTypeFactory::createFixedChar(25 + 1))   // var text
+                ->addField("C_ADDRESS", DataTypeFactory::createFixedChar(40 + 1))// var text
+                ->addField("C_NATIONKEY", BasicType::UINT64)
+                ->addField("C_PHONE", DataTypeFactory::createFixedChar(15 + 1))     // fixed text
+                ->addField("C_ACCTBAL", DataTypeFactory::createDouble())            // decimal
+                ->addField("C_MKTSEGMENT", DataTypeFactory::createFixedChar(10 + 1))// fixed text
+                ->addField("C_COMMENT", DataTypeFactory::createFixedChar(117 + 1))  // var text
+                ;
         schema_nation = Schema::create()
-                            ->addField("N_NATIONKEY", BasicType::UINT64)
-                            ->addField("N_NAME", DataTypeFactory::createFixedChar(25 + 1))// var text
-                            ->addField("N_REGIONKEY", BasicType::UINT64)
-                            ->addField("N_COMMENT", DataTypeFactory::createFixedChar(152 + 1));// var text
-        schema_integers_0 = Schema::create()
-                            ->addField("id", BasicType::UINT64)
-                            ->addField("value", BasicType::UINT64);
-        schema_integers_1 = Schema::create()
-                            ->addField("id", BasicType::UINT64)
-                            ->addField("one", BasicType::UINT64)
-                            ->addField("value", BasicType::UINT64);
+                ->addField("N_NATIONKEY", BasicType::UINT64)
+                ->addField("N_NAME", DataTypeFactory::createFixedChar(25 + 1))// var text
+                ->addField("N_REGIONKEY", BasicType::UINT64)
+                ->addField("N_COMMENT", DataTypeFactory::createFixedChar(152 + 1));// var text
+                schema_integers_0 = Schema::create()
+                        ->addField("id", BasicType::UINT64)
+                        ->addField("value", BasicType::UINT64);
+                schema_integers_1 = Schema::create()
+                        ->addField("id", BasicType::UINT64)
+                        ->addField("one", BasicType::UINT64)
+                        ->addField("value", BasicType::UINT64);
 
-        ASSERT_EQ(sizeof(record_customer), 236UL);
-        ASSERT_EQ(schema_customer->getSchemaSizeInBytes(), 236ULL);
-        {
-            std::ifstream file;
-            file.open(table_path_customer_l0200);
-            NES_ASSERT(file.is_open(), "Invalid path.");
-            int num_lines = std::count(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), '\n');
-            NES_ASSERT(num_lines == 200, "The table file table_path_customer_l0200 does not contain exactly 200 lines.");
-        }
+                ASSERT_EQ(sizeof(record_customer), 236UL);
+                ASSERT_EQ(schema_customer->getSchemaSizeInBytes(), 236ULL);
+                {
+                    std::ifstream file;
+                    file.open(table_path_customer_l0200);
+                    NES_ASSERT(file.is_open(), "Invalid path.");
+                    int num_lines = std::count(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>(), '\n');
+                    NES_ASSERT(num_lines == 200, "The table file table_path_customer_l0200 does not contain exactly 200 lines.");
+                }
 
-        ASSERT_EQ(sizeof(record_nation), 195UL);
+                ASSERT_EQ(sizeof(record_nation), 195UL);
         ASSERT_EQ(schema_nation->getSchemaSizeInBytes(), 195ULL);
         {
             std::ifstream file;
@@ -160,6 +160,9 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
         return diffToFirstTask;
     }
 };
+
+TEST_F(StaticDataSourceIntegrationTest, nothingTest) {}
+
 
 // This test checks that a deployed StaticDataSource can be initialized and queries with a simple query
 // Worker and coordinator on different nodes.
@@ -653,7 +656,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
 }
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinNationCustomer200lines) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -731,7 +734,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
 
 // join two static data sources together with the batch join operator.
 // Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
-TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinNationCustomerFull) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
@@ -823,7 +826,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
 }
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnly) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -907,7 +910,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
 }
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyPartitioned) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartitioned) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -998,7 +1001,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyPartitioned) {
 
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperations) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyWithOtherOperations) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -1177,7 +1180,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
 
 
 // join two static data sources together with the batch join operator. CUSTOMER with an artificial table.
-TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinCustomerWithIntTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -1297,7 +1300,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
 // join two static data sources together with the batch join operator.
 // two artificial tables of configurable length (generated during test)
 // useful for benchmarking
-TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinLargeIntTables) {
     std::string pathProbe = "./test_data/tmp_probe_table.tbl";
     std::string pathBuild = "./test_data/tmp_build_table.tbl";
 
