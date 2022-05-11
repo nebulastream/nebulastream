@@ -162,15 +162,6 @@ class BasePlacementStrategy {
      */
     bool runTypeInferencePhase(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
 
-    /**
-     * @brief assign binary matrix representation of placement mapping to the topology
-     * @param topologyPtr the topology to place the operators
-     * @param queryPlan query plan to place
-     * @param mapping binary mapping determining whether to place an operator to a node
-     */
-    bool
-    assignMappingToTopology(const NES::TopologyPtr topologyPtr, const NES::QueryPlanPtr queryPlan, const PlacementMatrix mapping);
-
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;

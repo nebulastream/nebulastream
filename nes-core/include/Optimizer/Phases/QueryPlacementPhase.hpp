@@ -83,6 +83,17 @@ class QueryPlacementPhase {
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
 
+    /**
+     * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
+     * selected query placement strategy
+     * @param placementStrategy : name of the placement strategy
+     * @param sharedQueryPlan : the shared query plan to place
+     * @param placementMatrix : the 2D matrix defining the placement
+     * @return true is placement successful.
+     * @throws QueryPlacementException
+     */
+    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, std::vector<std::vector<bool>> placementMatrix);
+
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
@@ -111,12 +122,21 @@ class QueryPlacementPhase {
      * @return false if one of the operator is not pinned else true
      */
     bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
-
     GlobalExecutionPlanPtr globalExecutionPlan;
+
+  public:
+    /**
+     * @brief set the placement matrix
+     * @param two dimensional matrix defining the placement of operators in the topology nodes
+     */
+    void setPlacementMatrix(const std::vector<std::vector<bool>>& placementMatrix);
+
+  private:
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
     bool queryReconfiguration;
+    std::vector<std::vector<bool>> placementMatrix;
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

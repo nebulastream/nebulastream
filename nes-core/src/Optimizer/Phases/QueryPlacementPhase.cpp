@@ -15,6 +15,7 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
@@ -57,6 +58,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     auto placementStrategyPtr =
         PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, z3Context);
 
+
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
@@ -79,7 +81,43 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                    lineageType,
                                                                    upStreamPinnedOperators,
                                                                    downStreamPinnedOperators);
-    NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+    NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+    return success;
+}
+
+// TODO 2487: reduce code duplication
+bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, std::vector<std::vector<bool>> placementMatrix) {
+    NES_INFO("QueryPlacementPhase: Perform query placement phase for shared query plan "
+             + std::to_string(sharedQueryPlan->getSharedQueryId()));
+
+    NES_ASSERT(placementStrategy == PlacementStrategy::Manual, "This call only works for manual placement");
+
+    auto manualPlacementStrategy = ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+    manualPlacementStrategy->setBinaryMapping(placementMatrix);
+
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlan = sharedQueryPlan->getQueryPlan();
+    auto faultToleranceType = queryPlan->getFaultToleranceType();
+    auto lineageType = queryPlan->getLineageType();
+    NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
+
+    //1. Fetch all upstream pinned operators
+    auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);
+
+    //2. Fetch all downstream pinned operators
+    auto downStreamPinnedOperators = getDownStreamPinnedOperators(upStreamPinnedOperators);
+
+    //3. Check if all operators are pinned
+    if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
+        throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
+    }
+
+    bool success = manualPlacementStrategy->updateGlobalExecutionPlan(queryId,
+                                                                   faultToleranceType,
+                                                                   lineageType,
+                                                                   upStreamPinnedOperators,
+                                                                   downStreamPinnedOperators);
+    NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return success;
 }
 
@@ -142,6 +180,10 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
         }
     }
     return downStreamPinnedOperators;
+}
+
+void QueryPlacementPhase::setPlacementMatrix(const std::vector<std::vector<bool>>& placementMatrix) {
+    QueryPlacementPhase::placementMatrix = placementMatrix;
 }
 
 }// namespace NES::Optimizer
