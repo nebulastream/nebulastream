@@ -28,6 +28,12 @@ class NetworkCollector : public MetricCollector {
     explicit NetworkCollector();
 
     /**
+     * @brief Returns the type of metric collector
+     * @return the metric collector type
+     */
+    MetricCollectorType getType() override;
+
+    /**
      * @brief Fill a buffer with a given metric.
      * @param tupleBuffer The tuple buffer
      * @return True if successful, else false

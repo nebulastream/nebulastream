@@ -15,6 +15,8 @@
 #ifndef NES_METRICCOLLECTORTYPE_HPP
 #define NES_METRICCOLLECTORTYPE_HPP
 
+#include <string>
+
 namespace NES {
 enum MetricCollectorType {
     CPU_COLLECTOR,
@@ -25,6 +27,8 @@ enum MetricCollectorType {
     RUNTIME_METRICS_COLLECTOR
 };
 
-}
+std::string toString(MetricCollectorType type);
+
+}// namespace NES
 
 #endif//NES_METRICCOLLECTORTYPE_HPP

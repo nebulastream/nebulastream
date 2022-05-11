@@ -28,6 +28,8 @@ CpuCollector::CpuCollector()
     NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
 }
 
+MetricCollectorType CpuCollector::getType() { return CPU_COLLECTOR; }
+
 bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();

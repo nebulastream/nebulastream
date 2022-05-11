@@ -29,6 +29,8 @@ DiskCollector::DiskCollector()
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
 }
 
+MetricCollectorType DiskCollector::getType() { return DISK_COLLECTOR; }
+
 bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         DiskMetrics measuredVal = resourceReader->readDiskStats();

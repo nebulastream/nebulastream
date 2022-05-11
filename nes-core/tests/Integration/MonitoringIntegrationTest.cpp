@@ -20,18 +20,25 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 //#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Monitoring/MetricCollectors/DiskCollector.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Services/MonitoringService.hpp>
+#include <Services/QueryService.hpp>
 #include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
@@ -282,75 +289,68 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
 
 TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
     // WIP of issue #2620
+    bool monitoring = true;
+
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
-
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->enableMonitoring = (true);
     coordinatorConfig->restPort = *restPort;
-    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf1->enableMonitoring = (true);
-    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf2->enableMonitoring = (true);
+    coordinatorConfig->enableMonitoring = (monitoring);
 
-    cout << "start coordinator" << endl;
+    NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    ASSERT_NE(port, 0ull);
-    cout << "coordinator started successfully" << endl;
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    //register logical schema
+    auto schema = DiskMetrics::getSchema("");
+    crd->getSourceCatalogService()->registerLogicalSource("diskMetricsStream", schema);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numberOfSlots = (12);
+    workerConfig1->enableMonitoring = (monitoring);
 
-    cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart2);
-    cout << "worker2 started successfully" << endl;
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->coordinatorPort = port;
+    workerConfig2->numberOfSlots = (12);
+    workerConfig2->enableMonitoring = (monitoring);
 
-    bool retConWrk1 = wrk1->connect();
-    ASSERT_TRUE(retConWrk1);
-    cout << "worker 1 connected " << endl;
+    MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(MetricCollectorType::DISK_COLLECTOR);
 
-    bool retConWrk2 = wrk2->connect();
-    ASSERT_TRUE(retConWrk2);
-    cout << "worker 2 connected " << endl;
+    auto physicalSource1 = PhysicalSource::create("stream", "diskMetrics1", sourceType);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
-    // requesting the monitoring data
-    auto const nodeNumber = static_cast<std::size_t>(3U);
-    ASSERT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
-    auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
 
-    ASSERT_EQ(jsons.size(), nodeNumber);
-    auto rootId = crd->getTopology()->getRoot()->getId();
-    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+    NES_INFO("MultiThreadedTest: Submit query");
+    string query = R"(Query::from("stream").sink(PrintSink::create());")";
 
-    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
-        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
-                 + std::to_string(port + 10));
-        auto json = jsons[std::to_string(i)];
-        ASSERT_TRUE(json.has_field("registration"));
-        json = json["registration"];
-        for (int j = 0; j < (int) json.size(); j++) {
-            auto data = json.at(j)["value"];
-            ASSERT_TRUE(
-                MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), data));
-        }
-    }
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
 
-    bool retStopWrk1 = wrk1->stop(false);
-    ASSERT_TRUE(retStopWrk1);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    bool retStopWrk2 = wrk2->stop(false);
-    ASSERT_TRUE(retStopWrk2);
+    NES_DEBUG("MultiThreadedTest: Remove query");
+    //queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
-    bool retStopCord = crd->stopCoordinator(false);
-    ASSERT_TRUE(retStopCord);
+    NES_INFO("MultiThreadedTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("MultiThreadedTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("MultiThreadedTest: Test finished");
 }
 
 }// namespace NES

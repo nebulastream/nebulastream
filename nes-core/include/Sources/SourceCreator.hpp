@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 #define NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -307,6 +308,29 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const size_t numSourceLocalBuffers,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                            const NES::Experimental::MaterializedView::MaterializedViewPtr view);
+
+/**
+ * @brief function to create a monitoring source
+ * @param metricCollector
+ * @param bufferManager
+ * @param queryManager
+ * @param numbersOfBufferToProduce
+ * @param sourceGatheringInterval
+ * @param operatorId
+ * @param originId
+ * @param numSourceLocalBuffers
+ * @param successors
+ * @return a const data source pointer
+ */
+DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
+                                     Runtime::BufferManagerPtr bufferManager,
+                                     Runtime::QueryManagerPtr queryManager,
+                                     const uint64_t numbersOfBufferToProduce,
+                                     uint64_t sourceGatheringInterval,
+                                     OperatorId operatorId,
+                                     OriginId originId,
+                                     size_t numSourceLocalBuffers,
+                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
 }// namespace Experimental::MaterializedView
 

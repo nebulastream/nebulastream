@@ -46,6 +46,9 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 using MetricEntryPtr = std::shared_ptr<std::pair<uint64_t, MetricPtr>>;
 using StoredNodeMetricsPtr = std::shared_ptr<std::unordered_map<MetricType, std::shared_ptr<std::vector<MetricEntryPtr>>>>;
+
+class MetricCollector;
+using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 }// namespace NES
 
 namespace web::json {

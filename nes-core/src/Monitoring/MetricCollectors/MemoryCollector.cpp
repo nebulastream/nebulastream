@@ -28,6 +28,8 @@ MemoryCollector::MemoryCollector()
     NES_INFO("MemoryCollector: Init MemoryCollector with schema " << schema->toString());
 }
 
+MetricCollectorType MemoryCollector::getType() { return MEMORY_COLLECTOR; }
+
 bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         MemoryMetrics measuredVal = resourceReader->readMemoryStats();

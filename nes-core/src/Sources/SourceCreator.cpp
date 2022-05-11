@@ -23,6 +23,7 @@
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Sources/MonitoringSource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -327,6 +328,24 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     GatheringMode::INTERVAL_MODE,
                                                                                     successors,
                                                                                     view);
+}
+
+DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
+                                     std::chrono::milliseconds waitTime,
+                                     Runtime::BufferManagerPtr bufferManager,
+                                     Runtime::QueryManagerPtr queryManager,
+                                     OperatorId operatorId,
+                                     OriginId originId,
+                                     size_t numSourceLocalBuffers,
+                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
+    return std::make_shared<MonitoringSource>(metricCollector,
+                                              waitTime,
+                                              bufferManager,
+                                              queryManager,
+                                              operatorId,
+                                              originId,
+                                              numSourceLocalBuffers,
+                                              successors);
 }
 
 }// namespace Experimental::MaterializedView

@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
 #define NES_INCLUDE_MONITORING_COLLECTORS_METRICCOLLECTOR_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
@@ -39,6 +40,12 @@ class MetricCollector {
   public:
     //  -- Destructor --
     virtual ~MetricCollector() = default;
+
+    /**
+     * @brief Returns the type of metric collector
+     * @return the metric collector type
+     */
+    virtual MetricCollectorType getType() = 0;
 
     /**
      * @brief Fill a buffer with a given metric.

@@ -84,6 +84,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -1049,7 +1050,19 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         sourceDetails->mutable_sourcedescriptor()->PackFrom(opcSerializedSourceDescriptor);
     }
 #endif
-    else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
+    else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
+        // serialize network source descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
+        auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
+        auto monitoringSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor();
+        const auto metricCollectorType = monitoringSourceDescriptor->getMetricCollectorType();
+        const auto waitTime = monitoringSourceDescriptor->getWaitTime();
+        // serialize source schema
+        monitoringSerializedSourceDescriptor.set_metriccollectortype(metricCollectorType);
+        monitoringSerializedSourceDescriptor.set_waittime(waitTime.count());
+        sourceDetails->mutable_sourcedescriptor()->PackFrom(monitoringSerializedSourceDescriptor);
+    } else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
         // serialize network source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
@@ -1216,7 +1229,17 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         return ret;
     }
 #endif
-    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
+    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor>()) {
+        // de-serialize zmq source descriptor
+        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as monitoringSourceDescriptor");
+        auto monitoringSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor();
+        serializedSourceDescriptor.UnpackTo(&monitoringSerializedSourceDescriptor);
+        // de-serialize source schema
+        auto waitTime = std::chrono::milliseconds(monitoringSerializedSourceDescriptor.waittime());
+        auto metricCollectorType = monitoringSerializedSourceDescriptor.metriccollectortype();
+        auto ret = MonitoringSourceDescriptor::create(waitTime, MetricCollectorType(metricCollectorType));
+        return ret;
+    } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>()) {
         // de-serialize zmq source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as NetworkSourceDescriptor");
         auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();

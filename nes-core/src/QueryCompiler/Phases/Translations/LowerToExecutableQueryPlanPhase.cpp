@@ -19,6 +19,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -30,6 +31,7 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -340,6 +342,11 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   memorySourceType->getTaskQueueId(),
                                                   logicalSourceName,
                                                   physicalSourceName);
+        }
+        case MONITORING_SOURCE: {
+            auto monitoringSourceType = physicalSourceType->as<MonitoringSourceType>();
+            return MonitoringSourceDescriptor::create(monitoringSourceType->getWaitTime(),
+                                                      MetricCollectorType(monitoringSourceType->getMetricCollectorType()));
         }
         case BENCHMARK_SOURCE: {
             auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();

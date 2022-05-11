@@ -35,6 +35,12 @@ class CpuCollector : public MetricCollector {
     bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
 
     /**
+     * @brief Returns the type of metric collector
+     * @return the metric collector type
+     */
+    MetricCollectorType getType() override;
+
+    /**
      * @brief Return the schema representing the metrics gathered by the collector.
      * @return The schema
      */
