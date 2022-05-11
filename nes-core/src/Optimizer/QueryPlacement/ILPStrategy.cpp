@@ -292,7 +292,7 @@ bool ILPStrategy::placeOperators(QueryPlanPtr queryPlan,
                                  z3::model& z3Model,
                                  std::map<std::string, z3::expr>& placementVariables) {
     auto topologyIterator = NES::DepthFirstNodeIterator(topology->getRoot()).begin();
-    std::vector<std::vector<bool>> binaryMapping;
+    NES::Optimizer::PlacementMatrix binaryMapping;
 
     while (topologyIterator != DepthFirstNodeIterator::end()) {
         // get the ExecutionNode for the current topology Node
@@ -319,7 +319,7 @@ bool ILPStrategy::placeOperators(QueryPlanPtr queryPlan,
     }
 
     // apply the placement from the specified binary mapping
-    // TODO 2487: use the new interface
+    // TODO 2485: use the new interface
     // auto assignSuccess = assignMappingToTopology(topology, queryPlan, binaryMapping);
 //    if (!assignSuccess) {
 //        return false;

@@ -73,7 +73,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     }
 
     // 5. assign the PlacementMatrix of the current candidate to the actual execution plan
-    // TODO 2487: use the new interface
+    // TODO 2486: use the new interface
     //assignMappingToTopology(topology, queryPlan, bestCandidate);
 
     // 6. complete the placement with system-generated network sources and sinks

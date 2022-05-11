@@ -55,6 +55,9 @@ using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+using PlacementMatrix = std::vector<std::vector<bool>>;
+
 /**
  * @brief This class is responsible for placing operators of an input query plan on a global execution plan.
  */
@@ -94,7 +97,7 @@ class QueryPlacementPhase {
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
-    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, std::vector<std::vector<bool>> matrix);
+    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan, NES::Optimizer::PlacementMatrix matrix);
 
     bool initiatePlacement(BasePlacementStrategyPtr placementStrategyPtr, const SharedQueryPlanPtr& sharedQueryPlan);
   private:
@@ -132,14 +135,14 @@ class QueryPlacementPhase {
      * @brief set the placement matrix
      * @param two dimensional matrix defining the placement of operators in the topology nodes
      */
-    void setPlacementMatrix(const std::vector<std::vector<bool>>& placementMatrix);
+    void setPlacementMatrix(const NES::Optimizer::PlacementMatrix& placementMatrix);
 
   private:
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
     bool queryReconfiguration;
-    std::vector<std::vector<bool>> placementMatrix;
+    NES::Optimizer::PlacementMatrix placementMatrix;
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
