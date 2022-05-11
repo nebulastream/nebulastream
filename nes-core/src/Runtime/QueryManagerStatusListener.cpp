@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
@@ -28,8 +29,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <memory>
-#include <stack>
-#include <utility>
+#include <variant>
 
 namespace NES::Runtime {
 void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep,
@@ -85,8 +85,31 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
         std::move(qepToFail));
 }
 
-void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline, const std::string& errorMessage) {
-    NES_ASSERT(false, errorMessage);
+void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink,
+                                             const std::string& errorMessage) {
+
+    QuerySubPlanId planId;
+    if (auto* pipe = std::get_if<Execution::ExecutablePipelinePtr>(&pipelineOrSink)) {
+        planId = (*pipe)->getQuerySubPlanId();
+    } else if (auto* sink = std::get_if<DataSinkPtr>(&pipelineOrSink)) {
+        planId = (*pipe)->getQuerySubPlanId();
+    }
+    std::unique_lock lock(queryMutex);
+    auto qepToFail = runningQEPs[planId];
+    lock.unlock();
+
+    auto future = asyncTaskExecutor->runAsync(
+        [this, errorMessage](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
+            NES_DEBUG("Going to fail query id=" << qepToFail->getQuerySubPlanId()
+                                                << " subplan=" << qepToFail->getQuerySubPlanId());
+            if (failQuery(qepToFail)) {
+                NES_DEBUG("Failed query id=" << qepToFail->getQuerySubPlanId() << " subplan=" << qepToFail->getQuerySubPlanId());
+                queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), qepToFail->getQuerySubPlanId(), errorMessage);
+                return qepToFail;
+            }
+            return nullptr;
+        },
+        std::move(qepToFail));
 }
 
 void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {
