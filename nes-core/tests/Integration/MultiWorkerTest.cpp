@@ -147,6 +147,7 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
 
 TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     cout << "start coordinator" << endl;
@@ -158,6 +159,7 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->coordinatorPort = (port);
+    wrkConf1->workerHealthCheckWaitTime = 1;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -166,6 +168,7 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->coordinatorPort = (port);
+    wrkConf2->workerHealthCheckWaitTime = 1;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
