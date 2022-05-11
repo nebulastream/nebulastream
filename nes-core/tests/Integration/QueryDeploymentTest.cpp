@@ -732,6 +732,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -747,6 +748,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig1->workerHealthCheckWaitTime = 1;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
