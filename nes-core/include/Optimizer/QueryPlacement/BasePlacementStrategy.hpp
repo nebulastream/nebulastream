@@ -162,6 +162,25 @@ class BasePlacementStrategy {
      */
     bool runTypeInferencePhase(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
 
+    /**
+     * @brief Get topology node where all children operators of the input operator are placed
+     * @param operatorNode: the input operator
+     * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
+     */
+    std::vector<TopologyNodePtr>
+    getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode,
+                                         std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap);
+
+    /**
+     * @brief Get the candidate query plan where input operator is to be appended
+     * @param queryId : the query id
+     * @param operatorNode : the candidate operator
+     * @param executionNode : the execution node where operator is to be placed
+     * @return the query plan to which the input operator is to be appended
+     */
+    static QueryPlanPtr
+    getCandidateQueryPlanForOperator(QueryId queryId, const OperatorNodePtr& operatorNode, const ExecutionNodePtr& executionNode);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
