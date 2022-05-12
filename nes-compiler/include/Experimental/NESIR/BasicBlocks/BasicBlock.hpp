@@ -27,15 +27,23 @@ class BasicBlock {
     /**
      * @brief BasicBlock used for control flow in NES IR
      * @param Operations: A list of Operations that are executed in the BasicBlock.
-     * @param nextBlock : The BasicBlock that is next in the control flow of the execution.
+     * @param nextBlocks : The BasicBlock that is next in the control flow of the execution.
      */
-    explicit BasicBlock(std::vector<OperationPtr> operations);
+    explicit BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs,
+                        std::vector<std::shared_ptr<BasicBlock>> nextBlocks = {});
     virtual ~BasicBlock() = default;
+    [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] std::vector<OperationPtr> getOperations();
+    [[nodiscard]] std::vector<std::string> getInputArgs();
+    [[nodiscard]] std::vector<std::shared_ptr<BasicBlock>> getNextBlocks();
+    void setNextBlocks(std::vector<std::shared_ptr<BasicBlock>> nextBlocks);
 
   private:
+    std::string identifier;
     std::vector<OperationPtr> operations;
+    std::vector<std::string> inputArgs;
+    std::vector<std::shared_ptr<BasicBlock>> nextBlocks;
 };
-using BasicBlockPtr = std::unique_ptr<BasicBlock>;
+using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 } // namespace NES
 #endif//NES_BASICBLOCK_HPP

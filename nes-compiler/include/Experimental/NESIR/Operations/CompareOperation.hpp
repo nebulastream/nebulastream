@@ -12,17 +12,25 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <utility>
+#ifndef NES_COMPAREOPERATION_HPP
+#define NES_COMPAREOPERATION_HPP
+
+#include <Experimental/NESIR/Operations/Operation.hpp>
+
 namespace NES {
-LoopOperation::LoopOperation(LoopType loopType, OperationPtr loopBranchOp)
-    : Operation(Operation::LoopOp), loopType(loopType), loopBranchOp(std::move(loopBranchOp)) {}
+class CompareOperation : public Operation {
+  public:
+    CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName);
+    ~CompareOperation() override = default;
 
-LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
-OperationPtr LoopOperation::getLoopBranchOp() { return std::move(loopBranchOp); }
+    std::string getIdentifier();
+    std::string getFirstArgName();
+    std::string getSecondArgName();
 
-bool LoopOperation::classof(const Operation *Op) {
-    return Op->getOperationType() == Operation::LoopOp;
-}
-
+  private:
+    std::string identifier;
+    std::string firstArgName;
+    std::string secondArgName;
+};
 }// namespace NES
+#endif//NES_COMPAREOPERATION_HPP

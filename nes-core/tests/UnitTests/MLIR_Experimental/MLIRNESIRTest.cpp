@@ -32,6 +32,13 @@
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
+#include <Experimental/NESIR/Operations/BranchOperation.hpp>
+
+#include <Experimental/NESIR/Operations/IfOperation.hpp>
+
+#include <Experimental/NESIR/Operations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
 #include <unordered_map>
 
 namespace NES {
@@ -150,15 +157,7 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
 
     //Todo BIG ISSUE:
     // - use loop-based MLIR Generation Approach
-    // - currently CREATION: (addressOp+(addressOp->loadOp + constOp)->addOp)->storeOp->loopBB->loopOp->funcBB->funcOp->NESIR
-    // - currently GENERATION: NESIR->funcOp->funcBB->loopOp->loopBB->storeOP
-    //                             -> addressOp
-    //                             -> addOp
-    //                                  -> constOp
-    //                                  -> loadOp->addressOp
-    // Goal: Mimic CREATION in GENERATION
-    // - NEW GENERATION (Idea: insert Ops on one level until hitting BB):
-    // 1,2,3   NESIR->funcOp(Op1)->funcBB(getOPs)
+#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
     // 4,5                     loopOp(Op1)->loopBB(getOPs)
     // 6                         addressOp(Op1) ~InputBuff~
     // 7                         loadOp[Op1](Op2) -> ACCESS: addressOpMap[&Op1]
@@ -175,36 +174,48 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     auto outputAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 8, 0, false);
     auto storeOp = std::make_shared<StoreOperation>(addOp, outputAddressOp);
 
-    //Todo test sizeof smartPtr vs rawPtr
-    // int64_t sizeOfSmartPtr = sizeof(inputAddressOp);
-    // int64_t sizeOfRawPtr = sizeof(inputAddressOp.get());
-    // int64_t* testPtr = (int64_t*) inputAddressOp.get();
-    // uintptr_t testUintPtr =  reinterpret_cast<std::uintptr_t>(inputAddressOp.get());
-    // testUintPtr++;
-    // auto testSmart = testPtr++;
-    // std::unordered_map<std::uintptr_t, OperationPtr> test;
-    // test.emplace(std::pair{testUintPtr, inputAddressOp});
-    // auto backcasted =  reinterpret_cast<Operation*>(testUintPtr);
-    // printf("Size of Smarty: %ld\n", sizeOfSmartPtr);
-    // printf("Size of Rawy: %ld\n", sizeOfRawPtr);
-
-    // Loop BasicBlock
+    // Loop BodyBlock
+    
     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, constOp, addOp, outputAddressOp, storeOp};
-    BasicBlockPtr loopBlock = std::make_unique<BasicBlock>(loopOps);
-    NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(std::move(loopBlock));
+    std::vector<std::string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne"};
+    BasicBlockPtr loopBodyBlock = std::make_shared<BasicBlock>("loopBlock", loopOps, loopArguments);
+    OperationPtr loopBodyTerminatorOp = std::make_shared<BranchOperation>(loopBodyBlock);
+    loopBodyBlock->getOperations().push_back(loopBodyTerminatorOp);
+    OperationPtr loopBodyBranchOp = std::make_shared<BranchOperation>(loopBodyBlock);
+
+    // Loop Header(IfOperation(LoopBodyBlock, ExecuteReturnBlock))
+    OperationPtr executeReturnOp = std::make_shared<ReturnOperation>(0);
+    std::vector<OperationPtr> executeReturnBlockOps{executeReturnOp};
+    std::vector<std::string> executeReturnBlockArgs{};
+    BasicBlockPtr executeReturnBlock = std::make_shared<BasicBlock>("loopBlock", executeReturnBlockOps, executeReturnBlockArgs);
+    OperationPtr returnBranchOp = std::make_shared<BranchOperation>(executeReturnOp);
+    OperationPtr ifCompareOp = std::make_shared<CompareOperation>("loopCompare", "i", "numTuples");
+    OperationPtr loopIfOp = std::make_shared<IfOperation>("loopCompare", loopBodyBranchOp, returnBranchOp);
+    std::vector<std::string> loopHeaderArgs{};
+    BasicBlockPtr loopHeaderBlock = std::make_shared<BasicBlock>("loopBlock", loopIfOp, loopHeaderArgs);
+    OperationPtr loopBranchOp = std::make_shared<BranchOperation>(loopHeaderBlock);
+
+    // Loop Operation -> loopBranchOp -> loopHeaderBlock -> loopIfOp -> (loopBodyBlock | executeEndBlock)
+    NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(loopBranchOp);
+
 
     // Execute Function
-    std::vector<OperationPtr> executeBlockOps{loopOperation};
-    NES::BasicBlockPtr executeBodyBlock = std::make_unique<NES::BasicBlock>(executeBlockOps);
+    // Execute Head Operations
+    std::vector<std::string> getInputDataBufArgs{"InputBuffer"};
+    std::vector<std::string> getOutputDataBufArgs{"OutputBuffer"};
+    OperationPtr inputDataBufferProxy = std::make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "inputDataBuffer", getInputDataBufArgs);
+    OperationPtr outputtDataBufferProxy = std::make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "outputDataBuffer", getInputDataBufArgs);
+    OperationPtr numTuplesProxy = std::make_shared<ProxyCallOperation>(Operation::GetNumTuples, "numTuples", getInputDataBufArgs);
+    OperationPtr constOneOp = std::make_shared<ConstantIntOperation>(1, 64);
+
+    std::vector<OperationPtr> executeBlockOps{inputDataBufferProxy, outputtDataBufferProxy, numTuplesProxy, constOneOp, loopOperation};
+    NES::BasicBlockPtr executeBodyBlock = std::make_shared<NES::BasicBlock>(executeBlockOps);
     std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{ "InputBuffer", "OutputBuffer"};
-    auto executeFuncOp = std::make_shared<FunctionOperation>("execute", std::move(executeBodyBlock),
-                                                             executeArgTypes, executeArgNames, Operation::INT64);
+    auto executeFuncOp = std::make_shared<FunctionOperation>("execute", executeBodyBlock, executeArgTypes, executeArgNames, Operation::INT64);
 
     // NESIR
-    std::vector<ExternalDataSourcePtr> externalDataSources{};
-    NES::NESIR nesIR(executeFuncOp, externalDataSources);
-    std::cout << externalDataSources.size() << '\n';
+    NES::NESIR nesIR(executeFuncOp);
 
     // NESIR to MLIR
     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);

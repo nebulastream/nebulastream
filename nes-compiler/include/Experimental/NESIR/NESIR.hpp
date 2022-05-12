@@ -21,14 +21,12 @@
 namespace NES {
 class NESIR {
   public:
-    NESIR(OperationPtr rootOperation, std::vector<ExternalDataSourcePtr> externalDataSource);
+    NESIR(OperationPtr rootOperation);
     ~NESIR() = default;
 
     OperationPtr getRootOperation();
-    std::vector<ExternalDataSourcePtr> getExternalDataSources();
   private:
     OperationPtr rootOperation;
-    std::vector<ExternalDataSourcePtr> externalDataSources;
 };
 
 }// namespace NESIR

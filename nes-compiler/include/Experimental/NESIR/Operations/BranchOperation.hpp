@@ -12,12 +12,26 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/BasicBlocks/IfBasicBlock.hpp>
-namespace NES {
-NES::IfBasicBlock::IfBasicBlock(const std::vector<OperationPtr>& operations,
-                                NES::BasicBlockPtr nextIfBlock,
-                                NES::BasicBlockPtr nextElseBlock)
-    : BasicBlock(operations), nextIfBlock(std::move(nextIfBlock)),
-      nextElseBlock(std::move(nextElseBlock)) {}
+#ifndef NES_BRANCHOPERATION_HPP
+#define NES_BRANCHOPERATION_HPP
 
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+
+namespace NES {
+/**
+ * @brief Terminator Operation(Op), must be last Op in BasicBlock(BB). Passes control flow from one BB to another.
+ * 
+ */
+class BranchOperation : public Operation {
+  public:
+    explicit BranchOperation(BasicBlockPtr nextBlock);
+    ~BranchOperation() override = default;
+
+    BasicBlockPtr getNextBlock();
+
+    static bool classof(const Operation *Op);
+  private:
+    BasicBlockPtr nextBlock;
+};
 }// namespace NES
+#endif//NES_BRANCHOPERATION_HPP

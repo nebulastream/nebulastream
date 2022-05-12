@@ -45,8 +45,12 @@ class Operation {
         CHARARRAY = 33,
         STRUCT    = 34
     };
-    enum MemberFunctions{GetNumTuples, GetDataBuffer};
-    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp, FunctionOp};
+    enum ProxyCallType{
+        GetNumTuples = 0, 
+        GetDataBuffer = 1,
+    };
+    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp, 
+                       CompareOp, ReturnOp, ProxyCallOp};
 
     explicit Operation(OperationType opType);
     virtual ~Operation() = default;

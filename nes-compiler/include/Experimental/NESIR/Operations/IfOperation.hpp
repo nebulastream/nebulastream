@@ -12,17 +12,25 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <utility>
+#ifndef NES_IFOPERATION_HPP
+#define NES_IFOPERATION_HPP
+
+#include "Experimental/NESIR/Operations/Operation.hpp"
+
 namespace NES {
-LoopOperation::LoopOperation(LoopType loopType, OperationPtr loopBranchOp)
-    : Operation(Operation::LoopOp), loopType(loopType), loopBranchOp(std::move(loopBranchOp)) {}
+class IfOperation : public Operation {
+  public:
+    IfOperation(std::string boolArgName, OperationPtr thenBranchOp, OperationPtr elseBranchOp);
+    ~IfOperation() override = default;
 
-LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
-OperationPtr LoopOperation::getLoopBranchOp() { return std::move(loopBranchOp); }
+    std::string getBoolArgName();
+    OperationPtr getThenBranchOp();
+    OperationPtr getElseBranchOp();
 
-bool LoopOperation::classof(const Operation *Op) {
-    return Op->getOperationType() == Operation::LoopOp;
-}
-
+  private:
+    std::string boolArgName;
+    OperationPtr thenBranchOp;
+    OperationPtr elseBranchOp;
+};
 }// namespace NES
+#endif//NES_IFOPERATION_HPP

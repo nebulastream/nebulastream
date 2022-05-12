@@ -16,7 +16,6 @@
 #define NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_
 
 #include <Experimental/NESIR/NESIR.hpp>
-#include <Experimental/NESIR/BasicBlocks/IfBasicBlock.hpp>
 
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
@@ -26,6 +25,12 @@
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/PredicateOperation.hpp>
+#include <Experimental/NESIR/Operations/IfOperation.hpp>
+#include "Experimental/NESIR/Operations/BranchOperation.hpp"
+#include "Experimental/NESIR/Operations/CompareOperation.hpp"
+#include "Experimental/NESIR/Operations/IfOperation.hpp"
+#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
+#include "Experimental/NESIR/Operations/ReturnOperation.hpp"
 
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
@@ -87,20 +92,26 @@ class MLIRGenerator {
     llvm::StringMap<mlir::Value> printfStrings;
 
 
-    void generateMLIR(NES::BasicBlockPtr basicBlock);
+    void generateMLIR(NES::BasicBlockPtr basicBlock, const std::unordered_map<std::string, mlir::Value>& blockArgs);
 
     /**
      * @brief Calls the specific generate function based on currentNode's type.
      * @param parentBlock MLIR Block that new operation is inserted into.
      */
-    void generateMLIR(const NES::OperationPtr& operation);
-    void generateMLIR(std::shared_ptr<NES::FunctionOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::LoopOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::ConstantIntOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::AddIntOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::StoreOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::LoadOperation> operation);
-    void generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp);
+    void generateMLIR(const NES::OperationPtr& operation, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::FunctionOperation> funcOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::AddIntOperation> addIntOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::StoreOperation> storeOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::LoadOperation> loadOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+
+    void generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::CompareOperation> compareOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::BranchOperation> branchOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::ReturnOperation> returnOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyCallOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.

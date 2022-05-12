@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <utility>
+#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
+#include <Experimental/NESIR/Operations/BranchOperation.hpp>
+
 namespace NES {
-LoopOperation::LoopOperation(LoopType loopType, OperationPtr loopBranchOp)
-    : Operation(Operation::LoopOp), loopType(loopType), loopBranchOp(std::move(loopBranchOp)) {}
 
-LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
-OperationPtr LoopOperation::getLoopBranchOp() { return std::move(loopBranchOp); }
+BranchOperation::BranchOperation(BasicBlockPtr nextBlock)
+    : Operation(OperationType::BranchOp), nextBlock(std::move(nextBlock)) {}
 
-bool LoopOperation::classof(const Operation *Op) {
-    return Op->getOperationType() == Operation::LoopOp;
-}
+BasicBlockPtr BranchOperation::getNextBlock() { return nextBlock; }
+
+bool BranchOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::BranchOp; }
 
 }// namespace NES

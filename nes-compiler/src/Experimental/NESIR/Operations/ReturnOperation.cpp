@@ -12,17 +12,14 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <utility>
+
+#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include <cstdint>
+
 namespace NES {
-LoopOperation::LoopOperation(LoopType loopType, OperationPtr loopBranchOp)
-    : Operation(Operation::LoopOp), loopType(loopType), loopBranchOp(std::move(loopBranchOp)) {}
+ReturnOperation::ReturnOperation(uint8_t returnOpCode) 
+    : Operation(Operation::ReturnOp), returnOpCode(returnOpCode){}
 
-LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
-OperationPtr LoopOperation::getLoopBranchOp() { return std::move(loopBranchOp); }
-
-bool LoopOperation::classof(const Operation *Op) {
-    return Op->getOperationType() == Operation::LoopOp;
-}
-
+    uint8_t ReturnOperation::getReturnOpCode() { return returnOpCode; }
+    
 }// namespace NES

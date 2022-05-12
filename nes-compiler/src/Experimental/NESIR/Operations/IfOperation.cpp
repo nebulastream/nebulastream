@@ -12,20 +12,16 @@
     limitations under the License.
 */
 
-#ifndef NES_IFBASICBLOCK_HPP
-#define NES_IFBASICBLOCK_HPP
 
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Operations/IfOperation.hpp>
 
 namespace NES {
-class IfBasicBlock : public BasicBlock {
-  public:
-    IfBasicBlock(const std::vector<OperationPtr>& operations, BasicBlockPtr nextIfBlock, BasicBlockPtr nextElseBlock);
-    ~IfBasicBlock() override = default;
+IfOperation::IfOperation(std::string boolArgName, OperationPtr thenBranchOp, OperationPtr elseBranchOp) 
+    : Operation(Operation::IfOp), boolArgName(boolArgName), thenBranchOp(std::move(thenBranchOp)), 
+    elseBranchOp(std::move(elseBranchOp)) {}
 
-  private:
-    BasicBlockPtr nextIfBlock;
-    BasicBlockPtr nextElseBlock;
-};
+    std::string IfOperation::getBoolArgName() { return boolArgName; }
+    OperationPtr IfOperation::getThenBranchOp() { return thenBranchOp; }
+    OperationPtr IfOperation::getElseBranchOp() { return elseBranchOp; }
+    
 }// namespace NES
-#endif//NES_IFBASICBLOCK_HPP

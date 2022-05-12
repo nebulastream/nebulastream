@@ -17,13 +17,11 @@
 
 namespace NES {
 
-NESIR::NESIR(OperationPtr rootOperation, std::vector<ExternalDataSourcePtr>  externalDataSources) :
-    rootOperation(std::move(rootOperation)), externalDataSources(std::move(externalDataSources)) {}
+NESIR::NESIR(OperationPtr rootOperation) :
+    rootOperation(std::move(rootOperation)) {}
 
 OperationPtr NESIR::getRootOperation() {
     return std::move(rootOperation);
 }
-
-std::vector<ExternalDataSourcePtr> NESIR::getExternalDataSources() { return externalDataSources; }
 
 }// namespace NES

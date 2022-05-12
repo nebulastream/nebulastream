@@ -16,9 +16,20 @@
 #include <utility>
 
 namespace NES {
-BasicBlock::BasicBlock(std::vector<OperationPtr> operations)
-    : operations(std::move(operations)) {}
+BasicBlock::BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs,
+                        std::vector<std::shared_ptr<BasicBlock>> nextBlocks)
+    : identifier(std::move(identifier)), operations(std::move(operations)), inputArgs(std::move(inputArgs)), nextBlocks(std::move(nextBlocks)) {}
+
+std::string BasicBlock::getIdentifier() { return identifier; }
 
 std::vector<OperationPtr> BasicBlock::getOperations() { return operations; }
+
+std::vector<std::string> BasicBlock::getInputArgs() { return inputArgs; }
+
+std::vector<std::shared_ptr<BasicBlock>> BasicBlock::getNextBlocks() { return nextBlocks; }
+
+void BasicBlock::setNextBlocks(std::vector<std::shared_ptr<BasicBlock>> nextBlocks) {
+    this->nextBlocks = std::move(nextBlocks);
+};
 
 }// namespace NES
