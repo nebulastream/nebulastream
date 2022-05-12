@@ -180,10 +180,10 @@ class SourceCatalog {
     bool updatedLogicalSource(std::string& sourceName, std::string& sourceSchema);
 
     /**
-     * @brief method to add a logical source
+     * @brief method to update a logical source
      * @param logical source name
      * @param schema of logical source as object
-     * @return bool indicating if insert was successful
+     * @return bool indicating if update was successful
      */
     bool updatedLogicalSource(const std::string& logicalSourceName, SchemaPtr schemaPtr);
 
