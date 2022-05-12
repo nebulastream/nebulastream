@@ -77,9 +77,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
 
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig->workerHealthCheckWaitTime = 1;
         cout << "iteration = " << i << endl;
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
         uint64_t port = crd->startCoordinator(/**blocking**/ false);
