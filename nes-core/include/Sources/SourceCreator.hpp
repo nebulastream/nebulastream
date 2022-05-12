@@ -287,6 +287,27 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   uint8_t retryTimes,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
+/**
+ * @brief function to create a monitoring source
+ * @param metricCollector
+ * @param waitTime
+ * @param bufferManager
+ * @param queryManager
+ * @param operatorId
+ * @param originId
+ * @param numSourceLocalBuffers
+ * @param successors
+ * @return a const data source pointer
+ */
+DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
+                                     std::chrono::milliseconds waitTime,
+                                     Runtime::BufferManagerPtr bufferManager,
+                                     Runtime::QueryManagerPtr queryManager,
+                                     OperatorId operatorId,
+                                     OriginId originId,
+                                     size_t numSourceLocalBuffers,
+                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+
 namespace Experimental::MaterializedView {
 
 /**
@@ -308,30 +329,6 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const size_t numSourceLocalBuffers,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                            const NES::Experimental::MaterializedView::MaterializedViewPtr view);
-
-/**
- * @brief function to create a monitoring source
- * @param metricCollector
- * @param bufferManager
- * @param queryManager
- * @param numbersOfBufferToProduce
- * @param sourceGatheringInterval
- * @param operatorId
- * @param originId
- * @param numSourceLocalBuffers
- * @param successors
- * @return a const data source pointer
- */
-DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
-                                     Runtime::BufferManagerPtr bufferManager,
-                                     Runtime::QueryManagerPtr queryManager,
-                                     const uint64_t numbersOfBufferToProduce,
-                                     uint64_t sourceGatheringInterval,
-                                     OperatorId operatorId,
-                                     OriginId originId,
-                                     size_t numSourceLocalBuffers,
-                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
-
 }// namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD

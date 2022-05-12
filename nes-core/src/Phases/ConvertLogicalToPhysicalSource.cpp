@@ -21,6 +21,7 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -28,6 +29,7 @@
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 
 #include <Network/NetworkManager.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -200,6 +202,18 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   memorySourceDescriptor->getSourceAffinity(),
                                   memorySourceDescriptor->getTaskQueueId(),
                                   successors);
+    } else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating monitoring source");
+        auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
+        auto metricCollector = MetricUtils::createCollectorFromType(monitoringSourceDescriptor->getMetricCollectorType());
+        return createMonitoringSource(metricCollector,
+                                      monitoringSourceDescriptor->getWaitTime(),
+                                      bufferManager,
+                                      queryManager,
+                                      operatorId,
+                                      originId,
+                                      numSourceLocalBuffers,
+                                      successors);
     } else if (sourceDescriptor->instanceOf<NES::Experimental::StaticDataSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating static data source");
         auto staticDataSourceDescriptor = sourceDescriptor->as<NES::Experimental::StaticDataSourceDescriptor>();

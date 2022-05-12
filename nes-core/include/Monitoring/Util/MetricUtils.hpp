@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
 #define NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
@@ -53,6 +54,13 @@ class MetricUtils {
      * @return json of metrics
      */
     static web::json::value toJson(StoredNodeMetricsPtr metrics);
+
+    /**
+     * Creates a metric collector from the according type.
+     * @param type
+     * @return the metric collector shared ptr.
+     */
+    static MetricCollectorPtr createCollectorFromType(MetricCollectorType type);
 };
 
 }// namespace NES

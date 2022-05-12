@@ -318,7 +318,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
 
     MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(MetricCollectorType::DISK_COLLECTOR);
 
-    auto physicalSource1 = PhysicalSource::create("stream", "diskMetrics1", sourceType);
+    auto physicalSource1 = PhysicalSource::create("diskMetricsStream", "diskMetrics1", sourceType);
     workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -329,7 +329,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
 
     NES_INFO("MultiThreadedTest: Submit query");
-    string query = R"(Query::from("stream").sink(PrintSink::create());")";
+    string query = R"(Query::from("diskMetricsStream").sink(PrintSinkDescriptor::create());)";
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
