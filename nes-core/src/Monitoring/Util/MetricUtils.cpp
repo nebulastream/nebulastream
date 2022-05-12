@@ -14,8 +14,13 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Monitoring/MetricCollectors/CpuCollector.hpp>
+#include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/MetricCollectors/MemoryCollector.hpp>
+#include <Monitoring/MetricCollectors/NetworkCollector.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 
@@ -68,6 +73,17 @@ web::json::value MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
         metricsJson[toString(metricTypeEntry.first)] = arr;
     }
     return metricsJson;
+}
+
+MetricCollectorPtr MetricUtils::createCollectorFromType(MetricCollectorType type) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<CpuCollector>();
+        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<DiskCollector>();
+        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<MemoryCollector>();
+        case MetricCollectorType::NETWORK_COLLECTOR: return std::make_shared<NetworkCollector>();
+        default: NES_FATAL_ERROR("MetricUtils: Not supported collector type " << toString(type));
+    }
+    return nullptr;
 }
 
 }// namespace NES

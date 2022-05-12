@@ -310,6 +310,24 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     successors);
 }
 
+DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
+                                     std::chrono::milliseconds waitTime,
+                                     Runtime::BufferManagerPtr bufferManager,
+                                     Runtime::QueryManagerPtr queryManager,
+                                     OperatorId operatorId,
+                                     OriginId originId,
+                                     size_t numSourceLocalBuffers,
+                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
+    return std::make_shared<MonitoringSource>(metricCollector,
+                                              waitTime,
+                                              bufferManager,
+                                              queryManager,
+                                              operatorId,
+                                              originId,
+                                              numSourceLocalBuffers,
+                                              successors);
+}
+
 namespace Experimental::MaterializedView {
 DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const Runtime::BufferManagerPtr bufferManager,
@@ -329,25 +347,6 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     successors,
                                                                                     view);
 }
-
-DataSourcePtr createMonitoringSource(MetricCollectorPtr metricCollector,
-                                     std::chrono::milliseconds waitTime,
-                                     Runtime::BufferManagerPtr bufferManager,
-                                     Runtime::QueryManagerPtr queryManager,
-                                     OperatorId operatorId,
-                                     OriginId originId,
-                                     size_t numSourceLocalBuffers,
-                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
-    return std::make_shared<MonitoringSource>(metricCollector,
-                                              waitTime,
-                                              bufferManager,
-                                              queryManager,
-                                              operatorId,
-                                              originId,
-                                              numSourceLocalBuffers,
-                                              successors);
-}
-
 }// namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD

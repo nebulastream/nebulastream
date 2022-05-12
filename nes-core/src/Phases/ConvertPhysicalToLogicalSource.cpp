@@ -134,8 +134,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             NES_INFO("ConvertPhysicalToLogicalSource: Creating monitoring source");
             const MonitoringSourcePtr monitoringSource = std::dynamic_pointer_cast<MonitoringSource>(dataSource);
             const SourceDescriptorPtr monitoringSourceDescriptor =
-                MonitoringSourceDescriptor::create(monitoringSource->getSchema(),
-                                                   monitoringSource->getWaitTime(),
+                MonitoringSourceDescriptor::create(monitoringSource->getWaitTime(),
                                                    monitoringSource->getCollectorType());
             return monitoringSourceDescriptor;
         }
