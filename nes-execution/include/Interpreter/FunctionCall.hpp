@@ -1,7 +1,10 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
 #include <Interpreter/DataValue/Integer.hpp>
+#include <execinfo.h>
 #include <memory>
+#include <stdio.h>
+#include <unistd.h>
 namespace NES::Interpreter {
 
 /*
@@ -55,17 +58,73 @@ auto bind(Fn T::*__pm, T* obj, Args... args) {
     auto f_ = std::mem_fn(__pm);
     return f_(obj, (unbox(args))...);
 }
+*/
+template<typename Arg>
+auto transform(Arg argument) {
+    if constexpr (std::is_same<Arg, Value<Integer>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<Boolean>>::value) {
+        return argument.value->getValue();
+    }
+}
 
-template<typename R, typename... Args>
-std::conditional_t<std::is_void_v<R>, void, R> FunctionCall(R (*fnptr)(Args...), Args... arguments) {
+class AbstractFunction {
+  public:
+    virtual ~AbstractFunction() = default;
+    virtual bool operator==(AbstractFunction& other) = 0;
+};
+
+template<typename CallbackFunction>
+class ProxyFunction : public AbstractFunction {
+  public:
+    bool operator==(AbstractFunction& other) override {
+
+        auto cast = dynamic_cast<ProxyFunction<CallbackFunction>*>(&other);
+        if (cast) {
+            return cast->function == this->function && cast->name == this->name;
+        }
+        return false;
+    }
+
+    ProxyFunction(CallbackFunction&& function, std::string& name) : function(function), name(name) {
+        void* funptr = reinterpret_cast<void*>(&function);
+        backtrace_symbols_fd(&funptr, 1, 1);
+    }
+    CallbackFunction function;
+    std::string name;
+};
+
+template<typename CallbackFunction>
+std::shared_ptr<AbstractFunction> createProxyFunction(CallbackFunction&& function, std::string name) {
+    return std::make_shared<ProxyFunction<CallbackFunction>>(function, name);
+}
+
+class ProxyFunctionRegistry {
+  public:
+    ProxyFunctionRegistry& getInstance() {
+        static ProxyFunctionRegistry proxyFunctionRegistry = ProxyFunctionRegistry();
+        return proxyFunctionRegistry;
+    }
+};
+
+template<typename CallbackFunction>
+void myFunction(CallbackFunction&& function) {
+    std::cout << "call function " << &function << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
+}
+
+template<typename R, typename... Args2, typename... Args>
+std::conditional_t<std::is_void_v<R>, void, R> FunctionCall(R (*fnptr)(Args2...), Args... arguments) {
     if constexpr (std::is_void_v<R>) {
         fnptr(std::forward<Args...>());
         //((c->setArg(index++, arguments)), ...);
     } else {
-        return fnptr(arguments...);
+        std::cout << "call function " << &fnptr << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
+
+        printf("%p\n", fnptr);
+        return fnptr(transform(std::forward<Args>(arguments))...);
     }
 }
-*/
+void foo(void) { printf("foo\n"); }
 }// namespace NES::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_

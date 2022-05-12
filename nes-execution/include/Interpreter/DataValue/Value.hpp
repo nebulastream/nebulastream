@@ -92,7 +92,8 @@ void Trace(OpCode op, const Value<ValueType>& input, Value<ValueType>& result) {
             auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
             ctx->trace(operation);
         } else if (op == CMP) {
-            ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
+            if constexpr (std::is_same_v<ValueType, Any>)
+                ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
         } else {
             auto operation = Operation(op, result.ref, {input.ref});
             ctx->trace(operation);

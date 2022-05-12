@@ -17,6 +17,17 @@ add_subdirectory(src)
 
 get_source(nes-execution NES_COMPILER_SOURCE_FILES)
 
+add_library(nes-clang-plugin SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/ClangPlugin/ExampleAttrInfo.cpp)
+find_package(Clang CONFIG REQUIRED)
+target_include_directories(nes-clang-plugin PRIVATE ${CLANG_INCLUDE_DIRS})
+#target_link_libraries(nes-clang-plugin PRIVATE
+#        clangAST
+#        clangBasic
+#        clangFrontend
+#        clangLex
+#        LLVMSupport
+ #       )
+
 # Add Library
 add_library(nes-execution SHARED ${NES_COMPILER_SOURCE_FILES})
 target_link_libraries(nes-execution PUBLIC nes-common)

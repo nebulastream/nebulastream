@@ -185,7 +185,7 @@ class TupleBuffer {
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
     template<typename T = uint8_t>
-    inline T* getBuffer() noexcept {
+    [[example]] inline T* getBuffer() noexcept {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
@@ -206,31 +206,31 @@ class TupleBuffer {
     }
 
     /// @brief get the buffer's size.
-    [[nodiscard]] inline uint64_t getBufferSize() const noexcept { return size; }
+    [[example]] [[nodiscard]] inline uint64_t getBufferSize() const noexcept { return size; }
 
     /// @brief get the number of tuples stored.
-    [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
+    [[example]] [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
 
     /// @brief set the number of tuples stored.
-    inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
+    [[example]] inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
 
     /// @brief get the watermark as a timestamp
-    [[nodiscard]] constexpr uint64_t getWatermark() const noexcept { return controlBlock->getWatermark(); }
+    [[example]] [[nodiscard]] constexpr uint64_t getWatermark() const noexcept { return controlBlock->getWatermark(); }
 
     /// @brief set the watermark from a timestamp
-    inline void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
+    [[example]] inline void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
 
     /// @brief get the creation timestamp as a timestamp
-    [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
+    [[example]] [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
 
     /// @brief set the sequence number
-    inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
+    [[example]] inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
 
     /// @brief get the sequence number
-    [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); };
+    [[example]] [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); };
 
     /// @brief set the creation timestamp with a timestamp
-    inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
+    [[example]] inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }

@@ -11,12 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #include <Interpreter/DataValue/Address.hpp>
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/Value.hpp>
+#include <Interpreter/FunctionCall.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <boost/preprocessor/stringize.hpp>
+#include <cxxabi.h>
+#include <dlfcn.h>
 #include <execinfo.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -41,7 +44,7 @@ class ValueTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down ValueTest test class." << std::endl; }
 };
 
-TEST_F(ValueTest, functionCallTest) {
+TEST_F(ValueTest, assignMentTest) {
     auto intValue = std::make_unique<Integer>(42);
     std::unique_ptr<Any> valAny = cast<Any>(intValue);
     std::unique_ptr<Any> valAny2 = cast<Any>(valAny);
@@ -49,7 +52,7 @@ TEST_F(ValueTest, functionCallTest) {
     auto anyValue = Value<Integer>(std::move(intValue));
     anyValue = anyValue + 10;
 
-    Value<Integer> val = Value<Integer>(42);
+    Value<Integer> val = Value<Integer>((int64_t) 42);
     Value<Integer> val2 = 42;
     Value<Any> va = val2;
     Value<Any> va2 = Value<>(10);
@@ -58,6 +61,35 @@ TEST_F(ValueTest, functionCallTest) {
     auto anyValueNew3 = anyValueNew1;
     anyValueNew3 = anyValueNew2;
     val2 = val;
+}
+
+uint64_t addFunc(uint64_t x, bool) {
+    return x;
+}
+
+[[proxy_function]] uint64_t addFunc2(uint64_t x, bool) {
+    return x;
+}
+
+TEST_F(ValueTest, functionCallTest) {
+    auto p1 = createProxyFunction<>(addFunc, "");
+    auto p2 = createProxyFunction<>(addFunc, "");
+    auto p3 = createProxyFunction<>(addFunc2, "");
+    bool t = *p1 == *p2;
+    bool t2 = *p1 == *p3;
+    auto address = std::addressof(addFunc);
+
+    auto intValue = std::make_unique<Integer>(42);
+    Value<Integer> val2 = 42;
+    Value<Boolean> val3 = false;
+
+   /* auto result = FunctionCall<>(addFunc, val2, val3);
+    auto* pb = &foo;
+    std::cout << typeid(*pb).name() << '\n';
+    std::cout << typeid(&addFunc).name() << '\n';
+    std::cout << typeid(addFunc).name() << '\n';
+    std::cout << typeid(int (*)(int, int)).name() << '\n';
+    */
 }
 
 TEST_F(ValueTest, addValueTest) {

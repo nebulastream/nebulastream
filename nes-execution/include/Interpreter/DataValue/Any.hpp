@@ -28,9 +28,9 @@ inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& value) {
     return value->copy();
 }
 
-
 template<class X, class Y>
-    requires(std::is_base_of<Y, X>::value == true && std::is_same<Any, X>::value == false ) inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& value) {
+    requires(std::is_base_of<Y, X>::value == true && std::is_same<Any, X>::value == false)
+inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& value) {
     // copy value value
     Y* anyVal = value.get();
     X* intValue = static_cast<X*>(anyVal);
@@ -38,6 +38,13 @@ template<class X, class Y>
     //return std::unique_ptr<X>{static_cast<X*>(value.get())};
 }
 
+template<class X, class Y>
+    requires(std::is_base_of<Y, X>::value == false && std::is_same<Any, X>::value == false)
+inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& ) {
+    // copy value value
+    return false;
+    //return std::unique_ptr<X>{static_cast<X*>(value.get())};
+}
 
 }// namespace NES::Interpreter
 
