@@ -34,6 +34,8 @@ class LoopOperation : public Operation {
 
   private:
     BasicBlockPtr loopBasicBlock;
+    OperationPtr condition
+    // Head as BasicBlock
 };
 }// namespace NES
 #endif//NES_LoopOperation_HPP

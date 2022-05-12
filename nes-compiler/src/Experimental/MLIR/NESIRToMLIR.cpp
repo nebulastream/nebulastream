@@ -212,6 +212,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functio
     builder->setInsertionPointToStart(&mlirFunction.getBody().front());
 
     // Store references to function args in the valueMap map.
+    // Todo it would be great if we could insert these values function arg inputs as values into the addressMap
+    // - but: since we use (smart)pointers/addresses as keys, 
     auto valueMapIterator = mlirFunction.args_begin();
     for (int i = 0; i < (int) functionOperation->getInputArgNames().size(); ++i) {
         functionValuesMap.emplace(std::pair{functionOperation->getName() + functionOperation->getInputArgNames().at(i), valueMapIterator[i]});

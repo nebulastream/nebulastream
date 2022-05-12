@@ -13,6 +13,7 @@
 */
 
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 #include <gtest/gtest.h>
 
 #include "mlir/IR/AsmState.h"
@@ -31,6 +32,7 @@
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
+#include <unordered_map>
 
 namespace NES {
 class MLIRNESIRTest : public testing::Test {
@@ -172,6 +174,19 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     auto addOp = std::make_shared<AddIntOperation>(loadOp, constOp);
     auto outputAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 8, 0, false);
     auto storeOp = std::make_shared<StoreOperation>(addOp, outputAddressOp);
+
+    //Todo test sizeof smartPtr vs rawPtr
+    // int64_t sizeOfSmartPtr = sizeof(inputAddressOp);
+    // int64_t sizeOfRawPtr = sizeof(inputAddressOp.get());
+    // int64_t* testPtr = (int64_t*) inputAddressOp.get();
+    // uintptr_t testUintPtr =  reinterpret_cast<std::uintptr_t>(inputAddressOp.get());
+    // testUintPtr++;
+    // auto testSmart = testPtr++;
+    // std::unordered_map<std::uintptr_t, OperationPtr> test;
+    // test.emplace(std::pair{testUintPtr, inputAddressOp});
+    // auto backcasted =  reinterpret_cast<Operation*>(testUintPtr);
+    // printf("Size of Smarty: %ld\n", sizeOfSmartPtr);
+    // printf("Size of Rawy: %ld\n", sizeOfRawPtr);
 
     // Loop BasicBlock
     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, constOp, addOp, outputAddressOp, storeOp};

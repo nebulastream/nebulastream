@@ -12,27 +12,29 @@
 //     limitations under the License.
 // */
 
-// #ifndef NES_MEMBERFUNCTIONOPERATION_HPP
-// #define NES_MEMBERFUNCTIONOPERATION_HPP
+// #ifndef NES_EXTERNALFUNCTIONOPERATION_HPP
+// #define NES_EXTERNALFUNCTIONOPERATION_HPP
 
 // #include <Experimental/NESIR/Operations/Operation.hpp>
 // #include <vector>
 
 // namespace NES {
 
-// //Todo: Decide: Leave type
-// class MemberFunctionOperation : public Operation {
+// class ExternalFunctionOperation : public Operation {
 //   public:
-//     MemberFunctionOperation(MemberFunctions memberFunctionType, std::vector<OperationPtr> functionArgs);
-//     ~MemberFunctionOperation() override = default;
+//     ExternalFunctionOperation(ExternalFunctionType externalFunctionType, std::vector<OperationPtr> functionArgs);
+//     ~ExternalFunctionOperation() override = default;
 
-//     MemberFunctions getMemberFunctionType();
+// ExternalFunctionOperation getExternalFunctionType();
 //     std::vector<OperationPtr> getFunctionArgs();
 //     bool classof(const Operation* Op);
 
 //   private:
-//     MemberFunctions memberFunctionType;
-//     std::vector<OperationPtr> functionArgs;
+//     std::string name; //Would be needed to create a prototype for a new external function
+//     ExternalFunctionType externalFunctionType; //Would be needed to access MemberFunctionOperations correctly 
+//                -> actually no! could check name (e.g. if getDataBuffer) in Generating Operation. If so, access MemberFunctions at correct spot -> hard coded
+//     std::vector<OperationPtr> functionArgs; // Would be needed for both
+//     std::vector<Operation::BasicType> argTypes; //Would be needed to create a prototype for a new external function
 // };
 // }// namespace NES
-// #endif//NES_MEMBERFUNCTIONOPERATION_HPP
+// #endif//NES_EXTERNALFUNCTIONOPERATION_HPP
