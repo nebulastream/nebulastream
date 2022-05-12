@@ -245,7 +245,7 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(node1->isFieldNode(), false);
     EXPECT_EQ(node2->isFieldNode(), true);
 
-    EXPECT_FALSE(node1->getCoordinates());
+    EXPECT_TRUE(node1->getCoordinates()->isValid());
     EXPECT_EQ(*(node2->getCoordinates()), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     bool retStopCord = crd->stopCoordinator(false);
