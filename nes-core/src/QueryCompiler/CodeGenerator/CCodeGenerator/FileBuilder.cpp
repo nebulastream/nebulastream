@@ -32,6 +32,7 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>\n"
                           "#include <Windowing/Runtime/WindowManager.hpp>\n"
                           "#include <Windowing/Runtime/WindowSliceStore.hpp>\n"
+                          "#include <Runtime/BufferStorage.hpp>\n"
                           "#include <Runtime/TupleBuffer.hpp>\n"
                           "#include <Runtime/ExecutionResult.hpp>\n"
                           "#include <Runtime/QueryTerminationType.hpp>\n"
