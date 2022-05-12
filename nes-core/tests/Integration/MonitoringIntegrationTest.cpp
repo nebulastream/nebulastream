@@ -340,7 +340,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_DEBUG("MultiThreadedTest: Remove query");
-    //queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultiThreadedTest: Stop worker 1");
