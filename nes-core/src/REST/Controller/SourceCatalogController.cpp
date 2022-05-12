@@ -193,7 +193,8 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
 
                     if (!added) {
                         web::json::value errorResponse{};
-                        errorResponse["detail"] = web::json::value::string("Logical Source name: " + sourceName + " already exists!");
+                        errorResponse["detail"] =
+                            web::json::value::string("Logical Source name: " + sourceName + " already exists!");
                         errorMessageImpl(message, errorResponse);
                         return;
                     }
@@ -261,7 +262,8 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
             .wait();
     } else if (path[1] == "updateLogicalSource-ex") {
 
-        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: REST received request to update Logical Source via Protobuf "
+        NES_DEBUG("SourceCatalogController: handlePost -updateLogicalSource: REST received request to update Logical Source via "
+                  "Protobuf "
                   << message.to_string());
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
@@ -299,9 +301,10 @@ void SourceCatalogController::handlePost(const std::vector<utility::string_t>& p
                     return;
 
                 } catch (const std::exception& exc) {
-                    NES_ERROR("SourceCatalogController: handlePost -updateLogicalSource: Exception occurred while trying to add new "
-                              "logical source"
-                              << exc.what());
+                    NES_ERROR(
+                        "SourceCatalogController: handlePost -updateLogicalSource: Exception occurred while trying to add new "
+                        "logical source"
+                        << exc.what());
                     handleException(message, exc);
                     return;
                 } catch (...) {
