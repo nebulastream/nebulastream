@@ -262,8 +262,7 @@ bool NesWorker::stop(bool) {
         }
         rpcServer.reset();
         rpcThread.reset();
-        if(statisticOutputThread && statisticOutputThread->joinable())
-        {
+        if (statisticOutputThread && statisticOutputThread->joinable()) {
             NES_DEBUG("NesWorker: statistic collection thread join");
             statisticOutputThread->join();
         }
