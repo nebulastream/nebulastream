@@ -43,8 +43,6 @@ using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
 }//namespace Configuratiions
 
-const std::chrono::seconds waitTimeInSeconds = std::chrono::seconds(1);
-
 /**
  * @brief: This class is responsible for handling requests related to monitor the alive status of nodes.
  */
