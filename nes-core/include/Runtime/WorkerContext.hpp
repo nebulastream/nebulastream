@@ -16,7 +16,6 @@
 #define NES_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/BufferStorage.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -27,6 +26,9 @@
 
 namespace NES::Runtime {
 
+struct BufferOrdering : public std::greater<TupleBuffer> {
+    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
+};
 
 class AbstractBufferProvider;
 
@@ -50,7 +52,7 @@ class WorkerContext {
     /// numa location of current worker
     uint32_t queueId = 0;
     ///queue of tuple buffers that were processed by the thread
-    std::unordered_map<Network::PartitionId, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>> storage;
+    std::unordered_map<Network::PartitionId, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
 
   public:
     explicit WorkerContext(uint32_t workerId,
