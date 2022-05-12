@@ -62,7 +62,8 @@ install(TARGETS nes-grpc
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
-target_compile_options(nes PRIVATE -fplugin=/home/pgrulich/projects/nes/nebulastream/cmake-build-debug/nes-execution/libnes-clang-plugin.so -fplugin-arg-example-help)
+target_compile_options(nes PRIVATE -fplugin=../nes-execution/libnes-clang-plugin.so -fplugin-arg-example-help)
+add_dependencies(nes nes-clang-plugin)
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
