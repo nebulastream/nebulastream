@@ -15,6 +15,11 @@
 # Set Sources and Headers
 add_subdirectory(src)
 
+add_library(nes-clang-plugin SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/ClangPlugin/ExampleAttrInfo.cpp)
+find_package(Clang CONFIG REQUIRED)
+target_include_directories(nes-clang-plugin PRIVATE ${CLANG_INCLUDE_DIRS})
+set_property(GLOBAL PROPERTY NES_CLANG_PLUGIN "${CMAKE_CURRENT_BINARY_DIR}/libnes-clang-plugin.so")
+
 get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
 
 # Add Library

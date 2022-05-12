@@ -2,10 +2,10 @@
 
 class XClazz {
   public:
-    [[example]] int addMember(int x) { return x * 2; }
+    [[proxyfunction]] int addMember(int x) { return x * 2; }
 };
 
-[[example]] int addXNes(int x) { return x * 2; }
+[[nes::proxyfunction]] int addXNes(int x) { return x * 2; }
 namespace NES::Test {
-[[example]] int addNamespaceX(int x) { return x * 2; }
+[[nes::proxyfunction]] int addNamespaceX(int x) { return x * 2; }
 }// namespace NES::Test
