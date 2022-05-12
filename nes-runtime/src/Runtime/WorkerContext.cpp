@@ -71,7 +71,7 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
 }
 
 void WorkerContext::createStorage(Network::PartitionId nesPartitionId) {
-    this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>();
+    this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>();
 }
 
 void WorkerContext::insertIntoStorage(Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
