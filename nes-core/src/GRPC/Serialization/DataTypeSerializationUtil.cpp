@@ -77,8 +77,8 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     } else if (serializedDataType->type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType->details().UnpackTo(&integerDetails);
-        if (integerDetails.bits() == 64){
-            if (integerDetails.lowerbound() == 0){
+        if (integerDetails.bits() == 64) {
+            if (integerDetails.lowerbound() == 0) {
                 return DataTypeFactory::createUInt64();
             } else {
                 return DataTypeFactory::createInt64();
@@ -88,9 +88,9 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
     } else if (serializedDataType->type() == SerializableDataType_Type_FLOAT) {
         auto floatDetails = SerializableDataType_FloatDetails();
         serializedDataType->details().UnpackTo(&floatDetails);
-        if (floatDetails.bits() == 32){
+        if (floatDetails.bits() == 32) {
             return DataTypeFactory::createFloat();
-        }else {
+        } else {
             return DataTypeFactory::createDouble();
         }
     } else if (serializedDataType->type() == SerializableDataType_Type_BOOLEAN) {
