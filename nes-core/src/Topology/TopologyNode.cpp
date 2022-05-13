@@ -149,6 +149,15 @@ Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
     return fixedCoordinates;
 }
 
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr TopologyNode::getReconnectSchedule() {
+    if (isMobile) {
+        std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
+        NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
+        return WorkerRPCClient::getReconnectSchedule(destAddress);
+    }
+    return {};
+}
+
 void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
     setFixedCoordinates(Spatial::Index::Experimental::Location(latitude, longitude));
 }

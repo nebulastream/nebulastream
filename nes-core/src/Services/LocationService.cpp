@@ -18,6 +18,8 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <cpprest/json.h>
+#include <Spatial/ReconnectSchedule.hpp>
+#include <utility>
 
 namespace NES::Spatial::Index::Experimental {
 LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology){};
@@ -28,6 +30,20 @@ web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId)
         return web::json::value::null();
     }
     return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates());
+}
+
+web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {
+    auto nodePtr = topology->findNodeWithId(nodeId);
+    if (!nodePtr || !nodePtr->isMobileNode()) {
+        return web::json::value::null();
+    }
+    auto schedule = nodePtr->getReconnectSchedule();
+    web::json::value scheduleJson;
+    scheduleJson["pathStart"] = convertLocationToJson(schedule->getPathStart());
+    scheduleJson["pathEnd"] = convertLocationToJson(schedule->getPathEnd());
+    //todo: insert vector also
+    return scheduleJson;
+
 }
 
 web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
@@ -42,9 +58,8 @@ web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() 
     return locMapJson;
 }
 
-web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc) {
-    web::json::value nodeInfo;
-    nodeInfo["id"] = web::json::value(id);
+
+web::json::value LocationService::convertLocationToJson(LocationPtr loc) {
     web::json::value locJson;
     if (loc) {
         locJson[0] = loc->getLatitude();
@@ -52,6 +67,13 @@ web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Loc
     } else {
         locJson = web::json::value::null();
     }
+    return locJson;
+}
+
+web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc) {
+    web::json::value nodeInfo;
+    nodeInfo["id"] = web::json::value(id);
+    web::json::value locJson = convertLocationToJson(std::move(loc));
     nodeInfo["location"] = web::json::value(locJson);
     return nodeInfo;
 }

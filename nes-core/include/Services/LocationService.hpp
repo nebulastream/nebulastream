@@ -67,7 +67,10 @@ class LocationService {
      */
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
 
+    web::json::value requestReconnectScheduleAsJson(uint64_t nodeId);
+
   private:
+    static web::json::value convertLocationToJson(LocationPtr loc);
     /**
      * Use a node id and a LocationPtr to construct a Json representation containing these values.
      * @param id : the nodes id

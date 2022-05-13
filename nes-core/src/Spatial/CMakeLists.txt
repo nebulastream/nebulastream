@@ -16,5 +16,6 @@ add_source_files(nes-core
         LocationProviderCSV.cpp
         LocationIndex.cpp
         NodeLocationWrapper.cpp
+        ReconnectSchedule.cpp
 )
 

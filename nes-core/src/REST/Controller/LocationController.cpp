@@ -21,6 +21,7 @@ namespace NES {
 
 const std::string kAllMobileLocationsRequestString = "allMobile";
 const std::string kNodeIdParamString = "nodeId";
+const std::string kSingleNodeReconnectInfoRequestString = "reconnectSchedule";
 
 LocationController::LocationController(Spatial::Index::Experimental::LocationServicePtr locationService)
     : locationService(std::move(locationService)) {
@@ -56,6 +57,24 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
             NES_DEBUG("LocationController: GET location of all mobile nodes")
             auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
             successMessageImpl(message, locationsJson);
+            return;
+        }
+        if (path[1] == kSingleNodeReconnectInfoRequestString) {
+            auto nodeIdOpt = getNodeIdFromURIParameter(parameters, message);
+            if (!nodeIdOpt.has_value()) {
+                return;
+            }
+            auto reconnectScheduleJson = locationService->requestReconnectScheduleAsJson(nodeIdOpt.value());
+            if (reconnectScheduleJson == web::json::value::null()) {
+                NES_ERROR("mobile node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
+                web::json::value errorResponse{};
+                auto statusCode = web::http::status_codes::NotFound;
+                errorResponse["code"] = web::json::value(statusCode);
+                errorResponse["message"] = web::json::value::string("No mobile node with this Id");
+                errorMessageImpl(message, errorResponse, statusCode);
+                return;
+            }
+            successMessageImpl(message, reconnectScheduleJson);
             return;
         }
     }

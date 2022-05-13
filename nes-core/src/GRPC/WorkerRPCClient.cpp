@@ -15,7 +15,6 @@
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <API/Schema.hpp>
-#include <Common/Location.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -24,6 +23,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
+#include <Common/Location.hpp>
+#include <Spatial/ReconnectSchedule.hpp>
 
 namespace NES {
 
@@ -462,4 +463,28 @@ Spatial::Index::Experimental::LocationPtr WorkerRPCClient::getLocation(const std
     }
     return std::make_shared<Spatial::Index::Experimental::Location>();
 }
+
+NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& adress) {
+    NES_DEBUG("WorkerRPCClient: requesting reconnect schedule from" << adress)
+    ClientContext context;
+    GetReconnectScheduleRequest request;
+    GetReconnectScheduleReply reply;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(adress, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->GetReconnectSchedule(&context, request, &reply);
+
+    if (reply.has_schedule()) {
+        //todo: also implement the passing of the list of reconnect points here
+        auto schedule = reply.schedule();
+        auto start = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathstart());
+        auto end = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathend());
+
+        return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(
+            start, end, std::vector<std::tuple<uint64_t, Spatial::Index::Experimental::LocationPtr , Timestamp>>());
+    }
+    return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
+}
+
 }// namespace NES
