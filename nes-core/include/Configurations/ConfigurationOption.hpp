@@ -156,7 +156,6 @@ const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string CONFIG_PATH = "configPath";
-const std::string COORDINATOR_HEALTH_CHECK_WAIT_TIME = "coordinatorHealthCheckWaitTime";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
@@ -189,7 +188,7 @@ const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
-const std::string WORKER_HEALTH_CHECK_WAIT_TIME = "workerHealthCheckWaitTime";
+const std::string HEALTH_CHECK_WAIT_TIME = "workerHealthCheckWaitTime";
 
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
