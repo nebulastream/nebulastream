@@ -26,7 +26,7 @@
 
 namespace NES {
 
-const uint32_t buffersPerEpoch = 100;
+const uint32_t buffersPerEpoch = 2000;
 
 enum SinkMediumTypes {
     ZMQ_SINK,
