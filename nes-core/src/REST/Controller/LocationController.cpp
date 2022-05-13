@@ -31,9 +31,9 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
             NES_DEBUG("LocationController: GET location of all mobile nodes")
             auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
             successMessageImpl(message, locationsJson);
+            return;
         }
         //todo: implement getter for individual nodes
-        resourceNotFoundImpl(message);
     }
     resourceNotFoundImpl(message);
 }

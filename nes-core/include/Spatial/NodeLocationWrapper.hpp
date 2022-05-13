@@ -95,6 +95,10 @@ class NodeLocationWrapper {
      */
     bool setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc);
 
+    /**
+     * @brief getter function for the location provider used to get the devices current location
+     * @return a pointer to the provider object
+     */
     LocationProviderPtr getLocationProvider();
 
   private:

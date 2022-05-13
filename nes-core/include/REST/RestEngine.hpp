@@ -108,7 +108,7 @@ class RestEngine {
                const Runtime::BufferManagerPtr bufferManager,
                const Spatial::Index::Experimental::LocationServicePtr& locationService);
 
-        void handleGet(web::http::http_request request);
+    void handleGet(web::http::http_request request);
     void handlePost(web::http::http_request request);
     void handleDelete(web::http::http_request request);
     void handlePut(web::http::http_request request);

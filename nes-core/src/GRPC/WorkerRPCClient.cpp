@@ -448,15 +448,14 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
 }
 
 Spatial::Index::Experimental::LocationPtr WorkerRPCClient::getLocation(const std::string& adress) {
-    NES_DEBUG("WorkerRPCClient: Reequesting location from " << adress)
+    NES_DEBUG("WorkerRPCClient: Requesting location from " << adress)
     ClientContext context;
+    GetLocationRequest request;
     GetLocationReply reply;
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(adress, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->GetLocation(&context, {}, &reply);
-    //todo: coordinates is 0 0 here
-    // todo: do we use the valid attribute here or can we use has_coord?
+    Status status = workerStub->GetLocation(&context, request, &reply);
     if (reply.has_coord()) {
         auto coord = reply.coord();
         return std::make_shared<Spatial::Index::Experimental::Location>(coord.lat(), coord.lng());
