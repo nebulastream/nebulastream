@@ -25,7 +25,6 @@ LocationService::LocationService(TopologyPtr topology) : locationIndex(topology-
 web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
    auto nodePtr = topology->findNodeWithId(nodeId);
    if (!nodePtr) {
-       //todo: what is the proper thing to return in this case?
        return web::json::value::null();
    }
    return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates());

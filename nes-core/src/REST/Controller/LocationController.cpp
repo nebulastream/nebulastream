@@ -20,7 +20,6 @@
 namespace NES::Spatial::Index::Experimental {
 
 const std::string kAllMobileLocationsRequestString = "allMobile";
-const std::string kSingleNodeLocationRequestString = "getLocation";
 const std::string kNodeIdParamString = "nodeId";
 
 LocationController::LocationController(LocationServicePtr locationService) : locationService(std::move(locationService)) {
@@ -30,22 +29,24 @@ LocationController::LocationController(LocationServicePtr locationService) : loc
 void LocationController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     NES_DEBUG("LocationController: Processing GET request")
     auto parameters = getParameters(message);
+    //get the location of a node with a specific id
+    if (path.size() == 1) {
+        auto nodeIdOpt = getNodeIdFromURIParameter(parameters, message);
+        if (!nodeIdOpt.has_value()) {
+            return;
+        }
+        auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeIdOpt.value());
+        successMessageImpl(message, nodeLocationJson);
+        return;
+    }
+
+    //get the locations of all mobile nodes
     if (path.size() > 1 && path.size() < 3) {
         if (path[1] == kAllMobileLocationsRequestString) {
             NES_DEBUG("LocationController: GET location of all mobile nodes")
             auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
             successMessageImpl(message, locationsJson);
             return;
-        }
-        if (path[1] == kSingleNodeLocationRequestString) {
-            auto nodeIdOpt = getNodeIdFromURIParameter(parameters, message);
-            if (!nodeIdOpt.has_value()) {
-                return;
-            }
-            auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeIdOpt.value());
-            successMessageImpl(message, nodeLocationJson);
-            return;
-
         }
     }
     resourceNotFoundImpl(message);
