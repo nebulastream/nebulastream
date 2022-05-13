@@ -41,6 +41,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
@@ -53,6 +54,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
+    wrkConf->workerHealthCheckWaitTime = 1;
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
