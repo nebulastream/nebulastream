@@ -157,14 +157,13 @@ void LocationIndex::addMobileNode(TopologyNodePtr node) {
     mobileNodes.insert({node->getId(), node});
 }
 
-std::vector<std::pair<uint64_t, Location>> LocationIndex::getMobileNodeLocations() {
-    std::vector<std::pair<uint64_t, Location>> locVector;
+std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLocations() {
+    std::vector<std::pair<uint64_t, LocationPtr>> locVector;
     locVector.reserve(mobileNodes.size());
     for (const auto& elem : mobileNodes) {
         LocationPtr loc = elem.second->getCoordinates();
         if (loc->isValid()) {
-            //todo: make this vector contain pointers not the objects themselves
-            locVector.emplace_back(elem.first, *loc);
+            locVector.emplace_back(elem.first, loc);
         }
     }
     return locVector;

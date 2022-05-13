@@ -331,7 +331,6 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     TopologyPtr topology = crd->getTopology();
     NES::Spatial::Index::Experimental::LocationIndexPtr geoTopology = topology->getLocationIndex();
     Timestamp beforeQuery = getTimestamp();
-    //std::pair currentLocation = sourceCsv->getCurrentLocation();
     TopologyNodePtr wrk1Node = topology->findNodeWithId(wrk1->getWorkerId());
     NES::Spatial::Index::Experimental::LocationPtr currentLocation = wrk1Node->getCoordinates();
     Timestamp afterQuery = getTimestamp();

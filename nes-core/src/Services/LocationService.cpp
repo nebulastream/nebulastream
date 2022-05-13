@@ -16,24 +16,45 @@
 #include <cpprest/json.h>
 #include <Spatial/LocationIndex.hpp>
 #include <Common/Location.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 
 namespace NES::Spatial::Index::Experimental {
-LocationService::LocationService(LocationIndexPtr locationIndex) : locationIndex(locationIndex) {};
+LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology) {};
+
+web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
+   auto nodePtr = topology->findNodeWithId(nodeId);
+   if (!nodePtr) {
+       //todo: what is the proper thing to return in this case?
+       return web::json::value::null();
+   }
+   return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates());
+}
 
 web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
-    auto nodeVector = locationIndex->getMobileNodeLocations();
+    auto nodeVector = locationIndex->getAllMobileNodeLocations();
     web::json::value locMapJson;
     size_t count = 0;
     for (const auto& elem : nodeVector) {
-        web::json::value nodeInfo;
-        nodeInfo["id"] = web::json::value(elem.first);
-        web::json::value locJson;
-        locJson[0] = elem.second.getLatitude();
-        locJson[1] = elem.second.getLongitude();
-        nodeInfo["location"] = web::json::value(locJson);
+        web::json::value nodeInfo = convertNodeLocationInfoToJson(elem.first, elem.second);
         locMapJson[count] = web::json::value(nodeInfo);
         ++count;
     }
     return locMapJson;
+}
+
+
+web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc) {
+    web::json::value nodeInfo;
+    nodeInfo["id"] = web::json::value(id);
+    web::json::value locJson;
+    if (loc) {
+        locJson[0] = loc->getLatitude();
+        locJson[1] = loc->getLongitude();
+    } else {
+        locJson = web::json::value::null();
+    }
+    nodeInfo["location"] = web::json::value(locJson);
+    return nodeInfo;
 }
 }
