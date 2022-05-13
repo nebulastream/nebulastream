@@ -32,6 +32,13 @@ class LocationController : public BaseController {
      */
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
 
+    /**
+     * Extracts the node id from the http requests parameters. if the parameter is not found or can not be converted to uint64_t,
+     * the appropriate error response will be send and the return value will be nullopt_t
+     * @param parameters: a map containing the string parameters
+     * @param httpRequest:
+     * @return : an optional containing the id or a nullopt_t if an error occurred.
+     */
     static std::optional<uint64_t> getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
                                                                           const web::http::http_request& httpRequest);
   private:
