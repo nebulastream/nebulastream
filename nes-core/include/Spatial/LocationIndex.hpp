@@ -33,6 +33,7 @@ namespace Spatial::Index::Experimental {
 
 const int DEFAULT_SEARCH_RADIUS = 50;
 class Location;
+using LocationPtr = std::shared_ptr<Location>;
 
 /**
  * this class holds information about the geographical position of nodes, for which such a position is known (field nodes)
@@ -107,7 +108,7 @@ class LocationIndex {
      * @brief get the locations of all the nodes in the mobileNodes map
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, Location>> getMobileNodeLocations();
+    std::vector<std::pair<uint64_t, LocationPtr>> getAllMobileNodeLocations();
 
     /**
      * Experimental

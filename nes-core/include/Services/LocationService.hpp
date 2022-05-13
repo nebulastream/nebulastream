@@ -14,19 +14,30 @@
 #ifndef NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
 #define NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
 
-#include <memory>
 #include <cpprest/json.h>
+#include <memory>
+
 namespace web::json {
 class value;
 }// namespace web::json
+
+namespace NES {
+class Topology;
+using TopologyPtr = std::shared_ptr<Topology>;
+}
 
 namespace NES::Spatial::Index::Experimental {
 class LocationIndex;
 using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 
+class Location;
+using LocationPtr = std::shared_ptr<Location>;
+
 class LocationService {
   public:
-    explicit LocationService(LocationIndexPtr locationIndex);
+    explicit LocationService(TopologyPtr topology);
+
+    web::json::value requestNodeLocationDataAsJson(uint64_t nodeId);
 
     /**
      * @brief get a list of all mobile nodes in the system and their current positions
@@ -43,8 +54,11 @@ class LocationService {
      */
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
 
+    static web::json::value convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc);
+
   private:
     LocationIndexPtr locationIndex;
+    TopologyPtr topology;
 };
 }
 

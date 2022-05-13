@@ -129,7 +129,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                                  queryCatalogService,
                                                                                  queryRequestQueue,
                                                                                  globalExecutionPlan);
-    locationService = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology->getLocationIndex());
+    locationService = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
 }
 
 NesCoordinator::~NesCoordinator() {

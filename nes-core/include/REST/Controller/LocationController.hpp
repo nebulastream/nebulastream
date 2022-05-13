@@ -32,6 +32,8 @@ class LocationController : public BaseController {
      */
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
 
+    static std::optional<uint64_t> getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
+                                                                          const web::http::http_request& httpRequest);
   private:
     LocationServicePtr locationService;
 };
