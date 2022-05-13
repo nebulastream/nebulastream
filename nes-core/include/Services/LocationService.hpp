@@ -37,6 +37,19 @@ class LocationService {
   public:
     explicit LocationService(TopologyPtr topology);
 
+    /**
+     * Get a json containing the id and the location of any node. In case the node is neither a field nor a mobile node,
+     * the "location" attribute will be null
+     * @param nodeId : the id of the requested node
+     * @return a json in the format:
+        {
+            "id": <node id>,
+            "location": [
+                <latitude>,
+                <longitude>
+            ]
+        }
+     */
     web::json::value requestNodeLocationDataAsJson(uint64_t nodeId);
 
     /**
@@ -54,6 +67,19 @@ class LocationService {
      */
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
 
+    /**
+     * Use a node id and a LocationPtr to construct a Json representation containing these values.
+     * @param id : the nodes id
+     * @param loc : the nodes location. if this is a nullptr then the "location" attribute of the returned json will be null.
+     * @return a json in the format:
+        {
+            "id": <node id>,
+            "location": [
+                <latitude>,
+                <longitude>
+            ]
+        }
+     */
     static web::json::value convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc);
 
   private:

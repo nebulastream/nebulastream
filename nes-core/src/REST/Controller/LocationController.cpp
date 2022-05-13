@@ -30,8 +30,7 @@ LocationController::LocationController(LocationServicePtr locationService) : loc
 void LocationController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     NES_DEBUG("LocationController: Processing GET request")
     auto parameters = getParameters(message);
-    //todo: check max length of path (3?)
-    if (path.size() > 1 && path.size() < 4) {
+    if (path.size() > 1 && path.size() < 3) {
         if (path[1] == kAllMobileLocationsRequestString) {
             NES_DEBUG("LocationController: GET location of all mobile nodes")
             auto locationsJson = locationService->requestLocationDataFromAllMobileNodesAsJson();
@@ -48,17 +47,15 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
             return;
 
         }
-        //todo: implement getter for individual nodes
     }
     resourceNotFoundImpl(message);
 }
 
-//todo: adjust all the error messages
 std::optional<uint64_t> LocationController::getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
                                                                           const web::http::http_request& httpRequest) {
    auto const idParameter = parameters.find(kNodeIdParamString);
    if (idParameter == parameters.end()) {
-       NES_ERROR("LocationController: Unable to find node with the ID spcified in the GET request");
+       NES_ERROR("LocationController: Unable to find nodeId parameter in the GET request");
        web::json::value errorResponse{};
        auto statusCode = web::http::status_codes::BadRequest;
        errorResponse["code"] = web::json::value(statusCode);
@@ -70,14 +67,20 @@ std::optional<uint64_t> LocationController::getNodeIdFromURIParameter(std::map<u
    try {
        nodeId = std::stoi(idParameter->second);
    } catch (const std::invalid_argument& invalidArgument) {
-       NES_ERROR("LocationController: Unable to find node with the ID spcified in the GET request");
+       NES_ERROR("LocationController: Unable to convert nodeId parameter to integer");
        web::json::value errorResponse{};
        auto statusCode = web::http::status_codes::BadRequest;
        errorResponse["code"] = web::json::value(statusCode);
-       errorResponse["message"] = web::json::value::string("Parameter nodeId must be provided");
+       errorResponse["message"] = web::json::value::string("Parameter nodeId must be a natural number");
        errorMessageImpl(httpRequest, errorResponse, statusCode);
        return {};
    } catch (const std::out_of_range& outOfRange) {
+       NES_ERROR("LocationController: nodeId is out of value range of the 64bit integer format");
+       web::json::value errorResponse{};
+       auto statusCode = web::http::status_codes::BadRequest;
+       errorResponse["code"] = web::json::value(statusCode);
+       errorResponse["message"] = web::json::value::string("Parameter nodeId must be in 64bit int value range");
+       errorMessageImpl(httpRequest, errorResponse, statusCode);
        return {};
    }
    return nodeId;
