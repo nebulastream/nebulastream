@@ -23,6 +23,9 @@
 # Set the number of worker threads
 #numWorkerThreads: 1
 
+# Set the number of buffers per epoch
+# numberOfBuffersPerEpoch: 100
+
 # Number buffers in global buffer pool
 #numberOfBuffersInGlobalBufferManager: 1024
 
@@ -146,3 +149,4 @@ physicalSources:
       #userName:
       # Set password, needed for: OPCSource
       #password:
+

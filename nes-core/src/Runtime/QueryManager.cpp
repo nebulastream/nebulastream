@@ -38,12 +38,13 @@ AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusLi
                                            std::vector<BufferManagerPtr> bufferManagers,
                                            uint64_t nodeEngineId,
                                            uint16_t numThreads,
+                                           uint64_t  numberOfBuffersPerEpoch,
                                            HardwareManagerPtr hardwareManager,
                                            const StateManagerPtr& stateManager,
                                            std::vector<uint64_t> workerToCoreMapping)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
       hardwareManager(std::move(hardwareManager)), workerToCoreMapping(std::move(workerToCoreMapping)),
-      queryStatusListener(std::move(queryStatusListener)), stateManager(std::move(stateManager)) {
+      queryStatusListener(std::move(queryStatusListener)), stateManager(std::move(stateManager)), numberOfBuffersPerEpoch(numberOfBuffersPerEpoch) {
 
     tempCounterTasksCompleted.resize(numThreads);
 
@@ -54,6 +55,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                                          std::vector<BufferManagerPtr> bufferManagers,
                                          uint64_t nodeEngineId,
                                          uint16_t numThreads,
+                                         uint64_t  numberOfBuffersPerEpoch,
                                          HardwareManagerPtr hardwareManager,
                                          const StateManagerPtr& stateManager,
                                          std::vector<uint64_t> workerToCoreMapping)
@@ -61,6 +63,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                            std::move(bufferManagers),
                            nodeEngineId,
                            numThreads,
+                           numberOfBuffersPerEpoch,
                            std::move(hardwareManager),
                            stateManager,
                            std::move(workerToCoreMapping)),
@@ -72,6 +75,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                                                std::vector<BufferManagerPtr> bufferManagers,
                                                uint64_t nodeEngineId,
                                                uint16_t numThreads,
+                                               uint64_t  numberOfBuffersPerEpoch,
                                                HardwareManagerPtr hardwareManager,
                                                const StateManagerPtr& stateManager,
                                                std::vector<uint64_t> workerToCoreMapping,
@@ -81,6 +85,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
                            std::move(bufferManagers),
                            nodeEngineId,
                            numThreads,
+                           numberOfBuffersPerEpoch,
                            std::move(hardwareManager),
                            stateManager,
                            std::move(workerToCoreMapping)),
@@ -100,6 +105,8 @@ MultiQueueQueryManager::MultiQueueQueryManager(std::shared_ptr<AbstractQueryStat
 
 uint64_t DynamicQueryManager::getNumberOfTasksInWorkerQueues() const { return taskQueue.size(); }
 
+uint64_t DynamicQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
+
 uint64_t MultiQueueQueryManager::getNumberOfTasksInWorkerQueues() const {
     uint64_t sum = 0;
     for (uint64_t i = 0; i < numberOfQueues; i++) {
@@ -115,6 +122,8 @@ uint64_t AbstractQueryManager::getCurrentTaskSum() {
     }
     return sum;
 }
+
+uint64_t AbstractQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
 
 AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false) { destroy(); }
 
@@ -140,6 +149,8 @@ bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     NES_ASSERT2_FMT(false, "Cannot start query manager workers");
     return false;
 }
+
+uint64_t MultiQueueQueryManager::getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
 
 bool MultiQueueQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);

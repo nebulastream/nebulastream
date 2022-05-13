@@ -39,6 +39,7 @@
 #include <iomanip>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -122,6 +123,8 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
 }
 
 uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
+
+uint64_t NesWorker::getNumberOfBuffersPerEpoch() { return numberOfBuffersPerEpoch; }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking "

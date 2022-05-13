@@ -81,6 +81,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                   std::vector<BufferManagerPtr> bufferManagers,
                                   uint64_t nodeEngineId,
                                   uint16_t numThreads,
+                                  uint64_t  numberOfBuffersPerEpoch,
                                   HardwareManagerPtr hardwareManager,
                                   const StateManagerPtr& stateManager,
                                   std::vector<uint64_t> workerToCoreMapping = {});
@@ -237,6 +238,13 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                            bool blocking = false) = 0;
 
   public:
+
+    /**
+     * @brief Returns the numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+     */
+    uint64_t getNumberOfBuffersPerEpoch() const;
+
     /**
      * @brief This method informs the QueryManager that a task has failed
      * @param pipeline the enclosed pipeline or sink
@@ -428,6 +436,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
 
     StateManagerPtr stateManager;
+
+    uint64_t numberOfBuffersPerEpoch;
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
@@ -439,6 +449,7 @@ class DynamicQueryManager : public AbstractQueryManager {
                                  std::vector<BufferManagerPtr> bufferManager,
                                  uint64_t nodeEngineId,
                                  uint16_t numThreads,
+                                 uint64_t  numberOfBuffersPerEpoch,
                                  HardwareManagerPtr hardwareManager,
                                  const StateManagerPtr& stateManager,
                                  std::vector<uint64_t> workerToCoreMapping = {});
@@ -480,6 +491,12 @@ class DynamicQueryManager : public AbstractQueryManager {
     void updateStatistics(const Task& task, QueryId queryId, QuerySubPlanId subPlanId, WorkerContext& workerContext) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
+
+    /**
+     * @brief Returns the numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+     */
+    uint64_t getNumberOfBuffersPerEpoch() const;
 
   private:
     /**
@@ -535,6 +552,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
                                     std::vector<BufferManagerPtr> bufferManager,
                                     uint64_t nodeEngineId,
                                     uint16_t numThreads,
+                                    uint64_t  numberOfBuffersPerEpoch,
                                     HardwareManagerPtr hardwareManager,
                                     const StateManagerPtr& stateManager,
                                     std::vector<uint64_t> workerToCoreMapping = {},
@@ -564,6 +582,12 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
+
+    /**
+     * @brief Returns the numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+     */
+    uint64_t getNumberOfBuffersPerEpoch() const;
 
   protected:
     /**

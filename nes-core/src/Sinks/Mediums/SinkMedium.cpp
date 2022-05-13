@@ -32,8 +32,10 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers), queryId(queryId),
       querySubPlanId(querySubPlanId), faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins) {
+    //if it not a network sink
     if (numberOfOrigins > 0) {
         watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins);
+        buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     }
     bufferCount = 0;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");

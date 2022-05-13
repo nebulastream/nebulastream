@@ -75,6 +75,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->restPort = *restPort;
 
         workerConfig = WorkerConfiguration::create();
+        workerConfig->numberOfBuffersPerEpoch = 100;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
         csvSourceTypeInfinite = CSVSourceType::create();
