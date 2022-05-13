@@ -37,8 +37,10 @@ enum SinkMediumTypes {
     OPC_SINK,
     MQTT_SINK,
     NULL_SINK,
-    MATERIALIZED_VIEW_SINK
+    MATERIALIZED_VIEW_SINK,
+    MONITORING_SINK
 };
+
 /**
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
