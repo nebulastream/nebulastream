@@ -18,9 +18,10 @@
 
 namespace NES {
 
-ConstantIntOperation::ConstantIntOperation(int64_t constantValue, int8_t numBits)
-    : Operation(OperationType::ConstantOp), constantValue(constantValue), numBits(numBits){}
+ConstantIntOperation::ConstantIntOperation(std::string identifier, int64_t constantValue, int8_t numBits)
+    : Operation(OperationType::ConstantOp), identifier(std::move(identifier)), constantValue(constantValue), numBits(numBits){}
 
+std::string ConstantIntOperation::getIdentifier() { return identifier; }
 int64_t ConstantIntOperation::getConstantIntValue() { return constantValue; }
 int8_t ConstantIntOperation::getNumBits() { return numBits; }
 bool ConstantIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstantOp; }

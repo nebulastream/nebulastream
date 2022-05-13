@@ -16,10 +16,12 @@
 
 namespace NES {
 
-LoadOperation::LoadOperation(OperationPtr addressOp)
-    : Operation(OperationType::LoadOp), addressOp(addressOp) {}
+LoadOperation::LoadOperation(std::string identifier, OperationPtr addressOp, std::string argName)
+    : Operation(OperationType::LoadOp), identifier(std::move(identifier)), addressOp(addressOp), argName(std::move(argName)) {}
 
+std::string LoadOperation::getIdentifier() { return identifier; }
 OperationPtr LoadOperation::getAddressOp() { return addressOp; }
+std::string LoadOperation::getArgName() { return argName; }
 
 bool LoadOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
 

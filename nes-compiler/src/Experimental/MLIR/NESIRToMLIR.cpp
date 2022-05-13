@@ -14,6 +14,8 @@ limitations under the License.
 
 #include <Experimental/MLIR/NESIRToMLIR.hpp>
 
+#include "Experimental/NESIR/Operations/AddIntOperation.hpp"
+#include "Experimental/NESIR/Operations/BranchOperation.hpp"
 #include "Experimental/NESIR/Operations/CompareOperation.hpp"
 #include "Experimental/NESIR/Operations/IfOperation.hpp"
 #include "Experimental/NESIR/Operations/Operation.hpp"
@@ -159,10 +161,9 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
     builder = std::make_shared<OpBuilder>(&context);
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
     // Insert all needed MemberClassFunctions into the MLIR module.
-    // Todo handle differently
-    // for(auto memberFunction : memberFunctions) {
-    //     theModule.push_back(memberFunction);
-    // }
+    for(auto memberFunction : memberFunctions) {
+        theModule.push_back(memberFunction);
+    }
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
     // Insert printFromMLIR function for debugging use.
@@ -170,7 +171,8 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
 };
 
 mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(NES::NESIR* nesIR) {
-    generateMLIR(nesIR->getRootOperation());
+    std::unordered_map<std::string, mlir::Value> firstBlockArgs;
+    generateMLIR(nesIR->getRootOperation(), firstBlockArgs);
     theModule->dump();
     if (failed(mlir::verify(theModule))) {
         theModule.emitError("module verification error");
@@ -179,14 +181,38 @@ mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(NES::NESIR* nesIR) {
     return theModule;
 }
 
-void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
-
+void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock, std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    auto terminatorOp = basicBlock->getOperations().back();
+    basicBlock->popOperation();
     for (const auto& operation : basicBlock->getOperations()) {
         generateMLIR(operation, blockArgs);
     }
+    // Generate Args for next block
+    std::unordered_map<std::string, mlir::Value> nextBlockArgs;
+    if (terminatorOp->getOperationType() == NES::Operation::BranchOp) { 
+        auto branchOp = std::static_pointer_cast<NES::BranchOperation>(terminatorOp);
+        for(auto newArgName : branchOp->getNextBlock()->getInputArgs()) {
+            nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+        }
+        generateMLIR(branchOp->getNextBlock(), nextBlockArgs);
+    } else if (terminatorOp->getOperationType() == NES::Operation::LoopOp) {
+        auto loopOp = std::static_pointer_cast<NES::LoopOperation>(terminatorOp);
+        for(auto newArgName : loopOp->getNextBlock()->getInputArgs()) {
+            nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+        }
+        generateMLIR(loopOp, nextBlockArgs);
+    } else if (terminatorOp->getOperationType() == NES::Operation::IfOp) {
+        auto ifOp = std::static_pointer_cast<NES::IfOperation>(terminatorOp);
+        generateMLIR(ifOp, blockArgs);
+    } else if (terminatorOp->getOperationType() == NES::Operation::ReturnOp) {
+        auto returnOp = std::static_pointer_cast<NES::ReturnOperation>(terminatorOp);
+        generateMLIR(returnOp, nextBlockArgs);
+    } else {
+        generateMLIR(terminatorOp, blockArgs);
+    }
 }
 
-void MLIRGenerator::generateMLIR(const NES::OperationPtr& operation, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(const NES::OperationPtr& operation, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     switch (operation->getOperationType()) {
         case NES::Operation::OperationType::FunctionOp: generateMLIR(std::static_pointer_cast<NES::FunctionOperation>(operation), blockArgs); break;
         case NES::Operation::OperationType::LoopOp: generateMLIR(std::static_pointer_cast<NES::LoopOperation>(operation), blockArgs); break;
@@ -205,7 +231,7 @@ void MLIRGenerator::generateMLIR(const NES::OperationPtr& operation, const std::
 }
 
 // Recursion. No dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functionOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functionOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     // Generate execute function. Set input/output types and get its entry block.
     llvm::SmallVector<mlir::Type, 4> inputTypes(0);
     for (auto inputArg : functionOp->getInputArgs()) {
@@ -228,55 +254,54 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functio
     // - but: since we use (smart)pointers/addresses as keys, 
     auto valueMapIterator = mlirFunction.args_begin();
     for (int i = 0; i < (int) functionOp->getInputArgNames().size(); ++i) {
-        functionValuesMap.emplace(std::pair{functionOp->getName() + functionOp->getInputArgNames().at(i), valueMapIterator[i]});
+        blockArgs.emplace(std::pair{functionOp->getInputArgNames().at(i), valueMapIterator[i]});
     }
-    std::unordered_map<NES::OperationPtr*, Value> addressValueMap;
     
-    // Handles special execute() function case. We could also handle this by emplacing MemberFunctionResults when needed.
-    if(functionOp->getName() == "execute") {
-        functionValuesMap.emplace(std::pair{"numTuples", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                    memberFunctions[NES::Operation::GetNumTuples], functionValuesMap["executeInputBuffer"]).getResult(0)});
-        functionValuesMap.emplace(std::pair{"inputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                    memberFunctions[NES::Operation::GetDataBuffer], functionValuesMap["executeInputBuffer"]).getResult(0)});   
-        functionValuesMap.emplace(std::pair{"outputBuffer", builder->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                    memberFunctions[NES::Operation::GetDataBuffer], functionValuesMap["executeOutputBuffer"]).getResult(0)});   
-    }
-
     // Generate MLIR for operations in function body (BasicBlock)
-    generateMLIR(functionOp->getFunctionBasicBlock());
+    generateMLIR(functionOp->getFunctionBasicBlock(), blockArgs);
 
     theModule.push_back(mlirFunction);
 }
 
 // Recursion. No dependencies. Does NOT require addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    if(loopOp->getLoopType() == NES::LoopOperation::LoopType::ForLoOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    if(loopOp->getLoopType() == NES::LoopOperation::LoopType::ForLoop) {
         // -=LOOP HEAD=-
+        // Loop Head BasicBlock contains CompareOp and IfOperation(thenBlock, elseBlock)
+        // thenBlock=loopBodyBB & elseBlock=executeReturnBB
+        auto compareOp = std::static_pointer_cast<NES::CompareOperation>(loopOp->getNextBlock()->getOperations().at(0));
+        auto loopIfOp = std::static_pointer_cast<NES::IfOperation>(loopOp->getNextBlock()->getOperations().at(1));
+        auto loopBodyBB = loopIfOp->getThenBranchBlock();
+        auto loopEndBB = loopIfOp->getElseBranchBlock();
+        loopBodyBB->popOperation(); // Remove branchOp at the end of LoopBodyBB.
         // Define index variables for loop.
-        auto loopBranchOp = std::static_pointer_cast<NES::BranchOperation>(loopOp->getLoopBranchOp());
-        // Pop Branch Terminator Operation at the end of loop block to circumvent infinite recursion.
-        loopBranchOp->getNextBlock()->getOperations().pop_back();
-        auto lowerBound = builder->create<arith::ConstantIndexOp>(getNameLoc("lowerBound"), 0);
-        auto stepSize = builder->create<arith::ConstantIndexOp>(getNameLoc("stepSize"), 1);
+        auto iIncAddOp = std::static_pointer_cast<NES::AddIntOperation>(loopBodyBB->getOperations().back());
+        auto lowerBound = builder->create<arith::IndexCastOp>(getNameLoc("Lower Bound"), builder->getIndexType(), blockArgs[iIncAddOp->getLeftArgName()]);
+        auto stepSize = builder->create<arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs[iIncAddOp->getRightArgName()]);
+        // auto lowerBound = builder->create<arith::ConstantIndexOp>(getNameLoc("lowerBound"), 0);
+        // auto stepSize = builder->create<arith::ConstantIndexOp>(getNameLoc("stepSize"), 1);
+
+        loopBodyBB->popOperation(); // Remove i+1 addOp at the end of LoopBodyBB.
+
         // Create Loop Operation. Save InsertionPoint(IP) of parent's BasicBlock
         insertComment("// For Loop Start");
-        auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, functionValuesMap["numTuples"], stepSize);
+        auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, blockArgs[compareOp->getSecondArgName()], stepSize);
         auto parentBlockInsertionPoint = builder->saveInsertionPoint();
 
         // -=LOOP BODY=-
         // Set Insertion Point(IP) to loop BasicBlock. Process all Operations in loop BasicBlock. Restore IP to parent's BasicBlock.
         builder->setInsertionPointToStart(forLoop.getBody());
         currentRecordIdx = builder->create<arith::IndexCastOp>(getNameLoc("InductionVar Cast"), builder->getI64Type(), forLoop.getInductionVar());
-        generateMLIR(loopBranchOp->getNextBlock());
-        // generateMLIR(loopOperation->getLoopBasicBlock());
+        generateMLIR(loopBodyBB, blockArgs);
         builder->restoreInsertionPoint(parentBlockInsertionPoint);
+        generateMLIR(loopEndBB, blockArgs);
     } else {
         throw std::exception{};
     }
 }
 
 // No Recursion. No dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("AddressOp");
     Value recordOffset = builder->create<LLVM::MulOp>(getNameLoc("recordOffset"),
                                                       currentRecordIdx,
@@ -284,77 +309,96 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressO
     Value fieldOffset = builder->create<LLVM::AddOp>(getNameLoc("fieldOffset"),
                                                      recordOffset,
                                                      getConstInt("1", 64, addressOp->getFieldOffset()));
-    std::string bufferName = (addressOp->getIsInputBuffer()) ? "inputBuffer" : "outputBuffer";
     // Return I8* to first byte of field data
     Value elementAddress = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                         LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                        functionValuesMap[bufferName],
+                                                        blockArgs[addressOp->getArgName()],
                                                         ArrayRef<Value>({fieldOffset}));
-    addressValueMap.emplace(std::pair{addressOp, builder->create<LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
+    blockArgs.emplace(std::pair{addressOp->getIdentifier(), builder->create<LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
                                             LLVM::LLVMPointerType::get(getMLIRType(addressOp->getDataType())),
                                             elementAddress)});
 }
 
 // No recursion. Dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoadOperation> loadOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoadOperation> loadOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("LoadOp.\n");
-    addressValueMap.emplace(loadOp, builder->create<LLVM::LoadOp>(getNameLoc("loadedValue"), addressValueMap[loadOp->getAddressOp()]));
+    blockArgs.emplace(std::pair{loadOp->getIdentifier(), builder->create<LLVM::LoadOp>(getNameLoc("loadedValue"), blockArgs[loadOp->getArgName()])});
 }
 
 // No Recursion. No dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("ConstIntOp");
-    addressValueMap.emplace(std::pair{constIntOp, getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue())});
+    blockArgs.emplace(std::pair{constIntOp->getIdentifier(), getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue())});
 }
 
 // No recursion. Dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("AddOp");
-    addressValueMap.emplace(std::pair{addOp,
-        builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), addressValueMap[addOp->getLHS()], addressValueMap[addOp->getRHS()])});
+    blockArgs.emplace(std::pair{addOp->getIdentifier(),
+        builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()])});
     auto printValFunc = insertExternalFunction("printValueFromMLIR", 0, {}, true);
-    builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, printValFunc, addressValueMap[addOp]);
+    builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, printValFunc, blockArgs[addOp->getIdentifier()]);
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::StoreOperation> storeOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::StoreOperation> storeOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("StoreOp\n");
-    builder->create<LLVM::StoreOp>(getNameLoc("outputStore"), addressValueMap[storeOp->getValueToStore()], 
-                                   addressValueMap[storeOp->getAddressOp()]);
+    builder->create<LLVM::StoreOp>(getNameLoc("outputStore"), blockArgs[storeOp->getValueArgName()], 
+                                   blockArgs[storeOp->getAddressArgName()]);
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ReturnOperation> returnOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ReturnOperation> returnOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("ReturnOp\n");
+    printf("ReturnOp blockArgs size: %d\n", (int) blockArgs.size());
+    
     // Insert return into 'execute' function block. This is the FINAL return.
     builder->create<LLVM::ReturnOp>(getNameLoc("return"), getConstInt("return", 64, returnOp->getReturnOpCode()));
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyCallOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyCallOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("ProxyCallOperation identifier: %s\n", proxyCallOp->getIdentifier().c_str());
+    printf("ProxyCallOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
+
     switch(proxyCallOp->getProxyCallType()) {
         case NES::Operation::GetDataBuffer:
-            theModule.push_back(this->memberFunctions.at(0));
+            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(), builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                    memberFunctions[NES::Operation::GetDataBuffer], blockArgs[proxyCallOp->getInputArgNames().at(0)]).getResult(0)});
             break;
         case NES::Operation::GetNumTuples:
-            theModule.push_back(this->memberFunctions.at(0));
+            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(), builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                    memberFunctions[NES::Operation::GetNumTuples], blockArgs[proxyCallOp->getInputArgNames().at(0)]).getResult(0)});
             break;
         default:
             insertExternalFunction(proxyCallOp->getIdentifier(), 64, {builder->getI64Type()}, true); //Todo handle correctly
     }
+    //Todo Insert function call. Use blockArgs is input args, if function has args.
 }
 
 //==--------------------- Dummy OPERATIONS ----------------------==//
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("IfOperation boolArgName: %s\n", ifOp->getBoolArgName().c_str());
+    //Todo handle below MLIR style if-else
+    std::unordered_map<std::string, mlir::Value> thenBlockArgs;
+    for(auto newArgName : ifOp->getThenBranchBlock()->getInputArgs()) {
+        thenBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+    }
+    generateMLIR(ifOp->getThenBranchBlock(), thenBlockArgs);
+    std::unordered_map<std::string, mlir::Value> elseBlockArgs;
+    for(auto newArgName : ifOp->getElseBranchBlock()->getInputArgs()) {
+        elseBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+    }
+    generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs);
 }
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::CompareOperation> compareOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::CompareOperation> compareOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("CompareOperation identifier: %s\n", compareOp->getIdentifier().c_str());
+    printf("CompareOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
 }
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::BranchOperation> branchOp, const std::unordered_map<std::string, mlir::Value>& blockArgs) {
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::BranchOperation> branchOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("BranchOperation.getNextBlock.getIdentifier: %s\n", branchOp->getNextBlock()->getIdentifier().c_str());
+    printf("BranchOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
 }

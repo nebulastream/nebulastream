@@ -15,22 +15,22 @@
 #ifndef NES_IFOPERATION_HPP
 #define NES_IFOPERATION_HPP
 
-#include "Experimental/NESIR/Operations/Operation.hpp"
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 
 namespace NES {
 class IfOperation : public Operation {
   public:
-    IfOperation(std::string boolArgName, OperationPtr thenBranchOp, OperationPtr elseBranchOp);
+    IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock);
     ~IfOperation() override = default;
 
     std::string getBoolArgName();
-    OperationPtr getThenBranchOp();
-    OperationPtr getElseBranchOp();
+    BasicBlockPtr getThenBranchBlock();
+    BasicBlockPtr getElseBranchBlock();
 
   private:
     std::string boolArgName;
-    OperationPtr thenBranchOp;
-    OperationPtr elseBranchOp;
+    BasicBlockPtr thenBranchBlock;
+    BasicBlockPtr elseBranchBlock;
 };
 }// namespace NES
 #endif//NES_IFOPERATION_HPP

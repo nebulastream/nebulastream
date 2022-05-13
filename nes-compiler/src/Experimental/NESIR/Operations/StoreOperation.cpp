@@ -17,11 +17,11 @@
 
 namespace NES {
 
-StoreOperation::StoreOperation(OperationPtr valueToStore, OperationPtr addressOp)
-    : Operation(OperationType::StoreOp), valueToStore(valueToStore), addressOp(addressOp) {}
+StoreOperation::StoreOperation(std::string valueArgName, std::string addressArgName)
+    : Operation(OperationType::StoreOp), valueArgName(valueArgName), addressArgName(addressArgName) {}
 
-OperationPtr StoreOperation::getValueToStore() { return valueToStore; }
-OperationPtr StoreOperation::getAddressOp() { return addressOp; }
+std::string StoreOperation::getValueArgName() { return valueArgName; }
+std::string StoreOperation::getAddressArgName() { return addressArgName; }
 
 bool StoreOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::StoreOp; }
 }// namespace NES

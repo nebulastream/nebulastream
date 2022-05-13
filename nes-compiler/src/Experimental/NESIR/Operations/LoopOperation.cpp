@@ -15,11 +15,11 @@
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <utility>
 namespace NES {
-LoopOperation::LoopOperation(LoopType loopType, OperationPtr loopBranchOp)
-    : Operation(Operation::LoopOp), loopType(loopType), loopBranchOp(std::move(loopBranchOp)) {}
+LoopOperation::LoopOperation(LoopType loopType, BasicBlockPtr nextBlock)
+    : Operation(Operation::LoopOp), loopType(loopType), nextBlock(std::move(nextBlock)) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
-OperationPtr LoopOperation::getLoopBranchOp() { return std::move(loopBranchOp); }
+BasicBlockPtr LoopOperation::getNextBlock() { return nextBlock; }
 
 bool LoopOperation::classof(const Operation *Op) {
     return Op->getOperationType() == Operation::LoopOp;

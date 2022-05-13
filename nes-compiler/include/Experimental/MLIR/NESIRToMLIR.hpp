@@ -81,9 +81,6 @@ class MLIRGenerator {
     mlir::ModuleOp theModule;
     // Map that contains execute input args, function call results and intermediary results from NESIR Operations.
     std::vector<mlir::FuncOp> memberFunctions;
-    std::unordered_map<std::string, Value> functionValuesMap;
-    std::unordered_map<std::string, Value> valueMap;
-    std::unordered_map<NES::OperationPtr, Value> addressValueMap;
     // Utility
     mlir::Value currentRecordIdx;
     mlir::RewriterBase::InsertPoint *globalInsertPoint;
@@ -92,26 +89,26 @@ class MLIRGenerator {
     llvm::StringMap<mlir::Value> printfStrings;
 
 
-    void generateMLIR(NES::BasicBlockPtr basicBlock, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(NES::BasicBlockPtr basicBlock, std::unordered_map<std::string, mlir::Value>& blockArgs);
 
     /**
      * @brief Calls the specific generate function based on currentNode's type.
      * @param parentBlock MLIR Block that new operation is inserted into.
      */
-    void generateMLIR(const NES::OperationPtr& operation, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::FunctionOperation> funcOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::AddIntOperation> addIntOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::StoreOperation> storeOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::LoadOperation> loadOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(const NES::OperationPtr& operation, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::FunctionOperation> funcOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::AddIntOperation> addIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::StoreOperation> storeOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::LoadOperation> loadOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
 
-    void generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::CompareOperation> compareOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::BranchOperation> branchOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::ReturnOperation> returnOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyCallOp, const std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::CompareOperation> compareOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::BranchOperation> branchOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::ReturnOperation> returnOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyCallOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
 
     /**
      * @brief Inserts an external, but non-class-member-function, into MLIR.

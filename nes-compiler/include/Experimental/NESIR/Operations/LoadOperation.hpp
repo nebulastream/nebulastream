@@ -20,14 +20,18 @@
 namespace NES {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(OperationPtr addressOp);
+    explicit LoadOperation(std::string identifier, OperationPtr addressOp, std::string argName);
     ~LoadOperation() override = default;
 
+    std::string getIdentifier();
     OperationPtr getAddressOp();
+    std::string getArgName();
 
     static bool classof(const Operation *Op);
   private:
+    std::string identifier;
     OperationPtr addressOp;
+    std::string argName;
 };
 }// namespace NES
 #endif//NES_LOADOPERATION_HPP

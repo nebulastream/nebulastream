@@ -157,7 +157,6 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
 
     //Todo BIG ISSUE:
     // - use loop-based MLIR Generation Approach
-#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
     // 4,5                     loopOp(Op1)->loopBB(getOPs)
     // 6                         addressOp(Op1) ~InputBuff~
     // 7                         loadOp[Op1](Op2) -> ACCESS: addressOpMap[&Op1]
@@ -166,52 +165,54 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     // 10                        addressOp(Op5) ~OutputBuff~
     // 11                        storeOp[Op4,Op5](Op6) -> ACCESS: addressOpMap[&Op4] and addressOpMap[&Op5]                   
 
-    // Loop BasicBlock Operations
-    auto inputAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 9, 1, true);
-    auto loadOp = std::make_shared<LoadOperation>(inputAddressOp);
-    auto constOp = std::make_shared<ConstantIntOperation>(9, 64);
-    auto addOp = std::make_shared<AddIntOperation>(loadOp, constOp);
-    auto outputAddressOp = std::make_shared<AddressOperation>(NES::Operation::BasicType::INT64, 8, 0, false);
-    auto storeOp = std::make_shared<StoreOperation>(addOp, outputAddressOp);
+    // Loop condition constants.
+    OperationPtr constIOp = std::make_shared<ConstantIntOperation>("i", 0, 64);
+    OperationPtr constOneOp = std::make_shared<ConstantIntOperation>("constOne", 1, 64);
+
+    // Loop BodyBlock Operations
+    auto inputAddressOp = std::make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "inputDataBuffer");
+    auto loadOp = std::make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
+    auto constOp = std::make_shared<ConstantIntOperation>("constInt42Op", 42, 64);
+    auto addOp = std::make_shared<AddIntOperation>("inputAddOp", loadOp, constOp, "loadTBValOp", "constInt42Op");
+    auto outputAddressOp = std::make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "outputDataBuffer");
+    auto storeOp = std::make_shared<StoreOperation>("inputAddOp", "outTBAddressOp");
+    auto loopIncAdd = std::make_shared<AddIntOperation>("loopIncAdd", constIOp, constOneOp, "i", "constOne");
 
     // Loop BodyBlock
-    
-    std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, constOp, addOp, outputAddressOp, storeOp};
+    std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, constOp, addOp, outputAddressOp, storeOp, loopIncAdd};
     std::vector<std::string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne"};
     BasicBlockPtr loopBodyBlock = std::make_shared<BasicBlock>("loopBlock", loopOps, loopArguments);
     OperationPtr loopBodyTerminatorOp = std::make_shared<BranchOperation>(loopBodyBlock);
-    loopBodyBlock->getOperations().push_back(loopBodyTerminatorOp);
-    OperationPtr loopBodyBranchOp = std::make_shared<BranchOperation>(loopBodyBlock);
+    loopBodyBlock->addOperation(loopBodyTerminatorOp);
 
     // Loop Header(IfOperation(LoopBodyBlock, ExecuteReturnBlock))
     OperationPtr executeReturnOp = std::make_shared<ReturnOperation>(0);
     std::vector<OperationPtr> executeReturnBlockOps{executeReturnOp};
     std::vector<std::string> executeReturnBlockArgs{};
     BasicBlockPtr executeReturnBlock = std::make_shared<BasicBlock>("loopBlock", executeReturnBlockOps, executeReturnBlockArgs);
-    OperationPtr returnBranchOp = std::make_shared<BranchOperation>(executeReturnOp);
     OperationPtr ifCompareOp = std::make_shared<CompareOperation>("loopCompare", "i", "numTuples");
-    OperationPtr loopIfOp = std::make_shared<IfOperation>("loopCompare", loopBodyBranchOp, returnBranchOp);
-    std::vector<std::string> loopHeaderArgs{};
-    BasicBlockPtr loopHeaderBlock = std::make_shared<BasicBlock>("loopBlock", loopIfOp, loopHeaderArgs);
-    OperationPtr loopBranchOp = std::make_shared<BranchOperation>(loopHeaderBlock);
+    OperationPtr loopIfOp = std::make_shared<IfOperation>("loopCompare", loopBodyBlock, executeReturnBlock);
+    std::vector<OperationPtr> loopHeaderBBOps{ifCompareOp, loopIfOp};
+    std::vector<std::string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "numTuples"};
+    BasicBlockPtr loopHeaderBlock = std::make_shared<BasicBlock>("loopHeaderBlock", loopHeaderBBOps, loopHeaderArgs);
 
     // Loop Operation -> loopBranchOp -> loopHeaderBlock -> loopIfOp -> (loopBodyBlock | executeEndBlock)
-    NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(loopBranchOp);
+    NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(LoopOperation::ForLoop, loopHeaderBlock);
 
 
     // Execute Function
     // Execute Head Operations
-    std::vector<std::string> getInputDataBufArgs{"InputBuffer"};
-    std::vector<std::string> getOutputDataBufArgs{"OutputBuffer"};
+    std::vector<std::string> getInputDataBufArgs{"inputTupleBuffer"};
+    std::vector<std::string> getOutputDataBufArgs{"outputTupleBuffer"};
     OperationPtr inputDataBufferProxy = std::make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "inputDataBuffer", getInputDataBufArgs);
-    OperationPtr outputtDataBufferProxy = std::make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "outputDataBuffer", getInputDataBufArgs);
+    OperationPtr outputtDataBufferProxy = std::make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "outputDataBuffer", getOutputDataBufArgs);
     OperationPtr numTuplesProxy = std::make_shared<ProxyCallOperation>(Operation::GetNumTuples, "numTuples", getInputDataBufArgs);
-    OperationPtr constOneOp = std::make_shared<ConstantIntOperation>(1, 64);
 
-    std::vector<OperationPtr> executeBlockOps{inputDataBufferProxy, outputtDataBufferProxy, numTuplesProxy, constOneOp, loopOperation};
-    NES::BasicBlockPtr executeBodyBlock = std::make_shared<NES::BasicBlock>(executeBlockOps);
+    std::vector<OperationPtr> executeBlockOps{inputDataBufferProxy, outputtDataBufferProxy, numTuplesProxy, constIOp, constOneOp, loopOperation};
+    std::vector<std::string> executeBodyBlockArgs{"inputTupleBuffer", "outputTupleBuffer"};
+    NES::BasicBlockPtr executeBodyBlock = std::make_shared<NES::BasicBlock>("executeFuncBB", executeBlockOps, executeBodyBlockArgs);
     std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
-    std::vector<std::string> executeArgNames{ "InputBuffer", "OutputBuffer"};
+    std::vector<std::string> executeArgNames{ "inputTupleBuffer", "outputTupleBuffer"};
     auto executeFuncOp = std::make_shared<FunctionOperation>("execute", executeBodyBlock, executeArgTypes, executeArgNames, Operation::INT64);
 
     // NESIR

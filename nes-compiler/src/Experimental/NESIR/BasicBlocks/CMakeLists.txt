@@ -13,5 +13,4 @@
 
 add_source_files(nes-compiler
         BasicBlock.cpp
-        IfBasicBlock.cpp
 )

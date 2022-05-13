@@ -21,16 +21,16 @@
 namespace NES {
 class StoreOperation : public Operation{
   public:
-    explicit StoreOperation(OperationPtr valueToStore, OperationPtr addressOp);
+    explicit StoreOperation(std::string valueArgName, std::string addressArgName);
     ~StoreOperation() override = default;
 
-    OperationPtr getValueToStore();
-    OperationPtr getAddressOp();
+    std::string getValueArgName();
+    std::string getAddressArgName();
     static bool classof(const Operation* Op);
 
   private:
-    OperationPtr valueToStore;
-    OperationPtr addressOp;
+    std::string valueArgName;
+    std::string addressArgName;
 };
 }// namespace NES
 #endif//NES_STOREOPERATION_HPP

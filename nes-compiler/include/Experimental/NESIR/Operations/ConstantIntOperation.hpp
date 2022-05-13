@@ -21,9 +21,10 @@ namespace NES {
 
 class ConstantIntOperation : public Operation {
   public:
-    explicit ConstantIntOperation(int64_t constantValue, int8_t numBits);
+    explicit ConstantIntOperation(std::string identifier, int64_t constantValue, int8_t numBits);
     ~ConstantIntOperation() override = default;
 
+    std::string getIdentifier();
     int64_t getConstantIntValue();
     int8_t getNumBits();
 
@@ -31,6 +32,7 @@ class ConstantIntOperation : public Operation {
     T getIntegerViaType();
     static bool classof(const Operation* Op);
   private:
+  std::string identifier;
     int64_t constantValue;
     int8_t numBits;
 };

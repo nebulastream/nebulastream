@@ -15,10 +15,11 @@
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 
 namespace NES {
-AddressOperation::AddressOperation(Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset, bool isInputBuffer)
-    : Operation(NES::Operation::AddressOp), dataType(dataType), recordWidth(getRecordWidth), fieldOffset(fieldOffset), 
-    isInputBuffer(isInputBuffer) {}
+AddressOperation::AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset, std::string argName)
+    : Operation(NES::Operation::AddressOp), identifier(std::move(identifier)), dataType(dataType), recordWidth(getRecordWidth), fieldOffset(fieldOffset), 
+    argName(argName) {}
 
+std::string AddressOperation::getIdentifier() { return identifier; }
 
 Operation::BasicType AddressOperation::getDataType() { return dataType; }
 
@@ -26,7 +27,7 @@ uint64_t AddressOperation::getRecordWidth() { return recordWidth; }
 
 uint64_t AddressOperation::getFieldOffset() { return fieldOffset; };
 
-bool AddressOperation::getIsInputBuffer() { return isInputBuffer; };
+std::string AddressOperation::getArgName() { return argName; };
 
 bool NES::AddressOperation::classof(const NES::Operation *Op) {
     return Op->getOperationType() == OperationType::AddressOp;

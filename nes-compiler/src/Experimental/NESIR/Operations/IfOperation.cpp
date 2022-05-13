@@ -16,12 +16,12 @@
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 
 namespace NES {
-IfOperation::IfOperation(std::string boolArgName, OperationPtr thenBranchOp, OperationPtr elseBranchOp) 
-    : Operation(Operation::IfOp), boolArgName(boolArgName), thenBranchOp(std::move(thenBranchOp)), 
-    elseBranchOp(std::move(elseBranchOp)) {}
+IfOperation::IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock) 
+    : Operation(Operation::IfOp), boolArgName(boolArgName), thenBranchBlock(std::move(thenBranchBlock)), 
+    elseBranchBlock(std::move(elseBranchBlock)) {}
 
     std::string IfOperation::getBoolArgName() { return boolArgName; }
-    OperationPtr IfOperation::getThenBranchOp() { return thenBranchOp; }
-    OperationPtr IfOperation::getElseBranchOp() { return elseBranchOp; }
+    BasicBlockPtr IfOperation::getThenBranchBlock() { return thenBranchBlock; }
+    BasicBlockPtr IfOperation::getElseBranchBlock() { return elseBranchBlock; }
     
 }// namespace NES
