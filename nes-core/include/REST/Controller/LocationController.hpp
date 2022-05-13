@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LOCATIONCONTROLLER_HPP
-#define NES_LOCATIONCONTROLLER_HPP
+#ifndef NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
+#define NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
 #include <memory>
 #include <REST/Controller/BaseController.hpp>
 
@@ -31,9 +31,10 @@ class LocationController : public BaseController {
      * @param message : the user message
      */
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
+
   private:
     LocationServicePtr locationService;
 };
 }
 
-#endif//NES_LOCATIONCONTROLLER_HPP
+#endif//NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP

@@ -11,9 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-//todo: adjust path of include guards
-#ifndef NES_LOCATIONSERVICE_HPP
-#define NES_LOCATIONSERVICE_HPP
+#ifndef NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
+#define NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
 
 #include <memory>
 #include <cpprest/json.h>
@@ -27,12 +26,26 @@ using LocationIndexPtr = std::shared_ptr<LocationIndex>;
 
 class LocationService {
   public:
-    LocationService(LocationIndexPtr locationIndex);
+    explicit LocationService(LocationIndexPtr locationIndex);
 
+    /**
+     * @brief get a list of all mobile nodes in the system and their current positions
+     * @return a json list in the format:
+     * [
+            {
+                "id": <node id>,
+                "location": [
+                    <latitude>,
+                    <longitude>
+                ]
+            }
+        ]
+     */
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
+
   private:
     LocationIndexPtr locationIndex;
 };
 }
 
-#endif//NES_LOCATIONSERVICE_HPP
+#endif//NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP

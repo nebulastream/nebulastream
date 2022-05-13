@@ -15,6 +15,7 @@
 #define NES_GEOLOCATION_LOCATIONINDEX_HPP
 #include <memory>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
@@ -94,8 +95,18 @@ class LocationIndex {
      */
     std::vector<std::pair<TopologyNodePtr, Location>> getNodesInRange(Location center, double radius);
 
+    /**
+     * Experimental
+     * @brief insert a new node into the map keeping track of all the mobile devices in the system
+     * @param node: a smart pointer to the node to be inserted
+     */
     void addMobileNode(TopologyNodePtr node);
 
+    /**
+     * Experimental
+     * @brief get the locations of all the nodes in the mobileNodes map
+     * @return a vector consisting of pairs containing node id and current location
+     */
     std::vector<std::pair<uint64_t, Location>> getMobileNodeLocations();
 
     /**
@@ -115,6 +126,7 @@ class LocationIndex {
      */
     bool setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
 
+    // a map containing all registered mobile nodes
     std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
