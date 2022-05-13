@@ -147,9 +147,9 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                          bufferManagers,
                                                                          nodeEngineId,
                                                                          numOfThreads,
+                                                                         numberOfBuffersPerEpoch,
                                                                          hardwareManager,
                                                                          stateManager,
-                                                                         numberOfBuffersPerEpoch,
                                                                          workerToCoreMappingVec);
                     break;
                 }
@@ -159,9 +159,9 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                  bufferManagers,
                                                                  nodeEngineId,
                                                                  numOfThreads,
+                                                                 numberOfBuffersPerEpoch,
                                                                  hardwareManager,
                                                                  stateManager,
-                                                                 numberOfBuffersPerEpoch,
                                                                  workerToCoreMappingVec,
                                                                  workerConfiguration->numberOfQueues.getValue(),
                                                                  workerConfiguration->numberOfThreadsPerQueue.getValue());
@@ -170,6 +170,15 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                 default: {
                     NES_ASSERT(false, "Cannot build Query Manager");
                 }
+
+            } else {
+                queryManager = std::make_shared<DynamicQueryManager>(nesWorker,
+                                                                     bufferManagers,
+                                                                     nodeEngineId,
+                                                                     numOfThreads,
+                                                                     numberOfBuffersPerEpoch,
+                                                                     hardwareManager,
+                                                                     stateManager);
             }
         }
         auto materializedViewManager = (!this->materializedViewManager)

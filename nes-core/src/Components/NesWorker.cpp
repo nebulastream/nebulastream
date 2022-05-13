@@ -127,6 +127,8 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>
 
 uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
+uint64_t NesWorker::getNumberOfBuffersPerEpoch() { return numberOfBuffersPerEpoch; }
+
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking "
               << blocking << " coordinatorIp=" << workerConfig->coordinatorIp.getValue() << " coordinatorPort="

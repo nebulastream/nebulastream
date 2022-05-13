@@ -81,9 +81,9 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                   std::vector<BufferManagerPtr> bufferManagers,
                                   uint64_t nodeEngineId,
                                   uint16_t numThreads,
+                                  uint64_t  numberOfBuffersPerEpoch,
                                   HardwareManagerPtr hardwareManager,
                                   const StateManagerPtr& stateManager,
-                                  uint64_t numberOfBuffersPerEpoch,
                                   std::vector<uint64_t> workerToCoreMapping = {});
 
     virtual ~AbstractQueryManager() NES_NOEXCEPT(false) override;
@@ -238,18 +238,19 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                            bool blocking = false) = 0;
 
   public:
-    /**
-     * @brief This method informs the QueryManager that a task has failed
-     * @param pipeline the enclosed pipeline or sink
-     * @param message the reason of the feature
-     */
-    void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
 
     /**
      * @brief Returns the numberOfBuffersPerEpoch
      * @return numberOfBuffersPerEpoch
      */
     uint64_t getNumberOfBuffersPerEpoch() const;
+
+    /**
+     * @brief This method informs the QueryManager that a task has failed
+     * @param pipeline the enclosed pipeline or sink
+     * @param message the reason of the feature
+     */
+    void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
 
     /**
      * @brief This method informs the QueryManager that a source has failed
@@ -278,15 +279,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @return true if it went through
      */
     bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
-
-    /**
-      * @brief Triggers an epoch propagation for all network sinks
-      * @param source the source for which to trigger the soft end of stream
-      * @param queryId
-      * @param epochBarrier timestamp that should be trimmed in the storage
-      * @return true if successful
-      */
-    bool addEpochPropagation(DataSourcePtr source, uint64_t queryId, uint64_t epochBarrier);
 
     /**
      * @return true if thread pool is running
@@ -335,6 +327,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param terminationType the type of termination (e.g., failure, soft)
      */
     void notifySinkCompletion(QuerySubPlanId subPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
+
+    /**
+     * @brief injects epoch barrier in all network sinks
+     * @param epochBarrier max timestamp of current epoch
+     * @param queryId query id
+     * @param source current operator
+     */
+    bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId, OperatorId source);
 
   private:
     friend class ThreadPool;
@@ -449,9 +449,9 @@ class DynamicQueryManager : public AbstractQueryManager {
                                  std::vector<BufferManagerPtr> bufferManager,
                                  uint64_t nodeEngineId,
                                  uint16_t numThreads,
+                                 uint64_t  numberOfBuffersPerEpoch,
                                  HardwareManagerPtr hardwareManager,
                                  const StateManagerPtr& stateManager,
-                                 uint64_t numberOfBuffersPerEpoch,
                                  std::vector<uint64_t> workerToCoreMapping = {});
 
     void destroy() override;
@@ -493,9 +493,9 @@ class DynamicQueryManager : public AbstractQueryManager {
     uint64_t getNumberOfTasksInWorkerQueues() const override;
 
     /**
-      * @brief Returns the numberOfBuffersPerEpoch
-      * @return numberOfBuffersPerEpoch
-      */
+     * @brief Returns the numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+     */
     uint64_t getNumberOfBuffersPerEpoch() const;
 
   private:
@@ -552,9 +552,9 @@ class MultiQueueQueryManager : public AbstractQueryManager {
                                     std::vector<BufferManagerPtr> bufferManager,
                                     uint64_t nodeEngineId,
                                     uint16_t numThreads,
+                                    uint64_t  numberOfBuffersPerEpoch,
                                     HardwareManagerPtr hardwareManager,
                                     const StateManagerPtr& stateManager,
-                                    uint64_t numberOfBuffersPerEpoch,
                                     std::vector<uint64_t> workerToCoreMapping = {},
                                     uint64_t numberOfQueues = 1,
                                     uint64_t numberOfThreadsPerQueue = 1);
@@ -584,9 +584,9 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     uint64_t getNumberOfTasksInWorkerQueues() const override;
 
     /**
-      * @brief Returns the numberOfBuffersPerEpoch
-      * @return numberOfBuffersPerEpoch
-      */
+     * @brief Returns the numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+     */
     uint64_t getNumberOfBuffersPerEpoch() const;
 
   protected:
