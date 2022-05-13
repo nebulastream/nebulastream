@@ -36,6 +36,8 @@ service WorkerRPCService {
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 
   rpc GetLocation(GetLocationRequest) returns (GetLocationReply) {}
+
+  rpc GetReconnectSchedule(GetReconnectScheduleRequest) returns (GetReconnectScheduleReply) {}
 }
 
 message DeployQueryRequest {
@@ -138,4 +140,12 @@ message GetLocationRequest {
 
 message GetLocationReply {
   Coordinates coord = 1;
+}
+
+message GetReconnectScheduleRequest {
+  uint64 id = 1;
+}
+
+message GetReconnectScheduleReply {
+  ReconnectSchedule schedule = 1;
 }

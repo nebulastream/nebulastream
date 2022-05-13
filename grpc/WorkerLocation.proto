@@ -23,3 +23,9 @@ message WorkerLocationInfo {
   uint64 id = 1;
   Coordinates coord = 2;
 }
+
+//todo: add the actual reconnects here
+message ReconnectSchedule {
+  Coordinates pathStart = 1;
+  Coordinates pathEnd = 2;
+}

@@ -30,6 +30,11 @@ namespace Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
 }
 
+namespace Spatial::Mobility::Experimental {
+class ReconnectSchedule;
+using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+}
+
 /**
  * @brief This class represents information about a physical node participating in the NES infrastructure
  */
@@ -163,6 +168,8 @@ class TopologyNode : public Node {
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
     NES::Spatial::Index::Experimental::LocationPtr getCoordinates();
+
+    NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
 
     /**
      * Experimental

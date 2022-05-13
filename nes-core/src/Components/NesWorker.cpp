@@ -159,6 +159,16 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
     NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":"
                                                                                           << localWorkerRpcPort.load());
+    if (locationWrapper->isMobileNode()) {
+        NES_DEBUG("Creating location source");
+        bool success =
+            locationWrapper->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
+
+        NES_DEBUG("create location source= " << success);
+        NES_ASSERT(success, "cannot create location source");
+
+    }
+
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
         bool con = connect();
@@ -171,15 +181,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         bool success = replaceParent(NesCoordinator::NES_COORDINATOR_ID, parentId);
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
-    }
-
-    if (locationWrapper->isMobileNode()) {
-        NES_DEBUG("Creating location source");
-        bool success =
-            locationWrapper->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
-
-        NES_DEBUG("create location source= " << success);
-        NES_ASSERT(success, "cannot create location source");
     }
 
     if (workerConfig->enableStatisticOuput) {
@@ -266,7 +267,8 @@ bool NesWorker::stop(bool) {
 bool NesWorker::connect() {
     std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
-    locationWrapper->setCoordinatorRPCClient(coordinatorRpcClient);
+    //todo: does this need to be set for all kinds of noces or only for mobile ones?
+    //locationWrapper->setUpReconnectPlanning(coordinatorRpcClient);
     std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
 
@@ -291,6 +293,11 @@ bool NesWorker::connect() {
                                                                         this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
+
+        locationWrapper->setCoordinatorRPCCLient(coordinatorRpcClient);
+        if (locationWrapper->isMobileNode()) {
+            locationWrapper->setUpReconnectPlanning(coordinatorRpcClient);
+        }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
         if (!configPhysicalSources.empty()) {

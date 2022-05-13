@@ -18,9 +18,10 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Spatial/NodeLocationWrapper.hpp>
 #include <cpprest/json.h>
 #include <utility>
+#include <Spatial/NodeLocationWrapper.hpp>
+#include <Spatial/ReconnectSchedule.hpp>
 
 namespace NES {
 
@@ -183,6 +184,24 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     Coordinates* coord = reply->mutable_coord();
     coord->set_lat(loc->getLatitude());
     coord->set_lng(loc->getLongitude());
+    return Status::OK;
+}
+
+Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectScheduleRequest* request, GetReconnectScheduleReply* reply) {
+    (void) request;
+    NES_DEBUG("WorkerRPCServer received reconnect schedule request")
+    auto schedule = locationWrapper->getReconnectSchedule();
+    ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
+
+    auto startLoc = schedule->getPathStart();
+    Coordinates* startCoord = scheduleMsg->mutable_pathstart();
+    startCoord->set_lat(startLoc->getLatitude());
+    startCoord->set_lng(startLoc->getLongitude());
+
+    auto endLoc = schedule->getPathEnd();
+    Coordinates* endCoord = scheduleMsg->mutable_pathend();
+    endCoord->set_lat(endLoc->getLatitude());
+    endCoord->set_lng(endLoc->getLongitude());
     return Status::OK;
 }
 }// namespace NES

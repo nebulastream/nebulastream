@@ -39,6 +39,9 @@ namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
+class ReconnectSchedule;
+using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+
 //todo: make this a member variale and set the default via config
 //todo: check what alternatives there are to sleep() in order to use more finegrained intervals
 const uint64_t kDefaultUpdateInterval = 10;
@@ -48,6 +51,8 @@ const size_t kDefaultSaveRate = 4;
 const double kPathDistanceDelta = 1;
 const double kPathExtensionFactor = 10;
 const double kSaveNodesRange = 50;
+const double kDefaultCoverage = 3;
+const double kPathLength = 200;
 
 class NodeLocationWrapper {
   public:
@@ -67,7 +72,7 @@ class NodeLocationWrapper {
      * Set the rpcClient which this LocationWrapper can use to communicate with the coordinator
      * @param rpcClientPtr
      */
-    void setCoordinatorRPCClient(CoordinatorRPCClientPtr rpcClientPtr);
+    void setUpReconnectPlanning(CoordinatorRPCClientPtr rpcClientPtr);
     /**
      * Experimental
      * @brief checks if this Worker runs on a non-mobile device with a known location (Field Node)
@@ -88,6 +93,7 @@ class NodeLocationWrapper {
      */
     Index::Experimental::LocationPtr getLocation();
 
+    Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
     /**
      * Experimental
      * @brief Method to get all field nodes within a certain range around a geographical point
@@ -109,7 +115,7 @@ class NodeLocationWrapper {
     /**
      * Experimental
      */
-    [[noreturn]] void startReconnectPlanning(size_t locBufferSize, uint64_t updateInterval, size_t bufferSaveRate);
+    [[noreturn]] void startReconnectPlanning();
 
     /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
@@ -124,10 +130,13 @@ class NodeLocationWrapper {
      */
     LocationProviderPtr getLocationProvider();
 
+    void setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinatorClient);
+
     static std::pair<S2Point, S1Angle> findPathCoverage(S2PolylinePtr path, S2Point coveringNode, S1Angle coverage);
 
   private:
     void updatePredictedPath(NES::Spatial::Index::Experimental::LocationPtr oldLoc, NES::Spatial::Index::Experimental::LocationPtr newLoc);
+    void scheduleReconnects(const NES::Spatial::Index::Experimental::LocationPtr& currentLoc);
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::LocationPtr fixedLocationCoordinates;
     bool isMobile;
@@ -141,10 +150,12 @@ class NodeLocationWrapper {
     size_t saveRate;
     //todo: make these pointers inf necessary. would allow forward declarations
     S2Point pathBeginning;
+    S2Point pathEnd;
     S2PolylinePtr trajectoryLine;
     S2PointIndex<uint64_t> fieldNodeIndex;
     //todo: maybe use a cap for this instead?
     NES::Spatial::Index::Experimental::LocationPtr positionOfLastNodeIndexUpdate;
+    std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> reconnectVector;
 };
 
 }//namespace NES::Spatial::Mobility::Experimental

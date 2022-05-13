@@ -15,9 +15,11 @@
 #include <Spatial/LocationProviderCSV.hpp>
 #include <Spatial/NodeLocationWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Spatial/ReconnectSchedule.hpp>
 
 #include <s2/s2point.h>
 #include <s2/s2polyline.h>
+#include <s2/s2earth.h>
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -45,8 +47,9 @@ bool NodeLocationWrapper::createLocationProvider(LocationProviderType type, std:
     return true;
 }
 
-void NodeLocationWrapper::setCoordinatorRPCClient(CoordinatorRPCClientPtr rpcClientPtr) {
-    this->coordinatorRpcClient = rpcClientPtr;
+void NodeLocationWrapper::setUpReconnectPlanning(CoordinatorRPCClientPtr rpcClientPtr) {
+    //this->coordinatorRpcClient = rpcClientPtr;
+    (void) rpcClientPtr;
     auto nodeList = getNodeIdsInRange(kSaveNodesRange);
     for (auto elem : nodeList) {
         auto loc = elem.second;
@@ -54,14 +57,18 @@ void NodeLocationWrapper::setCoordinatorRPCClient(CoordinatorRPCClientPtr rpcCli
         fieldNodeIndex.Add(S2Point(S2LatLng::FromDegrees(loc.getLatitude(), loc.getLongitude())), elem.first);
     }
     if (isMobile) {
+        //todo: these have to be set earlier
         updateInterval = kDefaultUpdateInterval;
         locBufferSize = kDefaultLocBufferSize;
         saveRate = kDefaultSaveRate;
+        /*
         locationUpdateThread = std::make_shared<std::thread>(([this]() {
         NES_DEBUG("NesWorker: starting location updating");
         startReconnectPlanning(locBufferSize, updateInterval, saveRate);
         NES_DEBUG("NesWorker: stop updating location");
         }));
+         */
+        locationUpdateThread = std::make_shared<std::thread>(&NodeLocationWrapper::startReconnectPlanning, this);
     }
 }
 
@@ -92,6 +99,14 @@ Index::Experimental::LocationPtr NodeLocationWrapper::getLocation() {
     return fixedLocationCoordinates;
 }
 
+Mobility::Experimental::ReconnectSchedulePtr NodeLocationWrapper::getReconnectSchedule() {
+    S2LatLng startLatLng(pathBeginning);
+    auto start = std::make_shared<Index::Experimental::Location>(startLatLng.lat().degrees(), startLatLng.lng().degrees());
+    S2LatLng endLatLng(pathEnd);
+    auto end = std::make_shared<Index::Experimental::Location>(endLatLng.lat().degrees(), endLatLng.lng().degrees());
+    return std::make_shared<Mobility::Experimental::ReconnectSchedule>(start, end, reconnectVector);
+}
+
 std::vector<std::pair<uint64_t, Index::Experimental::Location>>
 NodeLocationWrapper::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
@@ -106,18 +121,21 @@ std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrap
     return {};
 }
 
-[[noreturn]] void NodeLocationWrapper::startReconnectPlanning(size_t locBufferSize, uint64_t updateInterval, size_t bufferSaveRate) {
+[[noreturn]] void NodeLocationWrapper::startReconnectPlanning() {
     for (size_t i = 0; i < locBufferSize; ++i) {
-        locationBuffer.push_back(locationProvider->getCurrentLocation());
-        NES_DEBUG("added: " << locationBuffer.back().first->toString() << locationBuffer.back().second);
-        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval * bufferSaveRate));
+        //todo: probably this if condition can be removed later
+        if (locationProvider != nullptr) {
+            locationBuffer.push_back(locationProvider->getCurrentLocation());
+            NES_DEBUG("added: " << locationBuffer.back().first->toString() << locationBuffer.back().second);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval * saveRate));
     }
-    NES_DEBUG("buffer save rate: " << bufferSaveRate);
+    NES_DEBUG("buffer save rate: " << saveRate);
     NES_TRACE("Location buffer is filled");
-    size_t stepsSinceLastSave = bufferSaveRate;
+    size_t stepsSinceLastSave = saveRate;
     while (true) {
         auto newLoc = locationProvider->getCurrentLocation();
-        if (stepsSinceLastSave == bufferSaveRate) {
+        if (stepsSinceLastSave == saveRate) {
             auto oldLoc = locationBuffer.front();
             locationBuffer.pop_front();
             locationBuffer.push_back(newLoc);
@@ -153,12 +171,14 @@ void NodeLocationWrapper::updatePredictedPath(Spatial::Index::Experimental::Loca
         S2Point oldPoint(S2LatLng::FromDegrees(oldLoc->getLatitude(), oldLoc->getLongitude()));
         //todo: if we only extend by a little, we can use a chord angle. what is the performance difference?
         S1Angle angle(oldPoint, currentPoint);
-        auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, angle * kPathExtensionFactor);
+        //todo: fix everywhere if we are using distances to check if we use angle or km
+        auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, S2Earth::KmToAngle(kPathDistanceDelta));
         std::vector<S2Point> locVec;
         locVec.push_back(oldPoint);
         locVec.push_back(extrapolatedPoint);
         trajectoryLine = std::make_shared<S2Polyline>(locVec);
         pathBeginning = oldPoint;
+        pathEnd = extrapolatedPoint;
     }
 }
 
@@ -177,7 +197,23 @@ std::pair<S2Point, S1Angle> NodeLocationWrapper::findPathCoverage(S2PolylinePtr 
     return {coverageEnd, coverageAngleOnLine};
 }
 
+void NodeLocationWrapper::scheduleReconnects(const NES::Spatial::Index::Experimental::LocationPtr& currentLoc) {
+    S2Point currentPoint(S2LatLng::FromDegrees(currentLoc->getLatitude(), currentLoc->getLongitude()));
+    S2Point nextReconnectPoint = S2::GetPointOnLine(currentPoint, pathEnd, S1Angle::Degrees(kDefaultCoverage));
+
+    double distToReconnect = 0;
+    while (distToReconnect < kPathLength) {
+        //todo make a cap around next reconnect and divide it in half
+        //todo: take all nodes within this cap
+
+    }
+}
+
 NES::Spatial::Mobility::Experimental::LocationProviderPtr NodeLocationWrapper::getLocationProvider() {
     return locationProvider;
+}
+
+void NodeLocationWrapper::setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinatorClient) {
+    coordinatorRpcClient = coordinatorClient;
 }
 }// namespace NES::Spatial::Mobility::Experimental
