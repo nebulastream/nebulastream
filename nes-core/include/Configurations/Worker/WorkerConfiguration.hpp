@@ -227,7 +227,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the worker health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption workerHealthCheckWaitTime = {WORKER_HEALTH_CHECK_WAIT_TIME, 60, "Number of seconds to wait between health checks"};
+    UIntOption workerHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME, 60, "Number of seconds to wait between health checks"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
