@@ -146,6 +146,11 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
     }
     this->threadLocalSliceStores.clear();
 }
-KeyedThreadLocalPreAggregationOperatorHandler::~KeyedThreadLocalPreAggregationOperatorHandler() { NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler"); }
+KeyedThreadLocalPreAggregationOperatorHandler::~KeyedThreadLocalPreAggregationOperatorHandler() {
+    NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler");
+}
+Windowing::LogicalWindowDefinitionPtr KeyedThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
+    return windowDefinition;
+}
 
 }// namespace NES::Windowing::Experimental

@@ -84,7 +84,7 @@ class KeyedThreadLocalPreAggregationOperatorHandler
      * @brief Returns the window definition.
      * @return Windowing::LogicalWindowDefinitionPtr
      */
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() { return windowDefinition; };
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
     ~KeyedThreadLocalPreAggregationOperatorHandler();
 
