@@ -49,9 +49,12 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
      */
     inline SliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
-    inline std::weak_ptr<SliceStaging> getSliceStagingPtr() { return sliceStaging; }
+    /**
+     * @brief Gets a weak pointer to the slice staging
+     * @return std::weak_ptr<SliceStaging>
+     */
+    inline std::weak_ptr<SliceStaging> getSliceStagingPtr();
 
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() { return windowDefinition; };
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
@@ -65,6 +68,12 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
      * @return KeyedSlicePtr
      */
     KeyedSlicePtr createKeyedSlice(SliceMergeTask* sliceMergeTask);
+
+    /**
+     * @brief Gets the window definition
+     * @return Windowing::LogicalWindowDefinitionPtr
+     */
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
     ~KeyedSliceMergingOperatorHandler();
 

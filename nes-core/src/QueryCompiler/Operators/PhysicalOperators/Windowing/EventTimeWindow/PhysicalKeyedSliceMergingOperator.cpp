@@ -24,9 +24,9 @@ PhysicalKeyedSliceMergingOperator::PhysicalKeyedSliceMergingOperator(
     OperatorId id,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
-    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr keyedEventTimeWindowHandler)
+    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
-      keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
+      operatorHandler(operatorHandler) {}
 std::string PhysicalKeyedSliceMergingOperator::toString() const { return "PhysicalKeyedSliceMergingOperator"; }
 
 std::shared_ptr<PhysicalKeyedSliceMergingOperator> PhysicalKeyedSliceMergingOperator::create(
@@ -39,8 +39,12 @@ std::shared_ptr<PhysicalKeyedSliceMergingOperator> PhysicalKeyedSliceMergingOper
                                                                keyedEventTimeWindowHandler);
 }
 
+Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr PhysicalKeyedSliceMergingOperator::getWindowHandler() {
+    return operatorHandler;
+}
+
 OperatorNodePtr PhysicalKeyedSliceMergingOperator::copy() {
-    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
+    return create(inputSchema, outputSchema, operatorHandler);
 }
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

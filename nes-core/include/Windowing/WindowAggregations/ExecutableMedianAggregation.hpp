@@ -20,29 +20,6 @@
 namespace NES::Windowing {
 
 using MedianResultType = double;//use double as the result can be the average of two middle values
-
-template<class T>
-class PartialMedian {
-  public:
-    MedianResultType getMedian() {
-        std::sort(values.begin(), values.end());
-        if (values.size() % 2 == 0) {
-            // return the average of two middle value
-            auto idx1 = (values.size() / 2) - 1;
-            auto idx2 = values.size() / 2;
-            return (values[idx1] + values[idx2]) / 2.0;
-        } else {
-            // return the middle value
-            auto idx = (values.size() / 2);
-            return values[idx];
-        }
-    }
-    void push_back(const T& value) { values.emplace_back(value); }
-
-  private:
-    std::vector<T> values;
-};
-
 /**
  * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.
  * @tparam InputType input type of the aggregation

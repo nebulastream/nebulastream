@@ -29,20 +29,20 @@ class PhysicalKeyedSliceMergingOperator : public PhysicalUnaryOperator, public A
     PhysicalKeyedSliceMergingOperator(OperatorId id,
                                       SchemaPtr inputSchema,
                                       SchemaPtr outputSchema,
-                                      Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr keyedEventTimeWindowHandler);
+                                      Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler);
 
     static std::shared_ptr<PhysicalKeyedSliceMergingOperator>
     create(SchemaPtr inputSchema,
            SchemaPtr outputSchema,
-           Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr keyedEventTimeWindowHandler);
+           Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler);
 
-    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr getWindowHandler() { return keyedEventTimeWindowHandler; }
+    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr getWindowHandler();
 
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr keyedEventTimeWindowHandler;
+    Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr operatorHandler;
 };
 
 }// namespace PhysicalOperators
