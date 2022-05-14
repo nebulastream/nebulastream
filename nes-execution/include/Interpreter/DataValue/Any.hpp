@@ -42,7 +42,7 @@ template<class X, class Y>
     requires(std::is_base_of<Y, X>::value == false && std::is_same<Any, X>::value == false)
 inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& ) {
     // copy value value
-    return false;
+    return nullptr;
     //return std::unique_ptr<X>{static_cast<X*>(value.get())};
 }
 

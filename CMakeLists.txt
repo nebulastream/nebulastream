@@ -67,7 +67,12 @@ execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
+
 project(NES CXX)
+set(CMAKE_CXX_COMPILER_FORCED TRUE)
+set(CMAKE_CXX_COMPILER_WORKS TRUE)
+set(CMAKE_C_COMPILER_FORCED TRUE)
+set(CMAKE_C_COMPILER_WORKS TRUE)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
@@ -680,3 +685,9 @@ if (CMAKE_CROSSCOMPILING)
 endif ()
 project_enable_release()
 project_enable_version()
+
+# Build external project
+#execute_process(
+#        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/nes-compiler -t nes-clang-plugin
+#)
+

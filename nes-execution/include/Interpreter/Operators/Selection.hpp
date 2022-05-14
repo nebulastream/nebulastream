@@ -8,7 +8,7 @@ namespace NES::Interpreter {
 class Selection : public ExecuteOperator {
   public:
     Selection(ExpressionPtr expression) : expression(expression){};
-    void open(TraceContext& tracer) override;
+    void open() override;
     void execute(Record& record) override;
 
   private:

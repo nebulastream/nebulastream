@@ -19,7 +19,7 @@ get_source(nes-execution NES_COMPILER_SOURCE_FILES)
 
 # Add Library
 add_library(nes-execution SHARED ${NES_COMPILER_SOURCE_FILES})
-target_link_libraries(nes-execution PUBLIC nes-common)
+target_link_libraries(nes-execution PUBLIC nes-common nes nes-runtime-proxy)
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -31,9 +31,3 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-execution
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

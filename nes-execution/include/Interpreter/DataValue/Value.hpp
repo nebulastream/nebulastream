@@ -29,14 +29,15 @@ template<class ValueType = Any>
 class Value : BaseValue {
   public:
     Value(std::unique_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(createNextRef()){};
+    Value(std::unique_ptr<ValueType> wrappedValue, ValueRef& ref) : value(std::move(wrappedValue)), ref(ref){};
 
     Value(int value) : Value(std::make_unique<Integer>(value)) {
         Trace(CONST, *this, *this);
         //traceContext->trace(CONST, *this, *this);
     };
 
-    Value(int64_t value) : Value(std::make_unique<Integer>(value)) { Trace(CONST, *this, *this); };
-    Value(bool value) : Value(std::make_unique<Boolean>(value)) { Trace(CONST, *this, *this); };
+    explicit Value(int64_t value) : Value(std::make_unique<Integer>(value)) { Trace(CONST, *this, *this); };
+    explicit Value(bool value) : Value(std::make_unique<Boolean>(value)) { Trace(CONST, *this, *this); };
 
     // copy constructor
     template<class OType>
@@ -72,7 +73,7 @@ class Value : BaseValue {
 
     template<class T>
     auto as() {
-        return Value<T>(cast<T>(value));
+        return Value<T>(cast<T>(value), ref);
     }
 
     // destructor
@@ -83,8 +84,8 @@ class Value : BaseValue {
     ValueRef ref;
 };
 
-template<class ValueType>
-void Trace(OpCode op, const Value<ValueType>& input, Value<ValueType>& result) {
+template<class ValueType, class ResultType>
+void Trace(OpCode op, const Value<ValueType>& input, Value<ResultType>& result) {
     auto ctx = getThreadLocalTraceContext();
     if (ctx != nullptr) {
         if (op == OpCode::CONST) {
@@ -92,8 +93,8 @@ void Trace(OpCode op, const Value<ValueType>& input, Value<ValueType>& result) {
             auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
             ctx->trace(operation);
         } else if (op == CMP) {
-            if constexpr (std::is_same_v<ValueType, Any>)
-                ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
+            //if constexpr (std::is_same_v<ValueType, Any>)
+            ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
         } else {
             auto operation = Operation(op, result.ref, {input.ref});
             ctx->trace(operation);
@@ -118,10 +119,36 @@ concept IsNotValueType = !
 std::is_base_of<BaseValue, T>::value;
 
 template<class T>
+    requires(std::is_same_v<T, const bool> == true)
+inline auto toValue(T&& t) -> Value<> {
+    auto value =  Value<Boolean>(std::make_unique<Boolean>(t));
+    Trace(CONST, value, value);
+    return value;
+}
+
+template<class T>
+    requires(std::is_same_v<T, const uint64_t> == true)
+inline auto toValue(T&& t) -> Value<> {
+    auto value =  Value<Integer>(std::make_unique<Integer>(t));
+    Trace(CONST, value, value);
+    return value;
+}
+
+template<class T>
+    requires(std::is_same_v<T, const int32_t> == true)
+inline auto toValue(T&& t) -> Value<> {
+    auto value =  Value<Integer>(std::make_unique<Integer>(t));
+    Trace(CONST, value, value);
+    return value;
+}
+
+/*
+template<class T>
     requires(std::is_fundamental<T>::value == true)
 inline auto toValue(T&& t) -> Value<> {
     return Value{std::forward<T>(t)};
 }
+ */
 
 template<IsNotValueType LHS, IsValueType RHS>
 auto inline operator+(const LHS& left, const RHS& right) {
@@ -360,6 +387,14 @@ auto inline operator||(const LHS& left, const RHS& right) {
     Trace(OpCode::OR, left, right, resValue);
     return resValue;
 };
+
+template<class Type>
+auto load(Value<MemRef>& ref) {
+    auto value = ref.value->load<Type>();
+    auto resValue = Value<Type>(std::move(value));
+    Trace(OpCode::LOAD, ref, resValue);
+    return resValue;
+}
 
 }// namespace NES::Interpreter
 

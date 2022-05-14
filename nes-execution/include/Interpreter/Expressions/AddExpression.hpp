@@ -11,11 +11,7 @@ class AddExpression : public Expression {
     ExpressionPtr rightSubExpression;
 
   public:
-    Value<> execute(Record& record) override {
-        Value leftValue = leftSubExpression->execute(record);
-        Value rightValue = rightSubExpression->execute(record);
-        return leftValue + rightValue;
-    }
+    Value<> execute(Record& record) override;
 };
 
 }// namespace NES

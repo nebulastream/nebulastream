@@ -13,4 +13,7 @@
 
 add_source_files(nes-execution
         Expression.cpp
+        EqualsExpression.cpp
+        ReadFieldExpression.cpp
+        AddExpression.cpp
         )

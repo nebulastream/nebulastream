@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Interpreter/DataValue/Address.hpp>
 #include <Interpreter/DataValue/Integer.hpp>
+#include <Interpreter/DataValue/MemRef.hpp>
 #include <Interpreter/DataValue/Value.hpp>
 #include <Interpreter/Expressions/EqualsExpression.hpp>
 #include <Interpreter/Expressions/ReadFieldExpression.hpp>
@@ -21,8 +23,12 @@
 #include <Interpreter/Operations/AddOp.hpp>
 #include <Interpreter/Operators/Scan.hpp>
 #include <Interpreter/Operators/Selection.hpp>
+#include <Interpreter/RecordBuffer.hpp>
 #include <Interpreter/SSACreationPhase.hpp>
 #include <Interpreter/Trace/TraceContext.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <execinfo.h>
 #include <gtest/gtest.h>
@@ -464,6 +470,7 @@ void sumLoop() {
 }
 
 TEST_F(InterpreterTest, sumLoopTest) {
+
     auto execution = traceFunction([]() {
         sumLoop();
     });
@@ -633,9 +640,10 @@ TEST_F(InterpreterTest, loadStoreValueTest) {
     ASSERT_EQ(block3.operations[2].op, LESS_THAN);
     ASSERT_EQ(block3.operations[3].op, CMP);
 }
+*/
 
 TEST_F(InterpreterTest, selectionQueryTest) {
-    TraceContext tracer;
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
     Scan scan = Scan();
     auto readFieldF1 = std::make_shared<ReadFieldExpression>(0);
     auto readFieldF2 = std::make_shared<ReadFieldExpression>(0);
@@ -643,11 +651,25 @@ TEST_F(InterpreterTest, selectionQueryTest) {
     auto selection = std::make_shared<Selection>(equalsExpression);
     scan.setChild(std::move(selection));
 
-    auto execution = traceFunction([&scan](TraceContext* traceContext) {
-        scan.open(*traceContext);
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::UINT64);
+    schema->addField("f2", BasicType::UINT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+
+    auto buffer = bm->getBufferBlocking();
+    buffer.setNumberOfTuples(10);
+
+
+    auto address = std::addressof(buffer);
+    auto value = (int64_t) address;
+    auto memRef = Value<MemRef>(std::make_unique<MemRef>(value));
+
+    RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
+
+    auto execution = traceFunction([&scan, &recordBuffer]() {
+        scan.execute(recordBuffer);
     });
     execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << execution << std::endl;
+    std::cout << *execution << std::endl;
 }
-*/
 }// namespace NES::Interpreter

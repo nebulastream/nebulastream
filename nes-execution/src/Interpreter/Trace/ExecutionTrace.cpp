@@ -14,6 +14,7 @@ void ExecutionTrace::addOperation(Operation& operation) {
     if (operation.op == RETURN) {
         returnRef = operation.operationRef;
     }
+
 }
 
 uint32_t ExecutionTrace::createBlock() {

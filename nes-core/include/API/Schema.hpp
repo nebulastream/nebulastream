@@ -17,6 +17,7 @@
 
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
+#include <compare>
 #include <string>
 #include <vector>
 

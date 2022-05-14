@@ -13,9 +13,11 @@
 */
 #include <Interpreter/DataValue/Address.hpp>
 #include <Interpreter/DataValue/Integer.hpp>
+#include <Interpreter/DataValue/MemRef.hpp>
 #include <Interpreter/DataValue/Value.hpp>
 #include <Interpreter/FunctionCall.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
+#include <ProxyFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <cxxabi.h>
@@ -71,6 +73,7 @@ uint64_t addFunc(uint64_t x, bool) {
     return x;
 }
 
+
 TEST_F(ValueTest, functionCallTest) {
     auto p1 = createProxyFunction<>(addFunc, "");
     auto p2 = createProxyFunction<>(addFunc, "");
@@ -80,16 +83,16 @@ TEST_F(ValueTest, functionCallTest) {
     auto address = std::addressof(addFunc);
 
     auto intValue = std::make_unique<Integer>(42);
-    Value<Integer> val2 = 42;
+    Value<MemRef> memRef =  std::make_unique<MemRef>(42);
     Value<Boolean> val3 = false;
 
-   /* auto result = FunctionCall<>(addFunc, val2, val3);
+    auto result = FunctionCall<>(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBufferSize, memRef);
     auto* pb = &foo;
     std::cout << typeid(*pb).name() << '\n';
     std::cout << typeid(&addFunc).name() << '\n';
     std::cout << typeid(addFunc).name() << '\n';
     std::cout << typeid(int (*)(int, int)).name() << '\n';
-    */
+
 }
 
 TEST_F(ValueTest, addValueTest) {

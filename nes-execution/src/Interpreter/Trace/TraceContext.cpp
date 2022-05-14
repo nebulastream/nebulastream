@@ -137,6 +137,14 @@ void TraceContext::trace(OpCode op, const Value& leftInput, const Value& rightIn
 }
  */
 
+Operation& TraceContext::getLastOperation() {
+    auto& currentBlock = executionTrace->getCurrentBlock();
+    //if (currentBlock.operations.size() <= currentOperationCounter) {
+    //    return NULL;
+    // }
+    return currentBlock.operations[currentOperationCounter];
+}
+
 bool TraceContext::isExpectedOperation(OpCode opCode) {
     auto& currentBlock = executionTrace->getCurrentBlock();
     if (currentBlock.operations.size() <= currentOperationCounter) {
@@ -190,15 +198,23 @@ void TraceContext::traceCMP(const ValueRef& valueRef, bool result) {
 void TraceContext::trace(Operation& operation) {
     // check if we repeat a known trace or if this is a new operation.
     // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
+   // std::cout << "Add operation: " << operation << std::endl;
+   // std::cout << *executionTrace.get() << std::endl;
     if (!isExpectedOperation(operation.op)) {
         auto tag = createTag();
         if (auto ref = isKnownOperation(tag)) {
-            std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
-            std::cout << *executionTrace.get() << std::endl;
-            auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
-            auto mergeOperation = mergeBlock.operations.front();
-            currentOperationCounter = 1;
-            return;
+            if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
+               // std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
+               // std::cout << "----------- LAST OPERATION << " << operation << " ref (" << ref->blockId << "-" << ref->operationId
+               //           << ")-----------" << std::endl;
+                //std::cout << *executionTrace.get() << std::endl;
+                auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
+                auto mergeOperation = mergeBlock.operations.front();
+                currentOperationCounter = 1;
+                return;
+            } else {
+                std::cout << "----------- Ignore CONTROL_FLOW_MERGE as it is in the same block------------" << std::endl;
+            }
         }
         executionTrace->addOperation(operation);
         executionTrace->localTagMap.emplace(std::make_pair(tag, operation.operationRef));

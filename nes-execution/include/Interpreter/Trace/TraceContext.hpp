@@ -33,6 +33,7 @@ class TraceContext {
   private:
     Tag createTag();
     uint64_t createStartAddress();
+    Operation& getLastOperation();
     std::shared_ptr<ExecutionTrace> executionTrace;
     uint64_t currentOperationCounter = 0;
     uint64_t startAddress;

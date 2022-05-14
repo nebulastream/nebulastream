@@ -12,8 +12,8 @@ class ReadFieldExpression : public Expression {
     uint64_t fieldIndex;
 
   public:
-    ReadFieldExpression(uint64_t fieldIndex) : fieldIndex(fieldIndex) {}
-    Value<> execute(Record& record) override { return record.read(fieldIndex); }
+    ReadFieldExpression(uint64_t fieldIndex);
+    Value<> execute(Record& record) override;
 };
 
 }// namespace NES::Interpreter

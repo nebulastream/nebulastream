@@ -10,6 +10,7 @@ class TypeCastable {
         FloatValue,
         TraceValue,
         DoubleValue,
+        MemRef,
     };
     TypeCastable(Kind k) : kind(k) {}
     Kind getKind() const { return kind; }

@@ -4,12 +4,12 @@
 #include <Interpreter/Record.hpp>
 namespace NES::Interpreter {
 
-void Scan::open(TraceContext& tracer)  {
-    Value numberOfRecords = Value<>(20);
-    auto v1 = Value<>(0);
-    auto fields = std::vector<Value<>>({v1});
-    for (auto i = Value<Integer>(0); i < numberOfRecords.as<Integer>(); i = i + 1) {
-        Record record = Record(fields);
+void Scan::open() {}
+
+void Scan::execute(RecordBuffer& recordBuffer) {
+    auto numberOfRecords = recordBuffer.getNumRecords();
+    for (Value<Integer> i = 0; i < numberOfRecords; i = i + 1) {
+        auto record = recordBuffer.read(i);
         child->execute(record);
     }
 }

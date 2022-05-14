@@ -44,6 +44,7 @@ enum ValueType {
 struct Parameter {
     std::string name;
     std::string type;
+    std::string typeQualifiedName;
 };
 struct ProxyFunctionInfo {
     std::string name;
@@ -55,6 +56,9 @@ struct ProxyFunctionInfo {
     std::vector<Parameter> parameters;
 };
 static std::vector<ProxyFunctionInfo> proxyFunctions;
+static std::string genPATH = "./ProxyFunctions/";
+static std::string genPATH_HEADER = "./ProxyFunctions/ProxyFunctions.hpp";
+static std::string genPATH_SRC = "./ProxyFunctions/ProxyFunctions.cpp";
 
 struct ExampleAttrInfo : public ParsedAttrInfo {
 
@@ -80,7 +84,7 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
 
     AttrHandling handleDeclAttribute(Sema& S, Decl* D, const ParsedAttr& Attr) const override {
 
-        if (std::filesystem::exists("ProxyFunctions.hpp")) {
+        if (std::filesystem::exists(genPATH_HEADER)) {
             return AttributeApplied;
         };
         // Check if the decl is at file scope.
@@ -105,10 +109,10 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
             auto cxxMethod = isa<CXXMethodDecl>(functionDeclaration);
             if (cxxMethod) {
                 auto nsC = static_cast<CXXMethodDecl*>(functionDeclaration);
-                if (nsC->getAccess() != clang::AS_public && nsC->getAccess() != clang::AS_none) {
+                if (nsC->getAccess() == clang::AS_private || nsC->getAccess() == clang::AS_protected) {
                     unsigned ID =
                         S.getDiagnostics().getCustomDiagID(DiagnosticsEngine::Error,
-                                                           "'proxfunctions' are not supported on private members, but is ");
+                                                           "'proxyfunctions' are not supported on private members, but is ");
                     S.Diag(Attr.getLoc(), ID);
                     return AttributeNotApplied;
                 }
@@ -117,6 +121,7 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
                 // std::cout << "cxxMethod getThisObjectType " << nsC->getThisObjectType().getAsString() << std::endl;
                 Parameter parameter;
                 parameter.type = nsC->getParent()->getNameAsString();
+                parameter.typeQualifiedName = nsC->getParent()->getQualifiedNameAsString();
                 parameter.name = "thisPtr";
                 functionInfo.parameters.emplace_back(parameter);
             }
@@ -128,6 +133,7 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
             }
             auto sourceLoc = Attr.getLoc().printToString(S.getSourceManager());
             sourceLoc = sourceLoc.substr(0, sourceLoc.find(':'));
+            sourceLoc = sourceLoc.substr(58, sourceLoc.size());
             functionInfo.sourceFile = sourceLoc;
             functionInfo.name = functionDeclaration->getName().str();
             auto mangleContext = clang::ItaniumMangleContext::create(S.getASTContext(), S.getDiagnostics());
@@ -151,7 +157,8 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
     }
 
     ~ExampleAttrInfo() {
-        std::cout << "DISPOSE PLUGIN" << std::endl;
+
+        // std::cout << "DISPOSE PLUGIN" << std::endl;
         std::ostringstream headerFile;
         std::ostringstream cppFile;
         if (proxyFunctions.empty())
@@ -160,7 +167,7 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
         headerFile << "namespace NES::Runtime::ProxyFunctions {\n";
         cppFile << "namespace NES::Runtime::ProxyFunctions {\n";
         for (auto& pf : proxyFunctions) {
-            cppFile << "#include \"" << pf.sourceFile << "\"\n";
+            cppFile << "#include <" << pf.sourceFile << ">\n";
             std::string namespace_idenfier = pf.namespaceName;
             std::replace(namespace_idenfier.begin(), namespace_idenfier.end(), ':', '_');// replace all 'x' to 'y'
             std::ostringstream poxyFunctionDeclaration;
@@ -185,9 +192,11 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
                 if (pf.type == Member && &parm == &pf.parameters.front()) {
                     poxyFunctionDeclaration << "void *"
                                             << " " << parm.name;
-                    poxyFunctionDeclaration << ",";
+                    if (&parm != &pf.parameters.back()) {
+                        poxyFunctionDeclaration << ",";
+                    }
                     body << "auto* " << parm.name << "_ "
-                         << "=(" << parm.type << "*)" << parm.name << ";";
+                         << "=(" << parm.typeQualifiedName << "*)" << parm.name << ";";
                     continue;
                 } else {
                     poxyFunctionDeclaration << parm.type << " " << parm.name;
@@ -211,14 +220,14 @@ struct ExampleAttrInfo : public ParsedAttrInfo {
         }
         headerFile << "}";
         cppFile << "}";
-        std::cout << headerFile.str() << std::endl;
-        std::ofstream proxyFunctionsHeader;
-        proxyFunctionsHeader.open("ProxyFunctions.hpp");
-        proxyFunctionsHeader << headerFile.str();
-        proxyFunctionsHeader.close();
+        //std::cout << headerFile.str() << std::endl;
+        //std::ofstream proxyFunctionsHeader;
+        //proxyFunctionsHeader.open(genPATH_HEADER);
+        //proxyFunctionsHeader << headerFile.str();
+        // proxyFunctionsHeader.close();
 
         std::ofstream proxyFunctionsCPP;
-        proxyFunctionsCPP.open("ProxyFunctions.cpp");
+        proxyFunctionsCPP.open(genPATH_HEADER);
         proxyFunctionsCPP << cppFile.str();
         proxyFunctionsCPP.close();
     }

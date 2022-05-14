@@ -7,9 +7,10 @@ using ExecuteOperatorPtr = std::shared_ptr<ExecuteOperator>;
 class TraceContext;
 class Operator {
   public:
-    virtual void open(TraceContext& tracer) = 0;
-    void setChild(ExecuteOperatorPtr child) { this->child = std::move(child); }
-    virtual ~Operator() {};
+    virtual void open() = 0;
+    void setChild(ExecuteOperatorPtr child);
+    virtual ~Operator();
+
   protected:
     ExecuteOperatorPtr child;
 };

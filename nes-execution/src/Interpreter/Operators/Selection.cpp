@@ -5,9 +5,9 @@ namespace NES::Interpreter {
 
 void Selection::execute(Record& record) {
     if (expression->execute(record)) {
-        child->execute(record);
+       /// child->execute(record);
     }
 }
 
-void Selection::open(TraceContext&) {}
+void Selection::open() {}
 }// namespace NES::Interpreter

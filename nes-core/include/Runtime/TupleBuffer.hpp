@@ -183,9 +183,11 @@ class TupleBuffer {
         size = 0;
     }
 
+    [[nes::proxyfunction]]  inline uint8_t* getBuffer() noexcept { return getBuffer<uint8_t>(); }
+
     /// @brief return the TupleBuffer's content as pointer to `T`.
     template<typename T = uint8_t>
-    [[nes::proxyfunction]] inline T* getBuffer() noexcept {
+    inline T* getBuffer() noexcept {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
@@ -209,10 +211,14 @@ class TupleBuffer {
     [[nes::proxyfunction]] [[nodiscard]] inline uint64_t getBufferSize() const noexcept { return size; }
 
     /// @brief get the number of tuples stored.
-    [[nes::proxyfunction]] [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
+    [[nes::proxyfunction]] [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept {
+        return controlBlock->getNumberOfTuples();
+    }
 
     /// @brief set the number of tuples stored.
-    [[nes::proxyfunction]] inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
+    [[nes::proxyfunction]] inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept {
+        controlBlock->setNumberOfTuples(numberOfTuples);
+    }
 
     /// @brief get the watermark as a timestamp
     [[nes::proxyfunction]] [[nodiscard]] constexpr uint64_t getWatermark() const noexcept { return controlBlock->getWatermark(); }
@@ -221,16 +227,24 @@ class TupleBuffer {
     [[nes::proxyfunction]] inline void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
 
     /// @brief get the creation timestamp as a timestamp
-    [[nes::proxyfunction]] [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
+    [[nes::proxyfunction]] [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept {
+        return controlBlock->getCreationTimestamp();
+    }
 
     /// @brief set the sequence number
-    [[nes::proxyfunction]] inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
+    [[nes::proxyfunction]] inline void setSequenceNumber(uint64_t sequenceNumber) noexcept {
+        controlBlock->setSequenceNumber(sequenceNumber);
+    }
 
     /// @brief get the sequence number
-    [[nes::proxyfunction]] [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept { return controlBlock->getSequenceNumber(); };
+    [[nes::proxyfunction]] [[nodiscard]] constexpr uint64_t getSequenceNumber() const noexcept {
+        return controlBlock->getSequenceNumber();
+    };
 
     /// @brief set the creation timestamp with a timestamp
-    [[nes::proxyfunction]] inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
+    [[nes::proxyfunction]] inline void setCreationTimestamp(uint64_t value) noexcept {
+        controlBlock->setCreationTimestamp(value);
+    }
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }
@@ -247,7 +261,7 @@ class TupleBuffer {
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      */
-    [[nodiscard]] detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
+    [[nes::proxyfunction]] [[nodiscard]] detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;

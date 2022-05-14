@@ -11,12 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#add_subdirectory(Expressions)
+add_subdirectory(Expressions)
 add_subdirectory(Trace)
-#add_subdirectory(Operators)
+add_subdirectory(Operators)
 add_subdirectory(DataTypes)
 
 
 add_source_files(nes-execution
-        #Record.cpp
+        Record.cpp
+        RecordBuffer.cpp
         )

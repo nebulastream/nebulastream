@@ -12,13 +12,13 @@
 
 namespace NES::Interpreter {
 
-Record::Record(std::vector<Value> records): records(std::move(records)) {}
+Record::Record(std::vector<Value<Any>> records): records(std::move(records)) {}
 
-Value& Record::read(uint64_t fieldIndex) {
+Value<Any>& Record::read(uint64_t fieldIndex) {
     return records[fieldIndex];
 }
 
-void Record::write(uint64_t fieldIndex, Value& value) {
+void Record::write(uint64_t fieldIndex, Value<Any>& value) {
     records[fieldIndex] = value;
 }
 

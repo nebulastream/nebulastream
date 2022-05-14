@@ -1,6 +1,8 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
 #include <Interpreter/DataValue/Integer.hpp>
+#include <Interpreter/DataValue/MemRef.hpp>
+#include <Interpreter/DataValue/Value.hpp>
 #include <execinfo.h>
 #include <memory>
 #include <stdio.h>
@@ -65,6 +67,15 @@ auto transform(Arg argument) {
         return argument.value->getValue();
     } else if constexpr (std::is_same<Arg, Value<Boolean>>::value) {
         return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<MemRef>>::value) {
+        return (void*) argument.value->getValue();
+    }
+}
+
+template<typename Arg>
+auto transformReturn(Arg argument) {
+    if constexpr (std::is_same<Arg, uint64_t>::value) {
+        return Value<Integer>(std::make_unique<Integer>(argument));
     }
 }
 
@@ -113,16 +124,23 @@ void myFunction(CallbackFunction&& function) {
 }
 
 template<typename R, typename... Args2, typename... Args>
-std::conditional_t<std::is_void_v<R>, void, R> FunctionCall(R (*fnptr)(Args2...), Args... arguments) {
-    if constexpr (std::is_void_v<R>) {
-        fnptr(std::forward<Args...>());
-        //((c->setArg(index++, arguments)), ...);
-    } else {
-        std::cout << "call function " << &fnptr << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
+auto FunctionCall(R (*fnptr)(Args2...), Args... arguments) {
+    //if constexpr (std::is_void_v<R>) {
+    //    fnptr(std::forward<Args...>());
+    //((c->setArg(index++, arguments)), ...);
+    //} else {
+    std::cout << "call function " << &fnptr << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
 
-        printf("%p\n", fnptr);
-        return fnptr(transform(std::forward<Args>(arguments))...);
+    auto res = fnptr(transform(std::forward<Args>(arguments))...);
+    auto resultValue = transformReturn(res);
+    auto ctx = getThreadLocalTraceContext();
+    if (ctx != nullptr) {
+        auto operation = Operation(CALL, resultValue.ref,{});
+        ctx->trace(operation);
     }
+    return resultValue;
+
+    //}
 }
 void foo(void) { printf("foo\n"); }
 }// namespace NES::Interpreter

@@ -11,13 +11,8 @@ class EqualsExpression : public Expression {
     ExpressionPtr rightSubExpression;
 
   public:
-    EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-        : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
-    Value<> execute(Record& record) override {
-        Value leftValue = leftSubExpression->execute(record);
-        Value rightValue = rightSubExpression->execute(record);
-        return leftValue == rightValue;
-    }
+    EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
+    Value<> execute(Record& record) override;
 };
 
 }// namespace NES::Interpreter

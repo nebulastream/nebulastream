@@ -14,12 +14,6 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-
-add_library(nes-clang-plugin SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/ClangPlugin/ExampleAttrInfo.cpp)
-find_package(Clang CONFIG REQUIRED)
-target_include_directories(nes-clang-plugin PRIVATE ${CLANG_INCLUDE_DIRS})
-set_property(GLOBAL PROPERTY NES_CLANG_PLUGIN "${CMAKE_CURRENT_BINARY_DIR}/libnes-clang-plugin.so")
-
 get_source(nes-compiler NES_COMPILER_SOURCE_FILES)
 
 # Add Library
@@ -53,3 +47,23 @@ install(TARGETS nes-compiler
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)
+
+# pre-pare clang plugin
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nes-clang-plugin)
+execute_process(
+        COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}/nes-compiler/clang-plugin
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/nes-clang-plugin
+        COMMAND_ECHO STDOUT
+)
+
+# Build external project
+execute_process(
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/nes-clang-plugin
+        COMMAND_ECHO STDOUT
+)
+
+
+set_property(GLOBAL PROPERTY NES_CLANG_PLUGIN "${CMAKE_BINARY_DIR}/nes-clang-plugin/libnes-clang-plugin.so")
+
+
+
