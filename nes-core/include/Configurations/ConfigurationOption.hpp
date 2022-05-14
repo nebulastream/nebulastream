@@ -292,6 +292,7 @@ const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 //Configuration names for source types
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
+const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
 const std::string SOURCE_GATHERING_INTERVAL_CONFIG = "sourceGatheringInterval";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
@@ -337,10 +338,9 @@ const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
 
-//Runtine configuration
+//Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
-const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
 const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 
 // Logical source configurations
