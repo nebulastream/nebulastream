@@ -256,6 +256,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &locationSourceConfig,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
+                &numberOfBuffersPerEpoch,
                 &queryManagerMode,
                 &configPath,
                 &enableStatisticOuput};
