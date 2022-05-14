@@ -87,8 +87,9 @@ class TestHarness {
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1)
         : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
-          memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), physicalSourceCount(0), topologyId(1),
-          validationDone(false), topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
+          memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
+          physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false),
+          testHarnessResourcePath(testHarnessResourcePath) {}
 
     /**
          * @brief push a single element/tuple to specific source
@@ -509,13 +510,10 @@ class TestHarness {
                                                        ->getSinkOperators()[0]
                                                        ->getOutputSchema()
                                                        ->toString());
-        if (outputSchemaSizeInBytes != sizeof(T)) {
-            NES_FATAL_ERROR("The size of output struct does not match output schema."
-                            " Output struct:"
-                            << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
-            ADD_FAILURE();
-            return std::vector<T>();
-        }
+        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
+                   "The size of output struct does not match output schema."
+                   " Output struct:"
+                       << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
 
         if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(queryId,
                                                                    queryCatalogService,
@@ -527,9 +525,9 @@ class TestHarness {
                                     << std::to_string(numberOfContentToExpect));
         }
 
-        //if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
-        //    NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
-        //}
+        if (!TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService)) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkStoppedOrTimeout returns false for query with id= " << queryId);
+        }
 
         std::ifstream ifs(filePath.c_str());
         if (!ifs.good()) {

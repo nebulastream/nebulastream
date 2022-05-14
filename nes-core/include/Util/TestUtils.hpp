@@ -203,16 +203,14 @@ static constexpr auto sleepDuration = std::chrono::milliseconds(250);
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::Deployed:
-            case QueryStatus::Running: {
-                NES_DEBUG("Query started");
-                return true;
-            }
             case QueryStatus::MarkedForHardStop:
             case QueryStatus::MarkedForSoftStop:
             case QueryStatus::SoftStopCompleted:
             case QueryStatus::SoftStopTriggered:
             case QueryStatus::Stopped:
+            case QueryStatus::Running: {
+                return true;
+            }
             case QueryStatus::Failed: {
                 NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
                 return false;
