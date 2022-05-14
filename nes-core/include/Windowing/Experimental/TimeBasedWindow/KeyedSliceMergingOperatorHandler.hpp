@@ -53,7 +53,7 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
      * @brief Gets a weak pointer to the slice staging
      * @return std::weak_ptr<SliceStaging>
      */
-    inline std::weak_ptr<SliceStaging> getSliceStagingPtr();
+    std::weak_ptr<SliceStaging> getSliceStagingPtr();
 
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
