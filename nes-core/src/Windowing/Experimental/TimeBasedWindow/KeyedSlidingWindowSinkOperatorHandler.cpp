@@ -29,7 +29,7 @@
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/WindowProcessingTasks.hpp>
+#include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>

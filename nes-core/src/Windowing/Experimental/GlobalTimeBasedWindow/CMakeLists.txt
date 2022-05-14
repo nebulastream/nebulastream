@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(TimeBasedWindow)
-add_subdirectory(GlobalTimeBasedWindow)
-
 add_source_files(nes-core
-        LockFreeMultiOriginWatermarkProcessor.cpp
-        ThreadLocalSliceStore.cpp
-        GlobalSliceStore.cpp
-        SlidingWindowAssigner.cpp
+        GlobalSlice.cpp
+        GlobalSliceStaging.cpp
+        GlobalThreadLocalSliceStore.cpp
+        GlobalWindowGlobalSliceStoreAppendOperatorHandler.cpp
+        GlobalThreadLocalPreAggregationOperatorHandler.cpp
+        GlobalSliceMergingOperatorHandler.cpp
         )

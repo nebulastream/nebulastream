@@ -24,37 +24,36 @@
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
+#include <Windowing/Experimental/GlobalTimeBasedWindow/GlobalSlice.hpp>
+#include <Windowing/Experimental/GlobalTimeBasedWindow/GlobalSliceMergingOperatorHandler.hpp>
+#include <Windowing/Experimental/GlobalTimeBasedWindow/GlobalThreadLocalSliceStore.hpp>
+#include <Windowing/Experimental/GlobalTimeBasedWindow/GlobalSliceStaging.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 namespace NES::Windowing::Experimental {
 
-KeyedSliceMergingOperatorHandler::KeyedSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
+GlobalSliceMergingOperatorHandler::GlobalSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
     : sliceStaging(std::make_shared<SliceStaging>()), windowDefinition(windowDefinition) {
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
 
-void KeyedSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,
+void GlobalSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,
                                              NES::Experimental::HashMapFactoryPtr hashmapFactory) {
     this->factory = hashmapFactory;
 }
 
-void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+void GlobalSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                              Runtime::StateManagerPtr,
                                              uint32_t) {
-    NES_DEBUG("start KeyedSliceMergingOperatorHandler");
+    NES_DEBUG("start GlobalSliceMergingOperatorHandler");
     activeCounter++;
 }
 
-void KeyedSliceMergingOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop KeyedSliceMergingOperatorHandler");
+void GlobalSliceMergingOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+    NES_DEBUG("stop GlobalSliceMergingOperatorHandler");
     activeCounter--;
     if (activeCounter == 0) {
         NES_DEBUG("shutdown KeyedEventTimeWindowHandler");
@@ -63,11 +62,11 @@ void KeyedSliceMergingOperatorHandler::stop(Runtime::Execution::PipelineExecutio
     }
 }
 
-KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {
+KeyedSlicePtr GlobalSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {
     return std::make_unique<KeyedSlice>(factory, sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }
-KeyedSliceMergingOperatorHandler::~KeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
-Windowing::LogicalWindowDefinitionPtr KeyedSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
-std::weak_ptr<SliceStaging> KeyedSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
+GlobalSliceMergingOperatorHandler::~GlobalSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
+Windowing::LogicalWindowDefinitionPtr GlobalSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
+std::weak_ptr<SliceStaging> GlobalSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Windowing::Experimental

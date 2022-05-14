@@ -1,15 +1,15 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-        https://www.apache.org/licenses/LICENSE-2.0
+    https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #include <Runtime/BufferManager.hpp>
@@ -23,13 +23,13 @@
 #include <State/StateVariable.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
+#include <Windowing/Experimental/GlobalTimeBasedWindow/GlobalSliceStaging.hpp>
+#include <Windowing/Experimental/GlobalTimeBasedWindow/GlobalThreadLocalPreAggregationOperatorHandler.hpp>
+#include <Windowing/Experimental/GlobalTimeBasedWindow/GlobalThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -37,37 +37,37 @@
 
 namespace NES::Windowing::Experimental {
 
-KeyedThreadLocalPreAggregationOperatorHandler::KeyedThreadLocalPreAggregationOperatorHandler(
+GlobalThreadLocalPreAggregationOperatorHandler::GlobalThreadLocalPreAggregationOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     const std::vector<OriginId> origins,
-    std::weak_ptr<SliceStaging> weakSliceStagingPtr)
+    std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr)
     : weakSliceStaging(weakSliceStagingPtr), windowDefinition(windowDefinition) {
     watermarkProcessor = NES::Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
 
-KeyedThreadLocalSliceStore& KeyedThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
+GlobalThreadLocalSliceStore& GlobalThreadLocalPreAggregationOperatorHandler::getThreadLocalSliceStore(uint64_t workerId) {
     if (threadLocalSliceStores.size() <= workerId) {
         throw WindowProcessingException("ThreadLocalSliceStore for " + std::to_string(workerId) + " is not initialized.");
     }
-    return threadLocalSliceStores[workerId];
+    return *threadLocalSliceStores[workerId];
 }
 
-void KeyedThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
-                                                          NES::Experimental::HashMapFactoryPtr hashmapFactory) {
+void GlobalThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
+                                                           uint64_t entrySize) {
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        threadLocalSliceStores.emplace_back(hashmapFactory, windowSize, windowSlide);
+        auto threadLocal = std::make_unique<GlobalThreadLocalSliceStore>(entrySize, windowSize, windowSlide);
+        threadLocalSliceStores.push_back(std::move(threadLocal));
     }
-    this->factory = hashmapFactory;
 }
 
-void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
-                                                                            Runtime::Execution::PipelineExecutionContext& ctx,
-                                                                            uint64_t workerId,
-                                                                            OriginId originId,
-                                                                            uint64_t sequenceNumber,
-                                                                            uint64_t watermarkTs) {
+void GlobalThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
+                                                                             Runtime::Execution::PipelineExecutionContext& ctx,
+                                                                             uint64_t workerId,
+                                                                             OriginId originId,
+                                                                             uint64_t sequenceNumber,
+                                                                             uint64_t watermarkTs) {
 
     auto& threadLocalSliceStore = getThreadLocalSliceStore(workerId);
 
@@ -87,8 +87,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runt
             }
             auto& sliceState = slice->getState();
             // each worker adds its local state to the staging area
-            auto [addedPartitionsToSlice, numberOfBuffers] =
-                sliceStaging->addToSlice(slice->getEnd(), sliceState.extractEntries());
+            auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
                     NES_DEBUG("Deploy merge task for slice " << slice->getEnd() << " with " << numberOfBuffers << " buffers.");
@@ -108,26 +107,25 @@ void KeyedThreadLocalPreAggregationOperatorHandler::triggerThreadLocalState(Runt
     }
 }
 
-void KeyedThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
-                                                          Runtime::StateManagerPtr,
-                                                          uint32_t) {
-    NES_DEBUG("start ThreadLocalPreAggregationWindowHandler");
+void GlobalThreadLocalPreAggregationOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
+                                                           Runtime::StateManagerPtr,
+                                                           uint32_t) {
+    NES_DEBUG("start GlobalThreadLocalPreAggregationOperatorHandler");
 }
 
-void KeyedThreadLocalPreAggregationOperatorHandler::stop(
+void GlobalThreadLocalPreAggregationOperatorHandler::stop(
     Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
-    NES_DEBUG("shutdown ThreadLocalPreAggregationWindowHandler");
+    NES_DEBUG("shutdown GlobalThreadLocalPreAggregationOperatorHandler");
     auto sliceStaging = this->weakSliceStaging.lock();
     if (!sliceStaging) {
         return;
     }
 
     for (auto& threadLocalSliceStore : threadLocalSliceStores) {
-        for (auto& slice : threadLocalSliceStore.getSlices()) {
+        for (auto& slice : threadLocalSliceStore->getSlices()) {
             auto& sliceState = slice->getState();
             // each worker adds its local state to the staging area
-            auto [addedPartitionsToSlice, numberOfBuffers] =
-                sliceStaging->addToSlice(slice->getEnd(), sliceState.extractEntries());
+            auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging->addToSlice(slice->getEnd(), std::move(sliceState));
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
                     NES_DEBUG("Deploy merge task for slice (" << slice->getStart() << "-" << slice->getEnd() << ") with "
@@ -146,10 +144,10 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
     }
     this->threadLocalSliceStores.clear();
 }
-KeyedThreadLocalPreAggregationOperatorHandler::~KeyedThreadLocalPreAggregationOperatorHandler() {
+GlobalThreadLocalPreAggregationOperatorHandler::~GlobalThreadLocalPreAggregationOperatorHandler() {
     NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler");
 }
-Windowing::LogicalWindowDefinitionPtr KeyedThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
+Windowing::LogicalWindowDefinitionPtr GlobalThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
     return windowDefinition;
 }
 
