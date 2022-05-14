@@ -100,7 +100,7 @@ KeyedGlobalSliceStoreAppendOperatorHandler::~KeyedGlobalSliceStoreAppendOperator
     NES_DEBUG("Destruct KeyedEventTimeWindowHandler");
 }
 Windowing::LogicalWindowDefinitionPtr KeyedGlobalSliceStoreAppendOperatorHandler::getWindowDefinition() {
-    return { return windowDefinition; };
+    return windowDefinition;
 }
 
 }// namespace NES::Windowing::Experimental
