@@ -198,6 +198,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                                            bufferManagers,
                                                                            0,
                                                                            1,
+                                                                           100,
                                                                            hwManager,
                                                                            stateManager,
                                                                            100);
