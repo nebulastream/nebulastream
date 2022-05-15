@@ -128,7 +128,7 @@ class GlobalSliceStore {
      */
     std::vector<SliceTypeSharedPtr> getSlicesForWindow(uint64_t startTs, uint64_t endTs) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-        auto slicesInWindow = std::vector<KeyedSliceSharedPtr>();
+        auto slicesInWindow = std::vector<SliceTypeSharedPtr>();
         auto sliceIter = slices.begin();
         while (sliceIter != slices.end()) {
             if ((*sliceIter)->getEnd() > endTs) {
