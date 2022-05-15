@@ -89,6 +89,13 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
+    * @brief Lowers a thread local window operator
+    * @param queryPlan current plan
+    * @param operatorNode current operator
+    */
+    void lowerThreadLocalWindowOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+
+    /**
     * @brief Lowers a watermark assignment operator
     * @param queryPlan current plan
     * @param operatorNode current operator

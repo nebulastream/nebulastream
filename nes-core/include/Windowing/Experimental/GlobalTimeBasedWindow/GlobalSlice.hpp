@@ -14,6 +14,7 @@ class State {
     ~State();
     const uint64_t stateSize;
     alignas(STATE_ALIGNMENT) void* ptr;
+    bool isInitialized = false;
 };
 
 /**

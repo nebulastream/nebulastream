@@ -147,8 +147,46 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    void lowerPhysicalKeyedGlobalSliceStoreAppendOperator(const QueryPlanPtr& queryPlan,
-                                                          const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerKeyedGlobalSliceStoreAppendOperator(const QueryPlanPtr& queryPlan,
+                                                  const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+
+    /**
+     * @brief Lowers a thread local slice pre aggregation for keyed windows.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    void lowerGlobalThreadLocalSlicePreAggregation(const QueryPlanPtr& queryPlan,
+                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+
+    /**
+     * @brief Lowers the thread local slice merge operator for keyed windows.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    void lowerGlobalSliceMergingOperator(const QueryPlanPtr& queryPlan,
+                                         const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+
+    /**
+     * @brief Lowers the window sink for keyed tumbling windows.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    void lowerGlobalTumblingWindowSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+
+    /**
+     * @brief Lowers the window sink for keyed sliding windows.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    void lowerGlobalSlidingWindowSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+
+    /**
+     * @brief Lowers the global slice store append operator for keyed windows.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    void lowerGlobalWindowSliceStoreAppendOperator(const QueryPlanPtr& queryPlan,
+                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a join build operator.

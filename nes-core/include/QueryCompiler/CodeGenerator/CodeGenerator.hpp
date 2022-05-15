@@ -177,6 +177,46 @@ class CodeGenerator {
         uint64_t windowOperatorIndex,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) = 0;
 
+    virtual uint64_t generateGlobalSliceMergingOperatorSetup(
+        Windowing::LogicalWindowDefinitionPtr window,
+        SchemaPtr,
+        PipelineContextPtr context,
+        uint64_t id,
+        uint64_t windowOperatorIndex,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) = 0;
+
+    /**
+     * @brief Code generation for the setup of the thread local pre aggregation of global windows.
+     * @param window The window definition, which contains all properties of the window.
+     * @param windowOutputSchema the result schema
+     * @param context The context of the current pipeline.
+     * @param id operator id
+     * @param windowOperatorIndex index of the window handler
+     * @param aggregationFunctions the aggregation functions
+     * @return
+     */
+    virtual uint64_t generateGlobalThreadLocalPreAggregationSetup(
+        Windowing::LogicalWindowDefinitionPtr window,
+        SchemaPtr windowOutputSchema,
+        PipelineContextPtr context,
+        uint64_t id,
+        uint64_t windowOperatorIndex,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregationFunctions) = 0;
+
+    /**
+     * @brief Code generation for the thread local pre aggregation for keyed windows.
+     * @param window The window definition, which contains all properties of the window.
+     * @param generatableWindowAggregation the aggregation functions
+     * @param context The context of the current pipeline.
+     * @param windowOperatorIndex index of the window handler
+     * @return
+     */
+    virtual bool generateCodeForGlobalThreadLocalPreAggregationOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) = 0;
+
     /**
      * @brief Code generation for the thread local pre aggregation for keyed windows.
      * @param window The window definition, which contains all properties of the window.
@@ -205,6 +245,12 @@ class CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
+    virtual bool generateCodeForGlobalSliceMergingOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) = 0;
+
     /**
      * @brief Function to append a slice to the slice store.
      * @param context The context of the current pipeline.
@@ -223,6 +269,12 @@ class CodeGenerator {
      * @return
      */
     virtual bool generateCodeForKeyedTumblingWindowSink(
+        Windowing::LogicalWindowDefinitionPtr window,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        PipelineContextPtr context,
+        SchemaPtr schema) = 0;
+
+    virtual bool generateCodeForGlobalTumblingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,

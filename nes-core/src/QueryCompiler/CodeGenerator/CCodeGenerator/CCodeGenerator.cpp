@@ -1023,6 +1023,129 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     return true;
 }
 
+/**
+ * Code Generation for the window operator
+ * @param window windowdefinition
+ * @param context pipeline context
+ * @param out
+ * @return
+ */
+bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
+    Windowing::LogicalWindowDefinitionPtr window,
+    std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
+    PipelineContextPtr context,
+    uint64_t windowOperatorIndex) {
+    auto tf = getTypeFactory();
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
+
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall =
+        call("getOperatorHandler<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    auto windowOperatorStatement =
+        VarDeclStatement(windowOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    //auto workerId = (workerContext.getId()) % pipelineExecutionContext.getNumberOfWorkerThreads();
+    auto workerId = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "workerId");
+    auto callGetWorkerId = call("getId");
+    auto getNumberOfWorkerThreads = call("getNumberOfWorkerThreads");
+    auto workerIdStatement = VarDeclStatement(workerId).assign(
+        VarRef(context->code->varDeclarationWorkerContext).accessRef(callGetWorkerId)
+        % VarRef(context->code->varDeclarationExecutionContext).accessRef(getNumberOfWorkerThreads));
+    context->code->variableInitStmts.push_back(workerIdStatement.copy());
+
+    //auto& threadLocalSliceStore = windowOperatorHandler->threadLocalSliceStore[workerId];
+    auto threadLocalState = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "threadLocalState");
+    auto getThreadLocalState = call("getThreadLocalSliceStore");
+    getThreadLocalState->addParameter(VarRef(workerId));
+    auto threadLocalStateStatement =
+        VarDeclStatement(threadLocalState).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getThreadLocalState));
+    context->code->variableInitStmts.push_back(threadLocalStateStatement.copy());
+
+    // Read key value from record
+
+    auto recordHandler = context->getRecordHandler();
+    auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
+
+    auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
+    auto getCreationTimestamp = call("getCreationTimestamp");
+    auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
+    if (timeCharacteristicField != "creationTS") {
+        tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
+    }
+
+    //  auto& slice = threadLocalSliceStore.findSliceByTs(current_ts);
+    auto slice = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "slice");
+    auto findSliceByTs = call("findSliceByTs");
+    findSliceByTs->addParameter(tsVariableDeclaration);
+    auto sliceAssignmentStatement = VarDeclStatement(slice).assign(VarRef(threadLocalState).accessRef(findSliceByTs));
+    context->code->currentCodeInsertionPoint->addStatement(sliceAssignmentStatement.copy());
+    auto getState = call("getState");
+
+    // auto* entry = findOneEntry<K, useTags>(key, hash);
+    auto state = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "state");
+    auto isInitialized = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "isInitialized");
+    auto partialValuePtr = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "ptr");
+
+    auto stateAssignmentStatement = VarDeclStatement(state).assign(VarRef(slice).accessPtr(getState));
+    context->code->currentCodeInsertionPoint->addStatement(stateAssignmentStatement.copy());
+
+    auto ifElseStatement = IFELSE(!VarRef(state).accessPtr(VarRef(isInitialized)));
+    {
+        auto stateNotInitializedCase = ifElseStatement.getTrueCaseCompoundStatement();
+        auto partialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "partialValue");
+        auto partialValueAssignment = VarDeclStatement(partialValue)
+                                          .assign(TypeCast(VarRef(state).accessPtr(VarRef(partialValuePtr)),
+                                                           tf->createPointer(partialAggregationEntry.getType())));
+        stateNotInitializedCase->addStatement(partialValueAssignment.copy());
+
+        // set default partial values
+        for (auto& agg : aggregation) {
+            agg->compileLift(stateNotInitializedCase,
+                             VarRef(partialValue).accessPtr(VarRef(agg->getPartialAggregate())),
+                             recordHandler);
+        }
+        auto initializeValue = VarRef(state).accessPtr(
+            VarRef(isInitialized).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BOOLEAN, "true")))));
+        stateNotInitializedCase->addStatement(initializeValue.copy());
+    }
+    {
+        auto stateInitializedCase = ifElseStatement.getFalseCaseCompoundStatement();
+
+        // entry is valid case
+        auto partialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "partialValue");
+        auto partialValueAssignment = VarDeclStatement(partialValue)
+                                          .assign(TypeCast(VarRef(state).accessPtr(VarRef(partialValuePtr)),
+                                                           tf->createPointer(partialAggregationEntry.getType())));
+        stateInitializedCase->addStatement(partialValueAssignment.copy());
+        for (auto& agg : aggregation) {
+            agg->compileLiftCombine(stateInitializedCase,
+                                    VarRef(partialValue).accessPtr(VarRef(agg->getPartialAggregate())),
+                                    recordHandler);
+        }
+    }
+    context->code->currentCodeInsertionPoint->addStatement(ifElseStatement.createCopy());
+    auto triggerThreadLocalStateCall = call("triggerThreadLocalState");
+    triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationWorkerContext));
+    triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationExecutionContext));
+    triggerThreadLocalStateCall->addParameter(VarRef(workerId));
+    triggerThreadLocalStateCall->addParameter(getOriginId(context->code->varDeclarationInputBuffer));
+    triggerThreadLocalStateCall->addParameter(getSequenceNumber(context->code->varDeclarationInputBuffer));
+    triggerThreadLocalStateCall->addParameter(getWatermark(context->code->varDeclarationInputBuffer));
+
+    auto triggerThreadLocalStateCallCallStatement =
+        VarRef(windowOperatorHandlerDeclaration).accessPtr(triggerThreadLocalStateCall);
+
+    context->code->cleanupStmts.push_back(triggerThreadLocalStateCallCallStatement.createCopy());
+
+    return true;
+}
+
 bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
     Windowing::LogicalWindowDefinitionPtr window,
     std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
@@ -1109,6 +1232,96 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
                                                                    window,
                                                                    aggregation,
                                                                    context));
+
+    return 0;
+}
+
+bool CCodeGenerator::generateCodeForGlobalSliceMergingOperator(
+    Windowing::LogicalWindowDefinitionPtr window,
+    std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
+    PipelineContextPtr context,
+    uint64_t windowOperatorIndex) {
+    auto tf = getTypeFactory();
+    auto code = context->code;
+    auto td = context->code;
+
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
+    context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
+
+    auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    auto workerContextType = tf->createAnonymusDataType("Runtime::WorkerContext");
+    VariableDeclaration varDeclarationInputBuffer =
+        VariableDeclaration::create(tf->createReference(tupleBufferType), "inputTupleBuffer");
+
+    VariableDeclaration varDeclarationPipelineExecutionContext =
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+
+    VariableDeclaration varDeclarationWorkerContext =
+        VariableDeclaration::create(tf->createReference(workerContextType), "workerContext");
+
+    code->varDeclarationInputBuffer = varDeclarationInputBuffer;
+    code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+    code->varDeclarationWorkerContext = varDeclarationWorkerContext;
+
+    /* ExecutionResult ret = Ok; */
+    // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
+    code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"),
+                                    "ret",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
+            .copy());
+    code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
+
+    code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
+
+    auto mergeTask = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "mergeTask");
+    code->variableInitStmts.push_back(
+        VarDeclStatement(mergeTask)
+            .assign(TypeCast(getBuffer(code->varDeclarationInputBuffer),
+                             tf->createAnonymusDataType("NES::Windowing::Experimental::SliceMergeTask*")))
+            .copy());
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::GlobalSliceMergingOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+                                       .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    // auto partitions = windowOperatorHandler->getSliceStaging().erasePartition(mergeTask->sliceEnd);
+    auto sliceIndex = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "endSlice");
+    auto sliceStart = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "startSlice");
+    auto getSliceStagingCall = call("getSliceStaging");
+    auto erasePartitionCall = call("erasePartition");
+    erasePartitionCall->addParameter(VarRef(mergeTask).accessPtr(VarRef(sliceIndex)));
+    auto partitions = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "partitions");
+    auto partitionStatement =
+        VarDeclStatement(partitions)
+            .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getSliceStagingCall).accessRef(erasePartitionCall));
+    context->code->variableInitStmts.push_back(partitionStatement.copy());
+
+    auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
+    auto createSliceCall = call("createGlobalSlice");
+    createSliceCall->addParameter(VarRef(mergeTask));
+    context->code->variableInitStmts.push_back(
+        VarDeclStatement(globalSlice).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(createSliceCall)).copy());
+
+    auto globalSliceState = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "globalSliceState");
+    context->code->variableInitStmts.push_back(
+        VarDeclStatement(globalSliceState).assign(VarRef(globalSlice).accessPtr(call("getState"))).copy());
+    auto partialStates = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "partialStates");
+    context->code->variableInitStmts.push_back(
+        VarDeclStatement(partialStates).assign(VarRef(partitions).accessPtr(VarRef(partialStates))).copy());
+
+    // for (auto& partition : (*partitions.get())) {
+    context->code->variableInitStmts.push_back(globalSliceMergeLoop(partialStates,
+                                                                    code->tupleBufferGetNumberOfTupleCall,
+                                                                    partialAggregationEntry,
+                                                                    window,
+                                                                    aggregation,
+                                                                    context));
 
     return 0;
 }
@@ -1298,6 +1511,72 @@ std::shared_ptr<ForLoopStatement> CCodeGenerator::keyedSliceMergeLoop(
             scanBody->addStatement(ifElseStatement.createCopy());
         }
         loopBody->addStatement(scanLoop);
+    }
+    return partitionLoop;
+}
+
+std::shared_ptr<ForLoopStatement> CCodeGenerator::globalSliceMergeLoop(
+    VariableDeclaration& buffers,
+    FunctionCallStatement&,
+    StructDeclaration& partialAggregationEntry,
+    Windowing::LogicalWindowDefinitionPtr window,
+    std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
+    PipelineContextPtr) {
+    auto tf = getTypeFactory();
+    auto getSizeCall = call("size");
+    auto entryPtr = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "ptr");
+    auto globalSliceState = VariableDeclaration ::create(tf->createAnonymusDataType("auto&"), "globalSliceState");
+    auto globalPartialEntry = VariableDeclaration ::create(tf->createAnonymusDataType("auto*"), "globalPartialEntry");
+
+    auto partitionIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()),
+                                    "partitionIndex",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
+            .copy());
+    auto partitionLoop = std::make_shared<FOR>(partitionIndex,
+                                               (VarRef(partitionIndex) < (VarRef(buffers).accessRef(getSizeCall))).copy(),
+                                               (++VarRef(partitionIndex)).copy());
+    {
+        auto loopBody = partitionLoop->getCompoundStatement();
+        auto partialValueAssignment = VarDeclStatement(globalPartialEntry)
+                                          .assign(TypeCast(VarRef(globalSliceState).accessPtr(VarRef(entryPtr)),
+                                                           tf->createPointer(partialAggregationEntry.getType())));
+        loopBody->addStatement(partialValueAssignment.createCopy());
+
+        auto state = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "state");
+        // buffer = partitions[partitionIndex];
+        loopBody->addStatement(VarDeclStatement(state).assign(VarRef(buffers)[VarRef(partitionIndex)]).copy());
+
+        auto localEntry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "localEntry");
+
+        auto localPartialValueAssignment = VarDeclStatement(localEntry)
+                                               .assign(TypeCast(VarRef(state).accessPtr(VarRef(entryPtr)),
+                                                                tf->createPointer(partialAggregationEntry.getType())));
+        loopBody->addStatement(localPartialValueAssignment.copy());
+        auto isInitialized = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "isInitialized");
+
+        auto ifElseStatement = IFELSE(!VarRef(globalSliceState).accessPtr(VarRef(isInitialized)));
+        {
+            auto stateNotInitializedCase = ifElseStatement.getTrueCaseCompoundStatement();
+            auto memcopyCall = call("std::memcpy");
+            memcopyCall->addParameter(VarRef(globalPartialEntry));
+            memcopyCall->addParameter(VarRef(localEntry));
+            uint64_t entryContentSize = getAggregationValueSize(window);
+            memcopyCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue(entryContentSize))));
+            stateNotInitializedCase->addStatement(memcopyCall);
+            auto initializeValue = VarRef(state).accessPtr(
+                VarRef(isInitialized).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(BOOLEAN, "true")))));
+            stateNotInitializedCase->addStatement(initializeValue.copy());
+        }
+
+        {
+            auto entryExistsCase = ifElseStatement.getFalseCaseCompoundStatement();
+            for (auto& agg : aggregation) {
+                agg->compileCombine(entryExistsCase, VarRef(globalPartialEntry), VarRef(localEntry));
+            }
+        }
+
+        loopBody->addStatement(ifElseStatement.createCopy());
     }
     return partitionLoop;
 }
@@ -1608,6 +1887,49 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(
         loopBody->addStatement(scanLoop);
     }
     context->code->cleanupStmts.push_back(partitionLoop);
+
+    return false;
+}
+
+bool CCodeGenerator::generateCodeForGlobalTumblingWindowSink(
+    Windowing::LogicalWindowDefinitionPtr window,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
+    PipelineContextPtr context,
+    SchemaPtr resultSchema) {
+    auto tf = getTypeFactory();
+    auto code = context->code;
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, {aggregation});
+    auto globalSliceState = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "globalSliceState");
+    auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
+    auto entryPtr = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "ptr");
+
+    auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
+    auto blockScope = BlockScopeStatement::create();
+    auto entryAssignmentStatement = VarDeclStatement(entry)
+                                           .assign(TypeCast(VarRef(globalSliceState).accessPtr(VarRef(entryPtr)),
+                                                            tf->createPointer(partialAggregationEntry.getType())));
+
+
+    blockScope->addStatement(entryAssignmentStatement.copy());
+    // todo currently we assume here that the output schema always has the following fields in the same order.
+    // assign start field
+    context->getRecordHandler()->registerAttribute(resultSchema->fields[0]->getName(),
+                                                   VarRef(globalSlice).accessPtr(call("getStart")).copy());
+    // assign end field
+    context->getRecordHandler()->registerAttribute(resultSchema->fields[1]->getName(),
+                                                   VarRef(globalSlice).accessPtr(call("getEnd")).copy());
+
+    // assign value field
+    for (auto& agg : aggregation) {
+        auto value = agg->getPartialAggregate();
+        auto finalAggValue = agg->lower(VarRef(entry).accessPtr(VarRef(value)).copy());
+        auto asFieldFieldName = agg->getAggregationDescriptor()->as()->as<FieldAccessExpressionNode>()->getFieldName();
+        context->getRecordHandler()->registerAttribute(asFieldFieldName, finalAggValue);
+    }
+
+    code->currentCodeInsertionPoint = blockScope;
+
+    context->code->cleanupStmts.push_back(blockScope);
 
     return false;
 }
@@ -3169,6 +3491,59 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
 }
 
 uint64_t
+CCodeGenerator::generateGlobalSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                        SchemaPtr,
+                                                        PipelineContextPtr context,
+                                                        uint64_t id,
+                                                        uint64_t windowOperatorIndex,
+                                                        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) {
+
+    auto tf = getTypeFactory();
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    VariableDeclaration varDeclarationPipelineExecutionContext =
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+
+    context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+
+    // create a new setup scope for this operator
+    auto setupScope = context->createSetupScope();
+
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::GlobalSliceMergingOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement =
+        VarDeclStatement(windowOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    setupScope->addStatement(windowOperatorStatement.copy());
+
+    // getWindowDefinition
+    auto windowDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowDefinition");
+    auto getWindowDefinitionCall = call("getWindowDefinition");
+    auto windowDefinitionStatement = VarDeclStatement(windowDefDeclaration)
+                                         .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    // create struct for entry
+    // consists of keys and aggregation values
+    //StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, windowAggregation);
+    //context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
+
+    uint64_t aggValueSize = getAggregationValueSize(window);
+    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(aggValueSize)));
+
+    auto setupWindowHandler = call("setup");
+    setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
+    setupWindowHandler->addParameter(constantValueSize);
+    setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
+    return 0;
+}
+
+uint64_t
 CCodeGenerator::generateKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
                                                        SchemaPtr,
                                                        PipelineContextPtr context,
@@ -3367,6 +3742,55 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     auto setupWindowHandler = call("setup");
     setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
     setupWindowHandler->addParameter(VarRef(hashMapFactory));
+    setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
+    return 0;
+}
+
+uint64_t CCodeGenerator::generateGlobalThreadLocalPreAggregationSetup(
+    Windowing::LogicalWindowDefinitionPtr window,
+    SchemaPtr,
+    PipelineContextPtr context,
+    uint64_t id,
+    uint64_t windowOperatorIndex,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+
+    auto tf = getTypeFactory();
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
+
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+
+    // create a new setup scope for this operator
+    auto setupScope = context->createSetupScope();
+
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall =
+        call("getOperatorHandler<Windowing::Experimental::GlobalThreadLocalPreAggregationOperatorHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement =
+        VarDeclStatement(windowOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    setupScope->addStatement(windowOperatorStatement.copy());
+
+    // getWindowDefinition
+    auto windowDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowDefinition");
+    auto getWindowDefinitionCall = call("getWindowDefinition");
+    auto windowDefinitionStatement = VarDeclStatement(windowDefDeclaration)
+                                         .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    // create struct for entry
+    // consists of keys and aggregation values
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, windowAggregation);
+    context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
+
+    uint64_t aggValueSize = getAggregationValueSize(window);
+    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(aggValueSize)));
+
+    auto setupWindowHandler = call("setup");
+    setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
+    setupWindowHandler->addParameter(constantValueSize);
     setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
     return 0;
 }
