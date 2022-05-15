@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDTHREADLOCALSLICESTORE_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDTHREADLOCALSLICESTORE_HPP_
 #include <Exceptions/WindowProcessingException.hpp>
+#include <Windowing/Experimental/SlidingWindowAssigner.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
 #include <list>
 #include <map>
@@ -41,28 +42,6 @@ class KeyedThreadLocalSliceStore {
     explicit KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory,
                                         uint64_t windowSize,
                                         uint64_t windowSlide);
-
-    /**
-     * @brief Calculates the start of a slice for a specific timestamp ts.
-     * @param ts the timestamp for which we calculate the start of the particular slice.
-     * @return uint64_t slice start
-     */
-    inline uint64_t getSliceStartTs(uint64_t ts) {
-        auto prevSlideStart = ts - ((ts) % windowSlide);
-        auto prevWindowStart = ts < windowSize ? prevSlideStart : ts - ((ts - windowSize) % windowSlide);
-        return std::max(prevSlideStart, prevWindowStart);
-    }
-
-    /**
-     * @brief Calculates the end of a slice for a specific timestamp ts.
-     * @param ts the timestamp for which we calculate the end of the particular slice.
-     * @return uint64_t slice end
-     */
-    inline uint64_t getSliceEndTs(uint64_t ts) {
-        auto nextSlideEnd = ts + windowSlide - ((ts) % windowSlide);
-        auto nextWindowEnd = ts < windowSize ?  nextSlideEnd : ts + windowSlide - ((ts - windowSize) % windowSlide);
-        return std::min(nextSlideEnd, nextWindowEnd);
-    }
 
     /**
      * @brief Retrieves a slice which covers a specific ts.
@@ -93,14 +72,14 @@ class KeyedThreadLocalSliceStore {
         // Handle the individual cases and append a slice if required.
         if (sliceIter == slices.rend()) {
             // We are in case 1. thus we have to prepend a new slice
-            auto newSliceStart = getSliceStartTs(ts);
-            auto newSliceEnd = getSliceEndTs(ts);
+            auto newSliceStart = windowAssigner.getSliceStartTs(ts);
+            auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
             auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
             return slices.emplace_front(std::move(newSlice));
         } else if ((*sliceIter)->getStart() < ts && (*sliceIter)->getEnd() <= ts) {
             // We are in case 2. thus we have to append a new slice after the current iterator
-            auto newSliceStart = getSliceStartTs(ts);
-            auto newSliceEnd = getSliceEndTs(ts);
+            auto newSliceStart = windowAssigner.getSliceStartTs(ts);
+            auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
             auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
             auto slice = slices.emplace(sliceIter.base(), std::move(newSlice));
             return *slice;
@@ -160,9 +139,8 @@ class KeyedThreadLocalSliceStore {
     KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs);
 
   private:
+    const SlidingWindowAssigner windowAssigner;
     NES::Experimental::HashMapFactoryPtr hashMapFactory;
-    const uint64_t windowSize;
-    const uint64_t windowSlide;
     std::list<KeyedSlicePtr> slices;
     uint64_t lastWatermarkTs = 0;
 };
