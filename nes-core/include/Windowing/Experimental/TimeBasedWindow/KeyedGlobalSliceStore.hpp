@@ -16,6 +16,7 @@
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDGLOBALSLICESTORE_HPP_
 #include <Exceptions/WindowProcessingException.hpp>
 #include <Windowing/Experimental/SeqenceLog.hpp>
+#include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/Watermark/WatermarkProcessor.hpp>
 #include <cinttypes>
 #include <list>
@@ -25,12 +26,6 @@
 namespace NES::Windowing::Experimental {
 class KeyedSlice;
 using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
-
-struct Window {
-    uint64_t startTs;
-    uint64_t endTs;
-    uint64_t sequenceNumber;
-};
 
 /**
  * @brief The global slice store that contains the final slice.

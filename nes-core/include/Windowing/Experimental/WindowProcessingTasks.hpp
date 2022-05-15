@@ -36,6 +36,12 @@ class WindowTriggerTask {
     uint64_t windowEnd;
 };
 
+struct Window {
+    uint64_t startTs;
+    uint64_t endTs;
+    uint64_t sequenceNumber;
+};
+
 }// namespace NES::Windowing::Experimental
 
 #endif//NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_WINDOWPROCESSINGTASKS_HPP_

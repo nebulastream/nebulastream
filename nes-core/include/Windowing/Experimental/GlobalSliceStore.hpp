@@ -17,6 +17,7 @@
 #include <Exceptions/WindowProcessingException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Windowing/Experimental/SeqenceLog.hpp>
+#include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/Watermark/WatermarkProcessor.hpp>
 #include <cinttypes>
 #include <list>
@@ -25,11 +26,7 @@
 #include <mutex>
 namespace NES::Windowing::Experimental {
 
-struct Window {
-    uint64_t startTs;
-    uint64_t endTs;
-    uint64_t sequenceNumber;
-};
+
 
 class KeyedSlice;
 using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;

@@ -83,6 +83,19 @@ struct Output {
     }
 };
 
+struct GlobalOutput {
+    uint64_t start;
+    uint64_t end;
+    uint64_t value;
+    bool operator==(GlobalOutput const& rhs) const {
+        return (start == rhs.start && end == rhs.end && value == rhs.value);
+    }
+    friend ostream& operator<<(ostream& os, const GlobalOutput& output) {
+        os << "start: " << output.start << " end: " << output.end << " value: " << output.value;
+        return os;
+    }
+};
+
 struct OutputMultiAgg {
     uint64_t start;
     uint64_t end;
@@ -590,6 +603,34 @@ TEST_P(SingleNodeThreadLocalTumblingWindowTests, testTumblingWindowMultiAggregat
                                                   {16000, 17000, 1, 1000, 1000, 1, 1, 1}};
     std::vector<OutputMultiAgg> actualOutput =
         testHarness.getOutput<OutputMultiAgg>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+    ASSERT_EQ(actualOutput.size(), expectedOutput.size());
+    ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+TEST_P(SingleNodeThreadLocalTumblingWindowTests, testSingleGlobalTumblingWindowSingleBuffer) {
+    auto testSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
+    std::string query =
+        R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value"))))";
+    // R"(Query::from("window"))";
+
+    auto lambdaSource = createSimpleInputStream(1);
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("window", testSchema)
+                           .attachWorkerWithLambdaSourceToCoordinator("window", lambdaSource, workerConfiguration);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+
+    testHarness.validate().setupTopology();
+
+    std::vector<GlobalOutput> expectedOutput = {{0, 1000, 170}};
+
+    std::vector<GlobalOutput> actualOutput = testHarness.getOutput<GlobalOutput>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
+
     ASSERT_EQ(actualOutput.size(), expectedOutput.size());
     ASSERT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }

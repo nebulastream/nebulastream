@@ -135,6 +135,21 @@ class CCodeGenerator : public CodeGenerator {
         uint64_t windowOperatorIndex,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
 
+    uint64_t generateGlobalSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                    SchemaPtr,
+                                                    PipelineContextPtr context,
+                                                    uint64_t id,
+                                                    uint64_t windowOperatorIndex,
+                                                    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) override;
+
+    uint64_t
+    generateGlobalThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                SchemaPtr windowOutputSchema,
+                                                PipelineContextPtr context,
+                                                uint64_t id,
+                                                uint64_t windowOperatorIndex,
+                                                std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> ptr) override;
+
     uint64_t generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
                                                      SchemaPtr,
                                                      PipelineContextPtr context,
@@ -156,6 +171,12 @@ class CCodeGenerator : public CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
 
+    bool generateCodeForGlobalThreadLocalPreAggregationOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) override;
+
     bool generateCodeForThreadLocalPreAggregationOperator(
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
@@ -168,7 +189,19 @@ class CCodeGenerator : public CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
 
+    bool generateCodeForGlobalSliceMergingOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) override;
+
     bool generateCodeForKeyedTumblingWindowSink(
+        Windowing::LogicalWindowDefinitionPtr window,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        PipelineContextPtr context,
+        SchemaPtr ptr) override;
+
+    bool generateCodeForGlobalTumblingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
@@ -606,6 +639,12 @@ class CCodeGenerator : public CodeGenerator {
                                                std::vector<StatementPtr>& statements,
                                                const std::string& capacityVarName);
     ExpressionStatementPtr createGetEntryCall(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context);
+    std::shared_ptr<ForLoopStatement> globalSliceMergeLoop(VariableDeclaration& buffers,
+                                                           FunctionCallStatement& tupleBufferGetNumberOfTupleCall,
+                                                           StructDeclaration& partialAggregationEntry,
+                                                           Windowing::LogicalWindowDefinitionPtr window,
+                                                           std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> aggregation,
+                                                           PipelineContextPtr context);
 };
 }// namespace QueryCompilation
 }// namespace NES

@@ -4,7 +4,7 @@
 
 namespace NES::Windowing::Experimental {
 
-void State::reset() { memset(ptr, 0, stateSize); }
+void State::reset() { isInitialized = false; }
 
 State::State(uint64_t stateSize) : stateSize(stateSize), ptr(std::aligned_alloc(stateSize, STATE_ALIGNMENT)){};
 
