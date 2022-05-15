@@ -16,4 +16,5 @@ add_subdirectory(TimeBasedWindow)
 
 add_source_files(nes-core
         LockFreeMultiOriginWatermarkProcessor.cpp
+        SlidingWindowAssigner.cpp
         )

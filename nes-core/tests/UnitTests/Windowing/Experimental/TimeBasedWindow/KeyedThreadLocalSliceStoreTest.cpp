@@ -77,14 +77,12 @@ TEST_F(KeyedThreadLocalSliceStoreTest, assignSlidingWindowIregularSlide) {
     auto slidingWindowSize = 100;
     auto slidingWindowSlide = 30;
     auto sliceStore = KeyedThreadLocalSliceStore(hashMapFactory, slidingWindowSize, slidingWindowSlide);
+
     for (uint64_t ts = 1; ts < 1000; ts = ts + 10) {
         auto& slice = sliceStore.findSliceByTs(ts);
-        ASSERT_TRUE(slice->getStart() % slidingWindowSize == 0 || slice->getStart() % slidingWindowSlide == 0);
-        ASSERT_TRUE(slice->getEnd() % slidingWindowSize == 0 || slice->getEnd() % slidingWindowSlide == 0);
     }
-    ASSERT_EQ(sliceStore.getNumberOfSlices(), 40);
+    ASSERT_EQ(sliceStore.getNumberOfSlices(), 64);
 }
-
 
 TEST_F(KeyedThreadLocalSliceStoreTest, invalidTs) {
     auto tumblingWindowSize = 100;

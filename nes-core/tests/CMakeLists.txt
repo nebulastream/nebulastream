@@ -73,6 +73,10 @@ add_executable(keyed-thread-local-slice-store-test "UnitTests/Windowing/Experime
 target_link_libraries(keyed-thread-local-slice-store-test nes nes-tests-util ${GTEST_LIBRARIES})
 add_test(NAME keyed-thread-local-slice-store-test COMMAND keyed-thread-local-slice-store-test)
 
+add_executable(window-assigner-test "UnitTests/Windowing/Experimental/WindowAssignerTest.cpp")
+target_link_libraries(window-assigner-test nes nes-tests-util ${GTEST_LIBRARIES})
+add_test(NAME window-assigner-test COMMAND window-assigner-test)
+
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests nes-tests)
