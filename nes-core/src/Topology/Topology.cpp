@@ -546,6 +546,9 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(const TopologyNodePtr& s
     std::vector<TopologyNodePtr> nodesBetween;
     NES_DEBUG("Topology: iterate over parent of the source node and find path between its parent and destination nodes.");
     for (const auto& sourceParent : sourceNode->getParents()) {
+        if(sourceParent->as<TopologyNode>()->getMaintenanceFlag()){
+            continue;
+        }
         std::vector<TopologyNodePtr> foundBetweenNodes = findNodesBetween(sourceParent->as<TopologyNode>(), destinationNode);
         if (!foundBetweenNodes.empty()) {
             NES_TRACE("Topology: found a path between source nodes parent and destination nodes.");

@@ -59,7 +59,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      */
     void performOperatorPlacement(QueryId queryId,
                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators, bool partialPlacement = false);
 
     /**
      * @brief Try to place input operator on the input topology node

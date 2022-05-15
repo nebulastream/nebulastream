@@ -102,7 +102,7 @@ bool QueryPlacementPhase::executePartialPlacement(PlacementStrategy::Value place
     auto placementStrategyPtr =
         PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, z3Context);
 
-    auto queryId = queryPlan->getQuerySubPlanId();
+    auto queryId = queryPlan->getQueryId();
     auto faultToleranceType = queryPlan->getFaultToleranceType();
     auto lineageType = queryPlan->getLineageType();
     NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
@@ -117,6 +117,9 @@ bool QueryPlacementPhase::executePartialPlacement(PlacementStrategy::Value place
     if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
         throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
     }
+
+    //4. Clean operators of placed status and where they are placed, so they can be processed again
+    cleanQueryPlan(queryPlan);
 
     bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
                                                                    faultToleranceType,
@@ -211,6 +214,26 @@ std::vector<OperatorNodePtr>  QueryPlacementPhase::getDownStreamPinnedOperatorsF
         pinnedSinkOperators.emplace_back(sinkOperator);
     }
     return pinnedSinkOperators;
+}
+void QueryPlacementPhase::cleanQueryPlan(const QueryPlanPtr& queryPlan){
+    auto rootOperator = queryPlan->getRootOperators();
+    if(rootOperator.size() > 1){
+        throw QueryPlacementException( queryPlan->getQueryId(),"QueryPlacementPhase: partial placement only supports one root node.");
+    }
+    std::vector<NodePtr> childNodes = rootOperator[0]->getAndFlattenAllChildren(false);
+    for(NodePtr node : childNodes){
+        bool isSourceOperator = node->instanceOf<SourceLogicalOperatorNode>();
+        bool isNetworkSource = false;
+        if(isSourceOperator){
+            isNetworkSource = node->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>();
+        }
+        if(isNetworkSource){
+            continue;
+        }
+        OperatorNodePtr opNode = node->as<OperatorNode>();
+        opNode->removeProperty(PLACED);
+        opNode->removeProperty(PINNED_NODE_ID);
+    }
 };
 
 }// namespace NES::Optimizer

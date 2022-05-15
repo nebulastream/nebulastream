@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -121,6 +122,46 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     }
 
+    void setupDiamondTopologyAndSourceCatalog(std::vector<uint16_t> resources){
+        ASSERT_EQ(resources.size(), 4) << "Diamond Topology must consist of exactly 4 nodes";
+
+        topology = Topology::create();
+
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, resources[0]);
+        topology->setAsRoot(rootNode);
+
+        TopologyNodePtr intermediateNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1]);
+        topology->addNewTopologyNodeAsChild(rootNode, intermediateNode1);
+
+        TopologyNodePtr intermediateNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
+        topology->addNewTopologyNodeAsChild(rootNode, intermediateNode2);
+
+        TopologyNodePtr sourceNode = TopologyNode::create(4, "localhost", 123, 124, resources[3]);
+        topology->addNewTopologyNodeAsChild(intermediateNode1, sourceNode);
+        topology->addNewTopologyNodeAsChild(intermediateNode2, sourceNode);
+        topology->print();
+
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string sourceName = "car";
+
+        sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+        sourceCatalog->addLogicalSource(sourceName, schema);
+        auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
+
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setGatheringInterval(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
+
+        SourceCatalogEntryPtr sourceCatalogEntry =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+
+        sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry);
+        globalExecutionPlan = GlobalExecutionPlan::create();
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    }
+
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
         QueryPlanIterator queryPlanIterator = QueryPlanIterator(std::move(queryPlan));
 
@@ -191,6 +232,213 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
             }
         }
     }
+}
+
+TEST_F(QueryPlacementTest, testPartialPlacementWithNoOperators) {
+
+    setupDiamondTopologyAndSourceCatalog({1, 2, 2, 1});
+    Query query = Query::from("car").sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3u);
+    uint64_t nodeToMark;
+    for (const auto& executionNode : executionNodes) {
+        if(executionNode->getId() == 2){
+            nodeToMark = 2;
+        }
+        if(executionNode->getId() == 3) {
+            nodeToMark = 3;
+        }
+    }
+
+    topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true);
+    QueryPlanPtr queryToMigrate = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getQuerySubPlans(queryId)[0];
+    queryPlacementPhase->executePartialPlacement(NES::PlacementStrategy::BottomUp, queryToMigrate);
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 4);
+    auto newExecutionNode = nodeToMark == 2 ? globalExecutionPlan->getExecutionNodeByNodeId(3) : globalExecutionPlan->getExecutionNodeByNodeId(2);
+    auto oldExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark);
+    auto rootOfOldExecutionNode = oldExecutionNode->getQuerySubPlans(1)[0]->getRootOperators()[0];
+    auto leafOfOldExecutionNode = oldExecutionNode->getQuerySubPlans(1)[0]->getLeafOperators()[0];
+    auto rootOperator = newExecutionNode->getQuerySubPlans(1)[0]->getRootOperators()[0];
+    auto leafOperator = newExecutionNode->getQuerySubPlans(1)[0]->getLeafOperators()[0];
+    auto oldSourcePartitionId = leafOfOldExecutionNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+    auto newSourcePartitionId = leafOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+    ASSERT_EQ(oldSourcePartitionId, newSourcePartitionId);
+    auto oldSinkPartitionId =  rootOfOldExecutionNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+    auto newSinkPartitionId = rootOperator->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+    ASSERT_EQ(oldSinkPartitionId, newSinkPartitionId);
+}
+
+/* Test query placement with bottom up strategy  */
+TEST_F(QueryPlacementTest, testPartialPlacementWithSingleOperator) {
+
+    setupDiamondTopologyAndSourceCatalog({1, 1, 1, 1});
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3u);
+    uint64_t nodeToMark;
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1u) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0u];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 1u);
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        } else if (executionNode->getId() == 2u){
+            nodeToMark = 2;
+
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
+        }
+        else if (executionNode->getId() == 3u){
+            nodeToMark = 3;
+
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
+        }
+        else{
+            ASSERT_EQ(executionNode->getId(), 4u);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+        }
+    }
+
+    topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true);
+    QueryPlanPtr queryToMigrate = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getQuerySubPlans(queryId)[0];
+    queryPlacementPhase->executePartialPlacement(NES::PlacementStrategy::BottomUp, queryToMigrate);
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 4);
+    auto newExecutionNode = nodeToMark == 2 ? globalExecutionPlan->getExecutionNodeByNodeId(3) : globalExecutionPlan->getExecutionNodeByNodeId(2);
+    auto oldExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark);
+    auto rootOfOldExecutionNode = oldExecutionNode->getQuerySubPlans(1)[0]->getRootOperators()[0];
+    auto leafOfOldExecutionNode = oldExecutionNode->getQuerySubPlans(1)[0]->getLeafOperators()[0];
+    auto rootOperator = newExecutionNode->getQuerySubPlans(1)[0]->getRootOperators()[0];
+    auto leafOperator = newExecutionNode->getQuerySubPlans(1)[0]->getLeafOperators()[0];
+    auto oldSourcePartitionId = leafOfOldExecutionNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+    auto newSourcePartitionId = leafOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+    ASSERT_EQ(oldSourcePartitionId, newSourcePartitionId);
+    auto oldSinkPartitionId =  rootOfOldExecutionNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+    auto newSinkPartitionId = rootOperator->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+    ASSERT_EQ(oldSinkPartitionId, newSinkPartitionId);
+}
+
+TEST_F(QueryPlacementTest, testPartialPlacementWithMultipleOperators) {
+
+    setupDiamondTopologyAndSourceCatalog({1, 2, 2, 1});
+    Query query = Query::from("car").filter(Attribute("id") < 45).map(Attribute("newId") = 2).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3u);
+    uint64_t nodeToMark;
+    for (const auto& executionNode : executionNodes) {
+        if(executionNode->getId() == 2){
+            nodeToMark = 2;
+        }
+        if(executionNode->getId() == 3) {
+            nodeToMark = 3;
+        }
+    }
+
+    topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true);
+    QueryPlanPtr queryToMigrate = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getQuerySubPlans(queryId)[0];
+    queryPlacementPhase->executePartialPlacement(NES::PlacementStrategy::BottomUp, queryToMigrate);
+    executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 4);
+    auto newExecutionNode = nodeToMark == 2 ? globalExecutionPlan->getExecutionNodeByNodeId(3) : globalExecutionPlan->getExecutionNodeByNodeId(2);
+    auto oldExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark);
+    auto rootOfOldExecutionNode = oldExecutionNode->getQuerySubPlans(1)[0]->getRootOperators()[0];
+    auto leafOfOldExecutionNode = oldExecutionNode->getQuerySubPlans(1)[0]->getLeafOperators()[0];
+    auto rootOperator = newExecutionNode->getQuerySubPlans(1)[0]->getRootOperators()[0];
+    auto leafOperator = newExecutionNode->getQuerySubPlans(1)[0]->getLeafOperators()[0];
+    auto oldSourcePartitionId = leafOfOldExecutionNode->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+    auto newSourcePartitionId = leafOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+    ASSERT_EQ(oldSourcePartitionId, newSourcePartitionId);
+    auto oldSinkPartitionId =  rootOfOldExecutionNode->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+    auto newSinkPartitionId = rootOperator->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+    ASSERT_EQ(oldSinkPartitionId, newSinkPartitionId);
 }
 
 /* Test query placement with top down strategy  */

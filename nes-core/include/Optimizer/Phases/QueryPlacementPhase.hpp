@@ -137,6 +137,12 @@ class QueryPlacementPhase {
      */
     bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
 
+    /**
+     * removes PLACED and PINNED_NODE_ID status of operators of a queryPlan.
+     * @param queryPlan
+     */
+    void cleanQueryPlan(const QueryPlanPtr& queryPlan);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
