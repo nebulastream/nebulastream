@@ -2,18 +2,11 @@
 #define NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_GLOBALTIMEBASEDWINDOW_GLOBALSLICEMERGINGOPERATORHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
 
-namespace NES::Experimental {
-class HashMapFactory;
-using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
-class LockFreeMultiOriginWatermarkProcessor;
-}// namespace NES::Experimental
-
 namespace NES::Windowing::Experimental {
-class KeyedSlice;
 class SliceMergeTask;
-using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
-class KeyedGlobalSliceStore;
-class SliceStaging;
+class GlobalSlice;
+using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
+class GlobalSliceStaging;
 
 /**
  * @brief The SliceStagingWindowHandler implements a thread local strategy to compute window aggregates for tumbling and sliding windows.
@@ -26,20 +19,20 @@ class GlobalSliceMergingOperatorHandler : public Runtime::Execution::OperatorHan
   public:
     GlobalSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
 
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
+    void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
     /**
      * @brief Get a reference to the slice staging.
      * @note This should be only called from the generated code.
      * @return SliceStaging
      */
-    inline SliceStaging& getSliceStaging() { return *sliceStaging.get(); }
+    inline GlobalSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
      * @brief Gets a weak pointer to the slice staging
      * @return std::weak_ptr<SliceStaging>
      */
-    std::weak_ptr<SliceStaging> getSliceStagingPtr();
+    std::weak_ptr<GlobalSliceStaging> getSliceStagingPtr();
 
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
@@ -53,7 +46,7 @@ class GlobalSliceMergingOperatorHandler : public Runtime::Execution::OperatorHan
      * @param sliceMergeTaskS liceMergeTask
      * @return KeyedSlicePtr
      */
-    KeyedSlicePtr createKeyedSlice(SliceMergeTask* sliceMergeTask);
+    GlobalSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
 
     /**
      * @brief Gets the window definition
@@ -67,10 +60,9 @@ class GlobalSliceMergingOperatorHandler : public Runtime::Execution::OperatorHan
     std::atomic<uint32_t> activeCounter;
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::shared_ptr<SliceStaging> sliceStaging;
-    std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore;
+    uint64_t entrySize;
+    std::shared_ptr<GlobalSliceStaging> sliceStaging;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
-    NES::Experimental::HashMapFactoryPtr factory;
 };
 
 }// namespace NES::Windowing::Experimental

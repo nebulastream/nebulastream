@@ -19,4 +19,5 @@ add_source_files(nes-core
         GlobalWindowGlobalSliceStoreAppendOperatorHandler.cpp
         GlobalThreadLocalPreAggregationOperatorHandler.cpp
         GlobalSliceMergingOperatorHandler.cpp
+        GlobalSlidingWindowSinkOperatorHandler.cpp
         )
