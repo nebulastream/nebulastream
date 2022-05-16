@@ -43,6 +43,10 @@ class AVGPartialType {
         this->count = other.count;
         return *this;
     }
+    void reset() {
+        this->sum = 0;
+        this->count = 0;
+    }
     [[nodiscard]] SumType getSum() const { return sum; }
     [[nodiscard]] int64_t getCount() const { return count; }
 

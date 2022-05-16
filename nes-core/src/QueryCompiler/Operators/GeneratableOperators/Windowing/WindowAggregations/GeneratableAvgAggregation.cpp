@@ -54,7 +54,9 @@ void GeneratableAvgAggregation::compileLift(CompoundStatementPtr currentCode,
 
     auto fieldReference =
         recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
-
+    auto resetFunctionCall = FunctionCallStatement("reset");
+    auto resetStatement = partialValueRef.accessRef(resetFunctionCall);
+    currentCode->addStatement(resetStatement.copy());
     auto addSumFunctionCall = FunctionCallStatement("addToSum");
     addSumFunctionCall.addParameter(*fieldReference);
     auto updateSumStatement = partialValueRef.accessRef(addSumFunctionCall);
