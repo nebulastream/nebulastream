@@ -603,6 +603,10 @@ add_executable(single-node-thread-local-tumbling-window-tests "Integration/Windo
 target_link_libraries(single-node-thread-local-tumbling-window-tests nes-tests)
 add_test(NAME single-node-thread-local-tumbling-window-tests COMMAND single-node-thread-local-tumbling-window-tests)
 
+add_executable(single-node-thread-local-global-tumbling-window-tests "Integration/Windowing/TumblingWindow/SingleNodeThreadLocalGlobalTumblingWindowTests.cpp")
+target_link_libraries(single-node-thread-local-global-tumbling-window-tests nes-tests)
+add_test(NAME single-node-thread-local-global-tumbling-window-tests COMMAND single-node-thread-local-global-tumbling-window-tests)
+
 add_executable(single-node-thread-local-sliding-window-tests "Integration/Windowing/SlidingWindow/SingleNodeThreadLocalSlidingWindowTests.cpp")
 target_link_libraries(single-node-thread-local-sliding-window-tests nes-tests)
 add_test(NAME single-node-thread-local-sliding-window-tests COMMAND single-node-thread-local-sliding-window-tests)
