@@ -13,11 +13,12 @@
 */
 #ifdef PYTHON_UDF_ENABLED
 #include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
-#include "Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Python.h>
 
-namespace NES {
+namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
 PythonUdfExecutablePipelineStage::PythonUdfExecutablePipelineStage(const SchemaPtr& inputSchema) {
     this->inputSchema = inputSchema;
@@ -97,5 +98,5 @@ PythonUdfExecutablePipelineStage::~PythonUdfExecutablePipelineStage(){
     NES_DEBUG("~PythonUdfExecutablePipelineStage()");
 };
 
-}//namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators::Experimental
 #endif

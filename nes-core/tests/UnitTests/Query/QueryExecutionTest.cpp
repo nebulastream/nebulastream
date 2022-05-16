@@ -1127,11 +1127,13 @@ TEST_F(QueryExecutionTest, PythonUdfQuery) {
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
 
-    auto pythonUdfPipelineStage = std::make_shared<PythonUdfExecutablePipelineStage>(testSchema);
+    auto pythonUdfPipelineStage =
+        std::make_shared<NES::QueryCompilation::PhysicalOperators::Experimental::PythonUdfExecutablePipelineStage>(testSchema);
 
     auto pythonUdfOperator =
-        NES::QueryCompilation::PhysicalOperators::PhysicalPythonUdfOperator::create(testSchema, SchemaPtr(),
-                                                                                                        pythonUdfPipelineStage);
+        NES::QueryCompilation::PhysicalOperators::Experimental::PhysicalPythonUdfOperator::create(testSchema,
+                                                                                                  SchemaPtr(),
+                                                                                                  pythonUdfPipelineStage);
 
     filterOperator->insertBetweenThisAndParentNodes(pythonUdfOperator);
 
