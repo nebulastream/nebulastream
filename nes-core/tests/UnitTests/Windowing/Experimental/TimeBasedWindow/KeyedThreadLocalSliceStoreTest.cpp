@@ -11,15 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Runtime/BufferManager.hpp"
+#include <Runtime/BufferManager.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
-#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
+#include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
-#include <algorithm>
-#include <atomic>
 #include <gtest/gtest.h>
 #include <iostream>
 using namespace std;
