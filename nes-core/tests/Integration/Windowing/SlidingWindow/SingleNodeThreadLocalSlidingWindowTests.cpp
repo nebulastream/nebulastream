@@ -350,7 +350,7 @@ TEST_P(SingleNodeThreadLocalSlidingWindowTests, testMultipleSldingWindowIrigular
     testHarness.validate().setupTopology();
 
     std::vector<Output> expectedOutput = {};
-    expectedOutput.push_back({0, 1000, 1, 900});
+    expectedOutput.push_back({0, 1000, 1, 1000});
     for (uint64_t windowStart = 300; windowStart <= 16000; windowStart = windowStart + 300) {
         expectedOutput.push_back({windowStart, windowStart + 1000, 1, 1000});
     }
