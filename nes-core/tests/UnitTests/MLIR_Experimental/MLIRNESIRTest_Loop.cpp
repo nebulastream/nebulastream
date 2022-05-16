@@ -138,7 +138,7 @@ void* getInputBuffer(NES::Runtime::BufferManager* buffMgr) {
     return std::addressof(inputBuffer);
 }
 
-TEST(MLIRNESIRTest, simpleNESIRCreation) {
+TEST(MLIRNESIRTest_Loop, simpleNESIRLoop) {
     const uint64_t numTuples = 2;
     auto buffMgr = new NES::Runtime::BufferManager(); //shared pointer causes crash (destructor problem)
 
@@ -153,17 +153,7 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
     inputBuffer.setNumberOfTuples(numTuples);
 
-    auto outputBuffer = buffMgr->getBufferBlocking();
-
-    //Todo BIG ISSUE:
-    // - use loop-based MLIR Generation Approach
-    // 4,5                     loopOp(Op1)->loopBB(getOPs)
-    // 6                         addressOp(Op1) ~InputBuff~
-    // 7                         loadOp[Op1](Op2) -> ACCESS: addressOpMap[&Op1]
-    // 8                         constOp(Op3)
-    // 9                         addOp[Op2,Op3](Op4) -> ACCESS: addressOpMap[&Op2] and addressOpMap[&Op3]
-    // 10                        addressOp(Op5) ~OutputBuff~
-    // 11                        storeOp[Op4,Op5](Op6) -> ACCESS: addressOpMap[&Op4] and addressOpMap[&Op5]                   
+    auto outputBuffer = buffMgr->getBufferBlocking();                
 
     // Loop condition constants.
     OperationPtr constIOp = std::make_shared<ConstantIntOperation>("i", 0, 64);
@@ -182,7 +172,7 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, constOp, addOp, outputAddressOp, storeOp, loopIncAdd};
     std::vector<std::string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne"};
     BasicBlockPtr loopBodyBlock = std::make_shared<BasicBlock>("loopBlock", loopOps, loopArguments);
-    OperationPtr loopBodyTerminatorOp = std::make_shared<BranchOperation>(loopBodyBlock);
+    OperationPtr loopBodyTerminatorOp = std::make_shared<BranchOperation>(BranchOperation::LoopLastBranch, loopBodyBlock);
     loopBodyBlock->addOperation(loopBodyTerminatorOp);
 
     // Loop Header(IfOperation(LoopBodyBlock, ExecuteReturnBlock))
@@ -190,8 +180,8 @@ TEST(MLIRNESIRTest, simpleNESIRCreation) {
     std::vector<OperationPtr> executeReturnBlockOps{executeReturnOp};
     std::vector<std::string> executeReturnBlockArgs{};
     BasicBlockPtr executeReturnBlock = std::make_shared<BasicBlock>("loopBlock", executeReturnBlockOps, executeReturnBlockArgs);
-    OperationPtr ifCompareOp = std::make_shared<CompareOperation>("loopCompare", "i", "numTuples");
-    OperationPtr loopIfOp = std::make_shared<IfOperation>("loopCompare", loopBodyBlock, executeReturnBlock);
+    OperationPtr ifCompareOp = std::make_shared<CompareOperation>("loopCompare", "i", "numTuples", CompareOperation::ISLT);
+    OperationPtr loopIfOp = std::make_shared<IfOperation>("loopCompare", loopBodyBlock, executeReturnBlock, executeReturnBlock);
     std::vector<OperationPtr> loopHeaderBBOps{ifCompareOp, loopIfOp};
     std::vector<std::string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "numTuples"};
     BasicBlockPtr loopHeaderBlock = std::make_shared<BasicBlock>("loopHeaderBlock", loopHeaderBBOps, loopHeaderArgs);

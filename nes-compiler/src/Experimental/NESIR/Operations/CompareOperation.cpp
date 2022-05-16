@@ -15,12 +15,14 @@
 #include <Experimental/NESIR/Operations/CompareOperation.hpp>
 
 namespace NES {
-CompareOperation::CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName) 
+CompareOperation::CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName, 
+                                    Comparator comparator) 
     : Operation(Operation::CompareOp), identifier(std::move(identifier)), firstArgName(std::move(firstArgName)), 
-      secondArgName(std::move(secondArgName)) {}
+      secondArgName(std::move(secondArgName)), comparator(comparator) {}
 
 std::string CompareOperation::getIdentifier() { return identifier; }
 std::string CompareOperation::getFirstArgName() { return firstArgName; }
 std::string CompareOperation::getSecondArgName() { return secondArgName; }
+CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
 
 }// namespace NES

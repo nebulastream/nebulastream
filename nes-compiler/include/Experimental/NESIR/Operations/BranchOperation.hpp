@@ -24,13 +24,16 @@ namespace NES {
  */
 class BranchOperation : public Operation {
   public:
-    explicit BranchOperation(BasicBlockPtr nextBlock);
+    enum BranchType{IfLastBranch, LoopLastBranch, GlueBranch};
+    explicit BranchOperation(BranchType type, BasicBlockPtr nextBlock);
     ~BranchOperation() override = default;
 
+    BranchType getType();
     BasicBlockPtr getNextBlock();
 
     static bool classof(const Operation *Op);
   private:
+    BranchType type;
     BasicBlockPtr nextBlock;
 };
 }// namespace NES

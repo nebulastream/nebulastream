@@ -14,14 +14,12 @@
 
 #include <Experimental/NESIR/Operations/AddIntOperation.hpp>
 namespace NES {
-AddIntOperation::AddIntOperation(std::string identifier, OperationPtr lhs, OperationPtr rhs, std::string leftArgName, std::string rightArgName)
-    : Operation(OperationType::AddOp), identifier(std::move(identifier)), lhs(lhs), rhs(rhs), leftArgName(std::move(leftArgName)), rightArgName(std::move(rightArgName)) {}
+AddIntOperation::AddIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName)
+    : Operation(OperationType::AddOp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)), rightArgName(std::move(rightArgName)) {}
 
 bool AddIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
 std::string AddIntOperation::getIdentifier() { return identifier; }
-OperationPtr AddIntOperation::getLHS() { return lhs; }
-OperationPtr AddIntOperation::getRHS() { return rhs; }
 std::string AddIntOperation::getLeftArgName() { return leftArgName; }
 std::string AddIntOperation::getRightArgName() { return rightArgName; }
 }// namespace NES

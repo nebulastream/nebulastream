@@ -22,20 +22,16 @@ namespace NES {
 //Todo: Decide: Leave type
 class AddIntOperation : public Operation {
   public:
-    AddIntOperation(std::string identifier, OperationPtr lhs, OperationPtr rhs, std::string leftArgName, std::string rightArgName);
+    AddIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName);
     ~AddIntOperation() override = default;
 
     std::string getIdentifier();
-    OperationPtr getLHS();
-    OperationPtr getRHS();
     std::string getLeftArgName();
     std::string getRightArgName();
     bool classof(const Operation* Op);
 
   private:
     std::string identifier;
-    OperationPtr lhs;
-    OperationPtr rhs;
     std::string leftArgName;
     std::string rightArgName;
 };

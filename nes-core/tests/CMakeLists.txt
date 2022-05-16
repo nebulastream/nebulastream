@@ -223,10 +223,14 @@ if(NES_USE_MLIR)
             MLIRMemRefToLLVM
             MLIRExecutionEngine
             )
-    add_executable(mlir-nesir-test "UnitTests/MLIR_Experimental/MLIRNESIRTest.cpp")
-    target_link_libraries(mlir-nesir-test
+    add_executable(mlir-nesir-loop-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Loop.cpp")
+    target_link_libraries(mlir-nesir-loop-test
             nes-tests)
-    add_test(NAME mlir-nesir-test COMMAND mlir-nesir-test)
+    add_test(NAME mlir-nesir-loop-test COMMAND mlir-nesir-loop-test)
+    add_executable(mlir-nesir-if-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_IF.cpp")
+    target_link_libraries(mlir-nesir-if-test
+            nes-tests)
+    add_test(NAME mlir-nesir-if-test COMMAND mlir-nesir-if-test)
 endif (NES_USE_MLIR)
 
 

@@ -13,15 +13,18 @@
 */
 
 
+#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 
 namespace NES {
-IfOperation::IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock) 
+IfOperation::IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock, 
+                         BasicBlockPtr afterIfBlock) 
     : Operation(Operation::IfOp), boolArgName(boolArgName), thenBranchBlock(std::move(thenBranchBlock)), 
-    elseBranchBlock(std::move(elseBranchBlock)) {}
+    elseBranchBlock(std::move(elseBranchBlock)), afterIfBlock(afterIfBlock) {}
 
     std::string IfOperation::getBoolArgName() { return boolArgName; }
     BasicBlockPtr IfOperation::getThenBranchBlock() { return thenBranchBlock; }
     BasicBlockPtr IfOperation::getElseBranchBlock() { return elseBranchBlock; }
+    BasicBlockPtr IfOperation::getAfterIfBlock() { return afterIfBlock; }
     
 }// namespace NES

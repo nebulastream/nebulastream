@@ -39,7 +39,10 @@ limitations under the License.
 #include <cstdint>
 #include <exception>
 #include <memory>
+#include <mlir/Dialect/SCF/SCF.h>
+#include <mlir/IR/TypeRange.h>
 #include <mlir/Parser.h>
+#include <sys/types.h>
 #include <unordered_map>
 #include <vector>
 
@@ -83,12 +86,14 @@ Location MLIRGenerator::getNameLoc(const std::string& name) {
     return NameLoc::get(builder->getStringAttr(name), baseLocation);
 }
 
-mlir::arith::CmpIPredicate convertToMLIRComparison(NES::PredicateOperation::BinaryOperatorType comparisonType) {
+mlir::arith::CmpIPredicate convertToMLIRComparison(NES::CompareOperation::Comparator comparisonType) {
     //TODO extend to all comparison types
     switch (comparisonType) {
-        case (NES::PredicateOperation::BinaryOperatorType::EQUAL_OP): return mlir::arith::CmpIPredicate::eq;
-        case (NES::PredicateOperation::BinaryOperatorType::LESS_THAN_OP): return mlir::arith::CmpIPredicate::slt;
-        case (NES::PredicateOperation::BinaryOperatorType::UNEQUAL_OP): return mlir::arith::CmpIPredicate::ne;
+        case (NES::CompareOperation::Comparator::ISLT): return mlir::arith::CmpIPredicate::slt;
+        // case (NES::PredicateOperation::BinaryOperatorType::LESS_THAN_OP): return mlir::arith::CmpIPredicate::slt;
+        // case (NES::PredicateOperation::BinaryOperatorType::UNEQUAL_OP): return mlir::arith::CmpIPredicate::ne;
+        default:
+            return mlir::arith::CmpIPredicate::slt;
     }
 }
 
@@ -191,13 +196,31 @@ void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock, std::unordered_m
     std::unordered_map<std::string, mlir::Value> nextBlockArgs;
     if (terminatorOp->getOperationType() == NES::Operation::BranchOp) { 
         auto branchOp = std::static_pointer_cast<NES::BranchOperation>(terminatorOp);
-        for(auto newArgName : branchOp->getNextBlock()->getInputArgs()) {
-            nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+        switch(branchOp->getType()) {
+            case NES::BranchOperation::IfLastBranch: {
+                // mlir::ValueRange yieldValues{}; //yieldValues[0] = blockArgs["oeu"]; //Todo does this work?
+                // mlir::ValueRange yieldValues{}
+                // mlir::ArrayRef<Value> yieldVals; 
+                std::vector<mlir::Value> yieldOps;
+                for(auto nextBlockInputArg: branchOp->getNextBlock()->getInputArgs()) {
+                    yieldOps.push_back(blockArgs[nextBlockInputArg]);
+                }
+                builder->create<scf::YieldOp>(getNameLoc("ifYield"), yieldOps);
+                break;
+            }
+            case NES::BranchOperation::LoopLastBranch:
+                //Todo handle Loops with Yields
+                break;
+            case NES::BranchOperation::GlueBranch:
+                for(auto newArgName : branchOp->getNextBlock()->getInputArgs()) {
+                    nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+                }
+                generateMLIR(branchOp->getNextBlock(), nextBlockArgs);
+                break;
         }
-        generateMLIR(branchOp->getNextBlock(), nextBlockArgs);
     } else if (terminatorOp->getOperationType() == NES::Operation::LoopOp) {
         auto loopOp = std::static_pointer_cast<NES::LoopOperation>(terminatorOp);
-        for(auto newArgName : loopOp->getNextBlock()->getInputArgs()) {
+        for(auto newArgName : loopOp->getLoopHeaderBlock()->getInputArgs()) {
             nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
         }
         generateMLIR(loopOp, nextBlockArgs);
@@ -207,7 +230,7 @@ void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock, std::unordered_m
     } else if (terminatorOp->getOperationType() == NES::Operation::ReturnOp) {
         auto returnOp = std::static_pointer_cast<NES::ReturnOperation>(terminatorOp);
         generateMLIR(returnOp, nextBlockArgs);
-    } else {
+    } else { // Currently necessary for LoopOps, where we remove the terminatorOp to prevent recursion.
         generateMLIR(terminatorOp, blockArgs);
     }
 }
@@ -250,13 +273,11 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::FunctionOperation> functio
     builder->setInsertionPointToStart(&mlirFunction.getBody().front());
 
     // Store references to function args in the valueMap map.
-    // Todo it would be great if we could insert these values function arg inputs as values into the addressMap
-    // - but: since we use (smart)pointers/addresses as keys, 
     auto valueMapIterator = mlirFunction.args_begin();
     for (int i = 0; i < (int) functionOp->getInputArgNames().size(); ++i) {
         blockArgs.emplace(std::pair{functionOp->getInputArgNames().at(i), valueMapIterator[i]});
     }
-    
+
     // Generate MLIR for operations in function body (BasicBlock)
     generateMLIR(functionOp->getFunctionBasicBlock(), blockArgs);
 
@@ -269,19 +290,14 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std
         // -=LOOP HEAD=-
         // Loop Head BasicBlock contains CompareOp and IfOperation(thenBlock, elseBlock)
         // thenBlock=loopBodyBB & elseBlock=executeReturnBB
-        auto compareOp = std::static_pointer_cast<NES::CompareOperation>(loopOp->getNextBlock()->getOperations().at(0));
-        auto loopIfOp = std::static_pointer_cast<NES::IfOperation>(loopOp->getNextBlock()->getOperations().at(1));
+        auto compareOp = std::static_pointer_cast<NES::CompareOperation>(loopOp->getLoopHeaderBlock()->getOperations().at(0));
+        auto loopIfOp = std::static_pointer_cast<NES::IfOperation>(loopOp->getLoopHeaderBlock()->getOperations().at(1));
         auto loopBodyBB = loopIfOp->getThenBranchBlock();
         auto loopEndBB = loopIfOp->getElseBranchBlock();
-        loopBodyBB->popOperation(); // Remove branchOp at the end of LoopBodyBB.
         // Define index variables for loop.
-        auto iIncAddOp = std::static_pointer_cast<NES::AddIntOperation>(loopBodyBB->getOperations().back());
-        auto lowerBound = builder->create<arith::IndexCastOp>(getNameLoc("Lower Bound"), builder->getIndexType(), blockArgs[iIncAddOp->getLeftArgName()]);
-        auto stepSize = builder->create<arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs[iIncAddOp->getRightArgName()]);
-        // auto lowerBound = builder->create<arith::ConstantIndexOp>(getNameLoc("lowerBound"), 0);
-        // auto stepSize = builder->create<arith::ConstantIndexOp>(getNameLoc("stepSize"), 1);
-
-        loopBodyBB->popOperation(); // Remove i+1 addOp at the end of LoopBodyBB.
+        // For now we assume that loops always use the "i" as the induction var and always increase "i" by one each step.
+        auto lowerBound = builder->create<arith::IndexCastOp>(getNameLoc("Lower Bound"), builder->getIndexType(), blockArgs["i"]);
+        auto stepSize = builder->create<arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs["constOne"]);
 
         // Create Loop Operation. Save InsertionPoint(IP) of parent's BasicBlock
         insertComment("// For Loop Start");
@@ -334,10 +350,14 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ConstantIntOperation> cons
 // No recursion. Dependencies. Requires addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("AddOp");
-    blockArgs.emplace(std::pair{addOp->getIdentifier(),
-        builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()])});
-    auto printValFunc = insertExternalFunction("printValueFromMLIR", 0, {}, true);
-    builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, printValFunc, blockArgs[addOp->getIdentifier()]);
+    // Only generate Add, if not loop induction variable ++ operation.
+    if(addOp->getLeftArgName() != "i") {
+        blockArgs.emplace(std::pair{addOp->getIdentifier(),
+            builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()])});
+        // Debug
+        auto printValFunc = insertExternalFunction("printValueFromMLIR", 0, {}, true);
+        builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, printValFunc, blockArgs[addOp->getIdentifier()]);
+    }
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
@@ -376,27 +396,60 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyC
     //Todo Insert function call. Use blockArgs is input args, if function has args.
 }
 
-//==--------------------- Dummy OPERATIONS ----------------------==//
-// No recursion. Dependencies. Does NOT require addressMap insertion. 
-void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    printf("IfOperation boolArgName: %s\n", ifOp->getBoolArgName().c_str());
-    //Todo handle below MLIR style if-else
-    std::unordered_map<std::string, mlir::Value> thenBlockArgs;
-    for(auto newArgName : ifOp->getThenBranchBlock()->getInputArgs()) {
-        thenBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
-    }
-    generateMLIR(ifOp->getThenBranchBlock(), thenBlockArgs);
-    std::unordered_map<std::string, mlir::Value> elseBlockArgs;
-    for(auto newArgName : ifOp->getElseBranchBlock()->getInputArgs()) {
-        elseBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
-    }
-    generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs);
-}
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::CompareOperation> compareOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("CompareOperation identifier: %s\n", compareOp->getIdentifier().c_str());
     printf("CompareOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
+    blockArgs.emplace(std::pair{compareOp->getIdentifier(), builder->create<arith::CmpIOp>(getNameLoc("comparison"),
+                                               convertToMLIRComparison(compareOp->getComparator()),
+                                               blockArgs[compareOp->getFirstArgName()],
+                                               blockArgs[compareOp->getSecondArgName()])});
 }
+
+// No recursion. Dependencies. Does NOT require addressMap insertion. 
+void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    printf("IfOperation boolArgName: %s\n", ifOp->getBoolArgName().c_str());
+   
+    // Create IF Operation
+    bool hasResultArgs = ifOp->getAfterIfBlock()->getInputArgs().size() > 0;
+    mlir::scf::IfOp mlirIfOp;
+    auto currentInsertionPoint = builder->saveInsertionPoint();
+    if(!hasResultArgs) {
+        mlirIfOp = builder->create<scf::IfOp>(getNameLoc("ifOperation"), blockArgs[ifOp->getBoolArgName()], hasResultArgs);
+        builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
+        generateMLIR(ifOp->getThenBranchBlock(), blockArgs);
+    } else {
+        std::vector<mlir::Type> mlirIfOpResultTypes;
+        for(auto outArg : ifOp->getAfterIfBlock()->getInputArgs()) {
+            mlirIfOpResultTypes.push_back(blockArgs[outArg].getType());
+        }
+        mlirIfOp = builder->create<scf::IfOp>(getNameLoc("ifOperation"), mlirIfOpResultTypes, blockArgs[ifOp->getBoolArgName()], hasResultArgs);
+        // Inserting Then(If) Block.
+        builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
+        generateMLIR(ifOp->getThenBranchBlock(), blockArgs);
+        // Inserting Else Block. Must add YieldOps in else-case, even if NESIR-IfOperation has no else case.
+        builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
+        if(ifOp->getElseBranchBlock() != nullptr) {
+            generateMLIR(ifOp->getElseBranchBlock(), blockArgs);
+        } else {
+            std::vector<mlir::Value> yieldOps;
+            for(auto nextBlockInputArg: ifOp->getAfterIfBlock()->getInputArgs()) {
+                yieldOps.push_back(blockArgs[nextBlockInputArg]);
+            }
+            builder->create<scf::YieldOp>(getNameLoc("ifYield"), yieldOps);
+        }
+    }
+    // Get If and else child node. Set IP to if and then block. Restore IP after.
+    builder->restoreInsertionPoint(currentInsertionPoint);
+    // IfOp might have more input args than nextBlock. Hence, creating new blockArgs for the next block.
+    std::unordered_map<std::string, mlir::Value> nextBlockArgs;
+    for(int i = 0; i < (int) ifOp->getAfterIfBlock()->getInputArgs().size(); ++i) {
+        nextBlockArgs.emplace(std::pair{ifOp->getAfterIfBlock()->getInputArgs().at(i), mlirIfOp.getResult(i)});
+    }
+    generateMLIR(ifOp->getAfterIfBlock(), nextBlockArgs);
+}
+
+//==--------------------- Dummy OPERATIONS ----------------------==//
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::BranchOperation> branchOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("BranchOperation.getNextBlock.getIdentifier: %s\n", branchOp->getNextBlock()->getIdentifier().c_str());

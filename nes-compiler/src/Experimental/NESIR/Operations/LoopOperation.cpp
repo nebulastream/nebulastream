@@ -16,10 +16,10 @@
 #include <utility>
 namespace NES {
 LoopOperation::LoopOperation(LoopType loopType, BasicBlockPtr nextBlock)
-    : Operation(Operation::LoopOp), loopType(loopType), nextBlock(std::move(nextBlock)) {}
+    : Operation(Operation::LoopOp), loopType(loopType), loopHeaderBlock(std::move(nextBlock)) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
-BasicBlockPtr LoopOperation::getNextBlock() { return nextBlock; }
+BasicBlockPtr LoopOperation::getLoopHeaderBlock() { return loopHeaderBlock; }
 
 bool LoopOperation::classof(const Operation *Op) {
     return Op->getOperationType() == Operation::LoopOp;

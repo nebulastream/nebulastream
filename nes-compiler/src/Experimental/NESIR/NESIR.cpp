@@ -21,7 +21,7 @@ NESIR::NESIR(OperationPtr rootOperation) :
     rootOperation(std::move(rootOperation)) {}
 
 OperationPtr NESIR::getRootOperation() {
-    return std::move(rootOperation);
+    return rootOperation;
 }
 
 }// namespace NES

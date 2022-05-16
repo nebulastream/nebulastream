@@ -20,17 +20,20 @@
 namespace NES {
 class CompareOperation : public Operation {
   public:
-    CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName);
+    enum Comparator{ISLT, ISLE, ISGT, ISGE, IEQ, FSLT, FSLE, FSGT, FSGE, FEQ};
+    CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName, Comparator comparator);
     ~CompareOperation() override = default;
 
     std::string getIdentifier();
     std::string getFirstArgName();
     std::string getSecondArgName();
+    Comparator getComparator();
 
   private:
     std::string identifier;
     std::string firstArgName;
     std::string secondArgName;
+    Comparator comparator;
 };
 }// namespace NES
 #endif//NES_COMPAREOPERATION_HPP

@@ -25,7 +25,7 @@ FunctionOperation::FunctionOperation(std::string name, BasicBlockPtr functionBas
 
 const std::string& FunctionOperation::getName() const { return name; }
 BasicBlockPtr FunctionOperation::getFunctionBasicBlock() {
-    return std::move(functionBasicBlock);
+    return functionBasicBlock;
 }
 const std::vector<Operation::BasicType>& FunctionOperation::getInputArgs() const { return inputArgs; }
 Operation::BasicType FunctionOperation::getOutputArg() const { return outputArg; }
