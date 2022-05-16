@@ -16,8 +16,8 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
@@ -59,11 +59,11 @@ GeneratableKeyedSliceMergingOperator::GeneratableKeyedSliceMergingOperator(
 void GeneratableKeyedSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
     auto windowOperatorIndex = pipeline->registerOperatorHandler(windowHandler);
     codegen->generateKeyedSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
-                                                         outputSchema,
-                                                         pipeline,
-                                                         id,
-                                                         windowOperatorIndex,
-                                                         windowAggregation);
+                                                    outputSchema,
+                                                    pipeline,
+                                                    id,
+                                                    windowOperatorIndex,
+                                                    windowAggregation);
 }
 
 void GeneratableKeyedSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

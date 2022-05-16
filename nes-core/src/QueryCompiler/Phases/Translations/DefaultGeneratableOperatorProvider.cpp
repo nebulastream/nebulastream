@@ -57,16 +57,16 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedSliceMergingOperatorHandler.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStoreAppendOperatorHandler.hpp>
 #include <utility>
 
 class PhysicalCEPIterationOperator;

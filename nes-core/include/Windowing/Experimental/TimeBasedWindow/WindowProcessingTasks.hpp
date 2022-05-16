@@ -26,7 +26,6 @@ class SliceMergeTask {
     uint64_t endSlice;
 };
 
-
 /**
  * @brief This task models the trigger of a window with a start and a end.
  */
@@ -37,6 +36,6 @@ class WindowTriggerTask {
     uint64_t windowEnd;
 };
 
-}
+}// namespace NES::Windowing::Experimental
 
 #endif//NES_NES_CORE_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_WINDOWPROCESSINGTASKS_HPP_

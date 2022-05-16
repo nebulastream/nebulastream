@@ -64,7 +64,6 @@ void GeneratableAvgAggregation::compileLift(CompoundStatementPtr currentCode,
 
     currentCode->addStatement(updateSumStatement.copy());
     currentCode->addStatement(updateCountStatement.copy());
-
 }
 
 void GeneratableAvgAggregation::compileCombine(CompoundStatementPtr currentCode,

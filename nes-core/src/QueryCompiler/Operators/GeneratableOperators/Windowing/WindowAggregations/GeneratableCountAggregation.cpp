@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
@@ -34,9 +34,9 @@ GeneratableCountAggregation::create(const Windowing::WindowAggregationDescriptor
 }
 void GeneratableCountAggregation::compileLift(CompoundStatementPtr currentCode,
                                               BinaryOperatorStatement partialValueRef,
-                                              RecordHandlerPtr ) {
+                                              RecordHandlerPtr) {
 
-    auto initValue = DataTypeFactory::createBasicValue((uint64_t)1);
+    auto initValue = DataTypeFactory::createBasicValue((uint64_t) 1);
     auto initGenValue = GeneratableTypesFactory::createValueType(initValue);
     auto updatedPartial = partialValueRef.assign(ConstantExpressionStatement(initGenValue));
     currentCode->addStatement(updatedPartial.copy());

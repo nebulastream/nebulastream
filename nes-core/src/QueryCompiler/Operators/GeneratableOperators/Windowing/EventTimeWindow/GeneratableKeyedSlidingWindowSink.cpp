@@ -14,9 +14,9 @@
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedSlidingWindowSink.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
@@ -58,11 +58,11 @@ GeneratableKeyedSlidingWindowSink::GeneratableKeyedSlidingWindowSink(
 void GeneratableKeyedSlidingWindowSink::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
     codegen->generateKeyedSlidingWindowOperatorSetup(windowHandler->getWindowDefinition(),
-                                                    outputSchema,
+                                                     outputSchema,
                                                      context,
-                                                    id,
-                                                    windowOperatorIndex,
-                                                    windowAggregation);
+                                                     id,
+                                                     windowOperatorIndex,
+                                                     windowAggregation);
 }
 
 void GeneratableKeyedSlidingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
