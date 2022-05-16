@@ -19,14 +19,14 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
 /**
  * @brief Physical python udf operator. It receives an executable pipeline stage, which captures specific user defined logic.
  */
-class PhysicalPythonUdfOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
+class PhysicalPythonUdfOperator : public PhysicalOperators::PhysicalUnaryOperator,
+                                  public PhysicalOperators::AbstractEmitOperator,
+                                  public PhysicalOperators::AbstractScanOperator {
   public:
     /**
      * @brief Creates a new physical python udf operator, which contains a python udf executable pipeline stage
@@ -39,11 +39,11 @@ class PhysicalPythonUdfOperator : public PhysicalUnaryOperator, public AbstractE
                               SchemaPtr inputSchema,
                               SchemaPtr outputSchema,
                               Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage);
-    static PhysicalOperatorPtr create(OperatorId id,
+    static PhysicalOperators::PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
-    static PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
+    static PhysicalOperators::PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
     std::string toString() const override;
@@ -58,8 +58,6 @@ class PhysicalPythonUdfOperator : public PhysicalUnaryOperator, public AbstractE
   private:
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators::Experimental
 #endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPYTHONUDFOPERATOR_HPP_
 #endif// PYTHON_UDF_ENABLED

@@ -14,7 +14,7 @@
 #ifdef PYTHON_UDF_ENABLED
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
 
 PhysicalPythonUdfOperator::PhysicalPythonUdfOperator(OperatorId id,
@@ -45,5 +45,5 @@ OperatorNodePtr PhysicalPythonUdfOperator::copy() { return create(id, inputSchem
 Runtime::Execution::ExecutablePipelineStagePtr PhysicalPythonUdfOperator::getExecutablePipelineStage() {
     return executablePipelineStage;
 }
-}// namespace NES::QueryCompilation::PhysicalOperators
+}// namespace NES::QueryCompilation::PhysicalOperators::Experimental
 #endif

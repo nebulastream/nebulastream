@@ -15,14 +15,13 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PYTHONUDFEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PYTHONUDFEXECUTABLEPIPELINESTAGE_HPP_
 
-#include <Python.h>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
 using Runtime::TupleBuffer;
 using Runtime::WorkerContext;
@@ -51,6 +50,6 @@ class PythonUdfExecutablePipelineStage : public Runtime::Execution::ExecutablePi
     SchemaPtr inputSchema;
 };
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators::Experimental
 #endif// NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PYTHONUDFEXECUTABLEPIPELINESTAGE_HPP_
 #endif// PYTHON_UDF_ENABLED
