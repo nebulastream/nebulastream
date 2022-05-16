@@ -108,7 +108,6 @@ TEST_F(WindowAssignerTest, assignRegularSlidingWindow) {
     ASSERT_EQ(windowAssigner.getSliceEndTs(250), 300);
 }
 
-
 /**
  * @brief Test slice assignment for a ir-regular sliding windows:
  * A ir-regular sliding window has a slide, which is a not divider of the size.

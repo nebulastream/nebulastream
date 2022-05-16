@@ -61,8 +61,6 @@ class GeneratableMedianAggregation : public GeneratableWindowAggregation {
                      BinaryOperatorStatement partialValueRef,
                      RecordHandlerPtr recordHandler) override;
     VariableDeclarationPtr getPartialAggregate() override;
-
-
 };
 
 }// namespace GeneratableOperators

@@ -43,9 +43,7 @@ Windowing::Experimental::KeyedSliceMergingOperatorHandlerPtr PhysicalKeyedSliceM
     return operatorHandler;
 }
 
-OperatorNodePtr PhysicalKeyedSliceMergingOperator::copy() {
-    return create(inputSchema, outputSchema, operatorHandler);
-}
+OperatorNodePtr PhysicalKeyedSliceMergingOperator::copy() { return create(inputSchema, outputSchema, operatorHandler); }
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
 }// namespace NES

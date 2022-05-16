@@ -55,7 +55,6 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
      */
     std::weak_ptr<SliceStaging> getSliceStagingPtr();
 
-
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;

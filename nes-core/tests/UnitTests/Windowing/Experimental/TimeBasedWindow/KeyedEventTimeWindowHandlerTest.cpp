@@ -72,7 +72,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
         };
 };
 
-void processRecord(Windowing::Experimental::KeyedThreadLocalSliceStore& sliceStore, uint64_t ts, uint64_t key, uint64_t ) {
+void processRecord(Windowing::Experimental::KeyedThreadLocalSliceStore& sliceStore, uint64_t ts, uint64_t key, uint64_t) {
     auto& slice = sliceStore.findSliceByTs(ts);
     auto& state = slice->getState();
     state.getEntry<uint64_t>(key);

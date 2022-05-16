@@ -31,7 +31,7 @@ GeneratableMedianAggregation::create(const Windowing::WindowAggregationDescripto
 }
 void GeneratableMedianAggregation::compileLift(CompoundStatementPtr currentCode,
                                                BinaryOperatorStatement partialRef,
-                                               RecordHandlerPtr ) {
+                                               RecordHandlerPtr) {
     auto newCall = FunctionCallStatement("new NES::Windowing::PartialMedian");
     newCall.addParameter(*partialRef);
     currentCode->addStatement(newCall.copy());
@@ -56,8 +56,7 @@ void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr curre
 VariableDeclarationPtr GeneratableMedianAggregation::getPartialAggregate() {
     auto tf = GeneratableTypesFactory();
     return std::make_shared<VariableDeclaration>(
-        VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::PartialMedian"),
-                                    "median_value"));
+        VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::PartialMedian"), "median_value"));
 }
 
 void GeneratableMedianAggregation::compileCombine(CompoundStatementPtr currentCode,

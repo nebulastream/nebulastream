@@ -336,8 +336,8 @@ template<typename Predicate = std::equal_to<uint64_t>>
      * @return true if successful
      */
 [[nodiscard]] bool checkStoppedOrTimeout(QueryId queryId,
-                                        const QueryCatalogServicePtr& queryCatalogService,
-                                        std::chrono::seconds timeout = defaultTimeout) {
+                                         const QueryCatalogServicePtr& queryCatalogService,
+                                         std::chrono::seconds timeout = defaultTimeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {

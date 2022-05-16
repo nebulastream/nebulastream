@@ -51,9 +51,8 @@ class GeneratableWindowAggregation {
      * @param partialRef partial value ref
      * @param recordHandler record handler
      */
-    virtual void compileLift(CompoundStatementPtr currentCode,
-                                    BinaryOperatorStatement partialValueRef,
-                                    RecordHandlerPtr recordHandler) = 0;
+    virtual void
+    compileLift(CompoundStatementPtr currentCode, BinaryOperatorStatement partialValueRef, RecordHandlerPtr recordHandler) = 0;
 
     /**
      * @brief Generate code for combine function to combine multiple pre-aggregates to each other

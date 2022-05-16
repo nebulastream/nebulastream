@@ -81,7 +81,6 @@ class KeyedGlobalSliceStore {
     WatermarkProcessor sliceTriggerSequenceLog;
     uint64_t lastWindowStart = UINT64_MAX;
     uint64_t emittedWindows = 0;
-
 };
 
 }// namespace NES::Windowing::Experimental

@@ -21,7 +21,8 @@ LockFreeMultiOriginWatermarkProcessor::LockFreeMultiOriginWatermarkProcessor(con
     }
 };
 
-std::shared_ptr<LockFreeMultiOriginWatermarkProcessor> LockFreeMultiOriginWatermarkProcessor::create(const std::vector<OriginId> origins) {
+std::shared_ptr<LockFreeMultiOriginWatermarkProcessor>
+LockFreeMultiOriginWatermarkProcessor::create(const std::vector<OriginId> origins) {
     return std::make_shared<LockFreeMultiOriginWatermarkProcessor>(origins);
 }
 
@@ -34,13 +35,12 @@ uint64_t LockFreeMultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, uin
     return getCurrentWatermark();
 }
 
-uint64_t LockFreeMultiOriginWatermarkProcessor::getCurrentWatermark()  {
+uint64_t LockFreeMultiOriginWatermarkProcessor::getCurrentWatermark() {
     auto minimalWatermark = UINT64_MAX;
     for (auto& wt : watermarkProcessors) {
         minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
     }
     return minimalWatermark;
 }
-
 
 }// namespace NES::Experimental

@@ -30,7 +30,8 @@ class WindowProcessingException : public Exceptions::RuntimeException {
      * @param message The exception message.
      * @param location The location of this message.
      */
-    explicit WindowProcessingException(const std::string& message, const std::source_location location = std::source_location::current());
+    explicit WindowProcessingException(const std::string& message,
+                                       const std::source_location location = std::source_location::current());
 
   private:
     const std::string message;
