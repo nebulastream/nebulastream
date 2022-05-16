@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(TimeBasedWindow)
-add_subdirectory(GlobalTimeBasedWindow)
+add_subdirectory(KeyedTimeWindow)
+add_subdirectory(GlobalTimeWindow)
 
 add_source_files(nes-core
         LockFreeMultiOriginWatermarkProcessor.cpp
