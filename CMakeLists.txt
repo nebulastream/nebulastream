@@ -566,11 +566,6 @@ endif ()
 
 ###########################################################################################
 
-
-if (iwyu_path)
-    set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
-endif ()
-
 # Add tests with command
 if (NES_ENABLES_TESTS)
     set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES})
@@ -598,6 +593,11 @@ add_subdirectory(nes-client)
 add_subdirectory(benchmark)
 # Documentation
 add_subdirectory(cmake/docs)
+
+if (iwyu_path)
+    set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
+endif ()
+
 
 # Custom test commands --------------------------------------------------------
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
