@@ -24,9 +24,10 @@ class LockFreeMultiOriginWatermarkProcessor;
 
 namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStore;
-class KeyedGlobalSliceStore;
 class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
+template<typename SliceType>
+class GlobalSliceStore;
 
 /**
  * @brief The KeyedGlobalSliceStoreAppendOperatorHandler, which appends merged slices to the global slice store.
@@ -39,7 +40,7 @@ class KeyedGlobalSliceStoreAppendOperatorHandler
 
   public:
     KeyedGlobalSliceStoreAppendOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                               std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore);
+                                               std::weak_ptr<GlobalSliceStore<KeyedSlice>> globalSliceStore);
 
     ~KeyedGlobalSliceStoreAppendOperatorHandler();
 
@@ -69,7 +70,7 @@ class KeyedGlobalSliceStoreAppendOperatorHandler
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::weak_ptr<KeyedGlobalSliceStore> globalSliceStore;
+    std::weak_ptr<GlobalSliceStore<KeyedSlice>> globalSliceStore;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
 };

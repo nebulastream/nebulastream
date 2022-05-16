@@ -16,7 +16,6 @@
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDEVENTTIMETHREADLOCALWINDOWHANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 namespace NES::Experimental {
 class HashMapFactory;
 using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
@@ -92,7 +91,7 @@ class KeyedThreadLocalPreAggregationOperatorHandler
     uint64_t windowSize;
     uint64_t windowSlide;
     std::weak_ptr<SliceStaging> weakSliceStaging;
-    std::vector<KeyedThreadLocalSliceStore> threadLocalSliceStores;
+    std::vector<std::unique_ptr<KeyedThreadLocalSliceStore>> threadLocalSliceStores;
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;

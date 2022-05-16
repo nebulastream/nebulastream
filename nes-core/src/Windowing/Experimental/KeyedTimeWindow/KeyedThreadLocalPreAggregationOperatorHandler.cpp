@@ -23,13 +23,12 @@
 #include <State/StateVariable.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
-#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/SliceStaging.hpp>
+#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
+#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -51,13 +50,14 @@ KeyedThreadLocalSliceStore& KeyedThreadLocalPreAggregationOperatorHandler::getTh
     if (threadLocalSliceStores.size() <= workerId) {
         throw WindowProcessingException("ThreadLocalSliceStore for " + std::to_string(workerId) + " is not initialized.");
     }
-    return threadLocalSliceStores[workerId];
+    return *threadLocalSliceStores[workerId];
 }
 
 void KeyedThreadLocalPreAggregationOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                                           NES::Experimental::HashMapFactoryPtr hashmapFactory) {
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        threadLocalSliceStores.emplace_back(hashmapFactory, windowSize, windowSlide);
+        auto threadLocalSliceStore = std::make_unique<KeyedThreadLocalSliceStore>(hashmapFactory, windowSize, windowSlide);
+        threadLocalSliceStores.emplace_back(std::move(threadLocalSliceStore));
     }
     this->factory = hashmapFactory;
 }
@@ -123,7 +123,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
     }
 
     for (auto& threadLocalSliceStore : threadLocalSliceStores) {
-        for (auto& slice : threadLocalSliceStore.getSlices()) {
+        for (auto& slice : threadLocalSliceStore->getSlices()) {
             auto& sliceState = slice->getState();
             // each worker adds its local state to the staging area
             auto [addedPartitionsToSlice, numberOfBuffers] =

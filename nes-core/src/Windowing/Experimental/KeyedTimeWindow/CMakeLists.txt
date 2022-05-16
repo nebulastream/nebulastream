@@ -19,6 +19,5 @@ add_source_files(nes-core
         KeyedSlidingWindowSinkOperatorHandler.cpp
         KeyedThreadLocalSliceStore.cpp
         KeyedSlice.cpp
-        KeyedGlobalSliceStore.cpp
         SliceStaging.cpp
 )
