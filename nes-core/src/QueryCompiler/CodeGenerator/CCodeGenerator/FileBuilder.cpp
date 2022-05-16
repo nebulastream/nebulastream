@@ -61,6 +61,7 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>\n"
                           "#include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceStaging.hpp>\n"
                           "#include <Windowing/Experimental/WindowProcessingTasks.hpp>\n"
+                          "#include <Windowing/Experimental/GlobalSliceStore.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>\n"

@@ -22,13 +22,13 @@
 #include <State/StateVariable.hpp>
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
-#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
-#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/KeyedGlobalSliceStore.hpp>
+#include <Windowing/Experimental/GlobalSliceStore.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/SliceStaging.hpp>
+#include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
+#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -37,7 +37,7 @@ namespace NES::Windowing::Experimental {
 
 KeyedSlidingWindowSinkOperatorHandler::KeyedSlidingWindowSinkOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-    std::shared_ptr<KeyedGlobalSliceStore>& globalSliceStore)
+    std::shared_ptr<GlobalSliceStore<KeyedSlice>>& globalSliceStore)
     : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();

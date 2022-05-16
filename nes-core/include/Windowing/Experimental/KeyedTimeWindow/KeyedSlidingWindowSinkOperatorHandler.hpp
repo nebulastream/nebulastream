@@ -26,10 +26,11 @@ class LockFreeMultiOriginWatermarkProcessor;
 namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStore;
 class WindowTriggerTask;
-class KeyedGlobalSliceStore;
 class KeyedSlice;
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
+template<typename SliceType>
+class GlobalSliceStore;
 
 /**
  * @brief The KeyedSlidingWindowSinkOperatorHandler.
@@ -42,7 +43,7 @@ class KeyedSlidingWindowSinkOperatorHandler
 
   public:
     KeyedSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                          std::shared_ptr<KeyedGlobalSliceStore>& globalSliceStore);
+                                          std::shared_ptr<GlobalSliceStore<KeyedSlice>>& globalSliceStore);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
 
@@ -58,14 +59,14 @@ class KeyedSlidingWindowSinkOperatorHandler
 
     std::vector<KeyedSliceSharedPtr> getSlicesForWindow(WindowTriggerTask* windowTriggerTask);
 
-    KeyedGlobalSliceStore& getGlobalSliceStore() { return *globalSliceStore; }
+    GlobalSliceStore<KeyedSlice>& getGlobalSliceStore() { return *globalSliceStore; }
 
     ~KeyedSlidingWindowSinkOperatorHandler() { NES_DEBUG("Destruct KeyedEventTimeWindowHandler"); }
 
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::shared_ptr<KeyedGlobalSliceStore> globalSliceStore;
+    std::shared_ptr<GlobalSliceStore<KeyedSlice>> globalSliceStore;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
 };

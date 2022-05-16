@@ -19,23 +19,10 @@ namespace NES::Windowing::Experimental {
 KeyedThreadLocalSliceStore::KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory,
                                                        uint64_t windowSize,
                                                        uint64_t windowSlide)
-    : windowAssigner(windowSize, windowSlide), hashMapFactory(hashMapFactory), slices(){};
+    : ThreadLocalSliceStore<KeyedSlice>(windowSize, windowSlide), hashMapFactory(hashMapFactory){};
 
 KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
     return std::make_unique<KeyedSlice>(hashMapFactory, startTs, endTs);
 }
-
-void KeyedThreadLocalSliceStore::removeSlicesUntilTs(uint64_t ts) {
-    // drop all slices as long as the list is not empty and the first slice ends before the current ts.
-    while (!slices.empty() && slices.front()->getEnd() <= ts) {
-        slices.pop_front();
-    }
-}
-
-uint64_t KeyedThreadLocalSliceStore::getLastWatermark() { return lastWatermarkTs; }
-
-void KeyedThreadLocalSliceStore::setLastWatermark(uint64_t watermarkTs) { lastWatermarkTs = watermarkTs; }
-
-uint64_t KeyedThreadLocalSliceStore::getNumberOfSlices() { return slices.size(); }
 
 }// namespace NES::Windowing::Experimental
