@@ -611,6 +611,10 @@ add_executable(single-node-thread-local-sliding-window-tests "Integration/Window
 target_link_libraries(single-node-thread-local-sliding-window-tests nes-tests)
 add_test(NAME single-node-thread-local-sliding-window-tests COMMAND single-node-thread-local-sliding-window-tests)
 
+add_executable(single-node-thread-local-global-sliding-window-tests "Integration/Windowing/SlidingWindow/SingleNodeThreadLocalGlobalSlidingWindowTests.cpp")
+target_link_libraries(single-node-thread-local-global-sliding-window-tests nes-tests)
+add_test(NAME single-node-thread-local-global-sliding-window-tests COMMAND single-node-thread-local-global-sliding-window-tests)
+
 ### concurrent window deployment test ###
 add_executable(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")
 target_link_libraries(concurrent-window-deployment-test nes-tests)

@@ -28,10 +28,10 @@ GeneratableOperatorPtr GeneratableGlobalWindowSliceStoreAppendOperator::create(
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableGlobalWindowSliceStoreAppendOperator>(
         GeneratableGlobalWindowSliceStoreAppendOperator(id,
-                                                       std::move(inputSchema),
-                                                       std::move(outputSchema),
-                                                       std::move(operatorHandler),
-                                                       std::move(windowAggregation)));
+                                                        std::move(inputSchema),
+                                                        std::move(outputSchema),
+                                                        std::move(operatorHandler),
+                                                        std::move(windowAggregation)));
 }
 
 GeneratableOperatorPtr GeneratableGlobalWindowSliceStoreAppendOperator::create(
@@ -55,15 +55,12 @@ GeneratableGlobalWindowSliceStoreAppendOperator::GeneratableGlobalWindowSliceSto
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
-void GeneratableGlobalWindowSliceStoreAppendOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {
-    //   auto windowDefinition = windowHandler->getWindowDefinition();
-    //codegen->generateWindowSetup(windowDefinition, outputSchema, context, id, windowHandler);
-}
+void GeneratableGlobalWindowSliceStoreAppendOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
 void GeneratableGlobalWindowSliceStoreAppendOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->registerOperatorHandler(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
-    codegen->generateCodeForSliceStoreAppend(context, handler);
+    codegen->generateCodeForGlobalSliceStoreAppend(context, handler);
     windowHandler = nullptr;
 }
 

@@ -258,6 +258,7 @@ class CodeGenerator {
      * @return
      */
     virtual bool generateCodeForSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
+    virtual bool generateCodeForGlobalSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) = 0;
 
     /**
      * @brief Code generation for the emitting of keyed tumbling windows.
@@ -290,6 +291,13 @@ class CodeGenerator {
      * @return
      */
     virtual bool generateCodeForKeyedSlidingWindowSink(
+        Windowing::LogicalWindowDefinitionPtr window,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex,
+        SchemaPtr Schema) = 0;
+
+    virtual bool generateCodeForGlobalSlidingWindowSink(
         Windowing::LogicalWindowDefinitionPtr window,
         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
@@ -343,6 +351,14 @@ class CodeGenerator {
     */
     virtual uint64_t
     generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                            SchemaPtr,
+                                            PipelineContextPtr context,
+                                            uint64_t id,
+                                            uint64_t windowOperatorIndex,
+                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) = 0;
+
+    virtual uint64_t
+    generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
                                             SchemaPtr,
                                             PipelineContextPtr context,
                                             uint64_t id,
