@@ -15,6 +15,7 @@
 #ifndef NES_NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 #define NES_NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
@@ -33,6 +34,7 @@ class MonitoringSink : public SinkMedium {
      * @Note the default output will be written to cout
      */
     explicit MonitoringSink(MetricStorePtr metricStore,
+                            MetricCollectorType collectorType,
                             Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,
                             QueryId queryId,
@@ -79,6 +81,7 @@ class MonitoringSink : public SinkMedium {
 
   private:
     MetricStorePtr metricStore;
+    MetricCollectorType collectorType;
 };
 using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 

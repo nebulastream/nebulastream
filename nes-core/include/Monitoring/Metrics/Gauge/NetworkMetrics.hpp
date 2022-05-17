@@ -34,7 +34,7 @@ namespace NES {
  */
 class NetworkMetrics {
   public:
-    NetworkMetrics() = default;
+    NetworkMetrics();
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -66,6 +66,7 @@ class NetworkMetrics {
     bool operator==(const NetworkMetrics& rhs) const;
     bool operator!=(const NetworkMetrics& rhs) const;
 
+    uint64_t nodeId;
     uint64_t interfaceName;
 
     uint64_t rBytes;

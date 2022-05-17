@@ -25,7 +25,7 @@ namespace NES {
  */
 class NetworkCollector : public MetricCollector {
   public:
-    explicit NetworkCollector();
+    explicit NetworkCollector(uint64_t nodeId = 0);
 
     /**
      * @brief Returns the type of metric collector

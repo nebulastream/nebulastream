@@ -14,6 +14,7 @@
 
 #include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Sources/MonitoringSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
 
@@ -27,7 +28,7 @@ MonitoringSourceTypePtr MonitoringSourceType::create(uint64_t metricCollectorTyp
 }
 
 MonitoringSourceTypePtr MonitoringSourceType::create(uint64_t metricCollectorType) {
-    return create(metricCollectorType, DEFAULT_WAIT_TIME);
+    return create(metricCollectorType, MonitoringSource::DEFAULT_WAIT_TIME);
 }
 
 std::string MonitoringSourceType::toString() {
@@ -47,7 +48,7 @@ bool MonitoringSourceType::equal(const PhysicalSourceTypePtr& other) {
     return waitTime == otherSourceConfig->waitTime && metricCollectorType == otherSourceConfig->metricCollectorType;
 }
 
-void MonitoringSourceType::reset() { setWaitTime(DEFAULT_WAIT_TIME); }
+void MonitoringSourceType::reset() { setWaitTime(MonitoringSource::DEFAULT_WAIT_TIME); }
 std::chrono::milliseconds MonitoringSourceType::getWaitTime() const { return waitTime; }
 void MonitoringSourceType::setWaitTime(std::chrono::milliseconds waitTime) { this->waitTime = waitTime; }
 uint64_t MonitoringSourceType::getMetricCollectorType() const { return metricCollectorType; }

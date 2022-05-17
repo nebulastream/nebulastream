@@ -57,6 +57,7 @@ class RuntimeMetrics {
     bool operator==(const RuntimeMetrics& rhs) const;
     bool operator!=(const RuntimeMetrics& rhs) const;
 
+    uint64_t nodeId;
     uint64_t wallTimeNs;
     uint64_t memoryUsageInBytes;
     uint64_t cpuLoadInJiffies;//user+system

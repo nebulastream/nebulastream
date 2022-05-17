@@ -26,7 +26,7 @@ namespace NES {
  */
 class NetworkMetricsWrapper {
   public:
-    NetworkMetricsWrapper() = default;
+    NetworkMetricsWrapper(uint64_t nodeId = 0);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.
@@ -55,6 +55,9 @@ class NetworkMetricsWrapper {
 
     std::vector<std::string> getInterfaceNames();
 
+    uint64_t getNodeId() const;
+    void setNodeId(uint64_t nodeId);
+
     /**
      * @brief Returns the metrics as json
      * @return Json containing the metrics
@@ -66,6 +69,7 @@ class NetworkMetricsWrapper {
 
   private:
     std::vector<NetworkMetrics> networkMetrics;
+    uint64_t nodeId;
 } __attribute__((packed));
 
 /**

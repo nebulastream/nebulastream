@@ -22,6 +22,8 @@
 #include <cpprest/json.h>
 
 namespace NES {
+CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
+
 CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
     if (!arr.empty()) {
         cpuMetrics = std::move(arr);
@@ -41,7 +43,9 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     for (unsigned int i = 0; i < size(); i++) {
-        getValue(i).writeToBuffer(buf, tupleIndex + i);
+        CpuMetrics metrics = getValue(i);
+        metrics.nodeId = nodeId;
+        metrics.writeToBuffer(buf, tupleIndex + i);
     }
 }
 
@@ -57,6 +61,7 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
         cpuList.emplace_back(metrics);
     }
     cpuMetrics = std::move(cpuList);
+    nodeId = cpuMetrics[0].nodeId;
 }
 
 uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
@@ -64,8 +69,10 @@ uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
 CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
 
 web::json::value CpuMetricsWrapper::toJson() const {
-    web::json::value metricsJson{};
+    web::json::value metricsJsonWrapper{};
+    metricsJsonWrapper["NODE_ID"] = web::json::value::number(nodeId);
 
+    web::json::value metricsJson{};
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
         if (i == 0) {
             metricsJson["TOTAL"] = cpuMetrics[i].toJson();
@@ -73,6 +80,7 @@ web::json::value CpuMetricsWrapper::toJson() const {
             metricsJson["CORE_" + std::to_string(i)] = cpuMetrics[i].toJson();
         }
     }
+    metricsJsonWrapper["values"] = metricsJson;
     return metricsJson;
 }
 
@@ -88,10 +96,26 @@ bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
             return false;
         }
     }
+
+    if (nodeId != rhs.nodeId) {
+        return false;
+    }
+
     return true;
 }
 
 bool CpuMetricsWrapper::operator!=(const CpuMetricsWrapper& rhs) const { return !(rhs == *this); }
+
+uint64_t CpuMetricsWrapper::getNodeId() const { return nodeId; }
+
+void CpuMetricsWrapper::setNodeId(uint64_t nodeId) {
+    this->nodeId = nodeId;
+    if (!cpuMetrics.empty()) {
+        for (auto& nMetric : cpuMetrics) {
+            nMetric.nodeId = this->nodeId;
+        }
+    }
+}
 
 void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     metrics.writeToBuffer(buf, tupleIndex);

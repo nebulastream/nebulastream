@@ -26,9 +26,12 @@
 
 namespace NES {
 
+CpuMetrics::CpuMetrics() : nodeId(0) {}
+
 SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
-                           ->addField(prefix + "core_num", BasicType::UINT64)
+                           ->addField(prefix + "node_id", BasicType::UINT64)
+                           ->addField(prefix + "coreNum", BasicType::UINT64)
                            ->addField(prefix + "user", BasicType::UINT64)
                            ->addField(prefix + "nice", BasicType::UINT64)
                            ->addField(prefix + "system", BasicType::UINT64)
@@ -46,8 +49,14 @@ void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) c
     auto layout = Runtime::MemoryLayouts::RowLayout::create(CpuMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
+    auto totalSize = CpuMetrics::getSchema("")->getSchemaSizeInBytes();
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "CpuMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+
     uint64_t cnt = 0;
-    buffer[tupleIndex][cnt++].write<uint64_t>(core_num);
+    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<uint64_t>(coreNum);
     buffer[tupleIndex][cnt++].write<uint64_t>(user);
     buffer[tupleIndex][cnt++].write<uint64_t>(nice);
     buffer[tupleIndex][cnt++].write<uint64_t>(system);
@@ -67,7 +76,8 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
     int cnt = 0;
-    core_num = buffer[tupleIndex][cnt++].read<uint64_t>();
+    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    coreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
     user = buffer[tupleIndex][cnt++].read<uint64_t>();
     nice = buffer[tupleIndex][cnt++].read<uint64_t>();
     system = buffer[tupleIndex][cnt++].read<uint64_t>();
@@ -81,15 +91,17 @@ void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
-    os << "core_num: " << values.core_num << "user: " << values.user << " nice: " << values.nice << " system: " << values.system
-       << " idle: " << values.idle << " iowait: " << values.iowait << " irq: " << values.irq << " softirq: " << values.softirq
-       << " steal: " << values.steal << " guest: " << values.guest << " guestnice: " << values.guestnice;
+    os << "nodeId: " << values.nodeId << "coreNum: " << values.coreNum << "user: " << values.user << " nice: " << values.nice
+       << " system: " << values.system << " idle: " << values.idle << " iowait: " << values.iowait << " irq: " << values.irq
+       << " softirq: " << values.softirq << " steal: " << values.steal << " guest: " << values.guest
+       << " guestnice: " << values.guestnice;
     return os;
 }
 
 web::json::value CpuMetrics::toJson() const {
     web::json::value metricsJson{};
-    metricsJson["CORE_NUM"] = web::json::value::number(core_num);
+    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
+    metricsJson["CORE_NUM"] = web::json::value::number(coreNum);
     metricsJson["USER"] = web::json::value::number(user);
     metricsJson["NICE"] = web::json::value::number(nice);
     metricsJson["SYSTEM"] = web::json::value::number(system);
@@ -105,9 +117,9 @@ web::json::value CpuMetrics::toJson() const {
 }
 
 bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
-    return core_num == rhs.core_num && user == rhs.user && nice == rhs.nice && system == rhs.system && idle == rhs.idle
-        && iowait == rhs.iowait && irq == rhs.irq && softirq == rhs.softirq && steal == rhs.steal && guest == rhs.guest
-        && guestnice == rhs.guestnice;
+    return nodeId == rhs.nodeId && coreNum == rhs.coreNum && user == rhs.user && nice == rhs.nice && system == rhs.system
+        && idle == rhs.idle && iowait == rhs.iowait && irq == rhs.irq && softirq == rhs.softirq && steal == rhs.steal
+        && guest == rhs.guest && guestnice == rhs.guestnice;
 }
 
 bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }

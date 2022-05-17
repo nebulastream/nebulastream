@@ -16,6 +16,9 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/Storage/AllEntriesMetricStore.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -556,6 +559,36 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
     write_result = csvSink->writeData(buffer, wctx);
 
     EXPECT_EQ(buffer.getWatermark(), 1234567ull);
+    buffer.release();
+}
+
+TEST_F(SinkTest, testMonitoringSink) {
+    uint64_t nodeId = 4711;
+    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
+    auto nodeEngine = this->nodeEngine;
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+
+    auto metricStore = std::make_shared<AllEntriesMetricStore>();
+    DiskCollector diskCollector = DiskCollector();
+    const DataSinkPtr monitoringSink = createMonitoringSink(metricStore, diskCollector.getType(), nodeEngine, 1, 0, 0);
+
+    for (uint64_t i = 0; i < 2; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
+        }
+    }
+
+    buffer.setNumberOfTuples(4);
+    //cout << "watermark=" << buffer.getWatermark() << endl;
+    write_result = monitoringSink->writeData(buffer, wctx);
+
+    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
+    auto metricVec = storedMetrics->at(MetricType::DiskMetric);
+    auto diskMetric = metricVec->at(0);
+    NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson());
+    ASSERT_EQ(storedMetrics->size(), 2);
+
     buffer.release();
 }
 

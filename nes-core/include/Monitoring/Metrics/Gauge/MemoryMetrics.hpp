@@ -25,7 +25,7 @@ namespace NES {
  */
 class MemoryMetrics {
   public:
-    MemoryMetrics() = default;
+    MemoryMetrics();
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -58,6 +58,7 @@ class MemoryMetrics {
     bool operator==(const MemoryMetrics& rhs) const;
     bool operator!=(const MemoryMetrics& rhs) const;
 
+    uint64_t nodeId;
     uint64_t TOTAL_RAM;
     uint64_t TOTAL_SWAP;
     uint64_t FREE_RAM;

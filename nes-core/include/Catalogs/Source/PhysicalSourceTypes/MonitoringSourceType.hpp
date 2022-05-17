@@ -85,9 +85,6 @@ class MonitoringSourceType : public PhysicalSourceType {
     MonitoringSourceType(uint64_t metricCollectorType, std::chrono::milliseconds waitTime);
     uint64_t metricCollectorType;
     std::chrono::milliseconds waitTime;
-
-  public:
-    static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);
 };
 
 }// namespace NES

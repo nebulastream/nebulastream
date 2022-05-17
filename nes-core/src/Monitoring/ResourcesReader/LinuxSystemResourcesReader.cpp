@@ -221,7 +221,7 @@ CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
                 name[len] = '\0';
 
                 auto cpuStats = CpuMetrics();
-                cpuStats.core_num = i;
+                cpuStats.coreNum = i;
                 cpuStats.user = std::stoul(tokens[1]);
                 cpuStats.nice = std::stoul(tokens[2]);
                 cpuStats.system = std::stoul(tokens[3]);
@@ -363,7 +363,7 @@ MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
         output.LOADS_1MIN = sinfo->loads[0];
         output.LOADS_5MIN = sinfo->loads[1];
         output.LOADS_15MIN = sinfo->loads[2];
-        delete[] sinfo;
+        free(sinfo);
     } catch (const log4cxx::helpers::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading memory stats " << e.what());
     }
@@ -387,6 +387,7 @@ DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
         output.fBlocks = svfs->f_blocks;
         output.fBfree = svfs->f_bfree;
         output.fBavail = svfs->f_bavail;
+        free(svfs);
     } catch (const log4cxx::helpers::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading disk stats " << e.what());
     }

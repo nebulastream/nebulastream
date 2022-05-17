@@ -18,6 +18,7 @@ add_source_files(nes-core
         PrintSink.cpp
         NullOutputSink.cpp
         MaterializedViewSink.cpp
+        MonitoringSink.cpp
 )
 
 if(NES_USE_KAFKA)

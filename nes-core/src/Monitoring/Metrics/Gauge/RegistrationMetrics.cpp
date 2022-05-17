@@ -27,19 +27,20 @@
 namespace NES {
 
 RegistrationMetrics::RegistrationMetrics()
-    : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false), hasBattery(false) {
+    : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false),
+      hasBattery(false) {
     NES_DEBUG("RegistrationMetrics: Default ctor");
 }
 
 RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
-    : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
+    : nodeId(0), totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
       hasBattery(hasBattery) {
     NES_DEBUG("RegistrationMetrics: Init with flag moving:" + std::to_string(isMoving)
               + ", hasBattery:" + std::to_string(hasBattery));
 }
 
 RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& metrics)
-    : totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()), totalCPUJiffies(metrics.totalcpujiffies()),
+    : nodeId(0), totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()), totalCPUJiffies(metrics.totalcpujiffies()),
       cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()), isMoving(metrics.ismoving()),
       hasBattery(metrics.hasbattery()) {
     NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
@@ -47,6 +48,8 @@ RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& 
 
 SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
+                           ->addField(prefix + "node_id", BasicType::UINT64)
+
                            ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
 
                            ->addField(prefix + "cpuCoreNum", BasicType::UINT64)
@@ -64,7 +67,13 @@ void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupl
     auto layout = Runtime::MemoryLayouts::RowLayout::create(RegistrationMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
+    auto totalSize = RegistrationMetrics::getSchema("")->getSchemaSizeInBytes();
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "RegistrationMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+
     uint64_t cnt = 0;
+    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
     buffer[tupleIndex][cnt++].write<uint64_t>(totalMemoryBytes);
     buffer[tupleIndex][cnt++].write<uint64_t>(cpuCoreNum);
     buffer[tupleIndex][cnt++].write<uint64_t>(totalCPUJiffies);
@@ -81,19 +90,19 @@ void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tup
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
     uint64_t cnt = 0;
 
+    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
     totalMemoryBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
     cpuCoreNum = buffer[tupleIndex][cnt++].read<uint64_t>();
     totalCPUJiffies = buffer[tupleIndex][cnt++].read<uint64_t>();
     cpuPeriodUS = buffer[tupleIndex][cnt++].read<uint64_t>();
     cpuQuotaUS = buffer[tupleIndex][cnt++].read<uint64_t>();
-
     isMoving = buffer[tupleIndex][cnt++].read<bool>();
     hasBattery = buffer[tupleIndex][cnt++].read<bool>();
 }
 
 web::json::value RegistrationMetrics::toJson() const {
     web::json::value metricsJson{};
-
+    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
     metricsJson["TotalMemory"] = web::json::value::number(totalMemoryBytes);
 
     metricsJson["CpuCoreNum"] = web::json::value::number(cpuCoreNum);
@@ -120,9 +129,9 @@ SerializableRegistrationMetricsPtr RegistrationMetrics::serialize() const {
 }
 
 bool RegistrationMetrics::operator==(const RegistrationMetrics& rhs) const {
-    return totalMemoryBytes == rhs.totalMemoryBytes && cpuCoreNum == rhs.cpuCoreNum && totalCPUJiffies == rhs.totalCPUJiffies
-        && cpuPeriodUS == rhs.cpuPeriodUS && cpuQuotaUS == rhs.cpuQuotaUS && isMoving == rhs.isMoving
-        && hasBattery == rhs.hasBattery;
+    return nodeId == rhs.nodeId && totalMemoryBytes == rhs.totalMemoryBytes && cpuCoreNum == rhs.cpuCoreNum
+        && totalCPUJiffies == rhs.totalCPUJiffies && cpuPeriodUS == rhs.cpuPeriodUS && cpuQuotaUS == rhs.cpuQuotaUS
+        && isMoving == rhs.isMoving && hasBattery == rhs.hasBattery;
 }
 
 bool RegistrationMetrics::operator!=(const RegistrationMetrics& rhs) const { return !(rhs == *this); }

@@ -25,7 +25,7 @@ namespace NES {
  */
 class DiskCollector : public MetricCollector {
   public:
-    explicit DiskCollector();
+    explicit DiskCollector(uint64_t nodeId = 0);
 
     /**
      * @brief Returns the type of metric collector

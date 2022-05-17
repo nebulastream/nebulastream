@@ -200,7 +200,7 @@ class MetricValidator {
             NES_ERROR("MetricValidator: Missing field disk");
             check = false;
         } else {
-            if (!(json["disk"].size() == 5U)) {
+            if (!(json["disk"].size() == 6U)) {
                 NES_ERROR("MetricValidator: Values for disk missing");
                 check = false;
             }

@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -270,6 +271,26 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                               uint64_t numberOfOrigins = 1,
                               uint8_t retryTimes = 5);
+
+/**
+ * @brief create a monitoring data sink
+ * @param metricStore
+ * @param nodeEngine
+ * @param numOfProducers
+ * @param queryId
+ * @param querySubPlanId
+ * @param faultToleranceType
+ * @param numberOfOrigins
+ * @return a data sink pointer
+ */
+DataSinkPtr createMonitoringSink(MetricStorePtr metricStore,
+                                 MetricCollectorType collectorType,
+                                 Runtime::NodeEnginePtr nodeEngine,
+                                 uint32_t numOfProducers,
+                                 QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                 uint64_t numberOfOrigins = 1);
 
 namespace Experimental::MaterializedView {
 

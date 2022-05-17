@@ -22,8 +22,8 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
-MemoryCollector::MemoryCollector()
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+MemoryCollector::MemoryCollector(uint64_t nodeId)
+    : MetricCollector(nodeId), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(MemoryMetrics::getSchema("")) {
     NES_INFO("MemoryCollector: Init MemoryCollector with schema " << schema->toString());
 }
@@ -33,6 +33,7 @@ MetricCollectorType MemoryCollector::getType() { return MEMORY_COLLECTOR; }
 bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         MemoryMetrics measuredVal = resourceReader->readMemoryStats();
+        measuredVal.nodeId = getNodeId();
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
         NES_ERROR("MemoryCollector: Error while collecting metrics " << ex.what());
@@ -44,7 +45,9 @@ bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 SchemaPtr MemoryCollector::getSchema() { return schema; }
 
 const MetricPtr MemoryCollector::readMetric() const {
-    return std::make_shared<Metric>(resourceReader->readMemoryStats(), MetricType::MemoryMetric);
+    MemoryMetrics metrics = resourceReader->readMemoryStats();
+    metrics.nodeId = getNodeId();
+    return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
 }
 
 }// namespace NES
