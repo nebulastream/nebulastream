@@ -39,13 +39,15 @@ class PhysicalPythonUdfOperator : public PhysicalOperators::PhysicalUnaryOperato
                               SchemaPtr inputSchema,
                               SchemaPtr outputSchema,
                               Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage);
-    static PhysicalOperators::PhysicalOperatorPtr create(OperatorId id,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
-    static PhysicalOperators::PhysicalOperatorPtr create(const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
+    static PhysicalOperators::PhysicalOperatorPtr
+    create(OperatorId id,
+           const SchemaPtr& inputSchema,
+           const SchemaPtr& outputSchema,
+           const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
+    static PhysicalOperators::PhysicalOperatorPtr
+    create(const SchemaPtr& inputSchema,
+           const SchemaPtr& outputSchema,
+           const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
     std::string toString() const override;
     OperatorNodePtr copy() override;
 

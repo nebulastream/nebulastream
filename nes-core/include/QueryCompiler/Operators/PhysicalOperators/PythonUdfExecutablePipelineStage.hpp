@@ -44,9 +44,9 @@ class PythonUdfExecutablePipelineStage : public Runtime::Execution::ExecutablePi
   private:
     // TODO make configurable via config file ideally
     const char* udfDirectory = "test_data/"; // directory which contains the udf file
-    const char* udfFilename = "PythonUdf"; // name of the udf file
-    const char* pythonFunctionName = "add42"; // function name that is called
-    const char* pythonSystemPathKey = "path"; // keyword to set the Py system path
+    const char* udfFilename = "PythonUdf";   // name of the udf file
+    const char* pythonFunctionName = "add42";// function name that is called
+    const char* pythonSystemPathKey = "path";// keyword to set the Py system path
     SchemaPtr inputSchema;
 };
 
