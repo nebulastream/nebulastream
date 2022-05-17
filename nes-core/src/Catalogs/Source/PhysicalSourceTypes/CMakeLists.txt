@@ -26,4 +26,5 @@ add_source_files(nes-core
         SenseSourceType.cpp
         MaterializedViewSourceType.cpp
         StaticDataSourceType.cpp
-        )
+        TCPSourceType.cpp
+)

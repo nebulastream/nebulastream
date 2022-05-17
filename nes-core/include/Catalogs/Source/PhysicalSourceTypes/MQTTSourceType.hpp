@@ -33,22 +33,22 @@ class MQTTSourceType : public PhysicalSourceType {
 
   public:
     /**
-     * @brief create a MQTTSourceConfigPtr object
+     * @brief create an MQTTSourceTypePtr object
      * @param sourceConfigMap inputted config options
-     * @return MQTTSourceConfigPtr
+     * @return MQTTSourceTypePtr
      */
     static MQTTSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief create a MQTTSourceConfigPtr object
+     * @brief create an MQTTSourceTypePtr object
      * @param sourceConfigMap inputted config options
-     * @return MQTTSourceConfigPtr
+     * @return MQTTSourceTypePtr
      */
     static MQTTSourceTypePtr create(Yaml::Node yamlConfig);
 
     /**
-     * @brief create a MQTTSourceConfigPtr object with default values
-     * @return MQTTSourceConfigPtr
+     * @brief create an MQTTSourceTypePtr object with default values
+     * @return MQTTSourceTypePtr
      */
     static MQTTSourceTypePtr create();
 
@@ -141,11 +141,13 @@ class MQTTSourceType : public PhysicalSourceType {
   private:
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
+     * @param sourceConfigMap inputted config options
      */
     explicit MQTTSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
+     * @brief constructor to create a new MQTT source config object initialized with values from yamlConfig
+     * @param yamlConfig inputted config options
      */
     explicit MQTTSourceType(Yaml::Node yamlConfig);
 

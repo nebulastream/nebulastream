@@ -145,6 +145,7 @@ MQTTSourceType::MQTTSourceType()
 std::string MQTTSourceType::toString() {
     std::stringstream ss;
     ss << "MQTTSourceType => {\n";
+    ss << Configurations::URL_CONFIG + ":" + url->toStringNameCurrentValue();
     ss << Configurations::CLIENT_ID_CONFIG + ":" + clientId->toStringNameCurrentValue();
     ss << Configurations::USER_NAME_CONFIG + ":" + userName->toStringNameCurrentValue();
     ss << Configurations::TOPIC_CONFIG + ":" + topic->toStringNameCurrentValue();
@@ -161,7 +162,8 @@ bool MQTTSourceType::equal(const PhysicalSourceTypePtr& other) {
         return false;
     }
     auto otherSourceConfig = other->as<MQTTSourceType>();
-    return clientId->getValue() == otherSourceConfig->clientId->getValue()
+    return url->getValue() == otherSourceConfig->url->getValue()
+        && clientId->getValue() == otherSourceConfig->clientId->getValue()
         && userName->getValue() == otherSourceConfig->userName->getValue()
         && topic->getValue() == otherSourceConfig->topic->getValue() && qos->getValue() == otherSourceConfig->qos->getValue()
         && cleanSession->getValue() == otherSourceConfig->cleanSession->getValue()
