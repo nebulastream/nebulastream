@@ -258,6 +258,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::UDF::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
+    uint64_t numberOfBuffersPerEpoch;
     LocationServicePtr locationService;
 
   public:

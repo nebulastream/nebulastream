@@ -14,6 +14,7 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <filesystem>

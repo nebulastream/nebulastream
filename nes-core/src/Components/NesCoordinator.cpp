@@ -75,7 +75,7 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
       restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorIp),
-      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
+      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring), numberOfBuffersPerWorker(this->coordinatorConfiguration->numberOfBuffersPerWorker) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     setThreadName("NesCoordinator");
     topology = Topology::create();
@@ -183,6 +183,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorConfiguration->worker.localWorkerIp = rpcIp;
     // Ensure that coordinator and internal worker enable/disable monitoring together.
     coordinatorConfiguration->worker.enableMonitoring = enableMonitoring;
+
+    coordinatorConfiguration->worker.numberOfBuffersPerEpoch = numberOfBuffersPerEpoch;
     // Create a copy of the worker configuration to pass to the NesWorker.
     auto workerConfig = std::make_shared<WorkerConfiguration>(coordinatorConfiguration->worker);
     worker = std::make_shared<NesWorker>(std::move(workerConfig), monitoringService->getMonitoringManager()->getMetricStore());

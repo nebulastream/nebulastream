@@ -61,10 +61,18 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->numberOfBuffersPerEpoch = 15;
+        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 20;
+        coordinatorConfig->numberOfBuffersPerWorker = 2;
+        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 2;
 
         workerConfig = WorkerConfiguration::create();
-        workerConfig->numberOfBuffersPerEpoch = 100;
+        workerConfig->numberOfBuffersPerEpoch = 15;
+        workerConfig->numberOfBuffersInGlobalBufferManager = 20;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig->numberOfBuffersPerWorker = 2;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = 10;
+        workerConfig->enableStatisticOuput = true;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -393,6 +401,7 @@ TEST_F(UpstreamBackupTest, DISABLED_testTrimmingAfterPropagateEpoch) {
  * @brief test if upstream backup doesn't fail
  */
 TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
+
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
@@ -434,6 +443,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(100000000));
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
