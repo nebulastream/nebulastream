@@ -213,6 +213,10 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     TopologyManagerServicePtr getTopologyManagerService() const;
 
+    /**
+     * getter for the locationService
+     * @return
+     */
     NES::Spatial::Index::Experimental::LocationServicePtr getLocationService() const;
 
     NesWorkerPtr getNesWorker();

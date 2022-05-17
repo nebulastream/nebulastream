@@ -87,8 +87,6 @@ class RESTEndpointTest : public Testing::NESBaseTest {
         return worker;
     }
 
-    //NesWorkerPtr create
-
     static void stopWorker(NesWorker& worker, uint8_t id = 1) {
         NES_INFO("RESTEndpointTest: Stop worker " << id);
         EXPECT_TRUE(worker.stop(true));
