@@ -53,7 +53,8 @@ class SinkMedium : public Runtime::Reconfigurable {
                         QueryId queryId,
                         QuerySubPlanId querySubPlanId,
                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                        uint64_t numberOfOrigins = 1);
+                        uint64_t numberOfOrigins = 1,
+                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
 
     /**
      * @brief virtual method to setup sink
@@ -176,7 +177,6 @@ class SinkMedium : public Runtime::Reconfigurable {
   protected:
     SinkFormatPtr sinkFormat;
     uint32_t bufferCount;
-    uint32_t buffersPerEpoch;
     bool append{
         false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
     std::atomic_bool schemaWritten{false};// TODO same here
@@ -186,9 +186,11 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::atomic<uint32_t> activeProducers;
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
-    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     FaultToleranceType faultToleranceType;
     uint64_t numberOfOrigins;
+
+    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
+    uint32_t buffersPerEpoch;
 
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety

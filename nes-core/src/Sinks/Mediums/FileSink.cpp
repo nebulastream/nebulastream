@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <filesystem>
@@ -39,7 +40,8 @@ FileSink::FileSink(SinkFormatPtr format,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins) {
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {

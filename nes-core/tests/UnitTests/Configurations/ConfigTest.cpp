@@ -63,6 +63,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerEpoch.getValue(), coordinatorConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
               coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
@@ -146,6 +147,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
     EXPECT_NE(workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
               workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerEpoch.getValue(), workerConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
     EXPECT_TRUE(workerConfigPtr->physicalSources.empty());
 }

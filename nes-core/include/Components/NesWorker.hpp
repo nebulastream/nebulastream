@@ -270,6 +270,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
+    uint64_t numberOfBuffersPerEpoch;
     std::atomic<bool> connected{false};
     bool withParent{false};
     uint32_t parentId;
