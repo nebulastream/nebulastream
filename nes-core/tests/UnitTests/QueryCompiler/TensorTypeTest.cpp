@@ -37,55 +37,12 @@ class TensorTypeTest : public Testing::NESBaseTest {
 TEST_F(TensorTypeTest, testCheckNullTerminator) {
     // From supertype's constructor
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 1, 5>(5)));
-    //todo: make this throw an exception
     EXPECT_THROW((ExecutableTypes::Tensor<int, 1, 5>(10)), std::out_of_range);
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 2, 8>(2,4)));
+    EXPECT_THROW((ExecutableTypes::Tensor<int, 2, 9>(2,4)), std::out_of_range);
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 3, 30>(2,3,5)));
+    EXPECT_THROW((ExecutableTypes::Tensor<int, 3, 31>(2,3,5)), std::out_of_range);
     EXPECT_NO_THROW((ExecutableTypes::Tensor<int, 4, 80>(2,4,5,2)));
-
-
-    EXPECT_THROW((ExecutableTypes::Array{std::array{'a', 'b'}}), std::runtime_error);
-    EXPECT_NO_THROW((ExecutableTypes::Array{std::array{1, 2, 3}}));
-    EXPECT_THROW((ExecutableTypes::Array{std::array{'1', '2', '3'}}), std::runtime_error);
-    EXPECT_NO_THROW((ExecutableTypes::Array{std::array{'1', '2', '\0'}}));
-
-    // From content
-    EXPECT_THROW(((volatile void) ExecutableTypes::Array{'a', 'b', 'c'}), std::runtime_error);
-    EXPECT_NO_THROW((ExecutableTypes::Array{'a', 'b', '\0'}));
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 5>{'a', 'b', '\0'}));
-    EXPECT_NO_THROW((ExecutableTypes::Array{1, 2, 3}));
-
-    // char: From c-style array
-    char const cStyleArray[3] = {'a', 'b', 'c'};
-    EXPECT_THROW(((volatile void) ExecutableTypes::Array{cStyleArray}), std::runtime_error);
-    char const cStyleArrayNull[4] = {'a', 'b', '\0', '0'};
-    EXPECT_NO_THROW(((volatile void) ExecutableTypes::Array{cStyleArrayNull}));
-    EXPECT_NO_THROW(((volatile void) ExecutableTypes::Array<char, 3>{cStyleArrayNull}));
-    EXPECT_THROW(((volatile void) ExecutableTypes::Array<char, 2>{cStyleArrayNull}), std::runtime_error);
-    int const cStyleArrayInt[3] = {1, 2, 3};
-    EXPECT_NO_THROW(((volatile void) ExecutableTypes::Array{cStyleArrayInt}));
-
-    EXPECT_THROW(((volatile void) ExecutableTypes::Array<char, 3>{{'a', 'b', 'c'}}), std::runtime_error);
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 3>{{'a', 'b', '\0'}}));
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 3>{{'1', '\0'}}));
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 3>{{'1'}}));//< automatically append \0
-
-    // From vector
-    EXPECT_THROW((ExecutableTypes::Array<char, 3>{std::vector{'a', 'b', 'c'}}), std::runtime_error);
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 3>{std::vector{'a', 'b', '\0'}}));
-    EXPECT_THROW((ExecutableTypes::Array<char, 2>{std::vector{'a', 'b', '\0'}}), std::runtime_error);
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 2>{std::vector{'\0'}}));
-    EXPECT_NO_THROW((ExecutableTypes::Array<int, 3>{std::vector{1, 2, 3}}));
-    EXPECT_THROW((ExecutableTypes::Array<int, 2>{std::vector{1, 2, 3, 4, 5}}), std::runtime_error);
-    EXPECT_THROW((ExecutableTypes::Array<int, 2>{std::vector{1}}), std::runtime_error);
-
-    // From cstr / std::string
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 4>{"abc"}));
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 10>{"abc"}));
-    EXPECT_THROW((ExecutableTypes::Array<char, 1>{"abc"}), std::runtime_error);
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 4>{std::string("abc")}));
-    EXPECT_NO_THROW((ExecutableTypes::Array<char, 10>{std::string("abc")}));
-    EXPECT_THROW((ExecutableTypes::Array<char, 1>{std::string("abc")}), std::runtime_error);
 }
 
 /// Test that the noexcept specifier is set correctly for initializers, i.e., noexcept iff
