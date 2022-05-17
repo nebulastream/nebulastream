@@ -26,6 +26,7 @@
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/PredicateOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
+#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include "Experimental/NESIR/Operations/BranchOperation.hpp"
 #include "Experimental/NESIR/Operations/CompareOperation.hpp"
 #include "Experimental/NESIR/Operations/IfOperation.hpp"

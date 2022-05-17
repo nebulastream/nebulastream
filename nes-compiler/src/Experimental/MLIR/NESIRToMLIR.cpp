@@ -14,12 +14,15 @@ limitations under the License.
 
 #include <Experimental/MLIR/NESIRToMLIR.hpp>
 
+#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include "Experimental/NESIR/Operations/AddIntOperation.hpp"
 #include "Experimental/NESIR/Operations/BranchOperation.hpp"
 #include "Experimental/NESIR/Operations/CompareOperation.hpp"
 #include "Experimental/NESIR/Operations/IfOperation.hpp"
+#include "Experimental/NESIR/Operations/LoopOperation.hpp"
 #include "Experimental/NESIR/Operations/Operation.hpp"
 #include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
+#include "Experimental/NESIR/Operations/ReturnOperation.hpp"
 #include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/LLVMIR/LLVMTypes.h"
@@ -193,42 +196,39 @@ void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock, std::unordered_m
         generateMLIR(operation, blockArgs);
     }
     // Generate Args for next block
-    std::unordered_map<std::string, mlir::Value> nextBlockArgs;
     if (terminatorOp->getOperationType() == NES::Operation::BranchOp) { 
         auto branchOp = std::static_pointer_cast<NES::BranchOperation>(terminatorOp);
         switch(branchOp->getType()) {
-            case NES::BranchOperation::IfLastBranch: {
-                std::vector<mlir::Value> yieldOps;
-                for(auto nextBlockInputArg: branchOp->getNextBlock()->getInputArgs()) {
-                    printf("YieldOp print --------------------------------\n");
-                    blockArgs[nextBlockInputArg].dump();
-                    yieldOps.push_back(blockArgs[nextBlockInputArg]);
-                }
-                builder->create<scf::YieldOp>(getNameLoc("ifYield"), yieldOps);
+            case NES::BranchOperation::IfLastBranch:
+            // currentAfterIfBlock = nullptr;
+            //     if (branchOp->getNextBlock()->getScopeLevel() == basicBlock->getScopeLevel())  {
+            //         currentAfterIfBlock = branchOp->getNextBlock();
+            //     }
                 break;
-            }
             case NES::BranchOperation::LoopLastBranch:
                 //Todo handle Loops with Yields
                 break;
             case NES::BranchOperation::GlueBranch:
-                for(auto newArgName : branchOp->getNextBlock()->getInputArgs()) {
-                    nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+                // for(auto newArgName : branchOp->getNextBlock()->getInputArgs()) {
+                //     nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+                // }
+                if(basicBlock->getScopeLevel() == branchOp->getNextBlock()->getScopeLevel()) {
+                    generateMLIR(branchOp->getNextBlock(), blockArgs);
                 }
-                generateMLIR(branchOp->getNextBlock(), nextBlockArgs);
                 break;
         }
     } else if (terminatorOp->getOperationType() == NES::Operation::LoopOp) {
         auto loopOp = std::static_pointer_cast<NES::LoopOperation>(terminatorOp);
-        for(auto newArgName : loopOp->getLoopHeaderBlock()->getInputArgs()) {
-            nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
-        }
-        generateMLIR(loopOp, nextBlockArgs);
+        // for(auto newArgName : loopOp->getLoopHeaderBlock()->getInputArgs()) {
+        //     nextBlockArgs.emplace(std::pair{newArgName, blockArgs[newArgName]});
+        // }
+        generateMLIR(loopOp, blockArgs);
     } else if (terminatorOp->getOperationType() == NES::Operation::IfOp) {
         auto ifOp = std::static_pointer_cast<NES::IfOperation>(terminatorOp);
         generateMLIR(ifOp, blockArgs);
     } else if (terminatorOp->getOperationType() == NES::Operation::ReturnOp) {
         auto returnOp = std::static_pointer_cast<NES::ReturnOperation>(terminatorOp);
-        generateMLIR(returnOp, nextBlockArgs);
+        generateMLIR(returnOp, blockArgs);
     } else { // Currently necessary for LoopOps, where we remove the terminatorOp to prevent recursion.
         generateMLIR(terminatorOp, blockArgs);
     }
@@ -307,7 +307,15 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std
         // Set Insertion Point(IP) to loop BasicBlock. Process all Operations in loop BasicBlock. Restore IP to parent's BasicBlock.
         builder->setInsertionPointToStart(forLoop.getBody());
         currentRecordIdx = builder->create<arith::IndexCastOp>(getNameLoc("InductionVar Cast"), builder->getI64Type(), forLoop.getInductionVar());
-        generateMLIR(loopBodyBB, blockArgs);
+        std::unordered_map<std::string, mlir::Value> loopBodyArgs = blockArgs;
+        generateMLIR(loopBodyBB, loopBodyArgs);
+        // Copy all values that were modified in LoopOp to blockArgs.
+        int i = 0;
+        for(auto blockArg = blockArgs.begin(); blockArg != blockArgs.end(); blockArg++) { //Todo try: , ++i
+           blockArgs[blockArg->first] = loopBodyArgs[blockArg->first];
+            ++i;
+        }
+        // Leave LoopOp
         builder->restoreInsertionPoint(parentBlockInsertionPoint);
         generateMLIR(loopEndBB, blockArgs);
     } else {
@@ -325,10 +333,6 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressO
                                                      recordOffset,
                                                      getConstInt("1", 64, addressOp->getFieldOffset()));
     // Return I8* to first byte of field data
-    Value addressVal = blockArgs[addressOp->getArgName()];
-    printf("\n\nADDRESSVAL: ");
-    addressVal.dump();
-    printf("\n\n");
     Value elementAddress = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                         LLVM::LLVMPointerType::get(builder->getI8Type()),
                                                         blockArgs[addressOp->getArgName()],
@@ -347,7 +351,11 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoadOperation> loadOp, std
 // No Recursion. No dependencies. Requires addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ConstantIntOperation> constIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("ConstIntOp");
-    blockArgs.emplace(std::pair{constIntOp->getIdentifier(), getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue())});
+    if(!blockArgs.contains(constIntOp->getIdentifier())) {
+        blockArgs.emplace(std::pair{constIntOp->getIdentifier(), getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue())});
+    } else {
+        blockArgs[constIntOp->getIdentifier()] = getConstInt("ConstantOp", constIntOp->getNumBits(), constIntOp->getConstantIntValue());
+    }
 }
 
 // No recursion. Dependencies. Requires addressMap insertion.
@@ -413,54 +421,103 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::CompareOperation> compareO
                                                blockArgs[compareOp->getSecondArgName()])});
 }
 
+//Todo find a block that connects to scope!
+NES::BasicBlockPtr findAfterIfBlock(NES::BasicBlockPtr thenBlock, int ifScopeLevel) {
+    auto terminatorOp = thenBlock->getOperations().back();
+    // Generate Args for next block
+    if (terminatorOp->getOperationType() == NES::Operation::BranchOp) { 
+        auto branchOp = std::static_pointer_cast<NES::BranchOperation>(terminatorOp);
+        if(branchOp->getNextBlock()->getScopeLevel() <= ifScopeLevel) {
+            return branchOp->getNextBlock();
+        } else {
+            return findAfterIfBlock(branchOp->getNextBlock(), ifScopeLevel);
+        }
+    } else if (terminatorOp->getOperationType() == NES::Operation::LoopOp) {
+        auto loopOp = std::static_pointer_cast<NES::LoopOperation>(terminatorOp);
+        auto loopIfOp = std::static_pointer_cast<NES::IfOperation>(loopOp->getLoopHeaderBlock()->getOperations().back());
+        return findAfterIfBlock(loopIfOp->getElseBranchBlock(), ifScopeLevel);
+    } else { //(terminatorOp->getOperationType() == NES::Operation::IfOp)
+        auto ifOp = std::static_pointer_cast<NES::IfOperation>(terminatorOp);
+        return findAfterIfBlock(ifOp->getThenBranchBlock(), ifScopeLevel);
+    }
+}
+
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("IfOperation boolArgName: %s\n", ifOp->getBoolArgName().c_str());
-   
+     auto afterBlock = findAfterIfBlock(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getScopeLevel()-1);
+    printf("AfterBlock Result: %s\n", afterBlock->getIdentifier().c_str());
     // Create IF Operation
-    bool hasResultArgs = ifOp->getAfterIfBlock()->getInputArgs().size() > 0;
     mlir::scf::IfOp mlirIfOp;
     auto currentInsertionPoint = builder->saveInsertionPoint();
-    if(!hasResultArgs) {
-        mlirIfOp = builder->create<scf::IfOp>(getNameLoc("ifOperation"), blockArgs[ifOp->getBoolArgName()], hasResultArgs);
-        builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
-        generateMLIR(ifOp->getThenBranchBlock(), blockArgs);
-    } else {
-        //Todo given we want to overwrite value in if/else
-        // - if we simply replace the value in 'blockArgs' we will try to access the if-value in the else-case -> not possible!
-        // - if we give enter the 'overwritten' values with new names, we will try to access a non-existent value in the blockArgs map
-        //   -> new values will be written here later
-        std::vector<mlir::Type> mlirIfOpResultTypes;
-        for(auto nextBlockArgType : ifOp->getAfterIfBlock()->getInputArgTypes()) {
-            mlirIfOpResultTypes.push_back(getMLIRType(nextBlockArgType));
-        }
-        mlirIfOp = builder->create<scf::IfOp>(getNameLoc("ifOperation"), mlirIfOpResultTypes, blockArgs[ifOp->getBoolArgName()], hasResultArgs);
-        
-        // Inserting Then(If) Block.
-        builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
-        generateMLIR(ifOp->getThenBranchBlock(), blockArgs);
-        // Inserting Else Block. Must add YieldOps in else-case, even if NESIR-IfOperation has no else case.
-        builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
-        if(ifOp->getElseBranchBlock() != nullptr) {
-            generateMLIR(ifOp->getElseBranchBlock(), blockArgs);
-        } else {
-            std::vector<mlir::Value> yieldOps;
-            for(auto nextBlockInputArg: ifOp->getAfterIfBlock()->getInputArgs()) {
-                yieldOps.push_back(blockArgs[nextBlockInputArg]);
-            }
-            builder->create<scf::YieldOp>(getNameLoc("ifYield"), yieldOps);
-        }
+    //Todo given we want to overwrite value in if/else
+    // - if we simply replace the value in 'blockArgs' we will try to access the if-value in the else-case -> not possible!
+    // - if we give enter the 'overwritten' values with new names, we will try to access a non-existent value in the blockArgs map
+    //   -> new values will be written here later
+    std::vector<mlir::Type> mlirIfOpResultTypes;
+    // Register all blockArgs for the IfOperation as output/yield args. All values that are not modified, will just be returned.
+    for(auto afterIfBlockArg : afterBlock->getInputArgs()) {
+        mlirIfOpResultTypes.push_back(blockArgs[afterIfBlockArg].getType());
     }
-    // Get If and else child node. Set IP to if and then block. Restore IP after.
+    // for(auto blockArg = blockArgs.begin(); blockArg != blockArgs.end(); blockArg++) {
+    //     mlirIfOpResultTypes.push_back(blockArg->second.getType());
+    // }
+    // We always have an else case. Rationale: If the If-Branch returns values, SCF::IfOp requires an else branch. 
+    // Since an If-Branch returns values if it has blockArgs, which it must have (otherwise its superfluous), else is required.
+    mlirIfOp = builder->create<scf::IfOp>(getNameLoc("ifOperation"), mlirIfOpResultTypes, blockArgs[ifOp->getBoolArgName()], true);
+    
+    // IF case -> Change scope to Then Branch. Finish by setting obligatory YieldOp for THEN case.
+    builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
+    std::unordered_map<std::string, mlir::Value> ifBlockArgs = blockArgs;
+    generateMLIR(ifOp->getThenBranchBlock(), ifBlockArgs);
+    std::vector<mlir::Value> ifYieldOps;
+    for(auto afterIfBlockArg : afterBlock->getInputArgs()) {
+        ifYieldOps.push_back(ifBlockArgs[afterIfBlockArg]);
+    }
+    // for(auto blockArg = blockArgs.begin(); blockArg != blockArgs.end(); blockArg++) {
+    //     ifYieldOps.push_back(ifBlockArgs[blockArg->first]);
+    // }
+    // for(auto ifBlockArg = ifBlockArgs.begin(); ifBlockArg != ifBlockArgs.end(); ifBlockArg++) {
+    //     ifYieldOps.push_back(ifBlockArg->second);
+    // }
+    builder->create<scf::YieldOp>(getNameLoc("ifYield"), ifYieldOps);
+
+    // ELSE case -> Change scope to ELSE Branch. Finish by setting obligatory YieldOp for ELSE case.
+    builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
+    std::unordered_map<std::string, mlir::Value> elseBlockArgs = blockArgs;
+    if(ifOp->getElseBranchBlock() != nullptr) {
+        generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs);
+    }
+    std::vector<mlir::Value> elseYieldOps;
+    for(auto afterIfBlockArg : afterBlock->getInputArgs()) {
+        elseYieldOps.push_back(elseBlockArgs[afterIfBlockArg]);
+    }
+    // for(auto blockArg = blockArgs.begin(); blockArg != blockArgs.end(); blockArg++) {
+    //     elseYieldOps.push_back(ifBlockArgs[blockArg->first]);
+    // }
+    // for(auto elseBlockArg = elseBlockArgs.begin(); elseBlockArg != elseBlockArgs.end(); elseBlockArg++) {
+    //     elseYieldOps.push_back(elseBlockArg->second);
+    // }
+    builder->create<scf::YieldOp>(getNameLoc("elseYield"), elseYieldOps);
+
+    // Back to IfOp scope. Get all result values from IfOperation, write to blockArgs and proceed.
     builder->restoreInsertionPoint(currentInsertionPoint);
     // IfOp might have more input args than nextBlock. Hence, creating new blockArgs for the next block.
-    std::unordered_map<std::string, mlir::Value> nextBlockArgs;
-    for(int i = 0; i < (int) ifOp->getAfterIfBlock()->getInputArgs().size(); ++i) {
-        printf("IfOp transfer print --------------------------------\n");
-        mlirIfOp.getResult(i).dump();
-        nextBlockArgs.emplace(std::pair{ifOp->getAfterIfBlock()->getInputArgs().at(i), mlirIfOp.getResult(i)});
+    // std::unordered_map<std::string, mlir::Value> nextBlockArgs;
+
+    // If & Else case both MUST return exactly the same values. Hence we can iterate over the arg Values of either one.
+    // -> Todo try to integrate with above else iteration
+    for(int i = 0; i < (int) afterBlock->getInputArgs().size(); ++i) {
+        blockArgs[afterBlock->getInputArgs().at(i)] = mlirIfOp.getResult(i);
     }
-    generateMLIR(ifOp->getAfterIfBlock(), nextBlockArgs);
+    // for(auto ifOpArg = elseBlockArgs.begin(); ifOpArg != elseBlockArgs.end(); ifOpArg++) { //Todo try: , ++i
+    //     mlirIfOp.getResult(i).dump();
+    //     blockArgs[ifOpArg->first] = mlirIfOp.getResult(i);
+    //     ++i;
+    // }
+    if(afterBlock->getScopeLevel() == (ifOp->getThenBranchBlock()->getScopeLevel())-1) {
+        generateMLIR(afterBlock, blockArgs);
+    }
 }
 
 //==--------------------- Dummy OPERATIONS ----------------------==//

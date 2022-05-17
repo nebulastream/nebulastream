@@ -13,20 +13,21 @@
 */
 
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <cstdint>
 #include <utility>
 
 namespace NES {
 BasicBlock::BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs, 
-                       std::vector<Operation::BasicType> inputArgTypes)
+                       int32_t scopeLevel)
     : identifier(std::move(identifier)), operations(std::move(operations)), inputArgs(std::move(inputArgs)), 
-      inputArgTypes(std::move(inputArgTypes)) {}
+      scopeLevel(scopeLevel) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 
 std::vector<OperationPtr> BasicBlock::getOperations() { return operations; }
 
 std::vector<std::string> BasicBlock::getInputArgs() { return inputArgs; }
-std::vector<Operation::BasicType> BasicBlock::getInputArgTypes() { return inputArgTypes; }
+int32_t BasicBlock::getScopeLevel() { return scopeLevel; }
 
 void BasicBlock::addOperation(OperationPtr operation) { operations.push_back(operation); }
 void BasicBlock::popOperation() { operations.pop_back(); }
