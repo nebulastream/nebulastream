@@ -16,7 +16,6 @@
 
 namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
-
 PhysicalPythonUdfOperator::PhysicalPythonUdfOperator(OperatorId id,
                                                      SchemaPtr inputSchema,
                                                      SchemaPtr outputSchema,

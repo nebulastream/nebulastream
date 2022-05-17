@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #ifdef PYTHON_UDF_ENABLED
+#include <Python.h>
 #include <QueryCompiler/Operators/PhysicalOperators/PythonUdfExecutablePipelineStage.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Python.h>
 
 namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
@@ -94,9 +94,7 @@ ExecutionResult PythonUdfExecutablePipelineStage::execute(TupleBuffer& inputTupl
     return ExecutionResult::Ok;
 }
 
-PythonUdfExecutablePipelineStage::~PythonUdfExecutablePipelineStage(){
-    NES_DEBUG("~PythonUdfExecutablePipelineStage()");
-};
+PythonUdfExecutablePipelineStage::~PythonUdfExecutablePipelineStage() { NES_DEBUG("~PythonUdfExecutablePipelineStage()"); };
 
 }// namespace NES::QueryCompilation::PhysicalOperators::Experimental
 #endif
