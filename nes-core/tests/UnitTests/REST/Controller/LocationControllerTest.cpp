@@ -108,7 +108,7 @@ TEST_F(LocationControllerTest, testBadGETRequests) {
     EXPECT_EQ(getLocResp2.at("message").as_string(),
               "No node with this Id");
     EXPECT_TRUE(getLocResp2.find("code") != getLocResp2.end());
-    EXPECT_EQ(getLocResp2.at("code"), 400);
+    EXPECT_EQ(getLocResp2.at("code"), 404);
 
     //test request without for non numerical id
     web::http::http_request msg3(web::http::methods::GET);

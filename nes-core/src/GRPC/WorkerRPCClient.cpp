@@ -462,5 +462,4 @@ Spatial::Index::Experimental::LocationPtr WorkerRPCClient::getLocation(const std
     }
     return std::make_shared<Spatial::Index::Experimental::Location>();
 }
-
 }// namespace NES
