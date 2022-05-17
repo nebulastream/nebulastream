@@ -87,6 +87,8 @@ class AbstractHealthCheckService {
     cuckoohash_map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
     uint64_t id;
     std::string healthServiceName;
+    std::condition_variable cv;
+    std::mutex cv_m;
 };
 
 }// namespace NES
