@@ -80,7 +80,6 @@
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSliceMergingOperatorHandler.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>

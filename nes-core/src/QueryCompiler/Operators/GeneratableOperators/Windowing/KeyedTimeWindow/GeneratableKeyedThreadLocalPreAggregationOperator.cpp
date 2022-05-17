@@ -15,10 +15,8 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/KeyedTimeWindow/GeneratableKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
