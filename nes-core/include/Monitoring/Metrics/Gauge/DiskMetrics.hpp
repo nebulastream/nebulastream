@@ -25,7 +25,7 @@ namespace NES {
  */
 class DiskMetrics {
   public:
-    DiskMetrics() = default;
+    DiskMetrics();
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -57,6 +57,7 @@ class DiskMetrics {
     bool operator==(const DiskMetrics& rhs) const;
     bool operator!=(const DiskMetrics& rhs) const;
 
+    uint64_t nodeId;
     uint64_t fBsize;
     uint64_t fFrsize;
     uint64_t fBlocks;

@@ -23,8 +23,11 @@
 
 namespace NES {
 
+MemoryMetrics::MemoryMetrics() : nodeId(0) {}
+
 SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     auto schema = Schema::create(Schema::ROW_LAYOUT)
+                      ->addField(prefix + "node_id", BasicType::UINT64)
                       ->addField(prefix + "TOTAL_RAM", BasicType::UINT64)
                       ->addField(prefix + "TOTAL_SWAP", BasicType::UINT64)
                       ->addField(prefix + "FREE_RAM", BasicType::UINT64)
@@ -45,7 +48,13 @@ void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex
     auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
+    auto totalSize = MemoryMetrics::getSchema("")->getSchemaSizeInBytes();
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "MemoryMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+
     uint64_t cnt = 0;
+    buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
     buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_RAM);
     buffer[tupleIndex][cnt++].write<uint64_t>(TOTAL_SWAP);
     buffer[tupleIndex][cnt++].write<uint64_t>(FREE_RAM);
@@ -68,6 +77,7 @@ void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     auto buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layout, buf);
 
     uint64_t cnt = 0;
+    nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
     TOTAL_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
     TOTAL_SWAP = buffer[tupleIndex][cnt++].read<uint64_t>();
     FREE_RAM = buffer[tupleIndex][cnt++].read<uint64_t>();
@@ -86,16 +96,17 @@ void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
 SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
 
 bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
-    return TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM && SHARED_RAM == rhs.SHARED_RAM
-        && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP && TOTAL_HIGH == rhs.TOTAL_HIGH
-        && FREE_HIGH == rhs.FREE_HIGH && PROCS == rhs.PROCS && MEM_UNIT == rhs.MEM_UNIT && LOADS_1MIN == rhs.LOADS_1MIN
-        && LOADS_5MIN == rhs.LOADS_5MIN && LOADS_15MIN == rhs.LOADS_15MIN;
+    return nodeId == rhs.nodeId && TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP && FREE_RAM == rhs.FREE_RAM
+        && SHARED_RAM == rhs.SHARED_RAM && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP
+        && TOTAL_HIGH == rhs.TOTAL_HIGH && FREE_HIGH == rhs.FREE_HIGH && PROCS == rhs.PROCS && MEM_UNIT == rhs.MEM_UNIT
+        && LOADS_1MIN == rhs.LOADS_1MIN && LOADS_5MIN == rhs.LOADS_5MIN && LOADS_15MIN == rhs.LOADS_15MIN;
 }
 
 bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs == *this); }
 
 web::json::value MemoryMetrics::toJson() const {
     web::json::value metricsJson{};
+    metricsJson["NODE_ID"] = web::json::value::number(nodeId);
     metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
     metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
     metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);

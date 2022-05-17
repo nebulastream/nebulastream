@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 #define NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <cstdint>
 #include <memory>

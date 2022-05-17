@@ -44,6 +44,7 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
+#include <Sources/DefaultSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
@@ -421,18 +422,16 @@ class LambdaSourceProxy : public LambdaSource {
 class MonitoringSourceProxy : public MonitoringSource {
   public:
     MonitoringSourceProxy(const MetricCollectorPtr& metricCollector,
+                          std::chrono::milliseconds waitTime,
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
-                          uint64_t numbersOfBufferToProduce,
-                          uint64_t frequency,
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {})
         : MonitoringSource(metricCollector,
+                           waitTime,
                            bufferManager,
                            queryManager,
-                           numbersOfBufferToProduce,
-                           frequency,
                            operatorId,
                            0,
                            numSourceLocalBuffers,
@@ -1942,10 +1941,9 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
-                                               numBuffers,
-                                               1,
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
                                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
@@ -1960,10 +1958,9 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
-                                               numBuffers,
-                                               1,
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
                                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
@@ -1989,10 +1986,9 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
 
     uint64_t numBuffers = 2;
     MonitoringSourceProxy monitoringDataSource(testCollector,
+                                               MonitoringSource::DEFAULT_WAIT_TIME,
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
-                                               numBuffers,
-                                               1,
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
                                                {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});

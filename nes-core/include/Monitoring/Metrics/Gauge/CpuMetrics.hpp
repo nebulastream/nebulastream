@@ -36,7 +36,7 @@ namespace NES {
  */
 class CpuMetrics {
   public:
-    CpuMetrics() = default;
+    CpuMetrics();
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -76,7 +76,8 @@ class CpuMetrics {
     bool operator==(const CpuMetrics& rhs) const;
     bool operator!=(const CpuMetrics& rhs) const;
 
-    uint64_t core_num;
+    uint64_t nodeId;
+    uint64_t coreNum;
     uint64_t user;
     uint64_t nice;
     uint64_t system;

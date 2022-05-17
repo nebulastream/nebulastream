@@ -23,8 +23,8 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
-NetworkCollector::NetworkCollector()
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+NetworkCollector::NetworkCollector(uint64_t nodeId)
+    : MetricCollector(nodeId), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(NetworkMetrics::getSchema("")) {
     NES_INFO("NetworkCollector: Init NetworkCollector with schema " << schema->toString());
 }
@@ -34,6 +34,7 @@ MetricCollectorType NetworkCollector::getType() { return NETWORK_COLLECTOR; }
 bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
+        measuredVal.setNodeId(getNodeId());
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
         NES_ERROR("NetworkCollector: Error while collecting metrics " << ex.what());
@@ -45,7 +46,9 @@ bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 SchemaPtr NetworkCollector::getSchema() { return schema; }
 
 const MetricPtr NetworkCollector::readMetric() const {
-    return std::make_shared<Metric>(resourceReader->readNetworkStats(), MetricType::WrappedNetworkMetrics);
+    NetworkMetricsWrapper wrapper = resourceReader->readNetworkStats();
+    wrapper.setNodeId(getNodeId());
+    return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedNetworkMetrics);
 }
 
 }// namespace NES

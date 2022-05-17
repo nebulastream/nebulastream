@@ -79,12 +79,10 @@ class RegistrationMetrics {
     bool operator==(const RegistrationMetrics& rhs) const;
     bool operator!=(const RegistrationMetrics& rhs) const;
 
+    uint64_t nodeId;
     uint64_t totalMemoryBytes;
-
     uint64_t cpuCoreNum;
-    uint64_t
-        totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via AbstractSystemResourcesReader)
-
+    uint64_t totalCPUJiffies;//user+idle+system (This value can change everytime it is read via AbstractSystemResourcesReader)
     // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
     int64_t cpuPeriodUS;//the CPU CFS scheduler period in microseconds
     int64_t cpuQuotaUS; // CPU CFS quota in microseconds

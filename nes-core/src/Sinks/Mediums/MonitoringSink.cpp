@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,6 +24,7 @@
 
 namespace NES {
 MonitoringSink::MonitoringSink(MetricStorePtr metricStore,
+                               MetricCollectorType collectorType,
                                Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                QueryId queryId,
@@ -30,7 +32,7 @@ MonitoringSink::MonitoringSink(MetricStorePtr metricStore,
                                FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
     : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins),
-      metricStore(metricStore) {}
+      metricStore(metricStore), collectorType(collectorType) {}
 
 MonitoringSink::~MonitoringSink() = default;
 
@@ -38,7 +40,8 @@ SinkMediumTypes MonitoringSink::getSinkMediumType() { return MONITORING_SINK; }
 
 bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    NES_TRACE("MonitoringSink: getSchema medium " << toString() << " format " << sinkFormat->toString(););
+    NES_TRACE("MonitoringSink: getSchema medium " << toString() << " format " << sinkFormat->toString() << " buffer "
+                                                  << inputBuffer << " collector " << NES::toString(collectorType););
     return true;
 }
 
@@ -53,6 +56,7 @@ std::string MonitoringSink::toString() const {
 void MonitoringSink::setup() {
     // currently not required
 }
+
 void MonitoringSink::shutdown() {
     // currently not required
 }

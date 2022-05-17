@@ -22,7 +22,7 @@ namespace NES {
  */
 class MemoryCollector : public MetricCollector {
   public:
-    explicit MemoryCollector();
+    explicit MemoryCollector(uint64_t nodeId=0);
 
     /**
      * @brief Returns the type of metric collector

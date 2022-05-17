@@ -30,7 +30,7 @@ class Metric;
 class MetricCollector {
   protected:
     //  -- Constructors --
-    MetricCollector() = default;
+    MetricCollector(uint64_t nodeId = 0) : nodeId(nodeId){};
     MetricCollector(const MetricCollector&) = default;
     MetricCollector(MetricCollector&&) = default;
     //  -- Assignment --
@@ -66,6 +66,11 @@ class MetricCollector {
      * @return True if successful, else false
      */
     virtual const MetricPtr readMetric() const = 0;
+
+    uint64_t getNodeId() const { return nodeId; }
+
+  private:
+    uint64_t nodeId;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;

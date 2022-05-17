@@ -23,8 +23,8 @@
 
 namespace NES {
 
-DiskCollector::DiskCollector()
-    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+DiskCollector::DiskCollector(uint64_t nodeId)
+    : MetricCollector(nodeId), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
       schema(DiskMetrics::getSchema("")) {
     NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
 }
@@ -34,6 +34,7 @@ MetricCollectorType DiskCollector::getType() { return DISK_COLLECTOR; }
 bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         DiskMetrics measuredVal = resourceReader->readDiskStats();
+        measuredVal.nodeId = getNodeId();
         writeToBuffer(measuredVal, tupleBuffer, 0);
     } catch (const std::exception& ex) {
         NES_ERROR("DiskCollector: Error while collecting metrics " << ex.what());
@@ -45,7 +46,9 @@ bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 SchemaPtr DiskCollector::getSchema() { return schema; }
 
 const MetricPtr DiskCollector::readMetric() const {
-    return std::make_shared<Metric>(resourceReader->readDiskStats(), MetricType::DiskMetric);
+    DiskMetrics metrics = resourceReader->readDiskStats();
+    metrics.nodeId = getNodeId();
+    return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
 
 }// namespace NES

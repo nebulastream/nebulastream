@@ -24,6 +24,7 @@
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Sinks/Mediums/MaterializedViewSink.hpp>
+#include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
@@ -263,6 +264,24 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   retryTimes,
                                                   faultToleranceType,
                                                   numberOfOrigins);
+}
+
+DataSinkPtr createMonitoringSink(MetricStorePtr metricStore,
+                                 MetricCollectorType type,
+                                 Runtime::NodeEnginePtr nodeEngine,
+                                 uint32_t numOfProducers,
+                                 QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 FaultToleranceType faultToleranceType,
+                                 uint64_t numberOfOrigins) {
+    return std::make_shared<MonitoringSink>(metricStore,
+                                            type,
+                                            nodeEngine,
+                                            numOfProducers,
+                                            queryId,
+                                            querySubPlanId,
+                                            faultToleranceType,
+                                            numberOfOrigins);
 }
 
 namespace Experimental::MaterializedView {
