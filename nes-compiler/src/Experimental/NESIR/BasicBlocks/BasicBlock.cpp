@@ -16,14 +16,17 @@
 #include <utility>
 
 namespace NES {
-BasicBlock::BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs)
-    : identifier(std::move(identifier)), operations(std::move(operations)), inputArgs(std::move(inputArgs)) {}
+BasicBlock::BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs, 
+                       std::vector<Operation::BasicType> inputArgTypes)
+    : identifier(std::move(identifier)), operations(std::move(operations)), inputArgs(std::move(inputArgs)), 
+      inputArgTypes(std::move(inputArgTypes)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 
 std::vector<OperationPtr> BasicBlock::getOperations() { return operations; }
 
 std::vector<std::string> BasicBlock::getInputArgs() { return inputArgs; }
+std::vector<Operation::BasicType> BasicBlock::getInputArgTypes() { return inputArgTypes; }
 
 void BasicBlock::addOperation(OperationPtr operation) { operations.push_back(operation); }
 void BasicBlock::popOperation() { operations.pop_back(); }

@@ -171,7 +171,8 @@ TEST(MLIRNESIRTest_Loop, simpleNESIRLoop) {
     // Loop BodyBlock
     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, constOp, addOp, outputAddressOp, storeOp, loopIncAdd};
     std::vector<std::string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne"};
-    BasicBlockPtr loopBodyBlock = std::make_shared<BasicBlock>("loopBlock", loopOps, loopArguments);
+    std::vector<Operation::BasicType> loopArgTypes{Operation::INT8PTR, Operation::INT8PTR, Operation::INT64, Operation::INT64, Operation::INT64};
+    BasicBlockPtr loopBodyBlock = std::make_shared<BasicBlock>("loopBlock", loopOps, loopArguments, loopArgTypes);
     OperationPtr loopBodyTerminatorOp = std::make_shared<BranchOperation>(BranchOperation::LoopLastBranch, loopBodyBlock);
     loopBodyBlock->addOperation(loopBodyTerminatorOp);
 
@@ -179,12 +180,14 @@ TEST(MLIRNESIRTest_Loop, simpleNESIRLoop) {
     OperationPtr executeReturnOp = std::make_shared<ReturnOperation>(0);
     std::vector<OperationPtr> executeReturnBlockOps{executeReturnOp};
     std::vector<std::string> executeReturnBlockArgs{};
-    BasicBlockPtr executeReturnBlock = std::make_shared<BasicBlock>("loopBlock", executeReturnBlockOps, executeReturnBlockArgs);
+    std::vector<Operation::BasicType> executeBlockArgTypes{};
+    BasicBlockPtr executeReturnBlock = std::make_shared<BasicBlock>("loopBlock", executeReturnBlockOps, executeReturnBlockArgs, executeBlockArgTypes);
     OperationPtr ifCompareOp = std::make_shared<CompareOperation>("loopCompare", "i", "numTuples", CompareOperation::ISLT);
     OperationPtr loopIfOp = std::make_shared<IfOperation>("loopCompare", loopBodyBlock, executeReturnBlock, executeReturnBlock);
     std::vector<OperationPtr> loopHeaderBBOps{ifCompareOp, loopIfOp};
     std::vector<std::string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "numTuples"};
-    BasicBlockPtr loopHeaderBlock = std::make_shared<BasicBlock>("loopHeaderBlock", loopHeaderBBOps, loopHeaderArgs);
+    std::vector<Operation::BasicType> loopHeaderArgTypes{Operation::INT8PTR, Operation::INT8PTR, Operation::INT64, Operation::INT64, Operation::INT64};
+    BasicBlockPtr loopHeaderBlock = std::make_shared<BasicBlock>("loopHeaderBlock", loopHeaderBBOps, loopHeaderArgs, loopHeaderArgTypes);
 
     // Loop Operation -> loopBranchOp -> loopHeaderBlock -> loopIfOp -> (loopBodyBlock | executeEndBlock)
     NES::OperationPtr loopOperation = std::make_shared<LoopOperation>(LoopOperation::ForLoop, loopHeaderBlock);
@@ -200,7 +203,8 @@ TEST(MLIRNESIRTest_Loop, simpleNESIRLoop) {
 
     std::vector<OperationPtr> executeBlockOps{inputDataBufferProxy, outputtDataBufferProxy, numTuplesProxy, constIOp, constOneOp, loopOperation};
     std::vector<std::string> executeBodyBlockArgs{"inputTupleBuffer", "outputTupleBuffer"};
-    NES::BasicBlockPtr executeBodyBlock = std::make_shared<NES::BasicBlock>("executeFuncBB", executeBlockOps, executeBodyBlockArgs);
+    std::vector<Operation::BasicType> executeBodyBlockArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    NES::BasicBlockPtr executeBodyBlock = std::make_shared<NES::BasicBlock>("executeFuncBB", executeBlockOps, executeBodyBlockArgs, executeBlockArgTypes);
     std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{ "inputTupleBuffer", "outputTupleBuffer"};
     auto executeFuncOp = std::make_shared<FunctionOperation>("execute", executeBodyBlock, executeArgTypes, executeArgNames, Operation::INT64);

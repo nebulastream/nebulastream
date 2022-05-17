@@ -29,11 +29,13 @@ class BasicBlock {
      * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlocks : The BasicBlock that is next in the control flow of the execution.
      */
-    explicit BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs);
+    explicit BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs, 
+                        std::vector<Operation::BasicType> inputArgTypes);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] std::vector<OperationPtr> getOperations();
     [[nodiscard]] std::vector<std::string> getInputArgs();
+    [[nodiscard]] std::vector<Operation::BasicType> getInputArgTypes();
     void addOperation(OperationPtr operation);
     void popOperation();
 
@@ -41,6 +43,7 @@ class BasicBlock {
     std::string identifier;
     std::vector<OperationPtr> operations;
     std::vector<std::string> inputArgs;
+    std::vector<Operation::BasicType> inputArgTypes;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 } // namespace NES

@@ -198,11 +198,10 @@ void MLIRGenerator::generateMLIR(NES::BasicBlockPtr basicBlock, std::unordered_m
         auto branchOp = std::static_pointer_cast<NES::BranchOperation>(terminatorOp);
         switch(branchOp->getType()) {
             case NES::BranchOperation::IfLastBranch: {
-                // mlir::ValueRange yieldValues{}; //yieldValues[0] = blockArgs["oeu"]; //Todo does this work?
-                // mlir::ValueRange yieldValues{}
-                // mlir::ArrayRef<Value> yieldVals; 
                 std::vector<mlir::Value> yieldOps;
                 for(auto nextBlockInputArg: branchOp->getNextBlock()->getInputArgs()) {
+                    printf("YieldOp print --------------------------------\n");
+                    blockArgs[nextBlockInputArg].dump();
                     yieldOps.push_back(blockArgs[nextBlockInputArg]);
                 }
                 builder->create<scf::YieldOp>(getNameLoc("ifYield"), yieldOps);
@@ -326,6 +325,10 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressO
                                                      recordOffset,
                                                      getConstInt("1", 64, addressOp->getFieldOffset()));
     // Return I8* to first byte of field data
+    Value addressVal = blockArgs[addressOp->getArgName()];
+    printf("\n\nADDRESSVAL: ");
+    addressVal.dump();
+    printf("\n\n");
     Value elementAddress = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                         LLVM::LLVMPointerType::get(builder->getI8Type()),
                                                         blockArgs[addressOp->getArgName()],
@@ -352,8 +355,12 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp, st
     printf("AddOp");
     // Only generate Add, if not loop induction variable ++ operation.
     if(addOp->getLeftArgName() != "i") {
-        blockArgs.emplace(std::pair{addOp->getIdentifier(),
-            builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()])});
+        if(!blockArgs.contains(addOp->getIdentifier())) {
+            blockArgs.emplace(std::pair{addOp->getIdentifier(),
+                builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()])});
+        } else {
+            blockArgs[addOp->getIdentifier()] = builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()]);
+        }
         // Debug
         auto printValFunc = insertExternalFunction("printValueFromMLIR", 0, {}, true);
         builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, printValFunc, blockArgs[addOp->getIdentifier()]);
@@ -419,11 +426,16 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::un
         builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
         generateMLIR(ifOp->getThenBranchBlock(), blockArgs);
     } else {
+        //Todo given we want to overwrite value in if/else
+        // - if we simply replace the value in 'blockArgs' we will try to access the if-value in the else-case -> not possible!
+        // - if we give enter the 'overwritten' values with new names, we will try to access a non-existent value in the blockArgs map
+        //   -> new values will be written here later
         std::vector<mlir::Type> mlirIfOpResultTypes;
-        for(auto outArg : ifOp->getAfterIfBlock()->getInputArgs()) {
-            mlirIfOpResultTypes.push_back(blockArgs[outArg].getType());
+        for(auto nextBlockArgType : ifOp->getAfterIfBlock()->getInputArgTypes()) {
+            mlirIfOpResultTypes.push_back(getMLIRType(nextBlockArgType));
         }
         mlirIfOp = builder->create<scf::IfOp>(getNameLoc("ifOperation"), mlirIfOpResultTypes, blockArgs[ifOp->getBoolArgName()], hasResultArgs);
+        
         // Inserting Then(If) Block.
         builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
         generateMLIR(ifOp->getThenBranchBlock(), blockArgs);
@@ -444,6 +456,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::un
     // IfOp might have more input args than nextBlock. Hence, creating new blockArgs for the next block.
     std::unordered_map<std::string, mlir::Value> nextBlockArgs;
     for(int i = 0; i < (int) ifOp->getAfterIfBlock()->getInputArgs().size(); ++i) {
+        printf("IfOp transfer print --------------------------------\n");
+        mlirIfOp.getResult(i).dump();
         nextBlockArgs.emplace(std::pair{ifOp->getAfterIfBlock()->getInputArgs().at(i), mlirIfOp.getResult(i)});
     }
     generateMLIR(ifOp->getAfterIfBlock(), nextBlockArgs);
