@@ -39,7 +39,7 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
         if (nodeLocationJson == web::json::value::null()) {
             NES_ERROR("node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
             web::json::value errorResponse{};
-            auto statusCode = web::http::status_codes::BadRequest;
+            auto statusCode = web::http::status_codes::NotFound;
             errorResponse["code"] = web::json::value(statusCode);
             errorResponse["message"] = web::json::value::string("No node with this Id");
             errorMessageImpl(message, errorResponse, statusCode);
