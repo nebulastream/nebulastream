@@ -87,18 +87,35 @@ using namespace NES;
 
     }
 
-    TEST_F(JoinOrderOptimizationRuleTest, randomTest){
-        Schema schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
-        NES_DEBUG(schema.toString());
+    // Q1
+    TEST_F(JoinOrderOptimizationRuleTest, sequencePattern){
+
+        // TODO: Define Pattern as Query
+
+
         EXPECT_TRUE(1 == (2-1));
     }
 
-    /*
+    // Q2 -- will probably not be optimized as it is a Cartesian product
+    TEST_F(JoinOrderOptimizationRuleTest, conjunctionPattern){
 
-JoinGraphEdge[] edges = new JoinGraphEdge[] {
-new JoinGraphEdge(regionTable, nationTable, region2nationPred),
-new JoinGraphEdge(nationTable, suppTable, nation2suppPred),
-new JoinGraphEdge(partSuppTable, suppTable, partsupp2suppPred) };
+        EXPECT_TRUE(1 == (2-1));
+    }
 
-AnalyzedSelectQuery query = new AnalyzedSelectQuery(tables, edges);
- * */
+    // Q3 // will not be optimized as this is a union
+    TEST_F(JoinOrderOptimizationRuleTest, disjunctionPattern){
+
+        EXPECT_TRUE(1 == (2-1));
+    }
+
+    // Q4 -- will not be optimized
+    TEST_F(JoinOrderOptimizationRuleTest, iterationPattern){
+
+        EXPECT_TRUE(1 == (2-1));
+    }
+
+    // Q5 - will not be optimized
+    TEST_F(JoinOrderOptimizationRuleTest, negationPattern){
+
+        EXPECT_TRUE(1 == (2-1));
+    }
