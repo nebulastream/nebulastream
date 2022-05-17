@@ -43,7 +43,8 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins),
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       host(host.substr(0, host.find(':'))), port(port), internal(internal), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);

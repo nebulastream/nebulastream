@@ -50,7 +50,8 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    bool asynchronousClient,
                    FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
-    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins),
+    : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
 

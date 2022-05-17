@@ -35,7 +35,8 @@ PrintSink::PrintSink(SinkFormatPtr format,
                  queryId,
                  querySubPlanId,
                  faultToleranceType,
-                 numberOfOrigins),
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;

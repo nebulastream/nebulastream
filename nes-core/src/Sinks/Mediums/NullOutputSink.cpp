@@ -26,7 +26,8 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                QuerySubPlanId querySubPlanId,
                                FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins) {}
+    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {}
 
 NullOutputSink::~NullOutputSink() = default;
 
