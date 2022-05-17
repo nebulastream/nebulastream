@@ -34,6 +34,7 @@ void CoordinatorHealthCheckService::startHealthCheck() {
     NES_DEBUG("start health checking on coordinator");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
+        std::unique_lock<std::mutex> lk(cv_m);
         auto waitTime = std::chrono::seconds(this->coordinatorConfiguration->coordinatorHealthCheckWaitTime.getValue());
         while (isRunning) {
             for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
@@ -64,7 +65,8 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     }
                 }
             }
-            std::this_thread::sleep_for(waitTime);
+            //std::this_thread::sleep_for(waitTime);
+            cv.wait_for(lk, waitTime);
         }
         shutdownRPC->set_value(true);
         NES_DEBUG("NesCoordinator: stop health checking");
