@@ -26,6 +26,7 @@ add_source_files(nes-core
         LambdaSource.cpp
         BenchmarkSource.cpp
         MaterializedViewSource.cpp
+        TCPSource.cpp
 )
 add_subdirectory(Parsers)
 
