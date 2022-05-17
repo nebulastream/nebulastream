@@ -35,32 +35,21 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     static std::unique_ptr<ManualPlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
-    /**
-     * @brief set the binary mapping of the current strategy
-     * a binary mapping is a 2D vector of i X j that store decision whether to place operator j in node i
-     * @param userDefinedBinaryMapping binary mapping to set
-     */
-    void setBinaryMapping(PlacementMatrix userDefinedBinaryMapping);
-
     static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix matrix);
+
   private:
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                      TopologyPtr topology,
                                      TypeInferencePhasePtr typeInferencePhase);
-    /**
-     * @brief Try to place input operator on the input topology node
-     * @param queryId :  the query id
-     * @param operatorNode : the input operator to place
-     * @param candidateTopologyNode : the candidate topology node to place operator on
-     * @param pinnedDownStreamOperators: list of pinned downstream node after which placement stops
-     */
-    void placeOperator(QueryId queryId,
-                       const OperatorNodePtr& operatorNode,
-                       TopologyNodePtr candidateTopologyNode,
-                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
-    // stores the binary mapping  of the current strategy
-    PlacementMatrix binaryMapping;
+    void performOperatorPlacement(QueryId queryId,
+                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+
+    void placeOperator(QueryId queryId,
+                          const OperatorNodePtr& operatorNode,
+                          TopologyNodePtr candidateTopologyNode,
+                          const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 };
 
 }// namespace NES::Optimizer
