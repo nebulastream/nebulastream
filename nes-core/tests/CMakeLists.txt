@@ -132,7 +132,7 @@ add_executable(topology-controller-tests "UnitTests/REST/Controller/TopologyCont
 target_link_libraries(topology-controller-tests nes-tests)
 add_test(NAME topology-controller-tests COMMAND topology-controller-tests)
 
-### NES Query Controller Tests ###
+### NES Location Controller Tests ###
 add_executable(location-controller-test "UnitTests/REST/Controller/LocationControllerTest.cpp")
 target_link_libraries(location-controller-test nes-tests)
 add_test(NAME location-controller-test COMMAND location-controller-test)
@@ -241,6 +241,11 @@ add_test(NAME source-catalog-test COMMAND source-catalog-test)
 add_executable(query-catalog-service-tests "UnitTests/Services/QueryCatalogServiceTest.cpp")
 target_link_libraries(query-catalog-service-tests nes-tests)
 add_test(NAME query-catalog-service-tests COMMAND query-catalog-service-tests)
+
+### LocationService Tests ###
+add_executable(location-service-tests "UnitTests/Services/LocationServiceTest.cpp")
+target_link_libraries(location-service-tests nes-tests)
+add_test(NAME location-service-tests COMMAND location-service-tests)
 
 ### LogicalExpressionTest ###
 add_executable(logical-expression-test "UnitTests/Query/LogicalExpressionTest.cpp")

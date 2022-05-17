@@ -42,7 +42,6 @@ web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() 
     return locMapJson;
 }
 
-
 web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc) {
     web::json::value nodeInfo;
     nodeInfo["id"] = web::json::value(id);
