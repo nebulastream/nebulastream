@@ -824,9 +824,9 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
 }
 
 // Test manual placement with limited resources. The manual placement should place the operator depending on the mapping
-// without considering availability of the nodes
+// without considering availability of the topology nodes
 TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
-    setupTopologyAndSourceCatalog({1, 1, 1});
+    setupTopologyAndSourceCatalog({1, 1, 1}); // each node only has a capacity of 1
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -884,108 +884,65 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
     }
 }
 
+// Test manual placement to place expanded operators in the same topology node
+TEST_F(QueryPlacementTest, testManualPlacementExpandedOperatorInASingleNode) {
+    setupTopologyAndSourceCatalog({1, 1, 1});
+    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
 
-////TODO: enable this test after fixing #2487
-//TEST_F(QueryPlacementTest, DISABLED_testManualPlacementMultipleOperatorInANode) {
-//    // Setup the topology
-//    // We are using a linear topology of three nodes:
-//    // srcNode -> midNode -> sinkNode
-//    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
-//    auto midNode = TopologyNode::create(1, "localhost", 4001, 5001, 4);
-//    auto srcNode = TopologyNode::create(2, "localhost", 4002, 5002, 4);
-//
-//    TopologyPtr topology = Topology::create();
-//    topology->setAsRoot(sinkNode);
-//
-//    topology->addNewTopologyNodeAsChild(sinkNode, midNode);
-//    topology->addNewTopologyNodeAsChild(midNode, srcNode);
-//
-//    ASSERT_TRUE(sinkNode->containAsChild(midNode));
-//    ASSERT_TRUE(midNode->containAsChild(srcNode));
-//
-//    // Prepare the source and schema
-//    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-//                         "->addField(\"value\", BasicType::UINT64);";
-//    const std::string sourceName = "car";
-//
-//    sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-//    sourceCatalog->addLogicalSource(sourceName, schema);
-//    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
-//    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-//    csvSourceType->setGatheringInterval(0);
-//    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-//    auto physicalSource = PhysicalSource::create(sourceName, "test2", csvSourceType);
-//    SourceCatalogEntryPtr sourceCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
-//    sourceCatalog->addPhysicalSource(sourceName, sourceCatalogEntry1);
-//
-//    // Prepare the query
-//    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-//    auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
-//    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
-//
-//    sinkOperator->addChild(filterOperator);
-//    filterOperator->addChild(sourceOperator);
-//
-//    QueryPlanPtr testQueryPlan = QueryPlan::create();
-//    testQueryPlan->addRootOperator(sinkOperator);
-//
-//    // Prepare the placement
-//    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-//    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
-//
-//    auto manualPlacementStrategy = Optimizer::ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-//
-//    // case: allowing more than one operators per node
-//    NES::Optimizer::PlacementMatrix mapping = {{true, true, false}, {false, false, false}, {false, false, true}};
-//
-//    manualPlacementStrategy->setBinaryMapping(mapping);
-//
-//    // Execute optimization phases prior to placement
-//    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-//    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
-//    typeInferencePhase->execute(testQueryPlan);
-//
-//    auto topologySpecificQueryRewrite =
-//        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
-//    topologySpecificQueryRewrite->execute(testQueryPlan);
-//    typeInferencePhase->execute(testQueryPlan);
-//
-//    // Execute the placement
-//    manualPlacementStrategy->updateGlobalExecutionPlan(testQueryPlan);
-//    NES_DEBUG("ManualPlacement: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
-//
-//    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
-//
-//    EXPECT_EQ(executionNodes.size(), 3UL);
-//    for (const auto& executionNode : executionNodes) {
-//        if (executionNode->getId() == 0U) {
-//            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-//            EXPECT_EQ(querySubPlans.size(), 1U);
-//            auto querySubPlan = querySubPlans[0U];
-//            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-//            EXPECT_EQ(actualRootOperators.size(), 1U);
-//            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-//            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
-//            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
-//        } else if (executionNode->getId() == 1U) {
-//            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-//            EXPECT_EQ(querySubPlans.size(), 1U);
-//            auto querySubPlan = querySubPlans[0U];
-//            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-//            EXPECT_EQ(actualRootOperators.size(), 1U);
-//            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-//            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());//system generated source
-//        } else if (executionNode->getId() == 1U) {
-//            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(testQueryPlan->getQueryId());
-//            EXPECT_EQ(querySubPlans.size(), 1U);
-//            auto querySubPlan = querySubPlans[0U];
-//            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
-//            EXPECT_EQ(actualRootOperators.size(), 1U);
-//            OperatorNodePtr actualRootOperator = actualRootOperators[0];
-//            EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());// source
-//        }
-//    }
-//}
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite =
+        Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+
+    NES::Optimizer::PlacementMatrix binaryMapping = {{true, true, false, true, false},
+                                                     {false, false, true, false, false},
+                                                     {false, false, false, false, true}};
+
+    NES::Optimizer::ManualPlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
+
+    auto queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::Manual, sharedQueryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3u);
+    for (const auto& executionNode : executionNodes) {
+        if (executionNode->getId() == 1u) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0u];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2u);
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1u);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1u);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (const auto& children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
+        }
+    }
+}
 
 /**
  * Test on a linear topology with one logical source
