@@ -63,14 +63,16 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFi
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test2")});
+                                           TestUtils::physicalSourceName("test2"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test1")});
+                                           TestUtils::physicalSourceName("test1"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     std::stringstream ss;
@@ -151,7 +153,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::logicalSourceName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceGatheringInterval(1000)});
+                                           TestUtils::sourceGatheringInterval(1000),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
@@ -162,7 +165,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::logicalSourceName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceGatheringInterval(1000)});
+                                           TestUtils::sourceGatheringInterval(1000),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
@@ -229,7 +233,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                 TestUtils::logicalSourceName("QnV"),
                                 TestUtils::numberOfBuffersToProduce(1),
                                 TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                TestUtils::sourceGatheringInterval(1000)});
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1)});
 
     auto worker2 =
         TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -241,7 +246,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                 TestUtils::logicalSourceName("QnV"),
                                 TestUtils::numberOfBuffersToProduce(1),
                                 TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                TestUtils::sourceGatheringInterval(1000)});
+                                TestUtils::sourceGatheringInterval(1000),
+                                TestUtils::workerHealthCheckWaitTime(1)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
@@ -324,7 +330,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                                            TestUtils::logicalSourceName("window"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000)});
+                                           TestUtils::sourceGatheringInterval(1000),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
@@ -335,7 +342,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                                            TestUtils::logicalSourceName("window"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceGatheringInterval(1000)});
+                                           TestUtils::sourceGatheringInterval(1000),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
@@ -392,14 +400,16 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test")});
+                                           TestUtils::physicalSourceName("test"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test")});
+                                           TestUtils::physicalSourceName("test"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     web::json::value json_return;
@@ -455,14 +465,16 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorkerWithKill) 
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test")});
+                                           TestUtils::physicalSourceName("test"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
                                            TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalSourceName("default_logical"),
-                                           TestUtils::physicalSourceName("test")});
+                                           TestUtils::physicalSourceName("test"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     worker1.kill();
