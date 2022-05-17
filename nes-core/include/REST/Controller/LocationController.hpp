@@ -45,5 +45,4 @@ class LocationController : public BaseController {
     LocationServicePtr locationService;
 };
 }
-
 #endif//NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
