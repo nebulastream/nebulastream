@@ -362,5 +362,6 @@ void NesCoordinator::onFatalError(int, std::string) {}
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
 SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return sourceCatalogService; }
 TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
+NES::Spatial::Index::Experimental::LocationServicePtr NesCoordinator::getLocationService() const {return locationService; }
 
 }// namespace NES

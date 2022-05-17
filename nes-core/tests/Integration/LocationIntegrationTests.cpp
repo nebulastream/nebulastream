@@ -31,6 +31,7 @@
 #include <gtest/gtest.h>
 #include <Spatial/LocationProviderCSV.hpp>
 #include <Util/TimeMeasurement.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 
 using namespace std;
 namespace NES {
@@ -406,4 +407,63 @@ TEST_F(LocationIntegrationTests, DISABLED_testLocationFromConfig) {
     EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), NES::Spatial::Index::Experimental::Location(45, -30));
 }
 
+TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
+
+    WorkerRPCClientPtr client = std::make_shared<WorkerRPCClient>();
+    uint64_t rpcPortWrk1 = 6000;
+    uint64_t rpcPortWrk2 = 6001;
+    uint64_t rpcPortWrk3 = 6002;
+
+    //test getting location of mobile node
+    cout << "start worker 1" << endl;
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->rpcPort = rpcPortWrk1;
+    wrkConf1->isMobile.setValue(true);
+    wrkConf1->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart1);
+
+    auto loc1 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk1));
+    EXPECT_TRUE(loc1->isValid());
+    EXPECT_EQ(*loc1, NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
+
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    //test getting location of field node
+    cout << "start worker 2" << endl;
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->rpcPort = rpcPortWrk2;
+    wrkConf2->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2);
+
+    auto loc2 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk2));
+    EXPECT_TRUE(loc2->isValid());
+    EXPECT_EQ(*loc2, NES::Spatial::Index::Experimental::Location::fromString(location2));
+
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+
+    //test getting location of node which does not have a location
+    cout << "start worker 3" << endl;
+    WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
+    wrkConf3->rpcPort = rpcPortWrk3;
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart3);
+
+    auto loc3 = client->getLocation("127.0.0.1:" + std::to_string(rpcPortWrk3));
+    EXPECT_FALSE(loc3->isValid());
+
+    bool retStopWrk3 = wrk3->stop(false);
+    EXPECT_TRUE(retStopWrk3);
+
+    //test getting location of non existent node
+    auto loc4 = client->getLocation("127.0.0.1:9999");
+    EXPECT_FALSE(loc4->isValid());
+}
 }// namespace NES

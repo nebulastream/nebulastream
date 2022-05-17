@@ -36,6 +36,15 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
             return;
         }
         auto nodeLocationJson = locationService->requestNodeLocationDataAsJson(nodeIdOpt.value());
+        if (nodeLocationJson == web::json::value::null()) {
+            NES_ERROR("node with id " << std::to_string(nodeIdOpt.value()) << " does not exist");
+            web::json::value errorResponse{};
+            auto statusCode = web::http::status_codes::BadRequest;
+            errorResponse["code"] = web::json::value(statusCode);
+            errorResponse["message"] = web::json::value::string("No node with this Id");
+            errorMessageImpl(message, errorResponse, statusCode);
+            return;
+        }
         successMessageImpl(message, nodeLocationJson);
         return;
     }
@@ -72,7 +81,7 @@ std::optional<uint64_t> LocationController::getNodeIdFromURIParameter(std::map<u
        web::json::value errorResponse{};
        auto statusCode = web::http::status_codes::BadRequest;
        errorResponse["code"] = web::json::value(statusCode);
-       errorResponse["message"] = web::json::value::string("Parameter nodeId must be a natural number");
+       errorResponse["message"] = web::json::value::string("Parameter nodeId must be an unsigned integer");
        errorMessageImpl(httpRequest, errorResponse, statusCode);
        return {};
    } catch (const std::out_of_range& outOfRange) {
@@ -80,7 +89,7 @@ std::optional<uint64_t> LocationController::getNodeIdFromURIParameter(std::map<u
        web::json::value errorResponse{};
        auto statusCode = web::http::status_codes::BadRequest;
        errorResponse["code"] = web::json::value(statusCode);
-       errorResponse["message"] = web::json::value::string("Parameter nodeId must be in 64bit int value range");
+       errorResponse["message"] = web::json::value::string("Parameter nodeId must be in 64bit unsigned int value range");
        errorMessageImpl(httpRequest, errorResponse, statusCode);
        return {};
    }

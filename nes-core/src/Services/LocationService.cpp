@@ -32,7 +32,7 @@ web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId)
 
 web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
     auto nodeVector = locationIndex->getAllMobileNodeLocations();
-    web::json::value locMapJson;
+    web::json::value locMapJson =  web::json::value::array();
     size_t count = 0;
     for (const auto& elem : nodeVector) {
         web::json::value nodeInfo = convertNodeLocationInfoToJson(elem.first, elem.second);
