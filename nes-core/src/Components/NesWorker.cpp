@@ -39,6 +39,7 @@
 #include <iomanip>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -59,6 +60,20 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
     locationWrapper =
         std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
                                                                                     workerConfig->locationCoordinates);
+}
+
+//todo: check what the best way is to avoid the duplicate code in these constructors
+NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
+                     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr&& mobilityConfig)
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort) {
+    setThreadName("NesWorker");
+    NES_DEBUG("NesWorker: constructed");
+    NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
+    rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
+    locationWrapper =
+        std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
+                                                                                    workerConfig->locationCoordinates,
+                                                                                    mobilityConfig);
 }
 
 NesWorker::~NesWorker() { stop(true); }
@@ -296,7 +311,7 @@ bool NesWorker::connect() {
 
         locationWrapper->setCoordinatorRPCCLient(coordinatorRpcClient);
         if (locationWrapper->isMobileNode()) {
-            locationWrapper->setUpReconnectPlanning(coordinatorRpcClient);
+            locationWrapper->setUpReconnectPlanning();
         }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();

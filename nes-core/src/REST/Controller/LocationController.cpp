@@ -70,7 +70,7 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
                 web::json::value errorResponse{};
                 auto statusCode = web::http::status_codes::NotFound;
                 errorResponse["code"] = web::json::value(statusCode);
-                errorResponse["message"] = web::json::value::string("No mobile node with this Id");
+                errorResponse["message"] = web::json::value::string("No reconnect schedule available for a node with this Id");
                 errorMessageImpl(message, errorResponse, statusCode);
                 return;
             }

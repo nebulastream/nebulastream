@@ -45,6 +45,11 @@ class NodeLocationWrapper;
 using NodeLocationWrapperPtr = std::shared_ptr<NodeLocationWrapper>;
 }// namespace Spatial::Mobility::Experimental
 
+namespace Configurations::Spatial::Mobility::Experimental{
+class WorkerMobilityConfiguration;
+using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
+}
+
 class WorkerRPCServer;
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
@@ -71,6 +76,9 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @note this will create the worker actor using the default worker config
      */
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
+
+    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
+                         NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr&& mobilityConfig);
 
     /**
      * @brief default dtor

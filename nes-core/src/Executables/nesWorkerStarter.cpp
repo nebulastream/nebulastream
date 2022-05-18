@@ -20,6 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 
 using namespace NES;
 using namespace Configurations;
@@ -70,8 +71,13 @@ int main(int argc, char** argv) {
 
         NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
 
+        auto mobilityConfiguration = std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
+        if (!workerConfiguration->locationWrapperConfig.getValue().empty()) {
+            mobilityConfiguration->overwriteConfigWithYAMLFileInput(workerConfiguration->locationWrapperConfig.getValue());
+        }
+
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
-        NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
+        NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration), std::move(mobilityConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 
         NES_INFO("Starting worker");
