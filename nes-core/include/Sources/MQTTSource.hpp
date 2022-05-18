@@ -151,7 +151,7 @@ class MQTTSource : public DataSource {
     MQTTSource() = delete;
 
     /**
-     * @brief method to connect zmq using the host and port specified before
+     * @brief method to connect mqtt using the host and port specified before
      * check if already connected, if not connect try to connect, if already connected return
      * @return bool indicating if connection could be established
      */

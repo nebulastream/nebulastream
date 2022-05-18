@@ -30,4 +30,5 @@ add_source_files(nes-core
         LambdaSourceDescriptor.cpp
         BenchmarkSourceDescriptor.cpp
         MaterializedViewSourceDescriptor.cpp
+        TCPSourceDescriptor.cpp
 )
