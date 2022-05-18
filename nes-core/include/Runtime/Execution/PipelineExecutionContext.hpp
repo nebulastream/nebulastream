@@ -21,6 +21,7 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace NES::Runtime::Execution {
 

@@ -16,6 +16,8 @@
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDEVENTTIMETHREADLOCALWINDOWHANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <vector>
+#include <memory>
 namespace NES::Experimental {
 class HashMapFactory;
 using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
