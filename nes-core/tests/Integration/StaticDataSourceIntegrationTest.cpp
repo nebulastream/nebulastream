@@ -161,8 +161,6 @@ public:
     }
 };
 
-TEST_F(StaticDataSourceIntegrationTest, nothingTest) {}
-
 
 // This test checks that a deployed StaticDataSource can be initialized and queries with a simple query
 // Worker and coordinator on different nodes.
@@ -346,7 +344,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(StaticDataSourceIntegrationTest, testCustomerTableProjection) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
@@ -656,7 +654,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
 }
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinNationCustomer200lines) {
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -734,7 +732,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinNationCustomer200l
 
 // join two static data sources together with the batch join operator.
 // Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinNationCustomerFull) {
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->numberOfBuffersInGlobalBufferManager = 10000;
@@ -826,7 +824,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinNationCustomerFull
 }
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnly) {
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -910,7 +908,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnly) {
 }
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartitioned) {
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyPartitioned) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -1001,7 +999,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
 
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyWithOtherOperations) {
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperations) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -1088,7 +1086,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyWithOt
 
 
 // join two static data sources together with the batch join operator
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemoteProbeSource) {
+TEST_F(StaticDataSourceIntegrationTest, DESABLED_testBatchJoinIntegersOnlyRemoteProbeSource) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConfRemote = WorkerConfiguration::create();
@@ -1180,7 +1178,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
 
 
 // join two static data sources together with the batch join operator. CUSTOMER with an artificial table.
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinCustomerWithIntTable) {
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     // preloading tpch:customer in static data sorce requires 8650 x 4MB buffers
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -1300,7 +1298,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinCustomerWithIntTab
 // join two static data sources together with the batch join operator.
 // two artificial tables of configurable length (generated during test)
 // useful for benchmarking
-TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinLargeIntTables) {
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
     std::string pathProbe = "./test_data/tmp_probe_table.tbl";
     std::string pathBuild = "./test_data/tmp_build_table.tbl";
 
