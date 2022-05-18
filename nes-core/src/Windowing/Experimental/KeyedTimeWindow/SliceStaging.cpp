@@ -13,11 +13,11 @@
 */
 
 #include <Exceptions/WindowProcessingException.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/SliceStaging.hpp>
+#include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceStaging.hpp>
 
 namespace NES::Windowing::Experimental {
 
-std::tuple<uint64_t, uint64_t> SliceStaging::addToSlice(uint64_t sliceEndTs,
+std::tuple<uint64_t, uint64_t> KeyedSliceStaging::addToSlice(uint64_t sliceEndTs,
                                                         std::unique_ptr<std::vector<Runtime::TupleBuffer>> entries) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     if (!slicePartitionMap.contains(sliceEndTs)) {
@@ -32,7 +32,7 @@ std::tuple<uint64_t, uint64_t> SliceStaging::addToSlice(uint64_t sliceEndTs,
     return {partition->addedSlices, partition->buffers.size()};
 }
 
-std::unique_ptr<SliceStaging::Partition> SliceStaging::erasePartition(uint64_t sliceEndTs) {
+std::unique_ptr<KeyedSliceStaging::Partition> KeyedSliceStaging::erasePartition(uint64_t sliceEndTs) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     if (!slicePartitionMap.contains(sliceEndTs)) {
         throw WindowProcessingException("Slice Index " + std::to_string(sliceEndTs) + "not available");
@@ -43,7 +43,7 @@ std::unique_ptr<SliceStaging::Partition> SliceStaging::erasePartition(uint64_t s
     return value;
 }
 
-void SliceStaging::clear() {
+void KeyedSliceStaging::clear() {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     slicePartitionMap.clear();
 }

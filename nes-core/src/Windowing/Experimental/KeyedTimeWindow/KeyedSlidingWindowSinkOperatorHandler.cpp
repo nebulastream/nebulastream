@@ -24,9 +24,9 @@
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlice.hpp>
+#include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlidingWindowSinkOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/SliceStaging.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>

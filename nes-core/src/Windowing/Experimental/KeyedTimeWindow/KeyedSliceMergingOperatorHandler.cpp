@@ -18,8 +18,8 @@
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceMergingOperatorHandler.hpp>
+#include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/SliceStaging.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -27,7 +27,7 @@
 namespace NES::Windowing::Experimental {
 
 KeyedSliceMergingOperatorHandler::KeyedSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
-    : sliceStaging(std::make_shared<SliceStaging>()), windowDefinition(windowDefinition) {
+    : sliceStaging(std::make_shared<KeyedSliceStaging>()), windowDefinition(windowDefinition) {
     windowSize = windowDefinition->getWindowType()->getSize().getTime();
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
@@ -59,6 +59,6 @@ KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask*
 }
 KeyedSliceMergingOperatorHandler::~KeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 Windowing::LogicalWindowDefinitionPtr KeyedSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
-std::weak_ptr<SliceStaging> KeyedSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
+std::weak_ptr<KeyedSliceStaging> KeyedSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
 
 }// namespace NES::Windowing::Experimental

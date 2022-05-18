@@ -57,7 +57,7 @@ GeneratableKeyedTumblingWindowSink::GeneratableKeyedTumblingWindowSink(
 void GeneratableKeyedTumblingWindowSink::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
 void GeneratableKeyedTumblingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForGlobalTumblingWindowSink(windowDefinition, windowAggregation, context, outputSchema);
+    codegen->generateCodeForKeyedTumblingWindowSink(windowDefinition, windowAggregation, context, outputSchema);
 }
 
 std::string GeneratableKeyedTumblingWindowSink::toString() const { return "GeneratableKeyedSliceMergingOperator"; }

@@ -49,8 +49,8 @@ class SingleNodeThreadLocalSlidingWindowTests : public Testing::NESBaseTest, pub
   public:
     WorkerConfigurationPtr workerConfiguration;
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SingleNodeThreadLocalTumblingWindowTests.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SingleNodeThreadLocalTumblingWindowTests test class.");
+        NES::Logger::setupLogging("SingleNodeThreadLocalSlidingWindowTests.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup SingleNodeThreadLocalSlidingWindowTests test class.");
     }
 
     void SetUp() override {

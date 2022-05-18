@@ -24,7 +24,7 @@ class LockFreeMultiOriginWatermarkProcessor;
 
 namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStore;
-class SliceStaging;
+class KeyedSliceStaging;
 
 /**
  * @brief The KeyedThreadLocalPreAggregationOperator provides an operator handler to perform slice-based pre-aggregation of tumbling and sliding windows.
@@ -40,7 +40,7 @@ class KeyedThreadLocalPreAggregationOperatorHandler
   public:
     KeyedThreadLocalPreAggregationOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                                   const std::vector<OriginId> origins,
-                                                  std::weak_ptr<SliceStaging> weakSliceStagingPtr);
+                                                  std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr);
 
     /**
      * @brief Initializes the thread local state for the window operator
@@ -90,7 +90,7 @@ class KeyedThreadLocalPreAggregationOperatorHandler
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
-    std::weak_ptr<SliceStaging> weakSliceStaging;
+    std::weak_ptr<KeyedSliceStaging> weakSliceStaging;
     std::vector<std::unique_ptr<KeyedThreadLocalSliceStore>> threadLocalSliceStores;
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
