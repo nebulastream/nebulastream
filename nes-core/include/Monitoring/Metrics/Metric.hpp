@@ -20,12 +20,6 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cpprest/json.h>
 
-#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
-#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
-
 namespace NES {
 
 class Metric;

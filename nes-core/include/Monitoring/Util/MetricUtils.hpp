@@ -61,6 +61,13 @@ class MetricUtils {
      * @return the metric collector shared ptr.
      */
     static MetricCollectorPtr createCollectorFromType(MetricCollectorType type);
+
+    /**
+     * @brief Creates a metric from the according collector.
+     * @param type
+     * @return the metric as shared ptr.
+     */
+    static MetricPtr createMetricFromCollector(MetricCollectorType type);
 };
 
 }// namespace NES

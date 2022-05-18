@@ -30,7 +30,7 @@ class Metric;
 class MetricCollector {
   protected:
     //  -- Constructors --
-    MetricCollector(uint64_t nodeId = 0) : nodeId(nodeId){};
+    MetricCollector(uint64_t nodeId = 0);
     MetricCollector(const MetricCollector&) = default;
     MetricCollector(MetricCollector&&) = default;
     //  -- Assignment --

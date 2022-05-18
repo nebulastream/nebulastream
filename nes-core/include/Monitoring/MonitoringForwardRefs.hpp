@@ -45,8 +45,8 @@ using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
-using MetricEntryPtr = std::shared_ptr<std::pair<uint64_t, MetricPtr>>;
-using StoredNodeMetricsPtr = std::shared_ptr<std::unordered_map<MetricType, std::shared_ptr<std::vector<MetricEntryPtr>>>>;
+using TimestampMetricPtr = std::shared_ptr<std::pair<uint64_t, MetricPtr>>;
+using StoredNodeMetricsPtr = std::shared_ptr<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>;
 
 class MetricCollector;
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;

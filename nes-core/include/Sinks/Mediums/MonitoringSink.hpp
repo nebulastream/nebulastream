@@ -16,13 +16,17 @@
 #define NES_NES_CORE_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_
 
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
 
 namespace NES {
+
+class AbstractMetricStore;
+using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+class Metric;
+using MetricPtr = std::shared_ptr<Metric>;
 
 /**
  * @brief this class provides a print sink
@@ -82,6 +86,7 @@ class MonitoringSink : public SinkMedium {
   private:
     MetricStorePtr metricStore;
     MetricCollectorType collectorType;
+    MetricPtr parsedMetric;
 };
 using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 

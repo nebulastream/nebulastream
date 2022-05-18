@@ -184,11 +184,11 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
     ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), typedMetric));
 
-    DiskMetrics parsedMetric{};
+    MetricPtr parsedMetric = std::make_shared<Metric>(DiskMetrics{});
     readFromBuffer(parsedMetric, tupleBuffer, 0);
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
-    ASSERT_EQ(typedMetric, parsedMetric);
-    ASSERT_EQ(parsedMetric.nodeId, nodeId);
+    ASSERT_EQ(typedMetric, parsedMetric->getValue<DiskMetrics>());
+    ASSERT_EQ(parsedMetric->getValue<DiskMetrics>().nodeId, nodeId);
     ASSERT_EQ(typedMetric.nodeId, nodeId);
 }
 

@@ -15,9 +15,9 @@
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/QueryCatalogService.hpp>
-#include <Services/ReplicationService.hpp>
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>

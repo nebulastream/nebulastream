@@ -17,6 +17,7 @@
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>

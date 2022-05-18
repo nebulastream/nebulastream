@@ -18,7 +18,11 @@
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -58,7 +62,7 @@ web::json::value MetricUtils::toJson(std::unordered_map<MetricType, std::shared_
 web::json::value MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
     web::json::value metricsJson{};
     for (auto metricTypeEntry : *metrics.get()) {
-        std::shared_ptr<std::vector<MetricEntryPtr>> metricVec = metricTypeEntry.second;
+        std::shared_ptr<std::vector<TimestampMetricPtr>> metricVec = metricTypeEntry.second;
         web::json::value arr{};
         int i = 0;
         for (const auto& metric : *metricTypeEntry.second.get()) {
@@ -82,6 +86,20 @@ MetricCollectorPtr MetricUtils::createCollectorFromType(MetricCollectorType type
         case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<MemoryCollector>();
         case MetricCollectorType::NETWORK_COLLECTOR: return std::make_shared<NetworkCollector>();
         default: NES_FATAL_ERROR("MetricUtils: Not supported collector type " << toString(type));
+    }
+    return nullptr;
+}
+
+MetricPtr MetricUtils::createMetricFromCollector(MetricCollectorType type) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(CpuMetricsWrapper{}, WrappedCpuMetrics);
+        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(DiskMetrics{}, DiskMetric);
+        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(MemoryMetrics{}, MemoryMetric);
+        case MetricCollectorType::NETWORK_COLLECTOR:
+            return std::make_shared<Metric>(NetworkMetricsWrapper{}, WrappedNetworkMetrics);
+        default: {
+            NES_FATAL_ERROR("MonitoringSink: Collector type not supported " << NES::toString(type));
+        }
     }
     return nullptr;
 }

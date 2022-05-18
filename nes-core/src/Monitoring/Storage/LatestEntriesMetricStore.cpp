@@ -38,11 +38,11 @@ void LatestEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         }
     } else {
         NES_DEBUG("LatestEntriesMetricStore: Creating node entry with ID " << std::to_string(nodeId));
-        nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<MetricEntryPtr>>>>();
+        nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
-    nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<MetricEntryPtr>>()});
-    MetricEntryPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
+    nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
+    TimestampMetricPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
     auto entryVec = nodeMetrics->at(metric->getMetricType());
     entryVec->emplace_back(std::move(entry));
 }
