@@ -13,7 +13,7 @@
 */
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
 
@@ -22,7 +22,7 @@ namespace NES {
  */
 class MemoryCollector : public MetricCollector {
   public:
-    explicit MemoryCollector(uint64_t nodeId=0);
+    explicit MemoryCollector(uint64_t nodeId = 0);
 
     /**
      * @brief Returns the type of metric collector

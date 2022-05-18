@@ -16,7 +16,7 @@
 #define NES_INCLUDE_MONITORING_COLLECTORS_DISKCOLLECTOR_HPP_
 
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
 

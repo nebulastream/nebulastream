@@ -19,4 +19,5 @@ add_source_files(nes-core
         MemoryCollector.cpp
         MetricCollectorType.cpp
         NetworkCollector.cpp
-)
+        MetricCollector.cpp
+        )

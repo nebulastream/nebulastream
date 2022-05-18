@@ -25,7 +25,6 @@ MetricStoreType AllEntriesMetricStore::getType() const { return AllEntries; }
 
 void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
     std::unique_lock lock(storeMutex);
-    NES_DEBUG("AllEntriesMetricStore: Adding metric of type " << toString(metric->getMetricType()));
     StoredNodeMetricsPtr nodeMetrics;
     uint64_t timestamp = duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     if (storedMetrics.contains(nodeId)) {
@@ -36,15 +35,15 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
             NES_DEBUG("AllEntriesMetricStore: Found metrics for " << nodeId << " of type " << toString(metric->getMetricType()));
         } else {
             NES_DEBUG("AllEntriesMetricStore: Creating metrics " << nodeId << " of type " << toString(metric->getMetricType()));
-            nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<MetricEntryPtr>>()});
+            nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         }
     } else {
         NES_DEBUG("AllEntriesMetricStore: Adding metrics for " << nodeId << " with type " << toString(metric->getMetricType()));
-        nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<MetricEntryPtr>>>>();
-        nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<MetricEntryPtr>>()});
+        nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
+        nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
-    MetricEntryPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
+    TimestampMetricPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
     auto entryVec = nodeMetrics->at(metric->getMetricType());
     entryVec->emplace_back(std::move(entry));
 }
