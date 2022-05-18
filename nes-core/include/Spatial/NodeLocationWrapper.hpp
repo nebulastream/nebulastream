@@ -16,12 +16,15 @@
 
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <memory>
-#include <s2/s2point.h>
-#include <s2/s2point_index.h>
 #include <thread>
 #include <vector>
 #include <deque>
 #include <Util/TimeMeasurement.hpp>
+#ifdef S2DEF
+#include <s2/s1chord_angle.h>
+#include <s2/s2point.h>
+#include <s2/s2point_index.h>
+#endif
 
 class S2Polyline;
 using S2PolylinePtr = std::shared_ptr<S2Polyline>;
@@ -29,34 +32,43 @@ using S2PolylinePtr = std::shared_ptr<S2Polyline>;
 namespace NES {
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
-}// namespace NES
 
-namespace NES::Spatial::Index::Experimental {
+namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
 }// namespace NES::Spatial::Index::Experimental
+
+namespace Configurations::Spatial::Mobility::Experimental{
+class WorkerMobilityConfiguration;
+using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
+}
+}// namespace NES
+
 namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
-
+/*
 //todo: make this a member variale and set the default via config
 //todo: check what alternatives there are to sleep() in order to use more finegrained intervals
 const uint64_t kDefaultUpdateInterval = 10;
 const size_t kDefaultLocBufferSize = 10;
 const size_t kDefaultSaveRate = 4;
 //todo: do we want this in absolute degrees or relative to the speed?
-const double kPathDistanceDelta = 1;
+const double kPathDistanceDeltaMeters = 2000;
 const double kPathExtensionFactor = 10;
 const double kSaveNodesRange = 50;
-const double kDefaultCoverage = 3;
-const double kPathLength = 200;
-
+const double kDefaultCoverageMeters = 500;
+const double kPathLengthMeters = 500;
+*/
 class NodeLocationWrapper {
   public:
     explicit NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc);
+
+    NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc,
+                                             NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration);
 
     /**
      * Experimental
@@ -72,7 +84,8 @@ class NodeLocationWrapper {
      * Set the rpcClient which this LocationWrapper can use to communicate with the coordinator
      * @param rpcClientPtr
      */
-    void setUpReconnectPlanning(CoordinatorRPCClientPtr rpcClientPtr);
+    void setUpReconnectPlanning();
+
     /**
      * Experimental
      * @brief checks if this Worker runs on a non-mobile device with a known location (Field Node)
@@ -145,17 +158,24 @@ class NodeLocationWrapper {
 
     std::shared_ptr<std::thread> locationUpdateThread;
 
-    uint64_t updateInterval;
+    uint64_t pathUpdateInterval;
     size_t locBufferSize;
     size_t saveRate;
     //todo: make these pointers inf necessary. would allow forward declarations
     S2Point pathBeginning;
     S2Point pathEnd;
+    S2Point currentPointPathCoverageEnd;
     S2PolylinePtr trajectoryLine;
+    //todo: check which angles need to be s1angle and which ones can be chorda angles
+    S1ChordAngle predictedPathLengthAngle;
+    S1ChordAngle deltaAngle;
     S2PointIndex<uint64_t> fieldNodeIndex;
+    double nodeDownloadRadius;
+    uint64_t nodeIndexUpdateThreshold;
     //todo: maybe use a cap for this instead?
     NES::Spatial::Index::Experimental::LocationPtr positionOfLastNodeIndexUpdate;
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> reconnectVector;
+    S1ChordAngle defaultCoverageAngle;
 };
 
 }//namespace NES::Spatial::Mobility::Experimental

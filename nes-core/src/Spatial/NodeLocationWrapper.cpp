@@ -16,6 +16,7 @@
 #include <Spatial/NodeLocationWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Spatial/ReconnectSchedule.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 
 #include <s2/s2point.h>
 #include <s2/s2polyline.h>
@@ -26,6 +27,21 @@ namespace NES::Spatial::Mobility::Experimental {
 NodeLocationWrapper::NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc) {
     this->isMobile = isMobile;
     this->fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(fieldNodeLoc);
+}
+
+NodeLocationWrapper::NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc,
+                                         NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration) :
+NodeLocationWrapper(isMobile, fieldNodeLoc) {
+    //(void) configuration;
+    //todo: make the names match to avoid confusion
+    pathUpdateInterval = configuration->pathPredictionUpdateInterval.getValue();
+    locBufferSize = configuration->locationBufferSize.getValue();
+    saveRate = configuration->saveRate.getValue();
+    deltaAngle = S2Earth::MetersToChordAngle(configuration->pathDistanceDelta.getValue());
+    nodeDownloadRadius = configuration->nodeDownloadRadius.getValue();
+    nodeIndexUpdateThreshold = configuration->nodeIndexUpdateThreshold.getValue();
+    defaultCoverageAngle = S2Earth::MetersToChordAngle(configuration->defaultCoverageRadius.getValue());
+    predictedPathLengthAngle = S2Earth::MetersToChordAngle(configuration->pathPredictionLength);
 }
 
 bool NodeLocationWrapper::createLocationProvider(LocationProviderType type, std::string config) {
@@ -47,27 +63,17 @@ bool NodeLocationWrapper::createLocationProvider(LocationProviderType type, std:
     return true;
 }
 
-void NodeLocationWrapper::setUpReconnectPlanning(CoordinatorRPCClientPtr rpcClientPtr) {
-    //this->coordinatorRpcClient = rpcClientPtr;
-    (void) rpcClientPtr;
-    auto nodeList = getNodeIdsInRange(kSaveNodesRange);
+void NodeLocationWrapper::setUpReconnectPlanning() {
+    //todo: get these values from config instead of const values:
+    //deltaAngle = S1ChordAngle(kPathDistanceDeltaMeters);
+
+    auto nodeList = getNodeIdsInRange(nodeDownloadRadius);
     for (auto elem : nodeList) {
         auto loc = elem.second;
         //todo: set the return type of the vector to be in the sma order as the parameters of add
         fieldNodeIndex.Add(S2Point(S2LatLng::FromDegrees(loc.getLatitude(), loc.getLongitude())), elem.first);
     }
     if (isMobile) {
-        //todo: these have to be set earlier
-        updateInterval = kDefaultUpdateInterval;
-        locBufferSize = kDefaultLocBufferSize;
-        saveRate = kDefaultSaveRate;
-        /*
-        locationUpdateThread = std::make_shared<std::thread>(([this]() {
-        NES_DEBUG("NesWorker: starting location updating");
-        startReconnectPlanning(locBufferSize, updateInterval, saveRate);
-        NES_DEBUG("NesWorker: stop updating location");
-        }));
-         */
         locationUpdateThread = std::make_shared<std::thread>(&NodeLocationWrapper::startReconnectPlanning, this);
     }
 }
@@ -128,7 +134,7 @@ std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrap
             locationBuffer.push_back(locationProvider->getCurrentLocation());
             NES_DEBUG("added: " << locationBuffer.back().first->toString() << locationBuffer.back().second);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval * saveRate));
+        std::this_thread::sleep_for(std::chrono::milliseconds(pathUpdateInterval * saveRate));
     }
     NES_DEBUG("buffer save rate: " << saveRate);
     NES_TRACE("Location buffer is filled");
@@ -148,7 +154,7 @@ std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrap
             stepsSinceLastSave += 1;
         }
         //todo: check how far we are from las index update and download new nodes
-        std::this_thread::sleep_for(std::chrono::milliseconds(updateInterval));
+        std::this_thread::sleep_for(std::chrono::milliseconds(pathUpdateInterval));
     }
 }
 
@@ -156,23 +162,22 @@ void NodeLocationWrapper::updatePredictedPath(Spatial::Index::Experimental::Loca
     int vertexIndex = 0;
     int* vertexIndexPtr = &vertexIndex;
     S2Point currentPoint(S2LatLng::FromDegrees(currentLoc->getLatitude(), currentLoc->getLongitude()));
-    double dist = 0;
+    S1ChordAngle distAngle = S2Earth::MetersToChordAngle(0);
     if (trajectoryLine) {
         auto pointOnLine = trajectoryLine->Project(currentPoint, vertexIndexPtr);
         NES_DEBUG("point on line" << pointOnLine);
-        dist = S1ChordAngle(currentPoint, pointOnLine).degrees();
-        NES_DEBUG("dist: " << dist);
+        distAngle = S1ChordAngle(currentPoint, pointOnLine);
+        NES_DEBUG("dist: " << S2Earth::ToMeters(distAngle));
     }
     //todo: check if we are using size in the right way in the second half of hte condition
     //todo: instead of just using points, calculate centroids
     //todo: instead of updateing right away, look at if the new trajectory stabilizes itself after a turn
-    if ((trajectoryLine && dist > kPathDistanceDelta) || (!trajectoryLine && locationBuffer.size() == locBufferSize)) {
+
+    if ((trajectoryLine && distAngle > deltaAngle) || (!trajectoryLine && locationBuffer.size() == locBufferSize)) {
         NES_DEBUG("updating trajectory");
         S2Point oldPoint(S2LatLng::FromDegrees(oldLoc->getLatitude(), oldLoc->getLongitude()));
-        //todo: if we only extend by a little, we can use a chord angle. what is the performance difference?
         S1Angle angle(oldPoint, currentPoint);
-        //todo: fix everywhere if we are using distances to check if we use angle or km
-        auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, S2Earth::KmToAngle(kPathDistanceDelta));
+        auto extrapolatedPoint = S2::GetPointOnLine(oldPoint, currentPoint, predictedPathLengthAngle);
         std::vector<S2Point> locVec;
         locVec.push_back(oldPoint);
         locVec.push_back(extrapolatedPoint);
@@ -199,14 +204,19 @@ std::pair<S2Point, S1Angle> NodeLocationWrapper::findPathCoverage(S2PolylinePtr 
 
 void NodeLocationWrapper::scheduleReconnects(const NES::Spatial::Index::Experimental::LocationPtr& currentLoc) {
     S2Point currentPoint(S2LatLng::FromDegrees(currentLoc->getLatitude(), currentLoc->getLongitude()));
-    S2Point nextReconnectPoint = S2::GetPointOnLine(currentPoint, pathEnd, S1Angle::Degrees(kDefaultCoverage));
+    //todo: there is a mistek in the thinking for the following line: we cannot measure the full coverage from our current loc
+    //instead we need to use find path coverage
+    //S2Point nextReconnectPoint = S2::GetPointOnLine(currentPoint, pathEnd, S1Angle::Degrees(kDefaultCoverageMeters));
 
     double distToReconnect = 0;
-    while (distToReconnect < kPathLength) {
+    /*
+    //todo: what did i mean with this condition?
+    while (distToReconnect < kPathLengthMeters) {
         //todo make a cap around next reconnect and divide it in half
         //todo: take all nodes within this cap
 
     }
+     */
 }
 
 NES::Spatial::Mobility::Experimental::LocationProviderPtr NodeLocationWrapper::getLocationProvider() {

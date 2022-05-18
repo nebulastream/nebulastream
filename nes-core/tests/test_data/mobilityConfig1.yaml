@@ -1,0 +1,6 @@
+# ~~~ Configurations for the NES Mobile Worker ~~~
+
+# ~~ IPs and Ports ~~
+# Set NES ip of the REST server
+nodeInfoDownloadRadius: 20000
+
