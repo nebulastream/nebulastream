@@ -18,6 +18,9 @@
 #define NES_INCLUDE_MATERIALIZEDVIEW_MATERIALIZEDVIEW_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
+#include <variant>
+#include <Util/libcuckoo/cuckoohash_map.hh>
+//#include <Views/AIMBenchmark.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
@@ -55,4 +58,26 @@ protected:
 
 }; // class MaterializedView
 } // namespace NES::Experimental::MaterializedView
+
+/**
+ * Used for benchmark purposes
+ */
+template <typename K, typename V>
+class MaterializedView {
+public:
+    MaterializedView() = default;
+
+    // TODO: argument types change with subclasses
+    virtual void insert(K key, V value) = 0;
+
+    /*
+    // TODO: Return type changes between map and cookomap?
+    using ReturnType = std::variant<typename cuckoohash_map<K, V>::iterator, typename std::multimap<K, V>::iterator>;
+    virtual ReturnType begin() = 0;
+    virtual ReturnType end() = 0;
+    */
+    virtual uint64_t size() = 0;
+    virtual std::string name() = 0;
+};
+
 #endif//NES_INCLUDE_MATERIALIZEDVIEW_MATERIALIZEDVIEW_HPP_
