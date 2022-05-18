@@ -23,7 +23,7 @@ namespace NES {
 class TCPSourceType;
 using TCPSourceTypePtr = std::shared_ptr<TCPSourceType>;
 
-class TCPSourceType : PhysicalSourceType {
+class TCPSourceType : public PhysicalSourceType {
 
   public:
     /**

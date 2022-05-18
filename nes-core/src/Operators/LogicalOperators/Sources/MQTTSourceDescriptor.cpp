@@ -17,7 +17,6 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <mqtt/async_client.h>
 #include <utility>
 
 namespace NES {

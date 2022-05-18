@@ -15,6 +15,7 @@ limitations under the License.
 #ifndef NES_INCLUDE_SOURCES_TCPSOURCE_HPP
 #define NES_INCLUDE_SOURCES_TCPSOURCE_HPP
 
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/Parser.hpp>
@@ -37,8 +38,7 @@ class TCPSource : public DataSource{
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode::Value gatheringMode,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                       SourceDescriptor::InputFormat inputFormat);
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     ~TCPSource() override;
 
@@ -52,9 +52,27 @@ class TCPSource : public DataSource{
 
     TCPSource() = delete;
 
+    /**
+     * @brief method to connect tcp using the host and port specified before
+     * check if already connected, if not connect try to connect, if already connected return
+     * @return bool indicating if connection could be established
+     */
+    bool connected();
+
+    /**
+     * @brief method to make sure tcp is disconnected
+     * check if already disconnected, if not disconnected try to disconnect, if already disconnected return
+     * @return bool indicating if connection could be established
+     */
+    bool disconnect();
+
     friend class DataSource;
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unique_ptr<Parser> inputParser;
+    int connection;
+    uint64_t tupleSize;
+    int sock = 0;
+    uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
 
 };
