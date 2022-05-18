@@ -35,7 +35,7 @@ class BasicBlock {
     [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] std::vector<OperationPtr> getOperations();
     [[nodiscard]] std::vector<std::string> getInputArgs();
-    [[nodiscard]] int32_t getScopeLevel();
+    [[nodiscard]] int32_t getParentBlockLevel();
     void addOperation(OperationPtr operation);
     void popOperation();
 
@@ -43,7 +43,7 @@ class BasicBlock {
     std::string identifier;
     std::vector<OperationPtr> operations;
     std::vector<std::string> inputArgs;
-    int32_t scopeLevel;
+    int32_t parentBlockLevel;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 } // namespace NES
