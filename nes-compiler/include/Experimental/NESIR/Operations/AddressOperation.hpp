@@ -21,14 +21,16 @@
 namespace NES {
 class AddressOperation : public Operation {
 public:
-    explicit AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset, std::string argName);
+    explicit AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, 
+                              uint64_t fieldOffset, std::string recordIdxName, std::string addressSourceName);
     ~AddressOperation() override = default;
 
     std::string getIdentifier();
     Operation::BasicType getDataType();
     uint64_t getRecordWidth();
     uint64_t getFieldOffset();
-    std::string getArgName();
+    std::string getRecordIdxName();
+    std::string getAddressSourceName();
 
     static bool classof(const Operation *Op);
 private:
@@ -36,7 +38,8 @@ private:
     Operation::BasicType dataType;
     uint64_t recordWidth;
     uint64_t fieldOffset;
-    std::string argName;
+    std::string recordIdxName;
+    std::string addressSourceName;
 };
 }// namespace NES
 

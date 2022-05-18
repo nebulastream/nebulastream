@@ -274,7 +274,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std
     auto loopEndBB = loopIfOp->getElseBranchBlock();
     // Define index variables for loop.
     // For now we assume that loops always use the "i" as the induction var and always increase "i" by one each step.
-    auto lowerBound = builder->create<arith::IndexCastOp>(getNameLoc("LowerBound"), builder->getIndexType(), blockArgs["i"]);
+    auto lowerBound = builder->create<arith::IndexCastOp>(getNameLoc("LowerBound"), builder->getIndexType(), blockArgs[compareOp->getFirstArgName()]);
     auto stepSize = builder->create<arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs["constOne"]);
 
     // Create Loop Operation. Save InsertionPoint(IP) of parent's BasicBlock
@@ -287,22 +287,18 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std
     // -=LOOP BODY=-
     // Set Insertion Point(IP) to loop BasicBlock. Process all Operations in loop BasicBlock. Restore IP to parent's BasicBlock.
     builder->setInsertionPointToStart(forLoop.getBody());
-    //Todo cannot use global currentRecordIdx
-    if(loopBodyBB->getParentBlockLevel() == 2) {
-        currentRecordIdx = builder->create<arith::IndexCastOp>(getNameLoc("InductionVar Cast"), builder->getI64Type(), 
-                                                                forLoop.getInductionVar());
-    }
     std::unordered_map<std::string, mlir::Value> loopBodyArgs = blockArgs;
+    loopBodyArgs[compareOp->getFirstArgName()] = builder->create<arith::IndexCastOp>(getNameLoc("InductionVar Cast"), 
+                                              builder->getI64Type(), forLoop.getInductionVar());
     generateMLIR(loopBodyBB, loopBodyArgs);
     // Copy all values that were modified in LoopOp to blockArgs.
     int i = 0;
-    for(auto blockArg = blockArgs.begin(); blockArg != blockArgs.end(); blockArg++) { //Todo try: , ++i
+    for(auto blockArg = blockArgs.begin(); blockArg != blockArgs.end(); blockArg++, ++i) {
         blockArgs[blockArg->first] = loopBodyArgs[blockArg->first];
-        ++i;
     }
     // Leave LoopOp
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
-    // Todo think below through
+    // LoopOp might be last Op in e.g. a nested If-Else case. The loopEndBB might then be higher in scope and reached from another Op.
     if(loopOp->getLoopHeaderBlock()->getParentBlockLevel() <= loopEndBB->getParentBlockLevel()) {
         generateMLIR(loopEndBB, blockArgs);
     }
@@ -312,7 +308,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("AddressOp");
     Value recordOffset = builder->create<LLVM::MulOp>(getNameLoc("recordOffset"),
-                                                      currentRecordIdx,
+                                                      blockArgs[addressOp->getRecordIdxName()],
                                                       getConstInt("1", 64, addressOp->getRecordWidth()));
     Value fieldOffset = builder->create<LLVM::AddOp>(getNameLoc("fieldOffset"),
                                                      recordOffset,
@@ -320,7 +316,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddressOperation> addressO
     // Return I8* to first byte of field data
     Value elementAddress = builder->create<LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                         LLVM::LLVMPointerType::get(builder->getI8Type()),
-                                                        blockArgs[addressOp->getArgName()],
+                                                        blockArgs[addressOp->getAddressSourceName()],
                                                         ArrayRef<Value>({fieldOffset}));
     blockArgs.emplace(std::pair{addressOp->getIdentifier(), builder->create<LLVM::BitcastOp>(getNameLoc("Address Bitcasted"),
                                             LLVM::LLVMPointerType::get(getMLIRType(addressOp->getDataType())),
@@ -346,9 +342,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ConstantIntOperation> cons
 // No recursion. Dependencies. Requires addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("AddOp");
-    // Only generate Add, if not loop induction variable ++ operation.
-    // Todo need better check for loopIncArg
-    if(addOp->getLeftArgName() != "i" && addOp->getLeftArgName() != "j") {
+    // Only generate Add, if not loop induction variable ++ operation (only loopInduction vars have length 1).
+    if(addOp->getLeftArgName().length() != 1) {
         if(!blockArgs.contains(addOp->getIdentifier())) {
             blockArgs.emplace(std::pair{addOp->getIdentifier(),
                 builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()])});

@@ -83,7 +83,6 @@ class MLIRGenerator {
     // Map that contains execute input args, function call results and intermediary results from NESIR Operations.
     std::vector<mlir::FuncOp> memberFunctions;
     // Utility
-    mlir::Value currentRecordIdx;
     mlir::RewriterBase::InsertPoint *globalInsertPoint;
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;

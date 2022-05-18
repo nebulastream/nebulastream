@@ -15,19 +15,17 @@
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 
 namespace NES {
-AddressOperation::AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, uint64_t fieldOffset, std::string argName)
-    : Operation(NES::Operation::AddressOp), identifier(std::move(identifier)), dataType(dataType), recordWidth(getRecordWidth), fieldOffset(fieldOffset), 
-    argName(argName) {}
+AddressOperation::AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, 
+                                   uint64_t fieldOffset, std::string recordIdxName, std::string addressSourceName)
+    : Operation(NES::Operation::AddressOp), identifier(std::move(identifier)), dataType(dataType), 
+      recordWidth(getRecordWidth), fieldOffset(fieldOffset), recordIdxName(recordIdxName), addressSourceName(addressSourceName) {}
 
 std::string AddressOperation::getIdentifier() { return identifier; }
-
 Operation::BasicType AddressOperation::getDataType() { return dataType; }
-
 uint64_t AddressOperation::getRecordWidth() { return recordWidth; }
-
-uint64_t AddressOperation::getFieldOffset() { return fieldOffset; };
-
-std::string AddressOperation::getArgName() { return argName; };
+uint64_t AddressOperation::getFieldOffset() { return fieldOffset; }
+std::string AddressOperation::getRecordIdxName() { return recordIdxName; }
+std::string AddressOperation::getAddressSourceName() { return addressSourceName; }
 
 bool NES::AddressOperation::classof(const NES::Operation *Op) {
     return Op->getOperationType() == OperationType::AddressOp;
