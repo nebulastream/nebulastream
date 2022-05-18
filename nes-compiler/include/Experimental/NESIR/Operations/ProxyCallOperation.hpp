@@ -21,17 +21,22 @@
 namespace NES {
 class ProxyCallOperation : public Operation {
   public:
-    ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, std::vector<std::string> inputArgNames);
+    ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, std::vector<std::string> inputArgNames,
+                       std::vector<Operation::BasicType> inputArgTypes, Operation::BasicType resultType);
     ~ProxyCallOperation() override = default;
 
     ProxyCallType getProxyCallType();
     std::string getIdentifier();
     std::vector<std::string> getInputArgNames();
+    std::vector<Operation::BasicType> getInputArgTypes();
+    Operation::BasicType getResultType();
 
   private:
     ProxyCallType proxyCallType;
     std::string identifier;
-    std::vector<std::string> inputArgNames;
+    std::vector<std::string> inputArgNames; // We need this to get the correct input args from the value map.
+    std::vector<Operation::BasicType> inputArgTypes;
+    Operation::BasicType resultType;
 };
 }// namespace NES
 #endif//NES_PROXYCALLOPERATION_HPP

@@ -48,6 +48,7 @@ class Operation {
     enum ProxyCallType{
         GetNumTuples = 0, 
         GetDataBuffer = 1,
+        Other = 50
     };
     enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp, 
                        CompareOp, ReturnOp, ProxyCallOp};

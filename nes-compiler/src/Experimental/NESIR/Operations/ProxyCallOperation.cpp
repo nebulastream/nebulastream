@@ -16,11 +16,16 @@
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 
 namespace NES {
-ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, std::vector<std::string> inputArgNames) 
-    : Operation(Operation::ProxyCallOp), proxyCallType(proxyCallType), identifier(identifier), inputArgNames(std::move(inputArgNames)) {}
+ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, 
+                                        std::vector<std::string> inputArgNames, std::vector<Operation::BasicType> inputArgTypes,
+                                        Operation::BasicType resultType) 
+    : Operation(Operation::ProxyCallOp), proxyCallType(proxyCallType), identifier(identifier), inputArgNames(std::move(inputArgNames)),
+      inputArgTypes(inputArgTypes), resultType(resultType) {}
 
     Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
     std::string ProxyCallOperation::getIdentifier() { return identifier; }
     std::vector<std::string> ProxyCallOperation::getInputArgNames() { return inputArgNames; }
+    std::vector<Operation::BasicType> ProxyCallOperation::getInputArgTypes() { return inputArgTypes; }
+    Operation::BasicType ProxyCallOperation::getResultType() { return resultType; }
     
 }// namespace NES

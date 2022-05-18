@@ -119,7 +119,7 @@ class MLIRGenerator {
      * @return FlatSymbolRefAttr: Reference to function used in CallOps.
      */
     FlatSymbolRefAttr insertExternalFunction(const std::string &name,
-                                            uint8_t numResultBits,
+                                            mlir::Type resultType,
                                             std::vector<mlir::Type> argTypes,
                                             bool varArgs);
 
@@ -142,6 +142,13 @@ class MLIRGenerator {
      * @return mlir::Type: MLIR Type.
      */
     mlir::Type getMLIRType(NES::Operation::BasicType type);
+
+    /**
+     * @brief Get MLIR Type from a basic NES type.
+     * @param type: NES basic type.
+     * @return mlir::Type: MLIR Type.
+     */
+    std::vector<mlir::Type> getMLIRType(std::vector<NES::Operation::BasicType> types);
 
     /**
      * @brief Get a constant MLIR Integer.

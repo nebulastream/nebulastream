@@ -66,8 +66,17 @@ mlir::Type MLIRGenerator::getMLIRType(NES::Operation::BasicType type) {
         case NES::Operation::FLOAT: return Float32Type::get(context);
         case NES::Operation::DOUBLE: return Float64Type::get(context);
         case NES::Operation::INT8PTR: return LLVM::LLVMPointerType::get(builder->getI8Type());
+        case NES::Operation::VOID: return LLVM::LLVMVoidType::get(context);
         default: return builder->getIntegerType(32);
     }
+}
+
+std::vector<mlir::Type> MLIRGenerator::getMLIRType(std::vector<NES::Operation::BasicType> types) {
+    std::vector<mlir::Type> resultTypes;
+    for(auto type : types) {
+        resultTypes.push_back(getMLIRType(type));
+    }
+    return resultTypes;
 }
 
 mlir::Value MLIRGenerator::getConstInt(const std::string& location, int numBits, int64_t value) {
@@ -93,8 +102,6 @@ mlir::arith::CmpIPredicate convertToMLIRComparison(NES::CompareOperation::Compar
     //TODO extend to all comparison types
     switch (comparisonType) {
         case (NES::CompareOperation::Comparator::ISLT): return mlir::arith::CmpIPredicate::slt;
-        // case (NES::PredicateOperation::BinaryOperatorType::LESS_THAN_OP): return mlir::arith::CmpIPredicate::slt;
-        // case (NES::PredicateOperation::BinaryOperatorType::UNEQUAL_OP): return mlir::arith::CmpIPredicate::ne;
         default:
             return mlir::arith::CmpIPredicate::slt;
     }
@@ -104,19 +111,13 @@ mlir::arith::CmpIPredicate convertToMLIRComparison(NES::CompareOperation::Compar
 //==-- Create & Insert Functionality --==//
 //==-----------------------------------==//
 FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string& name,
-                                                        uint8_t numResultBits,
+                                                        mlir::Type resultType,
                                                         std::vector<mlir::Type> argTypes,
                                                         bool varArgs) {
-    // If function was declared already, return reference.
-    if (theModule.lookupSymbol<LLVM::LLVMFuncOp>(name))
-        return SymbolRefAttr::get(context, name);
     // Create function arg & result types (currently only int for result).
-    LLVM::LLVMFunctionType llvmFnType;
-    if (numResultBits != 0) {
-        llvmFnType = LLVM::LLVMFunctionType::get(builder->getIntegerType(numResultBits), argTypes, varArgs);
-    } else {
-        llvmFnType = LLVM::LLVMFunctionType::get(LLVM::LLVMVoidType::get(context), argTypes, varArgs);
-    }
+    LLVM::LLVMFunctionType llvmFnType = LLVM::LLVMFunctionType::get(resultType, argTypes, varArgs);
+    // llvmFnType = LLVM::LLVMFunctionType::get(LLVM::LLVMVoidType::get(context), argTypes, varArgs);
+
     // The InsertionGuard saves the current IP and restores it after scope is left.
     PatternRewriter::InsertionGuard insertGuard(*builder);
     builder->restoreInsertionPoint(*globalInsertPoint);
@@ -173,8 +174,6 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
     }
     // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
-    // Insert printFromMLIR function for debugging use.
-    printfReference = insertExternalFunction("printFromMLIR", 32, {builder->getIntegerType(8)}, true);
 };
 
 mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(NES::NESIR* nesIR) {
@@ -350,9 +349,6 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::AddIntOperation> addOp, st
         } else {
             blockArgs[addOp->getIdentifier()] = builder->create<LLVM::AddOp>(getNameLoc("binOpResult"), blockArgs[addOp->getLeftArgName()], blockArgs[addOp->getRightArgName()]);
         }
-        // Debug
-        auto printValFunc = insertExternalFunction("printValueFromMLIR", 0, {}, true);
-        builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, printValFunc, blockArgs[addOp->getIdentifier()]);
     }
 }
 
@@ -387,7 +383,25 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyC
                     memberFunctions[NES::Operation::GetNumTuples], blockArgs[proxyCallOp->getInputArgNames().at(0)]).getResult(0)});
             break;
         default:
-            insertExternalFunction(proxyCallOp->getIdentifier(), 64, {builder->getI64Type()}, true); //Todo handle correctly
+            //Todo probably have create new function call map, because Functions are not representable by mlir::Value
+            FlatSymbolRefAttr functionRef;
+            if(theModule.lookupSymbol<LLVM::LLVMFuncOp>(proxyCallOp->getIdentifier())) {
+                functionRef = SymbolRefAttr::get(context, proxyCallOp->getIdentifier());
+            } else {
+                functionRef = insertExternalFunction(proxyCallOp->getIdentifier(), getMLIRType(proxyCallOp->getResultType()), 
+                                       getMLIRType(proxyCallOp->getInputArgTypes()), true); 
+            }
+            //Todo handle giving multiple args to call
+            // mlir::None represents Type resultRange right now, needs to be dynamic
+            // Typerange(results), StringRef(callee), ValueRange(operands)
+            if (proxyCallOp->getResultType() != NES::Operation::VOID) {
+                builder->create<LLVM::CallOp>(getNameLoc("printFunc"), getMLIRType(proxyCallOp->getResultType()), functionRef, 
+                                              blockArgs[proxyCallOp->getInputArgNames().at(0)]);
+            } else {
+                builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, functionRef, 
+                                              blockArgs[proxyCallOp->getInputArgNames().at(0)]);
+            }
+            break;
     }
     //Todo Insert function call. Use blockArgs is input args, if function has args.
 }
