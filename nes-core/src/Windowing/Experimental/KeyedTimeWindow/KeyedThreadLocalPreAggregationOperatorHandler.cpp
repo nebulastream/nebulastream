@@ -24,9 +24,9 @@
 #include <Util/Experimental/HashMap.hpp>
 #include <Util/NonBlockingMonotonicSeqQueue.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSlice.hpp>
+#include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceStaging.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalPreAggregationOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Windowing/Experimental/KeyedTimeWindow/SliceStaging.hpp>
 #include <Windowing/Experimental/LockFreeMultiOriginWatermarkProcessor.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/WindowProcessingTasks.hpp>
@@ -39,7 +39,7 @@ namespace NES::Windowing::Experimental {
 KeyedThreadLocalPreAggregationOperatorHandler::KeyedThreadLocalPreAggregationOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     const std::vector<OriginId> origins,
-    std::weak_ptr<SliceStaging> weakSliceStagingPtr)
+    std::weak_ptr<KeyedSliceStaging> weakSliceStagingPtr)
     : weakSliceStaging(weakSliceStagingPtr), windowDefinition(windowDefinition) {
     watermarkProcessor = NES::Experimental::LockFreeMultiOriginWatermarkProcessor::create(origins);
     windowSize = windowDefinition->getWindowType()->getSize().getTime();

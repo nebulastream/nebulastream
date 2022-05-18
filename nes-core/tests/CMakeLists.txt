@@ -599,21 +599,21 @@ target_link_libraries(window-deployment-test nes-tests)
 add_test(NAME window-deployment-test COMMAND window-deployment-test)
 
 ### windowDeploymentTest ###
-add_executable(single-node-thread-local-tumbling-window-tests "Integration/Windowing/TumblingWindow/SingleNodeThreadLocalTumblingWindowTests.cpp")
-target_link_libraries(single-node-thread-local-tumbling-window-tests nes-tests)
-add_test(NAME single-node-thread-local-tumbling-window-tests COMMAND single-node-thread-local-tumbling-window-tests)
+add_executable(thread-local-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalTumblingWindowTests.cpp")
+target_link_libraries(thread-local-tumbling-window-tests nes-tests)
+add_test(NAME thread-local-tumbling-window-tests COMMAND thread-local-tumbling-window-tests)
 
-add_executable(single-node-thread-local-global-tumbling-window-tests "Integration/Windowing/TumblingWindow/SingleNodeThreadLocalGlobalTumblingWindowTests.cpp")
-target_link_libraries(single-node-thread-local-global-tumbling-window-tests nes-tests)
-add_test(NAME single-node-thread-local-global-tumbling-window-tests COMMAND single-node-thread-local-global-tumbling-window-tests)
+add_executable(thread-local-global-tumbling-window-tests "Integration/Windowing/TumblingWindow/ThreadLocalGlobalTumblingWindowTests.cpp")
+target_link_libraries(thread-local-global-tumbling-window-tests nes-tests)
+add_test(NAME thread-local-global-tumbling-window-tests COMMAND thread-local-global-tumbling-window-tests)
 
-add_executable(single-node-thread-local-sliding-window-tests "Integration/Windowing/SlidingWindow/SingleNodeThreadLocalSlidingWindowTests.cpp")
-target_link_libraries(single-node-thread-local-sliding-window-tests nes-tests)
-add_test(NAME single-node-thread-local-sliding-window-tests COMMAND single-node-thread-local-sliding-window-tests)
+add_executable(thread-local-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalKeyedSlidingWindowTests.cpp")
+target_link_libraries(thread-local-sliding-window-tests nes-tests)
+add_test(NAME thread-local-sliding-window-tests COMMAND thread-local-sliding-window-tests)
 
-add_executable(single-node-thread-local-global-sliding-window-tests "Integration/Windowing/SlidingWindow/SingleNodeThreadLocalGlobalSlidingWindowTests.cpp")
-target_link_libraries(single-node-thread-local-global-sliding-window-tests nes-tests)
-add_test(NAME single-node-thread-local-global-sliding-window-tests COMMAND single-node-thread-local-global-sliding-window-tests)
+add_executable(thread-local-global-sliding-window-tests "Integration/Windowing/SlidingWindow/ThreadLocalGlobalSlidingWindowTests.cpp")
+target_link_libraries(thread-local-global-sliding-window-tests nes-tests)
+add_test(NAME thread-local-global-sliding-window-tests COMMAND thread-local-global-sliding-window-tests)
 
 ### concurrent window deployment test ###
 add_executable(concurrent-window-deployment-test "Integration/ConcurrentWindowDeploymentTest.cpp")

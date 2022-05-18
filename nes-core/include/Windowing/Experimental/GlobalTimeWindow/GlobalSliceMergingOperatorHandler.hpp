@@ -37,13 +37,13 @@ class GlobalSliceMergingOperatorHandler : public Runtime::Execution::OperatorHan
     /**
      * @brief Get a reference to the slice staging.
      * @note This should be only called from the generated code.
-     * @return SliceStaging
+     * @return KeyedSliceStaging
      */
     inline GlobalSliceStaging& getSliceStaging() { return *sliceStaging.get(); }
 
     /**
      * @brief Gets a weak pointer to the slice staging
-     * @return std::weak_ptr<SliceStaging>
+     * @return std::weak_ptr<KeyedSliceStaging>
      */
     std::weak_ptr<GlobalSliceStaging> getSliceStagingPtr();
 

@@ -28,7 +28,7 @@ namespace NES::Windowing::Experimental {
  * Whenever a thread local slice store received a watermark it is assigning all slices that end before the particular slice to the stating area.
  * As multiple threads can concurrently append slices, we synchronize accesses.
  */
-class SliceStaging {
+class KeyedSliceStaging {
   public:
     class Partition {
       public:
