@@ -24,6 +24,8 @@
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/Storage/AbstractMetricStore.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
@@ -354,6 +356,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
 }
 
 TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitoringSink) {
+    // TODO: check node ID and check multiple workers
     // WIP of issue #2620
     bool monitoring = true;
 
@@ -394,7 +397,8 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitorin
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
     NES_INFO("MultiThreadedTest: Submit query");
-    string query = R"(Query::from("diskMetricsStream").sink(MonitoringSinkDescriptor::create(0));)";
+    string query =
+        R"(Query::from("diskMetricsStream").sink(MonitoringSinkDescriptor::create(MetricCollectorType::DISK_COLLECTOR));)";
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
@@ -406,6 +410,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitorin
 
     NES_DEBUG("MultiThreadedTest: Remove query");
     ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    NES_DEBUG("MultiThreadedTest: Stop query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultiThreadedTest: Stop worker 1");
@@ -416,6 +421,19 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitorin
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("MultiThreadedTest: Test finished");
+
+    auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
+
+    // test disk metrics
+    uint64_t nodeId1 = 0;
+    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId1);
+    auto metricVec = storedMetrics->at(MetricType::DiskMetric);
+    TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
+    MetricPtr retMetric = pairedDiskMetric->second;
+    DiskMetrics parsedMetrics = retMetric->getValue<DiskMetrics>();
+
+    NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetrics));
+    ASSERT_TRUE(storedMetrics->size() == 1);
 }
 
 }// namespace NES

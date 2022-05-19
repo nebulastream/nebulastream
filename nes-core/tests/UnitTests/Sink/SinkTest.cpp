@@ -600,11 +600,11 @@ TEST_F(SinkTest, testMonitoringSink) {
     ASSERT_TRUE(tupleBufferCpu.getNumberOfTuples() >= 1);
 
     // write disk metrics
-    const DataSinkPtr monitoringSink = createMonitoringSink(metricStore, diskCollector.getType(), nodeEngine, 1, 0, 0);
+    const DataSinkPtr monitoringSink = createMonitoringSink(metricStore, diskCollector.getType(), DiskMetrics::getSchema(""), nodeEngine, 1, 0, 0);
     monitoringSink->writeData(tupleBuffer, wctx);
 
     // write cpu metrics
-    const DataSinkPtr monitoringSinkCpu = createMonitoringSink(metricStore, cpuCollector.getType(), nodeEngine, 1, 0, 0);
+    const DataSinkPtr monitoringSinkCpu = createMonitoringSink(metricStore, cpuCollector.getType(), DiskMetrics::getSchema(""), nodeEngine, 1, 0, 0);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics

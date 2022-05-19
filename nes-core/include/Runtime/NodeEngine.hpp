@@ -44,6 +44,9 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
+class AbstractMetricStore;
+using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+
 namespace Runtime {
 
 /**
@@ -299,6 +302,18 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::vector<QuerySubPlanId> getSubQueryIds(uint64_t queryId);
 
+    /**
+     * Getter for the metric store
+     * @return the metric store
+     */
+    MetricStorePtr getMetricStore();
+
+    /**
+     * Setter for the metric store
+     * @param metricStore
+     */
+    void setMetricStore(MetricStorePtr metricStore);
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -329,6 +344,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;
     BufferStoragePtr bufferStorage;
+    MetricStorePtr metricStore;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;

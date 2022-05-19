@@ -37,7 +37,8 @@ class MonitoringSink : public SinkMedium {
      * @brief Default getSliceIndexByTs for could not find a slice,
      * @Note the default output will be written to cout
      */
-    explicit MonitoringSink(MetricStorePtr metricStore,
+    explicit MonitoringSink(SinkFormatPtr sinkFormat,
+                            MetricStorePtr metricStore,
                             MetricCollectorType collectorType,
                             Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,

@@ -26,7 +26,8 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 
 namespace NES {
-MonitoringSink::MonitoringSink(MetricStorePtr metricStore,
+MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
+                               MetricStorePtr metricStore,
                                MetricCollectorType collectorType,
                                Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
@@ -34,7 +35,13 @@ MonitoringSink::MonitoringSink(MetricStorePtr metricStore,
                                QuerySubPlanId querySubPlanId,
                                FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, queryId, querySubPlanId, faultToleranceType, numberOfOrigins),
+    : SinkMedium(std::move(sinkFormat),
+                 std::move(nodeEngine),
+                 numOfProducers,
+                 queryId,
+                 querySubPlanId,
+                 faultToleranceType,
+                 numberOfOrigins),
       metricStore(metricStore), collectorType(collectorType),
       parsedMetric(MetricUtils::createMetricFromCollector(collectorType)) {}
 
@@ -44,17 +51,32 @@ SinkMediumTypes MonitoringSink::getSinkMediumType() { return MONITORING_SINK; }
 
 bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    readFromBuffer(parsedMetric, inputBuffer, 0);
-    auto nodeIdPtr = (uint64_t*) inputBuffer.getBuffer();
-    uint64_t nodeId = nodeIdPtr[0];
-    NES_DEBUG("MonitoringSink: Received metrics from type " << NES::toString(collectorType) << " and ID " << nodeId;);
-    metricStore->addMetrics(nodeId, parsedMetric);
+
+    if (!inputBuffer) {
+        throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
+    }
+
+    auto dataBuffers = sinkFormat->getData(inputBuffer);
+    for (auto buffer : dataBuffers) {
+        readFromBuffer(parsedMetric, buffer, 0);
+        auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
+        uint64_t nodeId = nodeIdPtr[0];
+        NES_DEBUG("MonitoringSink: Received metrics from type " << NES::toString(collectorType) << " and ID " << nodeId << ": "
+                                                                << asJson(parsedMetric););
+        metricStore->addMetrics(nodeId, parsedMetric);
+    }
+
+    if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {
+        updateWatermark(inputBuffer);
+    }
+
     return true;
 }
 
 std::string MonitoringSink::toString() const {
     std::stringstream ss;
     ss << "MONITORING_SINK(";
+    ss << "COLLECTOR(" << NES::toString(collectorType) << ")";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
     ss << ")";
     return ss.str();

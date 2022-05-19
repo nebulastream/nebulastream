@@ -120,6 +120,12 @@ class MonitoringManager {
      */
     bool setupContinuousMonitoring(SourceCatalogPtr sourceCatalog);
 
+    /**
+     * Getter for the metric store
+     * @return the metric store
+     */
+    MetricStorePtr getMetricStore();
+
   private:
     bool registerMonitoringLogical(SourceCatalogPtr sourceCatalog);
     MetricStorePtr metricStore;

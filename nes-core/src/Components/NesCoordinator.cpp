@@ -44,6 +44,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Monitoring/MonitoringManager.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
@@ -203,6 +204,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     auto workerConfigCopy = workerConfig;
     worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
     worker->start(/**blocking*/ false, /**withConnect*/ true);
+    worker->getNodeEngine()->setMetricStore(monitoringService->getMonitoringManager()->getMetricStore());
 
     NES::Exceptions::installGlobalErrorListener(worker);
 

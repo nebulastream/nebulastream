@@ -285,6 +285,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
  */
 DataSinkPtr createMonitoringSink(MetricStorePtr metricStore,
                                  MetricCollectorType collectorType,
+                                 const SchemaPtr& schema,
                                  Runtime::NodeEnginePtr nodeEngine,
                                  uint32_t numOfProducers,
                                  QueryId queryId,
