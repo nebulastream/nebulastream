@@ -24,10 +24,12 @@ add_source_files(nes-core
         KalmanFilter.cpp
         BufferStorageUnit.cpp
         QueryStatus.cpp
-)
+        RequestType.cpp
+        SharedQueryPlanStatus.cpp
+        )
 if (NES_USE_MQTT)
     add_source_files(nes-core
-        MQTTClientWrapper.cpp
-    )
+            MQTTClientWrapper.cpp
+            )
 endif ()
 add_subdirectory(Experimental)

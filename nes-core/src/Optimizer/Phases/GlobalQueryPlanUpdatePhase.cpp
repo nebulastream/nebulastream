@@ -81,10 +81,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
             QueryId queryId = nesRequest->getQueryId();
             if (nesRequest->instanceOf<StopQueryRequest>()) {
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
-                globalQueryPlan->removeQuery(queryId);
+                globalQueryPlan->removeQuery(queryId, RequestType::Stop);
             } else if (nesRequest->instanceOf<FailQueryRequest>()) {
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
-                globalQueryPlan->removeQuery(queryId);
+                globalQueryPlan->removeQuery(queryId, RequestType::Fail);
             } else if (nesRequest->instanceOf<RunQueryRequest>()) {
                 auto runRequest = nesRequest->as<RunQueryRequest>();
                 auto queryPlan = runRequest->getQueryPlan();
