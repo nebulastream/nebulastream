@@ -26,17 +26,19 @@ namespace NES::Spatial::Mobility::Experimental {
 class ReconnectSchedule {
   public:
     ReconnectSchedule(Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
-                      std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> reconnectVector);
+                      std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> reconnectVector);
 
     Index::Experimental::LocationPtr getPathStart();
 
     Index::Experimental::LocationPtr getPathEnd();
 
+    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> getReconnectVector();
+
     static ReconnectSchedule Empty();
   private:
     Index::Experimental::LocationPtr pathStart;
     Index::Experimental::LocationPtr pathEnd;
-    std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> reconnectVector;
+    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> reconnectVector;
 };
 }
 

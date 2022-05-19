@@ -1,6 +1,13 @@
 # ~~~ Configurations for the NES Mobile Worker ~~~
 
-# ~~ IPs and Ports ~~
-# Set NES ip of the REST server
+# Set radius for node info to be downloaded
 nodeInfoDownloadRadius: 20000
+
+pathPredictionUpdateInterval: 10
+
+locationBufferSaveRate: 1
+
+pathPredictionLengthMeters: 40000
+
+defaultCoverageRadiusMeters: 5000
 

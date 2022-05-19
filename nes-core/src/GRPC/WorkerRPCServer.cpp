@@ -202,6 +202,16 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     Coordinates* endCoord = scheduleMsg->mutable_pathend();
     endCoord->set_lat(endLoc->getLatitude());
     endCoord->set_lng(endLoc->getLongitude());
+
+    for (auto elem : *(schedule->getReconnectVector())) {
+        ReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();
+        reconnectPoint->set_id(std::get<0>(elem));
+        Coordinates* reconnectLocation = reconnectPoint->mutable_coord();
+        auto loc = std::get<1>(elem);
+        reconnectLocation->set_lat(loc->getLatitude());
+        reconnectLocation->set_lng(loc->getLongitude());
+        reconnectPoint->set_time(std::get<2>(elem));
+    }
     return Status::OK;
 }
 }// namespace NES

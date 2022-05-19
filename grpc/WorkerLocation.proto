@@ -28,4 +28,11 @@ message WorkerLocationInfo {
 message ReconnectSchedule {
   Coordinates pathStart = 1;
   Coordinates pathEnd = 2;
+  repeated ReconnectPoint reconnectPoints = 3;
+}
+
+message ReconnectPoint {
+  uint64 id = 1;
+  Coordinates coord = 2;
+  uint64 time = 3;
 }

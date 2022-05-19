@@ -33,6 +33,9 @@ namespace NES {
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
+class NesWorker;
+using NesWorkerPtr = std::shared_ptr<NesWorker>;
+
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
@@ -68,7 +71,8 @@ class NodeLocationWrapper {
     explicit NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc);
 
     NodeLocationWrapper(bool isMobile, Index::Experimental::Location fieldNodeLoc,
-                                             NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration);
+                        uint64_t parentid,
+                        NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration);
 
     /**
      * Experimental
@@ -128,7 +132,7 @@ class NodeLocationWrapper {
     /**
      * Experimental
      */
-    [[noreturn]] void startReconnectPlanning();
+    void startReconnectPlanning();
 
     /**
      * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
@@ -148,8 +152,8 @@ class NodeLocationWrapper {
     static std::pair<S2Point, S1Angle> findPathCoverage(S2PolylinePtr path, S2Point coveringNode, S1Angle coverage);
 
   private:
-    void updatePredictedPath(NES::Spatial::Index::Experimental::LocationPtr oldLoc, NES::Spatial::Index::Experimental::LocationPtr newLoc);
-    void scheduleReconnects(const NES::Spatial::Index::Experimental::LocationPtr& currentLoc);
+    bool updatePredictedPath(const NES::Spatial::Index::Experimental::LocationPtr& oldLocation, const NES::Spatial::Index::Experimental::LocationPtr& currentLocation);
+    void scheduleReconnects();
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::LocationPtr fixedLocationCoordinates;
     bool isMobile;
@@ -159,23 +163,30 @@ class NodeLocationWrapper {
     std::shared_ptr<std::thread> locationUpdateThread;
 
     uint64_t pathUpdateInterval;
-    size_t locBufferSize;
+    size_t locationBufferSize;
     size_t saveRate;
     //todo: make these pointers inf necessary. would allow forward declarations
     S2Point pathBeginning;
     S2Point pathEnd;
-    S2Point currentPointPathCoverageEnd;
+    std::optional<S2Point> currentParentPathCoverageEnd;
+    NES::Timestamp endOfCoverageETA;
     S2PolylinePtr trajectoryLine;
     //todo: check which angles need to be s1angle and which ones can be chorda angles
     S1ChordAngle predictedPathLengthAngle;
     S1ChordAngle deltaAngle;
     S2PointIndex<uint64_t> fieldNodeIndex;
+    //todo: we can remove this on later, once we add it as a part of the tuple in th ereconnect vector
+    std::unordered_map<uint64_t, S2Point> fieldNodeMap;
     double nodeDownloadRadius;
+    S1Angle reconnectSearchRadius;
+    //size_t maxPlannedReconnects;
     uint64_t nodeIndexUpdateThreshold;
     //todo: maybe use a cap for this instead?
     NES::Spatial::Index::Experimental::LocationPtr positionOfLastNodeIndexUpdate;
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> reconnectVector;
     S1ChordAngle defaultCoverageAngle;
+    S2Point currentParentLocation;
+    uint64_t parentId;
 };
 
 }//namespace NES::Spatial::Mobility::Experimental

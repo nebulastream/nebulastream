@@ -41,6 +41,22 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
     web::json::value scheduleJson;
     scheduleJson["pathStart"] = convertLocationToJson(schedule->getPathStart());
     scheduleJson["pathEnd"] = convertLocationToJson(schedule->getPathEnd());
+
+    auto reconnectArray = web::json::value::array();
+    int i = 0;
+    //todo: make nullcheck here
+    if (schedule->getReconnectVector()) {
+        for (auto elem : *(schedule->getReconnectVector())) {
+            web::json::value elemJson;
+            elemJson["id"] = std::get<0>(elem);
+            //loc = std::get<1>(elem);
+            elemJson["reconnectPoint"] = convertLocationToJson(std::get<1>(elem));
+            elemJson["time"] = std::get<2>(elem);
+            reconnectArray[i] = elemJson;
+            i++;
+        }
+    }
+    scheduleJson["reconnectPoints"] = reconnectArray;
     //todo: insert vector also
     return scheduleJson;
 

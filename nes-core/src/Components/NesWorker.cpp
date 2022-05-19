@@ -73,6 +73,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
     locationWrapper =
         std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
                                                                                     workerConfig->locationCoordinates,
+                                                                                    workerConfig->parentId,
                                                                                     mobilityConfig);
 }
 
