@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -1365,6 +1366,16 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails->set_faulttolerancemode(static_cast<uint64_t>(zmqSinkDescriptor->getFaultToleranceType()));
         sinkDetails->set_numberoforiginids(numberOfOrigins);
+    } else if (sinkDescriptor->instanceOf<MonitoringSinkDescriptor>()) {
+        // serialize Monitoring sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor");
+        auto monitoringSinkDescriptor = sinkDescriptor->as<MonitoringSinkDescriptor>();
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor();
+        serializedSinkDescriptor.set_collectortype(monitoringSinkDescriptor->getCollectorType());
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+        sinkDetails->set_faulttolerancemode(static_cast<uint64_t>(monitoringSinkDescriptor->getFaultToleranceType()));
+        sinkDetails->set_numberoforiginids(numberOfOrigins);
     }
 #ifdef ENABLE_OPC_BUILD
     else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
@@ -1503,6 +1514,14 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
                                          serializedSinkDescriptor.isinternal(),
                                          FaultToleranceType(deserializedFaultTolerance),
                                          deserializedNumberOfOrigins);
+    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor>()) {
+        // de-serialize zmq sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MonitoringSinkDescriptor");
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMonitoringSinkDescriptor();
+        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
+        return MonitoringSinkDescriptor::create(MetricCollectorType(serializedSinkDescriptor.collectortype()),
+                                                FaultToleranceType(deserializedFaultTolerance),
+                                                deserializedNumberOfOrigins);
     }
 #ifdef ENABLE_OPC_BUILD
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableOPCSinkDescriptor>()) {

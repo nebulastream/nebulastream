@@ -20,10 +20,10 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 //#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
-#include <Monitoring/MetricCollectors/DiskCollector.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
@@ -330,6 +330,71 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
 
     NES_INFO("MultiThreadedTest: Submit query");
     string query = R"(Query::from("diskMetricsStream").sink(PrintSinkDescriptor::create());)";
+
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+
+    NES_DEBUG("MultiThreadedTest: Remove query");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+    NES_INFO("MultiThreadedTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("MultiThreadedTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("MultiThreadedTest: Test finished");
+}
+
+TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitoringSink) {
+    // WIP of issue #2620
+    bool monitoring = true;
+
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->enableMonitoring = (monitoring);
+
+    NES_INFO("MultiThreadedTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    //register logical schema
+    auto schema = DiskMetrics::getSchema("");
+    crd->getSourceCatalogService()->registerLogicalSource("diskMetricsStream", schema);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numberOfSlots = (12);
+    workerConfig1->enableMonitoring = (monitoring);
+
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->coordinatorPort = port;
+    workerConfig2->numberOfSlots = (12);
+    workerConfig2->enableMonitoring = (monitoring);
+
+    MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(MetricCollectorType::DISK_COLLECTOR);
+
+    auto physicalSource1 = PhysicalSource::create("diskMetricsStream", "diskMetrics1", sourceType);
+    workerConfig1->physicalSources.add(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
+    NES_INFO("MultiThreadedTest: Submit query");
+    string query = R"(Query::from("diskMetricsStream").sink(MonitoringSinkDescriptor::create(0));)";
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);

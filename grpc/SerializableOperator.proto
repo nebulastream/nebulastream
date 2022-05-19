@@ -254,6 +254,10 @@ message SerializableOperator{
     message SerializablePrintSinkDescriptor {
     }
 
+    message SerializableMonitoringSinkDescriptor {
+      uint64 collectorType = 1;
+    }
+
     message SerializableNullOutputSinkDescriptor {
     }
 
