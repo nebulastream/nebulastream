@@ -132,6 +132,57 @@ using namespace NES;
     }
 
 
+    TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4Streams){
+        Query subQuery1 = Query::from("Quantity").seqWith(Query::from("Velocity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
+        Query subQuery2 = Query::from("Temperature").seqWith(Query::from("Humidity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
+        Query query = subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)));
+        QueryPlanPtr queryPlan = query.getQueryPlan();
+
+
+
+        NES_DEBUG(queryPlan->toString())
+
+        auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
+        queryPlan = joinOrderOptimizationRule->apply(queryPlan);
+
+        NES_DEBUG(queryPlan->toString())
+
+    }
+
+    TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsAsJoinsDirectly){
+        Query subQuery1 = Query::from("Quantity")
+                              .joinWith(Query::from("Velocity"))
+                              .where(Attribute("ts")).equalsTo(Attribute("ts"))
+                              .window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                              .filter(Attribute("Quantity$ts") < Attribute("Velocity$ts"));
+
+
+        Query subQuery2 = Query::from("Temperature")
+                              .joinWith(Query::from("Humidity"))
+                              .where(Attribute("ts")).equalsTo(Attribute("ts"))
+                              .window(TumblingWindow::of(
+                                  EventTime(Attribute("ts")),Minutes(5))
+                                          )
+                              .filter(Attribute("Temperature$ts") < Attribute("Humidity$ts"));
+
+        // TODO how can i use left joins bigger time stamp here?
+        Query query = subQuery1.joinWith(subQuery2).where(Attribute("ts")).equalsTo(Attribute("ts")).window(TumblingWindow::of(
+            EventTime(Attribute("ts")),Minutes(5))).filter(Attribute("Velocity$ts") < Attribute("Temperature$ts"));
+
+
+           // subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)));
+        QueryPlanPtr queryPlan = query.getQueryPlan();
+
+        NES_DEBUG(queryPlan->toString())
+
+        auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
+        queryPlan = joinOrderOptimizationRule->apply(queryPlan);
+
+        NES_DEBUG(queryPlan->toString())
+
+
+    }
+
     // Q2 -- will probably not be optimized as it is a Cartesian product
     TEST_F(JoinOrderOptimizationRuleTest, conjunctionPattern){
 
