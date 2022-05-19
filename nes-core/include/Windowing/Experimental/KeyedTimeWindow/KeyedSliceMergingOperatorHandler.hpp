@@ -31,7 +31,8 @@ class KeyedGlobalSliceStore;
 class KeyedSliceStaging;
 
 /**
- * @brief The SliceStagingWindowHandler implements a thread local strategy to compute window aggregates for tumbling and sliding windows.
+ * @brief The KeyedSliceMergingOperatorHandler merges thread local pre-aggregated slices for keyed
+ * tumbling and sliding window aggregations.
  */
 class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHandler,
                                          public detail::virtual_enable_shared_from_this<KeyedSliceMergingOperatorHandler, false> {

@@ -35,11 +35,6 @@ KeyedGlobalSliceStoreAppendOperatorHandler::KeyedGlobalSliceStoreAppendOperatorH
     windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
 
-void KeyedGlobalSliceStoreAppendOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,
-                                                       NES::Experimental::HashMapFactoryPtr hashmapFactory) {
-    this->factory = hashmapFactory;
-}
-
 void KeyedGlobalSliceStoreAppendOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
                                                        Runtime::StateManagerPtr,
                                                        uint32_t) {
