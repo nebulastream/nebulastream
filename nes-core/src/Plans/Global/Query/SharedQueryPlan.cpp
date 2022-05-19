@@ -25,7 +25,8 @@
 namespace NES {
 
 SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
-    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), deployed(false), newMetaData(true), hashBasedSignatures() {
+    : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), sharedQueryPlanStatus(SharedQueryPlanStatus::Created),
+      hashBasedSignatures() {
     NES_DEBUG("SharedQueryPlan()");
     auto queryId = queryPlan->getQueryId();
     //Create a new query plan
@@ -71,40 +72,12 @@ bool SharedQueryPlan::removeQuery(QueryId queryId) {
     }
 
     queryIdToSinkOperatorMap.erase(queryId);
-    //Mark the meta data as updated but not deployed
-    markAsNotDeployed();
     return true;
-}
-
-void SharedQueryPlan::markAsNotDeployed() {
-    NES_TRACE("SharedQueryPlan: Mark the Global Query Metadata as updated but not deployed");
-    this->deployed = false;
-}
-
-void SharedQueryPlan::markAsDeployed() {
-    NES_TRACE("SharedQueryPlan: Mark the Global Query Metadata as deployed.");
-    this->deployed = true;
-    this->newMetaData = false;
 }
 
 bool SharedQueryPlan::isEmpty() {
     NES_TRACE("SharedQueryPlan: Check if Global Query Metadata is empty. Found : " << queryIdToSinkOperatorMap.empty());
     return queryIdToSinkOperatorMap.empty();
-}
-
-bool SharedQueryPlan::isDeployed() const {
-    NES_TRACE("SharedQueryPlan: Checking if Global Query Metadata was already deployed. Found : " << deployed);
-    return deployed;
-}
-
-bool SharedQueryPlan::isNew() const {
-    NES_TRACE("SharedQueryPlan: Checking if Global Query Metadata was newly constructed. Found : " << newMetaData);
-    return newMetaData;
-}
-
-void SharedQueryPlan::setAsOld() {
-    NES_TRACE("SharedQueryPlan: Marking Global Query Metadata as old post deployment");
-    this->newMetaData = false;
 }
 
 std::vector<OperatorNodePtr> SharedQueryPlan::getSinkOperators() {
@@ -190,6 +163,12 @@ void SharedQueryPlan::updateHashBasedSignature(size_t hashValue, const std::stri
     } else {
         hashBasedSignatures[hashValue] = {stringSignature};
     }
+}
+
+SharedQueryPlanStatus::Value SharedQueryPlan::getSharedQueryPlanStatus() const { return sharedQueryPlanStatus; }
+
+void SharedQueryPlan::setSharedQueryPlanStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+    this->sharedQueryPlanStatus = sharedQueryPlanStatus;
 }
 
 }// namespace NES

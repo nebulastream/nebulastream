@@ -16,6 +16,7 @@
 #define NES_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
 #include <Plans/Global/Query/SharedQueryId.hpp>
+#include <Util/SharedQueryPlanStatus.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
 #include <set>
@@ -122,33 +123,10 @@ class SharedQueryPlan {
     QueryPlanPtr getQueryPlan();
 
     /**
-     * @brief Mark the global query as deployed
-     */
-    void markAsDeployed();
-
-    /**
-     * @brief Mark the global query as not deployed
-     */
-    void markAsNotDeployed();
-
-    /**
-     * @brief Is the query plan for the metadata deployed
-     * @return true if deployed else false
-     */
-    [[nodiscard]] bool isDeployed() const;
-
-    /**
      * @brief Check if the metadata is empty
      * @return true if vector of queryIds is empty
      */
     bool isEmpty();
-
-    /**
-     * @brief Check if the metadata is newly created
-     * A New metadata is the one which was created by never got deployed before
-     * @return true if newly created else false
-     */
-    [[nodiscard]] bool isNew() const;
 
     /**
      * @brief Get the vector of sink operators sharing common upstream operators
@@ -206,6 +184,18 @@ class SharedQueryPlan {
      */
     void updateHashBasedSignature(size_t hashValue, const std::string& stringSignature);
 
+    /**
+     * Get the status of the shared query plan
+     * @return Current status of the query plan
+     */
+    SharedQueryPlanStatus::Value getSharedQueryPlanStatus() const;
+
+    /**
+     * Set the status of the shared query plan
+     * @param sharedQueryPlanStatus : the status of the shared query plan
+     */
+    void setSharedQueryPlanStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus);
+
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
@@ -217,13 +207,12 @@ class SharedQueryPlan {
     bool removeOperator(const OperatorNodePtr& operatorToRemove);
 
     SharedQueryId sharedQueryId;
+    SharedQueryPlanStatus::Value sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;
     std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;
     std::vector<QueryId> queryIds;
     std::vector<OperatorNodePtr> sinkOperators;
     SharedQueryPlanChangeLogPtr changeLog;
-    bool deployed;
-    bool newMetaData;
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
 };

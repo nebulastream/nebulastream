@@ -19,7 +19,7 @@
 #include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/QueryStatus.hpp>
+#include <Util/RequestType.hpp>
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -72,9 +72,9 @@ class GlobalQueryPlan {
     /**
      * @brief remove the operators belonging to the query with input query Id from the global query plan
      * @param queryId: the id of the query whose operators need to be removed
-     * @param queryStatus: reason for query removal
+     * @param requestType: request type for query removal
      */
-    void removeQuery(QueryId queryId, QueryStatus::Value queryStatus);
+    void removeQuery(QueryId queryId, RequestType::Value requestType);
 
     /**
      * @brief This method will remove all empty shared query plans that are deployed
