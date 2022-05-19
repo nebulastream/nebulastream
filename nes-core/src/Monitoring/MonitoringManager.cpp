@@ -188,4 +188,6 @@ bool MonitoringManager::setupContinuousMonitoring(SourceCatalogPtr sourceCatalog
     return success;
 }
 
+MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
+
 }// namespace NES

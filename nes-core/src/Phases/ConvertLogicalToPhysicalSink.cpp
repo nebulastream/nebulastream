@@ -79,16 +79,15 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     } else if (sinkDescriptor->instanceOf<MonitoringSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Monitoring sink");
         const MonitoringSinkDescriptorPtr monitoringSinkDescriptor = sinkDescriptor->as<MonitoringSinkDescriptor>();
-        return createMonitoringSink(schema,
-                                   querySubPlan->getQueryId(),
-                                   querySubPlan->getQuerySubPlanId(),
-                                   nodeEngine,
-                                   numOfProducers,
-                                          monitoringSinkDescriptor->getHost(),
-                                          monitoringSinkDescriptor->getPort(),
-                                          monitoringSinkDescriptor->isInternal(),
-                                          monitoringSinkDescriptor->getFaultToleranceType(),
-                                          monitoringSinkDescriptor->getNumberOfOrigins());
+        return createMonitoringSink(nodeEngine->getMetricStore(),
+                                    monitoringSinkDescriptor->getCollectorType(),
+                                    schema,
+                                    nodeEngine,
+                                    numOfProducers,
+                                    querySubPlan->getQueryId(),
+                                    querySubPlan->getQuerySubPlanId(),
+                                    monitoringSinkDescriptor->getFaultToleranceType(),
+                                    monitoringSinkDescriptor->getNumberOfOrigins());
     }
 #ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {

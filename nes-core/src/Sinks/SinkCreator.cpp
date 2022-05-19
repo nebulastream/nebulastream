@@ -268,13 +268,16 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
 
 DataSinkPtr createMonitoringSink(MetricStorePtr metricStore,
                                  MetricCollectorType type,
+                                 const SchemaPtr& schema,
                                  Runtime::NodeEnginePtr nodeEngine,
                                  uint32_t numOfProducers,
                                  QueryId queryId,
                                  QuerySubPlanId querySubPlanId,
                                  FaultToleranceType faultToleranceType,
                                  uint64_t numberOfOrigins) {
-    return std::make_shared<MonitoringSink>(metricStore,
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<MonitoringSink>(format,
+                                            metricStore,
                                             type,
                                             nodeEngine,
                                             numOfProducers,

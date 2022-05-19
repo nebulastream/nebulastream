@@ -602,4 +602,8 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
         return false;
     }
 }
+
+MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
+void NodeEngine::setMetricStore(MetricStorePtr metricStore) { this->metricStore = metricStore; }
+
 }// namespace NES::Runtime
