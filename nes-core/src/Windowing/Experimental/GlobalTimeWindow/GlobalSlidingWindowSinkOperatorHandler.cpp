@@ -30,10 +30,7 @@ namespace NES::Windowing::Experimental {
 GlobalSlidingWindowSinkOperatorHandler::GlobalSlidingWindowSinkOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
     std::shared_ptr<GlobalSliceStore<GlobalSlice>>& globalSliceStore)
-    : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {
-    windowSize = windowDefinition->getWindowType()->getSize().getTime();
-    windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
-}
+    : globalSliceStore(globalSliceStore), windowDefinition(windowDefinition) {}
 
 void GlobalSlidingWindowSinkOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&, uint64_t entrySize) {
     this->entrySize = entrySize;
@@ -59,5 +56,9 @@ GlobalSlidingWindowSinkOperatorHandler::getSlicesForWindow(WindowTriggerTask* wi
     return globalSliceStore->getSlicesForWindow(windowTriggerTask->windowStart, windowTriggerTask->windowEnd);
 }
 Windowing::LogicalWindowDefinitionPtr GlobalSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
+GlobalSliceStore<GlobalSlice>& GlobalSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
+GlobalSlidingWindowSinkOperatorHandler::~GlobalSlidingWindowSinkOperatorHandler() {
+    NES_DEBUG("Destruct GlobalSlidingWindowSinkOperatorHandler");
+}
 
 }// namespace NES::Windowing::Experimental

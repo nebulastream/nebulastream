@@ -23,10 +23,10 @@ class GlobalSlice;
 using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
 
 /**
- * @brief A Slice store for tumbling and sliding windows,
+ * @brief A thread local slice store for global (non-keyed) tumbling and sliding windows,
  * which stores slices for a specific thread.
  * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
- * As the slice store is only using by a single thread, we dont have to protect its functions for concurrent accesses.
+ * As the slice store is only using by a single thread, we don't have to protect its functions for concurrent accesses.
  */
 class GlobalThreadLocalSliceStore : public ThreadLocalSliceStore<GlobalSlice> {
   public:

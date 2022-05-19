@@ -33,7 +33,8 @@ template<typename SliceType>
 class GlobalSliceStore;
 
 /**
- * @brief The KeyedSlidingWindowSinkOperatorHandler.
+ * @brief Operator handler for the final window sink of keyed sliding windows.
+ * This window handler maintains the global slice store and allows the window operator to trigger individual windows.
  */
 class KeyedSlidingWindowSinkOperatorHandler
     : public Runtime::Execution::OperatorHandler,
@@ -42,12 +43,20 @@ class KeyedSlidingWindowSinkOperatorHandler
     using inherited1 = Runtime::Reconfigurable;
 
   public:
+    /**
+     * @brief Constructor for the operator handler.
+     * @param windowDefinition
+     * @param globalSliceStore
+     */
     KeyedSlidingWindowSinkOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                           std::shared_ptr<GlobalSliceStore<KeyedSlice>>& globalSliceStore);
 
+    /**
+     * @brief Initializes the operator handler.
+     * @param ctx reference to the pipeline context.
+     * @param hashmapFactory factory to initialize a new hash-map.
+     */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
-
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
@@ -55,13 +64,36 @@ class KeyedSlidingWindowSinkOperatorHandler
 
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+    * @brief Returns the logical window definition
+    * @return Windowing::LogicalWindowDefinitionPtr
+    */
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
+
+    /**
+     * @brief Creates a new keyed slice.
+     * This is used to create the state for a specific window from the generated code.
+     * @param windowTriggerTask WindowTriggerTask to identify the start and end ts of the window
+     * @return KeyedSlicePtr
+     */
     KeyedSlicePtr createKeyedSlice(WindowTriggerTask* sliceMergeTask);
 
+    /**
+     * @brief This function accesses the global slice store and returns a list of slices,
+     * which are covered by the window specified in the windowTriggerTask
+     * @param windowTriggerTask identifies the window, which we want to trigger.
+     * @return std::vector<KeyedSliceSharedPtr> list of keyed slices.
+     */
     std::vector<KeyedSliceSharedPtr> getSlicesForWindow(WindowTriggerTask* windowTriggerTask);
 
-    GlobalSliceStore<KeyedSlice>& getGlobalSliceStore() { return *globalSliceStore; }
+    /**
+     * @brief Returns a reference to the global slice store. This should only be used by the generated code,
+     * to access functions on the global slice sotre.
+     * @return GlobalSliceStore<GlobalSlice>&
+     */
+    GlobalSliceStore<KeyedSlice>& getGlobalSliceStore();
 
-    ~KeyedSlidingWindowSinkOperatorHandler() { NES_DEBUG("Destruct KeyedEventTimeWindowHandler"); }
+    ~KeyedSlidingWindowSinkOperatorHandler();
 
   private:
     uint64_t windowSize;

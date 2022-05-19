@@ -32,8 +32,9 @@ class KeyedThreadLocalSliceStore;
 class GlobalSliceStaging;
 
 /**
- * @brief The KeyedThreadLocalPreAggregationOperator provides an operator handler to perform slice-based pre-aggregation of tumbling and sliding windows.
- * This window handler, maintains a slice store for each worker thread and provides them for the aggregation.
+ * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
+ * of global non-keyed tumbling and sliding windows.
+ * This operator handler, maintains a slice store for each worker thread and provides them for the aggregation.
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  */
 class GlobalThreadLocalPreAggregationOperatorHandler
@@ -43,6 +44,12 @@ class GlobalThreadLocalPreAggregationOperatorHandler
     using inherited1 = Runtime::Reconfigurable;
 
   public:
+    /**
+     * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
+     * @param windowDefinition logical window definition
+     * @param origins the set of origins, which can produce data for the window operator
+     * @param weakSliceStagingPtr access to the slice staging.
+     */
     GlobalThreadLocalPreAggregationOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                                    const std::vector<OriginId> origins,
                                                    std::weak_ptr<GlobalSliceStaging> weakSliceStagingPtr);
@@ -50,7 +57,7 @@ class GlobalThreadLocalPreAggregationOperatorHandler
     /**
      * @brief Initializes the thread local state for the window operator
      * @param ctx PipelineExecutionContext
-     * @param hashmapFactory HashMapFactoryPtr
+     * @param entrySize Size of the aggregated values in memory
      */
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
 
@@ -58,6 +65,10 @@ class GlobalThreadLocalPreAggregationOperatorHandler
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
+    /**
+     * @brief Stops the operator handler and triggers all in flight slices.
+     * @param pipelineExecutionContext pipeline execution context
+     */
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
@@ -80,7 +91,7 @@ class GlobalThreadLocalPreAggregationOperatorHandler
     /**
      * @brief Returns the thread local slice store by a specific worker thread id
      * @param workerId
-     * @return
+     * @return GlobalThreadLocalSliceStore
      */
     GlobalThreadLocalSliceStore& getThreadLocalSliceStore(uint64_t workerId);
 

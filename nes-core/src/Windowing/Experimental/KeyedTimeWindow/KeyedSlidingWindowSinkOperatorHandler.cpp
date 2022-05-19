@@ -59,4 +59,9 @@ std::vector<KeyedSliceSharedPtr> KeyedSlidingWindowSinkOperatorHandler::getSlice
 }
 Windowing::LogicalWindowDefinitionPtr KeyedSlidingWindowSinkOperatorHandler::getWindowDefinition() { return windowDefinition; }
 
+GlobalSliceStore<KeyedSlice>& KeyedSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
+KeyedSlidingWindowSinkOperatorHandler::~KeyedSlidingWindowSinkOperatorHandler() {
+    NES_DEBUG("Destruct KeyedEventTimeWindowHandler");
+}
+
 }// namespace NES::Windowing::Experimental

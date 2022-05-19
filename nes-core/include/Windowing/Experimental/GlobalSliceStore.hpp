@@ -26,13 +26,13 @@
 #include <mutex>
 namespace NES::Windowing::Experimental {
 
-
-
 class KeyedSlice;
 using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
 
 /**
- * @brief The global slice store that contains the final slice.
+ * @brief The global slice store that contains pre-aggregated slice.
+ * After appending these slices to the global slice store, they are implicitly immutable.
+ * Thus we can concurrently, read them from multiple threads.
  */
 template<typename SliceType>
 class GlobalSliceStore {

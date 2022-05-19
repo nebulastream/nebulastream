@@ -35,7 +35,8 @@ class GlobalThreadLocalSliceStore;
 using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
 
 /**
- * @brief The GlobalWindowGlobalSliceStoreAppendOperatorHandler, which appends merged slices to the global slice store.
+ * @brief Operator handler, which appends merged slices to the global slice store.
+ * This operator is only used for sliding windows, as we can skip the global slice store for tumbling windows.s
  */
 class GlobalWindowGlobalSliceStoreAppendOperatorHandler
     : public Runtime::Execution::OperatorHandler,
@@ -44,19 +45,30 @@ class GlobalWindowGlobalSliceStoreAppendOperatorHandler
     using inherited1 = Runtime::Reconfigurable;
 
   public:
+    /**
+     * @brief Creates the operator handler.
+     * @param windowDefinition logical window definition
+     * @param globalSliceStore reference to the global slice store
+     */
     GlobalWindowGlobalSliceStoreAppendOperatorHandler(const NES::Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                                       std::weak_ptr<GlobalSliceStore<GlobalSlice>> globalSliceStore);
 
     ~GlobalWindowGlobalSliceStoreAppendOperatorHandler();
 
-    void setup(Runtime::Execution::PipelineExecutionContext& ctx, NES::Experimental::HashMapFactoryPtr hashmapFactory);
-
+    /**
+     * @brief Returns the logical window definition
+     * @return Windowing::LogicalWindowDefinitionPtr
+     */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
+    /**
+     * @brief Stops the operator handler and triggers for all slices in the global slice store the associated windows.
+     * @param pipelineExecutionContext
+     */
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
