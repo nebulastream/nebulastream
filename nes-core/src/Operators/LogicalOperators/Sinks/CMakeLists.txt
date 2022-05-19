@@ -17,10 +17,11 @@ add_source_files(nes-core
         KafkaSinkDescriptor.cpp
         ZmqSinkDescriptor.cpp
         PrintSinkDescriptor.cpp
+        MonitoringSinkDescriptor.cpp
         NetworkSinkDescriptor.cpp
         OPCSinkDescriptor.cpp
         MQTTSinkDescriptor.cpp
         NullOutputSinkDescriptor.cpp
         MaterializedViewSinkDescriptor.cpp
         SinkDescriptor.cpp
-)
+        )

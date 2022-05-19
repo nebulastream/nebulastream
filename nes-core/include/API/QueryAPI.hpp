@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>

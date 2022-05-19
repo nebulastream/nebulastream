@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MonitoringSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -75,6 +76,19 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    zmqSinkDescriptor->isInternal(),
                                    zmqSinkDescriptor->getFaultToleranceType(),
                                    zmqSinkDescriptor->getNumberOfOrigins());
+    } else if (sinkDescriptor->instanceOf<MonitoringSinkDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating Monitoring sink");
+        const MonitoringSinkDescriptorPtr monitoringSinkDescriptor = sinkDescriptor->as<MonitoringSinkDescriptor>();
+        return createMonitoringSink(schema,
+                                   querySubPlan->getQueryId(),
+                                   querySubPlan->getQuerySubPlanId(),
+                                   nodeEngine,
+                                   numOfProducers,
+                                          monitoringSinkDescriptor->getHost(),
+                                          monitoringSinkDescriptor->getPort(),
+                                          monitoringSinkDescriptor->isInternal(),
+                                          monitoringSinkDescriptor->getFaultToleranceType(),
+                                          monitoringSinkDescriptor->getNumberOfOrigins());
     }
 #ifdef ENABLE_KAFKA_BUILD
     else if (sinkDescriptor->instanceOf<KafkaSinkDescriptor>()) {
