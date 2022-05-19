@@ -22,17 +22,29 @@ using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
 class GlobalSliceStaging;
 
 /**
- * @brief The SliceStagingWindowHandler implements a thread local strategy to compute window aggregates for tumbling and sliding windows.
+ * @brief The GlobalSliceMergingOperatorHandler merges thread local pre-aggregated slices for global
+ * tumbling and sliding window aggregations.
  */
-class GlobalSliceMergingOperatorHandler : public Runtime::Execution::OperatorHandler,
-                                         public detail::virtual_enable_shared_from_this<GlobalSliceMergingOperatorHandler, false> {
+class GlobalSliceMergingOperatorHandler
+    : public Runtime::Execution::OperatorHandler,
+      public detail::virtual_enable_shared_from_this<GlobalSliceMergingOperatorHandler, false> {
     using inherited0 = detail::virtual_enable_shared_from_this<GlobalSliceMergingOperatorHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:
+    /**
+     * @brief Constructor for the GlobalSliceMergingOperatorHandler
+     * @param windowDefinition
+     */
     GlobalSliceMergingOperatorHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition);
 
     void setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t entrySize);
+
+    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
+               Runtime::StateManagerPtr stateManager,
+               uint32_t localStateVariableId) override;
+
+    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
      * @brief Get a reference to the slice staging.
@@ -47,17 +59,10 @@ class GlobalSliceMergingOperatorHandler : public Runtime::Execution::OperatorHan
      */
     std::weak_ptr<GlobalSliceStaging> getSliceStagingPtr();
 
-
-    void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               Runtime::StateManagerPtr stateManager,
-               uint32_t localStateVariableId) override;
-
-    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
-
     /**
-     * @brief Creates a new keyed slice for a specific slice merge task
-     * @param sliceMergeTaskS liceMergeTask
-     * @return KeyedSlicePtr
+     * @brief Creates a new global slice for a specific slice merge task
+     * @param sliceMergeTask SliceMergeTask
+     * @return GlobalSlicePtr
      */
     GlobalSlicePtr createGlobalSlice(SliceMergeTask* sliceMergeTask);
 
@@ -70,9 +75,6 @@ class GlobalSliceMergingOperatorHandler : public Runtime::Execution::OperatorHan
     ~GlobalSliceMergingOperatorHandler();
 
   private:
-    std::atomic<uint32_t> activeCounter;
-    uint64_t windowSize;
-    uint64_t windowSlide;
     uint64_t entrySize;
     std::shared_ptr<GlobalSliceStaging> sliceStaging;
     Windowing::LogicalWindowDefinitionPtr windowDefinition;
