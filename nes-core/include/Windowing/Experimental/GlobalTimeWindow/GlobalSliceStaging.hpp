@@ -15,12 +15,12 @@
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_GLOBALSLICESTAGING_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_GLOBALSLICESTAGING_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <Windowing/Experimental/GlobalTimeWindow/GlobalSlice.hpp>
 #include <cinttypes>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace NES::Windowing::Experimental {
 
@@ -33,6 +33,10 @@ class State;
  */
 class GlobalSliceStaging {
   public:
+    /**
+     * @brief Stores the partitions for a specific slice. For global windows,
+     * this is storing the single thread local aggregation values.
+     */
     class Partition {
       public:
         Partition(uint64_t sliceIndex) : sliceIndex(sliceIndex) {}

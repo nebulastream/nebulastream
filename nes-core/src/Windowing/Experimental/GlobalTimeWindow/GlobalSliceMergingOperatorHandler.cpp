@@ -30,8 +30,6 @@ namespace NES::Windowing::Experimental {
 GlobalSliceMergingOperatorHandler::GlobalSliceMergingOperatorHandler(
     const Windowing::LogicalWindowDefinitionPtr& windowDefinition)
     : sliceStaging(std::make_shared<GlobalSliceStaging>()), windowDefinition(windowDefinition) {
-    windowSize = windowDefinition->getWindowType()->getSize().getTime();
-    windowSlide = windowDefinition->getWindowType()->getSlide().getTime();
 }
 
 void GlobalSliceMergingOperatorHandler::setup(Runtime::Execution::PipelineExecutionContext&,
@@ -43,7 +41,6 @@ void GlobalSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecut
                                               Runtime::StateManagerPtr,
                                               uint32_t) {
     NES_DEBUG("start GlobalSliceMergingOperatorHandler");
-    activeCounter++;
 }
 
 void GlobalSliceMergingOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {

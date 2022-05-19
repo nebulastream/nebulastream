@@ -19,11 +19,30 @@
 #include <stdlib.h>
 namespace NES::Windowing::Experimental {
 
+/**
+ * @brief State, to represent one or more aggregation values.
+ * This is a wrapper around a small chuck of memory, which is dynamically allocated.
+ */
 class State {
   public:
+    // Align memory chunk to STATE_ALIGNMENT
     static constexpr uint64_t STATE_ALIGNMENT = 8;
+
+    /**
+     * @brief Create a new state element, with a specific state size.
+     * As this represents a single aggregation value, it will result in a small dynamic allocation.
+     * @param stateSize
+     */
     State(uint64_t stateSize);
+
+    /**
+     * @brief Resets the value of isInitialized
+     */
     void reset();
+
+    /**
+     * @brief Destructor for the state, which frees the memory chuck.
+     */
     ~State();
     const uint64_t stateSize;
     alignas(STATE_ALIGNMENT) void* ptr;
@@ -31,7 +50,8 @@ class State {
 };
 
 /**
- * @brief A global slice that contains key value pairs for a specific interval of [start, end[.
+ * @brief A global slice that contains key value pairs for a specific interval of [start, end).
+ * The aggregate value is stored in the State object.
  */
 class GlobalSlice {
   public:
