@@ -120,7 +120,7 @@ void RequestProcessorService::start() {
                                       "running.");
 
                             //3.2.1. First undeploy the running shared query plan with the shared query plan id
-                            bool undeploymentSuccessful = queryUndeploymentPhase->execute(sharedQueryId);
+                            bool undeploymentSuccessful = queryUndeploymentPhase->execute(sharedQueryId, RequestType::Stop);
                             if (!undeploymentSuccessful) {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
@@ -183,7 +183,7 @@ void RequestProcessorService::start() {
                                       "running.");
 
                             //3.4.1. Undeploy the running shared query plan
-                            bool undeploymentSuccessful = queryUndeploymentPhase->execute(sharedQueryId);
+                            bool undeploymentSuccessful = queryUndeploymentPhase->execute(sharedQueryId, RequestType::Stop);
                             if (!undeploymentSuccessful) {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
