@@ -181,15 +181,11 @@ bool QueryCatalogService::updateQueryStatus(QueryId queryId, QueryStatus::Value 
         case QueryStatus::Running:
         case QueryStatus::Failed: {
             auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
-            auto currentStatus = queryCatalogEntry->getQueryStatus();
-            if ((currentStatus == QueryStatus::MarkedForHardStop || currentStatus == QueryStatus::Stopped)
-                && queryStatus == QueryStatus::Running) {
-                NES_ERROR("QueryCatalog: Found query status already as " + queryCatalogEntry->getQueryStatusAsString()
-                          + ". Can not set new status as running.");
-                throw InvalidQueryStatusException({QueryStatus::MarkedForHardStop, QueryStatus::Stopped}, queryStatus);
-            }
             queryCatalogEntry->setQueryStatus(queryStatus);
             queryCatalogEntry->setMetaInformation(metaInformation);
+            for (const auto& subQueryPlanMetaData : queryCatalogEntry->getAllSubQueryPlanMetaData()) {
+                subQueryPlanMetaData->updateStatus(queryStatus);
+            }
             return true;
         }
         default:
