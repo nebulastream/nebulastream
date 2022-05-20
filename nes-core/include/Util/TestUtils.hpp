@@ -299,6 +299,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
                                           QueryId queryId,
                                           const GlobalQueryPlanPtr& globalQueryPlan,
                                           uint64_t expectedResult,
+                                          bool minOneProcessedTask = false,
                                           std::chrono::seconds timeoutSeconds = defaultTimeout) {
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
     if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
@@ -323,9 +324,10 @@ template<typename Predicate = std::equal_to<uint64_t>>
         auto timeoutMillisec = std::chrono::milliseconds(defaultTimeout);
 
         // wait for another iteration if the last processed task was very recent.
-        if (statistics[0]->getTimestampLastProcessedTask() == 0
+        if (minOneProcessedTask &&
+            (statistics[0]->getTimestampLastProcessedTask() == 0
             || statistics[0]->getTimestampFirstProcessedTask() == 0
-            || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count()) {
+            || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count())) {
             NES_DEBUG("checkCompleteOrTimeout: A task was processed within the last "
                       << timeoutMillisec.count() << "ms, the query may still be active. Restart the timeout period.");
         }
