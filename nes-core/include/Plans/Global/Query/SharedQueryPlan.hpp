@@ -153,12 +153,6 @@ class SharedQueryPlan {
     std::vector<QueryId> getQueryIds();
 
     /**
-     * @brief Set the meta data as old
-     * An Old metadata is deployed at least once in his life time.
-     */
-    void setAsOld();
-
-    /**
      * @brief Add the query id and sink operators from the query plan to the Shared Query Plan
      * @param queryPlan: the source query plan
      * @return true if successful else false
@@ -188,13 +182,13 @@ class SharedQueryPlan {
      * Get the status of the shared query plan
      * @return Current status of the query plan
      */
-    SharedQueryPlanStatus::Value getSharedQueryPlanStatus() const;
+    SharedQueryPlanStatus::Value getStatus() const;
 
     /**
      * Set the status of the shared query plan
      * @param sharedQueryPlanStatus : the status of the shared query plan
      */
-    void setSharedQueryPlanStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus);
+    void setStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus);
 
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);

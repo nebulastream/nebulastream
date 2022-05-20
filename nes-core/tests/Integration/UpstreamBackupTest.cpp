@@ -124,11 +124,11 @@ TEST_F(UpstreamBackupTest, DISABLED_testMessagePassingSinkCoordinatorSources) {
         sink->notifyEpochTermination(timestamp);
     }
 
-    auto currentTimestamp = crd->getReplicationService()->getCurrentEpochBarrier(queryId, 0);
+    auto currentTimestamp = crd->getReplicationService()->getCurrentEpochBarrier(queryId);
     while (currentTimestamp == -1) {
         NES_INFO("UpstreamBackupTest: current timestamp: " << currentTimestamp);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        currentTimestamp = crd->getReplicationService()->getCurrentEpochBarrier(queryId, 0);
+        currentTimestamp = crd->getReplicationService()->getCurrentEpochBarrier(queryId);
     }
 
     //check if the method was called

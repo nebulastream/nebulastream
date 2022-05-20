@@ -511,7 +511,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, true);
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, updatedSharedQMToDeploy[0]);
-    updatedSharedQMToDeploy[0]->setAsOld();
+    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
 
     // new Query
     auto queryPlan2 = Query::from("car")
@@ -623,7 +623,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, true);
     queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, updatedSharedQMToDeploy[0]);
     //Mark as deployed
-    updatedSharedQMToDeploy[0]->markAsDeployed();
+    updatedSharedQMToDeploy[0]->setStatus(SharedQueryPlanStatus::Deployed);
 
     // new Query
     auto queryPlan2 = Query::from("car")
