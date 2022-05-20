@@ -20,6 +20,7 @@
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
@@ -290,6 +291,37 @@ class MetricValidator {
         }
 
         return check;
+    }
+
+    static bool checkNodeIds(MetricPtr metric, uint64_t nodeId) {
+        if (metric->getMetricType() == DiskMetric) {
+            auto parsedMetrics = metric->getValue<DiskMetrics>();
+            return parsedMetrics.nodeId == nodeId;
+        } else if (metric->getMetricType() == MemoryMetric) {
+            auto parsedMetrics = metric->getValue<MemoryMetrics>();
+            return parsedMetrics.nodeId == nodeId;
+        } else if (metric->getMetricType() == RegistrationMetric) {
+            auto parsedMetrics = metric->getValue<RegistrationMetrics>();
+            return parsedMetrics.nodeId == nodeId;
+        } else if (metric->getMetricType() == WrappedCpuMetrics) {
+            auto parsedMetrics = metric->getValue<CpuMetricsWrapper>();
+            for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
+                if (parsedMetrics.getValue(i).nodeId != nodeId) {
+                    return false;
+                }
+            }
+            return parsedMetrics.getNodeId() == nodeId;
+        } else if (metric->getMetricType() == WrappedNetworkMetrics) {
+            auto parsedMetrics = metric->getValue<NetworkMetricsWrapper>();
+            for (uint64_t i = 0; i < parsedMetrics.size(); i++) {
+                if (parsedMetrics.getNetworkValue(i).nodeId != nodeId) {
+                    return false;
+                }
+            }
+            return parsedMetrics.getNodeId() == nodeId;
+        } else {
+            return false;
+        }
     }
 };
 

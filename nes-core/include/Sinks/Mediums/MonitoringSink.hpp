@@ -87,7 +87,6 @@ class MonitoringSink : public SinkMedium {
   private:
     MetricStorePtr metricStore;
     MetricCollectorType collectorType;
-    MetricPtr parsedMetric;
 };
 using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 

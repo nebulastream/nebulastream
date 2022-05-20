@@ -31,18 +31,18 @@ void AllEntriesMetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
         NES_DEBUG("AllEntriesMetricStore: Found stored metrics for node with ID " << nodeId);
         nodeMetrics = storedMetrics[nodeId];
         // check if the metric type exists
-        if (nodeMetrics->contains(metric->getMetricType())) {
-            NES_DEBUG("AllEntriesMetricStore: Found metrics for " << nodeId << " of type " << toString(metric->getMetricType()));
-        } else {
-            NES_DEBUG("AllEntriesMetricStore: Creating metrics " << nodeId << " of type " << toString(metric->getMetricType()));
+        if (!nodeMetrics->contains(metric->getMetricType())) {
+            NES_DEBUG("AllEntriesMetricStore: Creating metrics " << nodeId << " of " << toString(metric->getMetricType()));
             nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         }
     } else {
-        NES_DEBUG("AllEntriesMetricStore: Adding metrics for " << nodeId << " with type " << toString(metric->getMetricType()));
+        NES_DEBUG("AllEntriesMetricStore: Creating node " << nodeId << " of " << toString(metric->getMetricType()));
         nodeMetrics = std::make_shared<std::unordered_map<MetricType, std::shared_ptr<std::vector<TimestampMetricPtr>>>>();
         nodeMetrics->insert({metric->getMetricType(), std::make_shared<std::vector<TimestampMetricPtr>>()});
         storedMetrics.emplace(nodeId, nodeMetrics);
     }
+    NES_DEBUG("AllEntriesMetricStore: Adding metrics for " << nodeId << " with type " << toString(metric->getMetricType()) << ": "
+                                                           << NES::asJson(metric));
     TimestampMetricPtr entry = std::make_shared<std::pair<uint64_t, MetricPtr>>(timestamp, metric);
     auto entryVec = nodeMetrics->at(metric->getMetricType());
     entryVec->emplace_back(std::move(entry));
