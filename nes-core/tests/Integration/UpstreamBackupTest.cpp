@@ -61,17 +61,17 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->numberOfBuffersPerEpoch = 15;
-        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 20;
+        coordinatorConfig->numberOfBuffersPerEpoch = 20;
+        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 1024;
         coordinatorConfig->numberOfBuffersPerWorker = 2;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 2;
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->numberOfBuffersPerEpoch = 15;
-        workerConfig->numberOfBuffersInGlobalBufferManager = 20;
+        workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfBuffersPerWorker = 2;
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = 10;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = 20;
         workerConfig->enableStatisticOuput = true;
 
         csvSourceTypeInfinite = CSVSourceType::create();
@@ -443,7 +443,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100000000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
