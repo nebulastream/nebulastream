@@ -17,11 +17,11 @@
 #include <Services/WorkerHealthCheckService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <iostream>
 #include <atomic>
-#include <condition_variable>
-#include <thread>
 #include <chrono>
+#include <condition_variable>
+#include <iostream>
+#include <thread>
 
 using namespace std::chrono_literals;
 
@@ -54,9 +54,12 @@ void WorkerHealthCheckService::startHealthCheck() {
                             << coordinatorRpcClient->getId() << " coordinator went down so shutting down the worker with ip");
                 worker->stop(true);
             }
-//            std::this_thread::sleep_for(waitTime);
-            std::unique_lock<std::mutex> lk(cv_m);
-            cv.wait_for(lk, waitTime, [this]{return isRunning ==false;});
+            {
+                std::unique_lock<std::mutex> lk(cvMutex);
+                cv.wait_for(lk, waitTime, [this] {
+                    return isRunning == false;
+                });
+            }
         }
         //        we have to wait until the code above terminates to proceed afterwards with shutdown of the rpc server (can be delayed due to sleep)
         shutdownRPC->set_value(true);
