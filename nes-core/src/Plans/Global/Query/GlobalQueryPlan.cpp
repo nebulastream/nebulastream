@@ -53,15 +53,15 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType::Value requestTyp
         if (requestType == RequestType::Stop) {
             if (sharedQueryPlan->isEmpty()) {
                 // Mark SQP as stopped if all queries are removed post stop
-                sharedQueryPlan->setSharedQueryPlanStatus(SharedQueryPlanStatus::Stopped);
+                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Stopped);
             } else {
                 // Mark SQP as updated if after stop more queries are remaining
-                sharedQueryPlan->setSharedQueryPlanStatus(SharedQueryPlanStatus::Updated);
+                sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
             }
         } else if (requestType == RequestType::Fail) {
             // Mark SQP as Failed
             sharedQueryPlan->clear();
-            sharedQueryPlan->setSharedQueryPlanStatus(SharedQueryPlanStatus::Failed);
+            sharedQueryPlan->setStatus(SharedQueryPlanStatus::Failed);
         } else {
             NES_ERROR("Unknown request type " << RequestType::toString(requestType));
             NES_NOT_IMPLEMENTED();
@@ -82,12 +82,12 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
     NES_DEBUG("GlobalQueryPlan: Get the Global MetaData to be deployed.");
     std::vector<SharedQueryPlanPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map with global query metadata.");
-    for (auto& [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToPlanMap) {
-        if (sharedQueryMetaData->isDeployed()) {
+    for (auto& [sharedQueryId, sharedQueryPlan] : sharedQueryIdToPlanMap) {
+        if (SharedQueryPlanStatus::Deployed == sharedQueryPlan->getStatus()) {
             NES_TRACE("GlobalQueryPlan: Skipping! found already deployed query meta data.");
             continue;
         }
-        sharedQueryMetaDataToDeploy.push_back(sharedQueryMetaData);
+        sharedQueryMetaDataToDeploy.push_back(sharedQueryPlan);
     }
     NES_DEBUG("GlobalQueryPlan: Found " << sharedQueryMetaDataToDeploy.size() << "  Shared Query MetaData to be deployed.");
     return sharedQueryMetaDataToDeploy;
@@ -106,7 +106,7 @@ bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQuer
     NES_INFO("GlobalQueryPlan: updating the shared query metadata information");
     auto sharedQueryId = sharedQueryPlan->getSharedQueryId();
     //Mark the shared query plan as updated post merging new queries
-    sharedQueryPlan->setSharedQueryPlanStatus(SharedQueryPlanStatus::Updated);
+    sharedQueryPlan->setStatus(SharedQueryPlanStatus::Updated);
     sharedQueryIdToPlanMap[sharedQueryId] = sharedQueryPlan;
     NES_TRACE("GlobalQueryPlan: Updating the Query Id to Shared Query Id map");
     for (auto queryId : sharedQueryPlan->getQueryIds()) {
@@ -119,8 +119,10 @@ void GlobalQueryPlan::removeEmptySharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: remove empty metadata information.");
     //Following associative-container erase idiom
     for (auto itr = sharedQueryIdToPlanMap.begin(); itr != sharedQueryIdToPlanMap.end();) {
-        auto sharedQueryMetaData = itr->second;
-        if ((sharedQueryMetaData->isDeployed() || sharedQueryMetaData->isNew()) && sharedQueryMetaData->isEmpty()) {
+        auto sharedQueryPlan = itr->second;
+        //Remove all plans that are stopped or Failed
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Failed
+            || sharedQueryPlan->getStatus() == SharedQueryPlanStatus::Stopped) {
             NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
             sharedQueryIdToPlanMap.erase(itr++);
             continue;

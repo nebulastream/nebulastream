@@ -18,7 +18,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 namespace NES {
 /**
- * @brief This node represents a logical unary expression.
+ * @brief This node represents a logical binary expression.
  */
 class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode {
   public:
