@@ -16,7 +16,7 @@
 #define NES_INCLUDE_PHASES_QUERYUNDEPLOYMENTPHASE_HPP_
 
 #include <Plans/Query/QueryId.hpp>
-#include <Util/RequestType.hpp>
+#include <Util/SharedQueryPlanStatus.hpp>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -58,7 +58,7 @@ class QueryUndeploymentPhase {
      * @param queryId : id of the query
      * @return true if successful
      */
-    bool execute(QueryId queryId, RequestType::Value requestType);
+    bool execute(QueryId queryId, SharedQueryPlanStatus::Value sharedQueryPlanStatus);
 
   private:
     explicit QueryUndeploymentPhase(TopologyPtr topology,
@@ -76,7 +76,7 @@ class QueryUndeploymentPhase {
      * @param queryId
      * @return bool indicating success
      */
-    bool stopQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes, RequestType::Value requestType);
+    bool stopQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes, SharedQueryPlanStatus::Value sharedQueryPlanStatus);
 
     TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;

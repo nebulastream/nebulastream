@@ -41,7 +41,7 @@ QueryUndeploymentPhasePtr QueryUndeploymentPhase::create(TopologyPtr topology,
         QueryUndeploymentPhase(std::move(topology), std::move(globalExecutionPlan), std::move(workerRpcClient)));
 }
 
-bool QueryUndeploymentPhase::execute(const QueryId queryId, RequestType::Value requestType) {
+bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase::stopAndUndeployQuery : queryId=" << queryId);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
@@ -52,7 +52,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, RequestType::Value r
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
-    bool successStop = stopQuery(queryId, executionNodes, requestType);
+    bool successStop = stopQuery(queryId, executionNodes, sharedQueryPlanStatus);
     if (successStop) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful");
     } else {
@@ -68,7 +68,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, RequestType::Value r
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
-        throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId + '.'));
+        throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
     }
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
@@ -83,7 +83,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, RequestType::Value r
 
 bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
                                        const std::vector<ExecutionNodePtr>& executionNodes,
-                                       RequestType::Value requestType) {
+                                       SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
     NES_DEBUG("QueryUndeploymentPhase:markQueryForStop queryId=" << queryId);
     //NOTE: the uncommented lines below have to be activated for async calls
     std::map<CompletionQueuePtr, uint64_t> completionQueues;
@@ -99,12 +99,12 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId,
 
         Runtime::QueryTerminationType queryTerminationType;
 
-        if (RequestType::Stop == requestType) {
+        if (SharedQueryPlanStatus::Updated == sharedQueryPlanStatus || SharedQueryPlanStatus::Stopped == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::HardStop;
-        } else if (RequestType::Fail == requestType) {
+        } else if (SharedQueryPlanStatus::Failed == sharedQueryPlanStatus) {
             queryTerminationType = Runtime::QueryTerminationType::Failure;
         } else {
-            NES_ERROR("Unknown request type " << RequestType::toString(requestType));
+            NES_ERROR("Unhandled request type " << SharedQueryPlanStatus::toString(sharedQueryPlanStatus));
             NES_NOT_IMPLEMENTED();
         }
 

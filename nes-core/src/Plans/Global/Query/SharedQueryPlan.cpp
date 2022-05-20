@@ -96,7 +96,6 @@ void SharedQueryPlan::clear() {
     queryIdToSinkOperatorMap.clear();
     sinkOperators.clear();
     queryIds.clear();
-    markAsNotDeployed();
 }
 
 std::vector<QueryId> SharedQueryPlan::getQueryIds() { return queryIds; }
@@ -119,8 +118,6 @@ bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) 
             }
         }
     }
-    //Mark the meta data as updated but not deployed
-    markAsNotDeployed();
     return false;
 }
 
@@ -165,9 +162,9 @@ void SharedQueryPlan::updateHashBasedSignature(size_t hashValue, const std::stri
     }
 }
 
-SharedQueryPlanStatus::Value SharedQueryPlan::getSharedQueryPlanStatus() const { return sharedQueryPlanStatus; }
+SharedQueryPlanStatus::Value SharedQueryPlan::getStatus() const { return sharedQueryPlanStatus; }
 
-void SharedQueryPlan::setSharedQueryPlanStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
+void SharedQueryPlan::setStatus(SharedQueryPlanStatus::Value sharedQueryPlanStatus) {
     this->sharedQueryPlanStatus = sharedQueryPlanStatus;
 }
 
