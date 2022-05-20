@@ -42,8 +42,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                  querySubPlanId,
                  faultToleranceType,
                  numberOfOrigins),
-      metricStore(metricStore), collectorType(collectorType),
-      parsedMetric(MetricUtils::createMetricFromCollector(collectorType)) {}
+      metricStore(metricStore), collectorType(collectorType) {}
 
 MonitoringSink::~MonitoringSink() = default;
 
@@ -53,17 +52,20 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
     std::unique_lock lock(writeMutex);
 
     if (!inputBuffer) {
-        throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
+        throw Exceptions::RuntimeException("MonitoringSink::writeData input buffer invalid");
     }
 
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
+        MetricPtr parsedMetric = MetricUtils::createMetricFromCollector(collectorType);
         readFromBuffer(parsedMetric, buffer, 0);
         auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
         uint64_t nodeId = nodeIdPtr[0];
-        NES_DEBUG("MonitoringSink: Received metrics from type " << NES::toString(collectorType) << " and ID " << nodeId << ": "
-                                                                << asJson(parsedMetric););
-        metricStore->addMetrics(nodeId, parsedMetric);
+        NES_DEBUG("MonitoringSink: Received buffer for " << nodeId << " with " << inputBuffer.getNumberOfTuples()
+                                                         << " tuple and size " << getSchemaPtr()->getSchemaSizeInBytes() << ": "
+                                                         << asJson(parsedMetric));
+
+        metricStore->addMetrics(nodeId, std::move(parsedMetric));
     }
 
     if (faultToleranceType == FaultToleranceType::AT_LEAST_ONCE) {

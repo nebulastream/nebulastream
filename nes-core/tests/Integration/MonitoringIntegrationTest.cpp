@@ -356,91 +356,9 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabled) {
     NES_INFO("MultiThreadedTest: Test finished");
 }
 
-TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitoringSink) {
-    // TODO: check multiple workers
-    // WIP of issue #2620
-    bool monitoring = true;
-
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->enableMonitoring = (monitoring);
-
-    NES_INFO("MultiThreadedTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0UL);
-    //register logical schema
-    auto schema = DiskMetrics::getSchema("");
-    crd->getSourceCatalogService()->registerLogicalSource("diskMetricsStream", schema);
-    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
-
-    NES_DEBUG("MultiThreadedTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->coordinatorPort = port;
-    workerConfig1->numberOfSlots = (12);
-    workerConfig1->enableMonitoring = (monitoring);
-
-    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->coordinatorPort = port;
-    workerConfig2->numberOfSlots = (12);
-    workerConfig2->enableMonitoring = (monitoring);
-
-    MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(MetricCollectorType::DISK_COLLECTOR);
-
-    auto physicalSource1 = PhysicalSource::create("diskMetricsStream", "diskMetrics1", sourceType);
-    workerConfig1->physicalSources.add(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("MultiThreadedTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
-    NES_INFO("MultiThreadedTest: Submit query");
-    string query =
-        R"(Query::from("diskMetricsStream").sink(MonitoringSinkDescriptor::create(MetricCollectorType::DISK_COLLECTOR));)";
-
-    QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
-
-    NES_DEBUG("MultiThreadedTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    NES_DEBUG("MultiThreadedTest: Stop query");
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
-
-    NES_INFO("MultiThreadedTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("MultiThreadedTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("MultiThreadedTest: Test finished");
-
-    auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
-
-    // test disk metrics
-    uint64_t nodeId1 = 2;
-    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId1);
-    auto metricVec = storedMetrics->at(MetricType::DiskMetric);
-    TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
-    MetricPtr retMetric = pairedDiskMetric->second;
-    DiskMetrics parsedMetrics = retMetric->getValue<DiskMetrics>();
-
-    NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetrics));
-    ASSERT_EQ(storedMetrics->size(), 2);
-}
-
 TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitoringSinkMultiWorker) {
-    //TODO: fix problem with node IDs
     bool monitoring = true;
-    MetricCollectorType collectorType = MetricCollectorType::MEMORY_COLLECTOR;
+    MetricCollectorType collectorType = MetricCollectorType::DISK_COLLECTOR;
     MetricType metricType = MetricUtils::createMetricFromCollector(collectorType)->getMetricType();
     MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
     std::string metricCollectorStr = NES::toString(collectorType);
@@ -455,7 +373,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitorin
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     //register logical schema
-    crd->getSourceCatalogService()->registerLogicalSource("disk3", DiskMetrics::getSchema(""));
+    crd->getSourceCatalogService()->registerLogicalSource("disk3", NetworkMetrics::getSchema(""));
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -546,8 +464,8 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitorin
         auto metricVec = storedMetrics->at(metricType);
         TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
         MetricPtr retMetric = pairedDiskMetric->second;
-
-        NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetrics));
+        NES_INFO("MetricStoreTest: Stored metrics for ID " << nodeId << ": " << MetricUtils::toJson(storedMetrics));
+        ASSERT_TRUE(MetricValidator::checkNodeIds(retMetric, nodeId));
         ASSERT_EQ(storedMetrics->size(), 2);
     }
 }

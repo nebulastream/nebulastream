@@ -16,8 +16,8 @@
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Util/Logger/Logger.hpp>
@@ -34,11 +34,9 @@ MetricCollectorType CpuCollector::getType() { return CPU_COLLECTOR; }
 bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
     try {
         CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
-        for (uint64_t i = 0; i < measuredVal.size(); i++) {
-            CpuMetrics metrics = measuredVal.getValue(i);
-            metrics.nodeId = *getNodeId();
-        }
+        measuredVal.setNodeId(*getNodeId());
         writeToBuffer(measuredVal, tupleBuffer, 0);
+        NES_DEBUG("CpuCollector: Written metrics for " << *getNodeId() << ": " << asJson(measuredVal));
     } catch (const std::exception& ex) {
         NES_ERROR("CpuCollector: Error while collecting metrics " << ex.what());
         return false;
