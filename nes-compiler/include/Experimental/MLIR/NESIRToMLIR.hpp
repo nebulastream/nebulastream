@@ -30,6 +30,7 @@
 #include "Experimental/NESIR/Operations/BranchOperation.hpp"
 #include "Experimental/NESIR/Operations/CompareOperation.hpp"
 #include "Experimental/NESIR/Operations/IfOperation.hpp"
+#include "Experimental/NESIR/Operations/Operation.hpp"
 #include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
 #include "Experimental/NESIR/Operations/ReturnOperation.hpp"
 
@@ -165,5 +166,8 @@ class MLIRGenerator {
      * @return int8_t: Bit width.
      */
     int8_t getBitWidthFromType(NES::Operation::BasicType type);
+
+    //Todo add documentation
+    NES::OperationPtr findSameLevelBlock(NES::BasicBlockPtr thenBlock, int ifParentBlockLevel);
 };
 #endif //NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_

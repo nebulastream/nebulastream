@@ -107,6 +107,32 @@ mlir::arith::CmpIPredicate convertToMLIRComparison(NES::CompareOperation::Compar
     }
 }
 
+// Todo: Problem: loopIfOp->getElseBranchBlock()->getParentBlockLevel would result in correct Op, but is not triggered
+// -> we skip correct BranchOp
+NES::OperationPtr MLIRGenerator::findSameLevelBlock(NES::BasicBlockPtr thenBlock, int ifParentBlockLevel) {
+    auto terminatorOp = thenBlock->getOperations().back();
+    // Generate Args for next block
+    if (terminatorOp->getOperationType() == NES::Operation::BranchOp) { 
+        auto branchOp = std::static_pointer_cast<NES::BranchOperation>(terminatorOp);
+        if(branchOp->getNextBlock()->getParentBlockLevel() <= ifParentBlockLevel) {
+            return branchOp;
+        } else {
+            return findSameLevelBlock(branchOp->getNextBlock(), ifParentBlockLevel);
+        }
+    } else if (terminatorOp->getOperationType() == NES::Operation::LoopOp) {
+        auto loopOp = std::static_pointer_cast<NES::LoopOperation>(terminatorOp);
+        auto loopIfOp = std::static_pointer_cast<NES::IfOperation>(loopOp->getLoopHeaderBlock()->getOperations().back());
+        if(loopIfOp->getElseBranchBlock()->getParentBlockLevel() == ifParentBlockLevel) {
+            return loopIfOp;
+        } else {
+            return findSameLevelBlock(loopIfOp->getElseBranchBlock(), ifParentBlockLevel);
+        }
+    } else { //(terminatorOp->getOperationType() == NES::Operation::IfOp)
+        auto ifOp = std::static_pointer_cast<NES::IfOperation>(terminatorOp);
+        return findSameLevelBlock(ifOp->getThenBranchBlock(), ifParentBlockLevel);
+    }
+}
+
 //==-----------------------------------==//
 //==-- Create & Insert Functionality --==//
 //==-----------------------------------==//
@@ -270,17 +296,41 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std
     auto compareOp = std::static_pointer_cast<NES::CompareOperation>(loopOp->getLoopHeaderBlock()->getOperations().at(0));
     auto loopIfOp = std::static_pointer_cast<NES::IfOperation>(loopOp->getLoopHeaderBlock()->getOperations().at(1));
     auto loopBodyBB = loopIfOp->getThenBranchBlock();
-    auto loopEndBB = loopIfOp->getElseBranchBlock();
+    auto afterLoopBB = loopIfOp->getElseBranchBlock();
     // Define index variables for loop.
     // For now we assume that loops always use the "i" as the induction var and always increase "i" by one each step.
     auto lowerBound = builder->create<arith::IndexCastOp>(getNameLoc("LowerBound"), builder->getIndexType(), blockArgs[compareOp->getFirstArgName()]);
     auto stepSize = builder->create<arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs["constOne"]);
 
+    // Get the arguments of the branchOp, which branches back into loopHeader. Compare with loopHeader args.
+    // All args that are different are args which are changed inside the loop and are hence iterator args.
+    std::vector<mlir::Value> iteratorArgs{}; 
+    std::vector<std::string> loopTerminatorArgs;
+    std::vector<std::string> yieldOpArgs;
+    std::vector<std::string> changedHeaderArgs;
+    auto loopTerminatorOp = findSameLevelBlock(loopBodyBB, loopOp->getLoopHeaderBlock()->getParentBlockLevel());
+    if(loopTerminatorOp->getOperationType() == NES::Operation::BranchOp) {
+        loopTerminatorArgs = std::static_pointer_cast<NES::BranchOperation>(loopTerminatorOp)->getNextBlockArgs();
+    } else {
+        loopTerminatorArgs = std::static_pointer_cast<NES::IfOperation>(loopTerminatorOp)->getElseBlockArgs();
+    }
+    auto headerBlockArgs = loopOp->getLoopHeaderBlock()->getInputArgs();
+    for(int i = 0; i < (int) headerBlockArgs.size(); ++i) {
+        if(headerBlockArgs.at(i) != loopTerminatorArgs.at(i) && headerBlockArgs.at(i) != compareOp->getFirstArgName()) { 
+            iteratorArgs.push_back(blockArgs[headerBlockArgs.at(i)]); 
+            yieldOpArgs.push_back(loopTerminatorArgs.at(i));
+        }
+    }
     // Create Loop Operation. Save InsertionPoint(IP) of parent's BasicBlock
     insertComment("// For Loop Start");
     auto upperBound = builder->create<arith::IndexCastOp>(getNameLoc("UpperBound"), builder->getIndexType(), 
                                                             blockArgs[compareOp->getSecondArgName()]);
-    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, upperBound, stepSize);
+
+    auto forLoop = builder->create<scf::ForOp>(getNameLoc("forLoop"), lowerBound, upperBound, stepSize, iteratorArgs);
+    //Replace header input args that are changed in body with dynamic iter args from ForOp.
+    for(int i = 0; i < (int) changedHeaderArgs.size(); ++i) {
+        blockArgs[changedHeaderArgs.at(i)] = forLoop.getRegionIterArgs().begin()[i];
+    }
     auto parentBlockInsertionPoint = builder->saveInsertionPoint();
 
     // -=LOOP BODY=-
@@ -295,11 +345,19 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::LoopOperation> loopOp, std
     for(auto blockArg = blockArgs.begin(); blockArg != blockArgs.end(); blockArg++, ++i) {
         blockArgs[blockArg->first] = loopBodyArgs[blockArg->first];
     }
+    // If yieldOpArgs are given, get values from loopBodyArgs and create YieldOp at the very end of the loop body.
+    if(yieldOpArgs.size() > 0) {
+        std::vector<mlir::Value> forYieldOps;
+        for(auto yieldOpArg : yieldOpArgs) {
+            forYieldOps.push_back(loopBodyArgs[yieldOpArg]);
+        }
+        builder->create<scf::YieldOp>(getNameLoc("forYield"), forYieldOps);
+    }
     // Leave LoopOp
     builder->restoreInsertionPoint(parentBlockInsertionPoint);
     // LoopOp might be last Op in e.g. a nested If-Else case. The loopEndBB might then be higher in scope and reached from another Op.
-    if(loopOp->getLoopHeaderBlock()->getParentBlockLevel() <= loopEndBB->getParentBlockLevel()) {
-        generateMLIR(loopEndBB, blockArgs);
+    if(loopOp->getLoopHeaderBlock()->getParentBlockLevel() <= afterLoopBB->getParentBlockLevel()) {
+        generateMLIR(afterLoopBB, blockArgs);
     }
 }
 
@@ -391,15 +449,14 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::ProxyCallOperation> proxyC
                 functionRef = insertExternalFunction(proxyCallOp->getIdentifier(), getMLIRType(proxyCallOp->getResultType()), 
                                        getMLIRType(proxyCallOp->getInputArgTypes()), true); 
             }
-            //Todo handle giving multiple args to call
-            // mlir::None represents Type resultRange right now, needs to be dynamic
-            // Typerange(results), StringRef(callee), ValueRange(operands)
+            std::vector<mlir::Value> functionArgs;
+            for(auto arg : proxyCallOp->getInputArgNames()) { functionArgs.push_back(blockArgs[arg]); }
             if (proxyCallOp->getResultType() != NES::Operation::VOID) {
                 builder->create<LLVM::CallOp>(getNameLoc("printFunc"), getMLIRType(proxyCallOp->getResultType()), functionRef, 
-                                              blockArgs[proxyCallOp->getInputArgNames().at(0)]);
+                                              functionArgs);
             } else {
                 builder->create<LLVM::CallOp>(getNameLoc("printFunc"), mlir::None, functionRef, 
-                                              blockArgs[proxyCallOp->getInputArgNames().at(0)]);
+                                              functionArgs);
             }
             break;
     }
@@ -416,36 +473,16 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::CompareOperation> compareO
                                                blockArgs[compareOp->getSecondArgName()])});
 }
 
-//Todo find a block that connects to scope!
-NES::BasicBlockPtr findAfterIfBlock(NES::BasicBlockPtr thenBlock, int ifParentBlockLevel) {
-    auto terminatorOp = thenBlock->getOperations().back();
-    // Generate Args for next block
-    if (terminatorOp->getOperationType() == NES::Operation::BranchOp) { 
-        auto branchOp = std::static_pointer_cast<NES::BranchOperation>(terminatorOp);
-        if(branchOp->getNextBlock()->getParentBlockLevel() <= ifParentBlockLevel) {
-            return branchOp->getNextBlock();
-        } else {
-            return findAfterIfBlock(branchOp->getNextBlock(), ifParentBlockLevel);
-        }
-    } else if (terminatorOp->getOperationType() == NES::Operation::LoopOp) {
-        auto loopOp = std::static_pointer_cast<NES::LoopOperation>(terminatorOp);
-        auto loopIfOp = std::static_pointer_cast<NES::IfOperation>(loopOp->getLoopHeaderBlock()->getOperations().back());
-        if(loopIfOp->getElseBranchBlock()->getParentBlockLevel() == ifParentBlockLevel) {
-            return loopIfOp->getElseBranchBlock();
-        } else {
-            return findAfterIfBlock(loopIfOp->getElseBranchBlock(), ifParentBlockLevel);
-        }
-    } else { //(terminatorOp->getOperationType() == NES::Operation::IfOp)
-        auto ifOp = std::static_pointer_cast<NES::IfOperation>(terminatorOp);
-        return findAfterIfBlock(ifOp->getThenBranchBlock(), ifParentBlockLevel);
-    }
-}
-
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    printf("IfOperation boolArgName: %s\n", ifOp->getBoolArgName().c_str());
-    auto afterBlock = findAfterIfBlock(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getParentBlockLevel()-1);
-    printf("AfterBlock Result: %s\n", afterBlock->getIdentifier().c_str());
+    auto ifOpTerminator = findSameLevelBlock(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getParentBlockLevel()-1);
+    NES::BasicBlockPtr afterBlock;
+    // We can use the afterBlock args later, since they must match the terminatorOps args (no loop).
+    if(ifOpTerminator->getOperationType() == NES::Operation::BranchOp) {
+        afterBlock = std::static_pointer_cast<NES::BranchOperation>(ifOpTerminator)->getNextBlock();
+    } else {
+        afterBlock = std::static_pointer_cast<NES::IfOperation>(ifOpTerminator)->getElseBranchBlock();
+    }
     // Create IF Operation
     mlir::scf::IfOp mlirIfOp;
     auto currentInsertionPoint = builder->saveInsertionPoint();

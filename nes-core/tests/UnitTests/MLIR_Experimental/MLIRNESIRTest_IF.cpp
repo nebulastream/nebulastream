@@ -205,9 +205,11 @@ BasicBlockPtr createSimpleLoopEnd(BasicBlockPtr loopBodyBlock) {
     return make_shared<BasicBlock>("loopEndBlock", loopEndOps, loopEndArgs, 2);
 }
 
-BasicBlockPtr createSpecialLoopEnd(BasicBlockPtr loopBodyBlock, vector<OperationPtr> optionalEndOps, vector<string> optionalEndArgs) {
+BasicBlockPtr createSpecialLoopEnd(BasicBlockPtr loopHeaderBlock, vector<OperationPtr> optionalEndOps, vector<string> optionalEndArgs) {
     auto loopIncAdd = make_shared<AddIntOperation>("loopIncAdd", "i", "constOne");
-    OperationPtr loopBodyTerminatorOp = make_shared<BranchOperation>(loopBodyBlock);
+    vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "loopIncAdd", "constOne", "const47", "const50", "const100", 
+                                  "const8", "numTuples", "nestedIfBranchConst"};
+    OperationPtr loopBodyTerminatorOp = make_shared<BranchOperation>(loopHeaderBlock, loopHeaderArgs);
     optionalEndOps.push_back(loopIncAdd);
     optionalEndOps.push_back(loopBodyTerminatorOp);
     optionalEndArgs.push_back("i");
@@ -215,7 +217,7 @@ BasicBlockPtr createSpecialLoopEnd(BasicBlockPtr loopBodyBlock, vector<Operation
     return make_shared<BasicBlock>("loopEndBlock", optionalEndOps, optionalEndArgs, 2);
 }
 
-shared_ptr<LoopOperation> createLoopOperation(vector<string> loopHeaderArgs, BasicBlockPtr loopBodyBlock) {
+shared_ptr<LoopOperation> createTopLevelLoopOp(vector<string> loopHeaderArgs, BasicBlockPtr loopBodyBlock) {
     //Loop Header
     OperationPtr ifCompareOp = make_shared<CompareOperation>("loopCompare", "i", "numTuples", CompareOperation::ISLT);
     OperationPtr loopIfOp = make_shared<IfOperation>("loopCompare", loopBodyBlock, getSimpleZeroReturnBlock());
@@ -277,7 +279,7 @@ TEST(MLIRNESIRTEST_IF, NESIRIfElseNestedMultipleFollowUps) {
     // Create Loop Operation
     vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "const47", "const50", "const100", 
                                   "const8", "numTuples", "nestedIfBranchConst"};
-    shared_ptr<LoopOperation> loopOperation = createLoopOperation(loopHeaderArgs, loopBodyBlock);
+    shared_ptr<LoopOperation> loopOperation = createTopLevelLoopOp(loopHeaderArgs, loopBodyBlock);
 
     auto loopEndAdd = make_shared<AddIntOperation>("loopEndAdd", "inputAddOp", "nestedIfBranchConst");
     auto outputAddressOp = make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "i", "outputDataBuffer");
@@ -303,7 +305,8 @@ TEST(MLIRNESIRTEST_IF, NESIRIfElseNestedMultipleFollowUps) {
     vector<OperationPtr> nestedLoopHeaderBBOps{nestedLoopHeaderCompareOp, nestedLoopIfOp};
     vector<string> nestedLoopHeaderArgs{"j", "nestedIfBRanchConst", "inputAddOpp"};
     BasicBlockPtr nestedLoopHeaderBlock = make_shared<BasicBlock>("loopHeaderBlock", nestedLoopHeaderBBOps, nestedLoopHeaderArgs, 3);
-    OperationPtr nestedLoopTerminator = make_shared<BranchOperation>(nestedLoopHeaderBlock);
+    vector<string> nestedLoopTerminatorArgs{"nestedLoopIncAdd", "nestedIfBRanchConst", "inputAddOpp"};
+    OperationPtr nestedLoopTerminator = make_shared<BranchOperation>(nestedLoopHeaderBlock, nestedLoopTerminatorArgs);
     nestedLoopBodyBlock->addOperation(nestedLoopTerminator);
     shared_ptr<LoopOperation> nestedLoopOperation = make_shared<LoopOperation>(LoopOperation::ForLoop, nestedLoopHeaderBlock);
 //==------------------------------------------------==/

@@ -24,14 +24,17 @@ namespace NES {
  */
 class BranchOperation : public Operation {
   public:
-    explicit BranchOperation(BasicBlockPtr nextBlock);
+    explicit BranchOperation(BasicBlockPtr nextBlock, const std::vector<std::string>& nextBlockArgs = {});
     ~BranchOperation() override = default;
 
     BasicBlockPtr getNextBlock();
+    std::vector<std::string> getNextBlockArgs();
 
     static bool classof(const Operation *Op);
   private:
     BasicBlockPtr nextBlock;
+    std::vector<std::string> nextBlockArgs;
+    // Todo std::vector<void*> nextBlockArgs
 };
 }// namespace NES
 #endif//NES_BRANCHOPERATION_HPP

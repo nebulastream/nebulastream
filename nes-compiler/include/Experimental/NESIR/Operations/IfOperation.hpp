@@ -20,17 +20,22 @@
 namespace NES {
 class IfOperation : public Operation {
   public:
-    IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock);
+    IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock, 
+                std::vector<std::string> thenBlockArgs = {}, std::vector<std::string> elseBlockArgs = {});
     ~IfOperation() override = default;
 
     std::string getBoolArgName();
     BasicBlockPtr getThenBranchBlock();
     BasicBlockPtr getElseBranchBlock();
+    std::vector<std::string> getThenBlockArgs();
+    std::vector<std::string> getElseBlockArgs();
 
   private:
     std::string boolArgName;
     BasicBlockPtr thenBranchBlock;
     BasicBlockPtr elseBranchBlock;
+    std::vector<std::string> thenBlockArgs;
+    std::vector<std::string> elseBlockArgs;
 };
 }// namespace NES
 #endif//NES_IFOPERATION_HPP
