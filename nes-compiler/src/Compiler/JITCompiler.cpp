@@ -41,7 +41,7 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
     auto asyncResult = std::async(std::launch::async, [compiler, request, this]() {
         if (compilationReuseMap.contains(request->getSourceCode()->getCode())) {
             auto result = compilationReuseMap.find(request->getSourceCode()->getCode());
-            std::cout << "Reuse existing binary" << std::endl;
+            NES_DEBUG("Reuse existing binary instead of compiling it ");
             return result->second;
         } else {
             auto result = compiler->compile(request);

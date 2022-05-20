@@ -147,7 +147,6 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration->numWorkerThreads.getValue());
             std::vector<uint64_t> workerToCoreMappingVec =
                 Util::splitWithStringDelimiter<uint64_t>(workerConfiguration->workerPinList.getValue(), ",");
-//            NES_ASSERT(workerToCoreMappingVec.size() >= numOfThreads, " we need one position for each thread in mapping");
             switch (workerConfiguration->queryManagerMode.getValue()) {
                 case QueryExecutionMode::Dynamic: {
                     queryManager = std::make_shared<DynamicQueryManager>(nesWorker,
