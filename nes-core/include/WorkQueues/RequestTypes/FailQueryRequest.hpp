@@ -15,6 +15,7 @@
 #ifndef NES_FAILQUERYREQUEST_HPP
 #define NES_FAILQUERYREQUEST_HPP
 
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 #include <memory>
 
@@ -27,18 +28,18 @@ class FailQueryRequest : public Request {
   public:
     /**
      * @brief Create instance of  FailQueryRequest
-     * @param queryId : the id of query to fail
+     * @param sharedQueryId : the id of the shared query plan to fail
      * @param failureReason: reason for query failure
      * @return shared pointer to the instance of fail query request
      */
-    static FailQueryRequestPtr create(QueryId queryId, const std::string& failureReason);
+    static FailQueryRequestPtr create(SharedQueryId sharedQueryId, const std::string& failureReason);
 
     std::string getFailureReason();
 
     std::string toString() override;
 
   private:
-    explicit FailQueryRequest(QueryId queryId, const std::string& failureReason);
+    explicit FailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason);
 
     std::string failureReason;
 };

@@ -222,14 +222,18 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
                                                                    << " from worker: " << request->workerid());
 
         auto sharedQueryId = request->queryid();
-        auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryId);
-
-        for (const auto& queryId : queryIds) {
-            bool markedForFailure = queryService->validateAndQueueFailQueryRequest(queryId, request->errormsg());
-            if (!markedForFailure) {
-                NES_ERROR("Failed to mark query for failure " << queryId);
-            }
+        auto subQueryId = request->subqueryid();
+        if (!queryCatalogService->checkAndMarkForFailure(sharedQueryId, subQueryId)) {
+            NES_ERROR("Unable to mark queries for failure");
+            return Status::CANCELLED;
         }
+
+        //Send one failure request for the shared query plan
+        if (!queryService->validateAndQueueFailQueryRequest(sharedQueryId, request->errormsg())) {
+            NES_ERROR("Failed to create Query Failure request for shared query plan " << sharedQueryId);
+            return Status::CANCELLED;
+        }
+
         reply->set_success(true);
         return Status::OK;
     } catch (std::exception& ex) {

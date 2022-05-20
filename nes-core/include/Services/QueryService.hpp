@@ -98,15 +98,16 @@ class QueryService {
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryId : query id of the query to be stopped.
+     *
+     * @warning: this method is primarily designed to be called only by the system.
+     *
+     * @param sharedQueryId : shared query plan id of the shared query plan to be stopped.
+     * @param failureReason : reason for shared query plan failure.
      * @returns: true if successful
-     * @throws QueryNotFoundException : when query id is not found in the query catalog.
-     * @throws InvalidQueryStatusException : when the query is found to be in an invalid state.
      */
-    bool validateAndQueueFailQueryRequest(QueryId queryId, const std::string& failureReason);
+    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason);
 
   private:
-
     /**
      * Assign unique operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process
