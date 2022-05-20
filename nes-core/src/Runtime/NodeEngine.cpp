@@ -261,18 +261,39 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
             return false;
         }
 
-        for (auto querySubPlanId : querySubPlanIds) {
-            try {
-                if (queryManager->stopQuery(deployedQEPs[querySubPlanId], terminationType)) {
-                    NES_DEBUG("Runtime: stop of QEP " << querySubPlanId << " succeeded");
-                } else {
-                    NES_ERROR("Runtime: stop of QEP " << querySubPlanId << " failed");
-                    return false;
+        switch (terminationType) {
+            case QueryTerminationType::HardStop: {
+                for (auto querySubPlanId : querySubPlanIds) {
+                    try {
+                        if (queryManager->stopQuery(deployedQEPs[querySubPlanId], terminationType)) {
+                            NES_DEBUG("Runtime: stop of QEP " << querySubPlanId << " succeeded");
+                        } else {
+                            NES_ERROR("Runtime: stop of QEP " << querySubPlanId << " failed");
+                            return false;
+                        }
+                    } catch (std::exception const& exception) {
+                        NES_ERROR("Got exception while stopping query " << exception.what());
+                        return false;// handle this better!
+                    }
                 }
-            } catch (std::exception const& exception) {
-                NES_ERROR("Got exception while stopping query " << exception.what());
-                return false;// handle this better!
             }
+            case QueryTerminationType::Failure: {
+                for (auto querySubPlanId : querySubPlanIds) {
+                    try {
+                        if (queryManager->failQuery(deployedQEPs[querySubPlanId])) {
+                            NES_DEBUG("Runtime: failure of QEP " << querySubPlanId << " succeeded");
+                        } else {
+                            NES_ERROR("Runtime: failure of QEP " << querySubPlanId << " failed");
+                            return false;
+                        }
+                    } catch (std::exception const& exception) {
+                        NES_ERROR("Got exception while stopping query " << exception.what());
+                        return false;// handle this better!
+                    }
+                }
+            }
+            case QueryTerminationType::Graceful:
+            case QueryTerminationType::Invalid: NES_NOT_IMPLEMENTED();
         }
         return true;
     }

@@ -155,16 +155,9 @@ bool QueryService::validateAndQueueStopQueryRequest(QueryId queryId) {
     return false;
 }
 
-bool QueryService::validateAndQueueFailQueryRequest(QueryId queryId, const std::string& failureReason) {
-    //Check if query exists
-    auto exists = queryCatalogService->getEntryForQuery(queryId);
-
-    //If success then queue the hard stop request
-    if (exists) {
-        auto request = FailQueryRequest::create(queryId, failureReason);
-        return queryRequestQueue->add(request);
-    }
-    return false;
+bool QueryService::validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId, const std::string& failureReason) {
+    auto request = FailQueryRequest::create(sharedQueryId, failureReason);
+    return queryRequestQueue->add(request);
 }
 
 void QueryService::assignOperatorIds(QueryPlanPtr queryPlan) {
