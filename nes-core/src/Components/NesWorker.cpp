@@ -50,8 +50,7 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort),
-      sourceSharing(workerConfig->enableSourceSharing.getValue()){
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort){
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
