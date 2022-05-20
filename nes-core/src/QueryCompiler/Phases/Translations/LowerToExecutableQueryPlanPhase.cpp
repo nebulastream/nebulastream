@@ -332,7 +332,6 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
 #endif
         case CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            //            return CsvSourceDescriptor::create(schema, csvSourceType);
             return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
         }
         case SENSE_SOURCE: {

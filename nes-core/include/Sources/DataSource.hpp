@@ -249,6 +249,10 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
     [[nodiscard]] virtual bool fail();
 
+    /**
+     * @brief set source sharing value
+     * @param value
+     */
     void setSourceSharing(bool value){sourceSharing = value;};
 
   protected:

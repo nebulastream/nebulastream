@@ -443,14 +443,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
 }
 
 TEST_F(QueryDeploymentTest, testSourceSharing) {
-    std::string markerFile = "/tmp/start.source";
-
-    const int result = std::filesystem::remove(markerFile.c_str());
-    if( result == 0 ){
-        printf( "success\n" );
-    } else {
-        printf( "%s\n", strerror( errno ) ); // No such file or directory
-    }
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -478,11 +470,6 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfig1);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-
-    //    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
-    //    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    //    EXPECT_TRUE(retStart1);
-    //    NES_INFO("testSourceSharing: Worker1 started successfully");
 
     std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
     remove(outputFilePath1.c_str());
@@ -513,8 +500,6 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
         queryService->validateAndQueueAddRequest(query2, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
-    std::ofstream output(markerFile);
-
     //
     string expectedContent1 = "window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER\n"
                               "1,1,1000\n"
@@ -523,15 +508,22 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
                               "2,1,2000\n"
                               "2,11,2001\n"
                               "2,16,2002\n";
+
+    string expectedContent2 = "window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER\n"
+                              "1,4,1002\n"
+                              "2,1,2000\n"
+                              "2,11,2001\n"
+                              "2,16,2002\n";
+
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath2));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
 
     NES_DEBUG("testSourceSharing: Remove query 1");
-    //    queryService->validateAndQueueStopRequest(queryId1);
+    queryService->validateAndQueueStopRequest(queryId1);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
 
     NES_DEBUG("testSourceSharing: Remove query 2");
-    //    queryService->validateAndQueueStopRequest(queryId2);
+    queryService->validateAndQueueStopRequest(queryId2);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
 
     NES_DEBUG("testSourceSharing: Stop Coordinator");

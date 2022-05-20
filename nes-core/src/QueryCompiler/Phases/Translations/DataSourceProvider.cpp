@@ -33,7 +33,7 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                         bool sourceSharing) {
     if (!sourceSharing) {
-        NES_DEBUG("No source sharing is used");
+        NES_DEBUG("Source sharing is not used");
         return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                                 originId,
                                                                 std::move(sourceDescriptor),
@@ -41,7 +41,7 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                                                 compilerOptions->getNumSourceLocalBuffers(),
                                                                 std::move(successors));
     } else {
-        NES_WARNING("Source sharing is used");
+        NES_DEBUG("Source sharing is used");
         if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>()) {
             return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                                     originId,
@@ -54,12 +54,12 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
 
         auto searchEntry = std::make_pair(sourceDescriptor->getLogicalSourceName(), sourceDescriptor->getPhysicalSourceName());
         if (sourceDescriptorToDataSourceMap.contains(searchEntry)) {
-            NES_WARNING("using already existing source for source sharing for logical name "
+            NES_DEBUG("using already existing source for source sharing for logical name "
                         << sourceDescriptor->getLogicalSourceName());
             sourceDescriptorToDataSourceMap[searchEntry]->addExecutableSuccessors(successors);
             return sourceDescriptorToDataSourceMap[searchEntry];
         } else {
-            NES_WARNING("Create first source for source sharing for logical name " << sourceDescriptor->getLogicalSourceName());
+            NES_DEBUG("Create first source for source sharing for logical name " << sourceDescriptor->getLogicalSourceName());
             auto source = ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                                            originId,
                                                                            std::move(sourceDescriptor),

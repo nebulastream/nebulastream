@@ -427,7 +427,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
 
-    std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;// source sharing disabled
+    std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
     StateManagerPtr stateManager;
 #ifdef ENABLE_PAPI_PROFILER

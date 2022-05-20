@@ -145,7 +145,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping) {
             queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
 #endif
             // TODO (2310) properly initialize the profiler with a file, thread, and core id
-            std::cout << "worker " << i << " pins to queue " << queueIdx << std::endl;
+            NES_DEBUG("worker " << i << " pins to queue " << queueIdx);
             runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker, queueIdx));
         });
     }
