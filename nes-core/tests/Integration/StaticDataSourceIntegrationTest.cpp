@@ -216,7 +216,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableDistributed) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToASSERT = 1;
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -303,7 +303,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTableNotDistributed) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -399,7 +399,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testCustomerTableProjection) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
     const auto timeoutSeconds = std::chrono::seconds(120);
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, timeoutSeconds));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true, timeoutSeconds));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -473,7 +473,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToASSERT = 1;
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -546,7 +546,7 @@ TEST_F(StaticDataSourceIntegrationTest, testTableIntegersOnlyDistributed) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -628,7 +628,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToASSERT = 1;
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToASSERT, true));
 
     NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -710,7 +710,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -794,7 +794,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -875,7 +875,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -965,7 +965,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyPartit
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -1056,7 +1056,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperat
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -1144,7 +1144,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemote
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -1238,7 +1238,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     int buffersToExpect = 1;
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
     // extract total query runtime from statistics
     auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
@@ -1391,7 +1391,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinLargeIntTables) {
             auto globalQueryPlan = crd->getGlobalQueryPlan();
             EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
             int buffersToExpect = 1;
-            EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+            EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect, true));
 
             // extract total query runtime from statistics
             auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
