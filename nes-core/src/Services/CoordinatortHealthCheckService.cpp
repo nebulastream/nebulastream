@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -22,8 +22,11 @@
 namespace NES {
 
 CoordinatorHealthCheckService::CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
-                                                             WorkerRPCClientPtr workerRPCClient, std::string healthServiceName, Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
-    : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient), coordinatorConfiguration(coordinatorConfiguration) {
+                                                             WorkerRPCClientPtr workerRPCClient,
+                                                             std::string healthServiceName,
+                                                             Configurations::CoordinatorConfigurationPtr coordinatorConfiguration)
+    : topologyManagerService(topologyManagerService), workerRPCClient(workerRPCClient),
+      coordinatorConfiguration(coordinatorConfiguration) {
     id = 9999;
     this->healthServiceName = healthServiceName;
 }
@@ -34,7 +37,6 @@ void CoordinatorHealthCheckService::startHealthCheck() {
     NES_DEBUG("start health checking on coordinator");
     healthCheckingThread = std::make_shared<std::thread>(([this]() {
         setThreadName("nesHealth");
-        std::unique_lock<std::mutex> lk(cv_m);
         auto waitTime = std::chrono::seconds(this->coordinatorConfiguration->coordinatorHealthCheckWaitTime.getValue());
         while (isRunning) {
             for (auto node : nodeIdToTopologyNodeMap.lock_table()) {
@@ -65,8 +67,12 @@ void CoordinatorHealthCheckService::startHealthCheck() {
                     }
                 }
             }
-            //std::this_thread::sleep_for(waitTime);
-            cv.wait_for(lk, waitTime);
+            {
+                std::unique_lock<std::mutex> lk(cvMutex);
+                cv.wait_for(lk, waitTime, [this] {
+                    return isRunning == false;
+                });
+            }
         }
         shutdownRPC->set_value(true);
         NES_DEBUG("NesCoordinator: stop health checking");

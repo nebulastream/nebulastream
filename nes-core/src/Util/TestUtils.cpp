@@ -176,7 +176,6 @@ bool TestUtils::waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t 
         try {
             client.request(web::http::methods::GET)
                 .then([](const web::http::http_response& response) {
-                    NES_INFO("get first then");
                     return response.extract_json();
                 })
                 .then([&json_return](const pplx::task<web::json::value>& task) {

@@ -88,7 +88,7 @@ class AbstractHealthCheckService {
     uint64_t id;
     std::string healthServiceName;
     std::condition_variable cv;
-    std::mutex cv_m;
+    std::mutex cvMutex;
 };
 
 }// namespace NES

@@ -27,7 +27,10 @@ void AbstractHealthCheckService::stopHealthCheck() {
         NES_DEBUG("AbstractHealthCheckService::stopHealthCheck health check already stopped");
         return;
     }
-    cv.notify_all();
+    {
+        std::unique_lock<std::mutex> lk(cvMutex);
+        cv.notify_all();
+    }
     auto ret = shutdownRPC->get_future().get();
     NES_ASSERT(ret, "fail to shutdown health check");
 

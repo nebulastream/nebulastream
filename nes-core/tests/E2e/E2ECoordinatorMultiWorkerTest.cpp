@@ -457,7 +457,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker)
 
 TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorkerWithKill) {
     NES_INFO(" start coordinator");
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
