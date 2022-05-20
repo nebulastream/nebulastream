@@ -18,12 +18,12 @@ namespace NES {
 
 std::string toString(MetricCollectorType type) {
     switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return "cpu";
-        case MetricCollectorType::DISK_COLLECTOR: return "disk";
-        case MetricCollectorType::MEMORY_COLLECTOR: return "memory";
-        case MetricCollectorType::NETWORK_COLLECTOR: return "network";
-        case MetricCollectorType::STATIC_SYSTEM_METRICS_COLLECTOR: return "static";
-        case MetricCollectorType::RUNTIME_METRICS_COLLECTOR: return "runtime";
+        case MetricCollectorType::CPU_COLLECTOR: return "CPU_COLLECTOR";
+        case MetricCollectorType::DISK_COLLECTOR: return "DISK_COLLECTOR";
+        case MetricCollectorType::MEMORY_COLLECTOR: return "MEMORY_COLLECTOR";
+        case MetricCollectorType::NETWORK_COLLECTOR: return "NETWORK_COLLECTOR";
+        case MetricCollectorType::STATIC_SYSTEM_METRICS_COLLECTOR: return "STATIC_SYSTEM_METRICS_COLLECTOR";
+        case MetricCollectorType::RUNTIME_METRICS_COLLECTOR: return "RUNTIME_METRICS_COLLECTOR";
         default: return "unknown";
     }
 };
