@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
+#include "Experimental/MLIR/NESIRToMLIR.hpp"
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
@@ -53,8 +54,7 @@ class MLIRUtility {
         * @param debugFlags: Determine whether and how to print/write MLIR.
         * @return int: 1 if error occurred, else 0
         */
-        int loadAndProcessMLIR(NES::NESIR* nesIR,
-                               DebugFlags *debugFlags = nullptr);
+        int loadAndProcessMLIR(std::shared_ptr<NES::NESIR> nesIR, DebugFlags *debugFlags = nullptr);
 
         int loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags = nullptr);
         int loadModuleFromStrings(const std::string &mlirString, const std::string &mlirString2, DebugFlags *debugFlags);
@@ -65,9 +65,7 @@ class MLIRUtility {
          * @param jitAddresses: Memory addresses of external functions, objects, etc.
          * @return int: 1 if error occurred, else 0
          */
-        int runJit(const std::vector<std::string> &llvmIRModule,
-                const std::vector<llvm::JITTargetAddress> &jitAddresses, bool useProxyFunctions, void* inputBufferPtr = nullptr,
-                   void* outputBufferPtr = nullptr);
+        int runJit(bool useProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
 
         /**
          * @brief Can print a module and write it to a file, depending on debugFlags.
@@ -80,6 +78,7 @@ class MLIRUtility {
     private:
         mlir::OwningOpRef<mlir::ModuleOp> module;
         mlir::MLIRContext context;
+        std::shared_ptr<MLIRGenerator> mlirGenerator;
         std::string mlirFilepath;
         bool debugFromFile;
 

@@ -26,14 +26,16 @@
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/PredicateOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
-#include "Experimental/NESIR/Operations/BranchOperation.hpp"
-#include "Experimental/NESIR/Operations/CompareOperation.hpp"
-#include "Experimental/NESIR/Operations/IfOperation.hpp"
-#include "Experimental/NESIR/Operations/Operation.hpp"
-#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
-#include "Experimental/NESIR/Operations/ReturnOperation.hpp"
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Operations/BranchOperation.hpp>
+#include <Experimental/NESIR/Operations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/IfOperation.hpp>
+#include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
+#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include <Experimental/NESIR/ProxyFunctions.hpp>
 
+#include <llvm/ExecutionEngine/JITSymbol.h>
 #include <mlir/Dialect/StandardOps/IR/Ops.h>
 #include <mlir/Dialect/LLVMIR/LLVMDialect.h>
 #include <mlir/Dialect/SCF/SCF.h>
@@ -73,7 +75,10 @@ class MLIRGenerator {
     MLIRGenerator(mlir::MLIRContext &context, std::vector<mlir::FuncOp>& memberFunctions);
     ~MLIRGenerator() = default;
 
-    mlir::ModuleOp generateModuleFromNESIR(NES::NESIR* nesIR);
+    mlir::ModuleOp generateModuleFromNESIR(std::shared_ptr<NES::NESIR> nesIR);
+
+    std::vector<std::string> getJitProxyFunctionSymbols();
+    std::vector<llvm::JITTargetAddress> getJitProxyTargetAddresses();
 
 
   private:
@@ -83,6 +88,9 @@ class MLIRGenerator {
     mlir::ModuleOp theModule;
     // Map that contains execute input args, function call results and intermediary results from NESIR Operations.
     std::vector<mlir::FuncOp> memberFunctions;
+    NES::ProxyFunctions ProxyFunctions;
+    std::vector<std::string> jitProxyFunctionSymbols;
+    std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
     // Utility
     mlir::RewriterBase::InsertPoint *globalInsertPoint;
     mlir::Value globalString;

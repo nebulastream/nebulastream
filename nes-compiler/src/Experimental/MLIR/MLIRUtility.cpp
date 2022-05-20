@@ -154,7 +154,7 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     return 0;
 }
 
-int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
+int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<NES::NESIR> nesIR, DebugFlags* debugFlags) {
 
     // Todo find a good place to load the required Dialects
     // Load all Dialects required to process/generate the required MLIR.
@@ -170,8 +170,8 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
         // create NESAbstraction for testing and an MLIRGenerator
         // Insert functions necessary to get information from TupleBuffer objects and more.
         auto memberFunctions = MLIRGenerator::GetMemberFunctions(context);
-        auto MLIRGen = new MLIRGenerator(context, memberFunctions);
-        module = MLIRGen->generateModuleFromNESIR(nesIR);
+        mlirGenerator = std::make_shared<MLIRGenerator>(context, memberFunctions);
+        module = mlirGenerator->generateModuleFromNESIR(nesIR);
         printMLIRModule(module, debugFlags);
     }
 
@@ -200,8 +200,7 @@ int MLIRUtility::loadAndProcessMLIR(NES::NESIR* nesIR, DebugFlags* debugFlags) {
  * @param module: MLIR module that contains the 'execute' function.
  * @return int: 1 if error occurred, else 0
  */
-int MLIRUtility::runJit(const std::vector<std::string>& symbols, const std::vector<llvm::JITTargetAddress>& jitAddresses,
-                        bool useProxyFunctions, void* inputBufferPtr, void* outputBufferPtr) {
+int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outputBufferPtr) {
     // Initialize LLVM targets.
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -242,8 +241,9 @@ int MLIRUtility::runJit(const std::vector<std::string>& symbols, const std::vect
 
     auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
         auto symbolMap = llvm::orc::SymbolMap();
-        for (int i = 0; i < (int) symbols.size(); ++i) {
-            symbolMap[interner(symbols.at(i))] = llvm::JITEvaluatedSymbol(jitAddresses.at(i), llvm::JITSymbolFlags::Callable);
+        for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
+            symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] = 
+            llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
         }
         return symbolMap;
     };

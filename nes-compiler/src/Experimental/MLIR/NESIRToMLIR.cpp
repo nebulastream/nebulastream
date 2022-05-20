@@ -14,31 +14,31 @@ limitations under the License.
 
 #include <Experimental/MLIR/NESIRToMLIR.hpp>
 
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
-#include "Experimental/NESIR/Operations/AddIntOperation.hpp"
-#include "Experimental/NESIR/Operations/BranchOperation.hpp"
-#include "Experimental/NESIR/Operations/CompareOperation.hpp"
-#include "Experimental/NESIR/Operations/IfOperation.hpp"
-#include "Experimental/NESIR/Operations/LoopOperation.hpp"
-#include "Experimental/NESIR/Operations/Operation.hpp"
-#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
-#include "Experimental/NESIR/Operations/ReturnOperation.hpp"
-#include "mlir/Dialect/Arithmetic/IR/Arithmetic.h"
-#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
-#include "mlir/Dialect/LLVMIR/LLVMTypes.h"
-#include "mlir/IR/Attributes.h"
-#include "mlir/IR/Builders.h"
-#include "mlir/IR/BuiltinAttributes.h"
-#include "mlir/IR/BuiltinTypes.h"
-#include "mlir/IR/Location.h"
-#include "mlir/IR/MLIRContext.h"
-#include "mlir/IR/Operation.h"
-#include "mlir/IR/PatternMatch.h"
-#include "mlir/IR/Value.h"
-#include "mlir/IR/Verifier.h"
-#include "mlir/Support/LLVM.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Transforms/Utils/Cloning.h"
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/BranchOperation.hpp>
+#include <Experimental/NESIR/Operations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/IfOperation.hpp>
+#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
+#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include <mlir/Dialect/Arithmetic/IR/Arithmetic.h>
+#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
+#include <mlir/Dialect/LLVMIR/LLVMTypes.h>
+#include <mlir/IR/Attributes.h>
+#include <mlir/IR/Builders.h>
+#include <mlir/IR/BuiltinAttributes.h>
+#include <mlir/IR/BuiltinTypes.h>
+#include <mlir/IR/Location.h>
+#include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/Operation.h>
+#include <mlir/IR/PatternMatch.h>
+#include <mlir/IR/Value.h>
+#include <mlir/IR/Verifier.h>
+#include <mlir/Support/LLVM.h>
+#include <llvm/ADT/StringRef.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 #include <cstdint>
 #include <exception>
 #include <memory>
@@ -150,6 +150,8 @@ FlatSymbolRefAttr MLIRGenerator::insertExternalFunction(const std::string& name,
     // Create function in global scope. Return reference.
     builder->create<LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, LLVM::Linkage::External, false);
 
+    jitProxyFunctionSymbols.push_back(name);
+    jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(ProxyFunctions.getProxyFunctionAddress(name)));
     return SymbolRefAttr::get(context, name);
 }
 
@@ -202,7 +204,7 @@ MLIRGenerator::MLIRGenerator(mlir::MLIRContext& context, std::vector<mlir::FuncO
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
-mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(NES::NESIR* nesIR) {
+mlir::ModuleOp MLIRGenerator::generateModuleFromNESIR(std::shared_ptr<NES::NESIR> nesIR) {
     std::unordered_map<std::string, mlir::Value> firstBlockArgs;
     generateMLIR(nesIR->getRootOperation(), firstBlockArgs);
     theModule->dump();
@@ -531,3 +533,6 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::BranchOperation> branchOp,
     printf("BranchOperation.getNextBlock.getIdentifier: %s\n", branchOp->getNextBlock()->getIdentifier().c_str());
     printf("BranchOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
 }
+
+std::vector<std::string> MLIRGenerator::getJitProxyFunctionSymbols() { return jitProxyFunctionSymbols; }
+std::vector<llvm::JITTargetAddress> MLIRGenerator::getJitProxyTargetAddresses() { return jitProxyFunctionTargetAddresses; }
