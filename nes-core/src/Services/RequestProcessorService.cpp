@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "WorkQueues/RequestTypes/StopQueryRequest.hpp"
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
@@ -39,7 +38,9 @@
 #include <Services/RequestProcessorService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
+#include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <exception>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
@@ -150,7 +151,8 @@ void RequestProcessorService::start() {
                                       "running.");
 
                             //3.3.1. First undeploy the running shared query plan with the shared query plan id
-                            bool undeploymentSuccessful = queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
+                            bool undeploymentSuccessful =
+                                queryUndeploymentPhase->execute(sharedQueryId, SharedQueryPlanStatus::Updated);
                             if (!undeploymentSuccessful) {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
@@ -187,7 +189,8 @@ void RequestProcessorService::start() {
                                       "running.");
 
                             //3.4.1. Undeploy the running shared query plan
-                            bool undeploymentSuccessful = queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
+                            bool undeploymentSuccessful =
+                                queryUndeploymentPhase->execute(sharedQueryId, sharedQueryPlan->getStatus());
                             if (!undeploymentSuccessful) {
                                 throw QueryUndeploymentException("Unable to stop Global QueryId "
                                                                  + std::to_string(sharedQueryId));
@@ -215,11 +218,16 @@ void RequestProcessorService::start() {
                     if (queryRequest->instanceOf<StopQueryRequest>()) {
                         auto queryId = queryRequest->getQueryId();
                         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
-                    } else if(queryRequest->instanceOf<FailQueryRequest>()){
-
+                    } else if (queryRequest->instanceOf<FailQueryRequest>()) {
+                        auto failQueryRequest = queryRequest->as<FailQueryRequest>();
+                        auto sharedQueryPlanId = failQueryRequest->getQueryId();
+                        auto failureReason = failQueryRequest->getFailureReason();
+                        auto queryIds = queryCatalogService->getQueryIdsForSharedQueryId(sharedQueryPlanId);
+                        for (const auto& queryId : queryIds) {
+                            queryCatalogService->updateQueryStatus(queryId, QueryStatus::Failed, failureReason);
+                        }
                     }
                 }
-
                 //FIXME: Proper error handling #1585
             } catch (QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService: QueryPlacementException: " << ex.what());
