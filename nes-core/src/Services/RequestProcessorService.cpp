@@ -215,6 +215,8 @@ void RequestProcessorService::start() {
                     if (queryRequest->instanceOf<StopQueryRequest>()) {
                         auto queryId = queryRequest->getQueryId();
                         queryCatalogService->updateQueryStatus(queryId, QueryStatus::Stopped, "Hard Stopped");
+                    } else if(queryRequest->instanceOf<FailQueryRequest>()){
+
                     }
                 }
 

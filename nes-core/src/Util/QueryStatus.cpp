@@ -25,6 +25,7 @@ std::string QueryStatus::toString(const Value queryStatus) {
         case Deployed: return "DEPLOYED";
         case Running: return "RUNNING";
         case Stopped: return "STOPPED";
+        case MarkedForFailure: return "MARKED-FOR-FAILURE";
         case Failed: return "FAILED";
         case Restarting: return "RESTARTING";
         case Migrating: return "MIGRATING";
@@ -58,6 +59,8 @@ QueryStatus::Value QueryStatus::getFromString(const std::string queryStatus) {
         return SoftStopTriggered;
     } else if (queryStatus == "MARKED-FOR-SOFT-STOP") {
         return MarkedForSoftStop;
+    } else if (queryStatus == "MARKED-FOR-FAILURE") {
+        return MarkedForFailure;
     } else {
         NES_ERROR("No valid query status to parse");
         throw InvalidArgumentException("status", queryStatus);

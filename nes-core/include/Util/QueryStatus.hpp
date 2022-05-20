@@ -45,6 +45,7 @@ class QueryStatus {
         SoftStopTriggered,
         SoftStopCompleted,
         Stopped,
+        MarkedForFailure,
         Failed,
         Restarting,
         Migrating
