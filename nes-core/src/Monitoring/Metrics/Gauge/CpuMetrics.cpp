@@ -26,7 +26,9 @@
 
 namespace NES {
 
-CpuMetrics::CpuMetrics() : nodeId(0) {}
+CpuMetrics::CpuMetrics()
+    : nodeId(0), coreNum(0), user(0), nice(0), system(0), idle(0), iowait(0), irq(0), softirq(0), steal(0), guest(0),
+      guestnice(0) {}
 
 SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)

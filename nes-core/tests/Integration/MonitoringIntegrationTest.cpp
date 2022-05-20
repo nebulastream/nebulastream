@@ -425,7 +425,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitorin
     auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
 
     // test disk metrics
-    uint64_t nodeId1 = 0;
+    uint64_t nodeId1 = 2;
     StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId1);
     auto metricVec = storedMetrics->at(MetricType::DiskMetric);
     TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
@@ -433,7 +433,7 @@ TEST_F(MonitoringIntegrationTest, requestMetricsContinuouslyEnabledWithMonitorin
     DiskMetrics parsedMetrics = retMetric->getValue<DiskMetrics>();
 
     NES_INFO("MetricStoreTest: Stored metrics" << MetricUtils::toJson(storedMetrics));
-    ASSERT_TRUE(storedMetrics->size() == 1);
+    ASSERT_EQ(storedMetrics->size(), 2);
 }
 
 }// namespace NES

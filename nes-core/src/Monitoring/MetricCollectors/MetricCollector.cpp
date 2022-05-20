@@ -16,6 +16,8 @@
 
 namespace NES {
 
-MetricCollector::MetricCollector(uint64_t nodeId) : nodeId(nodeId) {}
+MetricCollector::MetricCollector(std::shared_ptr<TopologyNodeId> nodeId) : nodeId(nodeId) {}
+const std::shared_ptr<TopologyNodeId> MetricCollector::getNodeId() const { return nodeId; }
+void MetricCollector::setNodeId(const std::shared_ptr<TopologyNodeId> NodeId) { nodeId = NodeId; }
 
 }// namespace NES

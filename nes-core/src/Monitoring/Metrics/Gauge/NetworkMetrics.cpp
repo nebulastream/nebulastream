@@ -24,7 +24,9 @@
 
 namespace NES {
 
-NetworkMetrics::NetworkMetrics() : nodeId(0) {}
+NetworkMetrics::NetworkMetrics()
+    : nodeId(0), interfaceName(0), rBytes(0), rPackets(0), rErrs(0), rDrop(0), rFifo(0), rFrame(0), rCompressed(0), rMulticast(0),
+      tBytes(0), tPackets(0), tErrs(0), tDrop(0), tFifo(0), tColls(0), tCarrier(0), tCompressed(0) {}
 
 SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);

@@ -18,6 +18,7 @@
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Topology/TopologyNodeId.hpp>
 #include <memory>
 
 namespace NES {
@@ -30,7 +31,7 @@ class Metric;
 class MetricCollector {
   protected:
     //  -- Constructors --
-    MetricCollector(uint64_t nodeId = 0);
+    MetricCollector(std::shared_ptr<TopologyNodeId> nodeId = std::make_shared<TopologyNodeId>(0));
     MetricCollector(const MetricCollector&) = default;
     MetricCollector(MetricCollector&&) = default;
     //  -- Assignment --
@@ -67,10 +68,20 @@ class MetricCollector {
      */
     virtual const MetricPtr readMetric() const = 0;
 
-    uint64_t getNodeId() const { return nodeId; }
+    /**
+     * Getter for nodeId
+     * @return the nodeId
+     */
+    const std::shared_ptr<TopologyNodeId> getNodeId() const;
+
+    /**
+     * Setter for nodeId
+     * @param NodeId
+     */
+    void setNodeId(const std::shared_ptr<TopologyNodeId> NodeId);
 
   private:
-    uint64_t nodeId;
+    std::shared_ptr<TopologyNodeId> nodeId;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;

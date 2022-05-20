@@ -25,7 +25,7 @@ namespace NES {
  */
 class CpuCollector : public MetricCollector {
   public:
-    explicit CpuCollector(uint64_t nodeId = 0);
+    explicit CpuCollector();
 
     /**
      * @brief Fill a buffer with a given metric.

@@ -44,7 +44,7 @@ class MetricCollectorTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     AbstractSystemResourcesReaderPtr reader;
-    uint64_t nodeId = 4711;
+    std::shared_ptr<TopologyNodeId> nodeId;
 
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MetricCollectorTest.log", NES::LogLevel::LOG_DEBUG);
@@ -58,6 +58,7 @@ class MetricCollectorTest : public Testing::NESBaseTest {
         std::cout << "MetricCollectorTest: Setup MetricCollectorTest test case." << std::endl;
 
         auto bufferSize = 4096;
+        nodeId = std::make_shared<TopologyNodeId>(4711);
         bufferManager = std::make_shared<Runtime::BufferManager>(bufferSize, 10);
         reader = SystemResourcesReaderFactory::getSystemResourcesReader();
     }
@@ -67,7 +68,8 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 };
 
 TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
-    auto networkCollector = NetworkCollector(nodeId);
+    auto networkCollector = NetworkCollector();
+    networkCollector.setNodeId(nodeId);
     MetricPtr networkMetric = networkCollector.readMetric();
     ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
 
@@ -83,7 +85,7 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(wrappedMetric, parsedMetric);
-        ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
+        ASSERT_EQ(parsedMetric.getNodeId(), *nodeId);
     } else {
         NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorWrappedMetrics. Abstract reader found.");
     }
@@ -91,9 +93,10 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
 
 TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
     auto readMetrics = reader->readNetworkStats();
-    readMetrics.setNodeId(nodeId);
+    readMetrics.setNodeId(*nodeId);
 
-    auto networkCollector = NetworkCollector(nodeId);
+    auto networkCollector = NetworkCollector();
+    networkCollector.setNodeId(nodeId);
     MetricPtr networkMetric = networkCollector.readMetric();
     ASSERT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
 
@@ -111,16 +114,17 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(totalMetrics, parsedMetric);
-        ASSERT_EQ(totalMetrics.nodeId, nodeId);
-        ASSERT_EQ(readMetrics.getNodeId(), nodeId);
-        ASSERT_EQ(parsedMetric.nodeId, nodeId);
+        ASSERT_EQ(totalMetrics.nodeId, *nodeId);
+        ASSERT_EQ(readMetrics.getNodeId(), *nodeId);
+        ASSERT_EQ(parsedMetric.nodeId, *nodeId);
     } else {
         NES_DEBUG("MetricCollectorTest: Skipping testNetworkCollectorSingleMetrics. Abstract reader found.");
     }
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
-    auto cpuCollector = CpuCollector(nodeId);
+    auto cpuCollector = CpuCollector();
+    cpuCollector.setNodeId(nodeId);
     MetricPtr cpuMetric = cpuCollector.readMetric();
     ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
 
@@ -136,7 +140,7 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(wrappedMetric, parsedMetric);
-        ASSERT_EQ(parsedMetric.getNodeId(), nodeId);
+        ASSERT_EQ(parsedMetric.getNodeId(), *nodeId);
     } else {
         NES_DEBUG("MetricCollectorTest: Skipping testCpuCollectorWrappedMetrics. Abstract reader found.");
     }
@@ -144,9 +148,10 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
 
 TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
     auto readMetrics = reader->readCpuStats();
-    readMetrics.setNodeId(nodeId);
+    readMetrics.setNodeId(*nodeId);
 
-    auto cpuCollector = CpuCollector(nodeId);
+    auto cpuCollector = CpuCollector();
+    cpuCollector.setNodeId(nodeId);
     MetricPtr cpuMetric = cpuCollector.readMetric();
     ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
 
@@ -164,16 +169,17 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
         readFromBuffer(parsedMetric, tupleBuffer, 0);
         NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(wrappedMetric) << "\nParsed metric: " << asJson(parsedMetric));
         ASSERT_EQ(totalMetrics, parsedMetric);
-        ASSERT_EQ(totalMetrics.nodeId, nodeId);
-        ASSERT_EQ(readMetrics.getNodeId(), nodeId);
-        ASSERT_EQ(parsedMetric.nodeId, nodeId);
+        ASSERT_EQ(totalMetrics.nodeId, *nodeId);
+        ASSERT_EQ(readMetrics.getNodeId(), *nodeId);
+        ASSERT_EQ(parsedMetric.nodeId, *nodeId);
     } else {
         NES_DEBUG("MetricCollectorTest: Skipping testcpuCollectorSingleMetrics. Abstract reader found.");
     }
 }
 
 TEST_F(MetricCollectorTest, testDiskCollector) {
-    auto diskCollector = DiskCollector(nodeId);
+    auto diskCollector = DiskCollector();
+    diskCollector.setNodeId(nodeId);
     MetricPtr diskMetric = diskCollector.readMetric();
     DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
     ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
@@ -188,12 +194,14 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     readFromBuffer(parsedMetric, tupleBuffer, 0);
     NES_DEBUG("MetricCollectorTest:\nRead metric " << asJson(typedMetric) << "\nParsed metric: " << asJson(parsedMetric));
     ASSERT_EQ(typedMetric, parsedMetric->getValue<DiskMetrics>());
-    ASSERT_EQ(parsedMetric->getValue<DiskMetrics>().nodeId, nodeId);
-    ASSERT_EQ(typedMetric.nodeId, nodeId);
+    ASSERT_EQ(parsedMetric->getValue<DiskMetrics>().nodeId, *nodeId);
+    ASSERT_EQ(typedMetric.nodeId, *nodeId);
 }
 
 TEST_F(MetricCollectorTest, testMemoryCollector) {
-    auto memoryCollector = MemoryCollector(nodeId);
+    auto memoryCollector = MemoryCollector();
+    memoryCollector.setNodeId(nodeId);
+
     MetricPtr memoryMetric = memoryCollector.readMetric();
     MemoryMetrics typedMetric = memoryMetric->getValue<MemoryMetrics>();
     ASSERT_EQ(memoryMetric->getMetricType(), MetricType::MemoryMetric);
