@@ -23,7 +23,7 @@
 
 namespace NES {
 
-DiskMetrics::DiskMetrics() : nodeId(0) {}
+DiskMetrics::DiskMetrics() : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
 
 SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)

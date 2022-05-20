@@ -50,7 +50,8 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort) {
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort),
+      topologyNodeId(std::make_shared<TopologyNodeId>(INVALID_TOPOLOGY_NODE_ID)) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -291,10 +292,11 @@ bool NesWorker::connect() {
                                                                  *(locationWrapper->getLocation()),
                                                                  locationWrapper->isMobileNode());
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
-    topologyNodeId = coordinatorRpcClient->getId();
+    *topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
+        nodeEngine->setNodeId(topologyNodeId);
         healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
                                                                         HEALTH_SERVICE_NAME,
                                                                         this->inherited0::shared_from_this());
@@ -488,8 +490,8 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 #endif
 }
 
-TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
-
 NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr NesWorker::getLocationWrapper() { return locationWrapper; }
+
+const std::shared_ptr<TopologyNodeId> NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 }// namespace NES

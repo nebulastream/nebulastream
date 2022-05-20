@@ -125,7 +125,7 @@ uint64_t AbstractQueryManager::getCurrentTaskSum() {
 AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false) { destroy(); }
 
 bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
-    NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);
+    NES_DEBUG("startThreadPool: setup thread pool for nodeEngineId=" << nodeEngineId << " with numThreads=" << numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = Created;
     if (queryManagerStatus.compare_exchange_strong(expected, Running)) {

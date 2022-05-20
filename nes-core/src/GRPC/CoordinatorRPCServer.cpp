@@ -13,9 +13,9 @@
 */
 
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/SourceCatalogService.hpp>
@@ -55,6 +55,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
 
     auto registrationMetrics =
         std::make_shared<Metric>(RegistrationMetrics(request->registrationmetrics()), MetricType::RegistrationMetric);
+    registrationMetrics->getValue<RegistrationMetrics>().nodeId = id;
     monitoringManager->addMonitoringData(id, registrationMetrics);
 
     if (id != 0) {

@@ -314,6 +314,18 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void setMetricStore(MetricStorePtr metricStore);
 
+    /**
+     * Getter for node Id
+     * @return the node id
+     */
+    const std::shared_ptr<TopologyNodeId> getNodeId() const;
+
+    /**
+     * Setter for node ID
+     * @param NodeId
+     */
+    void setNodeId(const std::shared_ptr<TopologyNodeId> NodeId);
+
   public:
     /**
      * @brief Create a node engine and gather node information
@@ -337,6 +349,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         bool sourceSharing);
 
   private:
+    std::shared_ptr<TopologyNodeId> nodeId;
     std::vector<PhysicalSourcePtr> physicalSources;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;

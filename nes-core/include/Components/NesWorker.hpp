@@ -151,7 +151,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @brief method to get the id of the worker
      * @return id of the worker
      */
-    TopologyNodeId getTopologyNodeId() const;
+    const std::shared_ptr<TopologyNodeId> getTopologyNodeId() const;
 
     /**
      * @brief Method to check if a worker is still running
@@ -250,7 +250,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::string rpcAddress;
     NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
     std::atomic<bool> isRunning{false};
-    TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
+    std::shared_ptr<TopologyNodeId> topologyNodeId;
     HealthCheckServicePtr healthCheckService;
 
     std::unique_ptr<grpc::Server> rpcServer;

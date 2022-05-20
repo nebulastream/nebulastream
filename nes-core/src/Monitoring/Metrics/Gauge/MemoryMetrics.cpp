@@ -23,7 +23,9 @@
 
 namespace NES {
 
-MemoryMetrics::MemoryMetrics() : nodeId(0) {}
+MemoryMetrics::MemoryMetrics()
+    : nodeId(0), TOTAL_RAM(0), TOTAL_SWAP(0), FREE_RAM(0), SHARED_RAM(0), BUFFER_RAM(0), FREE_SWAP(0), TOTAL_HIGH(0),
+      FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0) {}
 
 SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     auto schema = Schema::create(Schema::ROW_LAYOUT)
