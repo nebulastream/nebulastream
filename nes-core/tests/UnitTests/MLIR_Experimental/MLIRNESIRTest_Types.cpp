@@ -280,11 +280,11 @@ TEST(MLIRNESIRTEST_TYPES, NESIRIfElseNestedMultipleFollowUps) {
     auto inAndOutputBuffer = createInAndOutputBuffers();
 
     //Debug Print
-    std::vector<string> proxyArgNames{"iOp"};
-    std::vector<Operation::BasicType> proxyArgTypes{};
-    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", proxyArgNames,
-                                                        proxyArgTypes, Operation::BasicType::VOID);
+    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", 
+                                                        std::vector<string>{"iOp"}, std::vector<Operation::BasicType>{}, 
+                                                        Operation::BasicType::VOID);
 
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
     std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
@@ -338,10 +338,6 @@ TEST(MLIRNESIRTEST_TYPES, NESIRIfElseNestedMultipleFollowUps) {
         )
         )
     );
-
-//-----------------------------------------------------------------//
-//-----------------------------------------------------------------//
-
 
     // NESIR to MLIR
     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);

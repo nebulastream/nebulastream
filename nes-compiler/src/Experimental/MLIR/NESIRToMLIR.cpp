@@ -109,7 +109,7 @@ mlir::arith::CmpIPredicate convertToMLIRComparison(NES::CompareOperation::Compar
 
 // Todo: Problem: loopIfOp->getElseBranchBlock()->getParentBlockLevel would result in correct Op, but is not triggered
 // -> we skip correct BranchOp
-NES::OperationPtr MLIRGenerator::findSameLevelBlock(NES::BasicBlockPtr thenBlock, int ifParentBlockLevel) {
+NES::OperationPtr MLIRGenerator::findSameLevelBlock(NES::BasicBlockPtr thenBlock, int ifParentBlockLevel, bool ifCase) {
     auto terminatorOp = thenBlock->getOperations().back();
     // Generate Args for next block
     if (terminatorOp->getOperationType() == NES::Operation::BranchOp) { 
@@ -127,9 +127,13 @@ NES::OperationPtr MLIRGenerator::findSameLevelBlock(NES::BasicBlockPtr thenBlock
         } else {
             return findSameLevelBlock(loopIfOp->getElseBranchBlock(), ifParentBlockLevel);
         }
-    } else { //(terminatorOp->getOperationType() == NES::Operation::IfOp)
+    } else {
         auto ifOp = std::static_pointer_cast<NES::IfOperation>(terminatorOp);
-        return findSameLevelBlock(ifOp->getThenBranchBlock(), ifParentBlockLevel);
+        if(ifCase) {
+            return findSameLevelBlock(ifOp->getThenBranchBlock(), ifParentBlockLevel);
+        } else {
+            return findSameLevelBlock(ifOp->getElseBranchBlock(), ifParentBlockLevel);
+        }
     }
 }
 
@@ -481,26 +485,31 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::CompareOperation> compareO
 
 // No recursion. Dependencies. Does NOT require addressMap insertion. 
 void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    auto ifOpTerminator = findSameLevelBlock(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getParentBlockLevel()-1);
-    NES::BasicBlockPtr afterBlock;
+    // Find block that is executed after all blocks that are nested within the IfOperation (must be the same for Then & Else).
+    // Get the final terminator operations for Then & Else case to grab their block-transition-args.
+    NES::BasicBlockPtr afterIfOpBlock;
     std::vector<std::string> ifTerminatorArgs;
-    // std::vector<std::string> elseTerminatorArgs; //Todo need elseTerminatorArgs to support correct NESIR BB approach.s
-    // We can use the afterBlock args later, since they must match the terminatorOps args (no loop).
-    if(ifOpTerminator->getOperationType() == NES::Operation::BranchOp) {
-        auto branchOp = std::static_pointer_cast<NES::BranchOperation>(ifOpTerminator);
+    auto ifOpThenTerminator = findSameLevelBlock(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getParentBlockLevel()-1);
+    auto ifOpElseTerminator = findSameLevelBlock(ifOp->getElseBranchBlock(), ifOp->getElseBranchBlock()->getParentBlockLevel()-1, false);
+    if(ifOpThenTerminator->getOperationType() == NES::Operation::BranchOp) {
+        auto branchOp = std::static_pointer_cast<NES::BranchOperation>(ifOpThenTerminator);
         ifTerminatorArgs = branchOp->getNextBlockArgs();
-        afterBlock = branchOp->getNextBlock();
-    } else {
-        auto nestedIfOp = std::static_pointer_cast<NES::IfOperation>(ifOpTerminator);
-        ifTerminatorArgs = nestedIfOp->getThenBlockArgs();
-        afterBlock = std::static_pointer_cast<NES::IfOperation>(ifOpTerminator)->getElseBranchBlock();
+        afterIfOpBlock = branchOp->getNextBlock();
+    } else { // Triggered if IfOp has an 'empty' else case. The else-branch then is the final branch operation (e.g. LoopHeadIfOp).
+        auto nestedIfOp = std::static_pointer_cast<NES::IfOperation>(ifOpThenTerminator);
+        ifTerminatorArgs = nestedIfOp->getElseBlockArgs();
+        afterIfOpBlock = std::static_pointer_cast<NES::IfOperation>(ifOpThenTerminator)->getElseBranchBlock();
     }
-    // Create IF Operation
+    std::vector<std::string> elseTerminatorArgs = (ifOpElseTerminator->getOperationType() == NES::Operation::BranchOp) 
+        ? std::static_pointer_cast<NES::BranchOperation>(ifOpElseTerminator)->getNextBlockArgs()
+        : std::static_pointer_cast<NES::IfOperation>(ifOpElseTerminator)->getElseBlockArgs();
+
+    // Create MLIR-IF-Operation
     mlir::scf::IfOp mlirIfOp;
     auto currentInsertionPoint = builder->saveInsertionPoint();
     std::vector<mlir::Type> mlirIfOpResultTypes;
     // Register all blockArgs for the IfOperation as output/yield args. All values that are not modified, will just be returned.
-    for(auto afterIfBlockArg : afterBlock->getInputArgs()) {
+    for(auto afterIfBlockArg : afterIfOpBlock->getInputArgs()) {
         mlirIfOpResultTypes.push_back(blockArgs[afterIfBlockArg].getType());
     }
     mlirIfOp = builder->create<scf::IfOp>(getNameLoc("ifOperation"), mlirIfOpResultTypes, blockArgs[ifOp->getBoolArgName()], true);
@@ -522,18 +531,18 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<NES::IfOperation> ifOp, std::un
         generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs); 
     }
     std::vector<mlir::Value> elseYieldOps;
-    for(auto afterIfBlockArg : afterBlock->getInputArgs()) { //Todo MUST use elseOpTerminator outArgs
+    for(auto afterIfBlockArg : elseTerminatorArgs) { //Todo MUST use elseOpTerminator outArgs
         elseYieldOps.push_back(elseBlockArgs[afterIfBlockArg]);
     }
     builder->create<scf::YieldOp>(getNameLoc("elseYield"), elseYieldOps);
 
-    // Back to IfOp scope. Get all result values from IfOperation, write to blockArgs and proceed.
+    // Back to IfOp scope. Get all yielded result values from IfOperation, write to blockArgs and proceed.
     builder->restoreInsertionPoint(currentInsertionPoint);
-    for(int i = 0; i < (int) afterBlock->getInputArgs().size(); ++i) {
-        blockArgs[afterBlock->getInputArgs().at(i)] = mlirIfOp.getResult(i);
+    for(int i = 0; i < (int) afterIfOpBlock->getInputArgs().size(); ++i) {
+        blockArgs[afterIfOpBlock->getInputArgs().at(i)] = mlirIfOp.getResult(i);
     }
-    if(afterBlock->getParentBlockLevel() == (ifOp->getThenBranchBlock()->getParentBlockLevel())-1) {
-        generateMLIR(afterBlock, blockArgs);
+    if(afterIfOpBlock->getParentBlockLevel() == (ifOp->getThenBranchBlock()->getParentBlockLevel())-1) {
+        generateMLIR(afterIfOpBlock, blockArgs);
     }
 }
 
