@@ -17,18 +17,22 @@
 #include <Interpreter/DataValue/Integer.hpp>
 #include <Interpreter/DataValue/MemRef.hpp>
 #include <Interpreter/DataValue/Value.hpp>
+#include <Interpreter/ExecutionContext.hpp>
 #include <Interpreter/Expressions/EqualsExpression.hpp>
 #include <Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Interpreter/FunctionCall.hpp>
 #include <Interpreter/Operations/AddOp.hpp>
+#include <Interpreter/Operators/Emit.hpp>
 #include <Interpreter/Operators/Scan.hpp>
 #include <Interpreter/Operators/Selection.hpp>
 #include <Interpreter/RecordBuffer.hpp>
 #include <Interpreter/SSACreationPhase.hpp>
 #include <Interpreter/Trace/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <execinfo.h>
 #include <gtest/gtest.h>
@@ -642,32 +646,88 @@ TEST_F(InterpreterTest, loadStoreValueTest) {
 }
 */
 
+class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
+  public:
+    MockedPipelineExecutionContext()
+        : PipelineExecutionContext(
+            0,
+            nullptr,
+            [](Runtime::TupleBuffer&, Runtime::WorkerContextRef) {
+
+            },
+            [](Runtime::TupleBuffer&) {
+            },
+            std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
+};
+
+TEST_F(InterpreterTest, emitQueryTest) {
+    auto bm = std::make_shared<Runtime::BufferManager>(100);
+
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
+    schema->addField("f1", BasicType::UINT64);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    Scan scan = Scan();
+    auto emit = std::make_shared<Emit>(memoryLayout);
+    scan.setChild(emit);
+
+    auto buffer = bm->getBufferBlocking();
+    buffer.setNumberOfTuples(2);
+
+    auto address = std::addressof(buffer);
+    auto value = (int64_t) address;
+    auto memRef = Value<MemRef>(std::make_unique<MemRef>(value));
+    RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
+
+    auto pctx = MockedPipelineExecutionContext();
+    auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
+    auto wctx = Runtime::WorkerContext(0, bm, 10);
+    auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
+
+    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
+
+    auto execution = traceFunction([&scan, &executionContext, &recordBuffer]() {
+        scan.open(executionContext, recordBuffer);
+        scan.close(executionContext, recordBuffer);
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution << std::endl;
+}
+
 TEST_F(InterpreterTest, selectionQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
-    Scan scan = Scan();
-    auto readFieldF1 = std::make_shared<ReadFieldExpression>(0);
-    auto readFieldF2 = std::make_shared<ReadFieldExpression>(0);
-    auto equalsExpression = std::make_shared<EqualsExpression>(readFieldF1, readFieldF2);
-    auto selection = std::make_shared<Selection>(equalsExpression);
-    scan.setChild(std::move(selection));
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::UINT64);
     schema->addField("f2", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    Scan scan = Scan();
+    auto readFieldF1 = std::make_shared<ReadFieldExpression>(0);
+    auto readFieldF2 = std::make_shared<ReadFieldExpression>(0);
+    auto equalsExpression = std::make_shared<EqualsExpression>(readFieldF1, readFieldF2);
+    auto selection = std::make_shared<Selection>(equalsExpression);
+    scan.setChild(selection);
+
+    auto emit = std::make_shared<Emit>(memoryLayout);
+    selection->setChild(emit);
 
     auto buffer = bm->getBufferBlocking();
     buffer.setNumberOfTuples(10);
 
-
     auto address = std::addressof(buffer);
     auto value = (int64_t) address;
     auto memRef = Value<MemRef>(std::make_unique<MemRef>(value));
-
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
-    auto execution = traceFunction([&scan, &recordBuffer]() {
-        scan.execute(recordBuffer);
+    auto pctx = MockedPipelineExecutionContext();
+    auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
+    auto wctx = Runtime::WorkerContext(0, bm, 10);
+    auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
+
+    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
+
+    auto execution = traceFunction([&scan, &executionContext, &recordBuffer]() {
+        scan.open(executionContext, recordBuffer);
+        scan.close(executionContext, recordBuffer);
     });
     execution = ssaCreationPhase.apply(std::move(execution));
     std::cout << *execution << std::endl;

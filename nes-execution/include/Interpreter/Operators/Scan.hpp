@@ -7,8 +7,7 @@ namespace NES::Interpreter {
 
 class Scan : public Operator {
   public:
-    void open() override;
-    void execute(RecordBuffer& recordBuffer);
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 };
 
 }// namespace NES::Interpreter

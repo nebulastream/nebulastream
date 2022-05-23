@@ -54,6 +54,10 @@ class SSACreationPhase {
                             if (blockRef.block == block.blockId) {
                                 // TODO check if we contain the type already.
                                 blockRef.arguments.emplace_back(type);
+                                // we changed the block an arguments, thus we have to revisit it.
+                                if(processedBlocks.contains(predBlock.blockId)){
+                                    processedBlocks.erase(predBlock.blockId);
+                                }
                             }
                         }
                     } else {

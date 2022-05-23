@@ -20,11 +20,14 @@ class RecordBuffer {
     ~RecordBuffer() = default;
     Record read(Value<Integer> recordIndex);
     Value<Integer> getNumRecords();
-    void write(uint64_t recordIndex, std::shared_ptr<Record> record);
+    void write(Value<Integer> recordIndex, Record& record);
 
   private:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+
+  public:
     Value<MemRef> tupleBufferRef;
+    void setNumRecords(Value<Integer> value);
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;

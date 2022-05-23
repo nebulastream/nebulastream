@@ -10,6 +10,7 @@ class MemRef : public Any {
     const static Kind type = Kind::IntegerValue;
 
     MemRef(int64_t value) : Any(type), value(value){};
+    MemRef(MemRef&& a) : MemRef(a.value) {}
     MemRef(MemRef& a) : MemRef(a.value) {}
     MemRef(Integer& a) : MemRef(a.value) {}
     std::unique_ptr<Any> copy() { return std::make_unique<MemRef>(this->value); }
@@ -21,6 +22,10 @@ class MemRef : public Any {
     int64_t getValue() { return value; }
     template<class ResultType>
     std::unique_ptr<ResultType> load() { return std::make_unique<Integer>(value); }
+
+    template<class ValueType>
+    void store(ValueType value) { std::make_unique<Integer>(value); }
+
 
     const int64_t value;
 };

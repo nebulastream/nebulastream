@@ -3,11 +3,10 @@
 #include <Interpreter/Record.hpp>
 namespace NES::Interpreter {
 
-void Selection::execute(Record& record) {
+void Selection::execute(ExecutionContext& ctx, Record& record) const {
     if (expression->execute(record)) {
-       /// child->execute(record);
+        child->execute(ctx, record);
     }
 }
 
-void Selection::open() {}
 }// namespace NES::Interpreter

@@ -121,7 +121,7 @@ std::is_base_of<BaseValue, T>::value;
 template<class T>
     requires(std::is_same_v<T, const bool> == true)
 inline auto toValue(T&& t) -> Value<> {
-    auto value =  Value<Boolean>(std::make_unique<Boolean>(t));
+    auto value = Value<Boolean>(std::make_unique<Boolean>(t));
     Trace(CONST, value, value);
     return value;
 }
@@ -129,7 +129,7 @@ inline auto toValue(T&& t) -> Value<> {
 template<class T>
     requires(std::is_same_v<T, const uint64_t> == true)
 inline auto toValue(T&& t) -> Value<> {
-    auto value =  Value<Integer>(std::make_unique<Integer>(t));
+    auto value = Value<Integer>(std::make_unique<Integer>(t));
     Trace(CONST, value, value);
     return value;
 }
@@ -137,7 +137,7 @@ inline auto toValue(T&& t) -> Value<> {
 template<class T>
     requires(std::is_same_v<T, const int32_t> == true)
 inline auto toValue(T&& t) -> Value<> {
-    auto value =  Value<Integer>(std::make_unique<Integer>(t));
+    auto value = Value<Integer>(std::make_unique<Integer>(t));
     Trace(CONST, value, value);
     return value;
 }
@@ -168,6 +168,11 @@ auto inline operator+(const LHS& left, const RHS& right) {
     auto resValue = Value(std::move(result));
     Trace(OpCode::ADD, left, right, resValue);
     return resValue;
+};
+
+template<IsValueType LHS>
+auto inline operator++(const LHS& left) {
+    return left + (uint32_t) 1;
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -394,6 +399,15 @@ auto load(Value<MemRef>& ref) {
     auto resValue = Value<Type>(std::move(value));
     Trace(OpCode::LOAD, ref, resValue);
     return resValue;
+}
+
+template<class Type>
+void store(Value<MemRef>& ref, Value<Type>& value) {
+    ref.value->store(value);
+    if (auto* ctx = getThreadLocalTraceContext()) {
+        auto operation = Operation(STORE, {ref.ref, value.ref});
+        ctx->trace(operation);
+    }
 }
 
 }// namespace NES::Interpreter

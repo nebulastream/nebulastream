@@ -19,4 +19,5 @@ add_source_files(nes-execution
         ExecutionTrace.cpp
         Block.cpp
         ValueRef.cpp
+        FunctionCallTarget.cpp
         )

@@ -23,9 +23,8 @@ Value<Integer> RecordBuffer::getNumRecords() {
 }
 
 Record RecordBuffer::read(Value<Integer> recordIndex) {
-
     // read all fields
-    // assume Row layout for now
+    // TODO add support for columnar layout
     auto fieldSizes = memoryLayout->getFieldSizes();
     auto tupleSize = memoryLayout->getTupleSize();
     std::vector<Value<Any>> fieldValues;
@@ -39,6 +38,19 @@ Record RecordBuffer::read(Value<Integer> recordIndex) {
     return Record(fieldValues);
 }
 
-void RecordBuffer::write(uint64_t, std::shared_ptr<Record>) {}
+void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
+    auto fieldSizes = memoryLayout->getFieldSizes();
+    auto tupleSize = memoryLayout->getTupleSize();
+    for (uint64_t i = 0; i < fieldSizes.size(); i++) {
+        auto fieldOffset = tupleSize * recordIndex + fieldSizes[i];
+        auto fieldAddress = this->tupleBufferRef + fieldOffset;
+        auto value = rec.read(i).as<Integer>();
+        auto memRef = fieldAddress.as<MemRef>();
+        store<Integer>(memRef, value);
+    }
+}
+void RecordBuffer::setNumRecords(Value<Integer> value) {
+    FunctionCall<>(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, value);
+}
 
 }// namespace NES::Interpreter

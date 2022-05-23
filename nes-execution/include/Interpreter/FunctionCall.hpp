@@ -77,6 +77,9 @@ auto transformReturn(Arg argument) {
     if constexpr (std::is_same<Arg, uint64_t>::value) {
         return Value<Integer>(std::make_unique<Integer>(argument));
     }
+    if constexpr (std::is_same<Arg, void*>::value) {
+        return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
+    }
 }
 
 class AbstractFunction {
@@ -112,11 +115,22 @@ std::shared_ptr<AbstractFunction> createProxyFunction(CallbackFunction&& functio
 
 class ProxyFunctionRegistry {
   public:
-    ProxyFunctionRegistry& getInstance() {
+    struct ProxyFunctionWrapper {
+        std::string name;
+        ProxyFunctionWrapper(std::string ) {
+            getInstance().registerProxyFunction(this);
+        }
+    };
+    static ProxyFunctionRegistry& getInstance() {
         static ProxyFunctionRegistry proxyFunctionRegistry = ProxyFunctionRegistry();
         return proxyFunctionRegistry;
     }
+    static void registerProxyFunction(ProxyFunctionWrapper* ){
+
+    };
 };
+
+//static void registerProxyFunction(void* fun, std::string functionName, std::string mangledName);
 
 template<typename CallbackFunction>
 void myFunction(CallbackFunction&& function) {
@@ -125,24 +139,32 @@ void myFunction(CallbackFunction&& function) {
 
 template<typename R, typename... Args2, typename... Args>
 auto FunctionCall(R (*fnptr)(Args2...), Args... arguments) {
-    //if constexpr (std::is_void_v<R>) {
-    //    fnptr(std::forward<Args...>());
-    //((c->setArg(index++, arguments)), ...);
-    //} else {
-    std::cout << "call function " << &fnptr << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
+    if constexpr (std::is_void_v<R>) {
+        fnptr(transform(std::forward<Args>(arguments))...);
+        auto ctx = getThreadLocalTraceContext();
+        if (ctx != nullptr) {
+            auto operation = Operation(CALL, ValueRef(), {});
+            ctx->trace(operation);
+        }
+        //((c->setArg(index++, arguments)), ...);
+    } else {
+        std::cout << "call function " << &fnptr << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
+        auto varRefs = std::vector<InputVariant>();
+        for (auto& p : {arguments...}) {
+            varRefs.emplace_back(p.ref);
+        }
+        auto res = fnptr(transform(std::forward<Args>(arguments))...);
+        auto resultValue = transformReturn(res);
+        auto ctx = getThreadLocalTraceContext();
+        if (ctx != nullptr) {
 
-    auto res = fnptr(transform(std::forward<Args>(arguments))...);
-    auto resultValue = transformReturn(res);
-    auto ctx = getThreadLocalTraceContext();
-    if (ctx != nullptr) {
-        auto operation = Operation(CALL, resultValue.ref,{});
-        ctx->trace(operation);
+            auto operation = Operation(CALL, resultValue.ref, varRefs);
+            ctx->trace(operation);
+        }
+        return resultValue;
     }
-    return resultValue;
-
     //}
 }
-void foo(void) { printf("foo\n"); }
 }// namespace NES::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_

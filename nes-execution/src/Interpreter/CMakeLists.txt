@@ -20,4 +20,5 @@ add_subdirectory(DataTypes)
 add_source_files(nes-execution
         Record.cpp
         RecordBuffer.cpp
+        ExecutionContext.cpp
         )

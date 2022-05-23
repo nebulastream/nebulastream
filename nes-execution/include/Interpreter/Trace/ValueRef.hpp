@@ -3,6 +3,8 @@
 #include <memory>
 namespace NES::Interpreter{
 
+class None {};
+
 class ValueRef {
   public:
     ValueRef() : blockId(), operationId(){};
