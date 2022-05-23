@@ -160,88 +160,6 @@ pair<NES::Runtime::TupleBuffer, NES::Runtime::TupleBuffer> createInAndOutputBuff
     return pair{inputBuffer, outputBuffer};
 }
 
-// BasicBlockPtr getSimpleZeroReturnBlock() {
-//     // Execute Return Block
-//     OperationPtr executeReturnOp = make_shared<ReturnOperation>(0);
-//     std::vector<OperationPtr> executeReturnBlockOps{executeReturnOp};
-//     std::vector<string> executeReturnBlockArgs{};
-//     return make_shared<BasicBlock>("loopBlock", executeReturnBlockOps, executeReturnBlockArgs, 1);
-// }
-
-// shared_ptr<FunctionOperation> createExecuteFunction(std::vector<string> constNames, std::vector<uint64_t> constVals, 
-//                                                     std::vector<uint8_t> constBits) {   
-//     std::vector<OperationPtr> executeBlockOps;
-//     // Loop proxy Ops
-//     std::vector<string> getInputDataBufArgs{"inputTupleBuffer"};
-//     std::vector<string> getOutputDataBufArgs{"outputTupleBuffer"};
-//     std::vector<Operation::BasicType> getOutputDataBufArgTypes{Operation::BasicType::INT8PTR};
-//     executeBlockOps.push_back(make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "inputDataBuffer", getInputDataBufArgs, 
-//                                                               getOutputDataBufArgTypes, Operation::BasicType::INT8PTR));
-//     executeBlockOps.push_back(make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "outputDataBuffer", getOutputDataBufArgs,
-//                                                               getOutputDataBufArgTypes, Operation::BasicType::INT8PTR));
-//     executeBlockOps.push_back(make_shared<ProxyCallOperation>(Operation::GetNumTuples, "numTuples", getInputDataBufArgs,
-//                                                               getOutputDataBufArgTypes, Operation::BasicType::INT64));
-
-//     // Loop condition constants.
-//     for(int i = 0; i < (int) constNames.size(); ++i) {
-//         executeBlockOps.push_back(make_shared<ConstantIntOperation>(constNames.at(i), constVals.at(i), constBits.at(i)));
-//     }
-    
-//     std::vector<string> executeBodyBlockArgs{"inputTupleBuffer", "outputTupleBuffer"};
-//     NES::BasicBlockPtr executeBodyBlock = make_shared<NES::BasicBlock>("executeFuncBB", executeBlockOps, executeBodyBlockArgs, 0);
-//     std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
-//     std::vector<string> executeArgNames{ "inputTupleBuffer", "outputTupleBuffer"};
-//     return make_shared<FunctionOperation>("execute", executeBodyBlock, executeArgTypes, executeArgNames, Operation::INT64);
-// }
-
-// BasicBlockPtr createSimpleLoopEnd(BasicBlockPtr loopBodyBlock) {
-//     auto loopIncAdd = make_shared<AddIntOperation>("loopIncAdd", "i", "const1Op");
-//     OperationPtr loopBodyTerminatorOp = make_shared<BranchOperation>(loopBodyBlock);
-//     std::vector<OperationPtr> loopEndOps{loopIncAdd, loopBodyTerminatorOp};
-//     std::vector<string> loopEndArgs{"i", "const1Op"};
-//     return make_shared<BasicBlock>("loopEndBlock", loopEndOps, loopEndArgs, 2);
-// }
-
-// BasicBlockPtr createSpecialLoopEnd(BasicBlockPtr loopHeaderBlock, std::vector<OperationPtr> optionalEndOps, std::vector<string> optionalEndArgs) {
-//     auto loopIncAdd = make_shared<AddIntOperation>("loopIncAdd", "i", "const1Op");
-//     std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "loopIncAdd", "const1Op", "const47", "const50", "const100", 
-//                                   "const8", "numTuples", "nestedIfBranchConst"};
-//     OperationPtr loopBodyTerminatorOp = make_shared<BranchOperation>(loopHeaderBlock, loopHeaderArgs);
-//     optionalEndOps.push_back(loopIncAdd);
-//     optionalEndOps.push_back(loopBodyTerminatorOp);
-//     optionalEndArgs.push_back("i");
-//     optionalEndArgs.push_back("const1Op");
-//     return make_shared<BasicBlock>("loopEndBlock", optionalEndOps, optionalEndArgs, 2);
-// }
-
-// shared_ptr<LoopOperation> createTopLevelLoopOp(std::vector<string> loopHeaderArgs, BasicBlockPtr loopBodyBlock) {
-//     //Loop Header
-//     OperationPtr ifCompareOp = make_shared<CompareOperation>("loopCompare", "i", "numTuples", CompareOperation::ISLT);
-//     OperationPtr loopIfOp = make_shared<IfOperation>("loopCompare", loopBodyBlock, getSimpleZeroReturnBlock());
-//     std::vector<OperationPtr> loopHeaderBBOps{ifCompareOp, loopIfOp};
-//     BasicBlockPtr loopHeaderBlock = make_shared<BasicBlock>("loopHeaderBlock", loopHeaderBBOps, loopHeaderArgs, 1);
-//     // Loop Operation -> loopBranchOp -> loopHeaderBlock -> loopIfOp -> (loopBodyBlock | executeEndBlock)
-//     return make_shared<LoopOperation>(LoopOperation::ForLoop, loopHeaderBlock);
-// }
-
-// shared_ptr<IfOperation> createIfOperation(string compareArg, int blockScopeLevel, std::vector<OperationPtr> thenOps, 
-//                                           std::vector<string> thenArgs, OperationPtr thenTerminatorOp) {
-//     BasicBlockPtr loopIfThenBlock = make_shared<BasicBlock>("LoopIfThenBlock", thenOps, thenArgs, blockScopeLevel);
-//     loopIfThenBlock->addOperation(thenTerminatorOp);
-//     return make_shared<IfOperation>(compareArg, loopIfThenBlock, nullptr);
-// }
-
-// shared_ptr<IfOperation> createIfElseOperation(string compareArg, int blockScopeLevel, std::vector<OperationPtr> thenOps, 
-//                                               std::vector<string> thenArgs, OperationPtr thenTerminatorOp, 
-//                                               std::vector<OperationPtr> elseOps, std::vector<string> elseArgs,
-//                                               OperationPtr elseTerminatorOp) {
-//     BasicBlockPtr loopIfThenBlock = make_shared<BasicBlock>("LoopIfThenBlock", thenOps, thenArgs, blockScopeLevel);
-//     BasicBlockPtr loopIfElseBlock = make_shared<BasicBlock>("LoopIfElseBlock", elseOps, elseArgs, blockScopeLevel);
-//     loopIfThenBlock->addOperation(thenTerminatorOp);
-//     loopIfElseBlock->addOperation(elseTerminatorOp);
-//     return make_shared<IfOperation>(compareArg, loopIfThenBlock, loopIfElseBlock);
-// }
-
 shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::ProxyCallType proxyCallType, bool getInputTB) {
     std::vector<string> getInputDataBufArgs{"inputTupleBuffer"};
     std::vector<string> getOutputDataBufArgs{"outputTupleBuffer"};
@@ -275,7 +193,8 @@ BasicBlockPtr saveBB(BasicBlockPtr basicBlock, std::unordered_map<std::string, B
     return savedBBs[basicBlockName];
 }
 
-TEST(MLIRNESIRTEST_TYPES, NESIRIfElseNestedMultipleFollowUps) {
+TEST(MLIRNESIRTEST_TYPES, NESIRSimpleTypeTest) {
+    printf("Starting Test NESIRSimpleTypeTest");
     const uint64_t numTuples = 2;
     auto inAndOutputBuffer = createInAndOutputBuffers();
 

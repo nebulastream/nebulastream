@@ -211,33 +211,6 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
-### MLIR Tests ###
-if(NES_USE_MLIR)
-    get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-    get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-    target_link_libraries(nes-tests
-            INTERFACE
-            ${dialect_libs}
-            ${conversion_libs}
-            MLIRReconcileUnrealizedCasts
-            MLIRMemRefToLLVM
-            MLIRExecutionEngine
-            )
-    add_executable(mlir-nesir-loop-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Loop.cpp")
-    target_link_libraries(mlir-nesir-loop-test
-            nes-tests)
-    add_test(NAME mlir-nesir-loop-test COMMAND mlir-nesir-loop-test)
-    add_executable(mlir-nesir-if-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_IF.cpp")
-    target_link_libraries(mlir-nesir-if-test
-            nes-tests)
-    add_test(NAME mlir-nesir-if-test COMMAND mlir-nesir-if-test)
-    add_executable(mlir-nesir-types-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Types.cpp")
-    target_link_libraries(mlir-nesir-types-test
-            nes-tests)
-    add_test(NAME mlir-nesir-types-test COMMAND mlir-nesir-types-test)
-endif (NES_USE_MLIR)
-
-
 ### Row Layout Tests ###
 add_executable(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")
 target_link_libraries(row-memory-layout-tests nes-tests)

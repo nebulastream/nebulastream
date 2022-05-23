@@ -599,6 +599,8 @@ endif ()
 add_subdirectory(nes-common)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
+# Add target for execution engines
+add_subdirectory(nes-execution-engine)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
 # Add target for client
