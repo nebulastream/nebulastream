@@ -21,7 +21,7 @@ limitations under the License.
 #include <list>
 
 /**
- * @brief This class defines the attributes and methods used by the NePSL Parsing Service.
+ * @brief This class defines the attributes and methods used by the NebulaPSL Parsing Service.
  * This enables the parsing of declarative patterns into NES queries.
  */
 
