@@ -17,13 +17,16 @@
 #include <memory>
 #include <REST/Controller/BaseController.hpp>
 
-namespace NES::Spatial::Index::Experimental {
+namespace NES {
+
+namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
+}
 
 class LocationController : public BaseController {
   public:
-    LocationController(LocationServicePtr locationService);
+    LocationController(Spatial::Index::Experimental::LocationServicePtr locationService);
 
     /**
      * Handling the Get requests for the locations
@@ -31,6 +34,8 @@ class LocationController : public BaseController {
      * @param message : the user message
      */
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
+
+  private:
 
     /**
      * Extracts the node id from the http requests parameters. if the parameter is not found or can not be converted to uint64_t,
@@ -40,9 +45,9 @@ class LocationController : public BaseController {
      * @return : an optional containing the id or a nullopt_t if an error occurred.
      */
     static std::optional<uint64_t> getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
-                                                                          const web::http::http_request& httpRequest);
-  private:
-    LocationServicePtr locationService;
+                                                             const web::http::http_request& httpRequest);
+
+    Spatial::Index::Experimental::LocationServicePtr locationService;
 };
 }
 #endif//NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP

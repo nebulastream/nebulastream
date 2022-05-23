@@ -183,7 +183,7 @@ message EpochBarrierPropagationReply{
   bool success = 1;
 }
 message GetNodesInRangeReply{
-  repeated NodeGeoInfo nodes = 1;
+  repeated WorkerLocationInfo nodes = 1;
 }
 
 message SerializableRegistrationMetrics{

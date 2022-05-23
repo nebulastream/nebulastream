@@ -68,6 +68,9 @@ using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+class LocationController;
+using LocationControllerPtr = std::shared_ptr<LocationController>;
+
 namespace Catalogs {
 class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
@@ -83,8 +86,6 @@ typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
 }//namespace Experimental
 
 namespace Spatial::Index::Experimental {
-class LocationController;
-using LocationControllerPtr = std::shared_ptr<LocationController>;
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 }
@@ -159,7 +160,7 @@ class RestEngine {
     TopologyControllerPtr topologyController;
     UdfCatalogControllerPtr udfCatalogController;
     Experimental::MaintenanceControllerPtr maintenanceController;
-    Spatial::Index::Experimental::LocationControllerPtr locationController;
+    LocationControllerPtr locationController;
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;

@@ -39,6 +39,20 @@ class LocationServiceTest : public Testing::NESBaseTest {
     }
     static void TearDownTestCase() { NES_INFO("Tear down LocationServiceTest test class")}
 
+    web::json::value convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::Index::Experimental::LocationPtr loc) {
+        web::json::value nodeInfo;
+        nodeInfo["id"] = web::json::value(id);
+        web::json::value locJson;
+        if (loc) {
+            locJson[0] = loc->getLatitude();
+            locJson[1] = loc->getLongitude();
+        } else {
+            locJson = web::json::value::null();
+        }
+        nodeInfo["location"] = web::json::value(locJson);
+        return nodeInfo;
+    }
+
     std::string location2 = "52.53736960143897, 13.299134894776092";
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
@@ -207,21 +221,21 @@ TEST_F(LocationServiceTest, testConvertingToJson) {
     double lat = 10.5;
     double lng = -3.3;
     auto loc1 = std::make_shared<NES::Spatial::Index::Experimental::Location>(lat, lng);
-    auto validLocJson = NES::Spatial::Index::Experimental::LocationService::convertNodeLocationInfoToJson(1, loc1);
+    auto validLocJson = convertNodeLocationInfoToJson(1, loc1);
 
     EXPECT_EQ(validLocJson["id"], 1);
     EXPECT_EQ(validLocJson["location"][0], lat);
     EXPECT_EQ(validLocJson["location"][1], lng);
 
     auto invalidLoc = std::make_shared<NES::Spatial::Index::Experimental::Location>();
-    auto invalidLocJson = NES::Spatial::Index::Experimental::LocationService::convertNodeLocationInfoToJson(2, invalidLoc);
+    auto invalidLocJson = convertNodeLocationInfoToJson(2, invalidLoc);
     NES_DEBUG("Invalid location json: " << invalidLocJson.serialize())
     EXPECT_EQ(invalidLocJson["id"], 2);
     EXPECT_TRUE(std::isnan(invalidLocJson["location"][0].as_double()));
     EXPECT_TRUE(std::isnan(invalidLocJson["location"][1].as_double()));
 
     std::shared_ptr<NES::Spatial::Index::Experimental::Location> locNullPtr;
-    auto nullLocJson = NES::Spatial::Index::Experimental::LocationService::convertNodeLocationInfoToJson(3, locNullPtr);
+    auto nullLocJson = convertNodeLocationInfoToJson(3, locNullPtr);
     EXPECT_EQ(nullLocJson["id"], 3);
     EXPECT_EQ(nullLocJson["location"], web::json::value::null());
 }

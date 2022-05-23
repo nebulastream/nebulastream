@@ -50,7 +50,7 @@ RestEngine::RestEngine(const SourceCatalogPtr& sourceCatalog,
     topologyController = std::make_shared<TopologyController>(topology);
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
     maintenanceController = std::make_shared<Experimental::MaintenanceController>(maintenanceService);
-    locationController = std::make_shared<Spatial::Index::Experimental::LocationController>(locationService);
+    locationController = std::make_shared<LocationController>(locationService);
 }
 
 void RestEngine::initRestOpHandlers() {

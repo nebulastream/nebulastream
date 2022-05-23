@@ -67,6 +67,9 @@ class LocationService {
      */
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
 
+
+  private:
+
     /**
      * Use a node id and a LocationPtr to construct a Json representation containing these values.
      * @param id : the nodes id
@@ -82,7 +85,6 @@ class LocationService {
      */
     static web::json::value convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc);
 
-  private:
     LocationIndexPtr locationIndex;
     TopologyPtr topology;
 };
