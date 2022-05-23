@@ -11,30 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Parsers/PSL/PSLQueryPlanCreator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Parsers/NePSL/NesCEPQueryPlanCreator.h>
 
-namespace NES::Parsers {
-
-int PSLQueryPlanCreator::getDirection() { return direction; }
-void PSLQueryPlanCreator::setDirection(int direction) { this->direction = direction; }
-int PSLQueryPlanCreator::getCurrentPointer() { return currentPointer; }
-void PSLQueryPlanCreator::setCurrentPointer(int currentPointer) { this->currentPointer = currentPointer; }
-int PSLQueryPlanCreator::getCurrentParent() { return currentParent; }
-void PSLQueryPlanCreator::setCurrentParent(int currentParent) { this->currentParent = currentParent; }
-int PSLQueryPlanCreator::getId() { return id; }
-void PSLQueryPlanCreator::setId(int id) { this->id = id; }
-const NES::Query& PSLQueryPlanCreator::getQuery() { return query; }
+int NesCEPQueryPlanCreator::getDirection() { return direction; }
+void NesCEPQueryPlanCreator::setDirection(int direction) { this->direction = direction; }
+int NesCEPQueryPlanCreator::getCurrentPointer() { return currentPointer; }
+void NesCEPQueryPlanCreator::setCurrentPointer(int currentPointer) { this->currentPointer = currentPointer; }
+int NesCEPQueryPlanCreator::getCurrentParent() { return currentParent; }
+void NesCEPQueryPlanCreator::setCurrentParent(int currentParent) { this->currentParent = currentParent; }
+int NesCEPQueryPlanCreator::getId() { return id; }
+void NesCEPQueryPlanCreator::setId(int id) { this->id = id; }
+const NES::Query& NesCEPQueryPlanCreator::getQuery() { return query; }
 
 //-------------------------------------------------------------------------------------
-/**
-     * @brief creates a subPattern
-     * @param context
-    */
-void PSLQueryPlanCreator::enterListEvents(NesCEPParser::ListEventsContext* context) {
-    PSLPattern* pattern = new PSLPattern(id);
+
+void NesCEPQueryPlanCreator::enterListEvents(NesCEPParser::ListEventsContext* context) {
+    NePSLPattern* pattern = new NePSLPattern(id);
     pattern->setParent(id);
     this->patterns.insert(this->it, pattern);
     this->currentPointer = id;
@@ -44,12 +36,8 @@ void PSLQueryPlanCreator::enterListEvents(NesCEPParser::ListEventsContext* conte
     NesCEPBaseListener::enterListEvents(context);
 }
 
-/**
-     * @brief creates a subPattern
-     * @param context
-    */
-void PSLQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* context) {
-    PSLPattern* pattern = new PSLPattern(id);
+void NesCEPQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* context) {
+    NePSLPattern* pattern = new NePSLPattern(id);
     pattern->setParent(currentParent);
     this->patterns.push_back(pattern);
     this->currentPointer = id;
@@ -58,16 +46,12 @@ void PSLQueryPlanCreator::enterEventElem(NesCEPParser::EventElemContext* context
     NesCEPBaseListener::enterEventElem(context);
 }
 
-/**
-     * @brief append the sources and the operators that connect them to the query plan
-     * @param context
-    */
-void PSLQueryPlanCreator::exitInputStreams(NesCEPParser::InputStreamsContext* context) {
-    std::list<PSLPattern*> tmpPatterns = patterns;
+void NesCEPQueryPlanCreator::exitInputStreams(NesCEPParser::InputStreamsContext* context) {
+    std::list<NePSLPattern*> tmpPatterns = patterns;
     patterns.reverse();
-    std::list<PSLPattern*>::iterator tmpIt = patterns.begin();
+    std::list<NePSLPattern*>::iterator tmpIt = patterns.begin();
     while (tmpIt != patterns.end()) {
-        PSLPattern* p = *tmpIt;
+        NePSLPattern* p = *tmpIt;
         std::string eventRight = p->getEventRight();
         std::string eventLeft = p->getEventLeft();
         std::string op = p->getOp();
@@ -82,7 +66,7 @@ void PSLQueryPlanCreator::exitInputStreams(NesCEPParser::InputStreamsContext* co
         if (!op.empty()) {
             int rightID = p->getRight();
             int leftID = p->getLeft();
-            std::list<PSLPattern*>::iterator anotherIt = tmpPatterns.begin();
+            std::list<NePSLPattern*>::iterator anotherIt = tmpPatterns.begin();
             std::advance(anotherIt, rightID);
             NES::Query right = (*anotherIt)->getQuery();
             anotherIt = tmpPatterns.begin();
@@ -113,16 +97,12 @@ void PSLQueryPlanCreator::exitInputStreams(NesCEPParser::InputStreamsContext* co
     NesCEPBaseListener::exitInputStreams(context);
 }
 
-/**
-     * @brief substitues the input stream alias by its realname in every subPattern
-     * @param context
-    */
-void PSLQueryPlanCreator::exitInputStream(NesCEPParser::InputStreamContext* context) {
+void NesCEPQueryPlanCreator::exitInputStream(NesCEPParser::InputStreamContext* context) {
     std::string realName = context->getStart()->getText();
     std::string alias = context->getStop()->getText();
-    std::list<PSLPattern*>::iterator tmpIt = patterns.begin();
+    std::list<NePSLPattern*>::iterator tmpIt = patterns.begin();
     while (tmpIt != patterns.end()) {
-        PSLPattern* p = *tmpIt;
+        NePSLPattern* p = *tmpIt;
         if (p->getEventRight() == alias) {
             p->setEventRight(realName);
         }
@@ -135,58 +115,31 @@ void PSLQueryPlanCreator::exitInputStream(NesCEPParser::InputStreamContext* cont
     NesCEPBaseListener::exitInputStream(context);
 }
 
-/**
-     * @brief marks that the walker is in the WHERE clause
-     * @param context
-    */
-void PSLQueryPlanCreator::enterWhereExp(NesCEPParser::WhereExpContext* context) {
+void NesCEPQueryPlanCreator::enterWhereExp(NesCEPParser::WhereExpContext* context) {
     inWhere = true;
     NesCEPBaseListener::enterWhereExp(context);
 }
 
-/**
-     * @brief marks that the walker is no more in the WHERE clause
-     * @param context
-    */
-void PSLQueryPlanCreator::exitWhereExp(NesCEPParser::WhereExpContext* context) {
+void NesCEPQueryPlanCreator::exitWhereExp(NesCEPParser::WhereExpContext* context) {
     inWhere = false;
     NesCEPBaseListener::exitWhereExp(context);
 }
 
-/**
-     * @brief append a map operator to the query plan
-     * @param context
-    */
-void PSLQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext* context) {
+void NesCEPQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext* context) {
     query.map(NES::Attribute(context->NAME()->getText()) = context->attVal()->getText());
 }
 
-/**
-     * @brief append the sink operators to the query plan
-     * @param context
-    */
-void PSLQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context) {
+void NesCEPQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context) {
     const std::vector<NES::OperatorNodePtr>& rootOperators = query.getQueryPlan()->getRootOperators();
-    // TODO check if this code works and results in the desired query plan.
-    // Furthermore I'm not sure if it is supported by the backend.
-    for (std::shared_ptr<NES::SinkDescriptor> tmpItr : sinks) {
-        std::shared_ptr<NES::SinkDescriptor> sinkDescriptor = tmpItr;
-        OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
 
-        for (auto &rootOperator : rootOperators){
-            op->addChild(rootOperator);
-            query.getQueryPlan()->removeAsRootOperator(rootOperator);
-        }
-        query.getQueryPlan()->addRootOperator(op);
+    for (std::shared_ptr<NES::SinkDescriptor> tmpItr : sinks) {
+        std::shared_ptr<NES::SinkDescriptor> sink = tmpItr;
+        query.multipleSink(sink, rootOperators);
     }
     NesCEPBaseListener::exitSinkList(context);
 }
 
-/**
-     * @brief add a sink operator to the sink list
-     * @param context
-    */
-void PSLQueryPlanCreator::enterSink(NesCEPParser::SinkContext* context) {
+void NesCEPQueryPlanCreator::enterSink(NesCEPParser::SinkContext* context) {
     NES::Query tmpQuery = query;
     std::string sinkType = context->sinkType()->getText();
     std::shared_ptr<NES::SinkDescriptor> sinkDescriptorPtr;
@@ -210,26 +163,21 @@ void PSLQueryPlanCreator::enterSink(NesCEPParser::SinkContext* context) {
         sinkDescriptorPtr = NES::NullOutputSinkDescriptor::create();
     }
     if (sinkType == "OPC") {
-        //TO-DO
+        //TODO
         sinkDescriptorPtr = NES::NullOutputSinkDescriptor::create();
     }
     if (sinkType == "ZMQ") {
-        //TO-DO
+        //TODO
         sinkDescriptorPtr = NES::NullOutputSinkDescriptor::create();
     }
     sinks.push_back(sinkDescriptorPtr);
     NesCEPBaseListener::enterSink(context);
 }
 
-/**
-     * @brief mark currentPointer subPattern as a child
-     *        of the currentParent subPattern and move one step up in the hierarchy
-     * @param context
-    */
-void PSLQueryPlanCreator::exitEventElem(NesCEPParser::EventElemContext* context) {
-    std::list<PSLPattern*>::iterator tmpIt = patterns.begin();
+void NesCEPQueryPlanCreator::exitEventElem(NesCEPParser::EventElemContext* context) {
+    std::list<NePSLPattern*>::iterator tmpIt = patterns.begin();
     std::advance(tmpIt, currentParent);
-    PSLPattern* p = *tmpIt;
+    NePSLPattern* p = *tmpIt;
     if (direction == -1) {
         p->setRight(currentPointer);
     }
@@ -244,14 +192,10 @@ void PSLQueryPlanCreator::exitEventElem(NesCEPParser::EventElemContext* context)
     NesCEPBaseListener::exitEventElem(context);
 }
 
-/**
-     * @brief mark the position of the event inside of the currentPointer subPattern
-     * @param context
-    */
-void PSLQueryPlanCreator::enterEvent(NesCEPParser::EventContext* context) {
-    std::list<PSLPattern*>::iterator tmpIt = patterns.begin();
+void NesCEPQueryPlanCreator::enterEvent(NesCEPParser::EventContext* context) {
+    std::list<NePSLPattern*>::iterator tmpIt = patterns.begin();
     std::advance(tmpIt, currentPointer);
-    PSLPattern* event = *tmpIt;
+    NePSLPattern* event = *tmpIt;
     if (this->direction == -1) {
         event->setEventRight(context->getStart()->getText());
     } else if (this->direction == 1) {
@@ -259,14 +203,10 @@ void PSLQueryPlanCreator::enterEvent(NesCEPParser::EventContext* context) {
     }
 }
 
-/**
-     * @brief add the appropriate iteration to the currentPointer subPattern
-     * @param context
-    */
-void PSLQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* context) {
-    std::list<PSLPattern*>::iterator tmpIt = patterns.begin();
+void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* context) {
+    std::list<NePSLPattern*>::iterator tmpIt = patterns.begin();
     std::advance(tmpIt, currentPointer);
-    PSLPattern* event = *tmpIt;
+    NePSLPattern* event = *tmpIt;
     event->setIteration(true);
     if (context->STAR()) {
         event->setIterMin(0);
@@ -288,45 +228,29 @@ void PSLQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* con
     NesCEPBaseListener::enterQuantifiers(context);
 }
 
-/**
-     * @brief add the appropriate operator to the currentParent subPattern
-     * @param context
-    */
-void PSLQueryPlanCreator::enterOperatorRule(NesCEPParser::OperatorRuleContext* context) {
+void NesCEPQueryPlanCreator::enterOperatorRule(NesCEPParser::OperatorRuleContext* context) {
     setDirection(0);
-    std::list<PSLPattern*>::iterator tmpIt = patterns.begin();
+    std::list<NePSLPattern*>::iterator tmpIt = patterns.begin();
     std::advance(tmpIt, currentParent);
-    PSLPattern* p = *tmpIt;
+    NePSLPattern* p = *tmpIt;
     p->setOp(context->getText());
 }
 
-/**
-     * @brief change direction to right
-     * @param context
-    */
-void PSLQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext* context) {
+void NesCEPQueryPlanCreator::exitOperatorRule(NesCEPParser::OperatorRuleContext* context) {
     setDirection(1);
     NesCEPBaseListener::exitOperatorRule(context);
 }
 
-/**
-     * @brief add a "<" filter to the query plan when needed
-     * @param context
-    */
-void PSLQueryPlanCreator::exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) {
-    std::string comparaisonOp = context->comparisonOperator()->getText();
-    if (comparaisonOp == "<") {
+void NesCEPQueryPlanCreator::exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) {
+    std::string comparisonOp = context->comparisonOperator()->getText();
+    if (comparisonOp == "<") {
         auto lessExpression = NES::LessExpressionNode::create(NES::Attribute(currentLeftExp).getExpressionNode(),
                                                               NES::Attribute(currentRightExp).getExpressionNode());
         query.filter(lessExpression);
     }
 }
 
-/**
-     * @brief if walker is inside of WHERE clause mark current position of the Attribute
-     * @param context
-    */
-void PSLQueryPlanCreator::enterAttribute(NesCEPParser::AttributeContext* context) {
+void NesCEPQueryPlanCreator::enterAttribute(NesCEPParser::AttributeContext* context) {
     if (inWhere) {
         if (leftFilter)
             currentLeftExp = context->getText();
@@ -334,4 +258,3 @@ void PSLQueryPlanCreator::enterAttribute(NesCEPParser::AttributeContext* context
             currentRightExp = context->getText();
     }
 }
-}// namespace NES::Parsers

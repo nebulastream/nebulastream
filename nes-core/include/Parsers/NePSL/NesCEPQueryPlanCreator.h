@@ -38,7 +38,7 @@ class NesCEPQueryPlanCreator: public NesCEPBaseListener {
         int currentPointer=-1;
         int currentParent=-1;
         int id=0;
-        std::list< NePSLPattern* > patterns;
+        std::list<NePSLPattern*> patterns;
         std::list<NePSLPattern*>::iterator it = patterns.begin();
         NES::Query query=NES::Query(NULL);
         std::list<std::shared_ptr<NES::SinkDescriptor>> sinks;
