@@ -70,7 +70,7 @@ class Hash {
      * @param seed
      * @return
      */
-    inline hash_t operator()(int64_t key, hash_t seed) const { return impl()->hashKey(key, seed); }
+    inline hash_t operator()(int64_t key, hash_t seed) const { return impl()->hashKey((uint64_t) key, seed); }
 
     /**
      * @brief Forwards the call operator to the concrete hash implementation for uint32_t
@@ -86,7 +86,7 @@ class Hash {
      * @param seed
      * @return
      */
-    inline hash_t operator()(int32_t key, hash_t seed) const { return impl()->hashKey(key, seed); }
+    inline hash_t operator()(int32_t key, hash_t seed) const { return impl()->hashKey((uint32_t) key, seed); }
 
     /**
      * @brief Forwards the call operator to the concrete hash implementation for int8_t
@@ -94,7 +94,7 @@ class Hash {
      * @param seed
      * @return
      */
-    inline hash_t operator()(int8_t key, hash_t seed) const { return impl()->hashKey(key, seed); }
+    inline hash_t operator()(int8_t key, hash_t seed) const { return impl()->hashKey((uint32_t) key, seed); }
 
     /**
      * @brief Forwards the call operator to the concrete hash implementation for std tuples
