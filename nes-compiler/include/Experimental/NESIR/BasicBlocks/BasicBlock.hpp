@@ -21,7 +21,7 @@
 #include <Experimental/NESIR/Operations/Operation.hpp>
 namespace NES {
 
-class BasicBlock {
+class BasicBlock :  public std::enable_shared_from_this<BasicBlock>{
   public:
 
     /**
@@ -36,7 +36,15 @@ class BasicBlock {
     [[nodiscard]] std::vector<OperationPtr> getOperations();
     [[nodiscard]] std::vector<std::string> getInputArgs();
     [[nodiscard]] int32_t getParentBlockLevel();
-    void addOperation(OperationPtr operation);
+    std::shared_ptr<BasicBlock> addOperation(OperationPtr operation);
+
+    // NESIR Assembly
+    std::shared_ptr<BasicBlock> addLoopTerminatorOpHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
+    std::shared_ptr<BasicBlock> addBranchTerminatorOpNextBlock(std::shared_ptr<BasicBlock> nextBlock);
+    std::shared_ptr<BasicBlock> addIfTerminatorOpThenBlock(std::shared_ptr<BasicBlock> thenBlock);
+    std::shared_ptr<BasicBlock> addIfTerminatorOpElseBlock(std::shared_ptr<BasicBlock> elseBlock);
+
+
     void popOperation();
 
   private:
@@ -46,5 +54,6 @@ class BasicBlock {
     int32_t parentBlockLevel;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
+
 } // namespace NES
 #endif//NES_BASICBLOCK_HPP

@@ -20,11 +20,14 @@
 namespace NES {
 class IfOperation : public Operation {
   public:
-    IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock, 
-                std::vector<std::string> thenBlockArgs = {}, std::vector<std::string> elseBlockArgs = {});
+    IfOperation(std::string boolArgName, std::vector<std::string> thenBlockArgs = {}, std::vector<std::string> elseBlockArgs = {});
     ~IfOperation() override = default;
 
     std::string getBoolArgName();
+
+    BasicBlockPtr setThenBranchBlock(BasicBlockPtr thenBlock);
+    BasicBlockPtr setElseBranchBlock(BasicBlockPtr elseBlock);
+
     BasicBlockPtr getThenBranchBlock();
     BasicBlockPtr getElseBranchBlock();
     std::vector<std::string> getThenBlockArgs();

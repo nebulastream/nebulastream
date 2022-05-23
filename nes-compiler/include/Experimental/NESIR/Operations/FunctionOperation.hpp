@@ -21,12 +21,12 @@
 namespace NES {
 class FunctionOperation : public Operation {
   public:
-    explicit FunctionOperation(std::string  name, BasicBlockPtr functionBasicBlock,
-                               std::vector<Operation::BasicType> inputArgs, std::vector<std::string> inputArgNames,
+    explicit FunctionOperation(std::string  name, std::vector<Operation::BasicType> inputArgs, std::vector<std::string> inputArgNames,
                                Operation::BasicType outputArg);
     ~FunctionOperation() override = default;
 
     [[nodiscard]] const std::string& getName() const;
+    BasicBlockPtr addFunctionBasicBlock(BasicBlockPtr functionBasicBlock);
     BasicBlockPtr getFunctionBasicBlock();
     [[nodiscard]] const std::vector<Operation::BasicType>& getInputArgs() const;
     [[nodiscard]] BasicType getOutputArg() const;

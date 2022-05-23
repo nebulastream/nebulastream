@@ -17,10 +17,15 @@
 
 namespace NES {
 
-NESIR::NESIR(OperationPtr rootOperation) :
-    rootOperation(std::move(rootOperation)) {}
+// NESIR::NESIR(OperationPtr rootOperation) :
+//     rootOperation(std::move(rootOperation)) {}
 
-OperationPtr NESIR::getRootOperation() {
+std::shared_ptr<FunctionOperation> NESIR::addRootOperation(std::shared_ptr<FunctionOperation> rootOperation) {
+    this->rootOperation = std::move(rootOperation);
+    return this->rootOperation;
+}
+
+std::shared_ptr<FunctionOperation> NESIR::getRootOperation() {
     return rootOperation;
 }
 

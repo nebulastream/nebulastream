@@ -15,18 +15,20 @@
 #ifndef NES_NESIR_HPP
 #define NES_NESIR_HPP
 
+#include "Experimental/NESIR/Operations/FunctionOperation.hpp"
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/ExternalDataSource.hpp>
 
 namespace NES {
 class NESIR {
   public:
-    NESIR(OperationPtr rootOperation);
+    NESIR() = default;
     ~NESIR() = default;
 
-    OperationPtr getRootOperation();
+    std::shared_ptr<FunctionOperation> addRootOperation(std::shared_ptr<FunctionOperation> rootOperation);
+    std::shared_ptr<FunctionOperation> getRootOperation();
   private:
-    OperationPtr rootOperation;
+    std::shared_ptr<FunctionOperation> rootOperation;
 };
 
 }// namespace NESIR

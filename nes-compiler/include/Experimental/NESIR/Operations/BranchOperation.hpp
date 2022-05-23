@@ -24,9 +24,10 @@ namespace NES {
  */
 class BranchOperation : public Operation {
   public:
-    explicit BranchOperation(BasicBlockPtr nextBlock, const std::vector<std::string>& nextBlockArgs = {});
+    explicit BranchOperation(const std::vector<std::string>& nextBlockArgs = {});
     ~BranchOperation() override = default;
 
+    BasicBlockPtr setNextBlock(BasicBlockPtr nextBlock);
     BasicBlockPtr getNextBlock();
     std::vector<std::string> getNextBlockArgs();
 

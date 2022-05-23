@@ -55,6 +55,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 using namespace mlir;
 
@@ -91,6 +92,7 @@ class MLIRGenerator {
     NES::ProxyFunctions ProxyFunctions;
     std::vector<std::string> jitProxyFunctionSymbols;
     std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
+    std::unordered_set<std::string> inductionVars;
     // Utility
     mlir::RewriterBase::InsertPoint *globalInsertPoint;
     mlir::Value globalString;

@@ -17,13 +17,18 @@
 
 namespace NES {
 
-FunctionOperation::FunctionOperation(std::string name, BasicBlockPtr functionBasicBlock,
-                                     std::vector<Operation::BasicType> inputArgs, std::vector<std::string> inputArgNames,
-                                     Operation::BasicType outputArg)
-    : Operation(OperationType::FunctionOp), name(std::move(name)), functionBasicBlock(std::move(functionBasicBlock)),
-      inputArgs(std::move(inputArgs)),  inputArgNames(std::move(inputArgNames)), outputArg(outputArg){}
+FunctionOperation::FunctionOperation(std::string name, std::vector<Operation::BasicType> inputArgs, 
+                                     std::vector<std::string> inputArgNames, Operation::BasicType outputArg)
+    : Operation(OperationType::FunctionOp), name(std::move(name)), inputArgs(std::move(inputArgs)), 
+      inputArgNames(std::move(inputArgNames)), outputArg(outputArg) {}
 
 const std::string& FunctionOperation::getName() const { return name; }
+
+BasicBlockPtr FunctionOperation::addFunctionBasicBlock(BasicBlockPtr functionBasicBlock) {
+    this->functionBasicBlock = functionBasicBlock;
+    return this->functionBasicBlock;
+}
+
 BasicBlockPtr FunctionOperation::getFunctionBasicBlock() {
     return functionBasicBlock;
 }

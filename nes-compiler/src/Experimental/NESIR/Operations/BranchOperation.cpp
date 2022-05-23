@@ -17,8 +17,13 @@
 
 namespace NES {
 
-BranchOperation::BranchOperation(BasicBlockPtr nextBlock, const std::vector<std::string>& nextBlockArgs)
-    : Operation(OperationType::BranchOp), nextBlock(std::move(nextBlock)), nextBlockArgs(nextBlockArgs) {}
+BranchOperation::BranchOperation(const std::vector<std::string>& nextBlockArgs)
+    : Operation(OperationType::BranchOp), nextBlockArgs(nextBlockArgs) {}
+
+BasicBlockPtr BranchOperation::setNextBlock(BasicBlockPtr nextBlock) { 
+    this->nextBlock = std::move(nextBlock);
+    return this->nextBlock; 
+}
 
 BasicBlockPtr BranchOperation::getNextBlock() { return nextBlock; }
 std::vector<std::string> BranchOperation::getNextBlockArgs() { return nextBlockArgs; }

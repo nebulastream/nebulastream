@@ -231,6 +231,10 @@ if(NES_USE_MLIR)
     target_link_libraries(mlir-nesir-if-test
             nes-tests)
     add_test(NAME mlir-nesir-if-test COMMAND mlir-nesir-if-test)
+    add_executable(mlir-nesir-types-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Types.cpp")
+    target_link_libraries(mlir-nesir-types-test
+            nes-tests)
+    add_test(NAME mlir-nesir-types-test COMMAND mlir-nesir-types-test)
 endif (NES_USE_MLIR)
 
 

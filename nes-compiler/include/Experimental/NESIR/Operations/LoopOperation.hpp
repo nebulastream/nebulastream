@@ -27,16 +27,17 @@ namespace NES {
 class LoopOperation : public Operation {
   public:
     enum LoopType{ForLoop};
-    LoopOperation(LoopType loopType, BasicBlockPtr loopHeaderBlock);
+    LoopOperation(LoopType loopType);
     ~LoopOperation() override = default;
 
     LoopType getLoopType();
-    BasicBlockPtr getLoopHeaderBlock();
+    BasicBlockPtr setLoopHeadBlock(BasicBlockPtr loopHeadBlock);
+    BasicBlockPtr getLoopHeadBlock();
     static bool classof(const Operation *Op);
 
   private:
     LoopType loopType;
-    BasicBlockPtr loopHeaderBlock;
+    BasicBlockPtr loopHeadBlock;
 };
 }// namespace NES
 #endif//NES_LoopOperation_HPP

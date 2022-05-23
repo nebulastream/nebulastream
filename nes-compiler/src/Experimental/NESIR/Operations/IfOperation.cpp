@@ -17,12 +17,20 @@
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 
 namespace NES {
-IfOperation::IfOperation(std::string boolArgName, BasicBlockPtr thenBranchBlock, BasicBlockPtr elseBranchBlock, 
-                         std::vector<std::string> thenBlockArgs, std::vector<std::string> elseBlockArgs) 
-    : Operation(Operation::IfOp), boolArgName(boolArgName), thenBranchBlock(std::move(thenBranchBlock)), 
-    elseBranchBlock(std::move(elseBranchBlock)), thenBlockArgs(std::move(thenBlockArgs)), elseBlockArgs(std::move(elseBlockArgs)) {}
+IfOperation::IfOperation(std::string boolArgName, std::vector<std::string> thenBlockArgs, std::vector<std::string> elseBlockArgs) 
+    : Operation(Operation::IfOp), boolArgName(boolArgName), thenBlockArgs(std::move(thenBlockArgs)), elseBlockArgs(std::move(elseBlockArgs)) {}
 
     std::string IfOperation::getBoolArgName() { return boolArgName; }
+
+    BasicBlockPtr IfOperation::setThenBranchBlock(BasicBlockPtr thenBlock) {
+        this->thenBranchBlock = std::move(thenBlock);
+        return this->thenBranchBlock;
+    }
+    BasicBlockPtr IfOperation::setElseBranchBlock(BasicBlockPtr elseBlock) {
+        this->elseBranchBlock = std::move(elseBlock);
+        return this->elseBranchBlock;
+    }
+
     BasicBlockPtr IfOperation::getThenBranchBlock() { return thenBranchBlock; }
     BasicBlockPtr IfOperation::getElseBranchBlock() { return elseBranchBlock; }
     std::vector<std::string> IfOperation::getThenBlockArgs() { return thenBlockArgs; }
