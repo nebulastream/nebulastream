@@ -20,6 +20,11 @@ limitations under the License.
 #include <API/Query.hpp>
 #include <list>
 
+/**
+ * @brief This class defines the attributes and methods used by the NePSL Parsing Service.
+ * This enables the parsing of declarative patterns into NES queries.
+ */
+
 class NePSLPattern {
   private:
     int id;
@@ -34,7 +39,6 @@ class NePSLPattern {
     std::string eventRight;
     std::string eventLeft;
     NES::Query query=NES::Query(NULL);
-
 
   public:
     explicit NePSLPattern(int id);
