@@ -59,39 +59,100 @@ class NesCEPQueryPlanCreator: public NesCEPBaseListener {
         const NES::Query& getQuery() ;
 
         /*----------------------------------------*/
-
+        /**
+         * @brief creates a subPattern
+         * @param context
+         */
         void enterListEvents(NesCEPParser::ListEventsContext* context) override;
 
+        /**
+         * @brief creates a subPattern
+         * @param context
+         */
         void enterEventElem(NesCEPParser::EventElemContext* context) override ;
 
-
+        /**
+         * @brief append the sources and the operators that connect them to the query plan
+         * @param context
+         */
         void exitInputStreams(NesCEPParser::InputStreamsContext* context) override ;
 
+        /**
+         * @brief substitutes the input stream alias by its real name in every subPattern
+         * @param context
+         */
         void exitInputStream(NesCEPParser::InputStreamContext* context) override ;
 
-
+        /**
+         * @brief marks that the walker is in the WHERE clause
+         * @param context
+         */
         void enterWhereExp(NesCEPParser::WhereExpContext* context) override ;
 
+        /**
+         * @brief marks that the walker is no more in the WHERE clause
+        * @param context
+        */
         void exitWhereExp(NesCEPParser::WhereExpContext* context) override ;
 
+        /**
+         * @brief append a map operator to the query plan
+         * @param context
+         */
         void enterOutAttribute(NesCEPParser::OutAttributeContext* context) override;
 
+        /**
+         * @brief append the sink operators to the query plan
+         * @param context
+         */
         void exitSinkList(NesCEPParser::SinkListContext* context) override ;
 
+        /**
+         * @brief add a sink operator to the sink list
+         * @param context
+         */
         void enterSink(NesCEPParser::SinkContext* context) override;
 
+        /**
+         * @brief mark currentPointer subPattern as a child of the currentParent subPattern and move one step up in the hierarchy
+         * @param context
+         */
         void exitEventElem(NesCEPParser::EventElemContext* context) override ;
 
+        /**
+         * @brief mark the position of the event inside of the currentPointer subPattern
+         * @param context
+         */
         void enterEvent(NesCEPParser::EventContext* context) override ;
 
+        /**
+         * @brief add the appropriate iteration to the currentPointer subPattern
+         * @param context
+         */
         void enterQuantifiers(NesCEPParser::QuantifiersContext* context) override ;
 
+        /**
+         * @brief add the appropriate operator to the currentParent subPattern
+         * @param context
+         */
         void enterOperatorRule(NesCEPParser::OperatorRuleContext* context) override ;
 
+        /**
+         * @brief change direction to right
+         * @param context
+         */
         void exitOperatorRule(NesCEPParser::OperatorRuleContext* context) override;
 
+        /**
+         * @brief add a "<" filter to the query plan when needed
+         * @param context
+         */
         void exitBinaryComparasionPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) override ;
 
+        /**
+         * @brief if walker is inside of WHERE clause mark current position of the Attribute
+         * @param context
+         */
         void enterAttribute(NesCEPParser::AttributeContext* context) override ;
     };
 
