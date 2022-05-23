@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include "Util/Logger/Logger.hpp"
+#include <Util/Logger/Logger.hpp>
 #include <REST/Controller/LocationController.hpp>
 #include <utility>
 #include <Services/LocationService.hpp>
 
-namespace NES::Spatial::Index::Experimental {
+namespace NES {
 
 const std::string kAllMobileLocationsRequestString = "allMobile";
 const std::string kNodeIdParamString = "nodeId";
 
-LocationController::LocationController(LocationServicePtr locationService) : locationService(std::move(locationService)) {
+LocationController::LocationController(Spatial::Index::Experimental::LocationServicePtr locationService) : locationService(std::move(locationService)) {
     NES_DEBUG("LocationController: Initializing");
 }
 

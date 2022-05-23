@@ -486,8 +486,8 @@ CoordinatorRPCClient::getNodeIdsInRange(Spatial::Index::Experimental::Location c
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
     std::vector<std::pair<uint64_t, Spatial::Index::Experimental::Location>> nodesInRange;
-    for (NodeGeoInfo nodeInfo : *reply.mutable_nodes()) {
-        nodesInRange.emplace_back(nodeInfo.id(), nodeInfo.coord());
+    for (WorkerLocationInfo workerInfo : *reply.mutable_nodes()) {
+        nodesInRange.emplace_back(workerInfo.id(), workerInfo.coord());
     }
     return nodesInRange;
 }

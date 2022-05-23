@@ -15,7 +15,7 @@
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
-#include "REST/RestEngine.hpp"
+#include <REST/RestEngine.hpp>
 #include <REST/Controller/LocationController.hpp>
 #include <Services/LocationService.hpp>
 #include <Topology/Topology.hpp>
@@ -38,13 +38,13 @@ class LocationControllerTest : public Testing::NESBaseTest {
     std::string location2 = "52.53736960143897, 13.299134894776092";
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
-    NES::Spatial::Index::Experimental::LocationControllerPtr controller;
+    LocationControllerPtr controller;
 };
 
 TEST_F(LocationControllerTest, testBadGETRequests) {
     TopologyPtr topology = Topology::create();
     NES::Spatial::Index::Experimental::LocationServicePtr service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
-    controller = std::make_shared<NES::Spatial::Index::Experimental::LocationController>(service);
+    controller = std::make_shared<LocationController>(service);
 
     //test request without nodeId parameter
     web::http::http_request msg1(web::http::methods::GET);
@@ -178,7 +178,7 @@ TEST_F(LocationControllerTest, testBadGETRequests) {
 TEST_F(LocationControllerTest, testGETSingleLocation) {
     TopologyPtr topology = Topology::create();
     NES::Spatial::Index::Experimental::LocationServicePtr service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
-    controller = std::make_shared<NES::Spatial::Index::Experimental::LocationController>(service);
+    controller = std::make_shared<LocationController>(service);
     TopologyNodePtr node = TopologyNode::create(3, "127.0.0.1", 0, 0, 0);
     TopologyNodePtr node2 = TopologyNode::create(4, "127.0.0.1", 1, 0, 0);
     node2->setFixedCoordinates(13.4, -23);
@@ -259,7 +259,7 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     web::json::value cmpLoc;
     TopologyPtr topology = Topology::create();
     NES::Spatial::Index::Experimental::LocationServicePtr service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
-    controller = std::make_shared<NES::Spatial::Index::Experimental::LocationController>(service);
+    controller = std::make_shared<LocationController>(service);
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);

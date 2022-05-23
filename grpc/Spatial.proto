@@ -19,7 +19,7 @@ message Coordinates {
   double lng = 2;
 }
 
-message NodeGeoInfo {
+message WorkerLocationInfo {
   uint64 id = 1;
   Coordinates coord = 2;
 }

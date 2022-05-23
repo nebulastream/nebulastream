@@ -243,9 +243,9 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
                                                    request->radius());
 
     for (auto elem : inRange) {
-        NodeGeoInfo* nodeInfo = reply->add_nodes();
-        nodeInfo->set_id(elem.first);
-        nodeInfo->set_allocated_coord(new Coordinates{elem.second});
+        WorkerLocationInfo* workerInfo = reply->add_nodes();
+        workerInfo->set_id(elem.first);
+        workerInfo->set_allocated_coord(new Coordinates{elem.second});
     }
     return Status::OK;
 }
