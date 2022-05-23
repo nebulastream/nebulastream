@@ -15,10 +15,10 @@ limitations under the License.
 #ifndef NES_NEPSLPATTERN_H
 #define NES_NEPSLPATTERN_H
 
-#include <string>
-#include <queue>
-#include <API/Query.hpp>
+#include "API/Query.hpp"
 #include <list>
+#include <queue>
+#include <string>
 
 /**
  * @brief This class defines the attributes and methods used by the NebulaPSL Parsing Service.
