@@ -173,7 +173,7 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                                  Execution::SuccessorExecutablePipeline executable,
                                                  uint32_t queueId) {
     NES_TRACE("Add Work for executable for queue=" << queueId);
-    if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
+    if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline) {
         if (!(*nextPipeline)->isRunning()) {
             // we ignore task if the pipeline is not running anymore.
             NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
@@ -186,7 +186,7 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                   << (*nextPipeline)->getSuccessors().size() << " inputBuffer " << buffer << " queueId=" << queueId);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
-    } else if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
+    } else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink) {
         NES_TRACE("QueryManager: added Task for Sink " << sink->get()->toString() << " inputBuffer " << buffer
                                                        << " queueId=" << queueId);
 
@@ -306,7 +306,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
     } else {
         using namespace std::string_literals;
 
-        throw Exceptions::RuntimeException("queryToStatisticsMap not set for "s + std::to_string(queryId)
+        NES_ERROR("queryToStatisticsMap not set for "s + std::to_string(queryId)
                                            + " this should only happen for testing");
     }
 #endif
@@ -463,7 +463,7 @@ void DynamicQueryManager::poisonWorkers() {
                                                           std::vector<Execution::SuccessorExecutablePipeline>(),
                                                           true);
     for (auto u{0ul}; u < threadPool->getNumberOfThreads(); ++u) {
-        NES_DEBUG("Add poision for queue=" << u);
+        NES_DEBUG("Add poison for queue=" << u);
         taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
     }
 }
