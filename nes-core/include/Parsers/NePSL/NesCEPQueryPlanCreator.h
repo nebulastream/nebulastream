@@ -16,21 +16,21 @@ limitations under the License.
 #ifndef NES_NESCEPQUERYPLANCREATOR_H
 #define NES_NESCEPQUERYPLANCREATOR_H
 
-#include <Parsers/NePSL/gen/NesCEPBaseListener.h>
-#include <API/NePSLPattern.h>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include "NePSLPattern.h"
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Parsers/NePSL/gen/NesCEPBaseListener.h>
+#include <Plans/Query/QueryPlan.hpp>
 
 class NesCEPQueryPlanCreator: public NesCEPBaseListener {
       private:

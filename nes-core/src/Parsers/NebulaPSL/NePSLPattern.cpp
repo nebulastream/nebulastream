@@ -12,15 +12,11 @@
     limitations under the License.
 */
 
+#include "Parsers/NePSL/NePSLPattern.h"
+#include "API/Query.hpp"
+#include "Parsers/NePSL/NesCEPQueryPlanCreator.h"
+#include "Parsers/NePSL/gen/NesCEPLexer.h"
 #include <iostream>
-#include <API/NePSLPattern.h>
-#include <Parsers/NePSL/gen/NesCEPLexer.h>
-#include <Parsers/NePSL/gen/NesCEPParser.h>
-#include <Parsers/NePSL/gen/NesCEPListener.h>
-#include <Parsers/NePSL/gen/NesCEPBaseListener.h>
-#include <Parsers/NePSL/NesCEPQueryPlanCreator.h>
-#include <API/Query.hpp>
-#include <cstring>
 
 NePSLPattern::NePSLPattern(int id) {
     setId(id);
