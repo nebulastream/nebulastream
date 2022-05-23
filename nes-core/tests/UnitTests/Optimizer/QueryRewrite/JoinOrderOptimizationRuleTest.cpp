@@ -29,6 +29,7 @@ limitations under the License.
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/JoinOrderOptimizationRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <iostream>
 #include <API/Query.hpp>
@@ -91,10 +92,45 @@ using namespace NES;
     TEST_F(JoinOrderOptimizationRuleTest, sequencePattern){
 
         // TODO: Define Pattern as Query
+        Query subQuery1 = Query::from("Velocity").filter(Attribute("value") > 175);
+        Query subQuery2 = Query::from("Quantity").filter(Attribute("value") > 250);
+        Query query = subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)));
 
+        std::string outputFilePath = getTestResourceFolder() / "testSmallSequencePattern.out";
+
+
+        std::string queryStr = R"(Query::from("Quantity").filter(Attribute("value") > 175).seqWith(Query::from("Quantity").filter(Attribute("value") > 250))
+.window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10))).sink(FileSinkDescriptor::create(")"
+            + outputFilePath + "\"));";
 
         EXPECT_TRUE(1 == (2-1));
+
     }
+
+    TEST_F(JoinOrderOptimizationRuleTest, longSequencePattern){
+        Query subQuery1 = Query::from("Velocity").filter(Attribute("value") > 50);
+        Query subQuery2 = Query::from("Quantity").filter(Attribute("value") > 3);
+        Query subQuery3 = Query::from("PM25").filter(Attribute("value") > 5);
+        Query subQuery4 = Query::from("PM10").filter(Attribute("value") > 6);
+        Query subQuery5 = Query::from("Temperature").filter(Attribute("value") > 13);
+        Query subQuery6 = Query::from("Humidity").filter(Attribute("value") > 6);
+
+        Query query = subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)))
+            .seqWith(subQuery3).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)))
+            .seqWith(subQuery4).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)))
+            .seqWith(subQuery5).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)))
+            .seqWith(subQuery6).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)));
+
+        QueryPlanPtr queryPlan = query.getQueryPlan();
+        NES_DEBUG(queryPlan->toString());
+
+        EXPECT_TRUE(1 == (2-1));
+
+
+
+
+    }
+
 
     // Q2 -- will probably not be optimized as it is a Cartesian product
     TEST_F(JoinOrderOptimizationRuleTest, conjunctionPattern){
