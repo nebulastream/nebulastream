@@ -240,7 +240,7 @@ jobs:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
       EVENT: ${{ github.event_name }}
-      DISPATCH_VERSION: ${{ github.event.inputs.version }}
+      NES_VERSION: ${{ github.event.inputs.version }}
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v3
@@ -255,7 +255,10 @@ jobs:
       - id: file_changes
         if: github.event_name != 'workflow_dispatch'
         uses: trilom/file-changes-action@v1.2.4
-      - name: Build and Release NES Build Image
+      - name: "Get NebulaStream Version"
+        if: github.event_name != 'workflow_dispatch'
+        run: echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
+      - name: "Build and Release NES Build Image"
         if: github.event_name != 'workflow_dispatch'
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
@@ -273,7 +276,7 @@ jobs:
           else
               echo "No changes done in buildImage. Skipping the build and release phase."
           fi
-      - name: Build and Release NES Dev Image
+      - name: "Build and Release NES Dev Image"
         if: github.event_name != 'workflow_dispatch'
         run: |
           echo '${{ steps.file_changes.outputs.files_modified }}'
@@ -289,6 +292,30 @@ jobs:
           else
               echo "No changes done to devImage. Skipping the build and release phase."
           fi
+      - name: "Generate ChangeLogs"
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issues: true
+          issuesWoLabels: true
+          pullRequests: false
+          prWoLabels: true
+          author: true
+          compareLink: true
+          stripGeneratorNotice: true
+          futureRelease: $NES_VERSION
+          bugsLabel: "### Bug Fixes 🐛"
+          issuesLabel: "### Miscellaneous Issues ✌️"
+          addSections: '{"optimizer":{"prefix":"### Query Optimizer 🔧","labels":["Query Optimizer"]},
+          "Spatial": {"prefix": "#### Spatial 🌇", "labels":["spatial"]}, 
+          "monitoring": {"prefix": "#### Monitoring 🚥", "labels":["monitoring"]},
+          "cep": {"prefix": "#### Complex Event Processing", "labels":["CEP"]},
+          "query compiler": {"prefix": "#### Query Compiler", "labels":["Query Compiler"]},
+          }'
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "GIT-CI: Adding changelog for NES version ${NES_VERSION}"
+          file_pattern: CHANGELOG.md
       - name: Release new tag
         env:
           CI_SECRET: ${{ secrets.CI_SECRET }}

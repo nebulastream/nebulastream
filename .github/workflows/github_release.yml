@@ -72,14 +72,20 @@ jobs:
             osversion: ubuntu-22_04
     steps:
       - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v3
+      - name: "Checkout NebulaStream Repository"
+        uses: actions/checkout@v3
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           fetch-depth: '0'
           token: ${{ secrets.CI_TOKEN }}
+      - name: "Fetch Changelog Entry For The Tag"
+        id: changelog_reader
+        uses: mindsers/changelog-reader-action@v1
+        with:
+          version: $GITHUB_REF_NAME
+          path: CHANGELOG.md
       - name: Build Docker
-        id: builddocker
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Build package
@@ -91,13 +97,22 @@ jobs:
           DEB_NAME=NebulaStream-$nes_version-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
           mv $GITHUB_WORKSPACE/build/*deb $GITHUB_WORKSPACE/build/$DEB_NAME.deb
           echo "DEB_FILE=$GITHUB_WORKSPACE/build/$DEB_NAME.deb" >> $GITHUB_ENV
-      - name: Release
-        uses: softprops/action-gh-release@v1
+      - name: "Release Dev Build Repository"
+        uses: softprops/action-gh-release@v0.1.14
         with:
           files: |
             ${{ env.DEB_FILE }}
           repository: nebulastream/nebulastream-dev-builds
           token: ${{ secrets.CI_TOKEN }}
+          body: ${{ steps.changelog_reader.outputs.log_entry }}
+      - name: "Release NebulaStream Repository"
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          files: |
+            ${{ env.DEB_FILE }}
+          repository: nebulastream/nebulastream
+          token: ${{ secrets.CI_TOKEN }}
+          body: ${{ steps.changelog_reader.outputs.log_entry }}
       - name: docker cleanup
         if: ${{ always() }}
         run: |
