@@ -50,13 +50,9 @@ MonitoringSource::MonitoringSource(MetricCollectorPtr metricCollector,
 }
 
 std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
-    NES_DEBUG("MonitoringSource:" << this << " requesting buffer");
     auto buf = this->bufferManager->getBufferBlocking();
-    NES_DEBUG("MonitoringSource:" << this << " got buffer");
-
-    NES_DEBUG("MonitoringSource: Filling buffer with 1 monitoring tuple.");
     metricCollector->fillBuffer(buf);
-    NES_DEBUG("MonitoringSource: Generated buffer with " << buf.getNumberOfTuples() << " tuple and size "
+    NES_TRACE("MonitoringSource: Generated buffer with " << buf.getNumberOfTuples() << " tuple and size "
                                                          << schema->getSchemaSizeInBytes());
 
     //update statistics

@@ -45,7 +45,7 @@ void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tu
 void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     auto schema = NetworkMetrics::getSchema("");
     auto interfaceList = std::vector<NetworkMetrics>();
-    NES_DEBUG("NetworkMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
+    NES_TRACE("NetworkMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
         //for each core parse the according CpuMetrics

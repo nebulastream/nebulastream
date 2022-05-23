@@ -45,7 +45,7 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
                                              "/sys/fs/cgroup/blkio/blkio.throttle.io_service_bytes"};
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
+        NES_TRACE("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
 
         if (access(metricLocations[0].c_str(), F_OK) != -1) {
             std::ifstream memoryLoc(metricLocations[0]);
@@ -61,7 +61,7 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
     }
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading cpuacct.stat for metrics");
+        NES_TRACE("LinuxSystemResourcesReader: Reading cpuacct.stat for metrics");
 
         if (access(metricLocations[1].c_str(), F_OK) != -1) {
             std::string line;
@@ -94,7 +94,7 @@ RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
     }
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading blkio.throttle.io_service_bytes for metrics");
+        NES_TRACE("LinuxSystemResourcesReader: Reading blkio.throttle.io_service_bytes for metrics");
 
         if (access(metricLocations[2].c_str(), F_OK) != -1) {
             std::string line;
@@ -136,7 +136,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
 
     // memory metrics
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
+        NES_TRACE("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
 
         if (access(metricLocations[0].c_str(), F_OK) != -1) {
             std::string memLine;
@@ -200,7 +200,7 @@ CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
     }
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading CPU stats for number of CPUs " << numCpuMetrics);
+        NES_TRACE("LinuxSystemResourcesReader: Reading CPU stats for number of CPUs " << numCpuMetrics);
         std::ifstream fileStat(metricLocation);
         std::string line;
 
@@ -252,7 +252,7 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
     }
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading network stats.");
+        NES_TRACE("LinuxSystemResourcesReader: Reading network stats.");
 
         // alternatively also /sys/class/net/intf/statistics can be parsed
         FILE* fp = fopen(metricLocation.c_str(), "re");
@@ -341,7 +341,7 @@ MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
     auto output = MemoryMetrics();
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading memory stats.");
+        NES_TRACE("LinuxSystemResourcesReader: Reading memory stats.");
 
         auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
 
@@ -374,7 +374,7 @@ DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
     DiskMetrics output{};
 
     try {
-        NES_DEBUG("LinuxSystemResourcesReader: Reading disk stats.");
+        NES_TRACE("LinuxSystemResourcesReader: Reading disk stats.");
         auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
 
         int ret = statvfs("/", svfs);

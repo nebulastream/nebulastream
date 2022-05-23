@@ -57,7 +57,7 @@ QueryCatalogEntryPtr QueryCatalog::createNewEntry(const std::string& queryString
 }
 
 std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getAllQueryCatalogEntries() {
-    NES_DEBUG("QueryCatalog: return registered queryIdAndCatalogEntryMapping=" << printQueries());
+    NES_TRACE("QueryCatalog: return registered queryIdAndCatalogEntryMapping=" << printQueries());
     return queryIdAndCatalogEntryMapping;
 }
 
@@ -67,17 +67,17 @@ QueryCatalogEntryPtr QueryCatalog::getQueryCatalogEntry(QueryId queryId) {
 }
 
 bool QueryCatalog::queryExists(QueryId queryId) {
-    NES_DEBUG("QueryCatalog: queryExists with id=" << queryId << " registered queryIdAndCatalogEntryMapping=" << printQueries());
+    NES_TRACE("QueryCatalog: queryExists with id=" << queryId << " registered queryIdAndCatalogEntryMapping=" << printQueries());
     if (queryIdAndCatalogEntryMapping.count(queryId) > 0) {
-        NES_DEBUG("QueryCatalog: query with id " << queryId << " exists");
+        NES_TRACE("QueryCatalog: query with id " << queryId << " exists");
         return true;
     }
-    NES_DEBUG("QueryCatalog: query with id " << queryId << " does not exist");
+    NES_TRACE("QueryCatalog: query with id " << queryId << " does not exist");
     return false;
 }
 
 std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueryCatalogEntries(QueryStatus::Value requestedStatus) {
-    NES_DEBUG("QueryCatalog: getQueriesWithStatus() registered queryIdAndCatalogEntryMapping=" << printQueries());
+    NES_TRACE("QueryCatalog: getQueriesWithStatus() registered queryIdAndCatalogEntryMapping=" << printQueries());
     std::map<uint64_t, QueryCatalogEntryPtr> matchingQueries;
     for (auto const& q : queryIdAndCatalogEntryMapping) {
         if (q.second->getQueryStatus() == requestedStatus) {
@@ -126,7 +126,7 @@ void QueryCatalog::removeSharedQueryPlanIdMappings(SharedQueryId sharedQueryId) 
 }
 
 void QueryCatalog::clearQueries() {
-    NES_DEBUG("QueryCatalog: clear query catalog");
+    NES_TRACE("QueryCatalog: clear query catalog");
     queryIdAndCatalogEntryMapping.clear();
 }
 
