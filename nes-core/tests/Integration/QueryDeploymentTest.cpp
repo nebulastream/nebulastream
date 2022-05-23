@@ -446,10 +446,11 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->bufferSizeInBytes = 1024;
 
     auto schema = Schema::create()
-                      ->addField(createField("win1", UINT64))
-                      ->addField(createField("id1", UINT64))
+                      ->addField(createField("id", UINT64))
+                      ->addField(createField("value", UINT64))
                       ->addField(createField("timestamp", UINT64));
 
     auto logicalSource = LogicalSource::create("window1", schema);
@@ -458,13 +459,28 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->enableSourceSharing = true;
+    workerConfig1->bufferSizeInBytes = 1024;
 
-    auto csvSourceType1 = CSVSourceType::create();
-    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setGatheringInterval(1000);
-    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
-    csvSourceType1->setNumberOfBuffersToProduce(6);
-    auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
+    std::promise<bool> start;
+    auto func1 = [&start](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples) {
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
+
+        start.get_future().get();
+        auto* records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numTuples; ++u) {
+            records[u].id = u;
+            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+            records[u].value = u % 10;
+            records[u].timestamp = 0;
+        }
+    };
+
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
+    auto physicalSource1 = PhysicalSource::create("window1", "test_stream1", lambdaSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfig1);
@@ -500,20 +516,192 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
         queryService->validateAndQueueAddRequest(query2, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
 
-    //
-    string expectedContent1 = "window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER\n"
-                              "1,1,1000\n"
-                              "1,12,1001\n"
-                              "1,4,1002\n"
-                              "2,1,2000\n"
-                              "2,11,2001\n"
-                              "2,16,2002\n";
+    start.set_value(true);
 
-    string expectedContent2 = "window1$win1:INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER\n"
-                              "1,4,1002\n"
-                              "2,1,2000\n"
-                              "2,11,2001\n"
-                              "2,16,2002\n";
+    string expectedContent1 = "window1$id:INTEGER,window1$value:INTEGER,window1$timestamp:INTEGER\n"
+                              "0,0,0\n"
+                              "1,1,0\n"
+                              "2,2,0\n"
+                              "3,3,0\n"
+                              "4,4,0\n"
+                              "5,5,0\n"
+                              "6,6,0\n"
+                              "7,7,0\n"
+                              "8,8,0\n"
+                              "9,9,0\n"
+                              "10,0,0\n"
+                              "11,1,0\n"
+                              "12,2,0\n"
+                              "13,3,0\n"
+                              "14,4,0\n"
+                              "15,5,0\n"
+                              "16,6,0\n"
+                              "17,7,0\n"
+                              "18,8,0\n"
+                              "19,9,0\n"
+                              "20,0,0\n"
+                              "21,1,0\n"
+                              "22,2,0\n"
+                              "23,3,0\n"
+                              "24,4,0\n"
+                              "25,5,0\n"
+                              "26,6,0\n"
+                              "27,7,0\n"
+                              "28,8,0\n"
+                              "29,9,0\n"
+                              "30,0,0\n"
+                              "31,1,0\n"
+                              "32,2,0\n"
+                              "33,3,0\n"
+                              "34,4,0\n"
+                              "35,5,0\n"
+                              "36,6,0\n"
+                              "37,7,0\n"
+                              "38,8,0\n"
+                              "39,9,0\n"
+                              "40,0,0\n"
+                              "41,1,0\n";
+
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath2));
+
+    NES_DEBUG("testSourceSharing: Remove query 1");
+    queryService->validateAndQueueStopRequest(queryId1);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+
+    NES_DEBUG("testSourceSharing: Remove query 2");
+    queryService->validateAndQueueStopRequest(queryId2);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalogService));
+
+    NES_DEBUG("testSourceSharing: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_DEBUG("testSourceSharing: Test finished");
+}
+
+
+TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->bufferSizeInBytes = 1024;
+
+    auto schema = Schema::create()
+                      ->addField(createField("id", UINT64))
+                      ->addField(createField("value", UINT64))
+                      ->addField(createField("timestamp", UINT64));
+
+    auto logicalSource = LogicalSource::create("window1", schema);
+    coordinatorConfig->logicalSources.add(logicalSource);
+
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig1->enableSourceSharing = true;
+    workerConfig1->bufferSizeInBytes = 1024;
+
+    std::promise<bool> start;
+    auto func1 = [&start](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples) {
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
+
+        start.get_future().get();
+        auto* records = buffer.getBuffer<Record>();
+        for (auto u = 0u; u < numTuples; ++u) {
+            records[u].id = u;
+            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+            records[u].value = u % 10;
+            records[u].timestamp = 0;
+        }
+    };
+
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
+    auto physicalSource1 = PhysicalSource::create("window1", "test_stream1", lambdaSourceType1);
+    workerConfig1->physicalSources.add(physicalSource1);
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfig1);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+
+    std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
+    remove(outputFilePath1.c_str());
+
+    std::string outputFilePath2 = getTestResourceFolder() / "testOutput2.out";
+    remove(outputFilePath2.c_str());
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    NES_INFO("testSourceSharing: Submit query");
+
+    string query1 =
+        R"(Query::from("window1").filter(Attribute("id") < 5)
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId1 =
+        queryService->validateAndQueueAddRequest(query1, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
+
+    string query2 =
+        R"(Query::from("window1").filter(Attribute("id") > 5)
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId2 =
+        queryService->validateAndQueueAddRequest(query2, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalogService));
+
+    start.set_value(true);
+
+    string expectedContent1 = "window1$id:INTEGER,window1$value:INTEGER,window1$timestamp:INTEGER\n"
+                              "0,0,0\n"
+                              "1,1,0\n"
+                              "2,2,0\n"
+                              "3,3,0\n"
+                              "4,4,0\n";
+
+    string expectedContent2 = "window1$id:INTEGER,window1$value:INTEGER,window1$timestamp:INTEGER\n"
+                              "5,5,0\n"
+                              "6,6,0\n"
+                              "7,7,0\n"
+                              "8,8,0\n"
+                              "9,9,0\n"
+                              "10,0,0\n"
+                              "11,1,0\n"
+                              "12,2,0\n"
+                              "13,3,0\n"
+                              "14,4,0\n"
+                              "15,5,0\n"
+                              "16,6,0\n"
+                              "17,7,0\n"
+                              "18,8,0\n"
+                              "19,9,0\n"
+                              "20,0,0\n"
+                              "21,1,0\n"
+                              "22,2,0\n"
+                              "23,3,0\n"
+                              "24,4,0\n"
+                              "25,5,0\n"
+                              "26,6,0\n"
+                              "27,7,0\n"
+                              "28,8,0\n"
+                              "29,9,0\n"
+                              "30,0,0\n"
+                              "31,1,0\n"
+                              "32,2,0\n"
+                              "33,3,0\n"
+                              "34,4,0\n"
+                              "35,5,0\n"
+                              "36,6,0\n"
+                              "37,7,0\n"
+                              "38,8,0\n"
+                              "39,9,0\n"
+                              "40,0,0\n"
+                              "41,1,0\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));

@@ -224,7 +224,7 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
                 return false;
             }
             default: {
-                NES_ERROR("Expected: Running or Scheduling but found " + QueryStatus::toString(status));
+                NES_WARNING("Expected: Running or Scheduling but found " + QueryStatus::toString(status));
                 break;
             }
         }
