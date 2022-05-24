@@ -177,7 +177,7 @@ class MLIRGenerator {
      */
     int8_t getBitWidthFromType(NES::Operation::BasicType type);
 
-    //Todo add documentation
-    NES::OperationPtr findSameLevelBlock(NES::BasicBlockPtr thenBlock, int ifParentBlockLevel, bool ifCase = true);
+    //
+    NES::OperationPtr findLastTerminatorOp(NES::BasicBlockPtr thenBlock, int ifParentBlockLevel);
 };
 #endif //NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_

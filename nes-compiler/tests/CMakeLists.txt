@@ -23,23 +23,5 @@ add_executable(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest
 target_link_libraries(compiler-sharedlibrary-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
 add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)
 
-if(NES_USE_MLIR)
-    get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS) # MLIR_CONVERSION_LIBS are also defined
-    get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-    add_executable(compiler-mlir-simpleModuleFromString-test "UnitTests/Experimental/MLIRModuleFromSimpleString.cpp")
-    # Not linking MLIRExecutionEngine against nes-compiler first throws 'hidden symbol `LLVMInitializeX86Target' error.
-    target_link_libraries(nes-compiler
-            PUBLIC
-            MLIRExecutionEngine
-            ${GTEST_LIBRARIES}
-            ${dialect_libs}
-            )
-    target_link_libraries(compiler-mlir-simpleModuleFromString-test
-            nes-compiler
-            )
-    add_test(NAME compiler-mlir-simpleModuleFromString-test COMMAND compiler-mlir-simpleModuleFromString-test)
-endif(NES_USE_MLIR)
-
-
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 

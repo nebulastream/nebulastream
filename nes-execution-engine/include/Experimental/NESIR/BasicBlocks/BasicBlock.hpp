@@ -29,29 +29,32 @@ class BasicBlock :  public std::enable_shared_from_this<BasicBlock>{
      * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlocks : The BasicBlock that is next in the control flow of the execution.
      */
-    explicit BasicBlock(std::string identifier, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs, 
-                        int32_t scopeLevel);
+    explicit BasicBlock(std::string identifier, int32_t scopeLevel, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs, 
+                        std::vector<Operation::BasicType> inputArgTypes);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
+    [[nodiscard]] int32_t getScopeLevel();
     [[nodiscard]] std::vector<OperationPtr> getOperations();
+    [[nodiscard]] OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::string> getInputArgs();
-    [[nodiscard]] int32_t getParentBlockLevel();
-    std::shared_ptr<BasicBlock> addOperation(OperationPtr operation);
+    [[nodiscard]] std::vector<Operation::BasicType> getInputArgTypes();
 
     // NESIR Assembly
-    std::shared_ptr<BasicBlock> addLoopTerminatorOpHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
-    std::shared_ptr<BasicBlock> addBranchTerminatorOpNextBlock(std::shared_ptr<BasicBlock> nextBlock);
-    std::shared_ptr<BasicBlock> addIfTerminatorOpThenBlock(std::shared_ptr<BasicBlock> thenBlock);
-    std::shared_ptr<BasicBlock> addIfTerminatorOpElseBlock(std::shared_ptr<BasicBlock> elseBlock);
+    std::shared_ptr<BasicBlock> addOperation(OperationPtr operation);
+    std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
+    std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
+    std::shared_ptr<BasicBlock> addThenBlock(std::shared_ptr<BasicBlock> thenBlock);
+    std::shared_ptr<BasicBlock> addElseBlock(std::shared_ptr<BasicBlock> elseBlock);
 
 
     void popOperation();
 
   private:
     std::string identifier;
+    int32_t scopeLevel;
     std::vector<OperationPtr> operations;
     std::vector<std::string> inputArgs;
-    int32_t parentBlockLevel;
+    std::vector<Operation::BasicType> inputArgTypes;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 

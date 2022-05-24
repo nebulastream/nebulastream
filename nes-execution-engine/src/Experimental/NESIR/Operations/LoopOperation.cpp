@@ -15,10 +15,11 @@
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <utility>
 namespace NES {
-LoopOperation::LoopOperation(LoopType loopType)
-    : Operation(Operation::LoopOp), loopType(loopType) {}
+LoopOperation::LoopOperation(LoopType loopType, const std::vector<std::string>& loopBlockArgs)
+    : Operation(Operation::LoopOp), loopType(loopType), loopBlockArgs(std::move(loopBlockArgs)) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
+std::vector<std::string> LoopOperation::getLoopBlockArgs() { return loopBlockArgs; }
 
 BasicBlockPtr LoopOperation::setLoopHeadBlock(BasicBlockPtr loopHeadBlock) {
     this->loopHeadBlock = std::move(loopHeadBlock);

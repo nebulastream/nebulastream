@@ -65,18 +65,18 @@ void printBuffer(std::vector<Operation::BasicType> types,
         for(auto type : types) {
             switch(type) {
                 case Operation::BasicType::INT1: {
-                    printf("Value(INT32): %d \n", *bufferPointer);
+                    printf("Value(INT1): %d \n", *bufferPointer);
                     bufferPointer += 1;
                     break;
                 }
                 case Operation::BasicType::INT8: {
-                    printf("Value(INT32): %d \n", *bufferPointer);
+                    printf("Value(INT8): %d \n", *bufferPointer);
                     bufferPointer += 1;
                     break;
                 }
                 case Operation::BasicType::INT16: {
                     int16_t *value = (int16_t*) bufferPointer;
-                    printf("Value(INT32): %d \n", *value);
+                    printf("Value(INT16): %d \n", *value);
                     bufferPointer += 2;
                     break;
                 }
@@ -88,7 +88,7 @@ void printBuffer(std::vector<Operation::BasicType> types,
                 }
                 case Operation::BasicType::INT64: {
                     int64_t *value = (int64_t*) bufferPointer;
-                    printf("Value(INT32): %ld \n", *value);
+                    printf("Value(INT64): %ld \n", *value);
                     bufferPointer += 8;
                     break;
                 }
@@ -122,22 +122,22 @@ void printBuffer(std::vector<Operation::BasicType> types,
         }
     }
 }
-
-void* getInputBuffer(NES::Runtime::BufferManager* buffMgr) {
-    const uint64_t numTuples = 2;
-    auto inputBuffer = buffMgr->getBufferBlocking();
-
-    // Create testTupleStruct. Load inputBuffer with testTupleStruct. Write sample array with testTupleStruct to inputBuffer.
-    struct __attribute__((packed)) testTupleStruct{
-        int64_t a;
-    };
-    testTupleStruct testTuplesArray[numTuples] = { testTupleStruct{1}, testTupleStruct{4} };
-    auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
-    memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
-    inputBuffer.setNumberOfTuples(numTuples);
-
-    // Return inputBuffer pointer as void*.
-    return addressof(inputBuffer);
+shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::ProxyCallType proxyCallType, bool getInputTB) {
+    std::vector<string> getInputDataBufArgs{"inputTupleBuffer"};
+    std::vector<string> getOutputDataBufArgs{"outputTupleBuffer"};
+    std::vector<Operation::BasicType> proxyDataBufferReturnArgs{Operation::BasicType::INT8PTR};
+    if (proxyCallType == ProxyCallOperation::GetDataBuffer) {
+        if(getInputTB) {
+            return make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "getInDataBufOp", getInputDataBufArgs, 
+                                                        proxyDataBufferReturnArgs, Operation::BasicType::INT8PTR);
+        } else {
+            return make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "getOutDataBufOp", getOutputDataBufArgs, 
+                                                        proxyDataBufferReturnArgs, Operation::BasicType::INT8PTR);
+        }
+    } else {
+        return make_shared<ProxyCallOperation>(Operation::GetNumTuples, "getNumTuplesOp", getInputDataBufArgs, 
+                                               proxyDataBufferReturnArgs, Operation::BasicType::INT64);
+    }
 }
 
 pair<NES::Runtime::TupleBuffer, NES::Runtime::TupleBuffer> createInAndOutputBuffers() {
@@ -160,202 +160,96 @@ pair<NES::Runtime::TupleBuffer, NES::Runtime::TupleBuffer> createInAndOutputBuff
     return pair{inputBuffer, outputBuffer};
 }
 
-BasicBlockPtr getSimpleZeroReturnBlock() {
-    // Execute Return Block
-    OperationPtr executeReturnOp = make_shared<ReturnOperation>(0);
-    std::vector<OperationPtr> executeReturnBlockOps{executeReturnOp};
-    std::vector<string> executeReturnBlockArgs{};
-    return make_shared<BasicBlock>("loopBlock", executeReturnBlockOps, executeReturnBlockArgs, 1);
+template<typename... Args>
+BasicBlockPtr createBB(std::string identifier, int level, std::vector<Operation::BasicType> argTypes, Args ... args) {
+    std::vector<std::string> argList({args...});
+    return  make_shared<BasicBlock>(identifier, level, std::vector<OperationPtr>{}, argList, argTypes);
 }
 
-shared_ptr<FunctionOperation> createExecuteFunction(std::vector<string> constNames, std::vector<uint64_t> constVals, 
-                                                    std::vector<uint8_t> constBits) {   
-    std::vector<OperationPtr> executeBlockOps;
-    // Loop proxy Ops
-    std::vector<string> getInputDataBufArgs{"inputTupleBuffer"};
-    std::vector<string> getOutputDataBufArgs{"outputTupleBuffer"};
-    std::vector<Operation::BasicType> getOutputDataBufArgTypes{Operation::BasicType::INT8PTR};
-    executeBlockOps.push_back(make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "inputDataBuffer", getInputDataBufArgs, 
-                                                              getOutputDataBufArgTypes, Operation::BasicType::INT8PTR));
-    executeBlockOps.push_back(make_shared<ProxyCallOperation>(Operation::GetDataBuffer, "outputDataBuffer", getOutputDataBufArgs,
-                                                              getOutputDataBufArgTypes, Operation::BasicType::INT8PTR));
-    executeBlockOps.push_back(make_shared<ProxyCallOperation>(Operation::GetNumTuples, "numTuples", getInputDataBufArgs,
-                                                              getOutputDataBufArgTypes, Operation::BasicType::INT64));
-
-    // Loop condition constants.
-    for(int i = 0; i < (int) constNames.size(); ++i) {
-        executeBlockOps.push_back(make_shared<ConstantIntOperation>(constNames.at(i), constVals.at(i), constBits.at(i)));
-    }
-    
-    std::vector<string> executeBodyBlockArgs{"inputTupleBuffer", "outputTupleBuffer"};
-    NES::BasicBlockPtr executeBodyBlock = make_shared<NES::BasicBlock>("executeFuncBB", executeBlockOps, executeBodyBlockArgs, 0);
-    std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
-    std::vector<string> executeArgNames{ "inputTupleBuffer", "outputTupleBuffer"};
-    return make_shared<FunctionOperation>("execute", executeBodyBlock, executeArgTypes, executeArgNames, Operation::INT64);
+BasicBlockPtr saveBB(BasicBlockPtr basicBlock, std::unordered_map<std::string, BasicBlockPtr>& savedBBs, const std::string& basicBlockName) {
+    savedBBs.emplace(std::pair{basicBlockName, basicBlock});
+    return savedBBs[basicBlockName];
 }
 
-BasicBlockPtr createSimpleLoopEnd(BasicBlockPtr loopBodyBlock) {
-    auto loopIncAdd = make_shared<AddIntOperation>("loopIncAdd", "i", "constOne");
-    OperationPtr loopBodyTerminatorOp = make_shared<BranchOperation>(loopBodyBlock);
-    std::vector<OperationPtr> loopEndOps{loopIncAdd, loopBodyTerminatorOp};
-    std::vector<string> loopEndArgs{"i", "constOne"};
-    return make_shared<BasicBlock>("loopEndBlock", loopEndOps, loopEndArgs, 2);
-}
+/*
+execute(inTB, outTB) {
+    inDatBuf = getDataBuffer(inTB)
+    outDatBuf = getDataBuffer(outTB)
+    numTuples = getNumTuples(inTB)
+    i = constOp(0)
+    const1 = constOp(1)
 
-BasicBlockPtr createSpecialLoopEnd(BasicBlockPtr loopHeaderBlock, std::vector<OperationPtr> optionalEndOps, std::vector<string> optionalEndArgs) {
-    auto loopIncAdd = make_shared<AddIntOperation>("loopIncAdd", "i", "constOne");
-    std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "loopIncAdd", "constOne", "const47", "const50", "const100", 
-                                  "const8", "numTuples", "nestedIfBranchConst"};
-    OperationPtr loopBodyTerminatorOp = make_shared<BranchOperation>(loopHeaderBlock, loopHeaderArgs);
-    optionalEndOps.push_back(loopIncAdd);
-    optionalEndOps.push_back(loopBodyTerminatorOp);
-    optionalEndArgs.push_back("i");
-    optionalEndArgs.push_back("constOne");
-    return make_shared<BasicBlock>("loopEndBlock", optionalEndOps, optionalEndArgs, 2);
-}
-
-shared_ptr<LoopOperation> createTopLevelLoopOp(std::vector<string> loopHeaderArgs, BasicBlockPtr loopBodyBlock) {
-    //Loop Header
-    OperationPtr ifCompareOp = make_shared<CompareOperation>("loopCompare", "i", "numTuples", CompareOperation::ISLT);
-    OperationPtr loopIfOp = make_shared<IfOperation>("loopCompare", loopBodyBlock, getSimpleZeroReturnBlock());
-    std::vector<OperationPtr> loopHeaderBBOps{ifCompareOp, loopIfOp};
-    BasicBlockPtr loopHeaderBlock = make_shared<BasicBlock>("loopHeaderBlock", loopHeaderBBOps, loopHeaderArgs, 1);
-    // Loop Operation -> loopBranchOp -> loopHeaderBlock -> loopIfOp -> (loopBodyBlock | executeEndBlock)
-    return make_shared<LoopOperation>(LoopOperation::ForLoop, loopHeaderBlock);
-}
-
-shared_ptr<IfOperation> createIfOperation(string compareArg, int blockScopeLevel, std::vector<OperationPtr> thenOps, 
-                                          std::vector<string> thenArgs, OperationPtr thenTerminatorOp) {
-    BasicBlockPtr loopIfThenBlock = make_shared<BasicBlock>("LoopIfThenBlock", thenOps, thenArgs, blockScopeLevel);
-    loopIfThenBlock->addOperation(thenTerminatorOp);
-    return make_shared<IfOperation>(compareArg, loopIfThenBlock, nullptr);
-}
-
-shared_ptr<IfOperation> createIfElseOperation(string compareArg, int blockScopeLevel, std::vector<OperationPtr> thenOps, 
-                                              std::vector<string> thenArgs, OperationPtr thenTerminatorOp, 
-                                              std::vector<OperationPtr> elseOps, std::vector<string> elseArgs,
-                                              OperationPtr elseTerminatorOp) {
-    BasicBlockPtr loopIfThenBlock = make_shared<BasicBlock>("LoopIfThenBlock", thenOps, thenArgs, blockScopeLevel);
-    BasicBlockPtr loopIfElseBlock = make_shared<BasicBlock>("LoopIfElseBlock", elseOps, elseArgs, blockScopeLevel);
-    loopIfThenBlock->addOperation(thenTerminatorOp);
-    loopIfElseBlock->addOperation(elseTerminatorOp);
-    return make_shared<IfOperation>(compareArg, loopIfThenBlock, loopIfElseBlock);
-}
-
-
-//==----------------------------------------------------------------------==//
-//==-------------------------- IF ELSE TESTS -----------------------------==//
-//==----------------------------------------------------------------------==//
-
-//Todo
-// If-Else test with loopOp after nested if-else, in Then block of parent if-else
-TEST(MLIRNESIRTEST_IF, NESIRIfElseNestedMultipleFollowUps) {
+    while(i < numTuples)
+        inAddr = addressOp(inDatBuf, i)
+        loadedVal = loadValue(inAddr)
+        const42 = constOp(42)
+        addRes = addOp(const42, loadedVal)
+        const46 = constOp(46)
+        if(addRes < const46) {
+            outAddr = addressOp(outDatBuf, i)
+            storeOp(outAddr, addRes)
+        }
+        i = addOp(i, const1)
+} (44, 0)
+*/
+TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
     const uint64_t numTuples = 2;
     auto inAndOutputBuffer = createInAndOutputBuffers();
 
     //Debug Print
-    std::vector<string> proxyArgNames{"inputAddOp"};
-    std::vector<Operation::BasicType> proxyArgTypes{};
-    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", proxyArgNames,
-                                                        proxyArgTypes, Operation::BasicType::VOID);
+    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", 
+                                                        std::vector<string>{"iOp"}, std::vector<Operation::BasicType>{}, 
+                                                        Operation::BasicType::VOID);
 
-    // Loop BodyBlock Operations
-    // Todo: AddressOp should access values at "i" to get "currentRecordIdx"
-    auto inputAddressOp = make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "i", "inputDataBuffer");
-    auto loadOp = make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
-    auto addOp = make_shared<AddIntOperation>("inputAddOp", "loadTBValOp", "const47");
-    
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
+    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
+    std::unordered_map<std::string, BasicBlockPtr> savedBBs;
+    auto nesIR = std::make_shared<NES::NESIR>();
 
-    // Loop BodyBlock up to (not including) IF Operation
-    OperationPtr loopBodyCompOp = make_shared<CompareOperation>("loopCompare", "inputAddOp", "const50", CompareOperation::ISLT);
-    std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, addOp, proxyPrintOp, loopBodyCompOp}; //IfOp added later
-    std::vector<string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne", "const47", "const50", 
-                                 "const100", "const8", "nestedIfBranchConst"};
-    BasicBlockPtr loopBodyBlock = make_shared<BasicBlock>("loopBlock", loopOps, loopArguments, 2);
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
+    ->addFunctionBasicBlock(
+        createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
+        ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
+        ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
+        ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
+        ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop))
+        ->addLoopHeadBlock(
+            saveBB(createBB("loopHeadBB", 1, {}, "iOp"), savedBBs, "loopHeadBB")
+            ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
+            ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
+            ->addThenBlock(
+                createBB("loopBodyBB", 2, {}, "iOp")
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp", "loopBodyAddOp", "const46Op", CompareOperation::ISLT))
+                ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp"}, std::vector<std::string>{}))
+                ->addThenBlock(
+                    createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp")
+                    ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
+                    ->addOperation(make_shared<StoreOperation>("loopBodyAddOp", "outputAddressOp"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
+                    ->addNextBlock(
+                saveBB(createBB("loopEndBB", 2, {Operation::INT64}, "iOp"), savedBBs, "loopEndBB")
+                ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
+                ->addNextBlock(savedBBs["loopHeadBB"])
+                    )
+                )
+            )
+        ->addElseBlock(
+            createBB("executeReturnBB", 1, {})
+            ->addOperation(make_shared<ReturnOperation>(0))
+        )
+        )
+    );
 
-    // Create Loop Operation
-    std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "const47", "const50", "const100", 
-                                  "const8", "numTuples", "nestedIfBranchConst"};
-    shared_ptr<LoopOperation> loopOperation = createTopLevelLoopOp(loopHeaderArgs, loopBodyBlock);
-
-    auto loopEndAdd = make_shared<AddIntOperation>("loopEndAdd", "inputAddOp", "nestedIfBranchConst");
-    auto outputAddressOp = make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "i", "outputDataBuffer");
-    auto storeOp = make_shared<StoreOperation>("loopEndAdd", "outTBAddressOp");
-    auto storeOp2 = make_shared<StoreOperation>("nestedIfBranchConst", "outTBAddressOp");
-    std::vector<OperationPtr> loopEndOps{loopEndAdd, outputAddressOp, storeOp, storeOp2};
-    std::vector<string> loopEndArgs{"inputAddOp", "nestedIfBranchConst", "outputDataBuffer"};
-    BasicBlockPtr loopEndBlock = createSpecialLoopEnd(loopOperation->getLoopHeaderBlock(), loopEndOps, loopEndArgs);
-
-    // Create If-only If operation
-    // Then Block Ops & Args:
-    //==--------- NESTED IF ------------==/
-//==--------- NESTED LOOP OPERATION!!!! ------------==/
-    auto nestedLoopAdd = make_shared<AddIntOperation>("nestedLoopAdd", "inputAddOp", "nestedIfBranchConst");
-    auto nestedLoopIncAdd = make_shared<AddIntOperation>("nestedLoopIncAdd", "j", "constOne");
-
-    std::vector<OperationPtr> nestedLoopOps{nestedLoopAdd, nestedLoopIncAdd};
-    std::vector<string> nestedLoopArguments{"nestedIfBranchConst", "inputAddOp"};
-    BasicBlockPtr nestedLoopBodyBlock = make_shared<BasicBlock>("nestedLoopBlock", nestedLoopOps, nestedLoopArguments, 4);
-
-    OperationPtr nestedLoopHeaderCompareOp = make_shared<CompareOperation>("nestedLoopCompare", "j", "nestedIfBranchConst", CompareOperation::ISLT);
-    OperationPtr nestedLoopIfOp = make_shared<IfOperation>("loopCompare", nestedLoopBodyBlock, loopEndBlock);
-    std::vector<OperationPtr> nestedLoopHeaderBBOps{nestedLoopHeaderCompareOp, nestedLoopIfOp};
-    std::vector<string> nestedLoopHeaderArgs{"j", "nestedIfBRanchConst", "inputAddOpp"};
-    BasicBlockPtr nestedLoopHeaderBlock = make_shared<BasicBlock>("loopHeaderBlock", nestedLoopHeaderBBOps, nestedLoopHeaderArgs, 3);
-    std::vector<string> nestedLoopTerminatorArgs{"nestedLoopIncAdd", "nestedIfBRanchConst", "inputAddOpp"};
-    OperationPtr nestedLoopTerminator = make_shared<BranchOperation>(nestedLoopHeaderBlock, nestedLoopTerminatorArgs);
-    nestedLoopBodyBlock->addOperation(nestedLoopTerminator);
-    shared_ptr<LoopOperation> nestedLoopOperation = make_shared<LoopOperation>(LoopOperation::ForLoop, nestedLoopHeaderBlock);
-//==------------------------------------------------==/
-    std::vector<OperationPtr> afterNestedIfOps{nestedLoopOperation};
-    std::vector<string> afterNestedIfArgs{"inputAddOp", "nestedIfBranchConst", "j"};
-    BasicBlockPtr afterNestedIfBlock = make_shared<BasicBlock>("nestedIfEndBlock", afterNestedIfOps, afterNestedIfArgs, 3);
-
-    auto thenAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "constOne");
-    OperationPtr nestedCompareOp = make_shared<CompareOperation>("nestedCompare", "inputAddOp", "const100", CompareOperation::ISLT);
-    // ThenThen
-    auto thenThenConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 1, 64);
-    std::vector<OperationPtr> thenThenOps{thenThenConstOp};
-    std::vector<string> thenThenArgs{"nestedIfBranchConst"};
-    OperationPtr thenThenTerminator = make_shared<BranchOperation>(afterNestedIfBlock); 
-    // ThenElse
-    auto thenElseConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 47, 64);
-    auto thenElseAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const47");
-    std::vector<OperationPtr> thenElseOps{thenElseConstOp, thenElseAddOp};
-    std::vector<string> thenElseArgs{"outputDataBuffer", "inputAddOp", "nestedIfBranchConst"};
-    OperationPtr thenElseTerminator = make_shared<BranchOperation>(afterNestedIfBlock);
-    shared_ptr<IfOperation> nestedIfOp = createIfElseOperation("nestedCompare", 4, thenThenOps, thenThenArgs, thenThenTerminator, 
-                                            thenElseOps, thenElseArgs, thenElseTerminator);
-
-    std::vector<OperationPtr> thenBlockOps{thenAddOp, proxyPrintOp, nestedCompareOp};
-    std::vector<string> thenBlockArgs{"outputDataBuffer", "inputAddOp", "constOne", "const100", "nestedIfBranchConst"};
-    //==--------------------------------==/
-
-    // Else Block Ops & Args:
-    auto elseAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const8");
-    auto elseBranchConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 8, 64);
-    std::vector<OperationPtr> elseBlockOps{elseAddOp, proxyPrintOp, elseBranchConstOp};
-    std::vector<string> elseBlockArgs{"outputDataBuffer", "inputAddOp", "nestedIfBranchConst"};
-    std::vector<Operation::BasicType> elseBlockArgTypes{Operation::BasicType::INT8PTR, Operation::BasicType::INT64};
-    OperationPtr elseTerminator = make_shared<BranchOperation>(loopEndBlock);
-    
-    shared_ptr<IfOperation> loopBodyIfOp = createIfElseOperation("loopCompare", 3, thenBlockOps, thenBlockArgs, 
-                                                                 nestedIfOp, elseBlockOps, elseBlockArgs, elseTerminator);
-
-    // Adding Terminator Operation to Loop's Body branch and to  Loop's If Operation branch.
-    loopBodyBlock->addOperation(loopBodyIfOp);
-
-    // Execute Function
-    std::vector<string> constNames{"i", "constOne", "const50", "const47", "const8", "const100", "nestedIfBranchConst", "j"} ;
-    std::vector<uint64_t> constVals{0, 1, 50, 47, 8, 100, 0, 0};
-    std::vector<uint8_t> constBits{64, 64, 64, 64, 64, 64, 64, 64};
-    shared_ptr<NES::FunctionOperation> executeFunctionOp = createExecuteFunction(constNames, constVals, constBits);
-    executeFunctionOp->getFunctionBasicBlock()->addOperation(loopOperation);
-
-    // NESIR
-    auto nesIR = std::make_shared<NES::NESIR>(executeFunctionOp);
-
-    // NESIR to MLIR
+   // NESIR to MLIR
     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
     assert(loadedModuleSuccess == 0);
@@ -368,413 +262,609 @@ TEST(MLIRNESIRTEST_IF, NESIRIfElseNestedMultipleFollowUps) {
     printBuffer(types, numTuples, outputBufferPointer);
 }
 
-// TEST(DISABLED_MLIRNESIRTEST_IF, NESIRIfElseNestedMultipleFollowUps) {
-//     const uint64_t numTuples = 2;
-//     auto inAndOutputBuffer = createInAndOutputBuffers();
+/*
+execute(inTB, outTB) {
+    inDatBuf = getDataBuffer(inTB)
+    outDatBuf = getDataBuffer(outTB)
+    numTuples = getNumTuples(inTB)
+    i = constOp(0)
+    const1 = constOp(1)
 
-//     // Loop BodyBlock Operations
-//     // Todo: AddressOp should access values at "i" to get "currentRecordIdx"
-//     auto inputAddressOp = make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "inputDataBuffer");
-//     auto loadOp = make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
-//     auto addOp = make_shared<AddIntOperation>("inputAddOp", "loadTBValOp", "const47");
+    while(i < numTuples)
+        inAddr = addressOp(inDatBuf, i)
+        loadedVal = loadValue(inAddr)
+        const42 = constOp(42)
+        addRes = addOp(const42, loadedVal)
+        const46 = constOp(46)
+        outAddr = addressOp(outDatBuf, i)
+        if(addRes < const46) {
+            storeOp(outAddr, addRes)
+        } else {
+            const8 = constOp(8)
+            elseAddResult = addOp(loadedVal, const8)
+            storeOp(outAddr, addRes)
+        }
+        i = addOp(i, const1)
+} (2, 4) -> (44, 54)
+*/
+TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
+    const uint64_t numTuples = 2;
+    auto inAndOutputBuffer = createInAndOutputBuffers();
 
-//     // Loop BodyBlock up to (not including) IF Operation
-//     OperationPtr loopBodyCompOp = make_shared<CompareOperation>("loopCompare", "inputAddOp", "const50", CompareOperation::ISLT);
-//     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, addOp, loopBodyCompOp}; //IfOp added later
-//     std::vector<string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne", "const47", "const50", 
-//                                  "const100", "const8", "nestedIfBranchConst"};
-//     BasicBlockPtr loopBodyBlock = make_shared<BasicBlock>("loopBlock", loopOps, loopArguments, 2);
+    //Debug Print
+    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", 
+                                                        std::vector<string>{"iOp"}, std::vector<Operation::BasicType>{}, 
+                                                        Operation::BasicType::VOID);
 
-//     // Create Loop Operation
-//     std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "const47", "const50", "const100", 
-//                                   "const8", "numTuples", "nestedIfBranchConst"};
-//     shared_ptr<LoopOperation> loopOperation = createLoopOperation(loopHeaderArgs, loopBodyBlock);
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
+    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
+    std::unordered_map<std::string, BasicBlockPtr> savedBBs;
+    auto nesIR = std::make_shared<NES::NESIR>();
 
-//     auto loopEndAdd = make_shared<AddIntOperation>("loopEndAdd", "inputAddOp", "nestedIfBranchConst");
-//     auto outputAddressOp = make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "outputDataBuffer");
-//     auto storeOp = make_shared<StoreOperation>("loopEndAdd", "outTBAddressOp");
-//     auto storeOp2 = make_shared<StoreOperation>("nestedIfBranchConst", "outTBAddressOp");
-//     std::vector<OperationPtr> loopEndOps{loopEndAdd, outputAddressOp, storeOp, storeOp2};
-//     std::vector<string> loopEndArgs{"inputAddOp", "nestedIfBranchConst", "outputDataBuffer"};
-//     //Todo change from loopBodyBlock -> loopHeaderBlock
-//     BasicBlockPtr loopEndBlock = createSpecialLoopEnd(loopOperation->getLoopHeaderBlock(), loopEndOps, loopEndArgs);
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
+    ->addFunctionBasicBlock(
+        createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
+        ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
+        ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
+        ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
+        ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop))
+        ->addLoopHeadBlock(
+            saveBB(createBB("loopHeadBB", 1, {}, "iOp"), savedBBs, "loopHeadBB")
+            ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
+            ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
+            ->addThenBlock(
+                createBB("loopBodyBB", 2, {}, "iOp")
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
+                ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp", "loopBodyAddOp", "const46Op", CompareOperation::ISLT))
+                ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp"}, std::vector<std::string>{}))
+                ->addThenBlock(
+                    createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "outputAddressOp")
+                    ->addOperation(make_shared<StoreOperation>("loopBodyAddOp", "outputAddressOp"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
+                    ->addNextBlock(
+                        saveBB(createBB("loopEndBB", 2, {Operation::INT64}, "iOp"), savedBBs, "loopEndBB")
+                        ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
+                        ->addNextBlock(savedBBs["loopHeadBB"])
+                    )
+                )
+                ->addElseBlock(
+                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "outputAddressOp")
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                    ->addOperation(std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
+                    ->addOperation(make_shared<StoreOperation>("elseAddOp", "outputAddressOp"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
+                    ->addNextBlock(savedBBs["loopEndBB"])
+                )
+        )
+        ->addElseBlock(
+            createBB("executeReturnBB", 1, {})
+            ->addOperation(make_shared<ReturnOperation>(0))
+        )
+        )
+    );
 
-//     // Create If-only If operation
-//     // Then Block Ops & Args:
-//     //==--------- NESTED IF ------------==/
-//     auto afterNestedIfAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "nestedIfBranchConst");
-//     OperationPtr nestedIfTerminator = make_shared<BranchOperation>(loopEndBlock);
-//     std::vector<OperationPtr> afterNestedIfOps{afterNestedIfAddOp, nestedIfTerminator};
-//     std::vector<string> afterNestedIfArgs{"inputAddOp", "nestedIfBranchConst"};
-//     BasicBlockPtr afterNestedIfBlock = make_shared<BasicBlock>("nestedIfEndBlock", afterNestedIfOps, afterNestedIfArgs, 3);
+   // NESIR to MLIR
+    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
 
-//     auto thenAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "constOne");
-//     OperationPtr nestedCompareOp = make_shared<CompareOperation>("nestedCompare", "inputAddOp", "const100", CompareOperation::ISLT);
-//     // ThenThen
-//     auto thenThenConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 1, 64);
-//     std::vector<OperationPtr> thenThenOps{thenThenConstOp};
-//     std::vector<string> thenThenArgs{"nestedIfBranchConst"};
-//     OperationPtr thenThenTerminator = make_shared<BranchOperation>(afterNestedIfBlock); 
-//     // ThenElse
-//     auto thenElseConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 47, 64);
-//     auto thenElseAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const47");
-//     std::vector<OperationPtr> thenElseOps{thenElseConstOp, thenElseAddOp};
-//     std::vector<string> thenElseArgs{"outputDataBuffer", "inputAddOp", "nestedIfBranchConst"};
-//     OperationPtr thenElseTerminator = make_shared<BranchOperation>(afterNestedIfBlock);
-//     shared_ptr<IfOperation> nestedIfOp = createIfElseOperation("nestedCompare", 4, thenThenOps, thenThenArgs, thenThenTerminator, 
-//                                             thenElseOps, thenElseArgs, thenElseTerminator);
+    mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
-//     std::vector<OperationPtr> thenBlockOps{thenAddOp, nestedCompareOp};
-//     std::vector<string> thenBlockArgs{"outputDataBuffer", "inputAddOp", "constOne", "const100", "nestedIfBranchConst"};
-//     //==--------------------------------==/
+    // Print OutputBuffer after execution.
+    std::vector<Operation::BasicType> types{Operation::INT64};
+    auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
+    printBuffer(types, numTuples, outputBufferPointer);
+}
 
-//     // Else Block Ops & Args:
-//     auto elseAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const8");
-//     auto elseBranchConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 8, 64);
-//     std::vector<OperationPtr> elseBlockOps{elseAddOp, elseBranchConstOp};
-//     std::vector<string> elseBlockArgs{"outputDataBuffer", "inputAddOp", "nestedIfBranchConst"};
-//     std::vector<Operation::BasicType> elseBlockArgTypes{Operation::BasicType::INT8PTR, Operation::BasicType::INT64};
-//     OperationPtr elseTerminator = make_shared<BranchOperation>(loopEndBlock);
-    
-//     shared_ptr<IfOperation> loopBodyIfOp = createIfElseOperation("loopCompare", 3, thenBlockOps, thenBlockArgs, 
-//                                                                  nestedIfOp, elseBlockOps, elseBlockArgs, elseTerminator);
+/*
+execute(inTB, outTB) {
+    inDatBuf = getDataBuffer(inTB)
+    outDatBuf = getDataBuffer(outTB)
+    numTuples = getNumTuples(inTB)
+    i = constOp(0)
+    const1 = constOp(1)
 
-//     // Adding Terminator Operation to Loop's Body branch and to  Loop's If Operation branch.
-//     loopBodyBlock->addOperation(loopBodyIfOp);
+    while(i < numTuples)
+        inAddr = addressOp(inDatBuf, i)
+        loadedVal = loadValue(inAddr)
+        const42 = constOp(42)
+        addRes = addOp(const42, loadedVal)
+        const46 = constOp(46)
+        if(addRes < const46) {
+            ifAddResult = addOp(loadedVal, const46)
+        } else {
+            const8 = constOp(8)
+            elseAddResult = addOp(loadedVal, const8)
+        }
+        outAddr = addressOp(outDatBuf, i)
+        storeOp(outAddr, addRes)
+        i = addOp(i, const1)
+} (2,4) -> (90, 54)
+*/
+TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
+    const uint64_t numTuples = 2;
+    auto inAndOutputBuffer = createInAndOutputBuffers();
 
-//     // Execute Function
-//     std::vector<string> constNames{"i", "constOne", "const50", "const47", "const8", "const100", "nestedIfBranchConst"} ;
-//     std::vector<uint64_t> constVals{0, 1, 50, 47, 8, 100, 0};
-//     std::vector<uint8_t> constBits{64, 64, 64, 64, 64, 64, 64};
-//     shared_ptr<NES::FunctionOperation> executeFunctionOp = createExecuteFunction(constNames, constVals, constBits);
-//     executeFunctionOp->getFunctionBasicBlock()->addOperation(loopOperation);
+    //Debug Print
+    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", 
+                                                        std::vector<string>{"iOp"}, std::vector<Operation::BasicType>{}, 
+                                                        Operation::BasicType::VOID);
 
-//     // NESIR
-//     NES::NESIR nesIR(executeFunctionOp);
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
+    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
+    std::unordered_map<std::string, BasicBlockPtr> savedBBs;
+    auto nesIR = std::make_shared<NES::NESIR>();
 
-//     // NESIR to MLIR
-//     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(&nesIR);
-//     assert(loadedModuleSuccess == 0);
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
+        ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
+        ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
+        ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
+        ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
+        ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop))
+            ->addLoopHeadBlock(saveBB(createBB("loopHeadBB", 1, {}, "iOp"), savedBBs, "loopHeadBB")
+            ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
+            ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
+                ->addThenBlock(createBB("loopBodyBB", 2, {}, "iOp")
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp", "loopBodyAddOp", "const46Op", CompareOperation::ISLT))
+                ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp"}, std::vector<std::string>{}))
+                    ->addThenBlock(createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp")
+                    ->addOperation(std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "thenAddOp"}))
+                ->addNextBlock(saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64}, "iOp", "ifAddResult"), savedBBs, "loopEndBB")
+                ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                ->addOperation(make_shared<StoreOperation>("ifAddResult", "outputAddressOp"))
+                ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
+                ->addNextBlock(savedBBs["loopHeadBB"])))
+                    ->addElseBlock(createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp")
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                    ->addOperation(std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "elseAddOp"}))
+                    ->addNextBlock(savedBBs["loopEndBB"])))
+            ->addElseBlock(createBB("executeReturnBB", 1, {})
+            ->addOperation(make_shared<ReturnOperation>(0))
+        )
+        )
+    );
 
-//     // Register buffers and functions with JIT and run module.
-//     const std::vector<string> symbolNames{"printValueFromMLIR"};
-//     // Order must match symbolNames order!
-//     const std::vector<llvm::JITTargetAddress> jitAddresses{
-//             llvm::pointerToJITTargetAddress(&printValueFromMLIR),
-//     };
-//     mlirUtility->runJit(symbolNames, jitAddresses, false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
+   // NESIR to MLIR
+    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
 
-//     // Print OutputBuffer after execution.
-//     std::vector<Operation::BasicType> types{Operation::INT64};
-//     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
-//     printBuffer(types, numTuples, outputBufferPointer);
-// }
+    mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
-// TEST(DISABLED_MLIRNESIRTEST_IF, NESIRIfElseNestedFollowUp) {
-//     const uint64_t numTuples = 2;
-//     auto inAndOutputBuffer = createInAndOutputBuffers();
+    // Print OutputBuffer after execution.
+    std::vector<Operation::BasicType> types{Operation::INT64};
+    auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
+    printBuffer(types, numTuples, outputBufferPointer);
+}
 
-//     // Loop BodyBlock Operations
-//     // Todo: AddressOp should access values at "i" to get "currentRecordIdx"
-//     auto inputAddressOp = make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "inputDataBuffer");
-//     auto loadOp = make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
-//     auto addOp = make_shared<AddIntOperation>("inputAddOp", "loadTBValOp", "const47");
+/*
+execute(inTB, outTB) {
+    inDatBuf = getDataBuffer(inTB)
+    outDatBuf = getDataBuffer(outTB)
+    numTuples = getNumTuples(inTB)
+    i = constOp(0)
+    const1 = constOp(1)
 
-//     // Loop BodyBlock up to (not including) IF Operation
-//     OperationPtr loopBodyCompOp = make_shared<CompareOperation>("loopCompare", "inputAddOp", "const50", CompareOperation::ISLT);
-//     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, addOp, loopBodyCompOp}; //IfOp added later
-//     std::vector<string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne", "const47", "const50", 
-//                                  "const100", "const8", "nestedIfBranchConst"};
-//     BasicBlockPtr loopBodyBlock = make_shared<BasicBlock>("loopBlock", loopOps, loopArguments, 2);
+    while(i < numTuples)
+        inAddr = addressOp(inDatBuf, i)
+        loadedVal = loadValue(inAddr)
+        const42 = constIntOp(42)
+        addResult = addOp(const42, loadedVal)
+        branchVal = constIntOp(0)
+        const46 = constIntOp(46)
+        if(addResult < const46) {
+            addResult = addOp(loadedVal, const46)
+            const100 = constIntOp(100)
+            if(ifAddResult < const100) {
+                branchVal = const1
+            } else {
+                branchVal = const46
+                addResult = addOp(ifAddResult, const46)
+            }
+        } else {
+            const8 = constOp(8)
+            addResult = addOp(loadedVal, const8)
+            branchVal = const8
+        }
+        addResult = addResult + branchVal
+        outAddr = addressOp(outDatBuf, i)
+        storeOp(outAddr, addRes)
+        i = addOp(i, const1)
+} (2, 4) -> (91, 62)
+*/
+TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
+    const uint64_t numTuples = 2;
+    auto inAndOutputBuffer = createInAndOutputBuffers();
 
-//     // Create Loop Operation
-//     std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "const47", "const50", "const100", 
-//                                   "const8", "numTuples", "nestedIfBranchConst"};
-//     shared_ptr<LoopOperation> loopOperation = createLoopOperation(loopHeaderArgs, loopBodyBlock);
+    //Debug Print
+    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", 
+                                                        std::vector<string>{"iOp"}, std::vector<Operation::BasicType>{}, 
+                                                        Operation::BasicType::VOID);
 
-//     auto loopEndAdd = make_shared<AddIntOperation>("loopEndAdd", "inputAddOp", "nestedIfBranchConst");
-//     auto outputAddressOp = make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "outputDataBuffer");
-//     auto storeOp = make_shared<StoreOperation>("loopEndAdd", "outTBAddressOp");
-//     auto storeOp2 = make_shared<StoreOperation>("nestedIfBranchConst", "outTBAddressOp");
-//     std::vector<OperationPtr> loopEndOps{loopEndAdd, outputAddressOp, storeOp, storeOp2};
-//     std::vector<string> loopEndArgs{"inputAddOp", "nestedIfBranchConst", "outputDataBuffer"};
-//     BasicBlockPtr loopEndBlock = createSpecialLoopEnd(loopOperation->getLoopHeaderBlock(), loopEndOps, loopEndArgs);
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
+    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
+    std::unordered_map<std::string, BasicBlockPtr> savedBBs;
+    auto nesIR = std::make_shared<NES::NESIR>();
 
-//     // Create If-only If operation
-//     // Then Block Ops & Args:
-//     //Todo 
-//     //==--------- NESTED IF ------------==/
-//     auto thenAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "constOne");
-//     OperationPtr nestedCompareOp = make_shared<CompareOperation>("nestedCompare", "inputAddOp", "const100", CompareOperation::ISLT);
-//     // ThenThen
-//     auto thenThenConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 1, 64);
-//     std::vector<OperationPtr> thenThenOps{thenThenConstOp};
-//     std::vector<string> thenThenArgs{"nestedIfBranchConst"};
-//     OperationPtr thenThenTerminator = make_shared<BranchOperation>(loopEndBlock);
-//     // ThenElse
-//     auto thenElseConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 47, 64); //Todo can we use inputAddOp here?
-//     auto thenElseAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const47");
-//     std::vector<OperationPtr> thenElseOps{thenElseConstOp, thenElseAddOp};
-//     std::vector<string> thenElseArgs{"outputDataBuffer", "inputAddOp", "nestedIfBranchConst"};
-//     OperationPtr thenElseTerminator = make_shared<BranchOperation>(loopEndBlock);
-//     shared_ptr<IfOperation> nestedIfOp = createIfElseOperation("nestedCompare", 4, thenThenOps, thenThenArgs, thenThenTerminator, 
-//                                             thenElseOps, thenElseArgs, thenElseTerminator);
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
+        ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
+        ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
+        ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
+        ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
+        ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop))
+        ->addLoopHeadBlock(
+            saveBB(createBB("loopHeadBB", 1, {}, "iOp"), savedBBs, "loopHeadBB")
+            ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
+            ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
+            ->addThenBlock(
+                createBB("loopBodyBB", 2, {}, "iOp")
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp", "loopBodyAddOp", "const46Op", CompareOperation::ISLT))
+                ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}, std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}))
+                ->addThenBlock(
+                    createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                    ->addOperation(std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
+                    ->addOperation(make_shared<CompareOperation>("nestedIfCompare", "thenAddOp", "const100Op", CompareOperation::ISLT))
+                    ->addOperation(make_shared<IfOperation>("nestedIfCompare", std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}, std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}))
+                    ->addThenBlock(
+                        createBB("thenThenBB", 4, {}, "iOp", "thenAddOp", "branchVal")
+                        ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "thenAddOp", "thenThenBranchVal"}))
+                        ->addNextBlock(
+                            saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "ifAddResult", "ifBranchVal"), savedBBs, "loopEndBB")
+                            ->addOperation(make_shared<AddIntOperation>("loopEndAddResult", "ifAddResult", "ifBranchVal"))
+                            ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                            ->addOperation(make_shared<StoreOperation>("loopEndAddResult", "outputAddressOp"))
+                            ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                            ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
+                            ->addNextBlock(savedBBs["loopHeadBB"])
+                        )
+                    )
+                    ->addElseBlock(
+                        createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
+                        ->addOperation(std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                        ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp", "thenAddOp", "thenElseBranchVal"))
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "thenElseAddOp", "thenElseBranchVal"}))
+                        ->addNextBlock(savedBBs["loopEndBB"])
+                    )
+                )
+                ->addElseBlock(
+                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                    ->addOperation(std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
+                    ->addNextBlock(savedBBs["loopEndBB"])
+                )
+            )
+            ->addElseBlock(createBB("executeReturnBB", 1, {})
+            ->addOperation(make_shared<ReturnOperation>(0))
+        )
+        )
+    );
 
-//     std::vector<OperationPtr> thenBlockOps{thenAddOp, nestedCompareOp, nestedIfOp};
-//     std::vector<string> thenBlockArgs{"outputDataBuffer", "inputAddOp", "constOne", "const100", "nestedIfBranchConst"};
-//     OperationPtr thenTerminator = make_shared<BranchOperation>(loopEndBlock);
-//     //==--------------------------------==/
+   // NESIR to MLIR
+    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
 
-//     // Else Block Ops & Args:
-//     auto elseAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const8");
-//     auto elseBranchConstOp = make_shared<ConstantIntOperation>("nestedIfBranchConst", 8, 64);
-//     std::vector<OperationPtr> elseBlockOps{elseAddOp, elseBranchConstOp};
-//     std::vector<string> elseBlockArgs{"outputDataBuffer", "inputAddOp", "nestedIfBranchConst"};
-//     std::vector<Operation::BasicType> elseBlockArgTypes{Operation::BasicType::INT8PTR, Operation::BasicType::INT64};
-//     OperationPtr elseTerminator = make_shared<BranchOperation>(loopEndBlock);
-    
-//     shared_ptr<IfOperation> loopBodyIfOp = createIfElseOperation("loopCompare", 3, thenBlockOps, thenBlockArgs, 
-//                                                                  thenTerminator, elseBlockOps, elseBlockArgs, elseTerminator);
+    mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
-//     // Adding Terminator Operation to Loop's Body branch and to  Loop's If Operation branch.
-//     loopBodyBlock->addOperation(loopBodyIfOp);
+    // Print OutputBuffer after execution.
+    std::vector<Operation::BasicType> types{Operation::INT64};
+    auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
+    printBuffer(types, numTuples, outputBufferPointer);
+}
+/*
+execute(inTB, outTB) {
+    inDatBuf = getDataBuffer(inTB)
+    outDatBuf = getDataBuffer(outTB)
+    numTuples = getNumTuples(inTB)
+    i = constOp(0)
+    const1 = constOp(1)
 
-//     // Execute Function
-//     std::vector<string> constNames{"i", "constOne", "const50", "const47", "const8", "const100", "nestedIfBranchConst"} ;
-//     std::vector<uint64_t> constVals{0, 1, 50, 47, 8, 100, 0};
-//     std::vector<uint8_t> constBits{64, 64, 64, 64, 64, 64, 64};
-//     shared_ptr<NES::FunctionOperation> executeFunctionOp = createExecuteFunction(constNames, constVals, constBits);
-//     executeFunctionOp->getFunctionBasicBlock()->addOperation(loopOperation);
+    while(i < numTuples)
+        inAddr = addressOp(inDatBuf, i)
+        loadedVal = loadValue(inAddr)
+        const42 = constIntOp(42)
+        addResult = addOp(const42, loadedVal)
+        branchVal = constIntOp(0)
+        const46 = constIntOp(46)
+        if(addResult < const46) {
+            addResult = addOp(loadedVal, const46)
+            const100 = constIntOp(100)
+            if(ifAddResult < const100) {
+                branchVal = const1
+            } else {
+                branchVal = const46
+                addResult = addOp(ifAddResult, const46)
+            }
+            addResult = addOp(addResult, branchVal)
+        } else {
+            const8 = constOp(8)
+            addResult = addOp(loadedVal, const8)
+            branchVal = const8
+        }
+        addResult = addResult + branchVal
+        outAddr = addressOp(outDatBuf, i)
+        storeOp(outAddr, addRes)
+        i = addOp(i, const1)
+} (2, 4) -> (92, 62)
+*/
+TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
+    const uint64_t numTuples = 2;
+    auto inAndOutputBuffer = createInAndOutputBuffers();
 
-//     // NESIR
-//     NES::NESIR nesIR(executeFunctionOp);
+    //Debug Print
+    auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", 
+                                                        std::vector<string>{"iOp"}, std::vector<Operation::BasicType>{}, 
+                                                        Operation::BasicType::VOID);
 
-//     // NESIR to MLIR
-//     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(&nesIR);
-//     assert(loadedModuleSuccess == 0);
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
+    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
+    std::unordered_map<std::string, BasicBlockPtr> savedBBs;
+    auto nesIR = std::make_shared<NES::NESIR>();
 
-//     // Register buffers and functions with JIT and run module.
-//     const std::vector<string> symbolNames{"printValueFromMLIR"};
-//     // Order must match symbolNames order!
-//     const std::vector<llvm::JITTargetAddress> jitAddresses{
-//             llvm::pointerToJITTargetAddress(&printValueFromMLIR),
-//     };
-//     mlirUtility->runJit(symbolNames, jitAddresses, false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
+   nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
+        ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
+        ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
+        ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
+        ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
+        ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop))
+        ->addLoopHeadBlock(
+            saveBB(createBB("loopHeadBB", 1, {}, "iOp"), savedBBs, "loopHeadBB")
+            ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
+            ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
+            ->addThenBlock(
+                createBB("loopBodyBB", 2, {}, "iOp")
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp", "loopBodyAddOp", "const46Op", CompareOperation::ISLT))
+                ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}, std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}))
+                ->addThenBlock(
+                    createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                    ->addOperation(std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
+                    ->addOperation(make_shared<CompareOperation>("nestedIfCompare", "thenAddOp", "const100Op", CompareOperation::ISLT))
+                    ->addOperation(make_shared<IfOperation>("nestedIfCompare", std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}, std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}))
+                    ->addThenBlock(
+                        createBB("thenThenBB", 4, {}, "iOp", "thenAddOp", "branchVal")
+                        ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "thenAddOp", "thenThenBranchVal"}))
+                        ->addNextBlock(
+                            saveBB(createBB("nestedIfFollowUpBB", 3, {Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "nestedIfAddResult", "ifBranchVal"), savedBBs, "nestedIfFollowUpBB")
+                            ->addOperation(make_shared<AddIntOperation>("afterIfBBAddOp", "nestedIfAddResult", "ifBranchVal"))
+                            ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "afterIfBBAddOp", "ifBranchVal"}))
+                            ->addNextBlock(
+                                saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "ifAddResult", "ifBranchVal"), savedBBs, "loopEndBB")
+                                ->addOperation(make_shared<AddIntOperation>("loopEndAddResult", "ifAddResult", "ifBranchVal"))
+                                ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                                ->addOperation(make_shared<StoreOperation>("loopEndAddResult", "outputAddressOp"))
+                                ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                                ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
+                                ->addNextBlock(savedBBs["loopHeadBB"])
+                            )
+                        )
+                    )
+                    ->addElseBlock(
+                        createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
+                        ->addOperation(std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                        ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp", "thenAddOp", "thenElseBranchVal"))
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "thenElseAddOp", "thenElseBranchVal"}))
+                        ->addNextBlock(savedBBs["nestedIfFollowUpBB"])
+                    )
+                )
+                ->addElseBlock(
+                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                    ->addOperation(std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
+                    ->addNextBlock(savedBBs["loopEndBB"])
+                )
+            )
+            ->addElseBlock(createBB("executeReturnBB", 1, {})
+            ->addOperation(make_shared<ReturnOperation>(0))
+        )
+        )
+    );
 
-//     // Print OutputBuffer after execution.
-//     std::vector<Operation::BasicType> types{Operation::INT64};
-//     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
-//     printBuffer(types, numTuples, outputBufferPointer);
-// }
+   // NESIR to MLIR
+    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
 
-// TEST(DISABLED_MLIRNESIRTEST_IF, simpleNESIRIFtest) {
-//     const uint64_t numTuples = 2;
-//     auto inAndOutputBuffer = createInAndOutputBuffers();
+    mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
-//     // Loop BodyBlock Operations
-//     // Todo: AddressOp should access values at "i" to get "currentRecordIdx"
-//     auto inputAddressOp = make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "inputDataBuffer");
-//     auto loadOp = make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
-//     auto addOp = make_shared<AddIntOperation>("inputAddOp", "loadTBValOp", "const42");
+    // Print OutputBuffer after execution.
+    std::vector<Operation::BasicType> types{Operation::INT64};
+    auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
+    printBuffer(types, numTuples, outputBufferPointer);
+}
 
-//     // Loop BodyBlock up to (not including) IF Operation
-//     OperationPtr loopBodyCompOp = make_shared<CompareOperation>("loopCompare", "inputAddOp", "const50", CompareOperation::ISLT);
-//     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, addOp, loopBodyCompOp}; //IfOp added later
-//     std::vector<string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne", "const42", "const50"};
-//     BasicBlockPtr loopBodyBlock = make_shared<BasicBlock>("loopBlock", loopOps, loopArguments, 2);
+/*
+execute(inTB, outTB) {
+    inDatBuf = getDataBuffer(inTB)
+    outDatBuf = getDataBuffer(outTB)
+    numTuples = getNumTuples(inTB)
+    i = constOp(0)
+    const1 = constOp(1)
 
-//     // Create Loop Operation
-//     std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "const42", "const50", "const8", "numTuples"};
-//     shared_ptr<LoopOperation> loopOperation = createLoopOperation(loopHeaderArgs, loopBodyBlock);
-//     BasicBlockPtr loopEndBlock = createSimpleLoopEnd(loopBodyBlock);
+    while(i < numTuples)
+        inAddr = addressOp(inDatBuf, i)
+        loadedVal = loadValue(inAddr)
+        const42 = constIntOp(42)
+        addResult = addOp(const42, loadedVal)
+        branchVal = constIntOp(0)
+        const46 = constIntOp(46)
+        if(addResult < const46) {
+            addResult = addOp(loadedVal, const46)
+            const100 = constIntOp(100)
+            if(ifAddResult < const100) {
+                branchVal = const1
+            } else {
+                branchVal = const46
+                addResult = addOp(ifAddResult, const46)
+            }
+            addResult = addOp(addResult, branchVal)
+            while(j < branchVal) {
+                addRes = addRes + addRes
+                proxyCall_Print(addRes)
+                j = addOp(j, const1)
+            }
+        } else {
+            const8 = constOp(8)
+            addResult = addOp(loadedVal, const8)
+            branchVal = const8
+        }
+        addResult = addResult + branchVal
+        outAddr = addressOp(outDatBuf, i)
+        storeOp(outAddr, addRes)
+        i = addOp(i, const1)
+} (2, 4) -> (92, 62)
+*/
+TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
+    const uint64_t numTuples = 2;
+    auto inAndOutputBuffer = createInAndOutputBuffers();
 
-//     // Create If-only If operation
-//     auto outputAddressOp = make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "outputDataBuffer");
-//     auto storeOp = make_shared<StoreOperation>("inputAddOp", "outTBAddressOp");
-//     std::vector<OperationPtr> ifThenBlockOps{outputAddressOp, storeOp};
-//     std::vector<string> loopIfThenBlockArgs{"outputDataBuffer", "inputAddOp"};
-//     OperationPtr loopIfThenTerminator = make_shared<BranchOperation>(loopEndBlock);
-//     shared_ptr<IfOperation> loopBodyIfOp = createIfOperation("loopCompare", 3, ifThenBlockOps, loopIfThenBlockArgs, loopIfThenTerminator);
 
-//     // Adding Terminator Operation to Loop's Body branch and to  Loop's If Operation branch.
-//     loopBodyBlock->addOperation(loopBodyIfOp);
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
+    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
+    std::unordered_map<std::string, BasicBlockPtr> savedBBs;
+    auto nesIR = std::make_shared<NES::NESIR>();
 
-//     // Execute Function
-//     std::vector<string> constNames{"i", "constOne", "const50", "const42"} ;
-//     std::vector<uint64_t> constVals{0, 1, 45, 42};
-//     std::vector<uint8_t> constBits{64, 64, 64, 64};
-//     shared_ptr<NES::FunctionOperation> executeFunctionOp = createExecuteFunction(constNames, constVals, constBits);
-//     executeFunctionOp->getFunctionBasicBlock()->addOperation(loopOperation);
+   nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
+        ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
+        ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
+        ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
+        ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
+        ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
+        ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop))
+        ->addLoopHeadBlock(
+            saveBB(createBB("loopHeadBB", 1, {}, "iOp"), savedBBs, "loopHeadBB")
+            ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
+            ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
+            ->addThenBlock(
+                createBB("loopBodyBB", 2, {}, "iOp")
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
+                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp", "loopBodyAddOp", "const46Op", CompareOperation::ISLT))
+                ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}, std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}))
+                ->addThenBlock(
+                    createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                    ->addOperation(std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
+                    ->addOperation(std::make_shared<ConstantIntOperation>("jOp", 0, 64))
+                    ->addOperation(make_shared<CompareOperation>("nestedIfCompare", "thenAddOp", "const100Op", CompareOperation::ISLT))
+                    ->addOperation(make_shared<IfOperation>("nestedIfCompare", std::vector<std::string>{"iOp", "jOp", "thenAddOp", "branchVal"}, std::vector<std::string>{"iOp", "jOp", "thenAddOp", "branchVal"}))
+                    ->addThenBlock(
+                        createBB("thenThenBB", 4, {}, "iOp", "jOp", "thenAddOp", "branchVal")
+                        ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "jOp", "thenAddOp", "thenThenBranchVal"}))
+                        ->addNextBlock(
+                            saveBB(createBB("nestedIfFollowUpBB", 3, {Operation::INT64, Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "jOp", "nestedIfAddResult", "ifBranchVal"), savedBBs, "nestedIfFollowUpBB")
+                            ->addOperation(make_shared<AddIntOperation>("afterIfBBAddOp", "nestedIfAddResult", "ifBranchVal"))
+                            ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop, std::vector<std::string>{"iOp", "jOp", "afterIfBBAddOp", "ifBranchVal"}))
+                            ->addLoopHeadBlock(
+                                //Nested Loop Start
+                                saveBB(createBB("nestedLoopHeadBB", 3, {}, "iOp", "jOp", "loopAddInput", "nestedLoopUpperLimit"), savedBBs, "nestedLoopHeadBB")
+                                ->addOperation(std::make_shared<CompareOperation>("nestedLoopHeadCompareOp", "jOp", "nestedLoopUpperLimit", CompareOperation::ISLT))
+                                ->addOperation(make_shared<IfOperation>("nestedLoopHeadCompareOp", std::vector<std::string>{"iOp", "jOp", "loopAddInput", "nestedLoopUpperLimit"}, std::vector<std::string>{"iOp", "loopAddInput", "nestedLoopUpperLimit"}))
+                                ->addThenBlock(
+                                    createBB("nestedLoopBodyBB", 4, {}, "jOp", "loopAddInput")
+                                    ->addOperation(make_shared<AddIntOperation>("nestedLoopAddOp", "loopAddInput", "loopAddInput"))
+                                    ->addOperation(make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other, "printValueFromMLIR", std::vector<string>{"nestedLoopAddOp"}, 
+                                                                                std::vector<Operation::BasicType>{}, Operation::BasicType::VOID))
+                                    ->addOperation(make_shared<AddIntOperation>("nestedLoopEndIncJOp", "jOp", "const1Op"))
+                                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "nestedLoopEndIncJOp", "loopAddInput", "nestedLoopUpperLimit"}))
+                                    ->addNextBlock(savedBBs["nestedLoopHeadBB"])
+                                )
+                                ->addElseBlock(
+                                    saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "ifAddResult", "ifBranchVal"), savedBBs, "loopEndBB")
+                                    ->addOperation(make_shared<AddIntOperation>("loopEndAddResult", "ifAddResult", "ifBranchVal"))
+                                    ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                                    ->addOperation(make_shared<StoreOperation>("loopEndAddResult", "outputAddressOp"))
+                                    ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
+                                    ->addNextBlock(savedBBs["loopHeadBB"])
+                                )
+                            )
+                        )
+                    )
+                    ->addElseBlock(
+                        createBB("thenElseBB", 4, {}, "iOp", "jOp", "thenAddOp", "branchVal")
+                        ->addOperation(std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                        ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp", "thenAddOp", "thenElseBranchVal"))
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "jOp", "thenElseAddOp", "thenElseBranchVal"}))
+                        ->addNextBlock(savedBBs["nestedIfFollowUpBB"])
+                    )
+                )
+                ->addElseBlock(
+                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                    ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                    ->addOperation(std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
+                    ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
+                    ->addNextBlock(savedBBs["loopEndBB"])
+                )
+            )
+            ->addElseBlock(createBB("executeReturnBB", 1, {})
+            ->addOperation(make_shared<ReturnOperation>(0))
+        )
+        )
+    );
 
-//     // NESIR
-//     NES::NESIR nesIR(executeFunctionOp);
+   // NESIR to MLIR
+    auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
 
-//     // NESIR to MLIR
-//     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(&nesIR);
-//     assert(loadedModuleSuccess == 0);
+    mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
-//     // Register buffers and functions with JIT and run module.
-//     const std::vector<string> symbolNames{"printValueFromMLIR"};
-//     // Order must match symbolNames order!
-//     const std::vector<llvm::JITTargetAddress> jitAddresses{
-//             llvm::pointerToJITTargetAddress(&printValueFromMLIR),
-//     };
-//     mlirUtility->runJit(symbolNames, jitAddresses, false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
-
-//     // Print OutputBuffer after execution.
-//     std::vector<Operation::BasicType> types{Operation::INT64};
-//     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
-//     printBuffer(types, numTuples, outputBufferPointer);
-// }
-
-// TEST(DISABLED_MLIRNESIRTEST_IF, simpleNESIRIfElse) {
-//     const uint64_t numTuples = 2;
-//     auto inAndOutputBuffer = createInAndOutputBuffers();
-
-//     // Loop BodyBlock Operations
-//     // Todo: AddressOp should access values at "i" to get "currentRecordIdx"
-//     auto inputAddressOp = make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "inputDataBuffer");
-//     auto loadOp = make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
-//     auto addOp = make_shared<AddIntOperation>("inputAddOp", "loadTBValOp", "const42");
-//     auto outputAddressOp = make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "outputDataBuffer");
-
-//     // Loop BodyBlock up to (not including) IF Operation
-//     OperationPtr loopBodyCompOp = make_shared<CompareOperation>("loopCompare", "inputAddOp", "const50", CompareOperation::ISLT);
-//     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, addOp, loopBodyCompOp, outputAddressOp}; //IfOp added later
-//     std::vector<string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne", "const42", "const50", "const8"};
-//     BasicBlockPtr loopBodyBlock = make_shared<BasicBlock>("loopBlock", loopOps, loopArguments, 1);
-
-//     // Create Loop Operation
-//     std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "const42", "const50", "const8", "numTuples"};
-//     shared_ptr<LoopOperation> loopOperation = createLoopOperation(loopHeaderArgs, loopBodyBlock);
-//     BasicBlockPtr loopEndBlock  = createSimpleLoopEnd(loopBodyBlock);
-
-//     // Create If-only If operation
-//     // Then Block Ops & Args:
-//     auto thenStoreOp = make_shared<StoreOperation>("inputAddOp", "outTBAddressOp");
-//     std::vector<OperationPtr> thenBlockOps{thenStoreOp};
-//     std::vector<string> thenBlockArgs{"outputDataBuffer", "inputAddOp"};
-//     OperationPtr thenTerminator = make_shared<BranchOperation>(loopEndBlock);
-//     // Else Block Ops & Args:
-//     auto elseAddOp = make_shared<AddIntOperation>("elseAddOp", "loadTBValOp", "const8");
-//     auto elseStoreOp = make_shared<StoreOperation>("elseAddOp", "outTBAddressOp");
-//     std::vector<OperationPtr> elseBlockOps{elseAddOp, elseStoreOp};
-//     std::vector<string> elseBlockArgs{"outputDataBuffer", "inputAddOp"};
-//     OperationPtr elseTerminator = make_shared<BranchOperation>(loopEndBlock);
-    
-//     shared_ptr<IfOperation> loopBodyIfOp = createIfElseOperation("loopCompare", 2, thenBlockOps, thenBlockArgs,
-//                                                                  thenTerminator, elseBlockOps, elseBlockArgs, elseTerminator);
-
-//     // Adding Terminator Operation to Loop's Body branch and to  Loop's If Operation branch.
-//     loopBodyBlock->addOperation(loopBodyIfOp);
-
-//     // Execute Function
-//     std::vector<string> constNames{"i", "constOne", "const50", "const42", "const8"} ;
-//     std::vector<uint64_t> constVals{0, 1, 46, 42, 8};
-//     std::vector<uint8_t> constBits{64, 64, 64, 64, 64};
-//     shared_ptr<NES::FunctionOperation> executeFunctionOp = createExecuteFunction(constNames, constVals, constBits);
-//     executeFunctionOp->getFunctionBasicBlock()->addOperation(loopOperation);
-
-//     // NESIR
-//     NES::NESIR nesIR(executeFunctionOp);
-
-//     // NESIR to MLIR
-//     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(&nesIR);
-//     assert(loadedModuleSuccess == 0);
-
-//     // Register buffers and functions with JIT and run module.
-//     const std::vector<string> symbolNames{"printValueFromMLIR"};
-//     // Order must match symbolNames order!
-//     const std::vector<llvm::JITTargetAddress> jitAddresses{
-//             llvm::pointerToJITTargetAddress(&printValueFromMLIR),
-//     };
-//     mlirUtility->runJit(symbolNames, jitAddresses, false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
-
-//     // Print OutputBuffer after execution.
-//     std::vector<Operation::BasicType> types{Operation::INT64};
-//     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
-//     printBuffer(types, numTuples, outputBufferPointer);
-// }
-
-// TEST(DISABLED_MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
-//     const uint64_t numTuples = 2;
-//     auto inAndOutputBuffer = createInAndOutputBuffers();
-
-//     // Loop BodyBlock Operations
-//     // Todo: AddressOp should access values at "i" to get "currentRecordIdx"
-//     auto inputAddressOp = make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "inputDataBuffer");
-//     auto loadOp = make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
-//     auto addOp = make_shared<AddIntOperation>("inputAddOp", "loadTBValOp", "const47");
-
-//     // Loop BodyBlock up to (not including) IF Operation
-//     OperationPtr loopBodyCompOp = make_shared<CompareOperation>("loopCompare", "inputAddOp", "const50", CompareOperation::ISLT);
-//     std::vector<OperationPtr> loopOps{inputAddressOp, loadOp, addOp, loopBodyCompOp}; //IfOp added later
-//     std::vector<string> loopArguments{"inputDataBuffer", "outputDataBuffer", "numTuples", "i", "constOne", "const47", "const50", "const8"};
-//     BasicBlockPtr loopBodyBlock = make_shared<BasicBlock>("loopBlock", loopOps, loopArguments, 2);
-
-//     // Create Loop Operation
-//     std::vector<string> loopHeaderArgs{"inputDataBuffer", "outputDataBuffer", "i", "constOne", "const47", "const50", "const8", "numTuples"};
-//     shared_ptr<LoopOperation> loopOperation = createLoopOperation(loopHeaderArgs, loopBodyBlock);
-
-//     auto outputAddressOp = make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "outputDataBuffer");
-//     auto storeOp = make_shared<StoreOperation>("inputAddOp", "outTBAddressOp");
-//     std::vector<OperationPtr> loopEndOps{outputAddressOp, storeOp};
-//     std::vector<string> loopEndArgs{"inputAddOp", "outputDataBuffer"};
-//     BasicBlockPtr loopEndBlock = createSpecialLoopEnd(loopOperation->getLoopHeaderBlock(), loopEndOps, loopEndArgs);
-
-//     // Create If-only If operation
-//     // Then Block Ops & Args:
-//     auto thenAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const50");
-//     std::vector<OperationPtr> thenBlockOps{thenAddOp};
-//     std::vector<string> thenBlockArgs{"outputDataBuffer", "inputAddOp"};
-//     OperationPtr thenTerminator = make_shared<BranchOperation>(loopEndBlock);
-//     // Else Block Ops & Args:
-//     auto elseAddOp = make_shared<AddIntOperation>("inputAddOp", "inputAddOp", "const8");
-//     std::vector<OperationPtr> elseBlockOps{elseAddOp};
-//     std::vector<string> elseBlockArgs{"outputDataBuffer", "inputAddOp"};
-//     OperationPtr elseTerminator = make_shared<BranchOperation>(loopEndBlock);
-    
-//     shared_ptr<IfOperation> loopBodyIfOp = createIfElseOperation("loopCompare", 3, thenBlockOps, thenBlockArgs, thenTerminator, 
-//                                                                  elseBlockOps, elseBlockArgs, elseTerminator);
-//     //Todo add storeOp to loopEndBlock
-//     // -> new createLoopEnd?
-
-//     // Adding Terminator Operation to Loop's Body branch and to  Loop's If Operation branch.
-//     loopBodyBlock->addOperation(loopBodyIfOp);
-
-//     // Execute Function
-//     std::vector<string> constNames{"i", "constOne", "const50", "const47", "const8"} ;
-//     std::vector<uint64_t> constVals{0, 1, 50, 47, 8};
-//     std::vector<uint8_t> constBits{64, 64, 64, 64, 64};
-//     shared_ptr<NES::FunctionOperation> executeFunctionOp = createExecuteFunction(constNames, constVals, constBits);
-//     executeFunctionOp->getFunctionBasicBlock()->addOperation(loopOperation);
-
-//     // NESIR
-//     NES::NESIR nesIR(executeFunctionOp);
-
-//     // NESIR to MLIR
-//     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
-//     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(&nesIR);
-//     assert(loadedModuleSuccess == 0);
-
-//     // Register buffers and functions with JIT and run module.
-//     const std::vector<string> symbolNames{"printValueFromMLIR"};
-//     // Order must match symbolNames order!
-//     const std::vector<llvm::JITTargetAddress> jitAddresses{
-//             llvm::pointerToJITTargetAddress(&printValueFromMLIR),
-//     };
-//     mlirUtility->runJit(symbolNames, jitAddresses, false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
-
-//     // Print OutputBuffer after execution.
-//     std::vector<Operation::BasicType> types{Operation::INT64};
-//     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
-//     printBuffer(types, numTuples, outputBufferPointer);
-// }
-
+    // Print OutputBuffer after execution.
+    std::vector<Operation::BasicType> types{Operation::INT64};
+    auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
+    printBuffer(types, numTuples, outputBufferPointer);
+}
 
 
 }// namespace NES

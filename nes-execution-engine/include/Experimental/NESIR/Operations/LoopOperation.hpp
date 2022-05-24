@@ -27,16 +27,18 @@ namespace NES {
 class LoopOperation : public Operation {
   public:
     enum LoopType{ForLoop};
-    LoopOperation(LoopType loopType);
+    LoopOperation(LoopType loopType, const std::vector<std::string>& loopBlockArgs = {});
     ~LoopOperation() override = default;
 
     LoopType getLoopType();
+    std::vector<std::string> getLoopBlockArgs();
     BasicBlockPtr setLoopHeadBlock(BasicBlockPtr loopHeadBlock);
     BasicBlockPtr getLoopHeadBlock();
     static bool classof(const Operation *Op);
 
   private:
     LoopType loopType;
+    std::vector<std::string> loopBlockArgs;
     BasicBlockPtr loopHeadBlock;
 };
 }// namespace NES

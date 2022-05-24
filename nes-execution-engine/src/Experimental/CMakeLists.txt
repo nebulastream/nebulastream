@@ -12,6 +12,4 @@
 # limitations under the License.
 
 add_subdirectory(MLIR)
-add_subdirectory(NESAbstraction)
-add_subdirectory(utility)
 add_subdirectory(NESIR)

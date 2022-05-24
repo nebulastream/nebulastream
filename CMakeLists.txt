@@ -517,7 +517,7 @@ message("-- LLVM version ${LLVM_VERSION_STRING}")
 message("-- LLVM version ${LLVM_ROOT_DIR}")
 
 # MLIR
-if(NES_USE_MLIR)
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
     find_package(MLIR REQUIRED CONFIG)
     if(MLIR_FOUND)
         include_directories(SYSTEM ${MLIR_INCLUDE_DIRS})
@@ -526,8 +526,7 @@ if(NES_USE_MLIR)
         message(FATAL_ERROR "Cannot find mlir")
     endif(MLIR_FOUND)
     message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-endif()
-
+endif(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 
 # Set definition values.
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
@@ -599,8 +598,10 @@ endif ()
 add_subdirectory(nes-common)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
-# Add target for execution engines
-add_subdirectory(nes-execution-engine)
+if(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
+    # Add target for execution engines
+    add_subdirectory(nes-execution-engine)
+endif(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
 # Add target for client
