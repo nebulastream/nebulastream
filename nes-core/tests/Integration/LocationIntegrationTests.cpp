@@ -33,7 +33,8 @@
 #include <Util/TimeMeasurement.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 
-using namespace std;
+using std::string;
+using std::map;
 namespace NES {
 using namespace Configurations;
 
