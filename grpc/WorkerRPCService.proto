@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 import "SerializableQueryPlan.proto";
-import "Spatial.proto";
+import "WorkerLocation.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
