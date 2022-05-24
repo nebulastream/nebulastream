@@ -28,6 +28,7 @@
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Sources/StaticDataSource.hpp>
+#include <Sources/TCPSource.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <chrono>
 
@@ -419,4 +420,23 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         inputFormat);
 }
 #endif
+
+DataSourcePtr createTCPSource(const SchemaPtr& schema,
+                              const Runtime::BufferManagerPtr& bufferManager,
+                              const Runtime::QueryManagerPtr& queryManager,
+                              const TCPSourceTypePtr& tcpSourceType,
+                              OperatorId operatorId,
+                              OriginId originId,
+                              size_t numSourceLocalBuffers,
+                              const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+    return std::make_shared<TCPSource>(schema,
+                                       bufferManager,
+                                       queryManager,
+                                       tcpSourceType,
+                                       operatorId,
+                                       originId,
+                                       numSourceLocalBuffers,
+                                       GatheringMode::INTERVAL_MODE,
+                                       successors);
+}
 }// namespace NES

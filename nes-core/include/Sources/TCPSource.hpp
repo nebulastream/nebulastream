@@ -48,6 +48,8 @@ class TCPSource : public DataSource{
 
     std::string toString() const override;
 
+    SourceType getType() const override;
+
   private:
 
     TCPSource() = delete;

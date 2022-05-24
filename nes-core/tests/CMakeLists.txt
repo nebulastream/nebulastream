@@ -193,6 +193,11 @@ add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.
 target_link_libraries(sink-tests nes-tests)
 add_test(NAME sink-tests COMMAND sink-tests)
 
+### TCP Tests ###
+add_executable(tcp-source-tests "UnitTests/Source/TCPSourceTest.cpp" UnitTests/Source/TCPSourceTest.cpp)
+target_link_libraries(tcp-source-tests nes-tests)
+add_test(NAME tcp-source-tests COMMAND tcp-source-tests)
+
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
     add_executable(kafka-tests "UnitTests/Source/KafkaTest.cpp")

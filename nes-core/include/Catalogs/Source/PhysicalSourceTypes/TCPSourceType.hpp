@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <sys/socket.h>
 
 namespace NES {
 
@@ -65,16 +66,69 @@ class TCPSourceType : public PhysicalSourceType {
     void reset() override;
 
     /**
-     * @brief set ip adress
-     * @param url new ip address
+     * @brief set host
+     * @param host new socket host
      */
-    void setUrl(std::string url);
+    void setSocketHost(std::string host);
 
     /**
-     * @brief get ip address
-     * @return ip adress
+     * @brief get host address
+     * @return host adress
      */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getUrl() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getSocketHost() const;
+
+    /**
+     * @brief set port
+     * @param port new socket port
+     */
+    void setSocketPort(uint32_t port);
+
+    /**
+     * @brief get port
+     * @return port
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSocketPort() const;
+
+    /**
+     * @brief get the domain
+     * @return domain
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSocketDomain() const;
+
+    /**
+     * @brief set the domain
+     * @param domain string with domain to be set
+     */
+    void setSocketDomain(uint32_t domain);
+
+    /**
+     * @brief set the domain via string
+     * @param domain string viable options: AF_INET IPv4 Internet protocols, AF_INET6 IPv6 Internet protocols
+     */
+    void setSocketDomainViaString(std::string domain);
+
+    /**
+     * @brief get the socket type
+     * @return socket type
+     */
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSocketType() const;
+
+    /**
+     * @brief set the socket type
+     * @param type the type to be set
+     */
+    void setSocketType(uint32_t type);
+
+    /**
+     * @brief set the type via string
+     * @param type string viable options:
+     * SOCK_STREAM Provides sequenced, reliable, two-way, connection-based byte  streams.  An out-of-band data transmission mechanism may be supported,
+     * SOCK_DGRAM Supports datagrams (connectionless, unreliable messages of a fixed maximum length),
+     * SOCK_SEQPACKET Provides  a  sequenced,  reliable,  two-way connection-based data transmission path  for  datagrams  of  fixed maximum  length;  a consumer is required to read an entire packet with each input system call,
+     * SOCK_RAW Provides raw network protocol access,
+     * SOCK_RDM Provides a reliable datagram layer that does not  guarantee ordering
+     */
+    void setSocketTypeViaString(std::string type);
 
   private:
     /**
@@ -94,7 +148,10 @@ class TCPSourceType : public PhysicalSourceType {
      */
     TCPSourceType();
 
-    Configurations::StringConfigOption url;
+    Configurations::StringConfigOption socketHost;
+    Configurations::IntConfigOption socketPort;
+    Configurations::IntConfigOption socketDomain;
+    Configurations::IntConfigOption socketType;
 };
 }// namespace NES
 #endif//NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP
