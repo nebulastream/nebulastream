@@ -84,15 +84,6 @@ TCPSourceType::TCPSourceType(std::map<std::string, std::string> sourceConfigMap)
     if (sourceConfigMap.find(Configurations::SOCKET_TYPE_CONFIG) != sourceConfigMap.end()) {
         setSocketTypeViaString(sourceConfigMap.find(Configurations::SOCKET_TYPE_CONFIG)->second);
     }
-    if (sourceConfigMap.find(Configurations::SOCKET_BUFFER_SIZE_CONFIG) != sourceConfigMap.end()) {
-        setSocketBufferSize(std::stoi(sourceConfigMap.find(Configurations::SOCKET_BUFFER_SIZE_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
-        flushIntervalMS->setValue(std::stof(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
-        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
-    }
 }
 
 TCPSourceType::TCPSourceType(Yaml::Node yamlConfig) : TCPSourceType() {
@@ -118,18 +109,31 @@ TCPSourceType::TCPSourceType(Yaml::Node yamlConfig) : TCPSourceType() {
         && yamlConfig[Configurations::SOCKET_TYPE_CONFIG].As<std::string>() != "\n") {
         setSocketTypeViaString(yamlConfig[Configurations::SOCKET_TYPE_CONFIG].As<std::string>());
     }
-    if (!yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<std::string>() != "\n") {
-        setSocketBufferSize(yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<uint32_t>());
-    }
-    if (!yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>() != "\n") {
-        flushIntervalMS->setValue(std::stof(yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>()));
-    }
-    if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
-        inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
-    }
+}
+
+TCPSourceType::TCPSourceType()
+    : PhysicalSourceType(TCP_SOURCE),
+      socketHost(Configurations::ConfigurationOption<std::string>::create(Configurations::SOCKET_HOST_CONFIG,
+                                                                          "127.0.0.1",
+                                                                          "host to connect to")),
+      socketPort(
+          Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOCKET_PORT_CONFIG, 3000, "port to connect to")),
+      socketDomain(Configurations::ConfigurationOption<uint32_t>::create(
+          Configurations::SOCKET_DOMAIN_CONFIG,
+          AF_INET,
+          "Domain argument specifies a communication domain; this selects the protocol family which will be used for "
+          "communication. Common choices: AF_INET (IPv4 Internet protocols), AF_INET6 (IPv6 Internet protocols)")),
+      socketType(Configurations::ConfigurationOption<uint32_t>::create(
+          Configurations::SOCKET_TYPE_CONFIG,
+          SOCK_STREAM,
+          "The  socket  has  the indicated type, which specifies the communication semantics. SOCK_STREAM Provides sequenced, "
+          "reliable, two-way, connection-based byte  streams.  An out-of-band data transmission mechanism may be supported, "
+          "SOCK_DGRAM Supports datagrams (connectionless, unreliable messages of a fixed maximum length), "
+          "SOCK_SEQPACKET Provides  a  sequenced,  reliable,  two-way connection-based data transmission path for "
+          "datagrams  of  fixed maximum  length;  a consumer is required to read an entire packet with each input system call, "
+          "SOCK_RAW Provides raw network protocol access, "
+          "SOCK_RDM Provides a reliable datagram layer that does not  guarantee ordering")) {
+    NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
 std::string TCPSourceType::toString() {
@@ -139,10 +143,7 @@ std::string TCPSourceType::toString() {
     ss << socketPort->toStringNameCurrentValue();
     ss << socketDomain->toStringNameCurrentValue();
     ss << socketType->toStringNameCurrentValue();
-    ss << socketBufferSize->toStringNameCurrentValue();
-    ss << flushIntervalMS->toStringNameCurrentValue();
-    ss << inputFormat->toStringNameCurrentValue();
-    ss << "}";
+    ss << "\n}";
     return ss.str();
 }
 
@@ -154,10 +155,7 @@ bool TCPSourceType::equal(const PhysicalSourceTypePtr& other) {
     return socketHost->getValue() == otherSourceConfig->socketHost->getValue()
         && socketPort->getValue() == otherSourceConfig->socketPort->getValue()
         && socketDomain->getValue() == otherSourceConfig->socketDomain->getValue()
-        && socketType->getValue() == otherSourceConfig->socketType->getValue()
-        && socketBufferSize->getValue() == otherSourceConfig->socketBufferSize->getValue()
-        && flushIntervalMS->getValue() == otherSourceConfig->flushIntervalMS->getValue()
-        && inputFormat->getValue() == otherSourceConfig->inputFormat->getValue();
+        && socketType->getValue() == otherSourceConfig->socketType->getValue();
 }
 
 void TCPSourceType::reset() {
@@ -165,9 +163,6 @@ void TCPSourceType::reset() {
     setSocketPort(socketPort->getDefaultValue());
     setSocketDomain(AF_INET);
     setSocketType(SOCK_STREAM);
-    setSocketBufferSize(0);
-    setFlushIntervalMS(0);
-    setInputFormat(inputFormat->getDefaultValue());
 }
 
 Configurations::StringConfigOption TCPSourceType::getSocketHost() const { return socketHost; }
@@ -196,29 +191,16 @@ void TCPSourceType::setSocketType(uint32_t typeValue) { socketType->setValue(typ
 
 void TCPSourceType::setSocketTypeViaString(std::string typeValue) {
     if (strcasecmp(typeValue.c_str(), "SOCK_STREAM") == 0) {
-        setSocketType(SOCK_STREAM);
+        setSocketDomain(SOCK_STREAM);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_DGRAM") == 0) {
-        setSocketType(SOCK_DGRAM);
+        setSocketDomain(SOCK_DGRAM);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_SEQPACKET") == 0) {
-        setSocketType(SOCK_SEQPACKET);
+        setSocketDomain(SOCK_SEQPACKET);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_RAW") == 0) {
-        setSocketType(SOCK_RAW);
+        setSocketDomain(SOCK_RAW);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_RDM") == 0) {
-        setSocketType(SOCK_RDM);
+        setSocketDomain(SOCK_RDM);
     }
 }
-
-void TCPSourceType::setInputFormat(Configurations::InputFormat inputFormatValue) {
-    inputFormat->setValue(std::move(inputFormatValue));
-}
-Configurations::InputFormatConfigOption TCPSourceType::getInputFormat() const { return inputFormat; }
-
-Configurations::IntConfigOption TCPSourceType::getSocketBufferSize() const { return socketBufferSize; }
-
-void TCPSourceType::setSocketBufferSize(uint32_t socketBufferSizeValue) { socketBufferSize->setValue(socketBufferSizeValue); }
-
-Configurations::FloatConfigOption TCPSourceType::getFlushIntervalMS() const { return flushIntervalMS; }
-
-void TCPSourceType::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
 }// namespace NES
