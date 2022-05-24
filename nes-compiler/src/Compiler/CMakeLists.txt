@@ -19,6 +19,7 @@ add_source_files(nes-compiler
         CompilationResult.cpp
         SourceCode.cpp
         File.cpp
+        CompilationCache.cpp
 )
 
 add_subdirectory(CPPCompiler)

@@ -18,7 +18,7 @@
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -93,15 +93,15 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
     }
 };
 
-class TestSourceProvider : public QueryCompilation::DataSourceProvider {
+class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
   public:
     explicit TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options)
-        : QueryCompilation::DataSourceProvider(std::move(std::move(options))){};
+        : QueryCompilation::DefaultDataSourceProvider(std::move(std::move(options))){};
     DataSourcePtr lower(OperatorId operatorId,
                         OriginId originId,
                         SourceDescriptorPtr sourceDescriptor,
                         Runtime::NodeEnginePtr nodeEngine,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors, bool) override {
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override {
         if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
             auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
             return testSourceDescriptor->create(operatorId,
@@ -110,14 +110,14 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
                                                 compilerOptions->getNumSourceLocalBuffers(),
                                                 successors);
         }
-        return DataSourceProvider::lower(operatorId, originId, sourceDescriptor, nodeEngine, successors, false);
+        return DefaultDataSourceProvider::lower(operatorId, originId, sourceDescriptor, nodeEngine, successors);
     }
 };
 
 class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
   public:
     QueryCompilation::LowerToExecutableQueryPlanPhasePtr
-    createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options) override {
+    createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options, bool) override {
         auto sinkProvider = std::make_shared<TestSinkProvider>();
         auto sourceProvider = std::make_shared<TestSourceProvider>(options);
         return QueryCompilation::LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);

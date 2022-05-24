@@ -48,7 +48,7 @@ std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExec
 }
 
 void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines) {
-    //TODO: Make this threadsafe
+    successorModifyMutex.lock();
     for (auto& pipe : newPipelines) {
         executableSuccessors.push_back(pipe);
     }
@@ -100,6 +100,7 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
    uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
+        //find the queue to which this sources pushes
         if (!sourceSharing) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         } else {

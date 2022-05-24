@@ -22,12 +22,13 @@
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
 #include <QueryCompiler/Phases/PredicationOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -73,9 +74,16 @@ CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompi
     auto codeGenerator = CCodeGenerator::create();
     return CodeGenerationPhase::create(codeGenerator, jitCompiler, options->getCompilationStrategy());
 }
-LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) {
+LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
+                                                                                              bool sourceSharing) {
     NES_DEBUG("Create lower to executable query plan phase");
-    auto sourceProvider = DataSourceProvider::create(options);
+    DataSourceProviderPtr sourceProvider;
+    if (!sourceSharing) {
+        sourceProvider = DefaultDataSourceProvider::create(options);
+    } else {
+        sourceProvider = SourceSharingDataSourceProvider::create(options);
+    }
+
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }

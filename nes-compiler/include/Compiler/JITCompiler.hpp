@@ -20,6 +20,8 @@
 
 namespace NES::Compiler {
 
+class CompilationCache;
+using CompilationCachePtr = std::shared_ptr<CompilationCache>;
 /**
  * @brief The JIT compiler handles compilation requests and dispatches them to the right language compiler implementation.
  */
@@ -28,8 +30,9 @@ class JITCompiler {
     /**
      * @brief Constructor to create a new jit compiler with a fixed set of language compilers.
      * @param languageCompilers set of language compilers.
+     * @param useCompilationCache
      */
-    JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers);
+    JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers, bool useCompilationCache);
     /**
      * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
      * @param request Compilation request
@@ -47,7 +50,8 @@ class JITCompiler {
      */
     [[nodiscard]] std::future<CompilationResult> handleRequest(std::shared_ptr<const CompilationRequest> request);
     const std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
-    std::map<std::string, CompilationResult> compilationReuseMap;
+    bool useCompilationCache;
+    CompilationCachePtr compilationCache;
 };
 
 }// namespace NES::Compiler

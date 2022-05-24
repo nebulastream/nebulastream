@@ -157,6 +157,11 @@ class WorkerConfiguration : public BaseConfiguration {
     BoolOption enableSourceSharing = {ENABLE_SOURCE_SHARING_CONFIG, false, "Enable source sharing"};
 
     /**
+     * @brief Enables compilation cache
+     * */
+    BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, false, "Enable use compilation caching"};
+
+    /**
      * @brief Enables the statistic output
      */
     BoolOption enableStatisticOuput = {ENABLE_STATISTIC_OUTPUT_CONFIG, false, "Enable statistic output"};
@@ -267,9 +272,9 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfThreadsPerQueue,
                 &queryManagerMode,
                 &enableSourceSharing,
-                &configPath,
                 &workerHealthCheckWaitTime,
-                &enableStatisticOuput};
+                &configPath,
+                &useCompilationCache};
     }
 };
 }// namespace Configurations
