@@ -469,10 +469,19 @@ endif ()
 # Antlr
 # Currently antlr dose not come with an own cmake file
 message(STATUS  Antlr ${_VCPKG_INSTALLED_DIR} )
-include_directories(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/include/antlr4-runtime)
-set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libuuid.a)
-set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libantlr4-runtime.a)
-
+if(APPLE)
+    include_directories(${_VCPKG_INSTALLED_DIR}/x64-macos-nes/include/antlr4-runtime)
+    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-macos-nes/lib/libuuid.a)
+   set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-macos-nes/lib/libantlr4-runtime.a)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    include_directories(${_VCPKG_INSTALLED_DIR}/arm64-linux-nes/include/antlr4-runtime)
+    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/arm64-linux-nes/lib/libuuid.a)
+    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/arm64-linux-nes/lib/libantlr4-runtime.a)
+else()
+    include_directories(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/include/antlr4-runtime)
+    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libuuid.a)
+    set(LIBRARIES ${LIBRARIES} ${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libantlr4-runtime.a)
+endif()
 
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)
@@ -522,7 +531,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-find_package(LLVM 13 CONFIG REQUIRED)
+find_package(LLVM 14 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
