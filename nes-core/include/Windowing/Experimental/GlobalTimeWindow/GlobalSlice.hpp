@@ -65,11 +65,16 @@ class GlobalSlice {
     GlobalSlice(uint64_t entrySize, uint64_t start, uint64_t end);
 
     /**
+     * @brief Copy constructor to create a new slice
+     * @param slice
+     */
+    GlobalSlice(GlobalSlice& slice);
+
+    /**
      * @brief Constructor to create a uninitialized slice.
      * @param entrySize entry size of the content of a slice
      */
     GlobalSlice(uint64_t entrySize);
-    GlobalSlice(GlobalSlice& entrySize);
 
     /**
      * @brief Start of the slice.

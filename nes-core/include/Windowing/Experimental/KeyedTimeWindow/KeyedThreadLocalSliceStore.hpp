@@ -32,8 +32,8 @@ using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 /**
  * @brief A Slice store for tumbling and sliding windows,
  * which stores slices for a specific thread.
- * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
- * As the slice store is only using by a single thread, we dont have to protect its functions for concurrent accesses.
+ * In the current implementation we handle tumbling widows as sliding widows with windowSize==windowSlide.
+ * As the slice store is only used by a single thread, we dont have to protect its functions for concurrent accesses.
  */
 class KeyedThreadLocalSliceStore : public ThreadLocalSliceStore<KeyedSlice> {
   public:

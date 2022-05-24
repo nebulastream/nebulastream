@@ -63,7 +63,7 @@ void GeneratableKeyedGlobalSliceStoreAppendOperator::generateOpen(CodeGeneratorP
 void GeneratableKeyedGlobalSliceStoreAppendOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->registerOperatorHandler(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
-    codegen->generateCodeForSliceStoreAppend(context, handler);
+    codegen->generateCodeForKeyedSliceStoreAppend(context, handler);
     windowHandler = nullptr;
 }
 

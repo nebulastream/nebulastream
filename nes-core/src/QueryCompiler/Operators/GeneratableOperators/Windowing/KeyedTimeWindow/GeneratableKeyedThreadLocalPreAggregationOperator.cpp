@@ -59,7 +59,6 @@ void GeneratableKeyedThreadLocalPreAggregationOperator::generateOpen(CodeGenerat
     auto windowDefinition = windowHandler->getWindowDefinition();
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
     codegen->generateKeyedThreadLocalPreAggregationSetup(windowDefinition,
-                                                         outputSchema,
                                                          context,
                                                          id,
                                                          windowOperatorIndex,
