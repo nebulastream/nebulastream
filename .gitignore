@@ -25,3 +25,5 @@ venv
 # Visual Studio Code Folders
 .cache
 .vscode
+compile_commands.json
+mlir_grammar.json
