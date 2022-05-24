@@ -84,7 +84,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
 
     locIndex->initializeFieldNodeCoordinates(node2, *(node2->getCoordinates()));
 
-    cout << "start worker 3" << endl;
+    NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
     wrkConf3->isMobile.setValue(true);
@@ -149,7 +149,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES_DEBUG("Response: " << response0.serialize());
     EXPECT_EQ(response0.as_array().size(), 0);
 
-    cout << "start worker 3" << endl;
+    NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
     wrkConf3->isMobile.setValue(true);
@@ -175,7 +175,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     EXPECT_TRUE(entry.find("location") != entry.end());
     EXPECT_EQ(entry.at("location"), cmpLoc);
 
-    cout << "start worker 4" << endl;
+    NES_INFO("start worker 4");
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
     wrkConf4->rpcPort = rpcPortWrk4;
     wrkConf4->isMobile.setValue(true);
