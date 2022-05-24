@@ -280,10 +280,9 @@ const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";
-const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string SOCKET_TYPE_CONFIG = "socketType";
 
-//Runtime configuration
+//Runtine configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
 const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
