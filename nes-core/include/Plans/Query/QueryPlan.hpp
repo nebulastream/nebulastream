@@ -56,6 +56,14 @@ class QueryPlan {
     static QueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
 
     /**
+     * @brief Creates a new query plan with a query id and a query sub plan id.
+     * @param queryId :  the query id
+     * @param querySubPlanId : the query sub-plan id
+     * @return a pointer to the query plan.
+     */
+    static QueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId);
+
+    /**
      * @brief Creates a new query plan with a root operator.
      * @param rootOperator The root operator usually a source operator.
      * @return a pointer to the query plan.
@@ -259,6 +267,14 @@ class QueryPlan {
      * @param rootOperators : vector of root Operators
      */
     QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators);
+
+    /**
+     * @brief Creates a new query plan with a query id and a query sub plan id.
+     * @param queryId :  the query id
+     * @param querySubPlanId : the query sub-plan id
+     * @param rootOperators : vector of root Operators
+     */
+    QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief initialize query plan with a root operator

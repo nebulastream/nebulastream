@@ -28,6 +28,10 @@ QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId, s
     return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId, std::move(rootOperators)));
 }
 
+QueryPlanPtr QueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId) {
+    return std::make_shared<QueryPlan>(QueryPlan(queryId, querySubPlanId));
+}
+
 QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator) {
     return std::make_shared<QueryPlan>(QueryPlan(std::move(rootOperator)));
 }
@@ -42,6 +46,8 @@ QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), 
 
 QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
     : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId) {}
+
+QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId) : queryId(queryId), querySubPlanId(querySubPlanId) {}
 
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");

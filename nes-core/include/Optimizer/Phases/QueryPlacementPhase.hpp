@@ -87,6 +87,12 @@ class QueryPlacementPhase {
      * @throws QueryPlacementException
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
+
+    /**
+     * @brief set the placement matrix
+     * @param two dimensional matrix defining the placement of operators in the topology nodes
+     */
+    void setPlacementMatrix(const NES::Optimizer::PlacementMatrix& placementMatrix);
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
@@ -116,13 +122,6 @@ class QueryPlacementPhase {
      */
     bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
     GlobalExecutionPlanPtr globalExecutionPlan;
-
-  public:
-    /**
-     * @brief set the placement matrix
-     * @param two dimensional matrix defining the placement of operators in the topology nodes
-     */
-    void setPlacementMatrix(const NES::Optimizer::PlacementMatrix& placementMatrix);
 
   private:
     TopologyPtr topology;

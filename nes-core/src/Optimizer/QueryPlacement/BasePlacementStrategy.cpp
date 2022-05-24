@@ -514,44 +514,41 @@ bool BasePlacementStrategy::operatorPresentInCollection(const OperatorNodePtr& o
     return isPresent != operatorCollection.end();
 }
 
-std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode,
-                                                                                    std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap) {
-
+std::vector<TopologyNodePtr> BasePlacementStrategy::getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode) {
     std::vector<TopologyNodePtr> childTopologyNodes;
-    NES_DEBUG("BottomUpStrategy: Get topology nodes with children operators");
+    NES_DEBUG("BasePlacementStrategy: Get topology nodes with children operators");
     std::vector<NodePtr> children = operatorNode->getChildren();
     for (auto& child : children) {
         const auto& found = operatorToExecutionNodeMap.find(child->as<OperatorNode>()->getId());
         if (found == operatorToExecutionNodeMap.end()) {
-            NES_WARNING("BottomUpStrategy: unable to find topology for child operator.");
+            NES_WARNING("BasePlacementStrategy: unable to find topology for child operator.");
             return {};
         }
         TopologyNodePtr childTopologyNode = found->second->getTopologyNode();
         childTopologyNodes.push_back(childTopologyNode);
     }
-    NES_DEBUG("BottomUpStrategy: returning list of topology nodes where children operators are placed");
+    NES_DEBUG("BasePlacementStrategy: returning list of topology nodes where children operators are placed");
     return childTopologyNodes;
 }
 
 QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId queryId,
-                                                     const OperatorNodePtr& operatorNode,
-                                                     const ExecutionNodePtr& executionNode) {
+                                                                     const OperatorNodePtr& operatorNode,
+                                                                     const ExecutionNodePtr& executionNode) {
 
-    NES_DEBUG("BottomUpStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id "
-                                                                             << executionNode->getId());
-    NES_TRACE("BottomUpStrategy: Get all query sub plans for the query id on the execution node.");
+    NES_DEBUG("BasePlacementStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id "
+                                                                                  << executionNode->getId());
+    NES_TRACE("BasePlacementStrategy: Get all query sub plans for the query id on the execution node.");
     std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
     QueryPlanPtr candidateQueryPlan;
     if (querySubPlans.empty()) {
         NES_TRACE("BottomUpStrategy: no query plan exists for this query on the executionNode. Returning an empty query plan.");
-        candidateQueryPlan = QueryPlan::create();
-        candidateQueryPlan->setQueryId(queryId);
-        candidateQueryPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
+        candidateQueryPlan = QueryPlan::create(queryId, PlanIdGenerator::getNextQuerySubPlanId());
         return candidateQueryPlan;
     }
 
+    // Find query plans containing the child operator
     std::vector<QueryPlanPtr> queryPlansWithChildren;
-    NES_TRACE("BottomUpStrategy: Find query plans with child operators for the input logical operator.");
+    NES_TRACE("BasePlacementStrategy: Find query plans with child operators for the input logical operator.");
     std::vector<NodePtr> children = operatorNode->getChildren();
     //NOTE: we do not check for parent operators as we are performing bottom up placement.
     for (auto& child : children) {
@@ -560,7 +557,7 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
         });
 
         if (found != querySubPlans.end()) {
-            NES_TRACE("BottomUpStrategy: Found query plan with child operator " << child);
+            NES_TRACE("BasePlacementStrategy: Found query plan with child operator " << child);
             queryPlansWithChildren.push_back(*found);
             querySubPlans.erase(found);
         }
@@ -568,32 +565,34 @@ QueryPlanPtr BasePlacementStrategy::getCandidateQueryPlanForOperator(QueryId que
 
     if (!queryPlansWithChildren.empty()) {
         executionNode->updateQuerySubPlans(queryId, querySubPlans);
+        // if there are more than 1 query plans containing the child operator, the create a new query plan, add root operators on
+        // it, and return the created query plan
         if (queryPlansWithChildren.size() > 1) {
-            NES_TRACE("BottomUpStrategy: Found more than 1 query plan with the child operators of the input logical operator.");
-            candidateQueryPlan = QueryPlan::create();
-            candidateQueryPlan->setQueryId(queryId);
-            candidateQueryPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
-            NES_TRACE("BottomUpStrategy: Prepare a new query plan and add the root of the query plans with parent operators as "
-                      "the root of the new query plan.");
+            NES_TRACE(
+                "BasePlacementStrategy: Found more than 1 query plan with the child operators of the input logical operator.");
+            candidateQueryPlan = QueryPlan::create(queryId, PlanIdGenerator::getNextQuerySubPlanId());
+            NES_TRACE(
+                "BasePlacementStrategy: Prepare a new query plan and add the root of the query plans with parent operators as "
+                "the root of the new query plan.");
             for (auto& queryPlanWithChildren : queryPlansWithChildren) {
                 for (auto& root : queryPlanWithChildren->getRootOperators()) {
                     candidateQueryPlan->addRootOperator(root);
                 }
             }
-            NES_TRACE("BottomUpStrategy: return the updated query plan.");
+            NES_TRACE("BasePlacementStrategy: return the updated query plan.");
             return candidateQueryPlan;
         }
+        // if there is only 1 plan containing the child operator, then return that query plan
         if (queryPlansWithChildren.size() == 1) {
-            NES_TRACE("BottomUpStrategy: Found only 1 query plan with the child operator of the input logical operator. "
+            NES_TRACE("BasePlacementStrategy: Found only 1 query plan with the child operator of the input logical operator. "
                       "Returning the query plan.");
             return queryPlansWithChildren[0];
         }
     }
-    NES_TRACE("BottomUpStrategy: no query plan exists with the child operator of the input logical operator. Returning an empty "
-              "query plan.");
-    candidateQueryPlan = QueryPlan::create();
-    candidateQueryPlan->setQueryId(queryId);
-    candidateQueryPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
+    NES_TRACE(
+        "BasePlacementStrategy: no query plan exists with the child operator of the input logical operator. Returning an empty "
+        "query plan.");
+    candidateQueryPlan = QueryPlan::create(queryId, PlanIdGenerator::getNextQuerySubPlanId());
     return candidateQueryPlan;
 }
 }// namespace NES::Optimizer
