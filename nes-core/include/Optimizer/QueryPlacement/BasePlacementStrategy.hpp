@@ -167,9 +167,7 @@ class BasePlacementStrategy {
      * @param operatorNode: the input operator
      * @return vector of topology nodes where child operator was placed or empty if not all children operators are placed
      */
-    std::vector<TopologyNodePtr>
-    getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode,
-                                         std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap);
+    std::vector<TopologyNodePtr> getTopologyNodesForChildrenOperators(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Get the candidate query plan where input operator is to be appended

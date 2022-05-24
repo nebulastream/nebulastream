@@ -115,7 +115,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
             NES_TRACE("BottomUpStrategy: Received an NAry operator for placement.");
             //Check if all children operators already placed
             NES_TRACE("BottomUpStrategy: Get the topology nodes where child operators are placed.");
-            std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode, operatorToExecutionNodeMap);
+            std::vector<TopologyNodePtr> childTopologyNodes = getTopologyNodesForChildrenOperators(operatorNode);
             if (childTopologyNodes.empty()) {
                 NES_WARNING(
                     "BottomUpStrategy: No topology node isOperatorAPinnedDownStreamOperator where child operators are placed.");
