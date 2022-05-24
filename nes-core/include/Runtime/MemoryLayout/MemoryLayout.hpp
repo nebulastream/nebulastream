@@ -16,7 +16,7 @@
 #define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <map>
+#include <unordered_map>
 #include <optional>
 #include <vector>
 
@@ -102,7 +102,7 @@ class MemoryLayout {
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
     std::vector<PhysicalTypePtr> physicalTypes;
-    std::map<std::string, uint64_t> nameFieldIndexMap;
+    std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
 
 }// namespace NES::Runtime::MemoryLayouts

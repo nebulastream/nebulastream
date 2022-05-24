@@ -17,6 +17,7 @@
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <utility>
 
@@ -63,12 +64,9 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema) {
     if (existingField) {
         fieldAccessExpression->updateFieldName(existingField->getName());
         return true;
+    } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+        return true;
     }
-    // TODO Enable the access of system provided field in #2548
-    // } else if (fieldName == "creationTS") {
-    //   fieldAccessExpression->updateFieldName("creationTS");
-    //   return true;
-    //}
     NES_ERROR("EventTimeWaterMark is using a non existing field " + fieldName);
     throw InvalidFieldException("EventTimeWaterMark is using a non existing field " + fieldName);
 }

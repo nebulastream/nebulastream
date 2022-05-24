@@ -54,7 +54,7 @@ void JoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr,
     }
 }
 
-void JoinOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+void JoinOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
     if (joinHandler) {
         joinHandler->stop();
     }

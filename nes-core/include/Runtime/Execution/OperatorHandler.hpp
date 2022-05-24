@@ -14,6 +14,7 @@
 
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
@@ -41,7 +42,7 @@ class OperatorHandler : public Reconfigurable {
      * @brief Stops the operator handler.
      * @param pipelineExecutionContext
      */
-    virtual void stop(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+    virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 };
 
 }// namespace Execution

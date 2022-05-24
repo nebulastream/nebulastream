@@ -44,14 +44,11 @@ void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecuti
     activeCounter++;
 }
 
-void KeyedSliceMergingOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop KeyedSliceMergingOperatorHandler");
-    activeCounter--;
-    if (activeCounter == 0) {
-        NES_DEBUG("shutdown KeyedEventTimeWindowHandler");
-        this->sliceStaging->clear();
-        this->sliceStaging.reset();
-    }
+void KeyedSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+                                            Runtime::Execution::PipelineExecutionContextPtr) {
+    NES_DEBUG("stop KeyedSliceMergingOperatorHandler: " << queryTerminationType);
+    this->sliceStaging->clear();
+    this->sliceStaging.reset();
 }
 
 KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {

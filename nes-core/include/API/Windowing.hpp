@@ -18,6 +18,9 @@
 
 namespace NES {
 
+class ExpressionNode;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+
 class ExpressionItem;
 
 namespace Windowing {
@@ -155,6 +158,13 @@ Windowing::TimeUnit Hours();
  * @return TimeMeasure
  */
 Windowing::TimeMeasure Days(uint64_t days);
+
+/**
+ * @brief This function provides access to the creation ts (ingestion ts) of an individual record.
+ * This is assigned by the data source.
+ * @return ExpressionNodePtr
+ */
+[[maybe_unused]] ExpressionNodePtr RecordCreationTs();
 
 }// namespace NES::API
 

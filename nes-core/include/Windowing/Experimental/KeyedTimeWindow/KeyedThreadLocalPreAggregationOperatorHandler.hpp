@@ -55,7 +55,7 @@ class KeyedThreadLocalPreAggregationOperatorHandler
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
      * @brief This method triggers the thread local state and appends all slices,

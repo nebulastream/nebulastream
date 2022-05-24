@@ -61,7 +61,7 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
      * @brief Creates a new keyed slice for a specific slice merge task
