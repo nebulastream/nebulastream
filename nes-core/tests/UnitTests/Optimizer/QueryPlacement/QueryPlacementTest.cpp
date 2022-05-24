@@ -785,7 +785,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
                                      {false, true, true, false, false},
                                      {false, false, false, true, true}};
 
-    NES::Optimizer::ManualPlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
+    NES::Optimizer::BasePlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
 
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);

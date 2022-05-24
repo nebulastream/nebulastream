@@ -145,9 +145,4 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
     }
     return downStreamPinnedOperators;
 }
-
-void QueryPlacementPhase::setPlacementMatrix(const NES::Optimizer::PlacementMatrix & placementMatrix) {
-    QueryPlacementPhase::placementMatrix = placementMatrix;
-}
-
 }// namespace NES::Optimizer
