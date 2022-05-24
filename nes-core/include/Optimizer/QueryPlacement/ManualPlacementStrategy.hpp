@@ -35,11 +35,6 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     static std::unique_ptr<ManualPlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
-    static void pinOperators(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                             const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
-                             TopologyPtr topology,
-                             NES::Optimizer::PlacementMatrix& matrix);
-
   private:
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                      TopologyPtr topology,

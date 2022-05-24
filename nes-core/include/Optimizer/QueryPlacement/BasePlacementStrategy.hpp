@@ -122,6 +122,10 @@ class BasePlacementStrategy {
                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
+    static void pinOperators(QueryPlanPtr queryPlan,
+                             TopologyPtr topology,
+                             NES::Optimizer::PlacementMatrix& matrix);
+
   protected:
     /**
      * Find topology path for placing operators between the input pinned upstream and downstream operators

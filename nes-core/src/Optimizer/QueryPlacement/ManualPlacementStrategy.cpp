@@ -66,31 +66,6 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     }
 };
 
-void ManualPlacementStrategy::pinOperators(const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                           const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
-                                           TopologyPtr topology,
-                                           NES::Optimizer::PlacementMatrix& matrix) {
-    matrix.size();
-    std::vector<TopologyNodePtr> topologyNodes;
-    auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
-    for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
-        topologyNodes.emplace_back((*itr)->as<TopologyNode>());
-    }
-
-    auto operators = QueryPlanIterator(std::move(queryPlan)).snapshot();
-
-    for (uint64_t i = 0; i < topologyNodes.size(); i++) {
-        // Set the Pinned operator property
-        auto currentRow = matrix[i];
-        for (uint64_t j = 0; j < operators.size(); j++) {
-            if (currentRow[j]) {
-                // if the the value of the matrix at (i,j) is 1, then add a PINNED_NODE_ID of the topologyNodes[i] to operators[j]
-                operators[j]->as<OperatorNode>()->addProperty("PINNED_NODE_ID", topologyNodes[i]->getId());
-            }
-        }
-    }
-}
-
 void ManualPlacementStrategy::performOperatorPlacement(QueryId queryId,
                                                        const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                        const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {

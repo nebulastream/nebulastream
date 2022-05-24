@@ -42,6 +42,30 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
 
 bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
+void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan,
+                                           TopologyPtr topology,
+                                           NES::Optimizer::PlacementMatrix& matrix) {
+    matrix.size();
+    std::vector<TopologyNodePtr> topologyNodes;
+    auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());
+    for (auto itr = topologyIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr) {
+        topologyNodes.emplace_back((*itr)->as<TopologyNode>());
+    }
+
+    auto operators = QueryPlanIterator(std::move(queryPlan)).snapshot();
+
+    for (uint64_t i = 0; i < topologyNodes.size(); i++) {
+        // Set the Pinned operator property
+        auto currentRow = matrix[i];
+        for (uint64_t j = 0; j < operators.size(); j++) {
+            if (currentRow[j]) {
+                // if the the value of the matrix at (i,j) is 1, then add a PINNED_NODE_ID of the topologyNodes[i] to operators[j]
+                operators[j]->as<OperatorNode>()->addProperty("PINNED_NODE_ID", topologyNodes[i]->getId());
+            }
+        }
+    }
+}
+
 void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
                                                  std::vector<OperatorNodePtr> downStreamPinnedOperators) {
 
