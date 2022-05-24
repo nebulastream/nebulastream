@@ -142,10 +142,10 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
 
     //if first one
     if (testIfLogicalSourceExistsInLogicalToPhysicalMapping(logicalSourceName)) {
-        NES_DEBUG("source already exist, just add new entry");
+        NES_DEBUG("SourceCatalog: Logical source already exists, add new physical entry");
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     } else {
-        NES_DEBUG("source does not exist, create new item");
+        NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
         logicalToPhysicalSourceMapping.insert(
             std::pair<std::string, std::vector<SourceCatalogEntryPtr>>(logicalSourceName, std::vector<SourceCatalogEntryPtr>()));
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);

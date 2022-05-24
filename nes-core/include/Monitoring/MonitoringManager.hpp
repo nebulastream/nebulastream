@@ -15,9 +15,12 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 #define NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <chrono>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -33,6 +36,15 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
+class NesCoordinator;
+using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
+
+class NesWorker;
+using NesWorkerPtr = std::shared_ptr<NesWorker>;
+
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
 /**
 * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
 */
@@ -45,7 +57,11 @@ class MonitoringManager {
      * @param metricStore the metric store
      * @param enableMonitoring flag to indicate if monitoring is enabled or not
      */
-    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, MetricStorePtr metricStore, bool enableMonitoring);
+    MonitoringManager(WorkerRPCClientPtr workerClient,
+                      TopologyPtr topology,
+                      MetricStorePtr metricStore,
+                      std::vector<MetricCollectorType> collectors,
+                      bool enableMonitoring);
     /**
      * Ctor to create a MonitoringManger for a given topology. For communication the manager will use the corresponding RPC client.
      * @param workerClient RPC client
@@ -114,11 +130,33 @@ class MonitoringManager {
     MonitoringPlanPtr getMonitoringPlan(uint64_t nodeId);
 
     /**
+     * @brief Registers the logical monitoring streams at the coordinator.
+     * @param the coordiantor
+     * @return true if monitoring is disabled or if the streams have been registered successfully, else false
+     */
+    bool registerLogicalMonitoringStreams(NesCoordinatorPtr crd);
+
+    /**
      * @brief Configures a continuous monitoring source.
      * @param sourceCatalog
      * @return Ture if success, else false
      */
-    bool setupContinuousMonitoring(SourceCatalogPtr sourceCatalog);
+    bool registerPhysicalMonitoringStreams(NesWorkerPtr worker);
+
+    /**
+     * @brief Starts or redeploys monitoring queries at the coordinator
+     * @param the coordinator
+     * @return true if successful, else false
+     */
+    std::unordered_map<MetricType, QueryId> startOrRedeployMonitoringQueries(NesCoordinatorPtr crd, bool sync);
+
+    /**
+     * @brief Stops all running monitoring queries;
+     * @param crd
+     * @param sync
+     * @return true if success
+     */
+    bool stopRunningMonitoringQueries(NesCoordinatorPtr crd, bool sync);
 
     /**
      * Getter for the metric store
@@ -126,13 +164,21 @@ class MonitoringManager {
      */
     MetricStorePtr getMetricStore();
 
+  public:
+    static const std::vector<MetricCollectorType> ALL_COLLECTOR_TYPES;
+
   private:
-    bool registerMonitoringLogical(SourceCatalogPtr sourceCatalog);
+    bool waitForQueryToStart(QueryId queryId, const QueryCatalogServicePtr& catalogService, std::chrono::seconds timeout);
+    bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogServicePtr& catalogService, std::chrono::seconds timeout);
+
+  private:
     MetricStorePtr metricStore;
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
+    std::unordered_map<MetricType, QueryId> deployedMonitoringQueries;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
     bool enableMonitoring;
+    std::vector<MetricCollectorType> monitoringStreamCollectors;
 };
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;

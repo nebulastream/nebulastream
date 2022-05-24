@@ -326,6 +326,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void setNodeId(const std::shared_ptr<TopologyNodeId> NodeId);
 
+    /**
+     * @brief Updates the physical sources on the node engine
+     * @param physicalSources
+     */
+    void updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+
   public:
     /**
      * @brief Create a node engine and gather node information

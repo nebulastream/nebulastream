@@ -608,4 +608,8 @@ void NodeEngine::setMetricStore(MetricStorePtr metricStore) { this->metricStore 
 const std::shared_ptr<TopologyNodeId> NodeEngine::getNodeId() const { return nodeId; }
 void NodeEngine::setNodeId(const std::shared_ptr<TopologyNodeId> NodeId) { nodeId = NodeId; }
 
+void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
+    this->physicalSources = std::move(physicalSources);
+}
+
 }// namespace NES::Runtime
