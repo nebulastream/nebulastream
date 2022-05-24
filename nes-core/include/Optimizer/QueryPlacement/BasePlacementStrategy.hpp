@@ -122,6 +122,12 @@ class BasePlacementStrategy {
                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
+    /**
+     * @brief Sets pinned node to the operator's property
+     * @param queryPlan query plan containing operator to pin
+     * @param topology topology containing node to pin
+     * @param matrix 2D matrix containing the pinning information
+     */
     static void pinOperators(QueryPlanPtr queryPlan,
                              TopologyPtr topology,
                              NES::Optimizer::PlacementMatrix& matrix);

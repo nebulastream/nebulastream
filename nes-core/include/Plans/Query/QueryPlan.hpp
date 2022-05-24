@@ -272,7 +272,6 @@ class QueryPlan {
      * @brief Creates a new query plan with a query id and a query sub plan id.
      * @param queryId :  the query id
      * @param querySubPlanId : the query sub-plan id
-     * @param rootOperators : vector of root Operators
      */
     QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId);
 

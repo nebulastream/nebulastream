@@ -53,7 +53,6 @@ using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
-
 /**
  * @brief This class is responsible for placing operators of an input query plan on a global execution plan.
  */
@@ -112,9 +111,8 @@ class QueryPlacementPhase {
      * @return false if one of the operator is not pinned else true
      */
     bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
-    GlobalExecutionPlanPtr globalExecutionPlan;
 
-  private:
+    GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
