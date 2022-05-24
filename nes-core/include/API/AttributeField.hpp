@@ -15,6 +15,8 @@
 #ifndef NES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
 #define NES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
 
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <memory>
 #include <string>
 

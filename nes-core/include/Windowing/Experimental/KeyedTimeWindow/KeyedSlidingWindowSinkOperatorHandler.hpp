@@ -62,7 +62,7 @@ class KeyedSlidingWindowSinkOperatorHandler
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
     * @brief Returns the logical window definition

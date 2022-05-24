@@ -25,7 +25,7 @@ void CEPOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr c
     this->clearCounter();
 }
 
-void CEPOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {}
+void CEPOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {}
 
 void CEPOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);

@@ -49,7 +49,8 @@ class CEPOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @brief Stops cep handler
      * @param pipelineExecutionContext pointer to the current pipeline execution context
     */
-    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
 

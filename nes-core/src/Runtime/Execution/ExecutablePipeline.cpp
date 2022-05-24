@@ -21,7 +21,9 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <chrono>
 
+using namespace std::chrono_literals;
 namespace NES::Runtime::Execution {
 ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
                                        QueryId queryId,
@@ -47,7 +49,9 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
 
     switch (this->pipelineStatus.load()) {
         case PipelineStatus::PipelineRunning: {
+            activeExecutions++;
             auto res = executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
+            activeExecutions--;
             return res;
         }
         case PipelineStatus::PipelineStopped: {
@@ -87,11 +91,16 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
     return false;
 }
 
-bool ExecutablePipeline::stop() {
+bool ExecutablePipeline::stop(QueryTerminationType terminationType) {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
+        // wait till active execution count is zero
+        while (activeExecutions > 0) {
+            NES_DEBUG("Pipeline is still executed. Wait for 100ms.")
+            std::this_thread::sleep_for(100ms);
+        }
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-            operatorHandler->stop(pipelineContext);
+            operatorHandler->stop(terminationType, pipelineContext);
         }
         return executablePipelineStage->stop(*pipelineContext.get()) == 0;
     }
@@ -238,7 +247,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
-                stop();
+                stop(QueryTerminationType::Failure);
                 queryManager->notifyPipelineCompletion(querySubPlanId,
                                                        inherited0::shared_from_this<ExecutablePipeline>(),
                                                        task.getType() == Runtime::SoftEndOfStream

@@ -70,4 +70,8 @@ Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, const 
 
 Windowing::TimeCharacteristicPtr IngestionTime() { return Windowing::TimeCharacteristic::createIngestionTime(); }
 
+ExpressionNodePtr RecordCreationTs() {
+    return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, BasicType::UINT64).getExpressionNode();
+}
+
 }// namespace NES::API

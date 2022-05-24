@@ -79,7 +79,7 @@ bool ExecutableQueryPlan::fail() {
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::ErrorState)) {
         NES_DEBUG("QueryExecutionPlan: fail " << queryId << " " << querySubPlanId);
         for (auto& stage : pipelines) {
-            if (!stage->stop()) {
+            if (!stage->stop(QueryTerminationType::Failure)) {
                 NES_ERROR("QueryExecutionPlan: fail failed for stage " << stage);
                 ret = false;
             }
@@ -144,7 +144,7 @@ bool ExecutableQueryPlan::stop() {
     if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Stopped)) {
         NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
         for (auto& stage : pipelines) {
-            if (!stage->stop()) {
+            if (!stage->stop(QueryTerminationType::Failure)) {
                 NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
                 allStagesStopped = false;
             }

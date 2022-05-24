@@ -37,14 +37,13 @@ bool WindowType::inferStamp(const SchemaPtr& schema) {
         auto existingField = schema->hasFieldName(fieldName);
         if (existingField) {
             timeCharacteristic->getField()->setName(existingField->getName());
-            return false;
-        } else if (fieldName == "creationTS") {
-            timeCharacteristic->getField()->setName("creationTS");
-            return false;
+            return true;
+        } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+            return true;
+        } else {
+            NES_ERROR("TumblingWindow using a non existing time field " + fieldName);
+            throw InvalidFieldException("TumblingWindow using a non existing time field " + fieldName);
         }
-
-        NES_ERROR("TumblingWindow using a non existing time field " + fieldName);
-        throw InvalidFieldException("TumblingWindow using a non existing time field " + fieldName);
     }
     return true;
 }

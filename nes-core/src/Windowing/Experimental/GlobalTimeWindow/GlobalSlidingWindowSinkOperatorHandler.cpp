@@ -42,8 +42,9 @@ void GlobalSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineE
     NES_DEBUG("start GlobalSlidingWindowSinkOperatorHandler");
 }
 
-void GlobalSlidingWindowSinkOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
-    NES_DEBUG("stop GlobalSlidingWindowSinkOperatorHandler");
+void GlobalSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+                                                  Runtime::Execution::PipelineExecutionContextPtr) {
+    NES_DEBUG("stop GlobalSlidingWindowSinkOperatorHandler: " << queryTerminationType);
     globalSliceStore.reset();
 }
 

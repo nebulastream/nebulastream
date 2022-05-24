@@ -19,11 +19,15 @@
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
+
+
+
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
  */
 class TimeCharacteristic {
   public:
+    constexpr static const auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
     /**
      * @brief The type as enum.
      */

@@ -19,6 +19,7 @@
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <variant>
@@ -103,9 +104,10 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
 
     /**
      * @brief Stops pipeline stage
-     * @return
+     * @param terminationType indicates the termination type see @QueryTerminationType
+     * @return  Success if pipeline stage stopped
      */
-    bool stop();
+    bool stop(QueryTerminationType terminationType);
 
     /**
     * @brief Get id of pipeline stage
@@ -184,6 +186,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     bool reconfiguration;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers = 0;
+    std::atomic<uint32_t> activeExecutions = 0;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 

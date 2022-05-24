@@ -307,7 +307,7 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
 
     if (type == QueryTerminationType::HardStop || type == QueryTerminationType::Failure) {
         for (auto& stage : qep->getPipelines()) {
-            NES_ASSERT2_FMT(stage->stop(), "Cannot hard stop pipeline " << stage->getPipelineId());
+            NES_ASSERT2_FMT(stage->stop(type), "Cannot hard stop pipeline " << stage->getPipelineId());
         }
     }
 

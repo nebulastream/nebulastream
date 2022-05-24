@@ -69,7 +69,8 @@ class GlobalThreadLocalPreAggregationOperatorHandler
      * @brief Stops the operator handler and triggers all in flight slices.
      * @param pipelineExecutionContext pipeline execution context
      */
-    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
      * @brief This method triggers the thread local state and appends all slices,

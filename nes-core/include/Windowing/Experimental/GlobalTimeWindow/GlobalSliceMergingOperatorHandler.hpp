@@ -44,7 +44,8 @@ class GlobalSliceMergingOperatorHandler
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
      * @brief Get a reference to the slice staging.

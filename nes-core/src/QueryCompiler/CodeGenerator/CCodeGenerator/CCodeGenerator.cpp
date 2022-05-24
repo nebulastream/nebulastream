@@ -655,7 +655,7 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         auto getCreationTimestamp = call("getCreationTimestamp");
         auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
 
-        if (watermarkFieldName != "creationTS") {
+        if (watermarkFieldName != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
 
             NES_ASSERT(recordHandler->hasAttribute(watermarkFieldName),
                        "CCodeGenerator: watermark assigner could not get field \"" << watermarkFieldName << "\" from struct");
@@ -922,7 +922,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
-    if (timeCharacteristicField != "creationTS") {
+    if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
         tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
     }
 
@@ -1074,7 +1074,7 @@ bool CCodeGenerator::generateCodeForGlobalThreadLocalPreAggregationOperator(
     auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
     auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
-    if (timeCharacteristicField != "creationTS") {
+    if (timeCharacteristicField != Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
         tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
     }
 

@@ -46,7 +46,10 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
                                                                      uint64_t sequenceNumber,
                                                                      KeyedSlicePtr slice) {
     auto global = globalSliceStore.lock();
-    NES_ASSERT(global, "globalSliceStore is not valid anymore");
+    if (!global) {
+        NES_FATAL_ERROR("GlobalSliceStore is invalid, this should only happen after a hard stop. Drop all in flight data.");
+        return;
+    }
     // add pre-aggregated slice to slice store
     auto windows = global->addSliceAndTriggerWindows(sequenceNumber, std::move(slice), windowSize, windowSlide);
     // check if we can trigger window computation
@@ -63,24 +66,24 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::triggerSliceMerging(Runtime::Wo
     }
 }
 
-void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr ctx) {
-    NES_DEBUG("stop KeyedGlobalSliceStoreAppendOperatorHandler");
-    auto global = globalSliceStore.lock();
-    if (!global) {
-        return;
-    }
-
-    auto windows = global->triggerAllInflightWindows(windowSize, windowSlide);
-    for (auto& window : windows) {
-        auto buffer = ctx->getBufferManager()->getBufferBlocking();
-        auto task = buffer.getBuffer<WindowTriggerTask>();
-        // we trigger the completion of all windows that end between startSlice and <= endSlice.
-        NES_DEBUG("Deploy window trigger task for slice  ( " << window.startTs << "-" << window.endTs << ")");
-        task->windowStart = window.startTs;
-        task->windowEnd = window.endTs;
-        task->sequenceNumber = window.sequenceNumber;
-        buffer.setNumberOfTuples(1);
-        ctx->dispatchBuffer(buffer);
+void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
+                                                      Runtime::Execution::PipelineExecutionContextPtr ctx) {
+    NES_DEBUG("stop GlobalWindowGlobalSliceStoreAppendOperatorHandler : " << queryTerminationType);
+    if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
+        auto global = globalSliceStore.lock();
+        NES_ASSERT(global, "Global slice store is invalid. This should not happen in a graceful stop.");
+        auto windows = global->triggerAllInflightWindows(windowSize, windowSlide);
+        for (auto& window : windows) {
+            auto buffer = ctx->getBufferManager()->getBufferBlocking();
+            auto task = buffer.getBuffer<WindowTriggerTask>();
+            // we trigger the completion of all windows that end between startSlice and <= endSlice.
+            NES_DEBUG("Deploy window trigger task for slice  ( " << window.startTs << "-" << window.endTs << ")");
+            task->windowStart = window.startTs;
+            task->windowEnd = window.endTs;
+            task->sequenceNumber = window.sequenceNumber;
+            buffer.setNumberOfTuples(1);
+            ctx->dispatchBuffer(buffer);
+        }
     }
 }
 KeyedGlobalSliceStoreAppendOperatorHandler::~KeyedGlobalSliceStoreAppendOperatorHandler() {
