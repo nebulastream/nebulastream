@@ -63,6 +63,13 @@ class MetricUtils {
     static MetricCollectorPtr createCollectorFromType(MetricCollectorType type);
 
     /**
+     * Retrieves the schema from the according type.
+     * @param type
+     * @return the schema ptr
+     */
+    static SchemaPtr getSchemaFromCollectorType(MetricCollectorType type);
+
+    /**
      * @brief Creates a metric from the according collector.
      * @param type
      * @return the metric as shared ptr.

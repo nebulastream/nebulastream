@@ -24,7 +24,6 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>

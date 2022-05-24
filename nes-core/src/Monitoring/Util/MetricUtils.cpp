@@ -98,7 +98,20 @@ MetricPtr MetricUtils::createMetricFromCollector(MetricCollectorType type) {
         case MetricCollectorType::NETWORK_COLLECTOR:
             return std::make_shared<Metric>(NetworkMetricsWrapper{}, WrappedNetworkMetrics);
         default: {
-            NES_FATAL_ERROR("MonitoringSink: Collector type not supported " << NES::toString(type));
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::toString(type));
+        }
+    }
+    return nullptr;
+}
+
+SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
+    switch (type) {
+        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchema("");
+        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getSchema("");
+        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchema("");
+        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchema("");
+        default: {
+            NES_FATAL_ERROR("MetricUtils: Collector type not supported " << NES::toString(type));
         }
     }
     return nullptr;
