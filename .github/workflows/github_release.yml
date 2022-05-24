@@ -22,7 +22,7 @@ jobs:
         token: ${{ secrets.CI_TOKEN }}
         repository: 'nebulastream/nebulastream-dev-builds'
         path: nebulastream
-     - name: create tag
+     - name: "Create Tag in nebulastream-dev-builds Repo"
        run: |
          cd nebulastream
          tag_name=$GITHUB_REF_NAME
@@ -42,7 +42,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           repository: 'nebulastream/nebulastream-tutorial'
           path: nebulastream-tutorial
-      - name: create tag
+      - name: "Create Tag in nebulastream-tutorial Repo"
         run: |
           cd nebulastream-tutorial
           tag_name=$GITHUB_REF_NAME
@@ -88,16 +88,16 @@ jobs:
       - name: Build Docker
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-      - name: Build package
+      - name: "Build Multi Arch Packages"
         run: |
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-package.sh nes_package_${{ matrix.osversion }}
-      - name: getFile
+      - name: "Fetch Debian Files"
         run: |
           nes_version=${GITHUB_REF_NAME:1}
           DEB_NAME=NebulaStream-$nes_version-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
           mv $GITHUB_WORKSPACE/build/*deb $GITHUB_WORKSPACE/build/$DEB_NAME.deb
           echo "DEB_FILE=$GITHUB_WORKSPACE/build/$DEB_NAME.deb" >> $GITHUB_ENV
-      - name: "Release Dev Build Repository"
+      - name: "Perform Release for nebulastream-dev-builds Repository"
         uses: softprops/action-gh-release@v0.1.14
         with:
           files: |
@@ -105,7 +105,7 @@ jobs:
           repository: nebulastream/nebulastream-dev-builds
           token: ${{ secrets.CI_TOKEN }}
           body: ${{ steps.changelog_reader.outputs.log_entry }}
-      - name: "Release NebulaStream Repository"
+      - name: "Perform Release for nebulastream Repository"
         uses: softprops/action-gh-release@v0.1.14
         with:
           files: |
@@ -113,7 +113,7 @@ jobs:
           repository: nebulastream/nebulastream
           token: ${{ secrets.CI_TOKEN }}
           body: ${{ steps.changelog_reader.outputs.log_entry }}
-      - name: docker cleanup
+      - name: "Perform Docker Cleanup"
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_package
@@ -129,7 +129,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Build and Release NES Executable Image
+      - name: "Build and Release NES Executable Image"
         run: |
           nes_version=${GITHUB_REF_NAME:1}
           echo "Preparing and Releasing new executable image with version $nes_version and latest"
