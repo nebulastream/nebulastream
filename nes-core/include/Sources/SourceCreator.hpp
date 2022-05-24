@@ -25,6 +25,7 @@
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/MaterializedViewSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Sources/TCPSource.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -397,6 +398,25 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                SourceDescriptor::InputFormat inputFormat);
 #endif
+
+/**
+ * @brief function to create a lambda source
+ * @param schema of the data source
+ * @param bufferManager
+ * @param queryManager
+ * @param number of buffers that should be produced
+ * @param frequency when to gather the next buffer
+ * @param generationFunction
+ * @param operatorId
+ * @return a const data source pointer */
+DataSourcePtr createTCPSource(const SchemaPtr& schema,
+                              const Runtime::BufferManagerPtr& bufferManager,
+                              const Runtime::QueryManagerPtr& queryManager,
+                              const TCPSourceTypePtr& tcpSourceType,
+                              OperatorId operatorId,
+                              OriginId originId,
+                              size_t numSourceLocalBuffers,
+                              const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 }// namespace NES
 #endif// NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_

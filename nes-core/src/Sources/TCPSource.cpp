@@ -51,23 +51,22 @@ std::string TCPSource::toString() const {
     std::stringstream ss;
     ss << "TCPSOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";
-    ss << "URL=" << sourceConfig->getUrl() << ".";
+    ss << sourceConfig->toString();
     return ss.str();
 }
 
 bool TCPSource::connected() {
     struct sockaddr_in serv_addr;
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+    if ((sock = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0)) < 0){
         NES_ERROR("TCPSource::connect: could not create socket.");
         connection = -1;
         return false;
     }
-    serv_addr.sin_family = AF_INET;
-    std::vector<std::string> connectionConfigs = Util::splitWithStringDelimiter<std::string>(sourceConfig->getUrl()->getValue(), ":");
-    serv_addr.sin_port = htons(std::stoi(connectionConfigs.at(2)));
+    serv_addr.sin_family = sourceConfig->getSocketDomain()->getValue();
+    serv_addr.sin_port = htons(sourceConfig->getSocketPort()->getValue());
 
-    if (inet_pton(AF_INET, connectionConfigs.at(1).c_str(), &serv_addr.sin_addr) <= 0){
-        NES_ERROR("TCPSource::connect: address: " << connectionConfigs.at(1) << " not supported");
+    if (inet_pton(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketHost()->getValue().c_str(), &serv_addr.sin_addr) <= 0){
+        NES_ERROR("TCPSource::connect: address: " << sourceConfig->getSocketHost()->getValue() << " not supported");
         connection = -1;
         return false;
     }
@@ -104,12 +103,44 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
     NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupleCount = 0;
-    //Todo: what buffer size to choose and how to convert the buffer to
-    //read(sock, tupleBuffer.getBuffer(), tupleBuffer.getBuffer().getBufferSize());
 
+    char *buffer = new char[tupleBuffer.getBuffer().getBufferSize()];
+    //Todo: what buffer size to choose and how to convert the buffer to
+    read(sock, buffer, tupleBuffer.getBuffer().getBufferSize());
+
+    std::cout << buffer << std::endl;
 
 
     return true;
 }
 
+SourceType TCPSource::getType() const { return TCP_SOURCE; }
+
 }// namespace NES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
