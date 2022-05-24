@@ -37,24 +37,29 @@ namespace NES::QueryCompilation {
 
 DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                                            Phases::PhaseFactoryPtr const& phaseFactory,
-                                           Compiler::JITCompilerPtr jitCompiler)
+                                           Compiler::JITCompilerPtr jitCompiler,
+                                           bool sourceSharing,
+                                           bool useCompilationCache)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
-      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)),
+      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
       bufferOptimizationPhase(phaseFactory->createBufferOptimizationPhase(options)),
       predicationOptimizationPhase(phaseFactory->createPredicationOptimizationPhase(options)),
-      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))) {}
+      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))), sourceSharing(sourceSharing),
+      useCompilationCache(useCompilationCache) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& options,
                                               Phases::PhaseFactoryPtr const& phaseFactory,
-                                              Compiler::JITCompilerPtr jitCompiler) {
-    return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory, std::move(jitCompiler)));
+                                              Compiler::JITCompilerPtr jitCompiler,
+                                              bool sourceSharing,
+                                              bool useCompilationCache) {
+    return std::make_shared<DefaultQueryCompiler>(
+        DefaultQueryCompiler(options, phaseFactory, std::move(jitCompiler), sourceSharing, useCompilationCache));
 }
 
 QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationRequestPtr request) {
-
     try {
         Timer timer("DefaultQueryCompiler");
 
@@ -103,9 +108,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         timer.pause();
         NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
 
-        auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan,
-                                                                          request->getNodeEngine(),
-                                                                          request->isSourceSharingEnabled());
+        auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();

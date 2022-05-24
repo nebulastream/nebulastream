@@ -45,7 +45,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -70,8 +70,7 @@ LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(const
 }
 
 Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
-                                                                                  const Runtime::NodeEnginePtr& nodeEngine,
-                                                                                  bool sourceSharing) {
+                                                                                  const Runtime::NodeEnginePtr& nodeEngine) {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
@@ -85,8 +84,7 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
                       executablePipelines,
                       nodeEngine,
                       pipelineQueryPlan,
-                      pipelineToExecutableMap,
-                      sourceSharing);
+                      pipelineToExecutableMap);
     }
 
     return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
@@ -137,8 +135,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap,
-    bool sourceSharing) {
+    std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     if (!pipeline->isSourcePipeline()) {
         NES_ERROR("This is not a source pipeline.");
@@ -187,8 +184,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
                                         sourceOperator->getOriginId(),
                                         sourceDescriptor,
                                         nodeEngine,
-                                        executableSuccessorPipelines,
-                                        sourceSharing);
+                                        executableSuccessorPipelines);
 
     // Add this source as a predecessor to the pipeline execution context's of all its children.
     // This way you can navigate upstream.

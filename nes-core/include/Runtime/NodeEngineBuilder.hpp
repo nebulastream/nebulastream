@@ -122,13 +122,6 @@ class NodeEngineBuilder {
     NodeEngineBuilder& setPhaseFactory(QueryCompilation::Phases::PhaseFactoryPtr phaseFactory);
 
     /**
-     * setter used to pass a language a query compiler to NodeEngineBuilder. Optional
-     * @param queryCompiler
-     * @return NodeEngineBuilder&
-     */
-    NodeEngineBuilder& setCompiler(QueryCompilation::QueryCompilerPtr queryCompiler);
-
-    /**
      * performs safety checks and returns a NodeEngine
      * @return NodeEnginePtr
      */

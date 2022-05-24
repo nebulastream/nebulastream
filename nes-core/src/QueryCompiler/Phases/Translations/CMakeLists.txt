@@ -20,6 +20,7 @@ add_source_files(nes-core
         GeneratableOperatorProvider.cpp
         DefaultGeneratableOperatorProvider.cpp
         DataSinkProvider.cpp
-        DataSourceProvider.cpp
+        DefaultDataSourceProvider.cpp
+        SourceSharingDataSourceProvider.cpp
 )
 

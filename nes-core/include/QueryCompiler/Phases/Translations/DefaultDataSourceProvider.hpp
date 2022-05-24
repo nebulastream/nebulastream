@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
 #include <Operators/OperatorId.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -22,9 +22,9 @@ namespace QueryCompilation {
 /**
  * @brief Provider to transform a source descriptor to executable DataSource.
  */
-class DataSourceProvider {
+class DefaultDataSourceProvider {
   public:
-    explicit DataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
+    explicit DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
     static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
     /**
      * @brief Lowers a source descriptor to a executable data source.
@@ -38,17 +38,14 @@ class DataSourceProvider {
                                 OriginId originId,
                                 SourceDescriptorPtr sourceDescriptor,
                                 Runtime::NodeEnginePtr nodeEngine,
-                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                                bool sourceSharing);
+                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
-    virtual ~DataSourceProvider() = default;
+    virtual ~DefaultDataSourceProvider() = default;
 
   protected:
     QueryCompilerOptionsPtr compilerOptions;
-    std::map<std::string, DataSourcePtr> physicalStreamNameToSourceMap;
-    std::map<std::pair<std::string,std::string>,DataSourcePtr> sourceDescriptorToDataSourceMap;
 };
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
+#endif// NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_

@@ -49,19 +49,13 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
             OperatorId sourceOperatorId = source->getOperatorId();
 
             NES_DEBUG("AbstractQueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep ");
-
+            //If source sharing is active and this is the first query for this source, init the map
             if (sourceToQEPMapping.find(sourceOperatorId) == sourceToQEPMapping.end()) {
                 sourceToQEPMapping[sourceOperatorId] = std::vector<Execution::ExecutableQueryPlanPtr>();
             }
 
+            //bookkeep which qep is now reading from this source
             sourceToQEPMapping[sourceOperatorId].push_back(qep);
-
-//            for (auto [id, qeps] : sourceToQEPMapping) {
-//                std::cout << "AFTER operator id=" << id << " with no values=" << qeps.size() << std::endl;
-//                for (auto& elem : qeps) {
-//                    std::cout << "plan id=" << elem->getQueryId() << " subplan=" << elem->getQuerySubPlanId() << std::endl;
-//                }
-//            }
         }
     }
 
@@ -228,7 +222,9 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
     std::unique_lock lock(queryMutex);
     NES_ASSERT2_FMT(sourceToQEPMapping.contains(source->getOperatorId()),
                     "source=" << source->getOperatorId() << " wants to terminate but is not part of the mapping process");
-    bool retFinal = true;
+
+    bool overallResult = true;
+    //we have to check for each query on this source if we can terminate and return a common answer
     for (auto qep : sourceToQEPMapping[source->getOperatorId()]) {
         bool ret = queryStatusListener->canTriggerEndOfStream(qep->getQueryId(),
                                                               qep->getQuerySubPlanId(),
@@ -236,10 +232,11 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
                                                               terminationType);
         if (!ret) {
             NES_ERROR("Query cannot trigger EOS =" << qep->getQueryId());
+            NES_THROW_RUNTIME_ERROR("cannot trigger EOS");
         }
-        retFinal &= ret;
+        overallResult &= ret;
     }
-    return retFinal;
+    return overallResult;
 }
 
 bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep) {
@@ -370,6 +367,7 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source) {
 
     // send EOS to `source` itself, iff a network source
     if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
+        //add soft eaos for network source
         auto reconfMessage = ReconfigurationMessage(-1, -1, SoftEndOfStream, netSource);
         addReconfigurationMessage(-1, -1, reconfMessage, false);
     }

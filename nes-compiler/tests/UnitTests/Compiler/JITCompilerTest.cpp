@@ -76,7 +76,7 @@ class JITCompilerTest : public Testing::TestWithErrorHandling<testing::Test> {
  */
 TEST_F(JITCompilerTest, compileCppCode) {
     auto sourceCode = std::make_unique<SourceCode>("cpp", TEST_FILE_BODY);
-    auto request = CompilationRequest::create(std::move(sourceCode), "test_1", false, false, true, true, false);
+    auto request = CompilationRequest::create(std::move(sourceCode), "test_1", false, false, true, true);
 
     auto result = compiler->compile(std::move(request));
     result.wait_for(std::chrono::seconds(waitForCompilation));

@@ -117,12 +117,6 @@ bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, inherited1::shared_from_this());
     request->enableDump();
-    if(sourceSharing)
-    {
-        NES_WARNING("Enable Source Sharing");
-        request->enableSourceSharing();
-    }
-
     auto result = queryCompiler->compileQuery(request);
     try {
         auto executablePlan = result->getExecutableQueryPlan();

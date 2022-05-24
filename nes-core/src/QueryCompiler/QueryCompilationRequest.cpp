@@ -21,7 +21,7 @@ QueryCompilationRequestPtr QueryCompilationRequest::create(QueryPlanPtr queryPla
 }
 
 QueryCompilationRequest::QueryCompilationRequest(QueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine)
-    : queryPlan(std::move(queryPlan)), nodeEngine(std::move(nodeEngine)), debug(false), optimize(false), dumpQueryPlans(false), sourceSharing(false) {}
+    : queryPlan(std::move(queryPlan)), nodeEngine(std::move(nodeEngine)), debug(false), optimize(false), dumpQueryPlans(false){}
 
 void QueryCompilationRequest::enableDump() { this->dumpQueryPlans = true; }
 
@@ -29,13 +29,9 @@ void QueryCompilationRequest::enableDebugging() { this->debug = true; }
 
 void QueryCompilationRequest::enableOptimizations() { this->optimize = true; }
 
-void QueryCompilationRequest::enableSourceSharing(){ this->sourceSharing = true; }
-
 bool QueryCompilationRequest::isDebugEnabled() const { return debug; }
 
 bool QueryCompilationRequest::isOptimizeEnabled() const { return optimize; }
-
-bool QueryCompilationRequest::isSourceSharingEnabled() const { return sourceSharing; }
 
 bool QueryCompilationRequest::isDumpEnabled() const { return dumpQueryPlans; }
 

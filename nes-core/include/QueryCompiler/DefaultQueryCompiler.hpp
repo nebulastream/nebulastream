@@ -27,11 +27,15 @@ class DefaultQueryCompiler : public QueryCompiler {
      * @brief Creates a new instance of the DefaultQueryCompiler, with a set of options and phases.
      * @param options QueryCompilationOptions.
      * @param phaseFactory Factory which allows the injection of query optimization phases.
+     * @param sourceSharing
+     * @param useCompilationCache
      * @return QueryCompilerPtr
      */
     static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options,
                                    Phases::PhaseFactoryPtr const& phaseFactory,
-                                   Compiler::JITCompilerPtr jitCompiler);
+                                   Compiler::JITCompilerPtr jitCompiler,
+                                   bool sourceSharing = false,
+                                   bool useCompilationCache = false);
 
     /**
     * @brief Submits a new query compilation request for compilation.
@@ -43,7 +47,10 @@ class DefaultQueryCompiler : public QueryCompiler {
   protected:
     DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                          Phases::PhaseFactoryPtr const& phaseFactory,
-                         Compiler::JITCompilerPtr jitCompiler);
+                         Compiler::JITCompilerPtr jitCompiler,
+                         bool sourceSharing,
+                         bool useCompilationCache);
+
     LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
     LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
@@ -52,6 +59,8 @@ class DefaultQueryCompiler : public QueryCompiler {
     BufferOptimizationPhasePtr bufferOptimizationPhase;
     PredicationOptimizationPhasePtr predicationOptimizationPhase;
     CodeGenerationPhasePtr codeGenerationPhase;
+    bool sourceSharing;
+    bool useCompilationCache;
 };
 
 }// namespace NES::QueryCompilation

@@ -34,8 +34,7 @@ class LowerToExecutableQueryPlanPhase {
                                                      const DataSourceProviderPtr& sourceProvider);
 
     Runtime::Execution::ExecutableQueryPlanPtr apply(const PipelineQueryPlanPtr& pipelineQueryPlan,
-                                                     const Runtime::NodeEnginePtr& nodeEngine,
-                                                     bool sourceSharing);
+                                                     const Runtime::NodeEnginePtr& nodeEngine);
 
   private:
     DataSinkProviderPtr sinkProvider;
@@ -46,8 +45,7 @@ class LowerToExecutableQueryPlanPhase {
                        std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
                        const Runtime::NodeEnginePtr& nodeEngine,
                        const PipelineQueryPlanPtr& pipelineQueryPlan,
-                       std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap,
-                       bool sourceSharing);
+                       std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
     Runtime::Execution::SuccessorExecutablePipeline
     processSuccessor(const OperatorPipelinePtr& pipeline,

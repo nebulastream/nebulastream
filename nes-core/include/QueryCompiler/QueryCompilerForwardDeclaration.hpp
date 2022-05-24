@@ -213,8 +213,8 @@ using OperatorFusionPolicyPtr = std::shared_ptr<OperatorFusionPolicy>;
 class DataSinkProvider;
 using DataSinkProviderPtr = std::shared_ptr<DataSinkProvider>;
 
-class DataSourceProvider;
-using DataSourceProviderPtr = std::shared_ptr<DataSourceProvider>;
+class DefaultDataSourceProvider;
+using DataSourceProviderPtr = std::shared_ptr<DefaultDataSourceProvider>;
 namespace Phases {
 
 class PhaseFactory;

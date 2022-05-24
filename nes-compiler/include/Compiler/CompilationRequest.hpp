@@ -39,8 +39,7 @@ class CompilationRequest {
                        bool profileCompilation,
                        bool profileExecution,
                        bool optimizeCompilation,
-                       bool debug,
-                       bool sourceSharing);
+                       bool debug);
     bool operator==(const CompilationRequest& rhs) const;
     bool operator!=(const CompilationRequest& rhs) const;
 
@@ -59,20 +58,13 @@ class CompilationRequest {
                                                       bool profileCompilation,
                                                       bool profileExecution,
                                                       bool optimizeCompilation,
-                                                      bool debug,
-                                                      bool sourceSharing = false);
+                                                      bool debug);
 
     /**
      * @brief Returns the source code artifact
      * @return @SourceCode
      */
     [[nodiscard]] const std::shared_ptr<SourceCode> getSourceCode() const;
-
-    /**
-     * @brief Indicates if debugging should be enabled.
-     * @return debug flag
-     */
-    [[nodiscard]] bool enableSourceSharing() const;
 
     /**
      * @brief Indicates if debugging should be enabled.
@@ -111,7 +103,6 @@ class CompilationRequest {
     const bool profileExecution;
     const bool optimizeCompilation;
     const bool debug;
-    const bool sourceSharing;
 };
 
 }// namespace NES::Compiler

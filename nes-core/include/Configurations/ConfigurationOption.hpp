@@ -153,6 +153,7 @@ const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "number
 const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
+const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";

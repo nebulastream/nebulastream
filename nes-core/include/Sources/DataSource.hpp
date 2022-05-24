@@ -294,9 +294,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   private:
     mutable std::recursive_mutex startStopMutex;
-    //    std::shared_ptr<std::thread> thread{nullptr};
     uint64_t maxSequenceNumber = 0;
 
+    mutable std::recursive_mutex successorModifyMutex;
     /**
     * @brief running routine with a fixed gathering interval
     */
