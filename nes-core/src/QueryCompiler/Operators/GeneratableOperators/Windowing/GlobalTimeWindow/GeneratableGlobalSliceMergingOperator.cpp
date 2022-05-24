@@ -59,7 +59,6 @@ GeneratableGlobalSliceMergingOperator::GeneratableGlobalSliceMergingOperator(
 void GeneratableGlobalSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
     auto windowOperatorIndex = pipeline->registerOperatorHandler(windowHandler);
     codegen->generateGlobalSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
-                                                    outputSchema,
                                                     pipeline,
                                                     id,
                                                     windowOperatorIndex,

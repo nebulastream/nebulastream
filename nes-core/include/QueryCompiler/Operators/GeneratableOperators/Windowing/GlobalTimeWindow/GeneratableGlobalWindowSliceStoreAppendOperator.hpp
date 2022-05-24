@@ -27,6 +27,7 @@ class GeneratableGlobalWindowSliceStoreAppendOperator : public GeneratableOperat
      * @param inputSchema of the input records
      * @param outputSchema of the result records
      * @param operatorHandler handler of the operator state
+     * @param windowAggregation window aggregations
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema,
@@ -40,6 +41,7 @@ class GeneratableGlobalWindowSliceStoreAppendOperator : public GeneratableOperat
      * @param inputSchema of the input records
      * @param outputSchema of the result records
      * @param operatorHandler handler of the operator state
+     * @param windowAggregation window aggregations
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr create(OperatorId id,

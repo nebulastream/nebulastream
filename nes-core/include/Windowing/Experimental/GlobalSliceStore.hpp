@@ -55,8 +55,6 @@ class GlobalSliceStore {
     std::vector<Window>
     addSliceAndTriggerWindows(uint64_t sequenceNumber, SliceTypeSharedPtr slice, uint64_t windowSize, uint64_t windowSlide) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-
-        //NES_ASSERT(!sliceMap.contains(sliceIndex), "Slice is not contained");
         auto sliceEnd = slice->getEnd();
         auto sliceStart = slice->getStart();
         auto sliceIter = slices.rbegin();
@@ -64,12 +62,11 @@ class GlobalSliceStore {
             sliceIter++;
         }
         if (sliceIter == slices.rend()) {
-            // We are in case 1. thus we have to prepend a new slice
             slices.emplace_front(std::move(slice));
         } else if ((*sliceIter)->getStart() < sliceStart) {
             slices.emplace(sliceIter.base(), std::move(slice));
         } else {
-            throw WindowProcessingException("");
+            throw WindowProcessingException("there is no slice contained in the global slice store.");
         }
         auto lastMaxSliceEnd = sliceAddSequenceLog.getCurrentWatermark();
         sliceAddSequenceLog.updateWatermark(sliceEnd, sequenceNumber);
@@ -92,6 +89,7 @@ class GlobalSliceStore {
     /**
      * @brief Triggers a specific slice and garbage collects all slices
      * that are not necessary any more.
+     * @param sequenceNumber
      * @param sliceIndex
      */
     void finalizeSlice(uint64_t sequenceNumber, uint64_t sliceIndex) {
@@ -112,8 +110,8 @@ class GlobalSliceStore {
         // remove all slices which are between lastFinalizedSliceIndex and newFinalizedSliceIndex.
         // at this point we are sure that we will never use them again.
         for (auto si = lastFinalizedSliceIndex; si < newFinalizedSliceIndex; si++) {
-            //assert(sliceMap.contains(si));
-            // sliceMap.erase(si);
+            assert(slices.contains(si));
+            slices.erase(si);
         }
     }
 
@@ -126,6 +124,7 @@ class GlobalSliceStore {
     std::vector<SliceTypeSharedPtr> getSlicesForWindow(uint64_t startTs, uint64_t endTs) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
         auto slicesInWindow = std::vector<SliceTypeSharedPtr>();
+        // Iterate over the slices and collect all slices, which are covered by the window between startTs and endTs.
         auto sliceIter = slices.begin();
         while (sliceIter != slices.end()) {
             if ((*sliceIter)->getEnd() > endTs) {
@@ -141,14 +140,14 @@ class GlobalSliceStore {
 
   private:
     std::vector<Window> triggerInflightWindows(uint64_t windowSize, uint64_t windowSlide, uint64_t lastEndTs, uint64_t endEndTs) {
-
         std::vector<Window> windows;
         // trigger all windows, for which the list of slices contains the slice end.
+        // use __builtin_sub_overflow to detect negative overflowing sub
         uint64_t maxWindowEndTs = lastEndTs;
         if (__builtin_sub_overflow(maxWindowEndTs, windowSize, &maxWindowEndTs)) {
             maxWindowEndTs = 0;
         }
-
+        // iterate over all slices that would open a window that ends below endTs.
         for (auto& slice : slices) {
             if (slice->getStart() + windowSize > endEndTs) {
                 break;

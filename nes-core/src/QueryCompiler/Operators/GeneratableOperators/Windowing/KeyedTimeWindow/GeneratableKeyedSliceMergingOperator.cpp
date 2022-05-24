@@ -59,7 +59,6 @@ GeneratableKeyedSliceMergingOperator::GeneratableKeyedSliceMergingOperator(
 void GeneratableKeyedSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
     auto windowOperatorIndex = pipeline->registerOperatorHandler(windowHandler);
     codegen->generateKeyedSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
-                                                    outputSchema,
                                                     pipeline,
                                                     id,
                                                     windowOperatorIndex,

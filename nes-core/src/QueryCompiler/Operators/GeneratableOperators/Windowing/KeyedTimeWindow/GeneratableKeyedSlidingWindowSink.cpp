@@ -58,7 +58,6 @@ GeneratableKeyedSlidingWindowSink::GeneratableKeyedSlidingWindowSink(
 void GeneratableKeyedSlidingWindowSink::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
     codegen->generateKeyedSlidingWindowOperatorSetup(windowHandler->getWindowDefinition(),
-                                                     outputSchema,
                                                      context,
                                                      id,
                                                      windowOperatorIndex,

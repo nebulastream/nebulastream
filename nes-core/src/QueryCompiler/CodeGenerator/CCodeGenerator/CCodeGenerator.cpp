@@ -1325,7 +1325,7 @@ bool CCodeGenerator::generateCodeForGlobalSliceMergingOperator(
     return 0;
 }
 
-bool CCodeGenerator::generateCodeForSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) {
+bool CCodeGenerator::generateCodeForKeyedSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto code = context->code;
     auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
@@ -3686,7 +3686,6 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
 
 uint64_t
 CCodeGenerator::generateGlobalSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                        SchemaPtr,
                                                         PipelineContextPtr context,
                                                         uint64_t id,
                                                         uint64_t windowOperatorIndex,
@@ -3739,7 +3738,6 @@ CCodeGenerator::generateGlobalSliceMergingOperatorSetup(Windowing::LogicalWindow
 
 uint64_t
 CCodeGenerator::generateKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                       SchemaPtr,
                                                        PipelineContextPtr context,
                                                        uint64_t id,
                                                        uint64_t windowOperatorIndex,
@@ -3808,7 +3806,6 @@ CCodeGenerator::generateKeyedSliceMergingOperatorSetup(Windowing::LogicalWindowD
 
 uint64_t
 CCodeGenerator::generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                        SchemaPtr,
                                                         PipelineContextPtr context,
                                                         uint64_t id,
                                                         uint64_t windowOperatorIndex,
@@ -3877,7 +3874,6 @@ CCodeGenerator::generateKeyedSlidingWindowOperatorSetup(Windowing::LogicalWindow
 
 uint64_t
 CCodeGenerator::generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                         SchemaPtr,
                                                          PipelineContextPtr context,
                                                          uint64_t id,
                                                          uint64_t windowOperatorIndex,
@@ -3924,7 +3920,6 @@ CCodeGenerator::generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindo
 
 uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     Windowing::LogicalWindowDefinitionPtr window,
-    SchemaPtr,
     PipelineContextPtr context,
     uint64_t id,
     uint64_t windowOperatorIndex,
