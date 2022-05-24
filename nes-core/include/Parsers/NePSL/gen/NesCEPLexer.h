@@ -1,14 +1,6 @@
-
-
-// Generated from /home/zouni/CLionProjects/nebulastream/nes-core/src/Parsers/NebulaPSL/NesCEP.g4 by ANTLR 4.9.2
-
 #pragma once
 
-
 #include "antlr4-runtime.h"
-
-
-
 
 class  NesCEPLexer : public antlr4::Lexer {
   public:
