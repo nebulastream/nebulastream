@@ -89,7 +89,15 @@ void NesCEPQueryPlanCreator::exitInputStreams(NesCEPParser::InputStreamsContext*
             }
         }
         if (p->isIteration()) {
-            query.times(p->getIterMin(), p->getIterMax());
+            if(p->getIterMax() != LLONG_MAX){
+                query.times(p->getIterMin(), p->getIterMax());
+                }
+            else if(p->getIterMin() == 1 && p->getIterMax() == LLONG_MAX){
+                    query.times();
+                }
+            else if(p->getIterMin() == 0){
+                    query.times(p->getIterMax());
+            }
             p->setQuery(query);
         }
         std::advance(tmpIt, 1);
@@ -209,20 +217,25 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
     NePSLPattern* event = *tmpIt;
     event->setIteration(true);
     if (context->STAR()) {
-        event->setIterMin(0);
-        event->setIterMax(LLONG_MAX);
+        //[]*
+        //TODO not yet implemented
+        //event->setIterMin(0);
+        //event->setIterMax(LLONG_MAX);
     } else if (context->PLUS() && !context->LBRACKET()) {
+        //e.g., A+
         event->setIterMin(1);
         event->setIterMax(LLONG_MAX);
     } else if (context->D_POINTS()) {
+        //e.g., A[2:4], between 2 to 4 occurances
         //Consecutive options not yet supported
         event->setIterMin(stoi(context->iterMin()->INT()->getText()));
         event->setIterMax(stoi(context->iterMax()->INT()->getText()));
     } else if (context->PLUS() && context->LBRACKET()) {
+        // e.g., A[2]+ is more than 2
         event->setIterMin(stoi(context->INT()->getText()));
         event->setIterMax(LLONG_MAX);
     } else {
-        event->setIterMin(stoi(context->INT()->getText()));
+        event->setIterMin(0);
         event->setIterMax(stoi(context->INT()->getText()));
     }
     NesCEPBaseListener::enterQuantifiers(context);

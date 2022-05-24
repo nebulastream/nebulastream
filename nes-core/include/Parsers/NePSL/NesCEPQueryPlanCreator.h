@@ -32,6 +32,11 @@ limitations under the License.
 #include <Parsers/NePSL/gen/NesCEPBaseListener.h>
 #include <Plans/Query/QueryPlan.hpp>
 
+/**
+ * @brief This class creates the query plan from a received NePSL pattern
+ * This enables the parsing of declarative patterns into NES queries.
+ */
+
 class NesCEPQueryPlanCreator: public NesCEPBaseListener {
       private:
         int direction=-1; // -1 for right 0 for op 1 for left

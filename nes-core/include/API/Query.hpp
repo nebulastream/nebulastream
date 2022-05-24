@@ -464,6 +464,13 @@ class Query {
     virtual Query& sink(SinkDescriptorPtr sinkDescriptor);
 
     /**
+     * @brief Add a sink operator for the query to multiple root nodes.
+     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
+     * @param sinkDescriptor
+     */
+    virtual Query& multipleSink(SinkDescriptorPtr sinkDescriptor, std::vector<OperatorNodePtr> rootOperators);
+
+    /**
      * @brief Gets the query plan from the current query.
      * @return QueryPlan
      */
@@ -579,6 +586,8 @@ class Query {
     Query& windowByKey(std::vector<ExpressionNodePtr> keys,
                        Windowing::WindowTypePtr const& windowType,
                        std::vector<Windowing::WindowAggregationPtr> aggregation);
+
+
 };
 
 using QueryPtr = std::shared_ptr<Query>;
