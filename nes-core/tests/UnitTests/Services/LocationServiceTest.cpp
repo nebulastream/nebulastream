@@ -61,7 +61,6 @@ class LocationServiceTest : public Testing::NESBaseTest {
 
 
 TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
-    using namespace std;
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;
@@ -121,7 +120,6 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
 }
 
 TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
-    using namespace std;
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
     uint64_t rpcPortWrk3 = 6002;
