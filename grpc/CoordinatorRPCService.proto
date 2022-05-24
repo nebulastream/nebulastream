@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 import "SerializableDataType.proto";
-import "Spatial.proto";
+import "WorkerLocation.proto";
 
 // The greeting service definition.
 service CoordinatorRPCService {
