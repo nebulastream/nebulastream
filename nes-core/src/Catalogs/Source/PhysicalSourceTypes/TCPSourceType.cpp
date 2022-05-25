@@ -105,7 +105,7 @@ std::string TCPSourceType::toString() {
     ss << socketPort->toStringNameCurrentValue();
     ss << socketDomain->toStringNameCurrentValue();
     ss << socketType->toStringNameCurrentValue();
-    ss << "\n}";
+    ss << "}";
     return ss.str();
 }
 
@@ -153,15 +153,15 @@ void TCPSourceType::setSocketType(uint32_t typeValue) { socketType->setValue(typ
 
 void TCPSourceType::setSocketTypeViaString(std::string typeValue) {
     if (strcasecmp(typeValue.c_str(), "SOCK_STREAM") == 0) {
-        setSocketDomain(SOCK_STREAM);
+        setSocketType(SOCK_STREAM);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_DGRAM") == 0) {
-        setSocketDomain(SOCK_DGRAM);
+        setSocketType(SOCK_DGRAM);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_SEQPACKET") == 0) {
-        setSocketDomain(SOCK_SEQPACKET);
+        setSocketType(SOCK_SEQPACKET);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_RAW") == 0) {
-        setSocketDomain(SOCK_RAW);
+        setSocketType(SOCK_RAW);
     } else if (strcasecmp(typeValue.c_str(), "SOCK_RDM") == 0) {
-        setSocketDomain(SOCK_RDM);
+        setSocketType(SOCK_RDM);
     }
 }
 
