@@ -247,12 +247,14 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
-                stop(QueryTerminationType::Failure);
+                auto terminationType = task.getType() == Runtime::SoftEndOfStream ? Runtime::QueryTerminationType::Graceful
+                                                                                  : Runtime::QueryTerminationType::HardStop;
+
                 queryManager->notifyPipelineCompletion(querySubPlanId,
                                                        inherited0::shared_from_this<ExecutablePipeline>(),
-                                                       task.getType() == Runtime::SoftEndOfStream
-                                                           ? Runtime::QueryTerminationType::Graceful
-                                                           : Runtime::QueryTerminationType::HardStop);
+                                                       terminationType);
+
+                stop(terminationType);
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
                         auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, task.getType(), *pipe);
