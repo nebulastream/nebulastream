@@ -65,27 +65,29 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     NES_TRACE("LambdaSource::receiveData called on operatorId=" << operatorId);
     using namespace std::chrono_literals;
 
-    auto buffer = bufferManager->getBufferBlocking();
-    NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer.getBufferSize(),
+    auto buffer = allocateBuffer();
+    NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer.getBuffer().getBufferSize(),
                     "value to write is larger than the buffer");
-    //    Runtime::TupleBuffer buffer;
 
-    generationFunction(buffer, numberOfTuplesToProduce);
-    if (!buffer) {
-        return std::nullopt;
-    }
+//    if (!buffer) {
+//        return std::nullopt;
+//    }
+    auto buffer2 = buffer.getBuffer();
+    generationFunction(buffer2, numberOfTuplesToProduce);
     buffer.setNumberOfTuples(numberOfTuplesToProduce);
 
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_TRACE("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
-                                                                     << " outOrgID=" << buffer.getOriginId());
+
+    NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << buffer.toString(schema));
+//    NES_TRACE("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
+//                                                                     << " outOrgID=" << buffer.getOriginId());
     if (buffer.getNumberOfTuples() == 0) {
         NES_ASSERT(false, "this should not happen");
         return std::nullopt;
     }
-    return buffer;
+    return buffer2;
 }
 
 std::string LambdaSource::toString() const { return "LambdaSource"; }
