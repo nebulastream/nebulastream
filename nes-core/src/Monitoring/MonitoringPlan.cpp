@@ -13,6 +13,7 @@
 */
 
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -25,8 +26,12 @@ MonitoringPlanPtr MonitoringPlan::create(const std::set<MetricType>& metrics) {
 }
 
 MonitoringPlanPtr MonitoringPlan::defaultPlan() {
-    std::set<MetricType> metricCollectors{CpuMetric, DiskMetric, MemoryMetric, NetworkMetric};
-    return MonitoringPlan::create(metricCollectors);
+    std::set<MetricType> metricTypes{WrappedCpuMetrics, DiskMetric, MemoryMetric, WrappedNetworkMetrics};
+    return MonitoringPlan::create(metricTypes);
+}
+
+std::set<MetricCollectorType> MonitoringPlan::defaultCollectors() {
+    return std::set<MetricCollectorType>{CPU_COLLECTOR, DISK_COLLECTOR, MEMORY_COLLECTOR, NETWORK_COLLECTOR};
 }
 
 bool MonitoringPlan::addMetric(MetricType metric) {
@@ -73,5 +78,13 @@ std::string MonitoringPlan::toString() const {
 std::ostream& operator<<(std::ostream& strm, const MonitoringPlan& plan) { return strm << plan.toString(); }
 
 const std::set<MetricType>& MonitoringPlan::getMetricTypes() const { return metricTypes; }
+
+const std::set<MetricCollectorType> MonitoringPlan::getCollectorTypes() const {
+    std::set<MetricCollectorType> output;
+    for (auto mType : getMetricTypes()) {
+        output.insert(MetricUtils::createCollectorTypeFromMetricType(mType));
+    }
+    return output;
+}
 
 }// namespace NES

@@ -113,13 +113,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     bool unregisterPhysicalSource(std::string logicalName, std::string physicalName);
 
     /**
-     * @brief method to register physical source with the coordinator
-     * @param physicalSources: physical sources containing relevant information
-     * @return bool indicating success
-     */
-    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
-
-    /**
     * @brief method add new parent to this node
     * @param parentId
     * @return bool indicating success
@@ -232,6 +225,13 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr getLocationWrapper();
 
   private:
+    /**
+     * @brief method to register physical source with the coordinator
+     * @param physicalSources: physical sources containing relevant information
+     * @return bool indicating success
+     */
+    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+
     /**
      * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
      */

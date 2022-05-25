@@ -91,6 +91,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     topology = Topology::create();
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, enableMonitoring);
+    monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();

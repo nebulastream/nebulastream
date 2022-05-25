@@ -24,7 +24,8 @@ enum MetricCollectorType {
     MEMORY_COLLECTOR,
     NETWORK_COLLECTOR,
     STATIC_SYSTEM_METRICS_COLLECTOR,
-    RUNTIME_METRICS_COLLECTOR
+    RUNTIME_METRICS_COLLECTOR,
+    INVALID
 };
 
 std::string toString(MetricCollectorType type);

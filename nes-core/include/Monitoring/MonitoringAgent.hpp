@@ -83,6 +83,12 @@ class MonitoringAgent {
      */
     RegistrationMetrics getRegistrationMetrics();
 
+    /**
+     * @brief
+     * @param workerConfig
+     */
+    bool addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig);
+
   private:
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;

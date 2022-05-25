@@ -57,7 +57,7 @@ bool MonitoringSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worke
 
     auto dataBuffers = sinkFormat->getData(inputBuffer);
     for (auto buffer : dataBuffers) {
-        MetricPtr parsedMetric = MetricUtils::createMetricFromCollector(collectorType);
+        MetricPtr parsedMetric = MetricUtils::createMetricFromCollectorType(collectorType);
         readFromBuffer(parsedMetric, buffer, 0);
         auto nodeIdPtr = (uint64_t*) buffer.getBuffer();
         uint64_t nodeId = nodeIdPtr[0];

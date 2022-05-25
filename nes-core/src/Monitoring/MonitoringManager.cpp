@@ -16,10 +16,10 @@
 #include <Util/Logger/Logger.hpp>
 
 #include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
 
 #include <API/Schema.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
@@ -32,8 +32,6 @@
 #include <Runtime/NodeEngine.hpp>
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 
@@ -45,29 +43,18 @@
 #include <utility>
 
 namespace NES {
-
-const std::vector<MetricCollectorType> MonitoringManager::ALL_COLLECTOR_TYPES = {CPU_COLLECTOR,
-                                                                                 DISK_COLLECTOR,
-                                                                                 MEMORY_COLLECTOR,
-                                                                                 NETWORK_COLLECTOR};
-
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
     : MonitoringManager(workerClient, topology, true) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
-    : MonitoringManager(workerClient,
-                        topology,
-                        std::make_shared<LatestEntriesMetricStore>(),
-                        ALL_COLLECTOR_TYPES,
-                        enableMonitoring) {}
+    : MonitoringManager(workerClient, topology, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
                                      TopologyPtr topology,
                                      MetricStorePtr metricStore,
-                                     std::vector<MetricCollectorType> monitoringStreamCollectors,
                                      bool enableMonitoring)
     : metricStore(metricStore), workerClient(workerClient), topology(topology), enableMonitoring(enableMonitoring),
-      monitoringStreamCollectors(monitoringStreamCollectors) {
+      monitoringCollectors(MonitoringPlan::defaultCollectors()) {
     NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring << ", storage=" << toString(metricStore->getType()));
 }
 
@@ -177,58 +164,20 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
 
 MetricStorePtr MonitoringManager::getMetricStore() { return metricStore; }
 
-bool MonitoringManager::registerLogicalMonitoringStreams(NesCoordinatorPtr crd) {
+bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config) {
     if (enableMonitoring) {
-        for (auto collectorType : monitoringStreamCollectors) {
+        for (auto collectorType : monitoringCollectors) {
             auto metricSchema = MetricUtils::getSchemaFromCollectorType(collectorType);
             // auto generate the specifics
-            MetricType metricType = MetricUtils::createMetricFromCollector(collectorType)->getMetricType();
-            std::string metricTypeString = NES::toString(metricType);
-            NES_INFO("MonitoringManager: Creating logical source " << metricTypeString);
-
-            //register logical schema
-            auto success = crd->getSourceCatalogService()->registerLogicalSource(metricTypeString, metricSchema);
-            if (!success) {
-                NES_ERROR("MonitoringManager: Error registering logical monitoring source for " << metricTypeString);
-                return false;
-            }
+            MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
+            std::string logicalSourceName = NES::toString(metricType);
+            logicalMonitoringSources.insert(logicalSourceName);
+            NES_INFO("MonitoringManager: Creating logical source " << logicalSourceName);
+            config->logicalSources.add(LogicalSource::create(logicalSourceName, metricSchema));
         }
         return true;
     }
     NES_ERROR("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
-    return false;
-}
-
-bool MonitoringManager::registerPhysicalMonitoringStreams(NesWorkerPtr worker) {
-    if (enableMonitoring) {
-        std::vector<PhysicalSourcePtr> physicalSources;
-        for (auto collectorType : monitoringStreamCollectors) {
-            // auto generate the specifics
-            MetricType metricType = MetricUtils::createMetricFromCollector(collectorType)->getMetricType();
-            MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
-            std::string metricTypeString = NES::toString(metricType);
-
-            NES_INFO("MonitoringManager: Creating physical source " << metricTypeString + "1");
-            auto source = PhysicalSource::create(metricTypeString, metricTypeString + "1", sourceType);
-            physicalSources.emplace_back(source);
-        }
-        NES_DEBUG("MonitoringManager: Start with register physical source");
-        bool success = worker->registerPhysicalSources(physicalSources);
-        NES_DEBUG("MonitoringManager: Physical sources registered successfully");
-        if (!success) {
-            NES_ERROR("MonitoringManager: Error registering logical monitoring sources");
-            return false;
-        }
-
-        auto engineSources = worker->getNodeEngine()->getPhysicalSources();
-        for (auto src : physicalSources) {
-            engineSources.emplace_back(src);
-            worker->getWorkerConfiguration()->physicalSources.add(src);
-        }
-        worker->getNodeEngine()->updatePhysicalSources(std::move(engineSources));
-        return true;
-    }
-    NES_ERROR("MonitoringManager: Monitoring is disabled, registering of physical monitoring streams not possible.");
     return false;
 }
 
@@ -245,8 +194,8 @@ std::unordered_map<MetricType, QueryId> MonitoringManager::startOrRedeployMonito
 
     // params for iteration
     if (success) {
-        for (auto collectorType : monitoringStreamCollectors) {
-            MetricType metricType = MetricUtils::createMetricFromCollector(collectorType)->getMetricType();
+        for (auto collectorType : monitoringCollectors) {
+            MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
             std::string metricCollectorStr = NES::toString(collectorType);
             std::string metricTypeString = NES::toString(metricType);
             std::string query =
@@ -267,8 +216,7 @@ std::unordered_map<MetricType, QueryId> MonitoringManager::startOrRedeployMonito
             }
             newQueries.insert({metricType, queryId});
         }
-    }
-    else {
+    } else {
         NES_ERROR("MonitoringManager: Failed to deploy monitoring queries. Queries are still running and could not be stopped.");
         return deployedMonitoringQueries;
     }
@@ -328,40 +276,32 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId,
 bool MonitoringManager::waitForQueryToStart(QueryId queryId,
                                             const QueryCatalogServicePtr& catalogService,
                                             std::chrono::seconds timeout) {
-    NES_TRACE("TestUtils: wait till the query " << queryId << " gets into Running status.");
+    NES_INFO("MonitoringManager: wait till the query " << queryId << " gets into Running status.");
     auto start_timestamp = std::chrono::system_clock::now();
 
-    NES_TRACE("TestUtils: Keep checking the status of query " << queryId << " until a fixed time out");
     while (std::chrono::system_clock::now() < start_timestamp + timeout) {
         auto queryCatalogEntry = catalogService->getEntryForQuery(queryId);
         if (!queryCatalogEntry) {
-            NES_ERROR("TestUtils: unable to find the entry for query " << queryId << " in the query catalog.");
+            NES_ERROR("MonitoringManager: unable to find the entry for query " << queryId << " in the query catalog.");
             return false;
         }
-        NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
+        NES_TRACE("MonitoringManager: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
         QueryStatus::Value status = queryCatalogEntry->getQueryStatus();
 
         switch (queryCatalogEntry->getQueryStatus()) {
-            case QueryStatus::MarkedForHardStop:
-            case QueryStatus::MarkedForSoftStop:
-            case QueryStatus::SoftStopCompleted:
-            case QueryStatus::SoftStopTriggered:
-            case QueryStatus::Stopped:
             case QueryStatus::Running: {
                 return true;
             }
-            case QueryStatus::Failed: {
-                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + QueryStatus::toString(status));
-                return false;
-            }
+            case QueryStatus::Scheduling: break;
             default: {
+                NES_ERROR("MonitoringManager: Query failed to start. Expected: Running but found "
+                          + QueryStatus::toString(status));
                 break;
             }
         }
-
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
-    NES_TRACE("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
+    NES_ERROR("MonitoringManager: Starting query " << queryId << " has timed out.");
     return false;
 }
 

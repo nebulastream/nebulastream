@@ -79,7 +79,7 @@ web::json::value MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
     return metricsJson;
 }
 
-MetricCollectorPtr MetricUtils::createCollectorFromType(MetricCollectorType type) {
+MetricCollectorPtr MetricUtils::createCollectorFromCollectorType(MetricCollectorType type) {
     switch (type) {
         case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<CpuCollector>();
         case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<DiskCollector>();
@@ -90,7 +90,7 @@ MetricCollectorPtr MetricUtils::createCollectorFromType(MetricCollectorType type
     return nullptr;
 }
 
-MetricPtr MetricUtils::createMetricFromCollector(MetricCollectorType type) {
+MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
     switch (type) {
         case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<Metric>(CpuMetricsWrapper{}, WrappedCpuMetrics);
         case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(DiskMetrics{}, DiskMetric);
@@ -115,6 +115,21 @@ SchemaPtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
         }
     }
     return nullptr;
+}
+
+MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType type) {
+    switch (type) {
+        case MetricType::CpuMetric: return MetricCollectorType::CPU_COLLECTOR;
+        case MetricType::WrappedCpuMetrics: return MetricCollectorType::CPU_COLLECTOR;
+        case MetricType::DiskMetric: return MetricCollectorType::DISK_COLLECTOR;
+        case MetricType::MemoryMetric: return MetricCollectorType::MEMORY_COLLECTOR;
+        case MetricType::NetworkMetric: return MetricCollectorType::NETWORK_COLLECTOR;
+        case MetricType::WrappedNetworkMetrics: return MetricCollectorType::NETWORK_COLLECTOR;
+        default: {
+            NES_ERROR("MetricUtils: Metric type not supported " << NES::toString(type));
+            return MetricCollectorType::INVALID;
+        }
+    }
 }
 
 }// namespace NES
