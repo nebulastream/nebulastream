@@ -31,6 +31,7 @@
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 using namespace std;
 
@@ -460,6 +461,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->enableSourceSharing = true;
     workerConfig1->bufferSizeInBytes = 1024;
+    workerConfig1->queryCompiler.outputBufferOptimizationLevel = QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
     auto func1 = [&start](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples) {
@@ -582,6 +584,12 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
 
 TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
+    std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
+    remove(outputFilePath1.c_str());
+
+    std::string outputFilePath2 = getTestResourceFolder() / "testOutput2.out";
+    remove(outputFilePath2.c_str());
+
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -599,16 +607,23 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->enableSourceSharing = true;
     workerConfig1->bufferSizeInBytes = 1024;
+    workerConfig1->queryCompiler.outputBufferOptimizationLevel = QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
-    auto func1 = [&start](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples) {
+    bool started = false;
+    auto func1 = [&start, &started](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples) {
         struct Record {
             uint64_t id;
             uint64_t value;
             uint64_t timestamp;
         };
 
-        start.get_future().get();
+        if(!started)
+        {
+            start.get_future().get();
+            started = true;
+        }
+
         auto* records = buffer.getBuffer<Record>();
         for (auto u = 0u; u < numTuples; ++u) {
             records[u].id = u;
@@ -625,12 +640,6 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig, workerConfig1);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-
-    std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
-    remove(outputFilePath1.c_str());
-
-    std::string outputFilePath2 = getTestResourceFolder() / "testOutput2.out";
-    remove(outputFilePath2.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -662,10 +671,50 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
                               "1,1,0\n"
                               "2,2,0\n"
                               "3,3,0\n"
+                              "4,4,0\n"
+                              "0,0,0\n"
+                              "1,1,0\n"
+                              "2,2,0\n"
+                              "3,3,0\n"
                               "4,4,0\n";
 
     string expectedContent2 = "window1$id:INTEGER,window1$value:INTEGER,window1$timestamp:INTEGER\n"
-                              "5,5,0\n"
+                              "6,6,0\n"
+                              "7,7,0\n"
+                              "8,8,0\n"
+                              "9,9,0\n"
+                              "10,0,0\n"
+                              "11,1,0\n"
+                              "12,2,0\n"
+                              "13,3,0\n"
+                              "14,4,0\n"
+                              "15,5,0\n"
+                              "16,6,0\n"
+                              "17,7,0\n"
+                              "18,8,0\n"
+                              "19,9,0\n"
+                              "20,0,0\n"
+                              "21,1,0\n"
+                              "22,2,0\n"
+                              "23,3,0\n"
+                              "24,4,0\n"
+                              "25,5,0\n"
+                              "26,6,0\n"
+                              "27,7,0\n"
+                              "28,8,0\n"
+                              "29,9,0\n"
+                              "30,0,0\n"
+                              "31,1,0\n"
+                              "32,2,0\n"
+                              "33,3,0\n"
+                              "34,4,0\n"
+                              "35,5,0\n"
+                              "36,6,0\n"
+                              "37,7,0\n"
+                              "38,8,0\n"
+                              "39,9,0\n"
+                              "40,0,0\n"
+                              "41,1,0\n"
                               "6,6,0\n"
                               "7,7,0\n"
                               "8,8,0\n"

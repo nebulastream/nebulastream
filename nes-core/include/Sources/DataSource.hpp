@@ -255,6 +255,12 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void setSourceSharing(bool value){sourceSharing = value;};
 
+    /**
+     * @brief set the number of queries that use this source
+     * @param value
+     */
+    void incrementNumberOfConsumerQueries(){numberOfConsumerQueries++;};
+
   protected:
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
@@ -280,6 +286,10 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t taskQueueId;
     bool sourceSharing = false;
 
+    //this counter is used to count the number of queries that use this source
+    std::atomic<uint64_t> refCounter = 0;
+    std::atomic<uint64_t> numberOfConsumerQueries = 1;
+
     /**
      * @brief Emits a tuple buffer to the successors.
      * @param buffer
@@ -295,6 +305,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
   private:
     mutable std::recursive_mutex startStopMutex;
     uint64_t maxSequenceNumber = 0;
+    size_t testI = 0;
 
     mutable std::recursive_mutex successorModifyMutex;
     /**

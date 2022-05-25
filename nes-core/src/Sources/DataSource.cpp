@@ -98,13 +98,13 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 }
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
-   uint64_t queueId = 0;
+    uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors) {
         //find the queue to which this sources pushes
         if (!sourceSharing) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         } else {
-            NES_TRACE("push task for queueid=" << queueId << " successor=" << &successor);
+            NES_DEBUG("push task for queueid=" << queueId << " successor=" << &successor);
             queryManager->addWorkForNextPipeline(buffer, successor, queueId++);
         }
     }
@@ -205,6 +205,12 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
         std::unique_lock lock(startStopMutex);// this mutex guards the thread variable
         wasGracefullyStopped = graceful;
     }
+
+    refCounter++;
+    if (refCounter != numberOfConsumerQueries) {
+        return true;
+    }
+
     NES_DEBUG("DataSource " << operatorId << ": Stop called and source is " << (running ? "running" : "not running"));
     bool expected = true;
 
@@ -369,7 +375,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
-        NES_TRACE("DataSource: Done with period " << curPeriod++
+        NES_DEBUG("DataSource: Done with period " << curPeriod++
                                                   << " "
                                                      "and overall buffers="
                                                   << processedOverallBufferCnt << " sleepCnt=" << sleepCnt
