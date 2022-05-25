@@ -301,7 +301,11 @@ bool NesWorker::connect() {
                                                                  workerConfig->numberOfSlots,
                                                                  registrationMetrics,
                                                                  fixedCoordinates,
-                                                                 workerConfig->nodeSpatialType.getValue());
+                                                                 workerConfig->nodeSpatialType.getValue(),
+                                                                 *(locationWrapper->getLocation()),
+                                                                 locationWrapper->isMobileNode(),
+                                                                 false);
+
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(topologyNodeId);
