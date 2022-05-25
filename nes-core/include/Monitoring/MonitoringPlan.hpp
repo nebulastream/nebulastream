@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <memory>
@@ -30,6 +31,12 @@ class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
     static MonitoringPlanPtr defaultPlan();
+
+    /**
+     * @brief Returns the default collectors of the plan.
+     * @return A set of collectors.
+     */
+    static std::set<MetricCollectorType> defaultCollectors();
 
     /**
      * @brief Add a specific metric to the plan
@@ -51,10 +58,16 @@ class MonitoringPlan {
     [[nodiscard]] std::string toString() const;
 
     /**
-     * @brief Returns the MetricColletorType objects that represent the plan.
-     * @return A set of MetricCollectorType objects.
+     * @brief Returns the MetricType objects that represent the plan.
+     * @return A set of metric type objects.
     */
     [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
+
+    /**
+     * @brief Returns the MetricType objects that represent the plan.
+     * @return A set of metric type objects.
+    */
+    [[nodiscard]] const std::set<MetricCollectorType> getCollectorTypes() const;
 
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 

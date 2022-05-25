@@ -51,7 +51,7 @@ class MonitoringSource : public DataSource {
     std::chrono::milliseconds waitTime;
 
   public:
-    static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);
+    static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(5000);
 };
 
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;

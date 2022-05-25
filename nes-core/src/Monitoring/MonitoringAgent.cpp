@@ -13,6 +13,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Components/NesWorker.hpp>
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -95,6 +97,24 @@ RegistrationMetrics MonitoringAgent::getRegistrationMetrics() {
     }
     NES_WARNING("MonitoringAgent: Metrics disabled. Return empty metric object for registration.");
     return RegistrationMetrics{};
+}
+
+bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig) {
+    if (enabled) {
+        for (auto metricType : monitoringPlan->getMetricTypes()) {
+            // auto generate the specifics
+            MonitoringSourceTypePtr sourceType =
+                MonitoringSourceType::create(MetricUtils::createCollectorTypeFromMetricType(metricType));
+            std::string metricTypeString = NES::toString(metricType);
+
+            NES_INFO("MonitoringAgent: Adding physical source to config " << metricTypeString + "1");
+            auto source = PhysicalSource::create(metricTypeString, metricTypeString + "1", sourceType);
+            workerConfig->physicalSources.add(source);
+        }
+        return true;
+    }
+    NES_ERROR("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
+    return false;
 }
 
 }// namespace NES

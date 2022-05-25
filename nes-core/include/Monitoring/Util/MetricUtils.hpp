@@ -60,7 +60,7 @@ class MetricUtils {
      * @param type
      * @return the metric collector shared ptr.
      */
-    static MetricCollectorPtr createCollectorFromType(MetricCollectorType type);
+    static MetricCollectorPtr createCollectorFromCollectorType(MetricCollectorType type);
 
     /**
      * Retrieves the schema from the according type.
@@ -74,7 +74,14 @@ class MetricUtils {
      * @param type
      * @return the metric as shared ptr.
      */
-    static MetricPtr createMetricFromCollector(MetricCollectorType type);
+    static MetricPtr createMetricFromCollectorType(MetricCollectorType type);
+
+    /**
+     * @brief Creates a metric from the according collector.
+     * @param type
+     * @return the collector as type
+     */
+    static MetricCollectorType createCollectorTypeFromMetricType(MetricType type);
 };
 
 }// namespace NES

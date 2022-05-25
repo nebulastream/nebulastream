@@ -135,12 +135,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        nodeEngine =
-            Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
-
-        NES_DEBUG("NesWorker: Node engine started successfully");
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << workerConfig->enableMonitoring);
         monitoringAgent = MonitoringAgent::create(workerConfig->enableMonitoring);
+        monitoringAgent->addMonitoringStreams(workerConfig);
+
+        nodeEngine =
+            Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
+        NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
         throw log4cxx::helpers::Exception("NesWorker error while starting node engine");
