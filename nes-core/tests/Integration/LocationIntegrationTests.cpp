@@ -25,8 +25,8 @@
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Spatial/LocationIndex.hpp>
+#include <Spatial/LocationProvider.hpp>
 #include <Spatial/LocationProviderCSV.hpp>
-#include <Spatial/NodeLocationWrapper.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -138,7 +138,7 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     auto inRange =
         geoTopology->getNodesInRange(NES::Spatial::Index::Experimental::Location(52.53736960143897, 13.299134894776092), 50.0);
     EXPECT_EQ(inRange.size(), (size_t) 3);
-    auto inRangeAtWorker = wrk2->getLocationWrapper()->getNodeIdsInRange(100.0);
+    auto inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //moving node 3 to hamburg (more than 100km away
     geoTopology->updateFieldNodeCoordinates(node3,
@@ -148,17 +148,17 @@ TEST_F(LocationIntegrationTests, testFieldNodes) {
     EXPECT_EQ(geoTopology->getClosestNodeTo(node3, 100).has_value(), false);
 
     //because node 3 is in hamburg now, we will only get 2 nodes in a radius of 100km (node 3 itself and node 4)
-    inRangeAtWorker = wrk2->getLocationWrapper()->getNodeIdsInRange(100.0);
+    inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
     EXPECT_EQ(inRangeAtWorker.at(1).first, wrk4->getWorkerId());
-    EXPECT_EQ(inRangeAtWorker.at(1).second, *(wrk4->getLocationWrapper()->getLocation()));
+    EXPECT_EQ(inRangeAtWorker.at(1).second, *(wrk4->getLocationProvider()->getLocation()));
 
     //when looking within a radius of 500km we will find all nodes again
-    inRangeAtWorker = wrk2->getLocationWrapper()->getNodeIdsInRange(500.0);
+    inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(500.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
     //if we remove one of the other nodes, there should be one node less in the radius of 500 km
     topology->removePhysicalNode(topology->findNodeWithId(wrk3->getWorkerId()));
-    inRangeAtWorker = wrk2->getLocationWrapper()->getNodeIdsInRange(500.0);
+    inRangeAtWorker = wrk2->getLocationProvider()->getNodeIdsInRange(500.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
 
     //location far away from all the other nodes should not have any closest node
@@ -232,15 +232,15 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
 
     EXPECT_EQ(geoTopology->getSizeOfPointIndex(), (size_t) 1);
 
-    EXPECT_EQ(wrk1->getLocationWrapper()->isMobileNode(), true);
-    EXPECT_EQ(wrk2->getLocationWrapper()->isMobileNode(), false);
+    EXPECT_EQ(wrk1->getLocationProvider()->isMobileNode(), true);
+    EXPECT_EQ(wrk2->getLocationProvider()->isMobileNode(), false);
 
-    EXPECT_EQ(wrk1->getLocationWrapper()->isFieldNode(), false);
-    EXPECT_EQ(wrk2->getLocationWrapper()->isFieldNode(), true);
+    EXPECT_EQ(wrk1->getLocationProvider()->isFieldNode(), false);
+    EXPECT_EQ(wrk2->getLocationProvider()->isFieldNode(), true);
 
-    //EXPECT_EQ(*(wrk1->getLocationWrapper()->getLocation()),
+    //EXPECT_EQ(*(wrk1->getLocationProvider()->getLocation()),
     //          NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
-    EXPECT_EQ(*(wrk2->getLocationWrapper()->getLocation()), NES::Spatial::Index::Experimental::Location::fromString(location2));
+    EXPECT_EQ(*(wrk2->getLocationProvider()->getLocation()), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
     TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
@@ -340,8 +340,7 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     NES::Spatial::Index::Experimental::LocationPtr currentLocation = wrk1Node->getCoordinates();
     Timestamp afterQuery = getTimestamp();
 
-    auto sourceCsv = dynamic_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV*>(
-        wrk1->getLocationWrapper()->getLocationProvider().get());
+    auto sourceCsv = std::static_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV, NES::Spatial::Mobility::Experimental::LocationProvider>(wrk1->getLocationProvider());
     auto startTime = sourceCsv->getStarttime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;

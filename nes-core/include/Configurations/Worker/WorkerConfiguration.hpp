@@ -189,7 +189,7 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType> locationSourceType = {
         LOCATION_SOURCE_TYPE_CONFIG,
-        NES::Spatial::Mobility::Experimental::LocationProviderType::CSV,
+        NES::Spatial::Mobility::Experimental::LocationProviderType::BASE,
         "the kind of interface which the  mobile worker gets its geolocation info from"};
 
     /**

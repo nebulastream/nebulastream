@@ -24,13 +24,25 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-LocationProviderCSV::LocationProviderCSV(std::string csvPath) {
+/*
+LocationProviderCSV::LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc,
+                                   uint64_t parentId,
+                                   NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration, const std::string& csvPath) : LocationProvider(isMobile, fieldNodeLoc, parentId, configuration) {
+    startTime = getTimestamp();
+    readMovementSimulationDataFromCsv(std::move(csvPath));
+}
+ */
+LocationProviderCSV::LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc, const std::string& csvPath) : LocationProvider(isMobile, fieldNodeLoc) {
+    startTime = getTimestamp();
+    readMovementSimulationDataFromCsv(std::move(csvPath));
+}
+
+    void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& csvPath) {
     std::string csvLine;
     std::ifstream inputStream(csvPath);
     std::string locString;
     std::string timeString;
 
-    startTime = getTimestamp();
     NES_DEBUG("Started csv location source at " << startTime)
 
     //read locations and time offsets from csv, calculate absolute timestamps from offsets by adding start time

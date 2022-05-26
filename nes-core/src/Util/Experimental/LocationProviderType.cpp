@@ -14,8 +14,8 @@
 #include <Util/Experimental/LocationProviderType.hpp>
 namespace NES::Spatial::Mobility::Experimental {
 LocationProviderType stringToLocationProviderType(const std::string providerTypeString) {
-    if (providerTypeString == "NONE") {
-        return LocationProviderType::NONE;
+    if (providerTypeString == "BASE") {
+        return LocationProviderType::BASE;
     } else if (providerTypeString == "CSV") {
         return LocationProviderType::CSV;
     }
@@ -24,7 +24,7 @@ LocationProviderType stringToLocationProviderType(const std::string providerType
 
 std::string toString(const LocationProviderType providerType) {
     switch (providerType) {
-        case LocationProviderType::NONE: return "NONE";
+        case LocationProviderType::BASE: return "BASE";
         case LocationProviderType::CSV: return "CSV";
         case LocationProviderType::INVALID: return "INVALID";
     }

@@ -14,8 +14,8 @@
 
 #ifndef NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
 #define NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
-#include <Common/Location.hpp>
 #include <Spatial/LocationProvider.hpp>
+#include <Common/Location.hpp>
 #include <vector>
 
 namespace NES::Spatial::Mobility::Experimental {
@@ -26,11 +26,17 @@ namespace NES::Spatial::Mobility::Experimental {
  */
 class LocationProviderCSV : public LocationProvider {
   public:
+    /*
+    LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc,
+                                       uint64_t parentId,
+                                       NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration, const std::string& csvPath);
+                                       */
+    LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc, const std::string& csvPath);
     /**
      * @brief construct a location source that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
      * @param csvPath: The path of the csv file
      */
-    explicit LocationProviderCSV(std::string csvPath);
+    void readMovementSimulationDataFromCsv(const std::string& csvPath);
 
     /**
      * @brief default destructor
@@ -39,6 +45,13 @@ class LocationProviderCSV : public LocationProvider {
     ;
 
     /**
+     *
+     * @return the Timestamp recorded when this object was created
+     */
+    [[nodiscard]] Timestamp getStarttime() const;
+
+  private:
+    /**
      * @brief get the simulated last known location of the device. if s2 is enabled this will be an interpolated point along
      * the line between to locations from the csv. If s2 is disabled this will be the waypoint from the csv which has the
      * most recent of the timestamps lying in the past
@@ -46,13 +59,6 @@ class LocationProviderCSV : public LocationProvider {
      */
     std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation() override;
 
-    /**
-     *
-     * @return the Timestamp recorded when this object was created
-     */
-    [[nodiscard]] Timestamp getStarttime() const;
-
-  private:
     Timestamp startTime;
     std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>> waypoints;
     std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>::iterator nextWaypoint;

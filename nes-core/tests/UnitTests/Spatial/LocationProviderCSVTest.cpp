@@ -34,7 +34,7 @@ class LocationProviderCSVTest : public testing::Test {
 };
 
 TEST_F(LocationProviderCSVTest, testCsvMovement) {
-    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+    NES::Spatial::Mobility::Experimental::LocationProviderCSV sourceCsv(true, {}, std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
     auto startTime = sourceCsv.getStarttime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;
