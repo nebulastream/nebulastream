@@ -22,7 +22,7 @@ Hashmap::Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
                  size_t valueSize,
                  uint64_t nrEntries)
     : entrySize(headerSize + keySize + valueSize), keyOffset(headerSize), valueOffset(keyOffset + keySize),
-      entriesPerBuffer(bufferManager->getBufferSize() / entrySize), bufferManager(bufferManager) {
+      entriesPerBuffer(bufferManager->getBufferSize() / entrySize), bufferManager(bufferManager),keySize(keySize) {
     setSize(nrEntries);
 }
 

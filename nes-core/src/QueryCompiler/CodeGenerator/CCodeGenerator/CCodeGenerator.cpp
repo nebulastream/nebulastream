@@ -935,9 +935,11 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
 
     auto keyTuple = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "keyTuple");
     auto makeKeyTupleCall = call("std::make_tuple");
-    for (auto& keyDeclaration : keyDeclarations) {
-        makeKeyTupleCall->addParameter(keyDeclaration);
+    // TODO this is not parable as it assumes a fix memory layout for tuple.
+    for (int64_t i = keyDeclarations.size() - 1; i >= 0; i--) {
+        makeKeyTupleCall->addParameter(keyDeclarations[i]);
     }
+
     context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(keyTuple).assign(makeKeyTupleCall).copy());
 
     auto getState = call("getState");
@@ -1469,9 +1471,13 @@ std::shared_ptr<ForLoopStatement> CCodeGenerator::keyedSliceMergeLoop(
 
             auto tuple = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tuple");
             auto makeTuple = call("std::make_tuple");
-            for (auto& keyDeclaration : keyDeclarations) {
-                makeTuple->addParameter(VarRef(entry).accessPtr(VarRef(keyDeclaration)));
+            // TODO this is not parable as it assumes a fix memory layout for tuple.
+            for (int64_t i = keyDeclarations.size() - 1; i >= 0; i--) {
+                makeTuple->addParameter(VarRef(entry).accessPtr(VarRef(keyDeclarations[i])));
             }
+            //for (auto& keyDeclaration : keyDeclarations) {
+            //     makeTuple->addParameter(VarRef(entry).accessPtr(VarRef(keyDeclaration)));
+            //}
             scanBody->addStatement(VarDeclStatement(tuple).assign(makeTuple).copy());
 
             auto hash = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hash");
@@ -1615,8 +1621,12 @@ ExpressionStatementPtr CCodeGenerator::createGetEntryCall(Windowing::LogicalWind
     auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
     auto tuple = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tuple");
     auto makeTuple = call("std::make_tuple");
-    for (auto& keyDeclaration : keyDeclarations) {
-        makeTuple->addParameter(keyDeclaration);
+    // TODO this is not parable as it assumes a fix memory layout for tuple.
+    for (int64_t i = keyDeclarations.size() - 1; i >= 0; i--) {
+        makeTuple->addParameter(keyDeclarations[i]);
+    }
+     for (auto& keyDeclaration : keyDeclarations) {
+         makeTuple->addParameter(keyDeclaration);
     }
     context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(tuple).assign(makeTuple).copy());
     auto getEntry = call("getEntry<>");
@@ -1746,9 +1756,9 @@ bool CCodeGenerator::generateCodeForGlobalSlidingWindowSink(
                     .assign(TypeCast(VarRef(buffers), tf->createPointer(partialAggregationEntry.getType())));
             entryExistsCase->addStatement(localPartialValueAssignment.createCopy());
             auto globalPartialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalPartialValue");
-            auto globalPartialValueAssignment =
-                VarDeclStatement(globalPartialValue)
-                    .assign(TypeCast(VarRef(globalSliceState).accessPtr(VarRef(sliceStatePtr)), tf->createPointer(partialAggregationEntry.getType())));
+            auto globalPartialValueAssignment = VarDeclStatement(globalPartialValue)
+                                                    .assign(TypeCast(VarRef(globalSliceState).accessPtr(VarRef(sliceStatePtr)),
+                                                                     tf->createPointer(partialAggregationEntry.getType())));
             entryExistsCase->addStatement(globalPartialValueAssignment.createCopy());
             for (auto& agg : aggregation) {
                 agg->compileCombine(entryExistsCase, VarRef(globalPartialValue), VarRef(localPartialValue));
@@ -1788,7 +1798,6 @@ bool CCodeGenerator::generateCodeForGlobalSlidingWindowSink(
     code->currentCodeInsertionPoint = blockScope;
 
     context->code->cleanupStmts.push_back(blockScope);
-
 
     return 0;
 }
