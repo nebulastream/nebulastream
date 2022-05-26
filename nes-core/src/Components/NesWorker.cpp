@@ -16,6 +16,7 @@
 #include <Common/Location.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -29,7 +30,8 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Services/WorkerHealthCheckService.hpp>
-#include <Spatial/NodeLocationWrapper.hpp>
+#include <Spatial/LocationProvider.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
@@ -39,7 +41,8 @@
 #include <iomanip>
 #include <log4cxx/helpers/exception.h>
 #include <utility>
-#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Util/Experimental/LocationProviderType.hpp>
+#include <Spatial/TrajectoryPredictor.hpp>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -57,24 +60,27 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
-    locationWrapper =
-        std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
+    //todo: set mobility config to zero in the beginning
+    /*
+    locationProvider =
+        std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->isMobile,
                                                                                     workerConfig->locationCoordinates);
+                                                                                    */
 }
 
 //todo: check what the best way is to avoid the duplicate code in these constructors
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
-                     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr&& mobilityConfig)
+                     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
-    locationWrapper =
-        std::make_shared<NES::Spatial::Mobility::Experimental::NodeLocationWrapper>(workerConfig->isMobile,
-                                                                                    workerConfig->locationCoordinates,
-                                                                                    workerConfig->parentId,
-                                                                                    mobilityConfig);
+    //todo: move source type and config to mobility config to clean this up
+    this->mobilityConfig = mobilityConfig;
+    /*
+    locationProvider = createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig, mobilityConfig);
+     */
 }
 
 NesWorker::~NesWorker() { stop(true); }
@@ -105,7 +111,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
 }
 
 void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& portPromise) {
-    WorkerRPCServer service(nodeEngine, monitoringAgent, locationWrapper);
+    WorkerRPCServer service(nodeEngine, monitoringAgent, locationProvider, trajectoryPredictor);
     ServerBuilder builder;
     int actualRpcPort;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials(), &actualRpcPort);
@@ -166,6 +172,19 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                                             << localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
+    locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig, mobilityConfig);
+    if (locationProvider->isMobileNode()) {
+        trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider, mobilityConfig, parentId);
+        /*
+        NES_DEBUG("Creating location source");
+        bool success =
+            locationProvider->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
+
+        NES_DEBUG("create location source= " << success);
+        NES_ASSERT(success, "cannot create location source");
+        */
+
+    }
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
         NES_DEBUG("NesWorker: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
@@ -175,15 +194,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort.load());
     NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":"
                                                                                           << localWorkerRpcPort.load());
-    if (locationWrapper->isMobileNode()) {
-        NES_DEBUG("Creating location source");
-        bool success =
-            locationWrapper->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
 
-        NES_DEBUG("create location source= " << success);
-        NES_ASSERT(success, "cannot create location source");
-
-    }
 
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
@@ -284,7 +295,7 @@ bool NesWorker::connect() {
     std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
     //todo: does this need to be set for all kinds of noces or only for mobile ones?
-    //locationWrapper->setUpReconnectPlanning(coordinatorRpcClient);
+    //locationProvider->setUpReconnectPlanning(coordinatorRpcClient);
     std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
 
@@ -295,8 +306,8 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  workerConfig->numberOfSlots,
                                                                  registrationMetrics,
-                                                                 *(locationWrapper->getLocation()),
-                                                                 locationWrapper->isMobileNode());
+                                                                 *(locationProvider->getLocation()),
+                                                                 locationProvider->isMobileNode());
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(topologyNodeId);
@@ -310,9 +321,9 @@ bool NesWorker::connect() {
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
 
-        locationWrapper->setCoordinatorRPCCLient(coordinatorRpcClient);
-        if (locationWrapper->isMobileNode()) {
-            locationWrapper->setUpReconnectPlanning();
+        locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
+        if (locationProvider->isMobileNode()) {
+            trajectoryPredictor->setUpReconnectPlanning();
         }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
@@ -513,8 +524,8 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 #endif
 }
 
-NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr NesWorker::getLocationWrapper() { return locationWrapper; }
-
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
+
+NES::Spatial::Mobility::Experimental::LocationProviderPtr NesWorker::getLocationProvider() { return locationProvider; }
 
 }// namespace NES

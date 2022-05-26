@@ -18,17 +18,16 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Spatial/LocationProvider.hpp>
+#include <Spatial/ReconnectSchedule.hpp>
+#include <Spatial/TrajectoryPredictor.hpp>
 #include <cpprest/json.h>
 #include <utility>
-#include <Spatial/NodeLocationWrapper.hpp>
-#include <Spatial/ReconnectSchedule.hpp>
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
-                                 Monitoring::MonitoringAgentPtr monitoringAgent,
-                                 NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr nodeLocationWrapper)
-    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)), locationWrapper(nodeLocationWrapper) {
+WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, Monitoring::MonitoringAgentPtr monitoringAgent, NES::Spatial::Mobility::Experimental::LocationProviderPtr nodeLocationWrapper, NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor)
+    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)), locationWrapper(std::move(nodeLocationWrapper)), trajectoryPredictor(std::move(trajectoryPredictor)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -190,7 +189,11 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
 Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectScheduleRequest* request, GetReconnectScheduleReply* reply) {
     (void) request;
     NES_DEBUG("WorkerRPCServer received reconnect schedule request")
-    auto schedule = locationWrapper->getReconnectSchedule();
+    if (!trajectoryPredictor) {
+        NES_DEBUG("WorkerRPCServer: trajectory planner not set")
+        return Status::CANCELLED;
+    }
+    auto schedule = trajectoryPredictor->getReconnectSchedule();
     ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
 
     auto startLoc = schedule->getPathStart();

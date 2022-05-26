@@ -12,10 +12,10 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        LocationProvider.cpp
         LocationProviderCSV.cpp
         LocationIndex.cpp
-        NodeLocationWrapper.cpp
+        LocationProvider.cpp
         ReconnectSchedule.cpp
+        TrajectoryPredictor.cpp
 )
 

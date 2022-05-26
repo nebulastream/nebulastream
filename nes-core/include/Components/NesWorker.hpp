@@ -41,8 +41,13 @@ using LocationPtr = std::shared_ptr<Location>;
 }// namespace Spatial::Index::Experimental
 
 namespace Spatial::Mobility::Experimental {
-class NodeLocationWrapper;
-using NodeLocationWrapperPtr = std::shared_ptr<NodeLocationWrapper>;
+class LocationProvider;
+using LocationProviderPtr = std::shared_ptr<LocationProvider>;
+
+class TrajectoryPredictor;
+using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
+
+enum class LocationProviderType;
 }// namespace Spatial::Mobility::Experimental
 
 namespace Configurations::Spatial::Mobility::Experimental{
@@ -78,7 +83,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
 
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
-                         NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr&& mobilityConfig);
+                         NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig);
 
     /**
      * @brief default dtor
@@ -234,13 +239,15 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
       */
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
+
     /**
      * get the class containing all location info on this worker if it is a field node or mobile node
      * @return
      */
-    NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr getLocationWrapper();
+    NES::Spatial::Mobility::Experimental::LocationProviderPtr getLocationProvider();
 
   private:
+
     /**
      * @brief method to register physical source with the coordinator
      * @param physicalSources: physical sources containing relevant information
@@ -261,10 +268,12 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     void handleRpcs(WorkerRPCServer& service);
 
+
     const Configurations::WorkerConfigurationPtr workerConfig;
     std::atomic<uint16_t> localWorkerRpcPort;
     std::string rpcAddress;
-    NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
+    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
+    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId;
     HealthCheckServicePtr healthCheckService;
@@ -279,6 +288,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
     uint32_t parentId;
+    NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

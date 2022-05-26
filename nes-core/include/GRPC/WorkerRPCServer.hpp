@@ -34,15 +34,16 @@ using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 }// namespace Monitoring
 
 namespace Spatial::Mobility::Experimental {
-class NodeLocationWrapper;
-using NodeLocationWrapperPtr = std::shared_ptr<NodeLocationWrapper>;
-}// namespace Spatial::Mobility::Experimental
+class LocationProvider;
+using LocationProviderPtr = std::shared_ptr<LocationProvider>;
+
+class TrajectoryPredictor;
+using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
+}
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
-    WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
-                    Monitoring::MonitoringAgentPtr monitoringAgent,
-                    NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper);
+    WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, Monitoring::MonitoringAgentPtr monitoringAgent, NES::Spatial::Mobility::Experimental::LocationProviderPtr locationWrapper, NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -70,7 +71,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Monitoring::MonitoringAgentPtr monitoringAgent;
-    NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr locationWrapper;
+    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationWrapper;
+    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
 };
 
 }// namespace NES
