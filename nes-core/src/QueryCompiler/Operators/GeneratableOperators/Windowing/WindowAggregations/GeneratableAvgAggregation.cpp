@@ -78,8 +78,9 @@ void GeneratableAvgAggregation::compileCombine(CompoundStatementPtr currentCode,
 }
 VariableDeclarationPtr GeneratableAvgAggregation::getPartialAggregate() {
     auto tf = GeneratableTypesFactory();
+    auto resultField = this->aggregationDescriptor->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
     return std::make_shared<VariableDeclaration>(
-        VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::AVGDouble"), "partial"));
+        VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::AVGDouble"), resultField));
 }
 ExpressionStatementPtr GeneratableAvgAggregation::lower(ExpressionStatementPtr partialValue) {
     auto tf = GeneratableTypesFactory();
