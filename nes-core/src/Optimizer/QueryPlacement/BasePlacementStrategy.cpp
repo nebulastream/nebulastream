@@ -42,9 +42,7 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
 
 bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
-void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan,
-                                           TopologyPtr topology,
-                                           NES::Optimizer::PlacementMatrix& matrix) {
+void BasePlacementStrategy::pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix& matrix) {
     matrix.size();
     std::vector<TopologyNodePtr> topologyNodes;
     auto topologyIterator = NES::BreadthFirstNodeIterator(topology->getRoot());

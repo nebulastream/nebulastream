@@ -33,7 +33,8 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
             //            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
         case PlacementStrategy::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::Manual: return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        case PlacementStrategy::Manual:
+            return ManualPlacementStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
 
             // #2486        case PlacementStrategy::IFCOP:
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
