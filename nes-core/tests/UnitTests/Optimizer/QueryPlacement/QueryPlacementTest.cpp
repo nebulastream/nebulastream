@@ -782,8 +782,8 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
     NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
-                                     {false, true, true, false, false},
-                                     {false, false, false, true, true}};
+                                                     {false, true, true, false, false},
+                                                     {false, false, false, true, true}};
 
     NES::Optimizer::BasePlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
 
@@ -826,7 +826,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
 // Test manual placement with limited resources. The manual placement should place the operator depending on the mapping
 // without considering availability of the topology nodes
 TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
-    setupTopologyAndSourceCatalog({1, 1, 1}); // each node only has a capacity of 1
+    setupTopologyAndSourceCatalog({1, 1, 1});// each node only has a capacity of 1
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
@@ -843,8 +843,8 @@ TEST_F(QueryPlacementTest, testManualPlacementLimitedResources) {
     auto queryId = sharedQueryPlan->getSharedQueryId();
 
     NES::Optimizer::PlacementMatrix binaryMapping = {{true, false, false, false, false},
-                                     {false, true, true, false, false},
-                                     {false, false, false, true, true}};
+                                                     {false, true, true, false, false},
+                                                     {false, false, false, true, true}};
 
     NES::Optimizer::ManualPlacementStrategy::pinOperators(queryPlan, topology, binaryMapping);
 

@@ -128,9 +128,7 @@ class BasePlacementStrategy {
      * @param topology topology containing node to pin
      * @param matrix 2D matrix containing the pinning information
      */
-    static void pinOperators(QueryPlanPtr queryPlan,
-                             TopologyPtr topology,
-                             NES::Optimizer::PlacementMatrix& matrix);
+    static void pinOperators(QueryPlanPtr queryPlan, TopologyPtr topology, NES::Optimizer::PlacementMatrix& matrix);
 
   protected:
     /**
