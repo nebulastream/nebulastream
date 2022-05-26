@@ -127,7 +127,7 @@ class Hashmap {
     inline void insert_tagged(Entry* entry, hash_t hash);
 
     template<typename K, bool useTags>
-    inline Entry* findOneEntry(const K& key, hash_t h);
+    inline Entry* findOneEntry( K& key, hash_t h);
 
     template<class KeyType>
     inline auto calculateHash(KeyType& key) const;
@@ -167,6 +167,20 @@ class Hashmap {
 
     Entry* allocateNewEntry();
 
+    void printHistogram() {
+        for (uint64_t e = 0; e < capacity; e++) {
+            if (entries[e] != nullptr) {
+                uint64_t counter = 0;
+                auto current = entries[e];
+                while (current != nullptr) {
+                    current = current->next;
+                    counter++;
+                }
+                std::cout << "pos: " << e << " length: " << counter << std::endl;
+            };
+        }
+    }
+
     Entry** entries;
 
   private:
@@ -182,6 +196,7 @@ class Hashmap {
     const ptr_t maskTag = (~(ptr_t) 0) << (sizeof(ptr_t) * 8 - 16);
     size_t capacity = 0;
     uint64_t currentSize = 0;
+    size_t keySize;
 };
 
 inline Hashmap::Entry* Hashmap::end() { return nullptr; }
@@ -242,7 +257,7 @@ void inline Hashmap::clear() {
 }
 
 template<typename K, bool useTags = false>
-inline Hashmap::Entry* Hashmap::findOneEntry(const K& key, hash_t h) {
+inline Hashmap::Entry* Hashmap::findOneEntry(K& key, hash_t h) {
     Entry* entry;
     if (useTags) {
         entry = reinterpret_cast<Entry*>(find_chain_tagged(h));
@@ -253,9 +268,15 @@ inline Hashmap::Entry* Hashmap::findOneEntry(const K& key, hash_t h) {
         return nullptr;
     }
     for (; entry != end(); entry = reinterpret_cast<Entry*>(entry->next)) {
-        if (entry->hash == h && (*getKeyPtr<K>(entry)) == key) {
+        //auto& otherKey = (*getKeyPtr<K>(entry));
+        //std::cout << std::memcmp(getKeyPtr(entry), &key, keySize) << "\t <" << std::get<0>(key) << "," << std::get<1>(key) << "," << std::get<2>(key) << "> vs."
+        //    << "<" << std::get<0>(otherKey) << "," << std::get<1>(otherKey) << "," << std::get<2>(otherKey) << ">" << std::endl;
+        if (std::memcmp(getKeyPtr(entry), &key, keySize) == 0) {
             return entry;
         }
+        //if (entry->hash == h && (*getKeyPtr<K>(entry)) == key) {
+        //    return entry;
+        //}
     }
     return nullptr;
 }

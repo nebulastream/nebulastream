@@ -75,6 +75,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
     }
     compilationFlags.addFlag("-shared");
+    compilationFlags.addFlag("-g");
 
     // add header
     for (auto libPaths : runtimePathConfig.libPaths) {
