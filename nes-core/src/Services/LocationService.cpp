@@ -23,7 +23,6 @@ namespace NES::Spatial::Index::Experimental {
 LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology) {};
 
 web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
-
    auto nodePtr = topology->findNodeWithId(nodeId);
    if (!nodePtr) {
        return web::json::value::null();
