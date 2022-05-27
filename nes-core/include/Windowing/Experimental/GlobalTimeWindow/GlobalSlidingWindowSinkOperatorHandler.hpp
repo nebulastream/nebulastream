@@ -93,6 +93,8 @@ class GlobalSlidingWindowSinkOperatorHandler
      */
     GlobalSliceStore<GlobalSlice>& getGlobalSliceStore();
 
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+
     ~GlobalSlidingWindowSinkOperatorHandler();
 
   private:

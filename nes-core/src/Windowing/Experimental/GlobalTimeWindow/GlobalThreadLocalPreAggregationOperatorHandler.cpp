@@ -136,13 +136,16 @@ void GlobalThreadLocalPreAggregationOperatorHandler::stop(
             }
         }
     }
-    this->threadLocalSliceStores.clear();
 }
 GlobalThreadLocalPreAggregationOperatorHandler::~GlobalThreadLocalPreAggregationOperatorHandler() {
     NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler");
 }
 Windowing::LogicalWindowDefinitionPtr GlobalThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
     return windowDefinition;
+}
+
+void GlobalThreadLocalPreAggregationOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+    this->threadLocalSliceStores.clear();
 }
 
 }// namespace NES::Windowing::Experimental

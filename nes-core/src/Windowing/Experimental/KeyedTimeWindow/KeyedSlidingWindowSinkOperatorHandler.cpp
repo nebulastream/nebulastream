@@ -47,7 +47,7 @@ void KeyedSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineEx
 
 void KeyedSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop KeyedSlidingWindowSinkOperatorHandler: " << queryTerminationType);
-    globalSliceStore.reset();
+
 }
 
 KeyedSlicePtr KeyedSlidingWindowSinkOperatorHandler::createKeyedSlice(WindowTriggerTask* windowTriggerTask) {
@@ -63,5 +63,10 @@ GlobalSliceStore<KeyedSlice>& KeyedSlidingWindowSinkOperatorHandler::getGlobalSl
 KeyedSlidingWindowSinkOperatorHandler::~KeyedSlidingWindowSinkOperatorHandler() {
     NES_DEBUG("Destruct KeyedEventTimeWindowHandler");
 }
+
+void KeyedSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+    globalSliceStore.reset();
+}
+
 
 }// namespace NES::Windowing::Experimental

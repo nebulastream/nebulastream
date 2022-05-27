@@ -47,8 +47,6 @@ void KeyedSliceMergingOperatorHandler::start(Runtime::Execution::PipelineExecuti
 void KeyedSliceMergingOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                             Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop KeyedSliceMergingOperatorHandler: " << queryTerminationType);
-    this->sliceStaging->clear();
-    this->sliceStaging.reset();
 }
 
 KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask* sliceMergeTask) {
@@ -57,5 +55,10 @@ KeyedSlicePtr KeyedSliceMergingOperatorHandler::createKeyedSlice(SliceMergeTask*
 KeyedSliceMergingOperatorHandler::~KeyedSliceMergingOperatorHandler() { NES_DEBUG("Destruct SliceStagingWindowHandler"); }
 Windowing::LogicalWindowDefinitionPtr KeyedSliceMergingOperatorHandler::getWindowDefinition() { return windowDefinition; }
 std::weak_ptr<KeyedSliceStaging> KeyedSliceMergingOperatorHandler::getSliceStagingPtr() { return sliceStaging; }
+
+void KeyedSliceMergingOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+    this->sliceStaging->clear();
+    this->sliceStaging.reset();
+}
 
 }// namespace NES::Windowing::Experimental

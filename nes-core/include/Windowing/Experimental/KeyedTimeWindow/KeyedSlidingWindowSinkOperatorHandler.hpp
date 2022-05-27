@@ -93,6 +93,9 @@ class KeyedSlidingWindowSinkOperatorHandler
      */
     GlobalSliceStore<KeyedSlice>& getGlobalSliceStore();
 
+
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+
     ~KeyedSlidingWindowSinkOperatorHandler();
 
   private:

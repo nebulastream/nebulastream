@@ -76,6 +76,8 @@ class KeyedSliceMergingOperatorHandler : public Runtime::Execution::OperatorHand
      */
     Windowing::LogicalWindowDefinitionPtr getWindowDefinition();
 
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+
     ~KeyedSliceMergingOperatorHandler();
 
   private:

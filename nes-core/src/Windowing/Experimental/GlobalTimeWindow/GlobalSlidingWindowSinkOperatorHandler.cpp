@@ -45,7 +45,6 @@ void GlobalSlidingWindowSinkOperatorHandler::start(Runtime::Execution::PipelineE
 void GlobalSlidingWindowSinkOperatorHandler::stop(Runtime::QueryTerminationType queryTerminationType,
                                                   Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop GlobalSlidingWindowSinkOperatorHandler: " << queryTerminationType);
-    globalSliceStore.reset();
 }
 
 GlobalSlicePtr GlobalSlidingWindowSinkOperatorHandler::createGlobalSlice(WindowTriggerTask* windowTriggerTask) {
@@ -60,6 +59,10 @@ Windowing::LogicalWindowDefinitionPtr GlobalSlidingWindowSinkOperatorHandler::ge
 GlobalSliceStore<GlobalSlice>& GlobalSlidingWindowSinkOperatorHandler::getGlobalSliceStore() { return *globalSliceStore; }
 GlobalSlidingWindowSinkOperatorHandler::~GlobalSlidingWindowSinkOperatorHandler() {
     NES_DEBUG("Destruct GlobalSlidingWindowSinkOperatorHandler");
+}
+
+void GlobalSlidingWindowSinkOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+    globalSliceStore.reset();
 }
 
 }// namespace NES::Windowing::Experimental

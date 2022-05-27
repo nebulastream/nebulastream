@@ -104,6 +104,9 @@ class GlobalThreadLocalPreAggregationOperatorHandler
 
     ~GlobalThreadLocalPreAggregationOperatorHandler();
 
+
+    void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
+
   private:
     uint64_t windowSize;
     uint64_t windowSlide;
