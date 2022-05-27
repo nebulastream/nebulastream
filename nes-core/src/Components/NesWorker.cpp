@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/Location.hpp>
 #include <Components/NesWorker.hpp>
@@ -138,6 +139,93 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
+    auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        struct Record {
+            uint64_t a;
+            uint64_t b;
+            uint64_t c;
+            uint64_t d;
+            uint64_t e;
+            uint64_t f;
+            uint64_t timestamp1;
+            uint64_t timestamp2;
+        };
+
+        auto* records = buffer.getBuffer<Record>();
+        auto now = std::chrono::system_clock::now();
+        auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+        auto epoch = now_ms.time_since_epoch();
+        auto value = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].a = u;
+            records[u].b = u % 2;
+            records[u].c = u % 3;
+            records[u].d = u % 4;
+            records[u].e = u % 5;
+            records[u].f = u % 10;
+            records[u].timestamp1 = value.count();
+            records[u].timestamp2 = value.count();
+        }
+    };
+    auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), workerConfig->numberOfBuffersToProduce, workerConfig->sourceGatheringInterval, "interval");
+    switch(workerConfig->lambdaSource) {
+        case 1: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 2: {
+            auto physicalSource1 = PhysicalSource::create("B", "B1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 3: {
+            auto physicalSource1 = PhysicalSource::create("C", "C1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 4: {
+            auto physicalSource1 = PhysicalSource::create("D", "D1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            break;
+        }
+        case 5: {
+            auto physicalSource1 = PhysicalSource::create("E", "E1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("E", "E2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            break;
+        }
+        case 6: {
+            auto physicalSource1 = PhysicalSource::create("F", "F1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("F", "F2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            break;
+        }
+        case 7: {
+            auto physicalSource1 = PhysicalSource::create("G", "G1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("G", "G2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            auto physicalSource3 = PhysicalSource::create("G", "G3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource3);
+            break;
+        }
+        case 8: {
+            auto physicalSource1 = PhysicalSource::create("H", "H1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("H", "H2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            auto physicalSource3 = PhysicalSource::create("H", "H3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource3);
+            auto physicalSource4 = PhysicalSource::create("H", "H4", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource4);
+            auto physicalSource5 = PhysicalSource::create("H", "H5", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource5);
+            break;
+        }
+    }
     try {
         nodeEngine =
             Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
@@ -170,6 +258,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(con, "cannot connect");
     }
 
+
     auto configPhysicalSources = workerConfig->physicalSources.getValues();
     if (!configPhysicalSources.empty()) {
         std::vector<PhysicalSourcePtr> physicalSources;
@@ -196,7 +285,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot create location source");
     }
 
-    if (workerConfig->enableStatisticOuput) {
+    if (workerConfig->enableStatisticOutput) {
         statisticOutputThread = std::make_shared<std::thread>(([this]() {
             NES_DEBUG("NesWorker: start statistic collection");
             std::ofstream statisticsFile;
