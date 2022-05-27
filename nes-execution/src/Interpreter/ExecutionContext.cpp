@@ -37,9 +37,9 @@ OperatorState* ExecutionContext::getLocalState(const Operator* op) {
     return value.get();
 }
 
-Value<MemRef> ExecutionContext::allocateBuffer() { return FunctionCall<>(allocateBufferProxy, workerContext); }
+Value<MemRef> ExecutionContext::allocateBuffer() { return FunctionCall<>("allocateBuffer",allocateBufferProxy, workerContext); }
 
-void ExecutionContext::emitBuffer(const RecordBuffer& rb) { FunctionCall<>(emitBufferProxy, pipelineContext, rb.tupleBufferRef); }
+void ExecutionContext::emitBuffer(const RecordBuffer& rb) { FunctionCall<>("emitBuffer",emitBufferProxy, pipelineContext, rb.tupleBufferRef); }
 ExecutionContext::ExecutionContext(Value<MemRef> pipelineContext, Value<MemRef> workerContext)
     : pipelineContext(pipelineContext), workerContext(workerContext) {}
 

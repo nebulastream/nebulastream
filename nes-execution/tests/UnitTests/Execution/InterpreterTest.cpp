@@ -680,9 +680,10 @@ TEST_F(InterpreterTest, emitQueryTest) {
 
     auto pctx = MockedPipelineExecutionContext();
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
+    memRefPCTX.ref = ValueRef(INT32_MAX, 0);
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
-
+    wctxRefPCTX.ref = ValueRef(INT32_MAX, 1);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = traceFunction([&scan, &executionContext, &recordBuffer]() {
@@ -716,13 +717,15 @@ TEST_F(InterpreterTest, selectionQueryTest) {
     auto address = std::addressof(buffer);
     auto value = (int64_t) address;
     auto memRef = Value<MemRef>(std::make_unique<MemRef>(value));
+    memRef.ref = ValueRef(INT32_MAX, 0);
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
     auto pctx = MockedPipelineExecutionContext();
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
+    memRefPCTX.ref = ValueRef(INT32_MAX, 1);
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
-
+    wctxRefPCTX.ref = ValueRef(INT32_MAX, 2);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = traceFunction([&scan, &executionContext, &recordBuffer]() {

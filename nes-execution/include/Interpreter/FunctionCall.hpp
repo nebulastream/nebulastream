@@ -73,6 +73,11 @@ auto transform(Arg argument) {
 }
 
 template<typename Arg>
+InputVariant getRefs(Arg argument) {
+    return argument.ref;
+}
+
+template<typename Arg>
 auto transformReturn(Arg argument) {
     if constexpr (std::is_same<Arg, uint64_t>::value) {
         return Value<Integer>(std::make_unique<Integer>(argument));
@@ -117,15 +122,13 @@ class ProxyFunctionRegistry {
   public:
     struct ProxyFunctionWrapper {
         std::string name;
-        ProxyFunctionWrapper(std::string ) {
-            getInstance().registerProxyFunction(this);
-        }
+        ProxyFunctionWrapper(std::string) { getInstance().registerProxyFunction(this); }
     };
     static ProxyFunctionRegistry& getInstance() {
         static ProxyFunctionRegistry proxyFunctionRegistry = ProxyFunctionRegistry();
         return proxyFunctionRegistry;
     }
-    static void registerProxyFunction(ProxyFunctionWrapper* ){
+    static void registerProxyFunction(ProxyFunctionWrapper*){
 
     };
 };
@@ -138,21 +141,24 @@ void myFunction(CallbackFunction&& function) {
 }
 
 template<typename R, typename... Args2, typename... Args>
-auto FunctionCall(R (*fnptr)(Args2...), Args... arguments) {
+auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... arguments) {
+
+    std::vector<InputVariant> varRefs = {FunctionCallTarget(functionName, functionName)};
+    for (auto& p : {getRefs(arguments)...}) {
+        varRefs.emplace_back(p);
+    }
+
     if constexpr (std::is_void_v<R>) {
         fnptr(transform(std::forward<Args>(arguments))...);
         auto ctx = getThreadLocalTraceContext();
         if (ctx != nullptr) {
-            auto operation = Operation(CALL, ValueRef(), {});
+            auto operation = Operation(CALL, varRefs);
             ctx->trace(operation);
         }
         //((c->setArg(index++, arguments)), ...);
     } else {
         std::cout << "call function " << &fnptr << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
-        auto varRefs = std::vector<InputVariant>();
-        for (auto& p : {arguments...}) {
-            varRefs.emplace_back(p.ref);
-        }
+
         auto res = fnptr(transform(std::forward<Args>(arguments))...);
         auto resultValue = transformReturn(res);
         auto ctx = getThreadLocalTraceContext();

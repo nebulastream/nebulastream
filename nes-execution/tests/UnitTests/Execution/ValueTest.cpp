@@ -74,32 +74,11 @@ uint64_t addFunc(uint64_t x, bool) {
 }
 
 
-TEST_F(ValueTest, functionCallTest) {
-    auto p1 = createProxyFunction<>(addFunc, "");
-    auto p2 = createProxyFunction<>(addFunc, "");
-    auto p3 = createProxyFunction<>(addFunc2, "");
-    bool t = *p1 == *p2;
-    bool t2 = *p1 == *p3;
-    auto address = std::addressof(addFunc);
-
-    auto intValue = std::make_unique<Integer>(42);
-    Value<MemRef> memRef =  std::make_unique<MemRef>(42);
-    Value<Boolean> val3 = false;
-
-    auto result = FunctionCall<>(NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBufferSize, memRef);
-    auto* pb = &foo;
-    std::cout << typeid(*pb).name() << '\n';
-    std::cout << typeid(&addFunc).name() << '\n';
-    std::cout << typeid(addFunc).name() << '\n';
-    std::cout << typeid(int (*)(int, int)).name() << '\n';
-
-}
-
 TEST_F(ValueTest, addValueTest) {
     auto x = Value<>(1);
     auto y = Value<>(2);
     auto intZ = y + x;
-    ASSERT_EQ(intZ.value->value, 3);
+    ASSERT_EQ(intZ.as<Integer>().value->value, 3);
 
     Value<Any> anyZ = y + x;
     ASSERT_EQ(anyZ.as<Integer>().value->value, 3);

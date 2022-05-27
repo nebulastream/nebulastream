@@ -19,7 +19,7 @@ RecordBuffer::RecordBuffer(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
     : memoryLayout(memoryLayout), tupleBufferRef(tupleBufferRef) {}
 
 Value<Integer> RecordBuffer::getNumRecords() {
-    return FunctionCall<>(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples, tupleBufferRef);
+    return FunctionCall<>("TupleBuffer.getNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples, tupleBufferRef);
 }
 
 Record RecordBuffer::read(Value<Integer> recordIndex) {
@@ -50,7 +50,7 @@ void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
     }
 }
 void RecordBuffer::setNumRecords(Value<Integer> value) {
-    FunctionCall<>(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, value);
+    FunctionCall<>("TupleBuffer.setNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, value);
 }
 
 }// namespace NES::Interpreter
