@@ -259,7 +259,7 @@ jobs:
         uses: trilom/file-changes-action@v1.2.4
       - name: "Get NebulaStream Version"
         run: |
-          echo "NES_VERSION=$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
+          NES_VERSION="$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')" >> $GITHUB_ENV
           if [[ "${{ github.event_name }}"  =~ "workflow_dispatch" ]]; then
             if [[ "${{ NEXT_VERSION }}" =~ "Minor" ]]; then
               echo "NES_VERSION=$(echo $NES_VERSION | awk -F. -v OFS=. '{$2 +=1 ; $3 = 0 ; print}')" >> $GITHUB_ENV
