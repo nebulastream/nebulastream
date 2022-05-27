@@ -304,7 +304,7 @@ jobs:
       - name: "Generate ChangeLogs"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           issues: true
           issuesWoLabels: true
           pullRequests: false
@@ -312,7 +312,7 @@ jobs:
           author: true
           compareLink: true
           stripGeneratorNotice: true
-          futureRelease: ${{ env.NES_VERSION }}
+          futureRelease: v${{ env.NES_VERSION }}
           bugsLabel: "### Bug Fixes 🐛"
           issuesLabel: "### Miscellaneous Issues ✌️"
           addSections: '{"optimizer":{"prefix":"### Query Optimizer 🔧","labels":["Query Optimizer", "QueryMerge"]},
