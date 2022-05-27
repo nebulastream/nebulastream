@@ -39,6 +39,7 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
+option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the highly experimental execution engine based on mlir." OFF)
 # Enable exception interception (for debugging purpose)
 option(NES_ENABLE_CXA_THROW_HOOK "Enable exception interception" OFF)
 
@@ -514,18 +515,6 @@ else ()
 endif ()
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 message("-- LLVM version ${LLVM_ROOT_DIR}")
-
-# MLIR
-if(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
-    find_package(MLIR REQUIRED CONFIG)
-    if(MLIR_FOUND)
-        include_directories(SYSTEM ${MLIR_INCLUDE_DIRS})
-        add_compile_definitions(MLIR_COMPILER)
-    else ()
-        message(FATAL_ERROR "Cannot find mlir")
-    endif(MLIR_FOUND)
-    message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-endif(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
 
 # Set definition values.
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)

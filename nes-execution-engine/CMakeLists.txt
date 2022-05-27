@@ -25,6 +25,19 @@ target_include_directories(nes-execution-engine PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+# include MLIR. This is currently required
+find_package(MLIR REQUIRED CONFIG)
+if (MLIR_FOUND)
+    target_include_directories(nes-execution-engine SYSTEM PUBLIC
+            $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
+            $<INSTALL_INTERFACE:include/nebulastream/>)
+    add_compile_definitions(MLIR_COMPILER)
+else ()
+    message(FATAL_ERROR "Cannot find mlir")
+endif (MLIR_FOUND)
+message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
+
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
