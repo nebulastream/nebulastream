@@ -15,74 +15,73 @@
 #ifndef NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 #define NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
 
-#include "Experimental/MLIR/NESIRToMLIR.hpp"
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <mlir/ExecutionEngine/ExecutionEngine.h>
-#include <mlir/IR/BuiltinOps.h>
-#include <mlir/IR/MLIRContext.h>
-#include <llvm/ExecutionEngine/JITSymbol.h>
-#include <llvm/ExecutionEngine/Orc/Mangling.h>
 #include <Experimental/NESIR/NESIR.hpp>
+#include <memory>
+#include <mlir/ExecutionEngine/ExecutionEngine.h>
+#include <mlir/IR/MLIRContext.h>
+#include <string>
 
+namespace NES::ExecutionEngine::Experimental::MLIR {
+
+class MLIRGenerator;
 
 class MLIRUtility {
-    public:
-        /**
-         * @brief Controls debugging related aspects of MLIR parsing and creation.
-         * comments: Insert comments into MLIR module.
-         * enableDebugInfo: Create MLIR with named locations.
-         * prettyDebug: Prettily write debug info. Invalidates MLIR!
-         */
-        struct DebugFlags {
-            bool comments;
-            bool enableDebugInfo;
-            bool prettyDebug;
-        };
+  public:
+    /**
+     * @brief Controls debugging related aspects of MLIR parsing and creation.
+     * comments: Insert comments into MLIR module.
+     * enableDebugInfo: Create MLIR with named locations.
+     * prettyDebug: Prettily write debug info. Invalidates MLIR!
+     */
+    struct DebugFlags {
+        bool comments;
+        bool enableDebugInfo;
+        bool prettyDebug;
+    };
 
-        /**
-         * @brief Used to generate MLIR, print/write and JIT compile it.
-         * @param mlirFilepath: Path from/to which to read/write MLIR.
-         * @param debugFromFile: If true, create MLIR from mlirFilePath 
-            (enables debugging)
-         */
-        MLIRUtility(std::string mlirFilepath, bool debugFromFile);
-        ~MLIRUtility() = default;
+    /**
+     * @brief Used to generate MLIR, print/write and JIT compile it.
+     * @param mlirFilepath: Path from/to which to read/write MLIR.
+     * @param debugFromFile: If true, create MLIR from mlirFilePath (enables debugging)
+     */
+    MLIRUtility(std::string mlirFilepath, bool debugFromFile);
+    ~MLIRUtility() = default;
 
-        /**
-        * @brief Creates MLIR and if successful, applies lowering passes to it
-        * @param NESTree: NES abstraction tree from which MLIR is generated.
-        * @param debugFlags: Determine whether and how to print/write MLIR.
-        * @return int: 1 if error occurred, else 0
-        */
-        int loadAndProcessMLIR(std::shared_ptr<NES::NESIR> nesIR, DebugFlags *debugFlags = nullptr);
+    /**
+    * @brief Creates MLIR and if successful, applies lowering passes to it
+    * @param NESTree: NES abstraction tree from which MLIR is generated.
+    * @param debugFlags: Determine whether and how to print/write MLIR.
+    * @return int: 1 if error occurred, else 0
+    */
+    int loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* debugFlags = nullptr);
 
-        int loadModuleFromString(const std::string &mlirString, DebugFlags *debugFlags = nullptr);
-        int loadModuleFromStrings(const std::string &mlirString, const std::string &mlirString2, DebugFlags *debugFlags);
+    int loadModuleFromString(const std::string& mlirString, DebugFlags* debugFlags = nullptr);
+    int loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags);
 
-        /**
-         * @brief Takes symbols and JITAddresses and JIT runs created module.
-         * @param llvmIRModule External symbol names, e.g. function names.
-         * @param jitAddresses: Memory addresses of external functions, objects, etc.
-         * @return int: 1 if error occurred, else 0
-         */
-        int runJit(bool useProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
+    /**
+     * @brief Takes symbols and JITAddresses and JIT runs created module.
+     * @param llvmIRModule External symbol names, e.g. function names.
+     * @param jitAddresses: Memory addresses of external functions, objects, etc.
+     * @return int: 1 if error occurred, else 0
+     */
+    int runJit(bool useProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
 
-        /**
-         * @brief Can print a module and write it to a file, depending on debugFlags.
-         * @param mlirModule: The module to print/write.
-         * @param debugFlags: Determine whether and how to print/write MLIR.
-         */
-        void printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp> &mlirModule,
-                             DebugFlags *debugFlags);
+    /**
+     * @brief Can print a module and write it to a file, depending on debugFlags.
+     * @param mlirModule: The module to print/write.
+     * @param debugFlags: Determine whether and how to print/write MLIR.
+     */
+    void printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, DebugFlags* debugFlags);
 
-    private:
-        mlir::OwningOpRef<mlir::ModuleOp> module;
-        mlir::MLIRContext context;
-        std::shared_ptr<MLIRGenerator> mlirGenerator;
-        std::string mlirFilepath;
-        bool debugFromFile;
+  private:
+    mlir::OwningOpRef<mlir::ModuleOp> module;
+    mlir::MLIRContext context;
+    std::shared_ptr<MLIRGenerator> mlirGenerator;
+    std::string mlirFilepath;
+    bool debugFromFile;
 
-        static std::string insertComments(const std::string &moduleString);
-
+    static std::string insertComments(const std::string& moduleString);
 };
-#endif //NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_
+
+}// namespace NES::ExecutionEngine::Experimental::MLIR
+#endif//NES_INCLUDE_EXPERIMENTAL_MLIRUTILITY_HPP_

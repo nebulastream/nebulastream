@@ -14,7 +14,7 @@
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 Operation::Operation(OperationType opType) : opType(opType) {}
 Operation::OperationType Operation::getOperationType() const { return opType; }

@@ -14,7 +14,7 @@
 
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 LoadOperation::LoadOperation(std::string identifier, std::string argName)
     : Operation(OperationType::LoadOp), identifier(std::move(identifier)), argName(std::move(argName)) {}
@@ -22,6 +22,6 @@ LoadOperation::LoadOperation(std::string identifier, std::string argName)
 std::string LoadOperation::getIdentifier() { return identifier; }
 std::string LoadOperation::getArgName() { return argName; }
 
-bool LoadOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
+bool LoadOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
 
 }// namespace NES

@@ -17,7 +17,7 @@
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class ConstantIntOperation : public Operation {
   public:

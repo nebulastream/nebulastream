@@ -16,7 +16,7 @@
 #include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 IfOperation::IfOperation(std::string boolArgName, std::vector<std::string> thenBlockArgs, std::vector<std::string> elseBlockArgs) 
     : Operation(Operation::IfOp), boolArgName(boolArgName), thenBlockArgs(std::move(thenBlockArgs)), elseBlockArgs(std::move(elseBlockArgs)) {}
 

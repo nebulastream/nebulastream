@@ -18,7 +18,7 @@
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <vector>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class StoreOperation : public Operation{
   public:
     explicit StoreOperation(std::string valueArgName, std::string addressArgName);

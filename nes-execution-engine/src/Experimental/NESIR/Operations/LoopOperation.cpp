@@ -14,7 +14,7 @@
 
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <utility>
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 LoopOperation::LoopOperation(LoopType loopType, const std::vector<std::string>& loopBlockArgs)
     : Operation(Operation::LoopOp), loopType(loopType), loopBlockArgs(std::move(loopBlockArgs)) {}
 

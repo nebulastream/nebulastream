@@ -17,7 +17,7 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class Operation {
   public:

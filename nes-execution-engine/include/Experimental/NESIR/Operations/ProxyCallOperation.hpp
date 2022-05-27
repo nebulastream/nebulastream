@@ -18,7 +18,7 @@
 #include "Experimental/NESIR/Operations/Operation.hpp"
 #include <vector>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class ProxyCallOperation : public Operation {
   public:
     ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, std::vector<std::string> inputArgNames,
