@@ -49,9 +49,7 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
 
     switch (this->pipelineStatus.load()) {
         case PipelineStatus::PipelineRunning: {
-            activeExecutions++;
             auto res = executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
-            activeExecutions--;
             return res;
         }
         case PipelineStatus::PipelineStopped: {
@@ -94,11 +92,6 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
 bool ExecutablePipeline::stop(QueryTerminationType terminationType) {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
-        // wait till active execution count is zero
-        while (activeExecutions > 0) {
-            NES_DEBUG("Pipeline is still executed. Wait for 100ms.")
-            std::this_thread::sleep_for(100ms);
-        }
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->stop(terminationType, pipelineContext);
         }

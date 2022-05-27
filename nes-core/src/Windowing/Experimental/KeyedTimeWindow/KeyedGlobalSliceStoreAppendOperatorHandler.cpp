@@ -89,6 +89,7 @@ void KeyedGlobalSliceStoreAppendOperatorHandler::stop(Runtime::QueryTerminationT
 KeyedGlobalSliceStoreAppendOperatorHandler::~KeyedGlobalSliceStoreAppendOperatorHandler() {
     NES_DEBUG("Destruct KeyedEventTimeWindowHandler");
 }
+
 Windowing::LogicalWindowDefinitionPtr KeyedGlobalSliceStoreAppendOperatorHandler::getWindowDefinition() {
     return windowDefinition;
 }

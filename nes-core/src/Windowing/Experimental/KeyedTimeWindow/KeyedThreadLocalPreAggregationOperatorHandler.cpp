@@ -136,13 +136,19 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
             }
         }
     }
-    this->threadLocalSliceStores.clear();
 }
+
+
 KeyedThreadLocalPreAggregationOperatorHandler::~KeyedThreadLocalPreAggregationOperatorHandler() {
     NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler");
 }
+
 Windowing::LogicalWindowDefinitionPtr KeyedThreadLocalPreAggregationOperatorHandler::getWindowDefinition() {
     return windowDefinition;
+}
+
+void KeyedThreadLocalPreAggregationOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage&) {
+    this->threadLocalSliceStores.clear();
 }
 
 }// namespace NES::Windowing::Experimental
