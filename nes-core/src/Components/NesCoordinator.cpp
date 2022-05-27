@@ -38,6 +38,7 @@
 #include <grpcpp/server_builder.h>
 #include <memory>
 #include <thread>
+#include <fstream>
 
 //GRPC Includes
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -223,6 +224,38 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start health check");
     healthCheckService->startHealthCheck();
 
+    statisticOutputThread = std::make_shared<std::thread>(([this]() {
+        NES_DEBUG("NesWorker: start statistic collection");
+        std::ofstream statisticsFile;
+        statisticsFile.open("coordinator.csv", std::ios::out);
+        if (statisticsFile.is_open()) {
+            statisticsFile << "timestamp,";
+            statisticsFile << "queryId,";
+            statisticsFile << "subPlanId,";
+            statisticsFile << "processedTasks,";
+            statisticsFile << "processedTuple,";
+            statisticsFile << "processedBuffers,";
+            statisticsFile << "processedWatermarks,";
+            statisticsFile << "latencyAVG,";
+            statisticsFile << "queueSizeAVG,";
+            statisticsFile << "availableGlobalBufferAVG,";
+            statisticsFile << "availableFixedBufferAVG\n";
+            while (isRunning) {
+                auto ts = std::chrono::system_clock::now();
+                auto timeNow = std::chrono::system_clock::to_time_t(ts);
+                auto stats = worker->getNodeEngine()->getQueryStatistics(true);
+                for (auto& query : stats) {
+                    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
+                                   << query.getQueryStatisticsAsString() << "\n";
+                    statisticsFile.flush();
+                }
+                sleep(1);
+            }
+        }
+        NES_DEBUG("NesWorker: statistic collection end");
+        statisticsFile.close();
+    }));
+
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread->join();
@@ -283,7 +316,11 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_DEBUG("NesCoordinator: join rpcThread");
             rpcThread->join();
             rpcThread.reset();
-
+            if (statisticOutputThread && statisticOutputThread->joinable()) {
+                NES_DEBUG("NesWorker: statistic collection thread join");
+                statisticOutputThread->join();
+            }
+            statisticOutputThread.reset();
         } else {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             NES_THROW_RUNTIME_ERROR("Error while stopping thread->join");

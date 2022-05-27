@@ -61,20 +61,16 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->numberOfBuffersPerEpoch = 20;
+        coordinatorConfig->numberOfBuffersPerEpoch = 100;
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 1024;
-        coordinatorConfig->numberOfBuffersPerWorker = 2;
-        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 2;
 
         workerConfig = WorkerConfiguration::create();
-        workerConfig->numberOfBuffersPerEpoch = 15;
+        workerConfig->numberOfBuffersPerEpoch = 100;
         workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig->numberOfBuffersPerWorker = 2;
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = 20;
         workerConfig->enableStatisticOutput = true;
         workerConfig->numberOfBuffersToProduce = 5000000;
-        workerConfig->sourceGatheringInterval = 1000;
+        workerConfig->sourceGatheringInterval = 0;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
