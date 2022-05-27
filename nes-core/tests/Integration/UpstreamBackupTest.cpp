@@ -72,7 +72,9 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfBuffersPerWorker = 2;
         workerConfig->numberOfBuffersInSourceLocalBufferPool = 20;
-        workerConfig->enableStatisticOuput = true;
+        workerConfig->enableStatisticOutput = true;
+        workerConfig->numberOfBuffersToProduce = 5000000;
+        workerConfig->sourceGatheringInterval = 1000;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -85,9 +87,14 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         csvSourceTypeFinite->setNumberOfBuffersToProduce(numberOfTupleBuffers);
 
         inputSchema = Schema::create()
-                          ->addField("value", DataTypeFactory::createUInt64())
-                          ->addField("id", DataTypeFactory::createUInt64())
-                          ->addField("timestamp", DataTypeFactory::createUInt64());
+                          ->addField("a", DataTypeFactory::createUInt64())
+                          ->addField("b", DataTypeFactory::createUInt64())
+                          ->addField("c", DataTypeFactory::createUInt64())
+                          ->addField("d", DataTypeFactory::createUInt64())
+                          ->addField("e", DataTypeFactory::createUInt64())
+                          ->addField("f", DataTypeFactory::createUInt64())
+                          ->addField("timestamp1", DataTypeFactory::createUInt64())
+                          ->addField("timestamp2", DataTypeFactory::createUInt64());
     }
 };
 
@@ -404,21 +411,25 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getSourceCatalogService()->registerLogicalSource("window", inputSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("C", inputSchema);
+    crd->getSourceCatalogService()->registerLogicalSource("B", inputSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("UpstreamBackupTest: Coordinator started successfully");
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
-    workerConfig->physicalSources.add(physicalSource1);
+//    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
+//    workerConfig->physicalSources.add(physicalSource1);
 
+    workerConfig->lambdaSource = 3;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
+
+    workerConfig->lambdaSource = 2;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -433,7 +444,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
     string query =
-        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+        "Query::from(\"C\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
@@ -443,7 +454,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
