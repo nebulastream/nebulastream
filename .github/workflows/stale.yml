@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/stale@v3
       with:
-        repo-token: ${{ secrets.CI_SECRET }}
+        repo-token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
         stale-issue-message: 'Stale issue message'
         stale-pr-message: 'Stale pull request message'
         stale-issue-label: 'no-issue-activity'
