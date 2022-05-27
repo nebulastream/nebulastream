@@ -139,7 +139,7 @@ jobs:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
         with:
-          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          access_token: ${{ secrets.NES_CI_SECRET }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build and test
         if: github.event_name != 'workflow_dispatch'
@@ -159,7 +159,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -179,7 +179,7 @@ jobs:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
         with:
-          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          access_token: ${{ secrets.NES_CI_SECRET }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build and test
         if: github.event_name != 'workflow_dispatch'
@@ -199,7 +199,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -218,7 +218,7 @@ jobs:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
         with:
-          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          access_token: ${{ secrets.NES_CI_SECRET }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build
         if: github.event_name != 'workflow_dispatch'
@@ -230,7 +230,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -304,7 +304,7 @@ jobs:
       - name: "Generate ChangeLogs"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
-          token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          token: ${{ secrets.NES_CI_SECRET }}
           issues: true
           issuesWoLabels: true
           pullRequests: false
@@ -336,7 +336,7 @@ jobs:
           file_pattern: CHANGELOG.md
       - name: "Release Tag"
         env:
-          CI_SECRET: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          CI_SECRET: ${{ secrets.NES_CI_SECRET }}
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt     
           if [[ $EVENT == 'workflow_dispatch' ]]; then
@@ -348,7 +348,7 @@ jobs:
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
         with:
-          github-token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          github-token: ${{ secrets.NES_CI_SECRET }}
       - name: "Repository Dispatch"
         uses: peter-evans/repository-dispatch@v1
         with:
@@ -375,6 +375,6 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
