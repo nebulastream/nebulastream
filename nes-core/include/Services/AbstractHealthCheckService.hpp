@@ -41,7 +41,7 @@ namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
-}//namespace Configuratiions
+}// namespace Configurations
 
 /**
  * @brief: This class is responsible for handling requests related to monitor the alive status of nodes.

@@ -15,9 +15,8 @@
 #ifndef NES_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 #define NES_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 
-#include <Services/AbstractHealthCheckService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <stdint.h>
+#include <Services/AbstractHealthCheckService.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <stdint.h>
 namespace NES {
@@ -27,7 +26,10 @@ namespace NES {
  */
 class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
   public:
-    CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService, WorkerRPCClientPtr workerRPCClient, std::string healthServiceName, Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+    CoordinatorHealthCheckService(TopologyManagerServicePtr topologyManagerService,
+                                  WorkerRPCClientPtr workerRPCClient,
+                                  std::string healthServiceName,
+                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * Method to start the health checking
@@ -38,7 +40,6 @@ class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
     TopologyManagerServicePtr topologyManagerService;
     WorkerRPCClientPtr workerRPCClient;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-
 };
 
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
