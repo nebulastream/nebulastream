@@ -98,7 +98,7 @@ jobs:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
         with:
-          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          access_token: ${{ secrets.NES_CI_SECRET }}
       - name: Build Docker
         id: builddocker
         if: github.event_name != 'workflow_dispatch'
@@ -119,7 +119,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -137,7 +137,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
+        uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
@@ -177,7 +177,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
+        uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
@@ -216,7 +216,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
+        uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
