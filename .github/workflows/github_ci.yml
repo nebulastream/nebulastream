@@ -61,7 +61,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: wyozi/contextual-qa-checklist-action@1.2
         with:
-          gh-token: ${{ secrets.CI_SECRET }}
+          gh-token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
 
   build-x64-linux:
@@ -96,9 +96,9 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
+        uses: styfle/cancel-workflow-action@0.9.1
         with:
-          access_token: ${{ secrets.CI_SECRET }}
+          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - name: Build Docker
         id: builddocker
         if: github.event_name != 'workflow_dispatch'
@@ -119,7 +119,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -139,7 +139,7 @@ jobs:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.7.0
         with:
-          access_token: ${{ secrets.CI_SECRET }}
+          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build and test
         if: github.event_name != 'workflow_dispatch'
@@ -159,7 +159,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -179,7 +179,7 @@ jobs:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.7.0
         with:
-          access_token: ${{ secrets.CI_SECRET }}
+          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build and test
         if: github.event_name != 'workflow_dispatch'
@@ -199,7 +199,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -218,7 +218,7 @@ jobs:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.7.0
         with:
-          access_token: ${{ secrets.CI_SECRET }}
+          access_token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build
         if: github.event_name != 'workflow_dispatch'
@@ -230,7 +230,7 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
@@ -336,7 +336,7 @@ jobs:
           file_pattern: CHANGELOG.md
       - name: "Release Tag"
         env:
-          CI_SECRET: ${{ secrets.CI_SECRET }}
+          CI_SECRET: ${{ secrets.CI_PRIVILEGE_SECRETE }}
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt     
           if [[ $EVENT == 'workflow_dispatch' ]]; then
@@ -348,7 +348,7 @@ jobs:
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
         with:
-          github-token: ${{ secrets.CI_SECRET }}
+          github-token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - name: "Repository Dispatch"
         uses: peter-evans/repository-dispatch@v1
         with:
@@ -375,6 +375,6 @@ jobs:
           status: ${{ job.status }}
           author_name: ${{ github.actor }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
