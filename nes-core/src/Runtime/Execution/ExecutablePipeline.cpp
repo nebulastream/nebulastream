@@ -237,9 +237,6 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             if (prevProducerCounter == 1) {//all producers sent EOS
                 NES_DEBUG("Reconfiguration of pipeline belonging to subplanId: " << querySubPlanId << " stage id: " << pipelineId
                                                                                  << " reached prev=1");
-                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-                    operatorHandler->postReconfigurationCallback(task);
-                }
                 auto terminationType = task.getType() == Runtime::SoftEndOfStream ? Runtime::QueryTerminationType::Graceful
                                                                                   : Runtime::QueryTerminationType::HardStop;
 
@@ -248,6 +245,10 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                                                        terminationType);
 
                 stop(terminationType);
+                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+                    operatorHandler->postReconfigurationCallback(task);
+                }
+
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
                         auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, task.getType(), *pipe);
