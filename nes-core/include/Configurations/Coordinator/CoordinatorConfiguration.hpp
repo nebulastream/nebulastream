@@ -150,26 +150,24 @@ class CoordinatorConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {
-            &restIp,
-            &coordinatorIp,
-            &rpcPort,
-            &restPort,
-            &dataPort,
-            &numberOfSlots,
-            &logLevel,
-            &numberOfBuffersInGlobalBufferManager,
-            &numberOfBuffersPerWorker,
-            &numberOfBuffersInSourceLocalBufferPool,
-            &bufferSizeInBytes,
-            &numWorkerThreads,
-            &enableQueryReconfiguration,
-            &enableMonitoring,
-            &configPath,
-            &optimizer,
-            &logicalSources,
-            &coordinatorHealthCheckWaitTime
-        };
+        return {&restIp,
+                &coordinatorIp,
+                &rpcPort,
+                &restPort,
+                &dataPort,
+                &numberOfSlots,
+                &logLevel,
+                &numberOfBuffersInGlobalBufferManager,
+                &numberOfBuffersPerWorker,
+                &numberOfBuffersInSourceLocalBufferPool,
+                &bufferSizeInBytes,
+                &numWorkerThreads,
+                &enableQueryReconfiguration,
+                &enableMonitoring,
+                &configPath,
+                &optimizer,
+                &logicalSources,
+                &coordinatorHealthCheckWaitTime};
     }
 };
 
