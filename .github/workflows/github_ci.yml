@@ -316,11 +316,18 @@ jobs:
           bugsLabel: "### Bug Fixes 🐛"
           issuesLabel: "### Miscellaneous Issues ✌️"
           addSections: '{"optimizer":{"prefix":"### Query Optimizer 🔧","labels":["Query Optimizer", "QueryMerge"]},
-          "Spatial": {"prefix": "#### Spatial 🌇", "labels":["spatial"]}, 
-          "monitoring": {"prefix": "#### Monitoring 🚥", "labels":["monitoring"]},
-          "cep": {"prefix": "#### Complex Event Processing", "labels":["CEP"]},
+          "Spatial": {"prefix": "#### Spatial Query Processing 🌇", "labels":["Spatial Query Processing"]}, 
+          "monitoring": {"prefix": "#### Monitoring 🚥", "labels":["Monitoring"]},
+          "cep": {"prefix": "#### Complex Event Processing", "labels":["Complex Event Processing"]},
+          "runtime": {"prefix": "#### Runtime ", "labels":["Runtime"]},
+          "udf": {"prefix": "#### User Defined Functions", "labels":["User Defined Functions"]},
           "query compiler": {"prefix": "#### Query Compiler", "labels":["Query Compiler"]},
-          "fault tolerance": {"prefix": "#### Fault Tolerance", "labels":["fault-tolerance"]},
+          "fault tolerance": {"prefix": "#### Fault Tolerance", "labels":["Fault Tolerance"]},
+          "build management": {"prefix": "#### Build Management", "labels":["Build Management"]},
+          "operators": {"prefix": "#### Operators ", "labels":["Operators"]},
+          "state management": {"prefix": "#### State Management ", "labels":["State Management"]},
+          "rest": {"prefix": "#### REST API ", "labels":["REST"]},
+          "documentation": {"prefix": "#### Documentation ", "labels":["Documentation"]},
           }'
       - name: "Commit Updated Changelog File"
         uses: stefanzweifel/git-auto-commit-action@v4
