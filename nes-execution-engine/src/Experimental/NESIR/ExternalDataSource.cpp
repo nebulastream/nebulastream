@@ -14,9 +14,9 @@
 
 #include <Experimental/NESIR/ExternalDataSource.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR {
     ExternalDataSource::ExternalDataSource(ExternalDataSourceType externalDataSourceType, std::string identfifier,
-                           std::vector<Operation::BasicType> types) : externalDataSourceType(externalDataSourceType), identifier(identfifier), types(types) {}
+                           std::vector<Operations::Operation::BasicType> types) : externalDataSourceType(externalDataSourceType), identifier(identfifier), types(types) {}
 
     ExternalDataSource::ExternalDataSourceType ExternalDataSource::getExternalDataSourceType() const {
         return externalDataSourceType;
@@ -26,7 +26,7 @@ namespace NES {
         return identifier;
     }
 
-    const std::vector<Operation::BasicType>& ExternalDataSource::getTypes() const {
+    const std::vector<Operations::Operation::BasicType>& ExternalDataSource::getTypes() const {
         return types;
     }
 

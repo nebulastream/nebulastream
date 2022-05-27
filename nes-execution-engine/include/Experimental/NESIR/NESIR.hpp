@@ -19,16 +19,16 @@
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/ExternalDataSource.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR {
 class NESIR {
   public:
     NESIR() = default;
     ~NESIR() = default;
 
-    std::shared_ptr<FunctionOperation> addRootOperation(std::shared_ptr<FunctionOperation> rootOperation);
-    std::shared_ptr<FunctionOperation> getRootOperation();
+    std::shared_ptr<Operations::FunctionOperation> addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation);
+    std::shared_ptr<Operations::FunctionOperation> getRootOperation();
   private:
-    std::shared_ptr<FunctionOperation> rootOperation;
+    std::shared_ptr<Operations::FunctionOperation> rootOperation;
 };
 
 }// namespace NESIR

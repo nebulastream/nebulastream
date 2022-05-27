@@ -17,7 +17,7 @@
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class CompareOperation : public Operation {
   public:
     enum Comparator{ISLT, ISLE, ISGT, ISGE, IEQ, FSLT, FSLE, FSGT, FSGE, FEQ};

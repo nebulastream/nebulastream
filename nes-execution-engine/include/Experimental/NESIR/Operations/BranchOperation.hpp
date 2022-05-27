@@ -17,7 +17,7 @@
 
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 /**
  * @brief Terminator Operation(Op), must be last Op in BasicBlock(BB). Passes control flow from one BB to another.
  * 

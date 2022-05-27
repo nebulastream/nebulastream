@@ -46,6 +46,9 @@
 #include <unordered_map>
 
 using namespace std;
+using namespace NES::ExecutionEngine::Experimental::MLIR;
+using namespace NES::ExecutionEngine::Experimental::IR;
+using namespace NES::ExecutionEngine::Experimental::IR::Operations;
 namespace NES {
 class MLIRNESIRTest : public testing::Test {
   public:
@@ -58,7 +61,7 @@ class MLIRNESIRTest : public testing::Test {
 };
 
 
-void printBuffer(std::vector<Operation::BasicType> types,
+void printBuffer(std::vector<Operations::Operation::BasicType> types,
                  uint64_t numTuples, int8_t *bufferPointer) {
     for(uint64_t i = 0; i < numTuples; ++i) {
         printf("------------\nTuple Nr. %lu\n------------\n", i+1);
@@ -205,7 +208,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
     std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<NES::NESIR>();
+    auto nesIR = std::make_shared<NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
     ->addFunctionBasicBlock(
@@ -222,7 +225,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
             ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
             ->addThenBlock(
                 createBB("loopBodyBB", 2, {}, "iOp")
-                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                 ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
@@ -231,7 +234,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                 ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp"}, std::vector<std::string>{}))
                 ->addThenBlock(
                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp")
-                    ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
+                    ->addOperation(make_shared<AddressOperation>("outputAddressOp", Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
                     ->addOperation(make_shared<StoreOperation>("loopBodyAddOp", "outputAddressOp"))
                     ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
                     ->addNextBlock(
@@ -300,7 +303,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
     std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<NES::NESIR>();
+    auto nesIR = std::make_shared<NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
     ->addFunctionBasicBlock(
@@ -317,12 +320,12 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
             ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
             ->addThenBlock(
                 createBB("loopBodyBB", 2, {}, "iOp")
-                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                 ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
                 ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
-                ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
+                ->addOperation(make_shared<AddressOperation>("outputAddressOp", Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp", "loopBodyAddOp", "const46Op", CompareOperation::ISLT))
                 ->addOperation(make_shared<IfOperation>("loopBodyIfCompareOp", std::vector<std::string>{"iOp", "loopBodyAddOp"}, std::vector<std::string>{}))
                 ->addThenBlock(
@@ -403,7 +406,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
     std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<NES::NESIR>();
+    auto nesIR = std::make_shared<NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
@@ -417,7 +420,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
             ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
             ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
                 ->addThenBlock(createBB("loopBodyBB", 2, {}, "iOp")
-                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                 ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
@@ -428,7 +431,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                     ->addOperation(std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
                     ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "thenAddOp"}))
                 ->addNextBlock(saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64}, "iOp", "ifAddResult"), savedBBs, "loopEndBB")
-                ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                ->addOperation(make_shared<AddressOperation>("outputAddressOp", Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
                 ->addOperation(make_shared<StoreOperation>("ifAddResult", "outputAddressOp"))
                 ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
                 ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
@@ -505,7 +508,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
     std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<NES::NESIR>();
+    auto nesIR = std::make_shared<NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
@@ -521,7 +524,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
             ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
             ->addThenBlock(
                 createBB("loopBodyBB", 2, {}, "iOp")
-                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                 ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
@@ -542,7 +545,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                         ->addNextBlock(
                             saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "ifAddResult", "ifBranchVal"), savedBBs, "loopEndBB")
                             ->addOperation(make_shared<AddIntOperation>("loopEndAddResult", "ifAddResult", "ifBranchVal"))
-                            ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                            ->addOperation(make_shared<AddressOperation>("outputAddressOp", Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
                             ->addOperation(make_shared<StoreOperation>("loopEndAddResult", "outputAddressOp"))
                             ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
                             ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
@@ -632,7 +635,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
     std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<NES::NESIR>();
+    auto nesIR = std::make_shared<NESIR>();
 
    nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
@@ -648,7 +651,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
             ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
             ->addThenBlock(
                 createBB("loopBodyBB", 2, {}, "iOp")
-                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                 ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
@@ -673,7 +676,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                             ->addNextBlock(
                                 saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "ifAddResult", "ifBranchVal"), savedBBs, "loopEndBB")
                                 ->addOperation(make_shared<AddIntOperation>("loopEndAddResult", "ifAddResult", "ifBranchVal"))
-                                ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                                ->addOperation(make_shared<AddressOperation>("outputAddressOp", Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
                                 ->addOperation(make_shared<StoreOperation>("loopEndAddResult", "outputAddressOp"))
                                 ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
                                 ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
@@ -766,7 +769,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
     std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
-    auto nesIR = std::make_shared<NES::NESIR>();
+    auto nesIR = std::make_shared<NESIR>();
 
    nesIR->addRootOperation(std::make_shared<FunctionOperation>( "execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
@@ -782,7 +785,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
             ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
             ->addThenBlock(
                 createBB("loopBodyBB", 2, {}, "iOp")
-                ->addOperation(make_shared<AddressOperation>("inputAddressOp", NES::Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
+                ->addOperation(make_shared<AddressOperation>("inputAddressOp", Operation::BasicType::INT64, 9, 1, "iOp", "getInDataBufOp"))
                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                 ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
@@ -822,7 +825,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                 ->addElseBlock(
                                     saveBB(createBB("loopEndBB", 2, {Operation::INT64, Operation::INT64, Operation::INT64}, "iOp", "ifAddResult", "ifBranchVal"), savedBBs, "loopEndBB")
                                     ->addOperation(make_shared<AddIntOperation>("loopEndAddResult", "ifAddResult", "ifBranchVal"))
-                                    ->addOperation(make_shared<AddressOperation>("outputAddressOp", NES::Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp")) 
+                                    ->addOperation(make_shared<AddressOperation>("outputAddressOp", Operation::BasicType::INT64, 8, 0, "iOp", "getOutDataBufOp"))
                                     ->addOperation(make_shared<StoreOperation>("loopEndAddResult", "outputAddressOp"))
                                     ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
                                     ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))

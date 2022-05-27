@@ -15,7 +15,7 @@
 #include "Experimental/NESIR/Operations/Operation.hpp"
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 StoreOperation::StoreOperation(std::string valueArgName, std::string addressArgName)
     : Operation(OperationType::StoreOp), valueArgName(valueArgName), addressArgName(addressArgName) {}

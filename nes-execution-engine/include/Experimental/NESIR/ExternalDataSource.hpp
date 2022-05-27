@@ -18,24 +18,24 @@
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <vector>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR {
 
 class ExternalDataSource {
   public:
     enum ExternalDataSourceType{TupleBuffer};
-    ExternalDataSource(ExternalDataSourceType externalDataSourceType, std::string identfifier, std::vector<Operation::BasicType> types);
+    ExternalDataSource(ExternalDataSourceType externalDataSourceType, std::string identfifier, std::vector<Operations::Operation::BasicType> types);
     ~ExternalDataSource() = default;
 
     [[nodiscard]] ExternalDataSourceType getExternalDataSourceType() const;
 
     [[nodiscard]] const std::string &getIdentifier() const;
 
-    [[nodiscard]] const std::vector<Operation::BasicType> &getTypes() const;
+    [[nodiscard]] const std::vector<Operations::Operation::BasicType> &getTypes() const;
 
 private:
     ExternalDataSourceType externalDataSourceType;
     std::string identifier;
-    std::vector<Operation::BasicType> types;
+    std::vector<Operations::Operation::BasicType> types;
 };
 using ExternalDataSourcePtr = std::shared_ptr<ExternalDataSource>;
 

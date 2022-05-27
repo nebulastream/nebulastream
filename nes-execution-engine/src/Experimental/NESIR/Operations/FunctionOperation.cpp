@@ -15,7 +15,7 @@
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 FunctionOperation::FunctionOperation(std::string name, std::vector<Operation::BasicType> inputArgs, 
                                      std::vector<std::string> inputArgNames, Operation::BasicType outputArg)
@@ -35,7 +35,7 @@ BasicBlockPtr FunctionOperation::getFunctionBasicBlock() {
 const std::vector<Operation::BasicType>& FunctionOperation::getInputArgs() const { return inputArgs; }
 Operation::BasicType FunctionOperation::getOutputArg() const { return outputArg; }
 
-bool FunctionOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::FunctionOp; }
+bool FunctionOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::FunctionOp; }
 const std::vector<std::string>& FunctionOperation::getInputArgNames() const { return inputArgNames; }
 
 }// namespace NES

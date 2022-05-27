@@ -14,7 +14,7 @@
 
 #include <Experimental/NESIR/Operations/CompareOperation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 CompareOperation::CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName, 
                                     Comparator comparator) 
     : Operation(Operation::CompareOp), identifier(std::move(identifier)), firstArgName(std::move(firstArgName)), 

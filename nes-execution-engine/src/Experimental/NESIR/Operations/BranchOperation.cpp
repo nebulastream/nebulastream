@@ -15,7 +15,7 @@
 #include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 BranchOperation::BranchOperation(const std::vector<std::string>& nextBlockArgs)
     : Operation(OperationType::BranchOp), nextBlockArgs(nextBlockArgs) {}
@@ -28,6 +28,6 @@ BasicBlockPtr BranchOperation::setNextBlock(BasicBlockPtr nextBlock) {
 BasicBlockPtr BranchOperation::getNextBlock() { return nextBlock; }
 std::vector<std::string> BranchOperation::getNextBlockArgs() { return nextBlockArgs; }
 
-bool BranchOperation::classof(const NES::Operation* Op) { return Op->getOperationType() == OperationType::BranchOp; }
+bool BranchOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::BranchOp; }
 
 }// namespace NES

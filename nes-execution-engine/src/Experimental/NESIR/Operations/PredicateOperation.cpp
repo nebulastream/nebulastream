@@ -13,7 +13,7 @@
 */
 #include <Experimental/NESIR/Operations/PredicateOperation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 PredicateOperation::PredicateOperation(OperationType opType, OperationPtr lhs, OperationPtr rhs, PredicateOperation::BinaryOperatorType binOpType)
     : Operation(opType), lhs(std::move(lhs)), rhs(std::move(rhs)), binOpType(binOpType){}

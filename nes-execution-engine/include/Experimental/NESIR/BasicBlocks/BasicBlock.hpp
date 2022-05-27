@@ -15,48 +15,49 @@
 #ifndef NES_BASICBLOCK_HPP
 #define NES_BASICBLOCK_HPP
 
-#include <vector>
-#include <memory>
-
 #include <Experimental/NESIR/Operations/Operation.hpp>
-namespace NES {
+#include <memory>
+#include <vector>
 
-class BasicBlock :  public std::enable_shared_from_this<BasicBlock>{
+namespace NES::ExecutionEngine::Experimental::IR {
+
+class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
   public:
-
     /**
      * @brief BasicBlock used for control flow in NES IR
      * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlocks : The BasicBlock that is next in the control flow of the execution.
      */
-    explicit BasicBlock(std::string identifier, int32_t scopeLevel, std::vector<OperationPtr> operations, std::vector<std::string> inputArgs, 
-                        std::vector<Operation::BasicType> inputArgTypes);
+    explicit BasicBlock(std::string identifier,
+                        int32_t scopeLevel,
+                        std::vector<Operations::OperationPtr> operations,
+                        std::vector<std::string> inputArgs,
+                        std::vector<Operations::Operation::BasicType> inputArgTypes);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] int32_t getScopeLevel();
-    [[nodiscard]] std::vector<OperationPtr> getOperations();
-    [[nodiscard]] OperationPtr getTerminatorOp();
+    [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
+    [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::string> getInputArgs();
-    [[nodiscard]] std::vector<Operation::BasicType> getInputArgTypes();
+    [[nodiscard]] std::vector<Operations::Operation::BasicType> getInputArgTypes();
 
     // NESIR Assembly
-    std::shared_ptr<BasicBlock> addOperation(OperationPtr operation);
+    std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
     std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
     std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
     std::shared_ptr<BasicBlock> addThenBlock(std::shared_ptr<BasicBlock> thenBlock);
     std::shared_ptr<BasicBlock> addElseBlock(std::shared_ptr<BasicBlock> elseBlock);
-
 
     void popOperation();
 
   private:
     std::string identifier;
     int32_t scopeLevel;
-    std::vector<OperationPtr> operations;
+    std::vector<Operations::OperationPtr> operations;
     std::vector<std::string> inputArgs;
-    std::vector<Operation::BasicType> inputArgTypes;
+    std::vector<Operations::Operation::BasicType> inputArgTypes;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
-} // namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR
 #endif//NES_BASICBLOCK_HPP

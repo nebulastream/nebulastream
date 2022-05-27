@@ -18,7 +18,7 @@
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class FunctionOperation : public Operation {
   public:
     explicit FunctionOperation(std::string  name, std::vector<Operation::BasicType> inputArgs, std::vector<std::string> inputArgNames,

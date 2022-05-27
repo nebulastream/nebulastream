@@ -13,6 +13,6 @@
 
 add_source_files(nes-execution-engine
         MLIRUtility.cpp
-        NESIRToMLIR.cpp
+        MLIRGenerator.cpp
 #        NESAbstractionToMLIR.cpp
 )

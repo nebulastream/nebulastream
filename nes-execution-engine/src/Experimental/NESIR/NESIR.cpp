@@ -15,17 +15,17 @@
 #include <Experimental/NESIR/NESIR.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR {
 
 // NESIR::NESIR(OperationPtr rootOperation) :
 //     rootOperation(std::move(rootOperation)) {}
 
-std::shared_ptr<FunctionOperation> NESIR::addRootOperation(std::shared_ptr<FunctionOperation> rootOperation) {
+std::shared_ptr<Operations::FunctionOperation> NESIR::addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation) {
     this->rootOperation = std::move(rootOperation);
     return this->rootOperation;
 }
 
-std::shared_ptr<FunctionOperation> NESIR::getRootOperation() {
+std::shared_ptr<Operations::FunctionOperation> NESIR::getRootOperation() {
     return rootOperation;
 }
 

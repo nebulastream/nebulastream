@@ -12,35 +12,35 @@
     limitations under the License.
 */
 
+#include <Experimental/MLIR/MLIRGenerator.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Experimental/MLIR/NESIRToMLIR.hpp>
-#include <mlir/Target/LLVMIR/Export.h>
-#include <string>
-
-#include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
-#include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h"
-#include "mlir/ExecutionEngine/OptUtils.h"
-#include "mlir/IR/OperationSupport.h"
-#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
-#include "mlir/Dialect/SCF/SCF.h"
-#include "mlir/Dialect/StandardOps/IR/Ops.h"
-#include "mlir/Parser.h"
-#include "mlir/Pass/PassManager.h"
-#include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
-#include "mlir/Target/LLVMIR/LLVMTranslationInterface.h"
-#include "mlir/Transforms/Passes.h"
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/JITSymbol.h"
-#include "llvm/Support/TargetSelect.h"
-
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/JITSymbol.h>
+#include <llvm/ExecutionEngine/Orc/Mangling.h>
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Linker/Linker.h>
 #include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/TargetSelect.h>
+#include <mlir/Conversion/SCFToStandard/SCFToStandard.h>
+#include <mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h>
+#include <mlir/Dialect/LLVMIR/LLVMDialect.h>
+#include <mlir/Dialect/SCF/SCF.h>
+#include <mlir/Dialect/StandardOps/IR/Ops.h>
+#include <mlir/ExecutionEngine/ExecutionEngine.h>
+#include <mlir/ExecutionEngine/OptUtils.h>
+#include <mlir/IR/BuiltinOps.h>
+#include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/OperationSupport.h>
+#include <mlir/Parser.h>
+#include <mlir/Pass/PassManager.h>
+#include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+#include <mlir/Target/LLVMIR/Export.h>
+#include <mlir/Target/LLVMIR/LLVMTranslationInterface.h>
+#include <mlir/Transforms/Passes.h>
+#include <string>
 #include <utility>
 
-#include "llvm/IRReader/IRReader.h"
-#include "llvm/Linker/Linker.h"
-
-#include <unistd.h>
-
+namespace NES::ExecutionEngine::Experimental::MLIR {
 MLIRUtility::MLIRUtility(std::string mlirFilepath, bool debugFromFile)
     : mlirFilepath(std::move(mlirFilepath)), debugFromFile(debugFromFile){};
 
@@ -68,7 +68,7 @@ std::string MLIRUtility::insertComments(const std::string& moduleString) {
 void MLIRUtility::printMLIRModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule, DebugFlags* debugFlags) {
     if (!debugFlags) {
         printf("No debug flags.\n");
-//        mlirModule->dump();
+        //        mlirModule->dump();
     } else {
         // Print location names and replace mlir::LLVM::UndefOp(s) with comments.
         std::string mlirString;
@@ -98,9 +98,11 @@ int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags*
     context.loadDialect<mlir::scf::SCFDialect>();
     module = parseSourceString(mlirString, &context);
 
-    if(debugFlags) { printf("Kek %d", debugFlags->comments); }
-//    auto opIterator = module->getOps().begin()->getBlock()->getOperations().begin();
-//    opIterator->dump();
+    if (debugFlags) {
+        printf("Kek %d", debugFlags->comments);
+    }
+    //    auto opIterator = module->getOps().begin()->getBlock()->getOperations().begin();
+    //    opIterator->dump();
     module->dump();
     if (!module) {
         llvm::errs() << "NESMLIRGenerator::loadMLIR: Could not load MLIR module" << '\n';
@@ -121,10 +123,10 @@ int MLIRUtility::loadModuleFromString(const std::string& mlirString, DebugFlags*
 
 //Todo remove!!
 int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags) {
-//    auto texst = mlir::UnrealizedConversionCastOp();
-//    auto whatDialect = mlir::UnrealizedConversionCastOp()->getDialect();
-//    mlir::LLVMTranslationDialectInterface testTransInt(mlir::UnrealizedConversionCastOp()->getDialect());
-//    context.loadDialect<testTransInt.getDialect()>();
+    //    auto texst = mlir::UnrealizedConversionCastOp();
+    //    auto whatDialect = mlir::UnrealizedConversionCastOp()->getDialect();
+    //    mlir::LLVMTranslationDialectInterface testTransInt(mlir::UnrealizedConversionCastOp()->getDialect());
+    //    context.loadDialect<testTransInt.getDialect()>();
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
@@ -132,9 +134,11 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     module = parseSourceString(mlirString, &context);
     auto module2 = parseSourceString(mlirString2, &context);
 
-    if(debugFlags) { printf("Kek %d", debugFlags->comments); }
-//    auto opIterator = module2->getOps().begin()->getBlock()->getOperations().front();
-//    module-> push_back(module2->getOps().begin()->getBlock()->getOperations().front().clone());
+    if (debugFlags) {
+        printf("Kek %d", debugFlags->comments);
+    }
+    //    auto opIterator = module2->getOps().begin()->getBlock()->getOperations().front();
+    //    module-> push_back(module2->getOps().begin()->getBlock()->getOperations().front().clone());
     module->dump();
 
     if (!module) {
@@ -154,14 +158,14 @@ int MLIRUtility::loadModuleFromStrings(const std::string& mlirString, const std:
     return 0;
 }
 
-int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<NES::NESIR> nesIR, DebugFlags* debugFlags) {
+int MLIRUtility::loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* debugFlags) {
 
     // Todo find a good place to load the required Dialects
     // Load all Dialects required to process/generate the required MLIR.
     context.loadDialect<mlir::StandardOpsDialect>();
     context.loadDialect<mlir::LLVM::LLVMDialect>();
     context.loadDialect<mlir::scf::SCFDialect>();
-//    context.loadDialect<>()
+    //    context.loadDialect<>()
     // Generate MLIR for the sample NESAbstraction or load from file.
     if (debugFromFile) {
         assert(!mlirFilepath.empty() && "No MLIR filename to read from given.");
@@ -215,9 +219,7 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
             llvm::SMDiagnostic Err;
             //Todo change path
             auto proxyFunctionsIR =
-                llvm::parseIRFile("/home/rudi/mlir/proxyFunctionsIR/proxyFunctionsIR.ll",
-                                  Err,
-                                  llvmIRModule->getContext());
+                llvm::parseIRFile("/home/rudi/mlir/proxyFunctionsIR/proxyFunctionsIR.ll", Err, llvmIRModule->getContext());
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR));
             auto optPipeline = mlir::makeOptimizingTransformer(3, 3, nullptr);
             auto optimizedModule = optPipeline(llvmIRModule);
@@ -242,8 +244,8 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
     auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
         auto symbolMap = llvm::orc::SymbolMap();
         for (int i = 0; i < (int) mlirGenerator->getJitProxyFunctionSymbols().size(); ++i) {
-            symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] = 
-            llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
+            symbolMap[interner(mlirGenerator->getJitProxyFunctionSymbols().at(i))] =
+                llvm::JITEvaluatedSymbol(mlirGenerator->getJitProxyTargetAddresses().at(i), llvm::JITSymbolFlags::Callable);
         }
         return symbolMap;
     };
@@ -251,7 +253,8 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
 
     // Invoke the JIT-compiled function.
     int64_t result = 0;
-    auto invocationResult = engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
+    auto invocationResult =
+        engine->invoke("execute", inputBufferPtr, outputBufferPtr, mlir::ExecutionEngine::Result<int64_t>(result));
     printf("Result: %ld\n", result);
 
     if (invocationResult) {
@@ -261,3 +264,4 @@ int MLIRUtility::runJit(bool useProxyFunctions, void* inputBufferPtr, void* outp
 
     return 0;
 }
+}// namespace NES::ExecutionEngine::Experimental::MLIR

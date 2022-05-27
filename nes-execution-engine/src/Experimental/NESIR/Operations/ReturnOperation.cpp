@@ -16,7 +16,7 @@
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
 #include <cstdint>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 ReturnOperation::ReturnOperation(uint8_t returnOpCode) 
     : Operation(Operation::ReturnOp), returnOpCode(returnOpCode){}
 

@@ -18,7 +18,7 @@
 #include "Experimental/NESIR/Operations/Operation.hpp"
 #include <cstdint>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class ReturnOperation : public Operation {
   public:
     ReturnOperation(uint8_t returnOpCode);

@@ -18,7 +18,7 @@
 #include <Experimental/NESIR/Operations/Operation.hpp>
 #include <vector>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class AddressOperation : public Operation {
 public:
     explicit AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, 

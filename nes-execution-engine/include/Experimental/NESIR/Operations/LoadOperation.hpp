@@ -17,7 +17,7 @@
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class LoadOperation : public Operation {
   public:
     explicit LoadOperation(std::string identifier, std::string argName);

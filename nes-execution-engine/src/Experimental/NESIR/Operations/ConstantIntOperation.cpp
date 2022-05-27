@@ -16,7 +16,7 @@
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <cstdint>
 
-namespace NES {
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 ConstantIntOperation::ConstantIntOperation(std::string identifier, int64_t constantValue, int8_t numBits)
     : Operation(OperationType::ConstantOp), identifier(std::move(identifier)), constantValue(constantValue), numBits(numBits){}
