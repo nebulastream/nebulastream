@@ -327,7 +327,7 @@ jobs:
           "operators": {"prefix": "#### Operators ", "labels":["Operators"]},
           "state management": {"prefix": "#### State Management ", "labels":["State Management"]},
           "rest": {"prefix": "#### REST API ", "labels":["REST"]},
-          "documentation": {"prefix": "#### Documentation ", "labels":["Documentation"]},
+          "documentation": {"prefix": "#### Documentation ", "labels":["Documentation"]}
           }'
       - name: "Commit Updated Changelog File"
         uses: stefanzweifel/git-auto-commit-action@v4
