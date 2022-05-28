@@ -153,9 +153,7 @@ std::vector<std::pair<TopologyNodePtr, Location>> LocationIndex::getNodesInRange
 #endif
 }
 
-void LocationIndex::addMobileNode(TopologyNodePtr node) {
-    mobileNodes.insert({node->getId(), node});
-}
+void LocationIndex::addMobileNode(TopologyNodePtr node) { mobileNodes.insert({node->getId(), node}); }
 
 std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLocations() {
     std::vector<std::pair<uint64_t, LocationPtr>> loccationVector;

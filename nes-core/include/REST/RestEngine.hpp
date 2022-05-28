@@ -88,7 +88,7 @@ typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
 namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
-}
+}// namespace Spatial::Index::Experimental
 
 class UdfCatalogController;
 using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;

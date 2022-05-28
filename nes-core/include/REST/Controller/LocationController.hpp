@@ -14,15 +14,15 @@
 
 #ifndef NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
 #define NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
-#include <memory>
 #include <REST/Controller/BaseController.hpp>
+#include <memory>
 
 namespace NES {
 
 namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
-}
+}// namespace Spatial::Index::Experimental
 
 class LocationController : public BaseController {
   public:
@@ -36,7 +36,6 @@ class LocationController : public BaseController {
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
 
   private:
-
     /**
      * Extracts the node id from the http requests parameters. if the parameter is not found or can not be converted to uint64_t,
      * the appropriate error response will be send and the return value will be nullopt_t
@@ -49,5 +48,5 @@ class LocationController : public BaseController {
 
     Spatial::Index::Experimental::LocationServicePtr locationService;
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP

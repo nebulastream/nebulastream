@@ -61,8 +61,9 @@ bool NodeLocationWrapper::setFixedLocationCoordinates(const Index::Experimental:
 Index::Experimental::LocationPtr NodeLocationWrapper::getLocation() {
     if (isMobile) {
         if (locationProvider) {
-            NES_DEBUG("Node location wrapper returning mobile node location: " << locationProvider->getCurrentLocation().first->getLatitude()
-                      << ", " << locationProvider->getCurrentLocation().first->getLongitude())
+            NES_DEBUG("Node location wrapper returning mobile node location: "
+                      << locationProvider->getCurrentLocation().first->getLatitude() << ", "
+                      << locationProvider->getCurrentLocation().first->getLongitude())
             return locationProvider->getCurrentLocation().first;
         }
         //if the node is mobile, but there is no location Source, return invalid
@@ -86,7 +87,5 @@ std::vector<std::pair<uint64_t, Index::Experimental::Location>> NodeLocationWrap
     return {};
 }
 
-LocationProviderPtr NodeLocationWrapper::getLocationProvider() {
-    return locationProvider;
-}
+LocationProviderPtr NodeLocationWrapper::getLocationProvider() { return locationProvider; }
 }// namespace NES::Spatial::Mobility::Experimental

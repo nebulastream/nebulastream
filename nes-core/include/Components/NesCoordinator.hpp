@@ -102,7 +102,7 @@ using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
-}
+}// namespace Spatial::Index::Experimental
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this

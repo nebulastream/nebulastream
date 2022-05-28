@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
+#include <Common/Location.hpp>
+#include <Components/NesWorker.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <NesBaseTest.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Services/LocationService.hpp>
+#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Spatial/LocationIndex.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Components/NesWorker.hpp>
-#include <Common/Location.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <cmath>
+#include <gtest/gtest.h>
 
 namespace NES {
 
@@ -37,7 +37,7 @@ class LocationServiceTest : public Testing::NESBaseTest {
         NES::Logger::setupLogging("LocationServiceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Set up LocationServiceTest test class.")
     }
-    static void TearDownTestCase() { NES_INFO("Tear down LocationServiceTest test class")}
+    static void TearDownTestCase(){NES_INFO("Tear down LocationServiceTest test class")}
 
     web::json::value convertNodeLocationInfoToJson(uint64_t id, NES::Spatial::Index::Experimental::LocationPtr loc) {
         web::json::value nodeInfo;
@@ -58,7 +58,6 @@ class LocationServiceTest : public Testing::NESBaseTest {
     std::string location4 = "52.49846981391786, 13.514464421192917";
     NES::Spatial::Index::Experimental::LocationServicePtr service;
 };
-
 
 TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     uint64_t rpcPortWrk1 = 6000;
@@ -237,4 +236,4 @@ TEST_F(LocationServiceTest, testConvertingToJson) {
     EXPECT_EQ(nullLocJson["id"], 3);
     EXPECT_EQ(nullLocJson["location"], web::json::value::null());
 }
-}
+}// namespace NES

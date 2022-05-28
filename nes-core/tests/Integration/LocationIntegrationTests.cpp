@@ -23,18 +23,18 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Spatial/LocationIndex.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
 #include <Spatial/NodeLocationWrapper.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-#include <Spatial/LocationProviderCSV.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
+#include <gtest/gtest.h>
 
-using std::string;
 using std::map;
+using std::string;
 namespace NES {
 using namespace Configurations;
 
@@ -317,7 +317,6 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
 
-
     double pos1lat = 52.55227464714949;
     double pos1lng = 13.351743136322877;
 
@@ -337,7 +336,8 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
     NES::Spatial::Index::Experimental::LocationPtr currentLocation = wrk1Node->getCoordinates();
     Timestamp afterQuery = getTimestamp();
 
-    auto sourceCsv = dynamic_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV*>(wrk1->getLocationWrapper()->getLocationProvider().get());
+    auto sourceCsv = dynamic_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV*>(
+        wrk1->getLocationWrapper()->getLocationProvider().get());
     auto startTime = sourceCsv->getStarttime();
     auto timefirstLoc = startTime;
     auto timesecloc = startTime + 100000000;

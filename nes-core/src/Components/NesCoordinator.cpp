@@ -27,11 +27,11 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Services/LocationService.hpp>
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/RequestProcessorService.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Services/LocationService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
@@ -362,6 +362,6 @@ void NesCoordinator::onFatalError(int, std::string) {}
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
 SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return sourceCatalogService; }
 TopologyManagerServicePtr NesCoordinator::getTopologyManagerService() const { return topologyManagerService; }
-NES::Spatial::Index::Experimental::LocationServicePtr NesCoordinator::getLocationService() const {return locationService; }
+NES::Spatial::Index::Experimental::LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 
 }// namespace NES

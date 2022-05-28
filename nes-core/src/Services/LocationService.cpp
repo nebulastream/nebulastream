@@ -12,27 +12,27 @@
     limitations under the License.
 */
 
-#include <Services/LocationService.hpp>
-#include <cpprest/json.h>
-#include <Spatial/LocationIndex.hpp>
 #include <Common/Location.hpp>
+#include <Services/LocationService.hpp>
+#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <cpprest/json.h>
 
 namespace NES::Spatial::Index::Experimental {
-LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology) {};
+LocationService::LocationService(TopologyPtr topology) : locationIndex(topology->getLocationIndex()), topology(topology){};
 
 web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId) {
-   auto nodePtr = topology->findNodeWithId(nodeId);
-   if (!nodePtr) {
-       return web::json::value::null();
-   }
-   return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates());
+    auto nodePtr = topology->findNodeWithId(nodeId);
+    if (!nodePtr) {
+        return web::json::value::null();
+    }
+    return convertNodeLocationInfoToJson(nodeId, nodePtr->getCoordinates());
 }
 
 web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
     auto nodeVector = locationIndex->getAllMobileNodeLocations();
-    web::json::value locMapJson =  web::json::value::array();
+    web::json::value locMapJson = web::json::value::array();
     size_t count = 0;
     for (const auto& [nodeId, location] : nodeVector) {
         web::json::value nodeInfo = convertNodeLocationInfoToJson(nodeId, location);
@@ -55,4 +55,4 @@ web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Loc
     nodeInfo["location"] = web::json::value(locJson);
     return nodeInfo;
 }
-}
+}// namespace NES::Spatial::Index::Experimental

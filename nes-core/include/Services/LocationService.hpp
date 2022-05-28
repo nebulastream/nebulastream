@@ -24,7 +24,7 @@ class value;
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
-}
+}// namespace NES
 
 namespace NES::Spatial::Index::Experimental {
 class LocationIndex;
@@ -67,9 +67,7 @@ class LocationService {
      */
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
 
-
   private:
-
     /**
      * Use a node id and a LocationPtr to construct a Json representation containing these values.
      * @param id : the nodes id
@@ -88,6 +86,6 @@ class LocationService {
     LocationIndexPtr locationIndex;
     TopologyPtr topology;
 };
-}
+}// namespace NES::Spatial::Index::Experimental
 
 #endif//NES_INCLUDE_SERVICES_LOCATIONSERVICE_HPP
