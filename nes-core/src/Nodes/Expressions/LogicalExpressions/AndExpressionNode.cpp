@@ -48,7 +48,6 @@ void AndExpressionNode::inferStamp(SchemaPtr schema) {
         NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: "
                                 + getLeft()->getStamp()->toString());
     }
-
     if (!getRight()->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: "
                                 + getRight()->getStamp()->toString());
