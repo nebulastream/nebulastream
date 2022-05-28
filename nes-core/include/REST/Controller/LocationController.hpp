@@ -16,6 +16,7 @@
 #define NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
 #include <REST/Controller/BaseController.hpp>
 #include <memory>
+#include <optional>
 
 namespace NES {
 
