@@ -38,7 +38,6 @@ on:
           - Minor
 
 jobs:
-
   validateTrigger:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
@@ -57,12 +56,12 @@ jobs:
           exit 1
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Contextual QA Checklists
-        if: github.event_name == 'pull_request'
-        uses: wyozi/contextual-qa-checklist-action@1.2
-        with:
-          gh-token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
-          comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
+      #- name: Contextual QA Checklists
+      #  if: github.event_name == 'pull_request'
+      #  uses: wyozi/contextual-qa-checklist-action@1.2
+      #  with:
+      #    gh-token: ${{ secrets.CI_PRIVILEGE_SECRETE }}
+      #    comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
 
   build-x64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
