@@ -107,7 +107,7 @@ class RestEngine {
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr bufferManager,
-               const Spatial::Index::Experimental::LocationServicePtr& locationService);
+               const NES::Spatial::Index::Experimental::LocationServicePtr& locationService);
 
     void handleGet(web::http::http_request request);
     void handlePost(web::http::http_request request);

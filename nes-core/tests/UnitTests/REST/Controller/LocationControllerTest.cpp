@@ -45,7 +45,7 @@ TEST_F(LocationControllerTest, testBadGETRequests) {
     TopologyPtr topology = Topology::create();
     NES::Spatial::Index::Experimental::LocationServicePtr service =
         std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
-    controller = std::make_shared<LocationController>(service);
+    controller = std::make_shared<NES::LocationController>(service);
 
     //test request without nodeId parameter
     web::http::http_request msg1(web::http::methods::GET);
