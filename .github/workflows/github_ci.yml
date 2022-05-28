@@ -332,11 +332,11 @@ jobs:
       - name: "Commit Updated Changelog File"
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "GIT-CI: Adding changelog for NES version ${NES_VERSION}"
+          commit_message: "GIT-CI: Adding changelog for NES version "${{ env.NES_VERSION }}
           file_pattern: CHANGELOG.md
       - name: "Release Tag"
         env:
-          CI_SECRET: ${{ secrets.NES_CI_SECRET }}
+          CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt     
           if [[ $EVENT == 'workflow_dispatch' ]]; then
