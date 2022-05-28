@@ -18,13 +18,15 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Spatial/NodeLocationWrapper.hpp>
 #include <cpprest/json.h>
 #include <utility>
-#include <Spatial/NodeLocationWrapper.hpp>
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent, NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr nodeLocationWrapper)
+WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
+                                 MonitoringAgentPtr monitoringAgent,
+                                 NES::Spatial::Mobility::Experimental::NodeLocationWrapperPtr nodeLocationWrapper)
     : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)), locationWrapper(nodeLocationWrapper) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }

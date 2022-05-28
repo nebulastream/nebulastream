@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
 #include <REST/Controller/LocationController.hpp>
-#include <utility>
 #include <Services/LocationService.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
 const std::string kAllMobileLocationsRequestString = "allMobile";
 const std::string kNodeIdParamString = "nodeId";
 
-LocationController::LocationController(Spatial::Index::Experimental::LocationServicePtr locationService) : locationService(std::move(locationService)) {
+LocationController::LocationController(Spatial::Index::Experimental::LocationServicePtr locationService)
+    : locationService(std::move(locationService)) {
     NES_DEBUG("LocationController: Initializing");
 }
 
@@ -62,37 +63,37 @@ void LocationController::handleGet(const std::vector<utility::string_t>& path, w
 }
 
 std::optional<uint64_t> LocationController::getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
-                                                                          const web::http::http_request& httpRequest) {
-   auto const idParameter = parameters.find(kNodeIdParamString);
-   if (idParameter == parameters.end()) {
-       NES_ERROR("LocationController: Unable to find nodeId parameter in the GET request");
-       web::json::value errorResponse{};
-       auto statusCode = web::http::status_codes::BadRequest;
-       errorResponse["code"] = web::json::value(statusCode);
-       errorResponse["message"] = web::json::value::string("Parameter nodeId must be provided");
-       errorMessageImpl(httpRequest, errorResponse, statusCode);
-       return {};
-   }
-   uint64_t nodeId;
-   try {
-       nodeId = std::stoi(idParameter->second);
-   } catch (const std::invalid_argument& invalidArgument) {
-       NES_ERROR("LocationController: Unable to convert nodeId parameter to integer");
-       web::json::value errorResponse{};
-       auto statusCode = web::http::status_codes::BadRequest;
-       errorResponse["code"] = web::json::value(statusCode);
-       errorResponse["message"] = web::json::value::string("Parameter nodeId must be an unsigned integer");
-       errorMessageImpl(httpRequest, errorResponse, statusCode);
-       return {};
-   } catch (const std::out_of_range& outOfRange) {
-       NES_ERROR("LocationController: nodeId is out of value range of the 64bit integer format");
-       web::json::value errorResponse{};
-       auto statusCode = web::http::status_codes::BadRequest;
-       errorResponse["code"] = web::json::value(statusCode);
-       errorResponse["message"] = web::json::value::string("Parameter nodeId must be in 64bit unsigned int value range");
-       errorMessageImpl(httpRequest, errorResponse, statusCode);
-       return {};
-   }
-   return nodeId;
+                                                                      const web::http::http_request& httpRequest) {
+    auto const idParameter = parameters.find(kNodeIdParamString);
+    if (idParameter == parameters.end()) {
+        NES_ERROR("LocationController: Unable to find nodeId parameter in the GET request");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Parameter nodeId must be provided");
+        errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return {};
+    }
+    uint64_t nodeId;
+    try {
+        nodeId = std::stoi(idParameter->second);
+    } catch (const std::invalid_argument& invalidArgument) {
+        NES_ERROR("LocationController: Unable to convert nodeId parameter to integer");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Parameter nodeId must be an unsigned integer");
+        errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return {};
+    } catch (const std::out_of_range& outOfRange) {
+        NES_ERROR("LocationController: nodeId is out of value range of the 64bit integer format");
+        web::json::value errorResponse{};
+        auto statusCode = web::http::status_codes::BadRequest;
+        errorResponse["code"] = web::json::value(statusCode);
+        errorResponse["message"] = web::json::value::string("Parameter nodeId must be in 64bit unsigned int value range");
+        errorMessageImpl(httpRequest, errorResponse, statusCode);
+        return {};
+    }
+    return nodeId;
 }
-}
+}// namespace NES

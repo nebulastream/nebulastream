@@ -61,7 +61,7 @@ using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 namespace Spatial::Index::Experimental {
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
-}
+}// namespace Spatial::Index::Experimental
 
 /**
  * @brief : This class is responsible for starting the REST server.

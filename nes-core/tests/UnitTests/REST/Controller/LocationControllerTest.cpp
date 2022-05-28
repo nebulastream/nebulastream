@@ -15,13 +15,13 @@
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
-#include <REST/RestEngine.hpp>
+#include <Components/NesWorker.hpp>
 #include <REST/Controller/LocationController.hpp>
+#include <REST/RestEngine.hpp>
 #include <Services/LocationService.hpp>
+#include <Spatial/LocationIndex.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Components/NesWorker.hpp>
-#include <Spatial/LocationIndex.hpp>
 
 using namespace std;
 namespace NES {
@@ -43,7 +43,8 @@ class LocationControllerTest : public Testing::NESBaseTest {
 
 TEST_F(LocationControllerTest, testBadGETRequests) {
     TopologyPtr topology = Topology::create();
-    NES::Spatial::Index::Experimental::LocationServicePtr service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
+    NES::Spatial::Index::Experimental::LocationServicePtr service =
+        std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
     controller = std::make_shared<LocationController>(service);
 
     //test request without nodeId parameter
@@ -54,27 +55,25 @@ TEST_F(LocationControllerTest, testBadGETRequests) {
     web::json::value response1;
     controller->handleGet(std::vector<utility::string_t>{"location"}, msg1);
 
-
     msg1.get_response()
         .then([&httpResponse1](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse1 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse1 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse1.extract_json()
         .then([&response1](const pplx::task<web::json::value>& task) {
-          response1 = task.get();
+            response1 = task.get();
         })
         .wait();
     auto getLocResp1 = response1.as_object();
     NES_DEBUG("Response: " << response1.serialize());
     EXPECT_TRUE(getLocResp1.size() == 2);
     EXPECT_TRUE(getLocResp1.find("message") != getLocResp1.end());
-    EXPECT_EQ(getLocResp1.at("message").as_string(),
-              "Parameter nodeId must be provided");
+    EXPECT_EQ(getLocResp1.at("message").as_string(), "Parameter nodeId must be provided");
     EXPECT_TRUE(getLocResp1.find("code") != getLocResp1.end());
     EXPECT_EQ(getLocResp1.at("code"), 400);
 
@@ -86,27 +85,25 @@ TEST_F(LocationControllerTest, testBadGETRequests) {
     web::json::value response2;
     controller->handleGet(std::vector<utility::string_t>{"location"}, msg2);
 
-
     msg2.get_response()
         .then([&httpResponse2](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse2 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse2 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse2.extract_json()
         .then([&response2](const pplx::task<web::json::value>& task) {
-          response2 = task.get();
+            response2 = task.get();
         })
         .wait();
     auto getLocResp2 = response2.as_object();
     NES_DEBUG("Response: " << response2.serialize());
     EXPECT_TRUE(getLocResp2.size() == 2);
     EXPECT_TRUE(getLocResp2.find("message") != getLocResp2.end());
-    EXPECT_EQ(getLocResp2.at("message").as_string(),
-              "No node with this Id");
+    EXPECT_EQ(getLocResp2.at("message").as_string(), "No node with this Id");
     EXPECT_TRUE(getLocResp2.find("code") != getLocResp2.end());
     EXPECT_EQ(getLocResp2.at("code"), 404);
 
@@ -118,27 +115,25 @@ TEST_F(LocationControllerTest, testBadGETRequests) {
     web::json::value response3;
     controller->handleGet(std::vector<utility::string_t>{"location"}, msg3);
 
-
     msg3.get_response()
         .then([&httpResponse3](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse3 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse3 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse3.extract_json()
         .then([&response3](const pplx::task<web::json::value>& task) {
-          response3 = task.get();
+            response3 = task.get();
         })
         .wait();
     auto getLocResp3 = response3.as_object();
     NES_DEBUG("Response: " << response3.serialize());
     EXPECT_TRUE(getLocResp3.size() == 2);
     EXPECT_TRUE(getLocResp3.find("message") != getLocResp3.end());
-    EXPECT_EQ(getLocResp3.at("message").as_string(),
-              "Parameter nodeId must be an unsigned integer");
+    EXPECT_EQ(getLocResp3.at("message").as_string(), "Parameter nodeId must be an unsigned integer");
     EXPECT_TRUE(getLocResp3.find("code") != getLocResp3.end());
     EXPECT_EQ(getLocResp3.at("code"), 400);
 
@@ -150,34 +145,33 @@ TEST_F(LocationControllerTest, testBadGETRequests) {
     web::json::value response4;
     controller->handleGet(std::vector<utility::string_t>{"location"}, msg4);
 
-
     msg4.get_response()
         .then([&httpResponse4](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse4 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse4 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse4.extract_json()
         .then([&response4](const pplx::task<web::json::value>& task) {
-          response4 = task.get();
+            response4 = task.get();
         })
         .wait();
     auto getLocResp4 = response4.as_object();
     NES_DEBUG("Response: " << response4.serialize());
     EXPECT_TRUE(getLocResp4.size() == 2);
     EXPECT_TRUE(getLocResp4.find("message") != getLocResp4.end());
-    EXPECT_EQ(getLocResp4.at("message").as_string(),
-              "Parameter nodeId must be in 64bit unsigned int value range");
+    EXPECT_EQ(getLocResp4.at("message").as_string(), "Parameter nodeId must be in 64bit unsigned int value range");
     EXPECT_TRUE(getLocResp4.find("code") != getLocResp4.end());
     EXPECT_EQ(getLocResp4.at("code"), 400);
 }
 
 TEST_F(LocationControllerTest, testGETSingleLocation) {
     TopologyPtr topology = Topology::create();
-    NES::Spatial::Index::Experimental::LocationServicePtr service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
+    NES::Spatial::Index::Experimental::LocationServicePtr service =
+        std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
     controller = std::make_shared<LocationController>(service);
     TopologyNodePtr node = TopologyNode::create(3, "127.0.0.1", 0, 0, 0);
     TopologyNodePtr node2 = TopologyNode::create(4, "127.0.0.1", 1, 0, 0);
@@ -193,19 +187,18 @@ TEST_F(LocationControllerTest, testGETSingleLocation) {
     web::json::value response1;
     controller->handleGet(std::vector<utility::string_t>{"location"}, msg1);
 
-
     msg1.get_response()
         .then([&httpResponse1](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse1 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse1 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse1.extract_json()
         .then([&response1](const pplx::task<web::json::value>& task) {
-          response1 = task.get();
+            response1 = task.get();
         })
         .wait();
     auto getLocResp1 = response1.as_object();
@@ -224,19 +217,18 @@ TEST_F(LocationControllerTest, testGETSingleLocation) {
     web::json::value response2;
     controller->handleGet(std::vector<utility::string_t>{"location"}, msg2);
 
-
     msg2.get_response()
         .then([&httpResponse2](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse2 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse2 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse2.extract_json()
         .then([&response2](const pplx::task<web::json::value>& task) {
-          response2 = task.get();
+            response2 = task.get();
         })
         .wait();
     auto getLocResp2 = response2.as_object();
@@ -258,7 +250,8 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     uint64_t rpcPortWrk4 = 6003;
     web::json::value cmpLoc;
     TopologyPtr topology = Topology::create();
-    NES::Spatial::Index::Experimental::LocationServicePtr service = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
+    NES::Spatial::Index::Experimental::LocationServicePtr service =
+        std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
     controller = std::make_shared<LocationController>(service);
     NES::Spatial::Index::Experimental::LocationIndexPtr locIndex = topology->getLocationIndex();
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
@@ -282,19 +275,18 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     web::json::value response0;
     controller->handleGet(std::vector<utility::string_t>{"location", "allMobile"}, msg0);
 
-
     msg0.get_response()
         .then([&httpResponse0](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse0 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse0 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse0.extract_json()
         .then([&response0](const pplx::task<web::json::value>& task) {
-          response0 = task.get();
+            response0 = task.get();
         })
         .wait();
     auto getLocResp0 = response0.as_array();
@@ -320,19 +312,18 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     web::json::value response1;
     controller->handleGet(std::vector<utility::string_t>{"location", "allMobile"}, msg1);
 
-
     msg1.get_response()
         .then([&httpResponse1](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse1 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse1 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse1.extract_json()
         .then([&response1](const pplx::task<web::json::value>& task) {
-          response1 = task.get();
+            response1 = task.get();
         })
         .wait();
     auto getLocResp1 = response1.as_array();
@@ -367,19 +358,18 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     web::json::value response2;
     controller->handleGet(std::vector<utility::string_t>{"location", "allMobile"}, msg2);
 
-
     msg2.get_response()
         .then([&httpResponse2](const pplx::task<web::http::http_response>& task) {
-          try {
-              httpResponse2 = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                httpResponse2 = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
     httpResponse2.extract_json()
         .then([&response2](const pplx::task<web::json::value>& task) {
-          response2 = task.get();
+            response2 = task.get();
         })
         .wait();
     auto getLocResp2 = response2.as_array();
@@ -410,4 +400,4 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     bool retStopWrk4 = wrk4->stop(false);
     EXPECT_TRUE(retStopWrk4);
 }
-}
+}// namespace NES

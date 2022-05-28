@@ -14,6 +14,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/LocationController.hpp>
 #include <REST/Controller/MaintenanceController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
@@ -21,7 +22,6 @@
 #include <REST/Controller/SourceCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
-#include <REST/Controller/LocationController.hpp>
 #include <REST/RestEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpprest/details/http_server.h>

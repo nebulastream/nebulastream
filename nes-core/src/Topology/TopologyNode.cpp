@@ -13,10 +13,10 @@
 */
 
 #include <Common/Location.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
-#include <GRPC/WorkerRPCClient.hpp>
 
 namespace NES {
 

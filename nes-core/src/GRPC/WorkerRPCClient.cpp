@@ -15,6 +15,7 @@
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <API/Schema.hpp>
+#include <Common/Location.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
@@ -23,7 +24,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <health.grpc.pb.h>
 #include <log4cxx/helpers/exception.h>
-#include <Common/Location.hpp>
 
 namespace NES {
 
