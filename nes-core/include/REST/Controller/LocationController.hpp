@@ -27,7 +27,7 @@ using LocationServicePtr = std::shared_ptr<LocationService>;
 
 class LocationController : public BaseController {
   public:
-    LocationController(Spatial::Index::Experimental::LocationServicePtr locationService);
+    LocationController(NES::Spatial::Index::Experimental::LocationServicePtr locationService);
 
     /**
      * Handling the Get requests for the locations
@@ -47,7 +47,7 @@ class LocationController : public BaseController {
     static std::optional<uint64_t> getNodeIdFromURIParameter(std::map<utility::string_t, utility::string_t> parameters,
                                                              const web::http::http_request& httpRequest);
 
-    Spatial::Index::Experimental::LocationServicePtr locationService;
+    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
 };
 }// namespace NES
 #endif//NES_INCLUDE_REST_CONTROLLER_LOCATIONCONTROLLER_HPP
