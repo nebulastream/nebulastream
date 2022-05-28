@@ -332,7 +332,7 @@ jobs:
       - name: "Commit Updated Changelog File"
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "GIT-CI: Adding changelog for NES version "${{ env.NES_VERSION }}
+          commit_message: "GIT-CI: Adding changelog for NES version ${{ env.NES_VERSION }}"
           file_pattern: CHANGELOG.md
       - name: "Release Tag"
         env:
