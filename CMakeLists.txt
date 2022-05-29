@@ -589,16 +589,14 @@ endif ()
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
-# Add target for the execution
-add_subdirectory(nes-execution)
 # Add target for the compiler
 add_subdirectory(nes-compiler)
+# Add target for core, which contains the nes lib
+add_subdirectory(nes-core)
 if(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
     # Add target for execution engines
     add_subdirectory(nes-execution-engine)
 endif(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE)
-# Add target for core, which contains the nes lib
-add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
 # Add target for benchmarks
