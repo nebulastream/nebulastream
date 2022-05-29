@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class ExecutionTrace;
 class Operation;
@@ -89,6 +89,6 @@ void Trace(OpCode op, const Value& input, Value& result) {
 }
  */
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_

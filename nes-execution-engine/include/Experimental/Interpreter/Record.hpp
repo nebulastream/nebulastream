@@ -20,7 +20,7 @@
 #include <ostream>
 #include <vector>
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class Record {
   public:
@@ -40,6 +40,6 @@ class Record {
 
 using RecordPtr = std::shared_ptr<Record>;
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_HPP_

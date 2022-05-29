@@ -19,7 +19,7 @@
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Interpreter::Operations {
+namespace NES::Experimental::Interpreter::Operations {
 
 template<typename Left, typename Right>
 auto OrOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& rightExp) {
@@ -31,6 +31,6 @@ auto OrOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& ri
     NES_THROW_RUNTIME_ERROR("no matching execution");
 }
 
-}// namespace NES::Interpreter::Operations
+}// namespace NES::Experimental::Interpreter::Operations
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATIONS_OROP_HPP_

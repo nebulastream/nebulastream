@@ -18,7 +18,7 @@
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/Record.hpp>
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class ReadFieldExpression : public Expression {
   private:
@@ -29,6 +29,6 @@ class ReadFieldExpression : public Expression {
     Value<> execute(Record& record) override;
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_READFIELDEXPRESSION_HPP_

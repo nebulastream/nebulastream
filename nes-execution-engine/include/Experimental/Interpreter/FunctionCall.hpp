@@ -20,7 +20,7 @@
 #include <memory>
 #include <stdio.h>
 #include <unistd.h>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 /*
 
@@ -184,6 +184,6 @@ auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... argume
     }
     //}
 }
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_

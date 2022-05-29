@@ -18,7 +18,7 @@
 #include <ostream>
 #include <unordered_map>
 #include <vector>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 class Block {
   public:
     Block(uint32_t blockId) : blockId(blockId), frame(){};
@@ -38,6 +38,6 @@ class Block {
     friend std::ostream& operator<<(std::ostream& os, const Block& block);
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCK_HPP_

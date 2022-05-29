@@ -18,7 +18,7 @@
 #include <Experimental/Interpreter/Trace/OperationRef.hpp>
 #include <set>
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class SSACreationPhase {
   public:
@@ -145,5 +145,5 @@ class SSACreationPhase {
     };
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
