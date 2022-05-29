@@ -20,7 +20,7 @@
 #include <memory>
 #include <stdio.h>
 #include <unistd.h>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 /*
 
@@ -86,7 +86,7 @@ auto transform(Arg argument) {
 }
 
 template<typename Arg>
-InputVariant getRefs(Arg argument) {
+Trace::InputVariant getRefs(Arg argument) {
     return argument.ref;
 }
 
@@ -156,16 +156,16 @@ void myFunction(CallbackFunction&& function) {
 template<typename R, typename... Args2, typename... Args>
 auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... arguments) {
 
-    std::vector<InputVariant> varRefs = {FunctionCallTarget(functionName, functionName)};
+    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, functionName)};
     for (auto& p : {getRefs(arguments)...}) {
         varRefs.emplace_back(p);
     }
 
     if constexpr (std::is_void_v<R>) {
         fnptr(transform(std::forward<Args>(arguments))...);
-        auto ctx = getThreadLocalTraceContext();
+        auto ctx = Trace::getThreadLocalTraceContext();
         if (ctx != nullptr) {
-            auto operation = Operation(CALL, varRefs);
+            auto operation = Trace::Operation(Trace::CALL, varRefs);
             ctx->trace(operation);
         }
         //((c->setArg(index++, arguments)), ...);
@@ -174,16 +174,16 @@ auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... argume
 
         auto res = fnptr(transform(std::forward<Args>(arguments))...);
         auto resultValue = transformReturn(res);
-        auto ctx = getThreadLocalTraceContext();
+        auto ctx = Trace::getThreadLocalTraceContext();
         if (ctx != nullptr) {
 
-            auto operation = Operation(CALL, resultValue.ref, varRefs);
+            auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
             ctx->trace(operation);
         }
         return resultValue;
     }
     //}
 }
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_

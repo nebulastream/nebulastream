@@ -15,7 +15,7 @@
 #include <Experimental/Interpreter/Operators/ExecuteOperator.hpp>
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Record.hpp>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     child->open(ctx, recordBuffer);
@@ -26,4 +26,4 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     }
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

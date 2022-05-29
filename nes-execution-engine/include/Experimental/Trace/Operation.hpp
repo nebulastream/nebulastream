@@ -14,14 +14,14 @@
 
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATION_HPP_
-#include <Experimental/Interpreter/Trace/BlockRef.hpp>
-#include <Experimental/Interpreter/Trace/ConstantValue.hpp>
-#include <Experimental/Interpreter/Trace/FunctionCallTarget.hpp>
-#include <Experimental/Interpreter/Trace/OpCode.hpp>
-#include <Experimental/Interpreter/Trace/ValueRef.hpp>
+#include <Experimental/Trace/BlockRef.hpp>
+#include <Experimental/Trace/ConstantValue.hpp>
+#include <Experimental/Trace/FunctionCallTarget.hpp>
+#include <Experimental/Trace/OpCode.hpp>
+#include <Experimental/Trace/ValueRef.hpp>
 #include <variant>
 #include <vector>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef, None, FunctionCallTarget>;
 class OperationRef;
@@ -40,6 +40,6 @@ class Operation {
     friend std::ostream& operator<<(std::ostream& os, const Operation& operation);
 };
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATION_HPP_

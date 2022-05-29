@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Expressions/EqualsExpression.hpp>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 EqualsExpression::EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
@@ -25,4 +25,4 @@ Value<> EqualsExpression::execute(Record& record) {
     return leftValue == rightValue;
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

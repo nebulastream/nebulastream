@@ -17,7 +17,7 @@
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <memory>
 #include <unordered_map>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Operator;
 class RecordBuffer;
 class OperatorState {
@@ -38,6 +38,6 @@ class ExecutionContext {
     Value<MemRef> workerContext;
 };
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_

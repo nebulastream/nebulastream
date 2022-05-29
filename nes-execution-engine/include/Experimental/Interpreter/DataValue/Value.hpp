@@ -25,14 +25,15 @@
 #include <Experimental/Interpreter/Operations/NegateOp.hpp>
 #include <Experimental/Interpreter/Operations/OrOp.hpp>
 #include <Experimental/Interpreter/Operations/SubOp.hpp>
-#include <Experimental/Interpreter/Trace/OpCode.hpp>
-#include <Experimental/Interpreter/Trace/TraceContext.hpp>
-#include <Experimental/Interpreter/Trace/TraceManager.hpp>
-#include <Experimental/Interpreter/Trace/ValueRef.hpp>
 #include <Experimental/Interpreter/Util/Casting.hpp>
+#include <Experimental/Trace/OpCode.hpp>
+#include <Experimental/Trace/TraceContext.hpp>
+#include <Experimental/Trace/ConstantValue.hpp>
+#include <Experimental/Trace/TraceManager.hpp>
+#include <Experimental/Trace/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class BaseValue {
   public:
@@ -41,16 +42,16 @@ class BaseValue {
 template<class ValueType = Any>
 class Value : BaseValue {
   public:
-    Value(std::unique_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(createNextRef()){};
-    Value(std::unique_ptr<ValueType> wrappedValue, ValueRef& ref) : value(std::move(wrappedValue)), ref(ref){};
+    Value(std::unique_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(Trace::createNextRef()){};
+    Value(std::unique_ptr<ValueType> wrappedValue, Trace::ValueRef& ref) : value(std::move(wrappedValue)), ref(ref){};
 
     Value(int value) : Value(std::make_unique<Integer>(value)) {
-        Trace(CONST, *this, *this);
+        TraceOperation(Trace::CONST, *this, *this);
         //traceContext->trace(CONST, *this, *this);
     };
 
-    explicit Value(int64_t value) : Value(std::make_unique<Integer>(value)) { Trace(CONST, *this, *this); };
-    explicit Value(bool value) : Value(std::make_unique<Boolean>(value)) { Trace(CONST, *this, *this); };
+    explicit Value(int64_t value) : Value(std::make_unique<Integer>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    explicit Value(bool value) : Value(std::make_unique<Boolean>(value)) { TraceOperation(Trace::CONST, *this, *this); };
 
     // copy constructor
     template<class OType>
@@ -68,8 +69,8 @@ class Value : BaseValue {
     // move assignment
     template<class OType>
     Value& operator=(Value<OType>&& other) noexcept {
-        auto operation = Operation(ASSIGN, this->ref, {other.ref});
-        getThreadLocalTraceContext()->trace(operation);
+        auto operation = Trace::Operation(Trace::ASSIGN, this->ref, {other.ref});
+        Trace::getThreadLocalTraceContext()->trace(operation);
         this->value = cast<ValueType>(other.value);
         return *this;
     }
@@ -78,7 +79,7 @@ class Value : BaseValue {
         //std::cout << "trace bool eval" << std::endl;
         if (instanceOf<Boolean>(value)) {
             auto boolValue = cast<Boolean>(value);
-            Trace(OpCode::CMP, *this, *this);
+            TraceOperation(Trace::OpCode::CMP, *this, *this);
             return boolValue->value;
         }
         return false;
@@ -94,32 +95,32 @@ class Value : BaseValue {
 
   public:
     std::unique_ptr<ValueType> value;
-    ValueRef ref;
+    Trace::ValueRef ref;
 };
 
 template<class ValueType, class ResultType>
-void Trace(OpCode op, const Value<ValueType>& input, Value<ResultType>& result) {
-    auto ctx = getThreadLocalTraceContext();
+void TraceOperation(Trace::OpCode op, const Value<ValueType>& input, Value<ResultType>& result) {
+    auto ctx = Trace::getThreadLocalTraceContext();
     if (ctx != nullptr) {
-        if (op == OpCode::CONST) {
+        if (op == Trace::OpCode::CONST) {
             auto constValue = input.value->copy();
-            auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
+            auto operation = Trace::Operation(op, result.ref, {Trace::ConstantValue(std::move(constValue))});
             ctx->trace(operation);
-        } else if (op == CMP) {
+        } else if (op == Trace::CMP) {
             //if constexpr (std::is_same_v<ValueType, Any>)
             ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
         } else {
-            auto operation = Operation(op, result.ref, {input.ref});
+            auto operation = Trace::Operation(op, result.ref, {input.ref});
             ctx->trace(operation);
         }
     }
 };
 
 template<class ValueLeft, class ValueRight, class ValueReturn>
-void Trace(OpCode op, const Value<ValueLeft>& left, const Value<ValueRight>& right, Value<ValueReturn>& result) {
-    auto ctx = getThreadLocalTraceContext();
+void TraceOperation(Trace::OpCode op, const Value<ValueLeft>& left, const Value<ValueRight>& right, Value<ValueReturn>& result) {
+    auto ctx = Trace::getThreadLocalTraceContext();
     if (ctx != nullptr) {
-        auto operation = Operation(op, result.ref, {left.ref, right.ref});
+        auto operation = Trace::Operation(op, result.ref, {left.ref, right.ref});
         ctx->trace(operation);
     }
 };
@@ -135,7 +136,7 @@ template<class T>
     requires(std::is_same_v<T, const bool> == true)
 inline auto toValue(T&& t) -> Value<> {
     auto value = Value<Boolean>(std::make_unique<Boolean>(t));
-    Trace(CONST, value, value);
+    TraceOperation(Trace::CONST, value, value);
     return value;
 }
 
@@ -143,7 +144,7 @@ template<class T>
     requires(std::is_same_v<T, const uint64_t> == true)
 inline auto toValue(T&& t) -> Value<> {
     auto value = Value<Integer>(std::make_unique<Integer>(t));
-    Trace(CONST, value, value);
+    TraceOperation(Trace::CONST, value, value);
     return value;
 }
 
@@ -151,7 +152,7 @@ template<class T>
     requires(std::is_same_v<T, const int32_t> == true)
 inline auto toValue(T&& t) -> Value<> {
     auto value = Value<Integer>(std::make_unique<Integer>(t));
-    Trace(CONST, value, value);
+    TraceOperation(Trace::CONST, value, value);
     return value;
 }
 
@@ -179,7 +180,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator+(const LHS& left, const RHS& right) {
     auto result = Operations::AddOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::ADD, left, right, resValue);
+    TraceOperation(Trace::OpCode::ADD, left, right, resValue);
     return resValue;
 };
 
@@ -204,7 +205,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator-(const LHS& left, const RHS& right) {
     auto result = Operations::SubOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::SUB, left, right, resValue);
+    TraceOperation(Trace::OpCode::SUB, left, right, resValue);
     return resValue;
 };
 
@@ -224,7 +225,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator*(const LHS& left, const RHS& right) {
     auto result = Operations::MulOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::MUL, left, right, resValue);
+    TraceOperation(Trace::OpCode::MUL, left, right, resValue);
     return resValue;
 };
 
@@ -244,7 +245,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator/(const LHS& left, const RHS& right) {
     auto result = Operations::DivOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::DIV, left, right, resValue);
+    TraceOperation(Trace::OpCode::DIV, left, right, resValue);
     return resValue;
 };
 
@@ -266,7 +267,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator==(const LHS& left, const RHS& right) {
     auto result = Operations::EqualsOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::EQUALS, left, right, resValue);
+    TraceOperation(Trace::OpCode::EQUALS, left, right, resValue);
     return resValue;
 };
 
@@ -274,7 +275,7 @@ template<IsValueType LHS>
 auto inline operator!(const LHS& left) {
     auto result = Operations::NegateOp(left.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::NEGATE, left, resValue);
+    TraceOperation(Trace::OpCode::NEGATE, left, resValue);
     return resValue;
 };
 
@@ -311,7 +312,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator<(const LHS& left, const RHS& right) {
     auto result = Operations::LessThan(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::LESS_THAN, left, right, resValue);
+    TraceOperation(Trace::OpCode::LESS_THAN, left, right, resValue);
     return resValue;
 };
 
@@ -382,7 +383,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator&&(const LHS& left, const RHS& right) {
     auto result = Operations::AndOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::AND, left, right, resValue);
+    TraceOperation(Trace::OpCode::AND, left, right, resValue);
     return resValue;
 };
 
@@ -402,7 +403,7 @@ template<IsValueType LHS, IsValueType RHS>
 auto inline operator||(const LHS& left, const RHS& right) {
     auto result = Operations::OrOp(left.value, right.value);
     auto resValue = Value(std::move(result));
-    Trace(OpCode::OR, left, right, resValue);
+    TraceOperation(Trace::OpCode::OR, left, right, resValue);
     return resValue;
 };
 
@@ -410,19 +411,19 @@ template<class Type>
 auto load(Value<MemRef>& ref) {
     auto value = ref.value->load<Type>();
     auto resValue = Value<Type>(std::move(value));
-    Trace(OpCode::LOAD, ref, resValue);
+    TraceOperation(Trace::OpCode::LOAD, ref, resValue);
     return resValue;
 }
 
 template<class Type>
 void store(Value<MemRef>& ref, Value<Type>& value) {
     ref.value->store(value);
-    if (auto* ctx = getThreadLocalTraceContext()) {
-        auto operation = Operation(STORE, {ref.ref, value.ref});
+    if (auto* ctx = Trace::getThreadLocalTraceContext()) {
+        auto operation = Trace::Operation(Trace::STORE, {ref.ref, value.ref});
         ctx->trace(operation);
     }
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_

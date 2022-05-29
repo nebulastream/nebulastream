@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TRACEMANAGER_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TRACEMANAGER_HPP_
 
-#include <Experimental/Interpreter/DataValue/Boolean.hpp>
-#include <Experimental/Interpreter/DataValue/Value.hpp>
-#include <Experimental/Interpreter/Trace/Tag.hpp>
-#include <Experimental/Interpreter/Util/Casting.hpp>
-#include <Util/magicenum/magic_enum.hpp>
-#include <execinfo.h>
-#include <iostream>
-#include <map>
-namespace NES::Experimental::Interpreter {}
+namespace NES::ExecutionEngine::Experimental::Trace{
+
+
+
+}
+
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TRACEMANAGER_HPP_

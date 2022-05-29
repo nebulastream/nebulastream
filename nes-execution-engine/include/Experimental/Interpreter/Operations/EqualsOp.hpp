@@ -18,7 +18,7 @@
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Experimental::Interpreter::Operations {
+namespace NES::ExecutionEngine::Experimental::Interpreter::Operations {
 
 template<typename Left, typename Right>
 auto EqualsOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>& rightExp) {
@@ -30,6 +30,6 @@ auto EqualsOp(const std::unique_ptr<Left>& leftExp, const std::unique_ptr<Right>
     NES_THROW_RUNTIME_ERROR("no matching execution");
 }
 
-}// namespace NES::Experimental::Interpreter::Operations
+}// namespace NES::ExecutionEngine::Experimental::Interpreter::Operations
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATIONS_EQUALSOP_HPP_

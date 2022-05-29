@@ -13,10 +13,10 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_
-#include <Experimental/Interpreter/Trace/Block.hpp>
-#include <Experimental/Interpreter/Trace/Tag.hpp>
+#include <Experimental/Trace/Block.hpp>
+#include <Experimental/Trace/Tag.hpp>
 #include <memory>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 class ExecutionTrace {
   public:
@@ -52,6 +52,6 @@ class ExecutionTrace {
     std::vector<Block> blocks;
 };
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_

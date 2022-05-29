@@ -11,16 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATIONREF_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATIONREF_HPP_
-#include <cinttypes>
-namespace NES::Experimental::Interpreter {
-class OperationRef {
-  public:
-    OperationRef(uint32_t blockId, uint32_t operationId) : blockId(blockId), operationId(operationId) {}
-    uint32_t blockId;
-    uint32_t operationId;
-};
-}// namespace NES::Experimental::Interpreter
-
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATIONREF_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPCODE_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPCODE_HPP_
+namespace NES::ExecutionEngine::Experimental::Trace {
+enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN, LOAD, STORE, CALL };
+}
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPCODE_HPP_

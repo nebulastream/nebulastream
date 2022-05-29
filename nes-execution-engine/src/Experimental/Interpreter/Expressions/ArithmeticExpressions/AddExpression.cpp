@@ -13,7 +13,7 @@
 */
 #include <Experimental/Interpreter/Expressions/ArithmeticalExpression/AddExpression.hpp>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Value<> AddExpression::execute(Record& record) {
     Value leftValue = leftSubExpression->execute(record);
@@ -21,4 +21,4 @@ Value<> AddExpression::execute(Record& record) {
     return leftValue + rightValue;
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

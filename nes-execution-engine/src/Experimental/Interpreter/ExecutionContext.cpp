@@ -19,7 +19,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 void* allocateBufferProxy(void* workerContext) {
     auto* wc = (Runtime::WorkerContext*) workerContext;
@@ -57,4 +57,4 @@ void ExecutionContext::emitBuffer(const RecordBuffer& rb) { FunctionCall<>("emit
 ExecutionContext::ExecutionContext(Value<MemRef> pipelineContext, Value<MemRef> workerContext)
     : pipelineContext(pipelineContext), workerContext(workerContext) {}
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

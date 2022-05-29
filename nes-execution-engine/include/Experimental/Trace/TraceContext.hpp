@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
 #include "Operation.hpp"
-#include <Experimental/Interpreter/Trace/OpCode.hpp>
+#include <Experimental/Trace/OpCode.hpp>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 class ExecutionTrace;
 class Operation;
@@ -89,6 +89,6 @@ void Trace(OpCode op, const Value& input, Value& result) {
 }
  */
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
