@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(MLIR)
-add_subdirectory(NESIR)
-add_subdirectory(Interpreter)
+add_source_files(nes-execution-engine
+        ExecuteOperator.cpp
+        Operator.cpp
+        Scan.cpp
+        Selection.cpp
+        Emit.cpp
+        )

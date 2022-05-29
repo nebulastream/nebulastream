@@ -41,5 +41,15 @@ add_test(NAME mlir-nesir-if-test COMMAND mlir-nesir-if-test)
 #        nes-execution-engine)
 #add_test(NAME mlir-nesir-types-test COMMAND mlir-nesir-types-test)
 
+add_executable(execution-engine-interpreter-test "UnitTests/Experimental/InterpreterTest.cpp")
+target_link_libraries(execution-engine-interpreter-test
+        nes-execution-engine)
+add_test(NAME execution-engine-interpreter-test COMMAND execution-engine-interpreter-test)
+
+add_executable(execution-engine-value-test "UnitTests/Experimental/ValueTest.cpp")
+target_link_libraries(execution-engine-value-test
+        nes-execution-engine)
+add_test(NAME execution-engine-value-test COMMAND execution-engine-value-test)
+
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
