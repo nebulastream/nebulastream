@@ -68,8 +68,8 @@ class DefaultPipeliningPhase : public PipeliningPhase {
     /**
      * @brief Writes the currentPipeline's id to operator handlers in currentOperator.
      */
-    void registerPipelineWithOperatorHandlers(const OperatorPipelinePtr &currentPipeline,
-                                              const PhysicalOperators::PhysicalOperatorPtr &currentOperator);
+    void registerPipelineWithOperatorHandlers(const OperatorPipelinePtr& currentPipeline,
+                                              const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     OperatorFusionPolicyPtr operatorFusionPolicy;
 };
 }// namespace QueryCompilation

@@ -91,11 +91,9 @@ bool StaticDataSourceType::equal(const PhysicalSourceTypePtr& other) {
         return false;
     }
     auto otherSourceConfig = other->as<StaticDataSourceType>();
-    return pathTableFile == otherSourceConfig->pathTableFile
-    && numBuffersToProcess == otherSourceConfig->numBuffersToProcess
-    && sourceMode == otherSourceConfig->sourceMode
-    && taskQueueId == otherSourceConfig->taskQueueId
-    && lateStart == otherSourceConfig->lateStart;
+    return pathTableFile == otherSourceConfig->pathTableFile && numBuffersToProcess == otherSourceConfig->numBuffersToProcess
+        && sourceMode == otherSourceConfig->sourceMode && taskQueueId == otherSourceConfig->taskQueueId
+        && lateStart == otherSourceConfig->lateStart;
 }
 
 }// namespace NES::Experimental

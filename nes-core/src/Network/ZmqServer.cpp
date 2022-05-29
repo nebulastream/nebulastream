@@ -335,7 +335,8 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                         }
                         case Runtime::EventType::kStartSourceEvent: {
                             auto event = Runtime::StartSourceEvent();
-                            exchangeProtocol.onEvent(nesPartition, event); // todo jm finish up the funtion calls folowing from here
+                            exchangeProtocol.onEvent(nesPartition,
+                                                     event);// todo jm finish up the funtion calls folowing from here
                             break;
                         }
                         default: {

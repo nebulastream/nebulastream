@@ -30,9 +30,7 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      * @param schema the schema of the source
      * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      */
-    explicit StaticDataSourceDescriptor(SchemaPtr schema,
-                                        std::string pathTableFile,
-                                        bool lateStart);
+    explicit StaticDataSourceDescriptor(SchemaPtr schema, std::string pathTableFile, bool lateStart);
 
     /**
      * @brief Factory method to create a StaticDataSourceDescriptor object
@@ -40,9 +38,7 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      * @return a correctly initialized shared ptr to StaticDataSourceDescriptor
      */
-    static std::shared_ptr<StaticDataSourceDescriptor> create(const SchemaPtr& schema,
-                                                              std::string pathTableFile,
-                                                              bool lateStart);
+    static std::shared_ptr<StaticDataSourceDescriptor> create(const SchemaPtr& schema, std::string pathTableFile, bool lateStart);
 
     /**
      * @brief Provides the string representation of the table source

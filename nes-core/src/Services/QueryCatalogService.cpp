@@ -71,10 +71,10 @@ bool QueryCatalogService::checkAndMarkForHardStop(QueryId queryId) {
     auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
     QueryStatus::Value currentStatus = queryCatalogEntry->getQueryStatus();
-//    if (currentStatus == QueryStatus::Stopped) {
-//        NES_DEBUG("Already stopped!");
-//        return true;
-//    }
+    //    if (currentStatus == QueryStatus::Stopped) {
+    //        NES_DEBUG("Already stopped!");
+    //        return true;
+    //    }
 
     if (currentStatus == QueryStatus::MarkedForSoftStop || currentStatus == QueryStatus::MarkedForHardStop
         || currentStatus == QueryStatus::Deployed || currentStatus == QueryStatus::Stopped

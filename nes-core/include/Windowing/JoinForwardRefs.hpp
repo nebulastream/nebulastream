@@ -21,8 +21,8 @@ class LogicalJoinDefinition;
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 
 namespace Experimental {
-    class LogicalBatchJoinDefinition;
-    using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
+class LogicalBatchJoinDefinition;
+using LogicalBatchJoinDefinitionPtr = std::shared_ptr<LogicalBatchJoinDefinition>;
 }// namespace Experimental
 class JoinActionDescriptor;
 using JoinActionDescriptorPtr = std::shared_ptr<JoinActionDescriptor>;
@@ -48,11 +48,11 @@ class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
 namespace Experimental {
-    class AbstractBatchJoinHandler;
-    using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
+class AbstractBatchJoinHandler;
+using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
 
-    class BatchJoinOperatorHandler;
-    using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+class BatchJoinOperatorHandler;
+using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 }// namespace Experimental
 
 }// namespace NES::Join

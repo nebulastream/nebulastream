@@ -24,17 +24,17 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <NesBaseTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
@@ -286,7 +286,9 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
     buf.setNumberOfTuples(10);
 }
 
-void fillBufferWithData(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout, const std::vector<std::vector<int64_t>>& data) {
+void fillBufferWithData(TupleBuffer& buf,
+                        const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout,
+                        const std::vector<std::vector<int64_t>>& data) {
     int tupleCount = data.size();
     uint64_t fieldCount = memoryLayout->getSchema()->fields.size();
 
@@ -294,13 +296,14 @@ void fillBufferWithData(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayou
     DataTypePtr expectedType = DataTypeFactory::createInt64();
     for (uint64_t fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
         auto field = memoryLayout->getSchema()->fields[fieldIndex];
-        NES_ASSERT(expectedType->isEquals(field->getDataType()), "fillBufferWithData: Only Int64 data types in schema supported.");
+        NES_ASSERT(expectedType->isEquals(field->getDataType()),
+                   "fillBufferWithData: Only Int64 data types in schema supported.");
         fields.push_back(Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(fieldIndex, memoryLayout, buf));
     }
 
     for (int recordIndex = 0; recordIndex < tupleCount; ++recordIndex) {
         auto tuple = data[recordIndex];
-        ASSERT_EQ(fieldCount, tuple.size()); // Tuple has the wrong number of field.
+        ASSERT_EQ(fieldCount, tuple.size());// Tuple has the wrong number of field.
         for (uint64_t fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
             fields[fieldIndex][recordIndex] = tuple[fieldIndex];
         }
@@ -413,7 +416,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
             testSink->cleanupBuffers();// wont be called by runtime as no runtime support in this test
             ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
-
         }
     }
 }
@@ -492,82 +494,71 @@ struct __attribute__((packed)) ResultTuple {
     int64_t probe$value;
 
     bool operator==(const ResultTuple& other) const {
-        return  (
-                this->probe$id == other.probe$id &&
-                this->probe$one == other.probe$one &&
-                this->probe$value == other.probe$value &&
-                this->build$id == other.build$id &&
-                this->build$value == other.build$value
-                );
+        return (this->probe$id == other.probe$id && this->probe$one == other.probe$one && this->probe$value == other.probe$value
+                && this->build$id == other.build$id && this->build$value == other.build$value);
     };
-
 };
 std::ostream& operator<<(std::ostream& os, const ResultTuple t) {
-    os << "ResultTuple: {" << t.build$id <<  ", " << t.build$value << ", "
-    << t.probe$id <<  ", " << t.probe$one <<  ", " << t.probe$value
-    << "}" << std::endl;
+    os << "ResultTuple: {" << t.build$id << ", " << t.build$value << ", " << t.probe$id << ", " << t.probe$one << ", "
+       << t.probe$value << "}" << std::endl;
     return os;
 }
 
 TEST_F(QueryExecutionTest, streamingJoinQuery) {
     // creating sources
     SchemaPtr schemaProbeSide = Schema::create()
-            ->addField("probe$id1", BasicType::INT64)
-            ->addField("probe$one", BasicType::INT64)
-            ->addField("probe$value", BasicType::INT64)
-            ;
+                                    ->addField("probe$id1", BasicType::INT64)
+                                    ->addField("probe$one", BasicType::INT64)
+                                    ->addField("probe$value", BasicType::INT64);
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
-            schemaProbeSide,
-            [&](OperatorId id,
-                    const SourceDescriptorPtr&,
-                    const Runtime::NodeEnginePtr&,
-                    size_t numSourceLocalBuffers,
-                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
-                                                                     nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(),
-                                                                     id,
-                                                                     0, // dummy origin id
-                                                                     numSourceLocalBuffers,
-                                                                     std::move(successors));
-            });
+        schemaProbeSide,
+        [&](OperatorId id,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 0,// dummy origin id
+                                                                 numSourceLocalBuffers,
+                                                                 std::move(successors));
+        });
 
-    SchemaPtr schemaBuildSide = Schema::create()
-            ->addField("build$id2", BasicType::INT64)
-            ->addField("build$value", BasicType::INT64)
-            ;
+    SchemaPtr schemaBuildSide =
+        Schema::create()->addField("build$id2", BasicType::INT64)->addField("build$value", BasicType::INT64);
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
-            schemaBuildSide,
-            [&](OperatorId id,
-                    const SourceDescriptorPtr&,
-                    const Runtime::NodeEnginePtr&,
-                    size_t numSourceLocalBuffers,
-                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                return createDefaultDataSourceWithSchemaForOneBuffer(schemaBuildSide,
-                                                                     nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(),
-                                                                     id,
-                                                                     0, // dummy origin id
-                                                                     numSourceLocalBuffers,
-                                                                     std::move(successors));
-            });
+        schemaBuildSide,
+        [&](OperatorId id,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(schemaBuildSide,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 0,// dummy origin id
+                                                                 numSourceLocalBuffers,
+                                                                 std::move(successors));
+        });
 
     auto outputSchema = Schema::create()
-            ->addField("probe$id1", BasicType::INT64)
-            ->addField("probe$one", BasicType::INT64)
-            ->addField("probe$value", BasicType::INT64)
-            ->addField("build$id2", BasicType::INT64)
-            ->addField("build$value", BasicType::INT64)
-            ;
+                            ->addField("probe$id1", BasicType::INT64)
+                            ->addField("probe$one", BasicType::INT64)
+                            ->addField("probe$value", BasicType::INT64)
+                            ->addField("build$id2", BasicType::INT64)
+                            ->addField("build$value", BasicType::INT64);
     auto testSink = TestSink::create(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(sourceDescriptorBuildSide)
-            .joinWith(TestQuery::from(sourceDescriptorProbeSide))
-            .where(Attribute("id1")).equalsTo(Attribute("id2"))
-            .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(4)))
-            .sink(testSinkDescriptor)
-            ;
+                     .joinWith(TestQuery::from(sourceDescriptorProbeSide))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(4)))
+                     .sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -709,8 +700,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     SchemaPtr schemaProbeSide = Schema::create()
                                     ->addField("probe$id1", BasicType::INT64)
                                     ->addField("probe$one", BasicType::INT64)
-                                    ->addField("probe$value", BasicType::INT64)
-        ;
+                                    ->addField("probe$value", BasicType::INT64);
     auto sourceDescriptorProbeSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaProbeSide,
         [&](OperatorId id,
@@ -722,15 +712,13 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0, // dummy origin id
+                                                                 0,// dummy origin id
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
 
-    SchemaPtr schemaBuildSide = Schema::create()
-                                    ->addField("build$id2", BasicType::INT64)
-                                    ->addField("build$value", BasicType::INT64)
-        ;
+    SchemaPtr schemaBuildSide =
+        Schema::create()->addField("build$id2", BasicType::INT64)->addField("build$value", BasicType::INT64);
     auto sourceDescriptorBuildSide = std::make_shared<TestUtils::TestSourceDescriptor>(
         schemaBuildSide,
         [&](OperatorId id,
@@ -742,7 +730,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                                                                  nodeEngine->getBufferManager(),
                                                                  nodeEngine->getQueryManager(),
                                                                  id,
-                                                                 0, // dummy origin id
+                                                                 0,// dummy origin id
                                                                  numSourceLocalBuffers,
                                                                  std::move(successors));
         });
@@ -752,16 +740,15 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
                             ->addField("probe$one", BasicType::INT64)
                             ->addField("probe$value", BasicType::INT64)
                             ->addField("build$id2", BasicType::INT64)
-                            ->addField("build$value", BasicType::INT64)
-        ;
+                            ->addField("build$value", BasicType::INT64);
     auto testSink = TestSink::create(10, outputSchema, nodeEngine);
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(sourceDescriptorProbeSide)
-                        .batchJoinWith(TestQuery::from(sourceDescriptorBuildSide))
-                            .where(Attribute("id1")).equalsTo(Attribute("id2"))
-                        .sink(testSinkDescriptor)
-        ;
+                     .batchJoinWith(TestQuery::from(sourceDescriptorBuildSide))
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -813,34 +800,29 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     auto resultBuffer3 = testSink->get(2);
     // The output buffers should contain 3, 102 and 8 tuple;
     EXPECT_EQ(resultBuffer1.getNumberOfTuples(), 3UL);
-    EXPECT_EQ(resultBuffer2.getNumberOfTuples(), 102UL); // 102 is max a buffer can hold
-    EXPECT_EQ(resultBuffer3.getNumberOfTuples(), 8UL); // 8 tuples that couldn't fit in buffer 2
+    EXPECT_EQ(resultBuffer2.getNumberOfTuples(), 102UL);// 102 is max a buffer can hold
+    EXPECT_EQ(resultBuffer3.getNumberOfTuples(), 8UL);  // 8 tuples that couldn't fit in buffer 2
 
-    auto resultLayout =
-        Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto resultRecordIndexFields1 =
-            Runtime::MemoryLayouts::RowLayoutField<ResultTuple, true>::create(0, resultLayout, resultBuffer1);
+        Runtime::MemoryLayouts::RowLayoutField<ResultTuple, true>::create(0, resultLayout, resultBuffer1);
     auto resultRecordIndexFields2 =
-            Runtime::MemoryLayouts::RowLayoutField<ResultTuple, true>::create(0, resultLayout, resultBuffer2);
+        Runtime::MemoryLayouts::RowLayoutField<ResultTuple, true>::create(0, resultLayout, resultBuffer2);
     auto resultRecordIndexFields3 =
-            Runtime::MemoryLayouts::RowLayoutField<ResultTuple, true>::create(0, resultLayout, resultBuffer3);
+        Runtime::MemoryLayouts::RowLayoutField<ResultTuple, true>::create(0, resultLayout, resultBuffer3);
 
     // content of res buffer 1
-    std::vector<ResultTuple> expectedTuples1 = {
-        {5, 50, 5, 1, 5000},
-        {6, 60, 6, 1, 6000},
-        {6, 60, 6, 1, 6001}
-    };
+    std::vector<ResultTuple> expectedTuples1 = {{5, 50, 5, 1, 5000}, {6, 60, 6, 1, 6000}, {6, 60, 6, 1, 6001}};
 
     // res buffers 2 and 3 will always contain the same tuple:
     ResultTuple expectedTuple2 = {6, 60, 6, 1, 6002};
-    for (int i=0; i<3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         EXPECT_EQ(resultRecordIndexFields1[i], expectedTuples1[i]);
     }
-    for (int i=0; i<102; ++i) {
+    for (int i = 0; i < 102; ++i) {
         EXPECT_EQ(resultRecordIndexFields2[i], expectedTuple2);
     }
-    for (int i=0; i<8; ++i) {
+    for (int i = 0; i < 8; ++i) {
         EXPECT_EQ(resultRecordIndexFields3[i], expectedTuple2);
     }
 

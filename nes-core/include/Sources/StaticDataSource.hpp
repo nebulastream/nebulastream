@@ -42,20 +42,19 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      * @param operatorId the valid id of the source
      */
     explicit StaticDataSource(SchemaPtr schema,
-                          std::string pathTableFile,
-                          const bool lateStart,
-                          ::NES::Runtime::BufferManagerPtr bufferManager,
-                          ::NES::Runtime::QueryManagerPtr queryManager,
-                          OperatorId operatorId,
-                          OriginId originId,
-                          size_t numSourceLocalBuffers,
-                          std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
+                              std::string pathTableFile,
+                              const bool lateStart,
+                              ::NES::Runtime::BufferManagerPtr bufferManager,
+                              ::NES::Runtime::QueryManagerPtr queryManager,
+                              OperatorId operatorId,
+                              OriginId originId,
+                              size_t numSourceLocalBuffers,
+                              std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief overwrite DataSource::start(). Only start runningRoutine, if lateStart==false.
      */
     bool start() final;
-
 
     /**
      * @brief method to start the source, calls DataSource::start().
@@ -64,12 +63,11 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      */
     bool startStaticDataSourceManually();
 
-
     /**
      * @brief API method called upon receiving an event. At startSourceEvent, start source.
      * @param event
      */
-    void onEvent(Runtime::BaseEvent &) final;
+    void onEvent(Runtime::BaseEvent&) final;
 
     void open() override;
 

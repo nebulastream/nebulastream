@@ -58,13 +58,12 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                       numSourceLocalBuffers,
                       GatheringMode::INTERVAL_MODE,// todo: this is a placeholder. gathering mode is unnecessary for static data.
                       std::move(successors)),
-                      lateStart(lateStart),
-                      pathTableFile(pathTableFile) {
+      lateStart(lateStart), pathTableFile(pathTableFile) {
 
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
-    NES_DEBUG("StaticDataSource: id " + std::to_string(operatorId) + " Initialize source with schema: |" + this->schema->toString()
-              + "| size: " + std::to_string(tupleSizeInBytes));
+    NES_DEBUG("StaticDataSource: id " + std::to_string(operatorId) + " Initialize source with schema: |"
+              + this->schema->toString() + "| size: " + std::to_string(tupleSizeInBytes));
 
     this->sourceAffinity = sourceAffinity;
     bufferSize = localBufferManager->getBufferSize();
@@ -94,20 +93,18 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     std::string delimiter = "|";
     inputParser = std::make_shared<CSVParser>(this->schema->getSize(), physicalTypes, delimiter);
 
-
-    NES_DEBUG("StaticDataSource() operatorId: " << operatorId << ":\n"
-        "eagerLoading=" << eagerLoading
-    << " numTuplesToProcess=" << numTuples
-    << " numBuffersToProcess=" << numBuffersToProcess
-    << " numTuplesPerBuffer=" << numTuplesPerBuffer);
+    NES_DEBUG("StaticDataSource() operatorId: " << operatorId
+                                                << ":\n"
+                                                   "eagerLoading="
+                                                << eagerLoading << " numTuplesToProcess=" << numTuples << " numBuffersToProcess="
+                                                << numBuffersToProcess << " numTuplesPerBuffer=" << numTuplesPerBuffer);
 
     if (eagerLoading) {
         this->numSourceLocalBuffers = this->numBuffersToProcess;
         preloadBuffers();
     }
-    auto now =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count();
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                   .count();
 
     NES_DEBUG("StaticDataSource created. Timestamp: " << now);
 }
@@ -117,8 +114,9 @@ bool StaticDataSource::start() {
 
     startCalled = true;
     if (lateStart) {
-        NES_DEBUG("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: " << this->operatorId);
-        return true; // we didn't start but still signal a success
+        NES_DEBUG("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: "
+                  << this->operatorId);
+        return true;// we didn't start but still signal a success
     }
 
     lock.unlock();
@@ -126,11 +124,9 @@ bool StaticDataSource::start() {
     return startStaticDataSourceManually();
 }
 
-bool StaticDataSource::startStaticDataSourceManually() {
-    return DataSource::start();
-}
+bool StaticDataSource::startStaticDataSourceManually() { return DataSource::start(); }
 
-void StaticDataSource::onEvent(Runtime::BaseEvent & event) {
+void StaticDataSource::onEvent(Runtime::BaseEvent& event) {
     std::unique_lock lock(startConfigMutex);
 
     NES_DEBUG("StaticDataSource::onEvent(event) called. operatorId: " << this->operatorId);
@@ -141,7 +137,8 @@ void StaticDataSource::onEvent(Runtime::BaseEvent & event) {
             NES_DEBUG("StaticDataSource::onEvent: start() method was previously called but delayed. Starting source now.");
             startStaticDataSourceManually();
         } else {
-            NES_DEBUG("StaticDataSource::onEvent: Received start event. As soon as DataSource::start is called the source will start.");
+            NES_DEBUG(
+                "StaticDataSource::onEvent: Received start event. As soon as DataSource::start is called the source will start.");
             lateStart = false;
         }
     } else {
@@ -156,7 +153,7 @@ void StaticDataSource::open() {
     }
 
     // but we might want to wait for the preloading to finish, for benchmarking reasons:
-    if (eagerLoading && this->bufferManager != nullptr // <- has previously been opened
+    if (eagerLoading && this->bufferManager != nullptr// <- has previously been opened
         && onlySendDataWhenLoadingIsFinished) {
         while (filledBuffers.size() < numBuffersToProcess) {
             // this will stall the start of runningRouting()
@@ -211,8 +208,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
     uint64_t generatedTuplesThisPass = 0;
     //fill buffer maximally
     NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSizeInBytes < buffer.getBuffer().getBufferSize(), "Wrong parameters");
-    NES_DEBUG("StaticDataSource::fillBuffer: fill buffer with #tuples=" << numTuplesPerBuffer
-                << " of size=" << tupleSizeInBytes);
+    NES_DEBUG("StaticDataSource::fillBuffer: fill buffer with #tuples=" << numTuplesPerBuffer << " of size=" << tupleSizeInBytes);
 
     std::string line;
     uint64_t tupleCount = 0;
@@ -232,7 +228,8 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::DynamicTupleBuf
     currentPositionInFile = input.tellg();
     buffer.setNumberOfTuples(tupleCount);
     generatedBuffers++;
-    NES_DEBUG("StaticDataSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
+    NES_DEBUG("StaticDataSource::fillBuffer: reading finished read " << tupleCount
+                                                                     << " tuples at posInFile=" << currentPositionInFile);
     NES_TRACE("StaticDataSource::fillBuffer: read filled buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 

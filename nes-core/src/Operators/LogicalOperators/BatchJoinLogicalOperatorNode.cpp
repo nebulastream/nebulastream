@@ -24,7 +24,8 @@
 
 namespace NES::Experimental {
 
-BatchJoinLogicalOperatorNode::BatchJoinLogicalOperatorNode(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition, OperatorId id)
+BatchJoinLogicalOperatorNode::BatchJoinLogicalOperatorNode(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDefinition,
+                                                           OperatorId id)
     : OperatorNode(id), LogicalBinaryOperatorNode(id), batchJoinDefinition(std::move(batchJoinDefinition)) {}
 
 bool BatchJoinLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
@@ -37,7 +38,9 @@ std::string BatchJoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-Join::Experimental::LogicalBatchJoinDefinitionPtr BatchJoinLogicalOperatorNode::getBatchJoinDefinition() { return batchJoinDefinition; }
+Join::Experimental::LogicalBatchJoinDefinitionPtr BatchJoinLogicalOperatorNode::getBatchJoinDefinition() {
+    return batchJoinDefinition;
+}
 
 bool BatchJoinLogicalOperatorNode::inferSchema() {
 
@@ -88,8 +91,9 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
 
     //Check if right input schema was identified
     if (!rightInputSchema) {
-        NES_ERROR("BatchJoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : "
-                  + probeJoinKeyName);
+        NES_ERROR(
+            "BatchJoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : "
+            + probeJoinKeyName);
         throw TypeInferenceException("BatchJoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 
@@ -134,7 +138,9 @@ OperatorNodePtr BatchJoinLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool BatchJoinLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<BatchJoinLogicalOperatorNode>(); } // todo
+bool BatchJoinLogicalOperatorNode::equal(NodePtr const& rhs) const {
+    return rhs->instanceOf<BatchJoinLogicalOperatorNode>();
+}// todo
 
 void BatchJoinLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();

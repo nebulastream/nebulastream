@@ -160,7 +160,6 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      */
     const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
 
-
     /**
      * @brief API method called upon receiving an event (from downstream)
      * @param event
@@ -173,10 +172,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
      */
     void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef);
 
-
-    PipelineExecutionContextPtr getContext() {
-        return pipelineContext;
-    };
+    PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
   private:
     const uint64_t pipelineId;

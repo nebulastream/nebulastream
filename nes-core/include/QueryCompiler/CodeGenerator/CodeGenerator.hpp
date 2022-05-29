@@ -322,10 +322,11 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    virtual uint64_t generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoin,
-                                                          PipelineContextPtr context,
-                                                          uint64_t id,
-                                                          Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+    virtual uint64_t
+    generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoin,
+                                         PipelineContextPtr context,
+                                         uint64_t id,
+                                         Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
 
     /**
     * @brief Code generation for a join operator, which depends on a particular join definition
@@ -356,10 +357,9 @@ class CodeGenerator {
     * @param batchJoinOperatorHandler the handler with the shared join state
     * @return flag if the generation was successful.
     */
-    virtual bool
-    generateCodeForBatchJoinBuild(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
-                                  PipelineContextPtr context,
-                                  Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+    virtual bool generateCodeForBatchJoinBuild(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                               PipelineContextPtr context,
+                                               Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
 
     /**
     * @brief Code generation for a batch join probe operator, which depends on a particular join definition
@@ -368,10 +368,9 @@ class CodeGenerator {
     * @param batchJoinOperatorHandler the handler with the shared join state
     * @return flag if the generation was successful.
     */
-    virtual bool
-    generateCodeForBatchJoinProbe(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
-                                  PipelineContextPtr context,
-                                  Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+    virtual bool generateCodeForBatchJoinProbe(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                               PipelineContextPtr context,
+                                               Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

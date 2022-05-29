@@ -27,8 +27,8 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
   public:
     explicit BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition, SchemaPtr resultSchema);
     explicit BatchJoinOperatorHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition,
-                                 SchemaPtr resultSchema,
-                                 AbstractBatchJoinHandlerPtr batchJoinHandler);
+                                      SchemaPtr resultSchema,
+                                      AbstractBatchJoinHandlerPtr batchJoinHandler);
 
     /**
     * @brief Factory to create new BatchJoinOperatorHandler
@@ -36,7 +36,8 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @param resultSchema window result schema
     * @return BatchJoinOperatorHandlerPtr
     */
-    static Experimental::BatchJoinOperatorHandlerPtr create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition, const SchemaPtr& resultSchema);
+    static Experimental::BatchJoinOperatorHandlerPtr create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+                                                            const SchemaPtr& resultSchema);
 
     /**
     * @brief Factory to create new BatchJoinOperatorHandler
@@ -45,8 +46,8 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @return BatchJoinOperatorHandlerPtr
     */
     static Experimental::BatchJoinOperatorHandlerPtr create(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
-                                         const SchemaPtr& resultSchema,
-                                         const AbstractBatchJoinHandlerPtr& batchJoinHandler);
+                                                            const SchemaPtr& resultSchema,
+                                                            const AbstractBatchJoinHandlerPtr& batchJoinHandler);
     /**
      * @brief Sets the join handler
      * @param batchJoinHandler AbstractBatchJoinHandlerPtr - should be of correctly templated class BatchJoinHandler!
@@ -59,7 +60,7 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
      * @tparam KeyType
      * @return JoinHandlerType
      */
-    template<template<class, class> class BatchJoinHandlerType, class KeyType, class InputTypeBuild> // <-- todo
+    template<template<class, class> class BatchJoinHandlerType, class KeyType, class InputTypeBuild>// <-- todo
     auto getBatchJoinHandler() {
         return std::static_pointer_cast<BatchJoinHandlerType<KeyType, InputTypeBuild>>(batchJoinHandler);
     }
@@ -73,7 +74,6 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     LogicalBatchJoinDefinitionPtr getBatchJoinDefinition();
 
     SchemaPtr getResultSchema();
-
 
     /**
      * @brief reconfigure callback that will be called per thread. When it is called by every thread on the build side: startProbeSide()
@@ -89,7 +89,8 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     void setProbePipelineID(uint64_t probePipelineID) {
         if (this->probePipelineID != 0) {
             NES_WARNING("BatchJoinOperatorHandler::setProbePipelineID called a second time. "
-                     "Previous id: " << this->probePipelineID << "New id: " << probePipelineID);
+                        "Previous id: "
+                        << this->probePipelineID << "New id: " << probePipelineID);
         }
         this->probePipelineID = probePipelineID;
     }
@@ -100,7 +101,8 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     void setBuildPipelineID(uint64_t buildPipelineID) {
         if (this->probePipelineID != 0) {
             NES_WARNING("BatchJoinOperatorHandler::setBuildPipelineID called a second time. "
-                     "Previous id: " << this->buildPipelineID << "New id: " << buildPipelineID);
+                        "Previous id: "
+                        << this->buildPipelineID << "New id: " << buildPipelineID);
         }
         this->buildPipelineID = buildPipelineID;
     }
@@ -108,19 +110,14 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @brief Get the ID of the probe pipeline (that holds this operator handler)
     * @returns probePipelineID
     */
-    uint64_t getProbePipelineID() {
-        return this->probePipelineID;
-    }
+    uint64_t getProbePipelineID() { return this->probePipelineID; }
     /**
     * @brief Get the ID of the build pipeline (that holds this operator handler)
     * @returns probePipelineID
     */
-    uint64_t getBuildPipelineID() {
-        return this->buildPipelineID;
-    }
+    uint64_t getBuildPipelineID() { return this->buildPipelineID; }
 
   private:
-
     /**
      * @brief Starts all predecessors on the Joins Probe side by calling onEvent(StartSourceEvent)
     */

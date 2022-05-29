@@ -501,9 +501,7 @@ class Query {
      * @param onLeftKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoinWith(const Query& subQueryRhs,
-                    ExpressionItem onLeftKey,
-                    ExpressionItem onRightKey);
+    Query& batchJoinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -560,9 +558,7 @@ class Query {
      * @param onBuildKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoin(const Query& subQueryRhs,
-                ExpressionItem onProbeKey,
-                ExpressionItem onBuildKey);
+    Query& batchJoin(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use

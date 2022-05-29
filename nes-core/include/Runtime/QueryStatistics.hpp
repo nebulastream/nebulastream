@@ -27,8 +27,8 @@ class QueryStatistics;
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 class QueryStatistics {
-public:
-    QueryStatistics(uint64_t queryId, uint64_t subQueryId) : queryId(queryId), subQueryId(subQueryId) {};
+  public:
+    QueryStatistics(uint64_t queryId, uint64_t subQueryId) : queryId(queryId), subQueryId(subQueryId){};
 
     QueryStatistics(const QueryStatistics& other);
 
@@ -90,7 +90,6 @@ public:
     * @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
     */
     void setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite);
-
 
     /**
     * @brief setter for timestampFirstProcessedTask
@@ -211,7 +210,7 @@ public:
      */
     void clear();
 
-private:
+  private:
     std::atomic<uint64_t> processedTasks = 0;
     std::atomic<uint64_t> processedTuple = 0;
     std::atomic<uint64_t> processedBuffers = 0;

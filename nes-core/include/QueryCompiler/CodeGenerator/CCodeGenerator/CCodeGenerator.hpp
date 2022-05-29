@@ -243,10 +243,11 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
-                                                  PipelineContextPtr context,
-                                                  uint64_t id,
-                                                  Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
+    uint64_t
+    generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                         PipelineContextPtr context,
+                                         uint64_t id,
+                                         Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -333,9 +334,9 @@ class CCodeGenerator : public CodeGenerator {
      * @return
      */
     VariableDeclaration getOperatorHandler(const PipelineContextPtr& context,
-                                                 const VariableDeclaration& tupleBufferVariable,
-                                                 uint64_t operatorIndex,
-                                                 NES::Runtime::Execution::OperatorHandlerType type);
+                                           const VariableDeclaration& tupleBufferVariable,
+                                           uint64_t operatorIndex,
+                                           NES::Runtime::Execution::OperatorHandlerType type);
 
     /**
      * @brief returns getOperatorHandler<Windowing::WindowOperatorHandler>(windowOperatorIndex);
@@ -499,9 +500,8 @@ class CCodeGenerator : public CodeGenerator {
      * @param buildType
      * @return
      */
-    BinaryOperatorStatement getBatchJoinHandler(const VariableDeclaration& pipelineContextVariable,
-                                                 DataTypePtr KeyType,
-                                                 const std::string& buildType);
+    BinaryOperatorStatement
+    getBatchJoinHandler(const VariableDeclaration& pipelineContextVariable, DataTypePtr KeyType, const std::string& buildType);
 
     /**
      * @brief returns windowHandlerVariable.getTypedWindowState()
@@ -585,8 +585,8 @@ class CCodeGenerator : public CodeGenerator {
      * @return
      */
     VariableDeclaration getBatchJoinOperatorHandler(const PipelineContextPtr& context,
-                                               const VariableDeclaration& tupleBufferVariable,
-                                               uint64_t batchJoinOperatorIndex);
+                                                    const VariableDeclaration& tupleBufferVariable,
+                                                    uint64_t batchJoinOperatorIndex);
 
     /**
      * @brief in a col layout, all pointers in the structDeclaration have to be set to the correct field

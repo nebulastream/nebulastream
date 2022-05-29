@@ -13,11 +13,11 @@
 */
 
 #include <API/Expressions/Expressions.hpp>
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -72,8 +72,9 @@ LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createJoinOperator(const Jo
     return std::make_shared<JoinLogicalOperatorNode>(joinDefinition, id);
 }
 
-LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createBatchJoinOperator(const Join::Experimental::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
-                                                                        OperatorId id) {
+LogicalBinaryOperatorNodePtr
+LogicalOperatorFactory::createBatchJoinOperator(const Join::Experimental::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+                                                OperatorId id) {
     return std::make_shared<Experimental::BatchJoinLogicalOperatorNode>(batchJoinDefinition, id);
 }
 

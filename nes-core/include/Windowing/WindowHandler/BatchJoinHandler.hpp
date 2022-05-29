@@ -19,6 +19,7 @@
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
@@ -26,23 +27,20 @@
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <Util/libcuckoo/cuckoohash_map.hh>
-
 
 namespace NES::Join::Experimental {
 
 template<class KeyType, class InputTypeBuild>
-        using HashTable = cuckoohash_map<KeyType, InputTypeBuild>;
+using HashTable = cuckoohash_map<KeyType, InputTypeBuild>;
 template<class KeyType, class InputTypeBuild>
-        using HashTablePtr = std::shared_ptr<HashTable<KeyType, InputTypeBuild>>;
+using HashTablePtr = std::shared_ptr<HashTable<KeyType, InputTypeBuild>>;
 
 template<class KeyType, class InputTypeBuild>
 class BatchJoinHandler : public AbstractBatchJoinHandler {
   public:
-    explicit BatchJoinHandler(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
-                         uint64_t id)
+    explicit BatchJoinHandler(const LogicalBatchJoinDefinitionPtr& batchJoinDefinition, uint64_t id)
         : AbstractBatchJoinHandler(std::move(batchJoinDefinition)), id(id), refCnt(2), isRunning(false),
-        hashTable(std::make_shared<HashTable<KeyType, InputTypeBuild>>()) {
+          hashTable(std::make_shared<HashTable<KeyType, InputTypeBuild>>()) {
         NES_ASSERT(this->batchJoinDefinition, "invalid join definition");
         NES_TRACE("Created join handler with id=" << id);
     }
@@ -61,9 +59,7 @@ class BatchJoinHandler : public AbstractBatchJoinHandler {
      * @brief Returns the join state in form of the hash table.
      * @return Templated Hashtable.
      */
-    HashTablePtr<KeyType, InputTypeBuild> getHashTable() {
-        return hashTable;
-    }
+    HashTablePtr<KeyType, InputTypeBuild> getHashTable() { return hashTable; }
 
     /**
      * @brief reconfigure machinery for the join handler: do not nothing (for now)

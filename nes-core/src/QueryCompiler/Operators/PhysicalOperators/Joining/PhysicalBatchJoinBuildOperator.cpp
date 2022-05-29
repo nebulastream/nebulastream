@@ -18,39 +18,34 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinHandler.hpp>
-
+#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalBatchJoinBuildOperator::create(SchemaPtr inputSchema,
-                                                      SchemaPtr outputSchema,
-                                                      Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler) {
-    return create(Util::getNextOperatorId(),
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(operatorHandler));
+                                                           SchemaPtr outputSchema,
+                                                           Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler) {
+    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler));
 }
 
-PhysicalOperatorPtr PhysicalBatchJoinBuildOperator::create(OperatorId id,
-                                                      const SchemaPtr& inputSchema,
-                                                      const SchemaPtr& outputSchema,
-                                                      const Join::Experimental::BatchJoinOperatorHandlerPtr& operatorHandler) {
+PhysicalOperatorPtr
+PhysicalBatchJoinBuildOperator::create(OperatorId id,
+                                       const SchemaPtr& inputSchema,
+                                       const SchemaPtr& outputSchema,
+                                       const Join::Experimental::BatchJoinOperatorHandlerPtr& operatorHandler) {
     return std::make_shared<PhysicalBatchJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler);
 }
 
 PhysicalBatchJoinBuildOperator::PhysicalBatchJoinBuildOperator(OperatorId id,
-                                                     SchemaPtr inputSchema,
-                                                     SchemaPtr outputSchema,
-                                                     Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler)
+                                                               SchemaPtr inputSchema,
+                                                               SchemaPtr outputSchema,
+                                                               Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), PhysicalBatchJoinOperator(std::move(operatorHandler)),
-      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)) {};
+      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)){};
 
 std::string PhysicalBatchJoinBuildOperator::toString() const { return "PhysicalBatchJoinBuildOperator"; }
 
-OperatorNodePtr PhysicalBatchJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler);
-}
+OperatorNodePtr PhysicalBatchJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

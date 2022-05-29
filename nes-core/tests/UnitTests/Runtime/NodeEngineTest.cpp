@@ -297,7 +297,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, const DataSinkPtr& sink)
         : PipelineExecutionContext(
-            -1, // mock pipeline id
+            -1,// mock pipeline id
             0, // mock query id
             std::move(queryManager),
             [sink](TupleBuffer& buffer, Runtime::WorkerContextRef worker) {

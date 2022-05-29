@@ -18,12 +18,11 @@
 namespace NES::Join::Experimental {
 
 LogicalBatchJoinDefinition::LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr keyTypeBuild,
-                                             FieldAccessExpressionNodePtr keyTypeProbe,
-                                             uint64_t numberOfInputEdgesLeft,
-                                             uint64_t numberOfInputEdgesRight)
+                                                       FieldAccessExpressionNodePtr keyTypeProbe,
+                                                       uint64_t numberOfInputEdgesLeft,
+                                                       uint64_t numberOfInputEdgesRight)
     : keyTypeBuild(std::move(keyTypeBuild)), keyTypeProbe(std::move(keyTypeProbe)),
-      numberOfInputEdgesBuild(numberOfInputEdgesLeft),
-      numberOfInputEdgesProbe(numberOfInputEdgesRight) {
+      numberOfInputEdgesBuild(numberOfInputEdgesLeft), numberOfInputEdgesProbe(numberOfInputEdgesRight) {
 
     NES_ASSERT(this->keyTypeBuild, "Invalid left join key type");
     NES_ASSERT(this->keyTypeProbe, "Invalid right join key type");
@@ -33,13 +32,13 @@ LogicalBatchJoinDefinition::LogicalBatchJoinDefinition(FieldAccessExpressionNode
 }
 
 LogicalBatchJoinDefinitionPtr LogicalBatchJoinDefinition::create(const FieldAccessExpressionNodePtr& keyTypeBuild,
-                                                       const FieldAccessExpressionNodePtr& keyTypeProbe,
-                                                       uint64_t numberOfInputEdgesLeft,
-                                                       uint64_t numberOfInputEdgesRight) {
+                                                                 const FieldAccessExpressionNodePtr& keyTypeProbe,
+                                                                 uint64_t numberOfInputEdgesLeft,
+                                                                 uint64_t numberOfInputEdgesRight) {
     return std::make_shared<Join::Experimental::LogicalBatchJoinDefinition>(keyTypeBuild,
-                                                              keyTypeProbe,
-                                                              numberOfInputEdgesLeft,
-                                                              numberOfInputEdgesRight);
+                                                                            keyTypeProbe,
+                                                                            numberOfInputEdgesLeft,
+                                                                            numberOfInputEdgesRight);
 }
 
 FieldAccessExpressionNodePtr LogicalBatchJoinDefinition::getBuildJoinKey() { return keyTypeBuild; }

@@ -24,8 +24,8 @@ class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
 namespace Experimental {
-    class BatchJoinOperatorHandler;
-    using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
+class BatchJoinOperatorHandler;
+using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 }// namespace Experimental
 }// namespace Join
 
