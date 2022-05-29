@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.41](https://github.com/nebulastream/nebulastream/tree/v0.2.41) (2022-05-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.40...v0.2.41)
+
+#### Runtime 
+
+- Batch Join Prototype [\#2429](https://github.com/nebulastream/nebulastream/issues/2429)
+
 ## [v0.2.40](https://github.com/nebulastream/nebulastream/tree/v0.2.40) (2022-05-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.39...v0.2.40)
