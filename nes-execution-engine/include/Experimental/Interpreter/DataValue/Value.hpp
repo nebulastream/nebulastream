@@ -32,7 +32,7 @@
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class BaseValue {
   public:
@@ -423,6 +423,6 @@ void store(Value<MemRef>& ref, Value<Type>& value) {
     }
 }
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_

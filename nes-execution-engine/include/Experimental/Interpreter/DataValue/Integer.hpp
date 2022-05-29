@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_INTEGER_HPP_
 #include <Experimental/Interpreter/DataValue/Any.hpp>
 #include <Experimental/Interpreter/DataValue/Boolean.hpp>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class Integer : public Any {
   public:
@@ -57,6 +57,6 @@ class Integer : public Any {
     const int64_t value;
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_INTEGER_HPP_

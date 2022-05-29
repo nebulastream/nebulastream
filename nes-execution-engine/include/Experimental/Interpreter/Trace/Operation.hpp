@@ -21,7 +21,7 @@
 #include <Experimental/Interpreter/Trace/ValueRef.hpp>
 #include <variant>
 #include <vector>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef, None, FunctionCallTarget>;
 class OperationRef;
@@ -40,6 +40,6 @@ class Operation {
     friend std::ostream& operator<<(std::ostream& os, const Operation& operation);
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATION_HPP_

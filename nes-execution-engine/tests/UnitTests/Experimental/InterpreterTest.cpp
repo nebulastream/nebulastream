@@ -38,7 +38,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class InterpreterTest : public testing::Test {
   public:
@@ -735,4 +735,4 @@ TEST_F(InterpreterTest, selectionQueryTest) {
     execution = ssaCreationPhase.apply(std::move(execution));
     std::cout << *execution << std::endl;
 }
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter

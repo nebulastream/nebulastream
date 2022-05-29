@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Trace/Block.hpp>
 #include <Experimental/Interpreter/Trace/Tag.hpp>
 #include <memory>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class ExecutionTrace {
   public:
@@ -52,6 +52,6 @@ class ExecutionTrace {
     std::vector<Block> blocks;
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_EXECUTIONTRACE_HPP_

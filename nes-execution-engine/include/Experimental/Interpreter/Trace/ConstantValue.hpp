@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_
 #include <memory>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 class Any;
 typedef std::shared_ptr<Any> AnyPtr;
 class ConstantValue {
@@ -23,6 +23,6 @@ class ConstantValue {
     AnyPtr value;
     friend std::ostream& operator<<(std::ostream& os, const ConstantValue& tag);
 };
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_

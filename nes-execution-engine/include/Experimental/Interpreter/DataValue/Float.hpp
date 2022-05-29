@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_FLOAT_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_FLOAT_HPP_
 #include <Experimental/Interpreter/DataValue/Any.hpp>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 class Float : public Any {
   public:
     const static Kind type = FloatValue;
@@ -33,6 +33,6 @@ class Float : public Any {
 
     const float value;
 };
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_FLOAT_HPP_

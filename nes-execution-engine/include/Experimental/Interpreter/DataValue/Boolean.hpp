@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
 #include <Experimental/Interpreter/DataValue/Any.hpp>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class Boolean : public Any {
   public:
@@ -32,6 +32,6 @@ class Boolean : public Any {
     const bool value;
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
