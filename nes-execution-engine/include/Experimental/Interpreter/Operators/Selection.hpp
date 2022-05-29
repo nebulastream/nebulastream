@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/Operators/ExecuteOperator.hpp>
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class Selection : public ExecuteOperator {
   public:
@@ -27,5 +27,5 @@ class Selection : public ExecuteOperator {
     const ExpressionPtr expression;
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SELECTION_HPP_

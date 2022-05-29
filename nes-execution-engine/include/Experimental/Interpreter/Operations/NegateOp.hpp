@@ -18,7 +18,7 @@
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Interpreter::Operations {
+namespace NES::Experimental::Interpreter::Operations {
 
 template<typename Value>
 auto NegateOp(const std::unique_ptr<Value>& value) {
@@ -29,6 +29,6 @@ auto NegateOp(const std::unique_ptr<Value>& value) {
     NES_THROW_RUNTIME_ERROR("no matching execution");
 }
 
-}// namespace NES::Interpreter::Operations
+}// namespace NES::Experimental::Interpreter::Operations
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATIONS_NEGATEOP_HPP_

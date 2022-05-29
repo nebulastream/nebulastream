@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
 #include <memory>
-namespace NES::Interpreter{
+namespace NES::Experimental::Interpreter{
 
 class None {};
 

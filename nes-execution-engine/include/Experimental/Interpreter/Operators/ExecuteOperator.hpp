@@ -14,7 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EXECUTEOPERATOR_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EXECUTEOPERATOR_HPP_
 #include <Experimental/Interpreter/Operators/Operator.hpp>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class Record;
 
@@ -24,6 +24,6 @@ class ExecuteOperator : public Operator {
     virtual ~ExecuteOperator() = default;
 };
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EXECUTEOPERATOR_HPP_

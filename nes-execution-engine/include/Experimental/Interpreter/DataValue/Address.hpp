@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ADDRESS_HPP_
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 /*
 class Address {
   public:
@@ -41,5 +41,5 @@ class Address {
     Value addressValue;
 };
 */
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ADDRESS_HPP_

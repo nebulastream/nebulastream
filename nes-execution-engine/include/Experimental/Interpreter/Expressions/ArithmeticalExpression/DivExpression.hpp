@@ -16,7 +16,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_DIVEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_DIVEXPRESSION_HPP_
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class DivExpression : public Expression {
   private:

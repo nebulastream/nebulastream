@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_EXPRESSION_HPP_
 #include <memory>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class Any;
 

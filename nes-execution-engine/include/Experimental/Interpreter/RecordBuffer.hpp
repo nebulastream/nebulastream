@@ -22,7 +22,7 @@
 #include <ostream>
 #include <vector>
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 class Record;
 class RecordBuffer {
   public:
@@ -42,6 +42,6 @@ class RecordBuffer {
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_RECORD_BUFFER_HPP_

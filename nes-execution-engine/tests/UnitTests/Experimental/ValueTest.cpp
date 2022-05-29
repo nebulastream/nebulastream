@@ -17,7 +17,6 @@
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operations/AddOp.hpp>
-#include <ProxyFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <cxxabi.h>
@@ -26,7 +25,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-namespace NES::Interpreter {
+namespace NES::Experimental::Interpreter {
 
 class ValueTest : public testing::Test {
   public:
@@ -87,4 +86,4 @@ TEST_F(ValueTest, addValueTest) {
     ASSERT_EQ(anyZ.as<Integer>().value->value, 6);
 }
 
-}// namespace NES::Interpreter
+}// namespace NES::Experimental::Interpreter
