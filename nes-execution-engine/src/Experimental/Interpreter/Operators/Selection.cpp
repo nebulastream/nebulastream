@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/Record.hpp>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 void Selection::execute(ExecutionContext& ctx, Record& record) const {
     if (expression->execute(record)) {
@@ -22,4 +22,4 @@ void Selection::execute(ExecutionContext& ctx, Record& record) const {
     }
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

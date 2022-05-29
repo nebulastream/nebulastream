@@ -11,22 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCKREF_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCKREF_HPP_
-
-#include <Experimental/Interpreter/Trace/ValueRef.hpp>
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_
 #include <memory>
-#include <vector>
-namespace NES::Experimental::Interpreter {
-class ConstantValue;
-class BlockRef {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+class Any;
+typedef std::shared_ptr<Any> AnyPtr;
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
+namespace NES::ExecutionEngine::Experimental::Trace {
+
+class ConstantValue {
   public:
-    BlockRef(uint64_t block) : block(block){};
-    uint64_t block;
-    std::vector<ValueRef> arguments;
+    ConstantValue(Interpreter::AnyPtr anyPtr);
+    Interpreter::AnyPtr value;
     friend std::ostream& operator<<(std::ostream& os, const ConstantValue& tag);
 };
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Trace
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCKREF_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_CONSTANTVALUE_HPP_

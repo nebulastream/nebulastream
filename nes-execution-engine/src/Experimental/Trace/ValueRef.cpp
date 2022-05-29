@@ -11,13 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TRACEMANAGER_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TRACEMANAGER_HPP_
 
-namespace NES::Experimental::Interpreter{
+#include <Experimental/Trace/TraceContext.hpp>
+#include <Experimental/Trace/ValueRef.hpp>
 
-
-
+namespace NES::ExecutionEngine::Experimental::Trace {
+ValueRef createNextRef() {
+    auto ctx = getThreadLocalTraceContext();
+    if (ctx) {
+        return ctx->createNextRef();
+    }
+    return ValueRef(0, 0);
 }
-
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TRACEMANAGER_HPP_
+}// namespace NES::ExecutionEngine::Experimental::Trace

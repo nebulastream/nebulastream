@@ -23,7 +23,7 @@
 #include <Experimental/Interpreter/Operations/OrOp.hpp>
 #include <Experimental/Interpreter/Operations/SubOp.hpp>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Record::Record(std::vector<Value<Any>> records): records(std::move(records)) {}
 

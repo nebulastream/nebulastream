@@ -11,17 +11,4 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Experimental/Interpreter/Trace/FunctionCallTarget.hpp>
-#include <string>
-
-namespace NES::Experimental::Interpreter{
-
-FunctionCallTarget::FunctionCallTarget(const std::__cxx11::basic_string<char>& functionName,
-                                       const std::__cxx11::basic_string<char>& mangledName)
-    : functionName(functionName), mangledName(mangledName) {}
-std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target) {
-    os << target.functionName;
-    return os;
-}
-}
+#include <Experimental/Trace/SSACreationPhase.hpp>

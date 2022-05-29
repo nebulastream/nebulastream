@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_subdirectory(Expressions)
-add_subdirectory(Trace)
 add_subdirectory(Operators)
 add_subdirectory(DataTypes)
 

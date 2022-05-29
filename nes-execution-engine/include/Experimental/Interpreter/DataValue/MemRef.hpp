@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/DataValue/Any.hpp>
 #include <Experimental/Interpreter/DataValue/Boolean.hpp>
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class MemRef : public Any {
   public:
@@ -43,6 +43,6 @@ class MemRef : public Any {
     const int64_t value;
 };
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_MEMREF_HPP_

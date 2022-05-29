@@ -13,12 +13,12 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCK_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCK_HPP_
-#include <Experimental/Interpreter/Trace/Operation.hpp>
+#include <Experimental/Trace/Operation.hpp>
 #include <cinttypes>
 #include <ostream>
 #include <unordered_map>
 #include <vector>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 class Block {
   public:
     Block(uint32_t blockId) : blockId(blockId), frame(){};
@@ -38,6 +38,6 @@ class Block {
     friend std::ostream& operator<<(std::ostream& os, const Block& block);
 };
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCK_HPP_

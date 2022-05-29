@@ -11,17 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_
-#include <Experimental/Interpreter/Operators/Operator.hpp>
-#include <Experimental/Interpreter/RecordBuffer.hpp>
-
-namespace NES::ExecutionEngine::Experimental::Interpreter {
-
-class Scan : public Operator {
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATIONREF_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATIONREF_HPP_
+#include <cinttypes>
+namespace NES::ExecutionEngine::Experimental::Trace {
+class OperationRef {
   public:
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    OperationRef(uint32_t blockId, uint32_t operationId) : blockId(blockId), operationId(operationId) {}
+    uint32_t blockId;
+    uint32_t operationId;
 };
-
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_SCAN_HPP_
+
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPERATIONREF_HPP_

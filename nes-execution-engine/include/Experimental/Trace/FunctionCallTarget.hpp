@@ -15,7 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_FUNCTIONCALLTARGET_HPP_
 #include <ostream>
 #include <string>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 class FunctionCallTarget {
   public:

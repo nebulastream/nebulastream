@@ -12,15 +12,16 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/DataValue/Any.hpp>
-#include <Experimental/Interpreter/Trace/ConstantValue.hpp>
+#include <Experimental/Trace/FunctionCallTarget.hpp>
+#include <string>
 
-namespace NES::Experimental::Interpreter {
-ConstantValue::ConstantValue(AnyPtr anyPtr) : value(std::move(anyPtr)){};
+namespace NES::ExecutionEngine::Experimental::Trace{
 
-std::ostream& operator<<(std::ostream& os, const ConstantValue& valueRef) {
-    os << "c" << valueRef.value;
+FunctionCallTarget::FunctionCallTarget(const std::__cxx11::basic_string<char>& functionName,
+                                       const std::__cxx11::basic_string<char>& mangledName)
+    : functionName(functionName), mangledName(mangledName) {}
+std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target) {
+    os << target.functionName;
     return os;
 }
-
-}// namespace NES::Experimental::Interpreter
+}
