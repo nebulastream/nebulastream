@@ -14,6 +14,8 @@
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
 
 namespace NES::QueryCompilation {
-bool OperatorAtATimePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; } // todo I believe this should be false -> never fuse
+bool OperatorAtATimePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) {
+    return true;
+}// todo I believe this should be false -> never fuse
 OperatorFusionPolicyPtr OperatorAtATimePolicy::create() { return std::make_shared<OperatorAtATimePolicy>(); }
 }// namespace NES::QueryCompilation

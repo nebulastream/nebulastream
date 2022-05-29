@@ -24,18 +24,18 @@ namespace NES::Join::Experimental {
  * @brief Runtime definition of a join operator
  * @experimental
  */
-class LogicalBatchJoinDefinition { // todo jm its dumb that this is in the windowing dir
+class LogicalBatchJoinDefinition {// todo jm its dumb that this is in the windowing dir
 
   public:
     static LogicalBatchJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& keyTypeBuild,
-                                           const FieldAccessExpressionNodePtr& keyTypeProbe,
-                                           uint64_t numberOfInputEdgesLeft,
-                                           uint64_t numberOfInputEdgesRight);
+                                                const FieldAccessExpressionNodePtr& keyTypeProbe,
+                                                uint64_t numberOfInputEdgesLeft,
+                                                uint64_t numberOfInputEdgesRight);
 
     explicit LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr keyTypeBuild,
-                                   FieldAccessExpressionNodePtr keyTypeProbe,
-                                   uint64_t numberOfInputEdgesLeft,
-                                   uint64_t numberOfInputEdgesRight);
+                                        FieldAccessExpressionNodePtr keyTypeProbe,
+                                        uint64_t numberOfInputEdgesLeft,
+                                        uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on build join key

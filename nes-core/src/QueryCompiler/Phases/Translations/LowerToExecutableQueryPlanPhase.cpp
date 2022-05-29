@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -29,6 +28,7 @@
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
@@ -50,11 +50,11 @@
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
+#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <string>
 #include <utility>
 #include <variant>
@@ -183,10 +183,9 @@ void LowerToExecutableQueryPlanPhase::processSource(
     // Add this source as a predecessor to the pipeline execution context's of all its children.
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
-        if (const auto* nextExecutablePipeline =
-                std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-            NES_DEBUG("Adding current source operator: " << source->getOperatorId()
-            << " as a predecessor to its child pipeline: " << (*nextExecutablePipeline)->getPipelineId());
+        if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
+            NES_DEBUG("Adding current source operator: " << source->getOperatorId() << " as a predecessor to its child pipeline: "
+                                                         << (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
         }
         // note: we do not register predecessors for DataSinks.
@@ -279,10 +278,10 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     // Add this pipeline as a predecessor to the pipeline execution context's of all its children.
     // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines) {
-        if (const auto* nextExecutablePipeline =
-                std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
+        if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
             NES_DEBUG("Adding current pipeline: " << executablePipeline->getPipelineId()
-            << " as a predecessor to its child pipeline: " << (*nextExecutablePipeline)->getPipelineId());
+                                                  << " as a predecessor to its child pipeline: "
+                                                  << (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
         }
         // note: we do not register predecessors for DataSinks.

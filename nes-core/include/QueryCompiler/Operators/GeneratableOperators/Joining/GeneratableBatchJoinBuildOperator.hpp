@@ -30,8 +30,9 @@ class GeneratableBatchJoinBuildOperator : public GeneratableBatchJoinOperator {
      * @param batchJoinOperatorHandler the join operator handler
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
 
     /**
      * @brief Creates a new generatable join build operator.
@@ -66,9 +67,9 @@ class GeneratableBatchJoinBuildOperator : public GeneratableBatchJoinOperator {
 
   protected:
     GeneratableBatchJoinBuildOperator(OperatorId id,
-                                 SchemaPtr inputSchema,
-                                 SchemaPtr outputSchema,
-                                 Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
+                                      Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
 #endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_JOINING_GENERATABLE_JOIN_BUILD_OPERATOR_HPP_

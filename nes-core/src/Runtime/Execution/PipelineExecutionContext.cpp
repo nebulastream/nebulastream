@@ -22,8 +22,8 @@
 
 namespace NES::Runtime::Execution {
 
-    PipelineExecutionContext::PipelineExecutionContext(uint64_t pipelineId,
-                                                       QuerySubPlanId queryId,
+PipelineExecutionContext::PipelineExecutionContext(uint64_t pipelineId,
+                                                   QuerySubPlanId queryId,
                                                    const QueryManagerPtr& queryManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,

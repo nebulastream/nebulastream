@@ -28,9 +28,8 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
                                    ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
                                    std::vector<StatementPtr> loopBody)
-        : varDeclaration(std::move(varDeclaration)), varDeclarationStatement(nullptr),
-        condition(std::move(condition)), advance(std::move(advance)),
-        body(std::make_shared<CompoundStatement>()) {
+    : varDeclaration(std::move(varDeclaration)), varDeclarationStatement(nullptr), condition(std::move(condition)),
+      advance(std::move(advance)), body(std::make_shared<CompoundStatement>()) {
     for (auto const& stmt : loopBody) {
         if (stmt) {
             body->addStatement(stmt);
@@ -41,8 +40,8 @@ ForLoopStatement::ForLoopStatement(ExpressionStatementPtr varDeclarationStatemen
                                    ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
                                    std::vector<StatementPtr> loopBody)
-        : varDeclaration(nullptr), varDeclarationStatement(std::move(varDeclarationStatement)), condition(std::move(condition)), advance(std::move(advance)),
-        body(std::make_shared<CompoundStatement>()) {
+    : varDeclaration(nullptr), varDeclarationStatement(std::move(varDeclarationStatement)), condition(std::move(condition)),
+      advance(std::move(advance)), body(std::make_shared<CompoundStatement>()) {
     for (auto const& stmt : loopBody) {
         if (stmt) {
             body->addStatement(stmt);
@@ -50,12 +49,11 @@ ForLoopStatement::ForLoopStatement(ExpressionStatementPtr varDeclarationStatemen
     }
 }
 
-
 ForLoopStatement::ForLoopStatement(ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
                                    std::vector<StatementPtr> loopBody)
-        : varDeclaration(nullptr), varDeclarationStatement(nullptr), condition(std::move(condition)), advance(std::move(advance)),
-        body(std::make_shared<CompoundStatement>()) {
+    : varDeclaration(nullptr), varDeclarationStatement(nullptr), condition(std::move(condition)), advance(std::move(advance)),
+      body(std::make_shared<CompoundStatement>()) {
     for (auto const& stmt : loopBody) {
         if (stmt) {
             body->addStatement(stmt);

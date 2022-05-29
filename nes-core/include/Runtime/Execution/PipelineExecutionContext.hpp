@@ -81,13 +81,9 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
         return std::dynamic_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
-    std::vector<PredecessorExecutablePipeline>& getPredecessors() {
-        return predecessors;
-    }
+    std::vector<PredecessorExecutablePipeline>& getPredecessors() { return predecessors; }
 
-    void addPredecessor(PredecessorExecutablePipeline pred) {
-        predecessors.push_back(pred);
-    }
+    void addPredecessor(PredecessorExecutablePipeline pred) { predecessors.push_back(pred); }
 
     QueryManagerPtr getQueryManager() {
         if (!queryManager.expired()) {
@@ -98,9 +94,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
 
     std::string toString() const;
 
-    uint64_t getPipelineID() {
-        return this->pipelineId;
-    }
+    uint64_t getPipelineID() { return this->pipelineId; }
 
     /**
      * @brief Returns the number of worker threads

@@ -101,7 +101,7 @@ Query& JoinWhere::equalsTo(const ExpressionItem& onBuildKey) const {
 }
 
 JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onProbeKey)
-: subQueryRhs(subQueryRhs), originalQuery(originalQuery), onProbeKey(onProbeKey.getExpressionNode()) {}
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onProbeKey(onProbeKey.getExpressionNode()) {}
 
 }// namespace Experimental::BatchJoinOperatorBuilder
 
@@ -372,9 +372,7 @@ Query& Query::join(const Query& subQueryRhs,
     return *this;
 }
 
-Query& Query::batchJoin(const Query& subQueryRhs,
-                   ExpressionItem onProbeKey,
-                   ExpressionItem onBuildKey) {
+Query& Query::batchJoin(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey) {
     NES_DEBUG("Query: batchJoinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
@@ -401,11 +399,7 @@ Query& Query::batchJoin(const Query& subQueryRhs,
     // todo here again we wan't to extend to distributed joins:
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(
-                                                                buildKeyFieldAccess,
-                                                                probeKeyFieldAccess,
-                                                                1,
-                                                                1);
+    auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
 
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
@@ -431,9 +425,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
-Query& Query::batchJoinWith(const Query& subQueryRhs,
-                       ExpressionItem onProbeKey,
-                       ExpressionItem onBuildKey) {
+Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionItem onProbeKey, ExpressionItem onBuildKey) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
 
     return Query::batchJoin(subQueryRhs, onProbeKey, onBuildKey);

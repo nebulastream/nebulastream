@@ -33,8 +33,9 @@ class GeneratableBatchJoinProbeOperator : public GeneratableBatchJoinOperator {
      * @param batchJoinOperatorHandler join operator handler
      * @return generatable join probe.
      */
-    static GeneratableOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
     /**
      * @brief Creates a new generatable join sink operator
      * @param id operator id
@@ -43,8 +44,10 @@ class GeneratableBatchJoinProbeOperator : public GeneratableBatchJoinOperator {
      * @param batchJoinOperatorHandler join operator handler
      * @return generatable join sink
      */
-    static GeneratableOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+    static GeneratableOperatorPtr create(OperatorId id,
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
+                                         Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
     /**
     * @brief Code generation function for the execute call of an operator.
     * The execute function is called for each tuple buffer consumed by this operator.
@@ -57,9 +60,9 @@ class GeneratableBatchJoinProbeOperator : public GeneratableBatchJoinOperator {
 
   protected:
     GeneratableBatchJoinProbeOperator(OperatorId id,
-                                SchemaPtr inputSchema,
-                                SchemaPtr outputSchema,
-                                Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
+                                      Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

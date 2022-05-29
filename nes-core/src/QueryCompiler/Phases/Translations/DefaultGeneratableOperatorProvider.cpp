@@ -303,21 +303,22 @@ void DefaultGeneratableOperatorProvider::lowerJoinSink(const QueryPlanPtr& query
 }
 
 void DefaultGeneratableOperatorProvider::lowerBatchJoinBuild(const QueryPlanPtr& queryPlan,
-                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+                                                             const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalBatchJoinBuild = operatorNode->as<PhysicalOperators::PhysicalBatchJoinBuildOperator>();
     auto generatableBatchJoinOperator =
         GeneratableOperators::GeneratableBatchJoinBuildOperator::create(physicalBatchJoinBuild->getInputSchema(),
-                                                                   physicalBatchJoinBuild->getOutputSchema(),
-                                                                   physicalBatchJoinBuild->getBatchJoinHandler());
+                                                                        physicalBatchJoinBuild->getOutputSchema(),
+                                                                        physicalBatchJoinBuild->getBatchJoinHandler());
     queryPlan->replaceOperator(operatorNode, generatableBatchJoinOperator);
 }
 
 void DefaultGeneratableOperatorProvider::lowerBatchJoinProbe(const QueryPlanPtr& queryPlan,
-                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+                                                             const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
     auto physicalBatchJoinSink = operatorNode->as<PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator>();
-    auto generatableBatchJoinOperator = GeneratableOperators::GeneratableBatchJoinProbeOperator::create(physicalBatchJoinSink->getOutputSchema(),
-                                                                                             physicalBatchJoinSink->getOutputSchema(),
-                                                                                             physicalBatchJoinSink->getBatchJoinHandler());
+    auto generatableBatchJoinOperator =
+        GeneratableOperators::GeneratableBatchJoinProbeOperator::create(physicalBatchJoinSink->getOutputSchema(),
+                                                                        physicalBatchJoinSink->getOutputSchema(),
+                                                                        physicalBatchJoinSink->getBatchJoinHandler());
     queryPlan->replaceOperator(operatorNode, generatableBatchJoinOperator);
 }
 

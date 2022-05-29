@@ -20,19 +20,19 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -995,28 +995,31 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->removeLogicalSource("default_logical");
 
-    SchemaPtr schemaProbeSide = Schema::create()
+    SchemaPtr schemaProbeSide =
+        Schema::create()
             ->addField("id1", BasicType::INT64)
             ->addField("one", BasicType::INT64)
-            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
-            ;
+            ->addField("timestamp",
+                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+        ;
     sourceCatalog->addLogicalSource("probe", schemaProbeSide);
 
-
-    SchemaPtr schemaBuildSide = Schema::create()
+    SchemaPtr schemaBuildSide =
+        Schema::create()
             ->addField("id2", BasicType::INT64)
-            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
-            ;
+            ->addField("timestamp",
+                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+        ;
     sourceCatalog->addLogicalSource("build", schemaBuildSide);
 
     auto subQuery = Query::from("build");
 
     auto query = Query::from("probe")
-            .joinWith(subQuery)
-            .where(Attribute("id1")).equalsTo(Attribute("id2"))
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-            .sink(FileSinkDescriptor::create(""))
-            ;
+                     .joinWith(subQuery)
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                     .sink(FileSinkDescriptor::create(""));
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -1024,14 +1027,14 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<JoinLogicalOperatorNode>()[0];
     Experimental::BatchJoinLogicalOperatorNodePtr batchJoinOp;
     {
-        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef =
-                Join::Experimental::LogicalBatchJoinDefinition::create(
-                        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id1")->as<FieldAccessExpressionNode>(),
-                        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id2")->as<FieldAccessExpressionNode>(),
-                        1,
-                        1);
+        Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef = Join::Experimental::LogicalBatchJoinDefinition::create(
+            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id1")->as<FieldAccessExpressionNode>(),
+            FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id2")->as<FieldAccessExpressionNode>(),
+            1,
+            1);
 
-        batchJoinOp = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
+        batchJoinOp =
+            LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<Experimental::BatchJoinLogicalOperatorNode>();
     }
     joinOp->replace(batchJoinOp);
     ASSERT_TRUE(batchJoinOp->inferSchema());
@@ -1061,27 +1064,30 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     sourceCatalog->removeLogicalSource("default_logical");
 
-    SchemaPtr schemaProbeSide = Schema::create()
+    SchemaPtr schemaProbeSide =
+        Schema::create()
             ->addField("id1", BasicType::INT64)
             ->addField("one", BasicType::INT64)
-            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
-            ;
+            ->addField("timestamp",
+                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+        ;
     sourceCatalog->addLogicalSource("probe", schemaProbeSide);
 
-
-    SchemaPtr schemaBuildSide = Schema::create()
+    SchemaPtr schemaBuildSide =
+        Schema::create()
             ->addField("id2", BasicType::INT64)
-            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
-            ;
+            ->addField("timestamp",
+                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+        ;
     sourceCatalog->addLogicalSource("build", schemaBuildSide);
 
     auto subQuery = Query::from("build");
 
     auto query = Query::from("probe")
-            .batchJoinWith(subQuery)
-            .where(Attribute("id1")).equalsTo(Attribute("id2"))
-            .sink(FileSinkDescriptor::create(""))
-            ;
+                     .batchJoinWith(subQuery)
+                     .where(Attribute("id1"))
+                     .equalsTo(Attribute("id2"))
+                     .sink(FileSinkDescriptor::create(""));
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());

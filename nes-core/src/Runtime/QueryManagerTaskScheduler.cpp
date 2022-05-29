@@ -39,7 +39,7 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
   public:
     explicit ReconfigurationPipelineExecutionContext(QuerySubPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
-            -1, // this is a dummy pipelineID
+            -1,// this is a dummy pipelineID
             queryExecutionPlanId,
             std::move(queryManager),
             [](TupleBuffer&, NES::Runtime::WorkerContext&) {
@@ -281,7 +281,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
 
         auto now =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
 
         statistics->setTimestampFirstProcessedTask(now, true);

@@ -53,7 +53,7 @@ namespace TestUtils {
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
-static constexpr auto defaultCooldown = std::chrono::seconds(3); // 3s after last processed task, the query should be done.
+static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last processed task, the query should be done.
 
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
@@ -319,15 +319,14 @@ template<typename Predicate = std::equal_to<uint64_t>>
         }
 
         uint64_t now =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
         auto timeoutMillisec = std::chrono::milliseconds(defaultTimeout);
 
         // wait for another iteration if the last processed task was very recent.
-        if (minOneProcessedTask &&
-            (statistics[0]->getTimestampLastProcessedTask() == 0
-            || statistics[0]->getTimestampFirstProcessedTask() == 0
-            || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count())) {
+        if (minOneProcessedTask
+            && (statistics[0]->getTimestampLastProcessedTask() == 0 || statistics[0]->getTimestampFirstProcessedTask() == 0
+                || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count())) {
             NES_DEBUG("checkCompleteOrTimeout: A task was processed within the last "
                       << timeoutMillisec.count() << "ms, the query may still be active. Restart the timeout period.");
         }

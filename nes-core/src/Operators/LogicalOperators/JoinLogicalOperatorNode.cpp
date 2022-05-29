@@ -148,7 +148,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool JoinLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<JoinLogicalOperatorNode>(); } // todo
+bool JoinLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<JoinLogicalOperatorNode>(); }// todo
 
 void JoinLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();

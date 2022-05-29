@@ -38,15 +38,14 @@ namespace NES::Join::Experimental {
  * Its child class BatchJoinHandler is templated with types at query-run-time and thus only available then.
  */
 class AbstractBatchJoinHandler : public detail::virtual_enable_shared_from_this<AbstractBatchJoinHandler, false>,
-                            public Runtime::Reconfigurable {
+                                 public Runtime::Reconfigurable {
     using inherited0 = detail::virtual_enable_shared_from_this<AbstractBatchJoinHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
   public:
     explicit AbstractBatchJoinHandler(LogicalBatchJoinDefinitionPtr batchJoinDefinition)
-     : batchJoinDefinition(std::move(batchJoinDefinition)) {
+        : batchJoinDefinition(std::move(batchJoinDefinition)) {
         // nop
-
     }
 
     ~AbstractBatchJoinHandler() NES_NOEXCEPT(false) override = default;

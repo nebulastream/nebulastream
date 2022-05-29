@@ -18,10 +18,11 @@
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
-GeneratableBatchJoinOperator::GeneratableBatchJoinOperator(OperatorId id,
-                                                 SchemaPtr inputSchema,
-                                                 SchemaPtr outputSchema,
-                                                 Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler)
+GeneratableBatchJoinOperator::GeneratableBatchJoinOperator(
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       batchJoinOperatorHandler(std::move(batchJoinOperatorHandler)) {}
 

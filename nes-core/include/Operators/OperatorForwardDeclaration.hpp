@@ -36,9 +36,9 @@ class JoinLogicalOperatorNode;
 using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
 
 namespace Experimental {
-    class BatchJoinLogicalOperatorNode;
-    using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
-}
+class BatchJoinLogicalOperatorNode;
+using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+}// namespace Experimental
 
 class UnionLogicalOperatorNode;
 using UnionLogicalOperatorNodePtr = std::shared_ptr<UnionLogicalOperatorNode>;

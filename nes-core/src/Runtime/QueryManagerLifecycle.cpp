@@ -186,7 +186,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     if (queryToStatisticsMap.contains(qep->getQuerySubPlanId())) {
         auto statistics = queryToStatisticsMap.find(qep->getQuerySubPlanId());
         auto now =
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
         statistics->setTimestampQueryStart(now, true);
     } else {

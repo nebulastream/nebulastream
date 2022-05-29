@@ -14,43 +14,40 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <utility>
 
+#include <Common/ExecutableType/Array.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/WindowHandler/BatchJoinHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
-#include <Common/ExecutableType/Array.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators::Experimental {
 
 PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(SchemaPtr inputSchema,
-                                                     SchemaPtr outputSchema,
-                                                     Join::Experimental::BatchJoinOperatorHandlerPtr joinOperatorHandler) {
-    return create(Util::getNextOperatorId(),
-                  std::move(inputSchema),
-                  std::move(outputSchema),
-                  std::move(joinOperatorHandler));
+                                                           SchemaPtr outputSchema,
+                                                           Join::Experimental::BatchJoinOperatorHandlerPtr joinOperatorHandler) {
+    return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(joinOperatorHandler));
 }
 
-PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(OperatorId id,
-                                                     const SchemaPtr& inputSchema,
-                                                     const SchemaPtr& outputSchema,
-                                                     const Join::Experimental::BatchJoinOperatorHandlerPtr& joinOperatorHandler) {
+PhysicalOperatorPtr
+PhysicalBatchJoinProbeOperator::create(OperatorId id,
+                                       const SchemaPtr& inputSchema,
+                                       const SchemaPtr& outputSchema,
+                                       const Join::Experimental::BatchJoinOperatorHandlerPtr& joinOperatorHandler) {
     return std::make_shared<PhysicalBatchJoinProbeOperator>(id, inputSchema, outputSchema, joinOperatorHandler);
 }
 
-PhysicalBatchJoinProbeOperator::PhysicalBatchJoinProbeOperator(OperatorId id,
-                                                   SchemaPtr inputSchema,
-                                                   SchemaPtr outputSchema,
-                                                   Join::Experimental::BatchJoinOperatorHandlerPtr joinOperatorHandler)
+PhysicalBatchJoinProbeOperator::PhysicalBatchJoinProbeOperator(
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Join::Experimental::BatchJoinOperatorHandlerPtr joinOperatorHandler)
     : OperatorNode(id), PhysicalBatchJoinOperator(std::move(joinOperatorHandler)),
       PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)){};
 
 std::string PhysicalBatchJoinProbeOperator::toString() const { return "PhysicalBatchJoinProbeOperator"; }
 
-OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler);
-}
+OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators::Experimental

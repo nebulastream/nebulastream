@@ -20,28 +20,35 @@
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
-GeneratableOperatorPtr GeneratableBatchJoinBuildOperator::create(OperatorId id,
-                                                            SchemaPtr inputSchema,
-                                                            SchemaPtr outputSchema,
-                                                            Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+GeneratableOperatorPtr
+GeneratableBatchJoinBuildOperator::create(OperatorId id,
+                                          SchemaPtr inputSchema,
+                                          SchemaPtr outputSchema,
+                                          Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
     return std::make_shared<GeneratableBatchJoinBuildOperator>(
-        GeneratableBatchJoinBuildOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler)));
+        GeneratableBatchJoinBuildOperator(id,
+                                          std::move(inputSchema),
+                                          std::move(outputSchema),
+                                          std::move(batchJoinOperatorHandler)));
 }
 
-GeneratableOperatorPtr GeneratableBatchJoinBuildOperator::create(SchemaPtr inputSchema,
-                                                            SchemaPtr outputSchema,
-                                                            Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+GeneratableOperatorPtr
+GeneratableBatchJoinBuildOperator::create(SchemaPtr inputSchema,
+                                          SchemaPtr outputSchema,
+                                          Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(batchJoinOperatorHandler));
 }
 
-GeneratableBatchJoinBuildOperator::GeneratableBatchJoinBuildOperator(OperatorId id,
-                                                           SchemaPtr inputSchema,
-                                                           SchemaPtr outputSchema,
-                                                           Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler)
-    : OperatorNode(id), GeneratableBatchJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler)){}
+GeneratableBatchJoinBuildOperator::GeneratableBatchJoinBuildOperator(
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler)
+    : OperatorNode(id),
+      GeneratableBatchJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler)) {}
 
 void GeneratableBatchJoinBuildOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
@@ -55,6 +62,8 @@ void GeneratableBatchJoinBuildOperator::generateExecute(CodeGeneratorPtr codegen
 
 std::string GeneratableBatchJoinBuildOperator::toString() const { return "GeneratableBatchJoinBuildOperator"; }
 
-OperatorNodePtr GeneratableBatchJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, batchJoinOperatorHandler); }
+OperatorNodePtr GeneratableBatchJoinBuildOperator::copy() {
+    return create(id, inputSchema, outputSchema, batchJoinOperatorHandler);
+}
 
 }// namespace NES::QueryCompilation::GeneratableOperators

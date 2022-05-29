@@ -30,13 +30,12 @@ class PhysicalBatchJoinProbeOperator : public PhysicalBatchJoinOperator, public 
                                       const SchemaPtr& inputSchemaProbe,
                                       const SchemaPtr& outputSchema,
                                       const Join::Experimental::BatchJoinOperatorHandlerPtr& operatorHandler);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchemaProbe,
-                                      SchemaPtr outputSchema,
-                                      Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
+    static PhysicalOperatorPtr
+    create(SchemaPtr inputSchemaProbe, SchemaPtr outputSchema, Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
     PhysicalBatchJoinProbeOperator(OperatorId id,
-                             SchemaPtr inputSchemaProbe,
-                             SchemaPtr outputSchema,
-                             Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
+                                   SchemaPtr inputSchemaProbe,
+                                   SchemaPtr outputSchema,
+                                   Join::Experimental::BatchJoinOperatorHandlerPtr operatorHandler);
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 };

@@ -645,7 +645,6 @@ OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePt
     return joinDetails;
 }
 
-
 SerializableOperator_BatchJoinDetails
 OperatorSerializationUtil::serializeBatchJoinOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& joinOperator) {
     auto joinDetails = SerializableOperator_BatchJoinDetails();
@@ -935,20 +934,21 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //    }
 }
 
-Experimental::BatchJoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeBatchJoinOperator(
-        SerializableOperator_BatchJoinDetails* joinDetails, OperatorId operatorId) {
+Experimental::BatchJoinLogicalOperatorNodePtr
+OperatorSerializationUtil::deserializeBatchJoinOperator(SerializableOperator_BatchJoinDetails* joinDetails,
+                                                        OperatorId operatorId) {
 
     auto buildKeyAccessExpression =
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onbuildkey())->as<FieldAccessExpressionNode>();
     auto probeKeyAccessExpression =
         ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onprobekey())->as<FieldAccessExpressionNode>();
     auto joinDefinition = Join::Experimental::LogicalBatchJoinDefinition::create(buildKeyAccessExpression,
-                                                              probeKeyAccessExpression,
-                                                              joinDetails->numberofinputedgesprobe(),
-                                                              joinDetails->numberofinputedgesbuild());
-    auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<Experimental::BatchJoinLogicalOperatorNode>();
+                                                                                 probeKeyAccessExpression,
+                                                                                 joinDetails->numberofinputedgesprobe(),
+                                                                                 joinDetails->numberofinputedgesbuild());
+    auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)
+                        ->as<Experimental::BatchJoinLogicalOperatorNode>();
     return retValue;
-
 }
 SerializableOperator_SourceDetails
 OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator, bool isClientOriginated) {

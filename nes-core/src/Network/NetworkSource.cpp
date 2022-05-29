@@ -238,7 +238,8 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 
 void NetworkSource::onEvent(Runtime::BaseEvent&) {
     NES_WARNING("NetworkSource::onEvent(event) called. Can not send Event upstream in network without the WorkerContext."
-               " operatorId: " << this->operatorId);
+                " operatorId: "
+                << this->operatorId);
 }
 
 void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {

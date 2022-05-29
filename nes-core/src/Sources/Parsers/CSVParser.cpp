@@ -35,10 +35,11 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
 
     std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
 
-    NES_ASSERT(values.size() == schema->getSize(), "CSVParser: The input line does not contain the right number of delited fiels."
-                                                   " Fields in schema: " << schema->getSize() << " Fields in line: " << values.size()
-                                                   << " Schema: " << schema->toString()
-                                                   << " Line: " << csvInputLine);
+    NES_ASSERT(values.size() == schema->getSize(),
+               "CSVParser: The input line does not contain the right number of delited fiels."
+               " Fields in schema: "
+                   << schema->getSize() << " Fields in line: " << values.size() << " Schema: " << schema->toString()
+                   << " Line: " << csvInputLine);
 
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {

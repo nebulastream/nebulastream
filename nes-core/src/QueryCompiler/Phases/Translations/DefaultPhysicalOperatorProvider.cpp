@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -237,7 +237,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
     auto joinOperatorHandler =
         Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
-    auto leftInputOperator = // the child or child group on the left input side of the join
+    auto leftInputOperator =// the child or child group on the left input side of the join
         getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getLeftInputSchema(),
                                                                                       joinOperator->getOutputSchema(),
@@ -245,7 +245,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
                                                                                       JoinBuildSide::Left);
     leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
 
-    auto rightInputOperator = // the child or child group on the right input side of the join
+    auto rightInputOperator =// the child or child group on the right input side of the join
         getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getRightInputSchema(),
                                                                                        joinOperator->getOutputSchema(),
@@ -260,9 +260,10 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
     operatorNode->replace(joinSink);
 }
 
-OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
-                                                                           SchemaPtr outputSchema,
-                                                                           std::vector<OperatorNodePtr> children) {
+OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
+    const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
+    SchemaPtr outputSchema,
+    std::vector<OperatorNodePtr> children) {
     NES_ASSERT(!children.empty(), "There should be children for operator " << batchJoinOperator->toString());
     if (children.size() > 1) {
         auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(std::move(outputSchema));
@@ -278,41 +279,45 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getBatchJoinChildInputOperator(
 }
 
 void DefaultPhysicalOperatorProvider::lowerBatchJoinOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {
-//  logical operator plan:
-//    childsLeft  ___ bjLogical ___ parent
-//                  /
-//    childsRight _/
+    //  logical operator plan:
+    //    childsLeft  ___ bjLogical ___ parent
+    //                  /
+    //    childsRight _/
 
-auto batchJoinOperator = operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>();
+    auto batchJoinOperator = operatorNode->as<Experimental::BatchJoinLogicalOperatorNode>();
     // create batch join operator handler, to establish a common Runtime object for build and probw.
     auto batchJoinOperatorHandler =
-        Join::Experimental::BatchJoinOperatorHandler::create(batchJoinOperator->getBatchJoinDefinition(), batchJoinOperator->getOutputSchema());
+        Join::Experimental::BatchJoinOperatorHandler::create(batchJoinOperator->getBatchJoinDefinition(),
+                                                             batchJoinOperator->getOutputSchema());
 
-
-    auto leftInputOperator =
-        getBatchJoinChildInputOperator(batchJoinOperator, batchJoinOperator->getLeftInputSchema(), batchJoinOperator->getLeftOperators());
-    auto batchJoinBuildOperator = PhysicalOperators::PhysicalBatchJoinBuildOperator::create(batchJoinOperator->getLeftInputSchema(),
-                                                                                      batchJoinOperator->getOutputSchema(),
-                                                                                      batchJoinOperatorHandler);
+    auto leftInputOperator = getBatchJoinChildInputOperator(batchJoinOperator,
+                                                            batchJoinOperator->getLeftInputSchema(),
+                                                            batchJoinOperator->getLeftOperators());
+    auto batchJoinBuildOperator =
+        PhysicalOperators::PhysicalBatchJoinBuildOperator::create(batchJoinOperator->getLeftInputSchema(),
+                                                                  batchJoinOperator->getOutputSchema(),
+                                                                  batchJoinOperatorHandler);
     leftInputOperator->insertBetweenThisAndParentNodes(batchJoinBuildOperator);
 
-//  now:
-//    childsLeft __ bjPhysicalBuild __ bjLogical ___ parent
-//                                   /
-//    childsRight __________________/
+    //  now:
+    //    childsLeft __ bjPhysicalBuild __ bjLogical ___ parent
+    //                                   /
+    //    childsRight __________________/
 
-    auto rightInputOperator = //    called to demultiplex, if there are multiple right childs. this var is not used further.
-        getBatchJoinChildInputOperator(batchJoinOperator, batchJoinOperator->getRightInputSchema(), batchJoinOperator->getRightOperators());
+    auto rightInputOperator =//    called to demultiplex, if there are multiple right childs. this var is not used further.
+        getBatchJoinChildInputOperator(batchJoinOperator,
+                                       batchJoinOperator->getRightInputSchema(),
+                                       batchJoinOperator->getRightOperators());
     auto batchJoinProbeOperator = PhysicalOperators::Experimental::PhysicalBatchJoinProbeOperator::create(
-                                                                                       batchJoinOperator->getRightInputSchema(), // right = probe side!
-                                                                                       batchJoinOperator->getOutputSchema(),
-                                                                                       batchJoinOperatorHandler);
+        batchJoinOperator->getRightInputSchema(),// right = probe side!
+        batchJoinOperator->getOutputSchema(),
+        batchJoinOperatorHandler);
     operatorNode->replace(batchJoinProbeOperator);
 
-//  final:
-//    childsLeft __ bjPhysicalBuild __ bjPhysicalProbe ___ parent
-//                                   /
-//    childsRight __________________/
+    //  final:
+    //    childsLeft __ bjPhysicalBuild __ bjPhysicalProbe ___ parent
+    //                                   /
+    //    childsRight __________________/
 }
 
 void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&,

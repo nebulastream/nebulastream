@@ -148,7 +148,8 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     }
 }
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
-    NES_DEBUG("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: " << this->uniqueNetworkSinkDescriptorId);
+    NES_DEBUG(
+        "NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: " << this->uniqueNetworkSinkDescriptorId);
     // this function currently has no usage
     onEvent(event);
 }

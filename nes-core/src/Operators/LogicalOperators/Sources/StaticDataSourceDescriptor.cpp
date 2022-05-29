@@ -18,14 +18,11 @@
 
 namespace NES::Experimental {
 
-StaticDataSourceDescriptor::StaticDataSourceDescriptor(SchemaPtr schema,
-                                                       std::string pathTableFile,
-                                                       bool lateStart)
-: SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)), lateStart(lateStart) {}
+StaticDataSourceDescriptor::StaticDataSourceDescriptor(SchemaPtr schema, std::string pathTableFile, bool lateStart)
+    : SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)), lateStart(lateStart) {}
 
-std::shared_ptr<StaticDataSourceDescriptor> StaticDataSourceDescriptor::create(const SchemaPtr& schema,
-                                                                               std::string pathTableFile,
-                                                                               bool lateStart) {
+std::shared_ptr<StaticDataSourceDescriptor>
+StaticDataSourceDescriptor::create(const SchemaPtr& schema, std::string pathTableFile, bool lateStart) {
     NES_ASSERT(schema, "StaticDataSourceDescriptor: Invalid schema passed.");
     return std::make_shared<StaticDataSourceDescriptor>(schema, pathTableFile, lateStart);
 }
@@ -38,9 +35,8 @@ bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         return false;
     }
     auto otherTableDescr = other->as<StaticDataSourceDescriptor>();
-    return schema == otherTableDescr->schema
-    && pathTableFile == otherTableDescr->pathTableFile
-    && lateStart == otherTableDescr->lateStart;
+    return schema == otherTableDescr->schema && pathTableFile == otherTableDescr->pathTableFile
+        && lateStart == otherTableDescr->lateStart;
 }
 
 SchemaPtr StaticDataSourceDescriptor::getSchema() const { return schema; }

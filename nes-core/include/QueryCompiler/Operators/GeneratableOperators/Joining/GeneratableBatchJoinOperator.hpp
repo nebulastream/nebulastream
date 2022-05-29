@@ -26,9 +26,9 @@ namespace GeneratableOperators {
 class GeneratableBatchJoinOperator : public GeneratableOperator {
   protected:
     GeneratableBatchJoinOperator(OperatorId id,
-                            SchemaPtr inputSchema,
-                            SchemaPtr outputSchema,
-                            Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
+                                 SchemaPtr inputSchema,
+                                 SchemaPtr outputSchema,
+                                 Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler);
     Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler;
 };
 }// namespace GeneratableOperators

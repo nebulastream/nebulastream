@@ -68,8 +68,8 @@
 #include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
-#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
+#include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
@@ -2172,10 +2172,11 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
     return joinOperatorHandlerIndex;
 }
 
-uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
-                                                              PipelineContextPtr context,
-                                                              uint64_t id,
-                                                              Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
+uint64_t
+CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                                     PipelineContextPtr context,
+                                                     uint64_t id,
+                                                     Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
 
     /*
      * Create struct definition, e.g.:
@@ -2195,14 +2196,14 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental
     NES_ASSERT(!batchJoinDef->getProbeJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
     NES_ASSERT(batchJoinDef->getBuildJoinKey()->getStamp()->isEquals(batchJoinDef->getProbeJoinKey()->getStamp()),
                "left join key is not the same type as right join key");
-    NES_ASSERT(batchJoinDef->getBuildSchema() != nullptr && !batchJoinDef->getBuildSchema()->fields.empty(), "left join type is undefined");
+    NES_ASSERT(batchJoinDef->getBuildSchema() != nullptr && !batchJoinDef->getBuildSchema()->fields.empty(),
+               "left join type is undefined");
     NES_ASSERT(batchJoinDef->getProbeSchema() != nullptr && !batchJoinDef->getProbeSchema()->fields.empty(),
                "right join type is undefined");
 
-
     auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
     VariableDeclaration varDeclarationPipelineExecutionContext =
-            VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
     context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
 
@@ -2213,28 +2214,29 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental
     auto setupScope = context->createSetupScope();
 
     auto batchJoinOperatorHandlerDeclaration =
-            VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinOperatorHandler");
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinOperatorHandler");
     auto getOperatorHandlerCall = call("getOperatorHandler<Join::Experimental::BatchJoinOperatorHandler>");
     auto constantOperatorHandlerIndex =
-            Constant(tf->createValueType(DataTypeFactory::createBasicValue(joinOperatorHandlerIndex)));
+        Constant(tf->createValueType(DataTypeFactory::createBasicValue(joinOperatorHandlerIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
 
     auto windowOperatorStatement =
-            VarDeclStatement(batchJoinOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+        VarDeclStatement(batchJoinOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
     setupScope->addStatement(windowOperatorStatement.copy());
 
     // get batch join Definition
     auto batchJoinDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinDefinition");
     auto getBatchJoinDefinitionCall = call("getBatchJoinDefinition");
     auto batchJoinDefinitionStatement =
-            VarDeclStatement(batchJoinDefDeclaration).assign(VarRef(batchJoinOperatorHandlerDeclaration).accessPtr(getBatchJoinDefinitionCall));
+        VarDeclStatement(batchJoinDefDeclaration)
+            .assign(VarRef(batchJoinOperatorHandlerDeclaration).accessPtr(getBatchJoinDefinitionCall));
     setupScope->addStatement(batchJoinDefinitionStatement.copy());
 
     // getResultSchema
     auto resultSchemaDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "resultSchema");
     auto getResultSchemaCall = call("getResultSchema");
-    auto resultSchemaStatement =
-            VarDeclStatement(resultSchemaDeclaration).assign(VarRef(batchJoinOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
+    auto resultSchemaStatement = VarDeclStatement(resultSchemaDeclaration)
+                                     .assign(VarRef(batchJoinOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
     setupScope->addStatement(resultSchemaStatement.copy());
 
     auto keyType = tf->createDataType(batchJoinDef->getBuildJoinKey()->getStamp());
@@ -2244,7 +2246,7 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental
     // Join::Experimental::BatchJoinHandler<KeyType, InputTypeBuild>(batchJoinDefinition, id)
     auto batchJoinHandler = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
     auto createBatchJoinHandlerCall =
-            call("Join::Experimental::BatchJoinHandler<" + keyType->getCode()->code_ + ", " + structNameBuildTuple + ">::create");
+        call("Join::Experimental::BatchJoinHandler<" + keyType->getCode()->code_ + ", " + structNameBuildTuple + ">::create");
     createBatchJoinHandlerCall->addParameter(VarRef(batchJoinDefDeclaration));
     createBatchJoinHandlerCall->addParameter(VarRef(idParam));
 
@@ -2257,7 +2259,7 @@ uint64_t CCodeGenerator::generateCodeForBatchJoinHandlerSetup(Join::Experimental
     auto setBatchJoinHandlerStatement = VarRef(batchJoinOperatorHandlerDeclaration).accessPtr(setBatchJoinHandlerCall);
     setupScope->addStatement(setBatchJoinHandlerStatement.copy());
 
-/*  todo jm think this is not needed yet (we dont have setup function)
+    /*  todo jm think this is not needed yet (we dont have setup function)
     // setup batch join handler
     auto getSharedFromThis = call("shared_from_this");
     auto setUpBatchJoinHandlerCall = call("setup");
@@ -2709,15 +2711,13 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     return true;
 }
 
-
 bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                    PipelineContextPtr context,
                                                    Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
-    NES_DEBUG("batch join input=" << context->inputSchema->toString()
-                            << " out=" << batchJoinDef->getOutputSchema()->toString());
+    NES_DEBUG("batch join input=" << context->inputSchema->toString() << " out=" << batchJoinDef->getOutputSchema()->toString());
 
     auto tf = getTypeFactory();
-    const std::string structNameBuildTuple = "InputTuple"; // we reuse the struct defined by generateCodeForScan
+    const std::string structNameBuildTuple = "InputTuple";// we reuse the struct defined by generateCodeForScan
 
     NES_ASSERT(batchJoinDef, "invalid join definition");
     NES_ASSERT(!batchJoinDef->getBuildJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
@@ -2732,7 +2732,8 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
     auto code = context->code;
 
     // "auto batchJoinHandler = pipelineExecutionContext.getBatchJoinHandler<int64_t, InputTupleBuild>()";
-    auto batchJoinHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
+    auto batchJoinHandlerVariableDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
 
     int64_t operatorHandlerIndex = context->getHandlerIndex(batchJoinOperatorHandler);
     auto batchJoinOperatorHandlerDeclaration =
@@ -2740,7 +2741,7 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
 
     auto getJoinHandlerStatement = getBatchJoinHandler(batchJoinOperatorHandlerDeclaration,
                                                        batchJoinDef->getBuildJoinKey()->getStamp(),
-                                                        structNameBuildTuple);
+                                                       structNameBuildTuple);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(batchJoinHandlerVariableDeclaration).assign(getJoinHandlerStatement).copy());
 
@@ -2748,8 +2749,7 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
     auto hashTableVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashTable");
     auto getHashTableCall = call("getHashTable");
     auto getHashTableStatement = VarRef(batchJoinHandlerVariableDeclaration).accessPtr(getHashTableCall);
-    context->code->variableInitStmts.emplace_back(
-            VarDeclStatement(hashTableVarDeclaration).assign(getHashTableStatement).copy());
+    context->code->variableInitStmts.emplace_back(VarDeclStatement(hashTableVarDeclaration).assign(getHashTableStatement).copy());
     //-------------------------
 
     /**
@@ -2759,8 +2759,8 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
     // "int64_t key = inputTuplesBuild[recordIndex].key;"
     auto recordHandler = context->getRecordHandler();
     auto joinKeyFieldName = batchJoinDef->getBuildJoinKey()->getFieldName();
-    auto keyVariableDeclaration =
-            VariableDeclaration::create(tf->createDataType(batchJoinDef->getBuildJoinKey()->getStamp()), joinKeyFieldName + "_buildKey");
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(batchJoinDef->getBuildJoinKey()->getStamp()),
+                                                              joinKeyFieldName + "_buildKey");
 
     NES_ASSERT2_FMT(recordHandler->hasAttribute(joinKeyFieldName),
                     "join key is not defined on input tuple << " << joinKeyFieldName);
@@ -2776,8 +2776,7 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
     auto currentTupleStatement = VarRef(code->varDeclarationInputTuples)[VarRef(code->varDeclarationRecordIndex)];
     insertCall->addParameter(VarRef(keyVariableDeclaration));
     insertCall->addParameter(currentTupleStatement);
-    context->code->currentCodeInsertionPoint->addStatement(
-            VarRef(hashTableVarDeclaration).accessPtr(insertCall).copy());
+    context->code->currentCodeInsertionPoint->addStatement(VarRef(hashTableVarDeclaration).accessPtr(insertCall).copy());
 
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);
@@ -2785,12 +2784,10 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::Experimental::LogicalBa
     return true;
 }
 
-
 bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBatchJoinDefinitionPtr batchJoinDef,
                                                    PipelineContextPtr context,
                                                    Join::Experimental::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) {
-    NES_DEBUG("batch join input=" << context->inputSchema->toString()
-                            << " out=" << batchJoinDef->getOutputSchema()->toString());
+    NES_DEBUG("batch join input=" << context->inputSchema->toString() << " out=" << batchJoinDef->getOutputSchema()->toString());
 
     NES_ASSERT(batchJoinDef, "invalid join definition");
     NES_ASSERT(!batchJoinDef->getBuildJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
@@ -2811,14 +2808,15 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBa
     context->code->structDeclarationInputTuples.emplace_back(buildTypeStruct);
 
     // "auto batchJoinHandler = pipelineExecutionContext.getBatchJoinHandler<int64_t, InputTupleBuild>();"
-    auto batchJoinHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
+    auto batchJoinHandlerVariableDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
     auto operatorHandlerIndex = context->registerOperatorHandler(batchJoinOperatorHandler);
     auto batchJoinOperatorHandlerDeclaration =
         getBatchJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
     auto getJoinHandlerStatement = getBatchJoinHandler(batchJoinOperatorHandlerDeclaration,
                                                        batchJoinDef->getBuildJoinKey()->getStamp(),
-                                                        structNameBuildTuple);
+                                                       structNameBuildTuple);
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(batchJoinHandlerVariableDeclaration).assign(getJoinHandlerStatement).copy());
 
@@ -2826,8 +2824,7 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBa
     auto hashTableVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashTable");
     auto getHashTableCall = call("getHashTable");
     auto getHashTableStatement = VarRef(batchJoinHandlerVariableDeclaration).accessPtr(getHashTableCall);
-    context->code->variableInitStmts.emplace_back(
-            VarDeclStatement(hashTableVarDeclaration).assign(getHashTableStatement).copy());
+    context->code->variableInitStmts.emplace_back(VarDeclStatement(hashTableVarDeclaration).assign(getHashTableStatement).copy());
     //-------------------------
 
     /**
@@ -2852,9 +2849,7 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBa
 
     // extract joinPartner
     // "InputTupleBuild joinPartner = hashTable->find(inputTuples[recordIndex].key);"
-    auto joinPartnerVariableDeclaration =
-            VariableDeclaration::create(tf->createUserDefinedType(buildTypeStruct), "joinPartner");
-
+    auto joinPartnerVariableDeclaration = VariableDeclaration::create(tf->createUserDefinedType(buildTypeStruct), "joinPartner");
 
     auto findJoinPartnerCall = FunctionCallStatement("find");
     findJoinPartnerCall.addParameter(joinKeyReference);
@@ -2866,8 +2861,7 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::Experimental::LogicalBa
     // register all fields of "InputTupleBuild joinPartner" in operator handler for use in emit
     for (const AttributeFieldPtr& field : batchJoinDef->getBuildSchema()->fields) {
         auto fieldVarDeclaration = VariableDeclaration::create(field->getDataType(), field->getName());
-        auto joinPartnerAccessStatement = VarRef(joinPartnerVariableDeclaration)
-                .accessRef(VarRef(fieldVarDeclaration));
+        auto joinPartnerAccessStatement = VarRef(joinPartnerVariableDeclaration).accessRef(VarRef(fieldVarDeclaration));
         recordHandler->registerAttribute(field->getName(), joinPartnerAccessStatement.copy());
     }
 
@@ -3780,11 +3774,12 @@ BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(const VariableDecla
 }
 
 BinaryOperatorStatement CCodeGenerator::getBatchJoinHandler(const VariableDeclaration& pipelineContextVariable,
-                                                             DataTypePtr keyType,
-                                                             const std::string& buildType) {
+                                                            DataTypePtr keyType,
+                                                            const std::string& buildType) {
 
     auto tf = getTypeFactory();
-    auto call = FunctionCallStatement(std::string("getBatchJoinHandler<NES::Join::Experimental::BatchJoinHandler, ") + TO_CODE(keyType) + "," + buildType + " >");
+    auto call = FunctionCallStatement(std::string("getBatchJoinHandler<NES::Join::Experimental::BatchJoinHandler, ")
+                                      + TO_CODE(keyType) + "," + buildType + " >");
     return VarRef(pipelineContextVariable).accessPtr(call);
 }
 
@@ -3836,7 +3831,7 @@ VariableDeclaration CCodeGenerator::getOperatorHandler(const PipelineContextPtr&
             typeString = "Join::Experimental::BatchJoinOperatorHandler";
             identifier = "batchJoinOperatorHandler";
             break;
-        case Runtime::Execution::KEY_EVENT_TIME_WINDOW: // afaik nothing uses or tests this behaviour
+        case Runtime::Execution::KEY_EVENT_TIME_WINDOW:// afaik nothing uses or tests this behaviour
             typeString = "Windowing::Experimental::BatchJoinOperatorHandler";
             identifier = "keyEventTimeWindowOperatorHandler";
             break;
@@ -3844,13 +3839,12 @@ VariableDeclaration CCodeGenerator::getOperatorHandler(const PipelineContextPtr&
 
     auto tf = getTypeFactory();
     auto executionContextRef = VarRefStatement(tupleBufferVariable);
-    auto operatorHandlerDeclaration =
-            VariableDeclaration::create(tf->createAnonymusDataType("auto"), identifier);
+    auto operatorHandlerDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), identifier);
     auto getOperatorHandlerCall = call("getOperatorHandler<" + typeString + ">");
     auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(operatorIndex)));
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto operatorStatement =
-            VarDeclStatement(operatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+        VarDeclStatement(operatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
     context->code->variableInitStmts.push_back(operatorStatement.copy());
 
     return operatorHandlerDeclaration;
@@ -3859,33 +3853,24 @@ VariableDeclaration CCodeGenerator::getOperatorHandler(const PipelineContextPtr&
 VariableDeclaration CCodeGenerator::getWindowOperatorHandler(const PipelineContextPtr& context,
                                                              const VariableDeclaration& tupleBufferVariable,
                                                              uint64_t operatorIndex) {
-    return getOperatorHandler(context,
-                              tupleBufferVariable,
-                              operatorIndex,
-                              NES::Runtime::Execution::OperatorHandlerType::WINDOW);
+    return getOperatorHandler(context, tupleBufferVariable, operatorIndex, NES::Runtime::Execution::OperatorHandlerType::WINDOW);
 }
 
 VariableDeclaration CCodeGenerator::getCEPIterationOperatorHandler(const PipelineContextPtr& context,
                                                                    const VariableDeclaration& tupleBufferVariable,
                                                                    uint64_t operatorIndex) {
-    return getOperatorHandler(context,
-                              tupleBufferVariable,
-                              operatorIndex,
-                              NES::Runtime::Execution::OperatorHandlerType::CEP);
+    return getOperatorHandler(context, tupleBufferVariable, operatorIndex, NES::Runtime::Execution::OperatorHandlerType::CEP);
 }
 
 VariableDeclaration CCodeGenerator::getJoinOperatorHandler(const PipelineContextPtr& context,
                                                            const VariableDeclaration& tupleBufferVariable,
                                                            uint64_t operatorIndex) {
-    return getOperatorHandler(context,
-                              tupleBufferVariable,
-                              operatorIndex,
-                              NES::Runtime::Execution::OperatorHandlerType::JOIN);
+    return getOperatorHandler(context, tupleBufferVariable, operatorIndex, NES::Runtime::Execution::OperatorHandlerType::JOIN);
 }
 
 VariableDeclaration CCodeGenerator::getBatchJoinOperatorHandler(const PipelineContextPtr& context,
-                                                           const VariableDeclaration& tupleBufferVariable,
-                                                           uint64_t operatorIndex) {
+                                                                const VariableDeclaration& tupleBufferVariable,
+                                                                uint64_t operatorIndex) {
     return getOperatorHandler(context,
                               tupleBufferVariable,
                               operatorIndex,

@@ -13,8 +13,8 @@
 */
 
 #include <Runtime/QueryStatistics.hpp>
-#include <sstream>
 #include <Util/Logger/Logger.hpp>
+#include <sstream>
 
 namespace NES::Runtime {
 

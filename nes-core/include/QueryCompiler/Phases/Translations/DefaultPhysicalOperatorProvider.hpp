@@ -120,8 +120,8 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
 
     // todo might need super class of join and batch join, this function is a duplicate of above
     static OperatorNodePtr getBatchJoinChildInputOperator(const Experimental::BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
-                                                           SchemaPtr outputSchema,
-                                                           std::vector<OperatorNodePtr> children);
+                                                          SchemaPtr outputSchema,
+                                                          std::vector<OperatorNodePtr> children);
 
     /**
     * @brief Lowers a cep iteration operator
