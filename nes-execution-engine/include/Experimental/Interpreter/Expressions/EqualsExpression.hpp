@@ -16,7 +16,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_EQUALSEXPRESSION_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_EQUALSEXPRESSION_HPP_
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class EqualsExpression : public Expression {
   private:
@@ -28,6 +28,6 @@ class EqualsExpression : public Expression {
     Value<> execute(Record& record) override;
 };
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_EQUALSEXPRESSION_HPP_

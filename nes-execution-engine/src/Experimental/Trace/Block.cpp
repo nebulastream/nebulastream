@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Trace/Block.hpp>
+#include <Experimental/Trace/Block.hpp>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 bool Block::isLocalValueRef(ValueRef& ref) {
 
@@ -52,4 +52,4 @@ std::ostream& operator<<(std::ostream& os, const Block& block) {
     return os;
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

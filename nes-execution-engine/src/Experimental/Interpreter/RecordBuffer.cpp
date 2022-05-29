@@ -25,7 +25,7 @@
 #include <Experimental/Interpreter/Operations/SubOp.hpp>
 #include <Experimental/Interpreter/ProxyFunctions.hpp>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 RecordBuffer::RecordBuffer(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> tupleBufferRef)
     : memoryLayout(memoryLayout), tupleBufferRef(tupleBufferRef) {}
@@ -65,4 +65,4 @@ void RecordBuffer::setNumRecords(Value<Integer> value) {
     FunctionCall<>("TupleBuffer.setNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, value);
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

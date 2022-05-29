@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Trace/ExecutionTrace.hpp>
-#include <Experimental/Interpreter/Trace/OperationRef.hpp>
+#include <Experimental/Trace/ExecutionTrace.hpp>
+#include <Experimental/Trace/OperationRef.hpp>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 ExecutionTrace::ExecutionTrace() : tagMap(), blocks() { createBlock(); };
 
@@ -207,4 +207,4 @@ void ExecutionTrace::checkInputReference(uint32_t currentBlockIndex, ValueRef in
 
 
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

@@ -14,15 +14,15 @@
 
 #include <Experimental/Interpreter/DataValue/Boolean.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
-#include <Experimental/Interpreter/Trace/ExecutionTrace.hpp>
-#include <Experimental/Interpreter/Trace/OperationRef.hpp>
-#include <Experimental/Interpreter/Trace/TraceContext.hpp>
+#include <Experimental/Trace/ExecutionTrace.hpp>
+#include <Experimental/Trace/OperationRef.hpp>
+#include <Experimental/Trace/TraceContext.hpp>
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <execinfo.h>
 #include <iostream>
 #include <map>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 static thread_local TraceContext threadLocalTraceContext;
 
@@ -391,4 +391,4 @@ std::ostream& operator<<(std::ostream& os, const Operation& operation) {
     return os;
 }
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

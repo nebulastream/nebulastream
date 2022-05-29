@@ -23,7 +23,7 @@
 #include <variant>
 #include <vector>
 
-namespace NES::Experimental::Interpreter{
+namespace NES::ExecutionEngine::Experimental::Trace{
 
 class Tag {
   public:

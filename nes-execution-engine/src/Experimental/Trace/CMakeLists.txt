@@ -20,4 +20,5 @@ add_source_files(nes-execution-engine
         Block.cpp
         ValueRef.cpp
         FunctionCallTarget.cpp
+        SSACreationPhase.cpp
         )

@@ -17,7 +17,7 @@
 #include <Experimental/Interpreter/Operators/ExecuteOperator.hpp>
 #include <Experimental/Interpreter/Record.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class EmitState : public OperatorState {
   public:
@@ -60,4 +60,4 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
 Emit::Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout)
     : maxRecordsPerBuffer(resultMemoryLayout->getCapacity()), resultMemoryLayout(resultMemoryLayout) {}
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

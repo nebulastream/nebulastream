@@ -11,9 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPCODE_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPCODE_HPP_
-namespace NES::Experimental::Interpreter {
-enum OpCode { ADD, SUB, DIV, MUL, EQUALS, LESS_THAN, NEGATE, AND, OR, CMP, JMP, CONST, ASSIGN, RETURN, LOAD, STORE, CALL };
+
+#include <Experimental/Interpreter/DataValue/Any.hpp>
+#include <Experimental/Trace/ConstantValue.hpp>
+
+namespace NES::ExecutionEngine::Experimental::Trace {
+ConstantValue::ConstantValue(Interpreter::AnyPtr anyPtr) : value(std::move(anyPtr)){};
+
+std::ostream& operator<<(std::ostream& os, const ConstantValue& valueRef) {
+    os << "c" << valueRef.value;
+    return os;
 }
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_OPCODE_HPP_
+
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

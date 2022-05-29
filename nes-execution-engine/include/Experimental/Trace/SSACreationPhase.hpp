@@ -13,12 +13,13 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
-#include <Experimental/Interpreter/Trace/TraceContext.hpp>
-#include <Experimental/Interpreter/Trace/ExecutionTrace.hpp>
-#include <Experimental/Interpreter/Trace/OperationRef.hpp>
+#include <Experimental/Trace/TraceContext.hpp>
+#include <Experimental/Trace/ExecutionTrace.hpp>
+#include <Experimental/Trace/OperationRef.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <set>
 
-namespace NES::Experimental::Interpreter {
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 class SSACreationPhase {
   public:
@@ -145,5 +146,5 @@ class SSACreationPhase {
     };
 };
 
-}// namespace NES::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_

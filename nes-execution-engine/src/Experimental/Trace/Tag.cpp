@@ -12,15 +12,12 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Trace/TraceContext.hpp>
-#include <Experimental/Interpreter/Trace/ValueRef.hpp>
-
-namespace NES::Experimental::Interpreter {
-ValueRef createNextRef() {
-    auto ctx = getThreadLocalTraceContext();
-    if (ctx) {
-        return ctx->createNextRef();
-    }
-    return ValueRef(0, 0);
-}
-}// namespace NES::Experimental::Interpreter
+#include <Experimental/Interpreter/DataValue/Boolean.hpp>
+#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Experimental/Trace/Tag.hpp>
+#include <Experimental/Interpreter/Util/Casting.hpp>
+#include <Util/magicenum/magic_enum.hpp>
+#include <execinfo.h>
+#include <iostream>
+#include <map>
+namespace NES::ExecutionEngine::Experimental::Trace {}
