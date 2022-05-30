@@ -110,7 +110,7 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
     Runtime::QueryTerminationType queryTerminationType,
     Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) {
     NES_DEBUG("stop ThreadLocalPreAggregationWindowHandler: " << queryTerminationType);
-    if(queryTerminationType == Runtime::QueryTerminationType::Graceful) {
+    if (queryTerminationType == Runtime::QueryTerminationType::Graceful) {
         auto sliceStaging = this->weakSliceStaging.lock();
         NES_ASSERT(sliceStaging, "Slice staging is invalid. This should not happen for graceful stop.");
         for (auto& threadLocalSliceStore : threadLocalSliceStores) {
@@ -137,7 +137,6 @@ void KeyedThreadLocalPreAggregationOperatorHandler::stop(
         }
     }
 }
-
 
 KeyedThreadLocalPreAggregationOperatorHandler::~KeyedThreadLocalPreAggregationOperatorHandler() {
     NES_DEBUG("~KeyedThreadLocalPreAggregationOperatorHandler");
