@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Operators/ExecuteOperator.hpp>
+#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Operators/Operator.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 

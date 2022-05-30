@@ -14,7 +14,7 @@
 
 #include <Experimental/Interpreter/ExecutionContext.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
-#include <Experimental/Interpreter/Operators/ExecuteOperator.hpp>
+#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
 #include <Experimental/Interpreter/Record.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {

@@ -12,20 +12,15 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
-#include <Experimental/Interpreter/Operators/Scan.hpp>
+#include <Experimental/Interpreter/Operators/Map.hpp>
 #include <Experimental/Interpreter/Record.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
-    // call open on all child operators
-    child->open(ctx, recordBuffer);
-    // iterate over records in buffer
-    auto numberOfRecords = recordBuffer.getNumRecords();
-    for (Value<Integer> i = 0; i < numberOfRecords; i = i + 1) {
-        auto record = recordBuffer.read(i);
-        child->execute(ctx,record);
-    }
+void Map::execute(ExecutionContext& ctx, Record& record) const {
+    // assume that map expression performs a field write
+    mapExpression->execute(record);
+    // call next operator
+    child->execute(ctx, record);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
