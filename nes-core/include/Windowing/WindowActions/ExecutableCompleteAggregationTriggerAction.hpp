@@ -111,8 +111,6 @@ class ExecutableCompleteAggregationTriggerAction
         if (tupleBuffer.getNumberOfTuples() != 0) {
             tupleBuffer.setWatermark(currentWatermark);
             tupleBuffer.setOriginId(windowDefinition->getOriginId());
-
-
             //write remaining buffer
             if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE) {
                 auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
