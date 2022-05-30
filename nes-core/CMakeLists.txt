@@ -17,8 +17,8 @@ include(GNUInstallDirs)
 # Generate protobuf and grpc files and add them to individual nes-grpc target
 set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
 set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
-SET (CMAKE_C_COMPILER_WORKS 1)
-SET (CMAKE_CXX_COMPILER_WORKS 1)
+
+
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/nes-grpc/)
 file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
 foreach (PROTO_FILE ${PROTO_FILES})
@@ -62,10 +62,6 @@ install(TARGETS nes-grpc
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
-get_property(NES_CLANG_PLUGIN GLOBAL PROPERTY NES_CLANG_PLUGIN)
-message(STATUS "NES_CLANG_PLUGIN ${NES_CLANG_PLUGIN}")
-#target_compile_options(nes PRIVATE -fplugin=${NES_CLANG_PLUGIN})
-set_source_files_properties(${NES_CORE_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS  -fplugin=${NES_CLANG_PLUGIN})
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -77,16 +73,6 @@ foreach (dir ${LIBA_INCLUDES})
     string(APPEND INCLUDE_COMPILER_STRING "/I${dir} ")
     message(STATUS "LIBNES inclues ${dir}")
 endforeach ()
-
-#add_dependencies(nes nes-clang-plugin)
-
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ProxyFunctions)
-add_library(nes-runtime-proxy INTERFACE)
-target_include_directories(nes-runtime-proxy INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/ProxyFunctions)
-target_link_libraries(nes-runtime-proxy INTERFACE nes)
-
-
-add_dependencies(nes-runtime-proxy nes)
 
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
