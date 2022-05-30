@@ -11,23 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAP_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAP_HPP_
+#include <Experimental/Interpreter/Expressions/Expression.hpp>
 #include <Experimental/Interpreter/Operators/ExecutableOperator.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-class Emit : public ExecutableOperator {
+class Map : public ExecutableOperator {
   public:
-    Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout);
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+    Map(ExpressionPtr mapExpression) : mapExpression(mapExpression){};
     void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
+
   private:
-    const uint64_t maxRecordsPerBuffer = 10;
-    const Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout;
+    const ExpressionPtr mapExpression;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_EMIT_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_OPERATORS_MAP_HPP_

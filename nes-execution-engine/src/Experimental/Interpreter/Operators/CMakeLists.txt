@@ -17,4 +17,5 @@ add_source_files(nes-execution-engine
         Scan.cpp
         Selection.cpp
         Emit.cpp
+        Map.cpp
         )
