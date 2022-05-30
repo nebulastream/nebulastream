@@ -183,7 +183,7 @@ class TupleBuffer {
         size = 0;
     }
 
-    [[nes::proxyfunction]]  inline uint8_t* getBuffer() noexcept { return getBuffer<uint8_t>(); }
+    inline uint8_t* getBuffer() noexcept { return getBuffer<uint8_t>(); }
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
     template<typename T = uint8_t>
