@@ -83,7 +83,7 @@ void WorkerContext::trimStorage(Network::PartitionId nesPartitionId, uint64_t ti
     if (iteratorPartitionId != this->storage.end()) {
         if (!iteratorPartitionId->second.empty()) {
             while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
-                NES_TRACE("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
+                NES_DEBUG("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
                 iteratorPartitionId->second.pop();
             }
         }
