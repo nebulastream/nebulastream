@@ -305,7 +305,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
   private:
     mutable std::recursive_mutex startStopMutex;
     uint64_t maxSequenceNumber = 0;
-    size_t testI = 0;
 
     mutable std::recursive_mutex successorModifyMutex;
     /**

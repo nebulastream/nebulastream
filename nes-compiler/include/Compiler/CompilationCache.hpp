@@ -17,21 +17,40 @@
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <map>
 #include <string>
+#include <mutex>
 
 namespace NES::Compiler {
 
+/**
+ * This class is used to cache the already generated binaries to not compile the the query over and over again
+ */
 class CompilationCache {
   public:
 
+    /**
+     * @brief check if the binary for a query already exists
+     * @param code
+     * @return bool if for this code the binary already exists
+     */
     bool exists(std::shared_ptr<SourceCode> code);
 
+    /**
+     * @brief inserts a compilation result for a new source code
+     * @param souceCode
+     * @param compilationResult
+     */
     void insert(std::pair<std::shared_ptr<SourceCode>, CompilationResult> newEntry);
 
+    /**
+     * @brief method to retrieve the compilation result for a given source code
+     * @param code
+     * @return compilation result
+     */
     CompilationResult get(std::shared_ptr<SourceCode> code);
 
   private:
     std::map<std::shared_ptr<SourceCode>, CompilationResult> compilationReuseMap;
-    std::mutex lock;
+    std::mutex mutex;
 };
 
 }// namespace NES::Compiler

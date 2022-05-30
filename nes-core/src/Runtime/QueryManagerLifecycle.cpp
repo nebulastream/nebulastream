@@ -231,8 +231,8 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
                                                               source->getOperatorId(),
                                                               terminationType);
         if (!ret) {
-            NES_ERROR("Query cannot trigger EOS =" << qep->getQueryId());
-            NES_THROW_RUNTIME_ERROR("cannot trigger EOS");
+            NES_ERROR("Query cannot trigger EOS for query manager for query =" << qep->getQueryId());
+            NES_THROW_RUNTIME_ERROR("cannot trigger EOS in canTriggerEndOfStream()");
         }
         overallResult &= ret;
     }
