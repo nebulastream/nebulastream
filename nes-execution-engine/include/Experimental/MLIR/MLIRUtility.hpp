@@ -19,6 +19,8 @@
 #include <memory>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/OwningOpRef.h>
+#include <mlir/IR/BuiltinOps.h>
 #include <string>
 
 namespace NES::ExecutionEngine::Experimental::MLIR {
