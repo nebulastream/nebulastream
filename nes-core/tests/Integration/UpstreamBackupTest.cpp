@@ -61,11 +61,11 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
-        coordinatorConfig->numberOfBuffersPerEpoch = 100;
+        coordinatorConfig->numberOfBuffersPerEpoch = 10;
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 1024;
 
         workerConfig = WorkerConfiguration::create();
-        workerConfig->numberOfBuffersPerEpoch = 100;
+        workerConfig->numberOfBuffersPerEpoch = 10;
         workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->enableStatisticOutput = true;

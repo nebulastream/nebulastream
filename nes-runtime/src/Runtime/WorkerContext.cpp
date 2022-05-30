@@ -70,15 +70,15 @@ void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChan
     dataChannels[id] = std::move(channel);
 }
 
-void WorkerContext::createStorage(Network::PartitionId nesPartitionId) {
+void WorkerContext::createStorage(Network::NesPartition nesPartitionId) {
     this->storage[nesPartitionId] = std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>();
 }
 
-void WorkerContext::insertIntoStorage(Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
+void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES::Runtime::TupleBuffer buffer) {
     storage[nesPartitionId].push(buffer);
 }
 
-void WorkerContext::trimStorage(Network::PartitionId nesPartitionId, uint64_t timestamp) {
+void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
         if (!iteratorPartitionId->second.empty()) {
