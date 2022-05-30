@@ -450,7 +450,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100000));
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));

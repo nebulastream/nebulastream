@@ -29,7 +29,7 @@
 namespace NES::Runtime {
 
 struct BufferOrdering : public std::greater<TupleBuffer> {
-    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
+    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() < rhs.getWatermark(); }
 };
 
 class AbstractBufferProvider;

@@ -81,11 +81,9 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartitionId, NES:
 void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
     if (iteratorPartitionId != this->storage.end()) {
-        if (!iteratorPartitionId->second.empty()) {
-            while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
-                NES_DEBUG("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
-                iteratorPartitionId->second.pop();
-            }
+        while (!iteratorPartitionId->second.empty() && iteratorPartitionId->second.top().getWatermark() <= timestamp) {
+            NES_DEBUG("BufferStorage: Delete tuple with watermark" << iteratorPartitionId->second.top().getWatermark());
+            iteratorPartitionId->second.pop();
         }
     }
 }
