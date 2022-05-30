@@ -16,8 +16,6 @@
 
 namespace NES::ExecutionEngine::Experimental::Trace{
 
-
-
 }
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TRACEMANAGER_HPP_

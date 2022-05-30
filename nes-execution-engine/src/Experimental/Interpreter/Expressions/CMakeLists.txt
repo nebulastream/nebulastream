@@ -14,6 +14,7 @@
 add_source_files(nes-execution-engine
         Expression.cpp
         ReadFieldExpression.cpp
+        WriteFieldExpression.cpp
         )
 
 add_subdirectory(ArithmeticExpressions)
