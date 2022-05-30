@@ -139,7 +139,7 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
     return;
 }
 
-void BatchJoinOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+void BatchJoinOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
     // nop
 }
 
