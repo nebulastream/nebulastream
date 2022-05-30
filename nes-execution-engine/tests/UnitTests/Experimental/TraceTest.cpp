@@ -17,7 +17,7 @@
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Expressions/EqualsExpression.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -490,12 +490,12 @@ TEST_F(TraceTest, sumWhileLoopTest) {
     auto execution = Trace::traceFunction([]() {
         sumWhileLoop();
     });
-    std::cout << execution << std::endl;
+
     execution = ssaCreationPhase.apply(std::move(execution));
     auto basicBlocks = execution->getBlocks();
     ASSERT_EQ(basicBlocks.size(), 4);
     auto block0 = basicBlocks[0];
-    std::cout << execution << std::endl;
+    std::cout << *execution << std::endl;
     ASSERT_EQ(block0.operations[0].op, Trace::CONST);
     ASSERT_EQ(block0.operations[1].op, Trace::JMP);
 
