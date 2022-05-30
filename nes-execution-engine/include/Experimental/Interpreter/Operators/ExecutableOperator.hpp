@@ -18,10 +18,10 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class Record;
 
-class ExecuteOperator : public Operator {
+class ExecutableOperator : public Operator {
   public:
     virtual void execute(ExecutionContext& ctx, Record& record) const = 0;
-    virtual ~ExecuteOperator() = default;
+    virtual ~ExecutableOperator() = default;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

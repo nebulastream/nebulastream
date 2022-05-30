@@ -17,9 +17,9 @@
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class RecordBuffer;
-class ExecuteOperator;
+class ExecutableOperator;
 class ExecutionContext;
-using ExecuteOperatorPtr = std::shared_ptr<ExecuteOperator>;
+using ExecuteOperatorPtr = std::shared_ptr<ExecutableOperator>;
 class TraceContext;
 class Operator {
   public:
