@@ -11,5 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LOGICALEXPRESSION_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LOGICALEXPRESSION_HPP_
+
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+
+class LogicalExpression : public Expression {
+  public:
+    LogicalExpression();
+    Value<> execute(Record& record) = 0;
+};
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
+
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_LOGICALEXPRESSION_HPP_

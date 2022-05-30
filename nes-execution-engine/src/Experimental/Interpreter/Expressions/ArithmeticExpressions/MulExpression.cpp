@@ -11,5 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
+#include <Experimental/Interpreter/Expressions/ArithmeticalExpression/MulExpression.hpp>
+
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+
+Value<> MulExpression::execute(Record& record) {
+    Value leftValue = leftSubExpression->execute(record);
+    Value rightValue = rightSubExpression->execute(record);
+    return leftValue * rightValue;
+}
+
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

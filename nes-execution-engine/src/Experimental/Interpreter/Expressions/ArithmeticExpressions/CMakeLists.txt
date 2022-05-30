@@ -13,4 +13,7 @@
 
 add_source_files(nes-execution-engine
         AddExpression.cpp
+        SubExpression.cpp
+        DivExpression.cpp
+        MulExpression.cpp
         )

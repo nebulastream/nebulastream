@@ -11,5 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_NEGATEEXPRESSION_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_NEGATEEXPRESSION_HPP_
+
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+
+class NegateExpression : public Expression {
+  private:
+    ExpressionPtr subExpression;
+
+  public:
+    NegateExpression(ExpressionPtr subExpression);
+    Value<> execute(Record& record) override;
+};
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
+
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_NEGATEEXPRESSION_HPP_

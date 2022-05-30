@@ -12,9 +12,10 @@
 # limitations under the License.
 
 add_source_files(nes-execution-engine
-        Expression.cpp
-        ReadFieldExpression.cpp
+        EqualsExpression.cpp
+        AndExpression.cpp
+        LessThanExpression.cpp
+        NegateExpression.cpp
+        OrExpression.cpp
+        LogicalExpression.cpp
         )
-
-add_subdirectory(ArithmeticExpressions)
-add_subdirectory(LogicalExpressions)
