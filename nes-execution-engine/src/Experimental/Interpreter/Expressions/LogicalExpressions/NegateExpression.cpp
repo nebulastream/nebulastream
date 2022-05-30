@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#include <Experimental/Interpreter/Expressions/EqualsExpression.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/NegateExpression.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-EqualsExpression::EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
+NegateExpression::NegateExpression(ExpressionPtr subExpression)
+    : subExpression(std::move(subExpression)){};
 
-Value<> EqualsExpression::execute(Record& record) {
-    Value<> leftValue = leftSubExpression->execute(record);
-    Value<> rightValue = rightSubExpression->execute(record);
-    return leftValue == rightValue;
+Value<> NegateExpression::execute(Record& record) {
+    Value<> leftValue = subExpression->execute(record);
+    return !leftValue;
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

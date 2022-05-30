@@ -13,20 +13,21 @@
 */
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/Expressions/Expression.hpp>
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_MULEXPRESSION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_MULEXPRESSION_HPP_
+#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_OREXPRESSION_HPP_
+#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_OREXPRESSION_HPP_
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-class MulExpression : public Expression {
+class OrExpression : public Expression {
   private:
     ExpressionPtr leftSubExpression;
     ExpressionPtr rightSubExpression;
 
   public:
+    OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
     Value<> execute(Record& record) override;
 };
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::Interpreter
 
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_MULEXPRESSION_HPP_
+#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_OREXPRESSION_HPP_
