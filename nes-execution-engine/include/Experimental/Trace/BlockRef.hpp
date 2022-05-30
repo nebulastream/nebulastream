@@ -22,8 +22,8 @@ namespace NES::ExecutionEngine::Experimental::Trace {
 class ConstantValue;
 class BlockRef {
   public:
-    BlockRef(uint64_t block) : block(block){};
-    uint64_t block;
+    BlockRef(uint32_t block) : block(block){};
+    uint32_t block;
     std::vector<ValueRef> arguments;
     friend std::ostream& operator<<(std::ostream& os, const ConstantValue& tag);
 };
