@@ -166,6 +166,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             records[u].timestamp1 = value.count();
             records[u].timestamp2 = value.count();
         }
+        buffer.setWatermark(value.count());
     };
     auto lambdaSourceType1 = LambdaSourceType::create(std::move(func1), workerConfig->numberOfBuffersToProduce, workerConfig->sourceGatheringInterval, "interval");
     switch(workerConfig->lambdaSource) {
