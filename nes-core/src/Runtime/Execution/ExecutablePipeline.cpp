@@ -89,12 +89,9 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
     return false;
 }
 
-bool ExecutablePipeline::stop(QueryTerminationType terminationType) {
+bool ExecutablePipeline::stop(QueryTerminationType) {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
-        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-            operatorHandler->stop(terminationType, pipelineContext);
-        }
         return executablePipelineStage->stop(*pipelineContext.get()) == 0;
     }
     return expected == PipelineStatus::PipelineStopped;
@@ -191,27 +188,8 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
         case HardEndOfStream:
         case SoftEndOfStream: {
             if (context.decreaseObjectRefCnt(this) == 1) {
-                // here we could have a tricky situation with window handlers when using folly
-                // imagine the source emits a buffer b followed by eos token
-                // if b triggers a window, the handler enqueues further data buffers after eos token
-                // our shutdown logic needs thus to be aware of this:
-                // assuming we have a window handler attached to the i-th pipeline
-                // the (i+1)-th shall consider the eos token from the window handler and ignore the one from the i-th pipeline
-                // Thus, we start a new reconfiguration in ExecutablePipeline::postReconfigurationCallback
-                bool hasWindowHandler = false;
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->reconfigure(task, context);
-                    hasWindowHandler = true;
-                }
-                if (!hasWindowHandler) {
-                    // no window handler -> no chance the above situation could have occurred
-                    for (auto successorPipeline : successorPipelines) {
-                        if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-                            (*pipe)->reconfigure(task, context);
-                        } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
-                            (*sink)->reconfigure(task, context);
-                        }
-                    }
                 }
             }
             break;
@@ -240,14 +218,20 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 auto terminationType = task.getType() == Runtime::SoftEndOfStream ? Runtime::QueryTerminationType::Graceful
                                                                                   : Runtime::QueryTerminationType::HardStop;
 
-                queryManager->notifyPipelineCompletion(querySubPlanId,
-                                                       inherited0::shared_from_this<ExecutablePipeline>(),
-                                                       terminationType);
-
-                stop(terminationType);
+                // do not change the order here
+                // first, stop and drain handlers, if necessary
+                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+                    operatorHandler->stop(terminationType, pipelineContext);
+                }
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
+                // second, stop pipeline, if not stopped yet
+                stop(terminationType);
+                // finally, notify query manager
+                queryManager->notifyPipelineCompletion(querySubPlanId,
+                                                       inherited0::shared_from_this<ExecutablePipeline>(),
+                                                       terminationType);
 
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
