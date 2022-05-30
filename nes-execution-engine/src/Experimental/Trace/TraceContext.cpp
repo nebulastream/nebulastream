@@ -31,11 +31,13 @@ TraceContext* getThreadLocalTraceContext() { return &threadLocalTraceContext; }
 
 TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()) {
     reset();
+#pragma GCC diagnostic ignored "-Wframe-address"
     startAddress = (uint64_t) (__builtin_return_address(2));
     std::cout << startAddress << std::endl;
 }
 
 void TraceContext::reset() {
+
     executionTrace->setCurrentBloc(0);
     currentOperationCounter = 0;
     executionTrace->tagMap.merge(executionTrace->localTagMap);
