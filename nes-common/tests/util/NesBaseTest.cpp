@@ -43,6 +43,7 @@ class ShmFixedVector {
         : name(name), mmapSize(sizeof(T) * capacity + sizeof(Metadata)), capacity(capacity), created(false) {}
 
     void open() {
+        shm_unlink(name.c_str());
         while (true) {
             shmemFd = shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRWXU);
             if (shmemFd >= 0) {
