@@ -67,14 +67,38 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             processAdd(scope, currentIrBlock, operation);
             return;
         };
-        case SUB: break;
-        case DIV: break;
-        case MUL: break;
-        case EQUALS: break;
-        case LESS_THAN: break;
-        case NEGATE: break;
-        case AND: break;
-        case OR: break;
+        case SUB: {
+            processSub(scope, currentIrBlock, operation);
+            return;
+        };
+        case DIV: {
+            processDiv(scope, currentIrBlock, operation);
+            return;
+        };
+        case MUL: {
+            processMul(scope, currentIrBlock, operation);
+            return;
+        };
+        case EQUALS: {
+            processEquals(scope, currentIrBlock, operation);
+            return;
+        };
+        case LESS_THAN: {
+            processLessThan(scope, currentIrBlock, operation);
+            return;
+        };
+        case NEGATE: {
+            processNegate(scope, currentIrBlock, operation);
+            return;
+        };
+        case AND: {
+            processAnd(scope, currentIrBlock, operation);
+            return;
+        };
+        case OR: {
+            processOr(scope, currentIrBlock, operation);
+            return;
+        };
         case CMP: {
             processCMP(scope, currentBlock, currentIrBlock, operation);
             return;
@@ -99,8 +123,14 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             currentIrBlock->addOperation(operation);
             return;
         };
-        case LOAD: break;
-        case STORE: break;
+        case LOAD: {
+            processLoad(scope, currentIrBlock, operation);
+            return;
+        };
+        case STORE: {
+            processStore(scope, currentIrBlock, operation);
+            return;
+        };
         case CALL: break;
     }
     //  NES_NOT_IMPLEMENTED();
