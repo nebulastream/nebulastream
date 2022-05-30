@@ -12,8 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        Expressions.cpp
-        ArithmeticExpressions.cpp
-        LogicalExpressions.cpp
-        GeographyExpressions.cpp
-)
+        GeographyFieldsAccessExpressionNode.cpp
+        STWithinExpressionNode.cpp
+        )
