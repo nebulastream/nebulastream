@@ -11,21 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Experimental/Interpreter/Expressions/Expression.hpp>
-#ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
-#define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
+#include <Experimental/Interpreter/DataValue/Any.hpp>
+#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
+#include <Experimental/Interpreter/Record.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-class WriteFieldExpression : public Expression {
-  private:
-    uint64_t fieldIndex;
-    ExpressionPtr subExpression;
-
-  public:
-    Value<> execute(Record& record) override;
-};
-}// namespace NES
-
-#endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
+Value<> WriteFieldExpression::execute(Record& record) {
+    Value<> newValue = subExpression->execute(record);
+    record.write(fieldIndex, newValue);
+    return Value<Any>(nullptr);
+}
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

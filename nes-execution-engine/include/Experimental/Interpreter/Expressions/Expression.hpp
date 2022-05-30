@@ -18,13 +18,10 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class Any;
-
 class Record;
 using RecordPtr = std::shared_ptr<Record>;
-
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
-
 
 class Expression {
   public:
