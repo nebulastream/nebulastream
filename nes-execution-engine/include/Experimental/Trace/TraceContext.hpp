@@ -65,30 +65,6 @@ std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
     return tracer->getExecutionTrace();
 }
 
-/**
-void Trace(OpCode op, const Value& left, const Value& right, Value& result) {
-    if (ctx != nullptr) {
-        auto operation = Operation(op, result.ref, {left.ref, right.ref});
-        ctx->trace(operation);
-    }
-}
-
-void Trace(OpCode op, const Value& input, Value& result) {
-    if (ctx != nullptr) {
-        if (op == OpCode::CONST) {
-            auto constValue = input.value->copy();
-            auto operation = Operation(op, result.ref, {ConstantValue(std::move(constValue))});
-            ctx->trace(operation);
-        } else if (op == CMP) {
-            ctx->traceCMP(input.ref, cast<Boolean>(result.value)->value);
-        } else {
-            auto operation = Operation(op, result.ref, {input.ref});
-            ctx->trace(operation);
-        }
-    }
-}
- */
-
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
