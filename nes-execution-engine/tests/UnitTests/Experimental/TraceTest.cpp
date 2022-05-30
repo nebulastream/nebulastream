@@ -26,6 +26,7 @@
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Trace/SSACreationPhase.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
+#include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -37,60 +38,24 @@
 #include <memory>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
-
-class InterpreterTest : public testing::Test {
+class TraceTest : public testing::Test {
   public:
     Trace::SSACreationPhase ssaCreationPhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("InterpreterTest.log", NES::LogLevel::LOG_DEBUG);
-        std::cout << "Setup InterpreterTest test class." << std::endl;
+        NES::Logger::setupLogging("TraceTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup TraceTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { std::cout << "Setup InterpreterTest test case." << std::endl; }
+    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "Tear down InterpreterTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down InterpreterTest test class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 };
-/*
-uint64_t callNoArgs() { return 42; }
-
-uint64_t   Trace::ADD(uint64_t x, uint64_t y) { return x + y; }
-class TestObject {
-  public:
-    static uint64_t staticFunc(uint64_t x, uint64_t y) { return x + y; }
-    uint64_t memberFunc(uint64_t x, uint64_t y) { return x + y; }
-};
-
-TEST_F(InterpreterTest, functionCallTest) {
-
-    auto intValue = std::make_unique<Integer>(42);
-
-    std::unique_ptr<Any> anyValue = std::move(intValue);
-
-    auto value = FunctionCall(callNoArgs);
-    ASSERT_EQ(value, 42);
-    auto res = FunctionCall(  Trace::ADD, (uint64_t) 10, (uint64_t) 11);
-    ASSERT_EQ(res, 21);
-
-    res = FunctionCall(TestObject::staticFunc, (uint64_t) 11, (uint64_t) 11);
-    ASSERT_EQ(res, 22);
-
-    auto t = TestObject();
-    //std::bind(&TestObject::memberFunc, &t, 15, 15);
-    uint64_t v = 15;
-    TraceContext tc = TraceContext();
-    Value value2 = toValue(2, &tc);
-    res = bind2(&TestObject::memberFunc, &t, value2, (uint64_t) 15);
-   // auto memberFunc = std::mem_fn(&TestObject::memberFunc);
-    // res = memberFunc(&t, (uint64_t) 15, (uint64_t) 15);
-    ASSERT_EQ(res, 17);
-}
-*/
 
 void assignmentOperator() {
     auto iw = Value<>(1);
@@ -98,7 +63,7 @@ void assignmentOperator() {
     iw = iw2 + iw;
 }
 
-TEST_F(InterpreterTest, assignmentOperatorTest) {
+TEST_F(TraceTest, assignmentOperatorTest) {
     auto executionTrace = Trace::traceFunction([]() {
         assignmentOperator();
     });
@@ -120,7 +85,7 @@ void arithmeticExpression() {
     auto result = iw - iw3 + 2 * iw2 / iw;
 }
 
-TEST_F(InterpreterTest, arithmeticExpressionTest) {
+TEST_F(TraceTest, arithmeticExpressionTest) {
     auto executionTrace = Trace::traceFunction([]() {
         arithmeticExpression();
     });
@@ -147,7 +112,7 @@ void logicalExpressionLessThan() {
     auto result = iw < 2;
 }
 
-TEST_F(InterpreterTest, logicalExpressionLessThanTest) {
+TEST_F(TraceTest, logicalExpressionLessThanTest) {
     auto executionTrace = Trace::traceFunction(logicalExpressionLessThan);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace.get() << std::endl;
@@ -164,7 +129,7 @@ void logicalExpressionEquals() {
     auto result = iw == 2;
 }
 
-TEST_F(InterpreterTest, logicalExpressionEqualsTest) {
+TEST_F(TraceTest, logicalExpressionEqualsTest) {
     auto executionTrace = Trace::traceFunction([]() {
         logicalExpressionEquals();
     });
@@ -182,7 +147,7 @@ void logicalExpressionLessEquals() {
     auto result = iw <= 2;
 }
 
-TEST_F(InterpreterTest, logicalExpressionLessEqualsTest) {
+TEST_F(TraceTest, logicalExpressionLessEqualsTest) {
     auto executionTrace = Trace::traceFunction(logicalExpressionLessEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
@@ -200,7 +165,7 @@ void logicalExpressionGreater() {
     auto result = iw > 2;
 }
 
-TEST_F(InterpreterTest, logicalExpressionGreaterTest) {
+TEST_F(TraceTest, logicalExpressionGreaterTest) {
     auto executionTrace = Trace::traceFunction(logicalExpressionGreater);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
@@ -219,7 +184,7 @@ void logicalExpressionGreaterEquals() {
     auto result = iw >= 2;
 }
 
-TEST_F(InterpreterTest, logicalExpressionGreaterEqualsTest) {
+TEST_F(TraceTest, logicalExpressionGreaterEqualsTest) {
     auto executionTrace = Trace::traceFunction(logicalExpressionGreaterEquals);
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     auto basicBlocks = executionTrace->getBlocks();
@@ -236,7 +201,7 @@ void logicalExpression() {
     auto result = iw == 2 && iw < 1 || true;
 }
 
-TEST_F(InterpreterTest, logicalExpressionTest) {
+TEST_F(TraceTest, logicalExpressionTest) {
     auto executionTrace = Trace::traceFunction([]() {
         logicalExpression();
     });
@@ -264,7 +229,7 @@ void ifCondition(bool flag) {
     iw + 42;
 }
 
-TEST_F(InterpreterTest, ifConditionTest) {
+TEST_F(TraceTest, ifConditionTest) {
     auto executionTrace = Trace::traceFunction([]() {
         ifCondition(true);
         Trace::getThreadLocalTraceContext()->reset();
@@ -320,7 +285,7 @@ void ifElseCondition(bool flag) {
     iw + 1;
 }
 
-TEST_F(InterpreterTest, ifElseConditionTest) {
+TEST_F(TraceTest, ifElseConditionTest) {
     auto executionTrace = Trace::traceFunction([]() {
         ifElseCondition(true);
         Trace::getThreadLocalTraceContext()->reset();
@@ -378,7 +343,7 @@ void emptyLoop() {
     auto iw3 = iw2 - 5;
 }
 
-TEST_F(InterpreterTest, emptyLoopTest) {
+TEST_F(TraceTest, emptyLoopTest) {
     auto execution = Trace::traceFunction([]() {
         emptyLoop();
     });
@@ -425,7 +390,7 @@ void longEmptyLoop() {
     auto iw3 = iw2 - 5;
 }
 
-TEST_F(InterpreterTest, longEmptyLoopTest) {
+TEST_F(TraceTest, longEmptyLoopTest) {
     auto execution = Trace::traceFunction([]() {
         longEmptyLoop();
     });
@@ -471,7 +436,7 @@ void sumLoop() {
     auto res = agg == 10;
 }
 
-TEST_F(InterpreterTest, sumLoopTest) {
+TEST_F(TraceTest, sumLoopTest) {
 
     auto execution = Trace::traceFunction([]() {
         sumLoop();
@@ -521,7 +486,7 @@ void sumWhileLoop() {
     auto res = agg == 10;
 }
 
-TEST_F(InterpreterTest, sumWhileLoopTest) {
+TEST_F(TraceTest, sumWhileLoopTest) {
     auto execution = Trace::traceFunction([]() {
         sumWhileLoop();
     });
@@ -568,7 +533,7 @@ void invertedLoop() {
     } while (i < end);
 }
 
-TEST_F(InterpreterTest, invertedLoopTest) {
+TEST_F(TraceTest, invertedLoopTest) {
     auto execution = Trace::traceFunction([]() {
         invertedLoop();
     });
@@ -609,7 +574,7 @@ void loadStoreValue() {
       Trace::ADDress.store(value);
 }
 
-TEST_F(InterpreterTest, loadStoreValueTest) {
+TEST_F(TraceTest, loadStoreValueTest) {
 
     auto execution =  Trace::traceFunction([]() {
         loadStoreValue();
@@ -659,7 +624,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
             std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
 };
 
-TEST_F(InterpreterTest, emitQueryTest) {
+TEST_F(TraceTest, emitQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -693,7 +658,7 @@ TEST_F(InterpreterTest, emitQueryTest) {
     std::cout << *execution << std::endl;
 }
 
-TEST_F(InterpreterTest, selectionQueryTest) {
+TEST_F(TraceTest, selectionQueryTest) {
     auto bm = std::make_shared<Runtime::BufferManager>(100);
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
