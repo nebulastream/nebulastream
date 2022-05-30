@@ -13,16 +13,19 @@
 */
 
 #include <Compiler/CompilationCache.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/SourceCode.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES::Compiler {
 
-bool CompilationCache::exists(std::shared_ptr<SourceCode> code) { return compilationReuseMap.contains(code); };
+bool CompilationCache::exists(std::shared_ptr<SourceCode> code) {
+    std::unique_lock lock(mutex);
+    return compilationReuseMap.contains(code);
+};
 
 void CompilationCache::insert(std::pair<std::shared_ptr<SourceCode>, CompilationResult> newEntry) {
-    lock.lock();
+    std::unique_lock lock(mutex);
     if (exists(newEntry.first)) {
         NES_WARNING("Compilation Cache: inserted item already exists");
     } else {
@@ -31,7 +34,7 @@ void CompilationCache::insert(std::pair<std::shared_ptr<SourceCode>, Compilation
 }
 
 CompilationResult CompilationCache::get(std::shared_ptr<SourceCode> code) {
-    lock.lock();
+    std::unique_lock lock(mutex);
     return compilationReuseMap.find(code)->second;
 }
 }// namespace NES::Compiler
