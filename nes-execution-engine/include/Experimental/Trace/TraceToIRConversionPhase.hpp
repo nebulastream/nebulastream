@@ -40,11 +40,24 @@ class TraceToIRConversionPhase {
 
       private:
         IR::BasicBlockPtr processBlock(int32_t scope, Block& block);
-        void processOperation(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processOperation(int32_t scope, Block& currentBlock, IR::BasicBlockPtr& currentIRBlock, Operation& operation);
         void processJMP(int32_t scope, IR::BasicBlockPtr& block, Operation& operation);
-        void processCMP(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processCMP(int32_t scope, Block& currentBlock, IR::BasicBlockPtr& currentIRBlock, Operation& operation);
+        void processAdd(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processSub(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processMul(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processDiv(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processEquals(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processLessThan(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processNegate(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processAnd(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processOr(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processLoad(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processStore(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        bool isBlockInLoop(int32_t scope, uint32_t parentBlock, uint32_t currentBlock);
         std::vector<std::string> createBlockArguments(BlockRef val);
         std::string createValueIdentifier(InputVariant val);
+
       private:
         std::shared_ptr<ExecutionTrace> trace;
         std::shared_ptr<IR::NESIR> ir;

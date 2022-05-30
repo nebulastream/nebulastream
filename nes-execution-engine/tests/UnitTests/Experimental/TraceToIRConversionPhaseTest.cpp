@@ -17,7 +17,7 @@
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
-#include <Experimental/Interpreter/Expressions/EqualsExpression.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
 #include <Experimental/Interpreter/Operators/Emit.hpp>
@@ -104,4 +104,28 @@ TEST_F(TraceToIRConversionPhaseTest, ifConditionTest) {
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
 }
+
+void sumLoop() {
+    Value agg = Value(1);
+    for (auto start = Value(0); start < 10; start = start + 1) {
+        agg = agg + 1;
+    }
+    auto res = agg == 10;
+}
+
+TEST_F(TraceToIRConversionPhaseTest, sumLoopTest) {
+
+    auto execution = Trace::traceFunction([]() {
+        sumLoop();
+    });
+    execution = ssaCreationPhase.apply(std::move(execution));
+    std::cout << *execution.get() << std::endl;
+    auto ir = irCreationPhase.apply(execution);
+    std::cout << ir.get() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir);
+}
+
 }
