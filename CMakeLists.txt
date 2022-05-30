@@ -67,12 +67,7 @@ execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
-
 project(NES CXX)
-set(CMAKE_CXX_COMPILER_FORCED TRUE)
-set(CMAKE_CXX_COMPILER_WORKS TRUE)
-set(CMAKE_C_COMPILER_FORCED TRUE)
-set(CMAKE_C_COMPILER_WORKS TRUE)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
@@ -171,7 +166,7 @@ endif ()
 get_nes_log_level_value(NES_LOGGING_VALUE)
 
 # Set Optimization Flags
-set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-unknown-attributes -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations -Wno-frame-address ")
+set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
@@ -675,9 +670,3 @@ if (CMAKE_CROSSCOMPILING)
 endif ()
 project_enable_release()
 project_enable_version()
-
-# Build external project
-#execute_process(
-#        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/nes-compiler -t nes-clang-plugin
-#)
-
