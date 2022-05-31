@@ -492,4 +492,5 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
     return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
 }
 
+
 }// namespace NES

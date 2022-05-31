@@ -39,6 +39,12 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                                         "The coverage in meters each field node is assumed to have"};
     UIntOption pathPredictionLength = {PATH_PREDICTION_LENGTH, 10000, "The Length of the predicted path to be computed"};
 
+    UIntOption sendDevicePositionUpdateThreshold = {SEND_DEVICE_POSITION_UPDATE_THRESHOLD_CONFIG, 10, "The distance in meters after which the device will report it's new position in meters"};
+
+    BoolOption pushDeviceLocationUpdates = {PUSH_DEVICE_POSITION_UPDATES, true, "determines if position updates should be sent to the coordinator"};
+
+    UIntOption sendLocationUpdateInterval = {SEND_LOCATION_UPDATE_INTERVAL, 10000, "the sleep amount between 2 checks if a locatin update should be sent to the coordinator"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&pathPredictionUpdateInterval,
@@ -48,7 +54,10 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                 &nodeDownloadRadius,
                 &nodeIndexUpdateThreshold,
                 &defaultCoverageRadius,
-                &pathPredictionLength};
+                &pathPredictionLength,
+                &sendDevicePositionUpdateThreshold,
+                &pushDeviceLocationUpdates,
+                &sendLocationUpdateInterval};
     }
 };
 }

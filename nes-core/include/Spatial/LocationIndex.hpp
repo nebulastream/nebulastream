@@ -17,6 +17,7 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Util/TimeMeasurement.hpp>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -116,6 +117,8 @@ class LocationIndex {
      */
     size_t getSizeOfPointIndex();
 
+    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, LocationPtr reconnectLocation, Timestamp reconnectTime);
+
   private:
     /**
      * Experimental
@@ -127,8 +130,10 @@ class LocationIndex {
      */
     bool setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
 
+
     // a map containing all registered mobile nodes
     std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
+    std::unordered_map<uint64_t, std::tuple<uint64_t, LocationPtr, Timestamp>> reconnectPredictionMap;
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;

@@ -93,4 +93,12 @@ web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Loc
     nodeInfo["location"] = web::json::value(locJson);
     return nodeInfo;
 }
+bool LocationService::updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, LocationPtr location, Timestamp time) {
+   if (locationIndex->updatePredictedReconnect(deviceId, reconnectNodeId, location, time)) {
+       return true;
+   } else if (topology->findNodeWithId(reconnectNodeId)) {
+       NES_DEBUG("node exists but is not a mobile node")
+   }
+   return false;
+}
 }// namespace NES::Spatial::Index::Experimental

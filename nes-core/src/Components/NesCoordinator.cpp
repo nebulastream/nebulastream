@@ -330,7 +330,8 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
                                  sourceCatalogService,
                                  queryCatalogService,
                                  monitoringService->getMonitoringManager(),
-                                 this->replicationService);
+                                 this->replicationService,
+                                 locationService);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());

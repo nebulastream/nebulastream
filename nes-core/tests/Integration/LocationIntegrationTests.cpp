@@ -472,6 +472,7 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
 }
 
 TEST_F(LocationIntegrationTests, buildReconnectScheduleScenario) {
+    NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     //coordinatorConfig->rpcPort = *rpcCoordinatorPort;

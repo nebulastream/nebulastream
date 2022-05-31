@@ -16,6 +16,7 @@
 
 #include <cpprest/json.h>
 #include <memory>
+#include <Util/TimeMeasurement.hpp>
 
 namespace web::json {
 class value;
@@ -68,6 +69,8 @@ class LocationService {
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
 
     web::json::value requestReconnectScheduleAsJson(uint64_t nodeId);
+
+    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, LocationPtr location, Timestamp time);
 
   private:
     static web::json::value convertLocationToJson(LocationPtr loc);

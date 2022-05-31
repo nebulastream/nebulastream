@@ -46,6 +46,11 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 class ReplicationService;
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 
+namespace Spatial::Index::Experimental {
+class LocationService;
+using LocationServicePtr = std::shared_ptr<LocationService>;
+}
+
 /**
  * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
  */
@@ -65,8 +70,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                   SourceCatalogServicePtr sourceCatalogService,
                                   QueryCatalogServicePtr queryCatalogService,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
-                                  ReplicationServicePtr replicationService);
-
+                                  ReplicationServicePtr replicationService,
+                                  NES::Spatial::Index::Experimental::LocationServicePtr locationService);
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
@@ -229,6 +234,10 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                    const ::SoftStopCompletionMessage* request,
                                    ::SoftStopCompletionReply* response) override;
 
+    Status SendScheduledReconnect(ServerContext*, const SendScheduledReconnectRequest* request, SendScheduledReconnectReply* reply) override;
+
+    Status SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) override;
+
   private:
     QueryServicePtr queryService;
     TopologyManagerServicePtr topologyManagerService;
@@ -236,6 +245,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     QueryCatalogServicePtr queryCatalogService;
     Monitoring::MonitoringManagerPtr monitoringManager;
     ReplicationServicePtr replicationService;
+    NES::Spatial::Index::Experimental::LocationServicePtr locationService;
 };
 }// namespace NES
 

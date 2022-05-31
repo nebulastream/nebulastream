@@ -19,6 +19,7 @@
 #include <Common/Location.hpp>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Spatial/ReconnectSchedule.hpp>
+#include <Spatial/ReconnectConfigurator.hpp>
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -80,7 +81,8 @@ bool TrajectoryPredictor::downloadFieldNodes() {
     return true;
 }
 
-void TrajectoryPredictor::setUpReconnectPlanning() {
+void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconnectConfigurator) {
+    this->reconnectConfigurator = std::move(reconnectConfigurator);
     //todo: this can also moved into the isMobile if condition?
     downloadFieldNodes();
     NES_DEBUG("Parent Id: " << parentId)
@@ -145,12 +147,14 @@ void TrajectoryPredictor::startReconnectPlanning() {
 
             //check if there are scheduled reconnects
             if (!reconnectVector.empty()) {
-                //todo: maybe save them as s2points right away to avoid converting them each time
                 nextReconnectNodeLocation = fieldNodeMap.at(get<0>(reconnectVector[0]));
 
+                //update reconnect information and inform coordinator if necessary
+                reconnectConfigurator->update(getNextReconnect());
             } else {
-                //todo: what do we do now?
                 NES_INFO("rescheduled after reconnect but there is no next reconnect in list")
+                //update reconnect information and inform coordinator if necessary
+                reconnectConfigurator->update(std::nullopt);
             }
         }
 
@@ -158,9 +162,15 @@ void TrajectoryPredictor::startReconnectPlanning() {
         if (!reconnectVector.empty() && S1Angle(S2Point(S2LatLng::FromDegrees(currentOwnLocation.first->getLatitude(),
                                                                               currentOwnLocation.first->getLongitude())),
                                                 nextReconnectNodeLocation) < S1Angle(defaultCoverageAngle)) {
-            //todo: make reconnect here. for now we just reset the current connected point and pop from the vector
-            //todo: use a fifo queue instead of a vector to make popping the first element more efficient
-            //instead we can alos just use an iterator to the current element
+
+            //reconnect and inform coordinator about upcoming reconnect
+            std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> nextReconnect = getNextReconnect();
+            //todo: pute the update and reconnect here in one call
+            reconnectConfigurator->reconnect(parentId, get<0>(reconnectVector.front()));
+            reconnectConfigurator->update(nextReconnect);
+
+            //update locally saved information about parent
+            parentId = get<0>(reconnectVector.front());
             currentParentLocation = fieldNodeMap.at(get<0>(reconnectVector[0]));
             currentParentPathCoverageEnd = std::nullopt;
             reconnectVector.erase(reconnectVector.begin());
@@ -168,7 +178,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             //after reconnect, check if there is a next point on the schedule
             if (!reconnectVector.empty()) {
                 auto coverageEndLoc = std::get<1>(reconnectVector.front());
-                //todo: maybe save them as s2points right away to aovoid converting the each time
+                //todo: maybe save them as s2points right away to avoid converting the each time
                 currentParentPathCoverageEnd =
                     S2Point(S2LatLng::FromDegrees(coverageEndLoc->getLatitude(), coverageEndLoc->getLongitude()));
                 nextReconnectNodeLocation = fieldNodeMap.at(get<0>(reconnectVector[0]));
@@ -177,12 +187,10 @@ void TrajectoryPredictor::startReconnectPlanning() {
                 NES_INFO("no next reconnect scheduled")
             }
         }
-        //todo: check how far we are from las index update and download new nodes
         std::this_thread::sleep_for(std::chrono::milliseconds(pathUpdateInterval));
     }
 }
 
-//Todo: implement
 bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Location currentLocation) {
     S2Point currentS2Point(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
     if (S1Angle(currentS2Point, positionOfLastNodeIndexUpdate) > coveredRadiusWithoutThreshold) {
@@ -326,5 +334,13 @@ S2Point TrajectoryPredictor::locationToS2Point(Index::Experimental::Location loc
 Index::Experimental::Location TrajectoryPredictor::s2pointToLocation(S2Point point) {
     S2LatLng latLng(point);
     return {latLng.lat().degrees(), latLng.lng().degrees()};
+}
+
+std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> TrajectoryPredictor::getNextReconnect() {
+    if (reconnectVector.size() > 1) {
+        return reconnectVector.at(1);
+    } else {
+        return std::nullopt;
+    }
 }
 }

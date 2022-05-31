@@ -48,6 +48,9 @@ using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 
+class ReconnectConfigurator;
+using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
+
 class TrajectoryPredictor {
   public:
     TrajectoryPredictor(LocationProviderPtr locationProvider, Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration, uint64_t parentId);
@@ -57,7 +60,7 @@ class TrajectoryPredictor {
     /**
      * Experimental
      */
-    void setUpReconnectPlanning();
+    void setUpReconnectPlanning(ReconnectConfiguratorPtr reconnectConfigurator);
 
     /**
      * Experimental
@@ -109,6 +112,9 @@ class TrajectoryPredictor {
     bool downloadFieldNodes();
     S2Point locationToS2Point(Index::Experimental::Location location);
     Index::Experimental::Location s2pointToLocation(S2Point point);
+
+    ReconnectConfiguratorPtr reconnectConfigurator;
+    std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> getNextReconnect();
 };
 
 }
