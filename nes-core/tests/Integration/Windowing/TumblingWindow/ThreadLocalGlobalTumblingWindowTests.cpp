@@ -89,14 +89,14 @@ struct GlobalOutputMultiAgg {
     uint64_t value4;
     uint64_t value5;
     bool operator==(const GlobalOutputMultiAgg& rhs) const {
-        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2
-            && value3 == rhs.value3 && value4 == rhs.value4 && value5 == rhs.value5;
+        return start == rhs.start && end == rhs.end && value1 == rhs.value1 && value2 == rhs.value2 && value3 == rhs.value3
+            && value4 == rhs.value4 && value5 == rhs.value5;
     }
     bool operator!=(const GlobalOutputMultiAgg& rhs) const { return !(rhs == *this); }
 
     friend ostream& operator<<(ostream& os, const GlobalOutputMultiAgg& agg) {
-        os << "start: " << agg.start << " end: " << agg.end << " value1: " << agg.value1
-           << " value2: " << agg.value2 << " value3: " << agg.value3 << " value4: " << agg.value4 << " value5: " << agg.value5;
+        os << "start: " << agg.start << " end: " << agg.end << " value1: " << agg.value1 << " value2: " << agg.value2
+           << " value3: " << agg.value3 << " value4: " << agg.value4 << " value5: " << agg.value5;
         return os;
     }
 };

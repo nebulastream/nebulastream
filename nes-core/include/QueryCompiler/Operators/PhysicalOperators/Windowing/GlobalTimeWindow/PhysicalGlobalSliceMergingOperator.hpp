@@ -27,9 +27,9 @@ namespace PhysicalOperators {
 class PhysicalGlobalSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalGlobalSliceMergingOperator(OperatorId id,
-                                      SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema,
-                                      Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler);
+                                       SchemaPtr inputSchema,
+                                       SchemaPtr outputSchema,
+                                       Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr operatorHandler);
 
     static std::shared_ptr<PhysicalGlobalSliceMergingOperator>
     create(SchemaPtr inputSchema,

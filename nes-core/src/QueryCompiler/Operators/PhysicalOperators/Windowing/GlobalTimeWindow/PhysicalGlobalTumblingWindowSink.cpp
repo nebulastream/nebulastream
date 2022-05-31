@@ -21,19 +21,19 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 PhysicalGlobalTumblingWindowSink::PhysicalGlobalTumblingWindowSink(OperatorId id,
-                                                                 SchemaPtr inputSchema,
-                                                                 SchemaPtr outputSchema,
-                                                                 Windowing::LogicalWindowDefinitionPtr windowDefinition)
+                                                                   SchemaPtr inputSchema,
+                                                                   SchemaPtr outputSchema,
+                                                                   Windowing::LogicalWindowDefinitionPtr windowDefinition)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), windowDefinition(windowDefinition) {}
 
 std::shared_ptr<PhysicalGlobalTumblingWindowSink>
 PhysicalGlobalTumblingWindowSink::create(SchemaPtr inputSchema,
-                                        SchemaPtr outputSchema,
-                                        Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+                                         SchemaPtr outputSchema,
+                                         Windowing::LogicalWindowDefinitionPtr windowDefinition) {
     return std::make_shared<PhysicalGlobalTumblingWindowSink>(Util::getNextOperatorId(),
-                                                             inputSchema,
-                                                             outputSchema,
-                                                             windowDefinition);
+                                                              inputSchema,
+                                                              outputSchema,
+                                                              windowDefinition);
 }
 
 Windowing::LogicalWindowDefinitionPtr PhysicalGlobalTumblingWindowSink::getWindowDefinition() { return windowDefinition; }

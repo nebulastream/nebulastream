@@ -33,18 +33,16 @@ std::shared_ptr<PhysicalGlobalSliceMergingOperator> PhysicalGlobalSliceMergingOp
     SchemaPtr outputSchema,
     Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr keyedEventTimeWindowHandler) {
     return std::make_shared<PhysicalGlobalSliceMergingOperator>(Util::getNextOperatorId(),
-                                                               inputSchema,
-                                                               outputSchema,
-                                                               keyedEventTimeWindowHandler);
+                                                                inputSchema,
+                                                                outputSchema,
+                                                                keyedEventTimeWindowHandler);
 }
 
 Windowing::Experimental::GlobalSliceMergingOperatorHandlerPtr PhysicalGlobalSliceMergingOperator::getWindowHandler() {
     return operatorHandler;
 }
 
-OperatorNodePtr PhysicalGlobalSliceMergingOperator::copy() {
-    return create(inputSchema, outputSchema, operatorHandler);
-}
+OperatorNodePtr PhysicalGlobalSliceMergingOperator::copy() { return create(inputSchema, outputSchema, operatorHandler); }
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
 }// namespace NES

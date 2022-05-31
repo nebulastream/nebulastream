@@ -17,9 +17,9 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/ExecutionResult.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <variant>

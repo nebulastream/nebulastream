@@ -64,7 +64,8 @@ class KeyedGlobalSliceStoreAppendOperatorHandler
      * @brief Stops the operator handler and triggers for all slices in the global slice store the associated windows.
      * @param pipelineExecutionContext
      */
-    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
      * @brief This function triggers the slice merging and appends the merged slice to the global slice store.

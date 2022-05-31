@@ -89,7 +89,8 @@ class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
     * @brief Stops window handler
      * @param pipelineExecutionContext pointer to the current pipeline execution context
     */
-    void stop(Runtime::QueryTerminationType terminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType terminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     ~WindowOperatorHandler() override { NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count())); }
 

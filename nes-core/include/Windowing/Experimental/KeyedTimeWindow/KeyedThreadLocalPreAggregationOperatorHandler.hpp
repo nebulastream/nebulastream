@@ -16,8 +16,8 @@
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDEVENTTIMETHREADLOCALWINDOWHANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
 namespace NES::Experimental {
 class HashMapFactory;
 using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
@@ -55,7 +55,8 @@ class KeyedThreadLocalPreAggregationOperatorHandler
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     /**
      * @brief This method triggers the thread local state and appends all slices,

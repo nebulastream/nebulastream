@@ -104,7 +104,6 @@ class GlobalThreadLocalPreAggregationOperatorHandler
 
     ~GlobalThreadLocalPreAggregationOperatorHandler();
 
-
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
   private:

@@ -20,24 +20,25 @@
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
-GeneratableOperatorPtr
-GeneratableGlobalTumblingWindowSink::create(OperatorId id,
-                                           SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           Windowing::LogicalWindowDefinitionPtr& windowDefinition,
-                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
-    return std::make_shared<GeneratableGlobalTumblingWindowSink>(GeneratableGlobalTumblingWindowSink(id,
-                                                                                                   std::move(inputSchema),
-                                                                                                   std::move(outputSchema),
-                                                                                                   windowDefinition,
-                                                                                                   std::move(windowAggregation)));
+GeneratableOperatorPtr GeneratableGlobalTumblingWindowSink::create(
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::LogicalWindowDefinitionPtr& windowDefinition,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+    return std::make_shared<GeneratableGlobalTumblingWindowSink>(
+        GeneratableGlobalTumblingWindowSink(id,
+                                            std::move(inputSchema),
+                                            std::move(outputSchema),
+                                            windowDefinition,
+                                            std::move(windowAggregation)));
 }
 
-GeneratableOperatorPtr
-GeneratableGlobalTumblingWindowSink::create(SchemaPtr inputSchema,
-                                           SchemaPtr outputSchema,
-                                           Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
+GeneratableOperatorPtr GeneratableGlobalTumblingWindowSink::create(
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::LogicalWindowDefinitionPtr windowDefinition,
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),

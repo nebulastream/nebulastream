@@ -16,8 +16,8 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/KeyedTimeWindow/GeneratableKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/Experimental/KeyedTimeWindow/KeyedSliceMergingOperatorHandler.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {

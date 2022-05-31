@@ -403,10 +403,10 @@ class CodeGenerator {
     */
     virtual uint64_t
     generateGlobalSlidingWindowOperatorSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                            PipelineContextPtr context,
-                                            uint64_t id,
-                                            uint64_t windowOperatorIndex,
-                                            std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) = 0;
+                                             PipelineContextPtr context,
+                                             uint64_t id,
+                                             uint64_t windowOperatorIndex,
+                                             std::vector<GeneratableOperators::GeneratableWindowAggregationPtr>) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.

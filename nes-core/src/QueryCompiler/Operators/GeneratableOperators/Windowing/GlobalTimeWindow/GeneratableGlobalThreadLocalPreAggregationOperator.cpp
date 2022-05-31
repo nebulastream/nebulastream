@@ -59,11 +59,11 @@ void GeneratableGlobalThreadLocalPreAggregationOperator::generateOpen(CodeGenera
     auto windowDefinition = windowHandler->getWindowDefinition();
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
     codegen->generateGlobalThreadLocalPreAggregationSetup(windowDefinition,
-                                                         outputSchema,
-                                                         context,
-                                                         id,
-                                                         windowOperatorIndex,
-                                                         windowAggregation);
+                                                          outputSchema,
+                                                          context,
+                                                          id,
+                                                          windowOperatorIndex,
+                                                          windowAggregation);
 }
 
 void GeneratableGlobalThreadLocalPreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

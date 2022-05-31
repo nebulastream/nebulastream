@@ -37,7 +37,9 @@ using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
  */
 class KeyedThreadLocalSliceStore : public ThreadLocalSliceStore<KeyedSlice> {
   public:
-    explicit KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory, uint64_t windowSize, uint64_t windowSlide);
+    explicit KeyedThreadLocalSliceStore(NES::Experimental::HashMapFactoryPtr hashMapFactory,
+                                        uint64_t windowSize,
+                                        uint64_t windowSlide);
     ~KeyedThreadLocalSliceStore() = default;
 
   private:
