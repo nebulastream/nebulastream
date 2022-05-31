@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.2.42](https://github.com/nebulastream/nebulastream/tree/v0.2.42) (2022-05-31)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.41...v0.2.42)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Add ThreadLocalGlobalWindow [\#2800](https://github.com/nebulastream/nebulastream/issues/2800)
+- \[Windowing\] add functions to directly access the IngestionTS of a record during execution [\#2548](https://github.com/nebulastream/nebulastream/issues/2548)
+
 ## [v0.2.41](https://github.com/nebulastream/nebulastream/tree/v0.2.41) (2022-05-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.40...v0.2.41)
