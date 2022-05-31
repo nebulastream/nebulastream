@@ -18,6 +18,7 @@ limitations under the License.
 #include <Windowing/JoinEdge.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Util/OptimizerPlanOperator.hpp>
 #include <Util/AbstractJoinPlanOperator.hpp>
 
@@ -31,6 +32,7 @@ namespace NES {
 
 namespace NES::Optimizer {
 
+class TimeSequenceList;
 class JoinOrderOptimizationRule;
 using JoinOrderOptimizationRulePtr = std::shared_ptr<JoinOrderOptimizationRule>;
 
@@ -64,6 +66,17 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @return list of source connections
      */
     std::vector<Join::JoinEdgePtr> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators);
+
+    /**
+     * @brief Retrieves possible (minding time-constraints) join edges between event streams. As they are cartesian products it is not necessary to check the join key,
+     * but it is important to check if this generally is in line with the event order given by a sequence operator.
+     * @param abstractJoinOperators a vector of AbstractJoinPlanOperatorPtr - which are logical sources with some join optimization relevant information, joinOperators of the query, filter operators attached to joins.
+     * @return list of source connections
+     */
+    std::vector<Join::JoinEdgePtr> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators,
+                                                     std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators,
+                                                     std::vector<FilterLogicalOperatorNodePtr> filterOperators);
+
 
     /**
      * @brief Optimize order of join operators according to cost-model
@@ -181,6 +194,8 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @return  Topmost node in the hierarchy before a JoinLogicalOperatorNode
      */
     NodePtr getPotentialParentNodes(NodePtr sharedPtr);
+
+    TimeSequenceList* getTimeSequenceList(std::vector<FilterLogicalOperatorNodePtr> filterOperators);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_

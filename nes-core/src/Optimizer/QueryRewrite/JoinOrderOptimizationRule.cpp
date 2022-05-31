@@ -29,8 +29,34 @@ namespace NES::Optimizer {
 
     JoinOrderOptimizationRule::JoinOrderOptimizationRule() = default;
 
+    // linkedList that cares about time order of sequence operators
+    class TimeSequenceList {
+      public:
+        std::string name;
+        TimeSequenceList *next = nullptr;
+
+        TimeSequenceList(std::string name) { this->name = name; }
+        // checks if string is found somewhere in the linkedlist
+        bool isInList(std::string nodeName) {
+            TimeSequenceList* currentNode = this;
+            while(currentNode != nullptr){
+                if(currentNode->name == nodeName){
+                    return true;
+                }
+                currentNode = currentNode->next;
+            }
+            return false;
+        }
+    };
+
     QueryPlanPtr JoinOrderOptimizationRule::apply(QueryPlanPtr queryPlan) {
-        NES_DEBUG("JoinOrderOptimizationRule: Applying JoinOrderOptimizationRule to query " << queryPlan->toString());
+        NES_DEBUG("JoinOrderOptimizationRule: Applying JoinOrderOptimizationRule to query " << queryPlan->toString())
+        bool isCEP = true; // Turn off for traditional join-reordering (for CEP we optimize Filter+Join as a combined Operator)
+
+        if(isCEP){
+            NES_DEBUG("JoinOrderOptimizationRule: Specifically applying CEP Operator reordering")
+        }
+
 
         // Check if the QueryPlan has more than 1 join -- if so reordering might be beneficial
         int count = 0;
@@ -46,19 +72,51 @@ namespace NES::Optimizer {
             // SourceOperators are the logical data streams that are similar to relations in DBMS
             const auto sourceOperators = queryPlan->getSourceOperators();
 
+            // Sources are mapped to an intermediate representation of OptimizerPlanOperator, which allows a degree of flexibility
             std::vector<OptimizerPlanOperatorPtr> sources;
             for (const auto &source : sourceOperators){
                 sources.push_back(std::make_shared<OptimizerPlanOperator>(source));
             }
 
+            // sources are then mapped to AbstractJoinPlanOperators
             std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators;
             for(auto source: sources){
                 abstractJoinOperators.push_back(std::make_shared<AbstractJoinPlanOperator>(source));
             }
 
+            // This vector holds information about all "possible" joins. In case of CEP (sequence): Cartesian Products with possible time-orderings, ASP: matching joinkeys
+            std::vector<Join::JoinEdgePtr> joinEdges;
+
+            if (isCEP){
+                // Alongside joins (cartesian products) we need the respective time-based filter operators
+                std::vector<FilterLogicalOperatorNodePtr> filters;
+                for(auto join : joinOperators){
+                    if (join->getJoinDefinition()->getJoinType() == Join::LogicalJoinDefinition::CARTESIAN_PRODUCT) {
+
+                        auto parents = join->getParents();
+                        if (parents.size() != 0) {
+                            if (parents[0]->instanceOf<FilterLogicalOperatorNode>()) {
+                                filters.push_back(parents[0]->as<FilterLogicalOperatorNode>());
+                            }
+                        }
+                    }
+                }
+                // TODO extract global sequence order
+                TimeSequenceList* timeSequenceList = getTimeSequenceList(filters);
+
+
+
+                // TODO Convert Filter+Join to joinEdges and add filterPredicate information make sure that leftOperator is BEFORE rightOperator
+                // Converting Filter and Join to joinEdges, while minding order and leveraging predicate information.
+                joinEdges = retrieveJoinEdges(joinOperators, abstractJoinOperators, filters);
+
+            }
+            else{
+
             //  Derive a join graph by getting all the join edges between the sources (logical streams)
-            std::vector<Join::JoinEdgePtr> joinEdges = retrieveJoinEdges(joinOperators, abstractJoinOperators);
+            joinEdges = retrieveJoinEdges(joinOperators, abstractJoinOperators);
             getHardCodedJoinSelectivities(joinEdges);
+            }
 
             // print joinEdges
             NES_DEBUG(listJoinEdges(joinEdges));
@@ -118,6 +176,25 @@ namespace NES::Optimizer {
 
         return joinEdges;
 
+    }
+
+    // TODO Implement for CEP
+    std::vector<Join::JoinEdgePtr> JoinOrderOptimizationRule::retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators,
+                                                 std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators,
+                                                 std::vector<FilterLogicalOperatorNodePtr> filterOperators) {
+
+        NES_DEBUG("JoinOrderOptimizationRule: Retrieving Join Edges for CEP Operator")
+        // Iterate over joinOperators and detect all JoinEdges
+        std::vector<Join::JoinEdgePtr> joinEdges;
+
+        NES_DEBUG(joinOperators.size() << abstractJoinOperators.size() << filterOperators.size())
+
+
+
+       // Join::JoinEdge joinEdge = Join::JoinEdge(leftOperatorNode, rightOperatorNode, join->getJoinDefinition(), 0.5);
+       // joinEdges.push_back(std::make_shared<Join::JoinEdge>(joinEdge));
+
+        return joinEdges;
     }
 
     // optimizing the join order given the join graph
@@ -533,5 +610,32 @@ namespace NES::Optimizer {
         }
         return currentNodePtr;
     }
+
+    // This is a bit hacky: Sequence builds up sequentially (as the name suggests) so I need to prepend the first child to a linkedList
+    TimeSequenceList* JoinOrderOptimizationRule::getTimeSequenceList(std::vector<FilterLogicalOperatorNodePtr> filterOperators) {
+
+        TimeSequenceList* timeSequenceList;
+
+        //FieldAccessNode(Velocity$ts[Undefined])<FieldAccessNode(Humidity$ts[Undefined])
+        for (auto filter : filterOperators){
+            auto children = filter->getPredicate()->getChildren();
+            auto leftChild = children[0]->toString();
+            auto rightChild = children[1]->toString();
+            NES_DEBUG(leftChild <<  "<" << rightChild)
+
+            if(timeSequenceList == nullptr){
+                timeSequenceList = new TimeSequenceList(leftChild);
+                timeSequenceList->next = new TimeSequenceList(rightChild);
+            }else{
+                // prepend the first child. Second child is already in list.
+                TimeSequenceList* newHead = new TimeSequenceList(leftChild);
+                newHead->next = timeSequenceList;
+                timeSequenceList = newHead;
+            }
+        }
+
+        return timeSequenceList;
+    }
+
     }// namespace NES::Optimizer
 

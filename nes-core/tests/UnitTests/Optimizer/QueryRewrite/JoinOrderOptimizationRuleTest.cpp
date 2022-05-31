@@ -133,12 +133,16 @@ using namespace NES;
 
 
     TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4Streams){
-        Query subQuery1 = Query::from("Quantity").seqWith(Query::from("Velocity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
+/*        Query subQuery1 = Query::from("Quantity").seqWith(Query::from("Velocity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
         Query subQuery2 = Query::from("Temperature").seqWith(Query::from("Humidity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
-        Query query = subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("ts")), Minutes(10)));
+        Query query = subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("peter")), Minutes(5)));
+        */
+
+        Query query = Query::from("Quantity").seqWith(Query::from("Velocity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+            .seqWith(Query::from("Temperature")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+            .seqWith(Query::from("Humidity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
+
         QueryPlanPtr queryPlan = query.getQueryPlan();
-
-
 
         NES_DEBUG(queryPlan->toString())
 
