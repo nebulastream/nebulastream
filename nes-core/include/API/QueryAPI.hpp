@@ -17,6 +17,7 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Expressions/GeographyExpressions.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>

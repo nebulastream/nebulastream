@@ -17,13 +17,27 @@ limitations under the License.
 
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
 
 namespace NES {
 
 /**
  * @brief Defines common spatial operations between expression nodes.
  */
-ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude, const ExpressionItem& longitude, const ExpressionItem& wkt);
+ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude,
+                            const ExpressionItem& longitude,
+                            const ExpressionItem& wkt);
+
+ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitude,
+                             const ExpressionItem& longitude,
+                             const ExpressionItem& wkt,
+                             const ExpressionItem& distance);
+
+ExpressionNodePtr ST_KNN(const ExpressionItem& latitude,
+                         const ExpressionItem& longitude,
+                         const ExpressionItem& wkt,
+                         const ExpressionItem& k);
 
 }// namespace NES
 
