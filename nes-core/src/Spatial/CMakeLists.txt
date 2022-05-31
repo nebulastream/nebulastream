@@ -17,5 +17,6 @@ add_source_files(nes-core
         LocationProvider.cpp
         ReconnectSchedule.cpp
         TrajectoryPredictor.cpp
+        ReconnectConfigurator.cpp
 )
 

@@ -50,7 +50,6 @@ class LocationProviderCSV : public LocationProvider {
      */
     [[nodiscard]] Timestamp getStarttime() const;
 
-  private:
     /**
      * @brief get the simulated last known location of the device. if s2 is enabled this will be an interpolated point along
      * the line between to locations from the csv. If s2 is disabled this will be the waypoint from the csv which has the
@@ -58,6 +57,8 @@ class LocationProviderCSV : public LocationProvider {
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
     std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation() override;
+
+  private:
 
     Timestamp startTime;
     std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>> waypoints;

@@ -11,9 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_WORKERRECONNECTCONFIGURATOR_HPP
-#define NES_WORKERRECONNECTCONFIGURATOR_HPP
+#ifndef NES_RECONNECTCONFIGURATOR_HPP
+#define NES_RECONNECTCONFIGURATOR_HPP
 
-class WorkerReconnectConfigurator {};
+namespace NES {
 
-#endif//NES_WORKERRECONNECTCONFIGURATOR_HPP
+namespace Spatial::Mobility::Experimental {
+class ReconnectConfigurator {
+  public:
+  private:
+
+};
+}
+}
+
+#endif//NES_RECONNECTCONFIGURATOR_HPP

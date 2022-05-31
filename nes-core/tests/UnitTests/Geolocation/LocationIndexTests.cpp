@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Spatial/LocationIndex.hpp>
+#include <Spatial/TrajectoryPredictor.hpp>
 #include <Spatial/LocationProvider.hpp>
 #include <Spatial/LocationProviderCSV.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -56,7 +57,7 @@ TEST_F(LocationIndexTests, testCoverageCalculation) {
      */
 
 
-    auto res = NES::Spatial::Mobility::Experimental::LocationProvider::findPathCoverage(path, node, coverage);
+    auto res = NES::Spatial::Mobility::Experimental::TrajectoryPredictor::findPathCoverage(path, node, coverage);
 
     NES_DEBUG("Reconnect Point " << S2LatLng(res.first));
     NES_DEBUG("distance Reconnect Point <-> Covering Node " << S1Angle(node, res.first).degrees());
