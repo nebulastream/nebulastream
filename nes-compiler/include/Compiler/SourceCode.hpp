@@ -14,6 +14,7 @@
 #ifndef NES_INCLUDE_COMPILER_SOURCECODE_HPP_
 #define NES_INCLUDE_COMPILER_SOURCECODE_HPP_
 #include <string>
+
 namespace NES::Compiler {
 
 /**
@@ -22,6 +23,7 @@ namespace NES::Compiler {
  */
 class SourceCode {
   public:
+
     /**
      * Overload == operator
      * @param rhs
@@ -61,5 +63,27 @@ class SourceCode {
 };
 
 }// namespace NES::Compiler
+
+namespace std {
+
+template <>
+struct hash<NES::Compiler::SourceCode>
+{
+    std::size_t operator()(const NES::Compiler::SourceCode& k) const
+    {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+
+        // Compute individual hash values for first,
+        // second and third and combine them using XOR
+        // and bit shifting:
+
+        return ((hash<string>()(k.getCode())
+                 ^ (hash<string>()(k.getLanguage()) << 1)) >> 1);
+    }
+};
+
+}
 
 #endif// NES_INCLUDE_COMPILER_SOURCECODE_HPP_
