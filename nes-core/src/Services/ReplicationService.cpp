@@ -40,6 +40,7 @@ int ReplicationService::getCurrentEpochBarrier(uint64_t queryId) const {
 }
 
 void ReplicationService::saveEpochBarrier(uint64_t queryId, uint64_t epochBarrier) const {
+    std::unique_lock lock(replicationServiceMutex);
     std::pair<uint64_t, uint64_t> newPairEpochTimestamp;
     auto iterator = queryIdToCurrentEpochBarrierMap.find(queryId);
     if (iterator != queryIdToCurrentEpochBarrierMap.end()) {
@@ -51,6 +52,7 @@ void ReplicationService::saveEpochBarrier(uint64_t queryId, uint64_t epochBarrie
 }
 
 std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(uint64_t queryId) const {
+    std::unique_lock lock(replicationServiceMutex);
     auto globalQueryPlan = this->coordinatorPtr->getGlobalQueryPlan();
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(queryId);
     if (sharedQueryPlan) {
@@ -61,6 +63,7 @@ std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(
 }
 
 std::vector<TopologyNodePtr> ReplicationService::getPhysicalSources(SourceLogicalOperatorNodePtr logicalSource) const {
+    std::unique_lock lock(replicationServiceMutex);
     SourceDescriptorPtr sourceDescriptor = logicalSource->getSourceDescriptor();
     auto sourceName = sourceDescriptor->getSchema()->getSourceNameQualifier();
     return this->coordinatorPtr->getSourceCatalog()->getSourceNodesForLogicalSource(sourceName);

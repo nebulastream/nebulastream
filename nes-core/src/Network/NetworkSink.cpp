@@ -113,8 +113,11 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
         case Runtime::Initialize: {
-            auto channel =
-                networkManager->registerSubpartitionProducer(receiverLocation, nesPartition, bufferManager, waitTime, retryTimes);
+            auto channel = networkManager->registerSubpartitionProducer(receiverLocation,
+                                                                        nesPartition,
+                                                                        bufferManager,
+                                                                        waitTime,
+                                                                        retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
@@ -139,7 +142,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::PropagateEpoch: {
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
-            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId << "punctuation= " << task.getUserData<uint64_t>());
+            NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
+                                                                 << "punctuation= " << task.getUserData<uint64_t>());
             workerContext.trimStorage(nesPartition, task.getUserData<uint64_t>());
             break;
         }

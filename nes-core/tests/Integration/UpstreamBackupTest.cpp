@@ -62,11 +62,14 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
         coordinatorConfig->numberOfBuffersPerEpoch = 10;
-        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 1024;
+        coordinatorConfig->numberOfBuffersInGlobalBufferManager = 500000;
+        coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1000;
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->numberOfBuffersPerEpoch = 10;
-        workerConfig->numberOfBuffersInGlobalBufferManager = 1024;
+        workerConfig->numWorkerThreads = 8;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = 1000;
+        workerConfig->numberOfBuffersInGlobalBufferManager = 500000;
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->enableStatisticOutput = true;
         workerConfig->numberOfBuffersToProduce = 5000000;
@@ -425,11 +428,11 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
 
-    workerConfig->lambdaSource = 2;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+//    workerConfig->lambdaSource = 2;
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
@@ -450,7 +453,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
     NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopQueryRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
@@ -459,9 +462,9 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("UpstreamBackupTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
+//    NES_INFO("UpstreamBackupTest: Stop worker 2");
+//    bool retStopWrk2 = wrk2->stop(true);
+//    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
