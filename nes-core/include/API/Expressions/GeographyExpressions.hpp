@@ -15,12 +15,11 @@ limitations under the License.
 #ifndef NES_NES_CORE_INCLUDE_API_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_HPP_
 #define NES_NES_CORE_INCLUDE_API_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_HPP_
 
-#include <API/Expressions/Expressions.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
-
 namespace NES {
+
+class ExpressionNode;
+class ExpressionItem;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 /**
  * @brief Defines common spatial operations between expression nodes.
