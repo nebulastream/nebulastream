@@ -29,10 +29,10 @@ GeneratableOperatorPtr GeneratableGlobalSliceMergingOperator::create(
     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableGlobalSliceMergingOperator>(
         GeneratableGlobalSliceMergingOperator(id,
-                                             std::move(inputSchema),
-                                             std::move(outputSchema),
-                                             std::move(operatorHandler),
-                                             std::move(windowAggregation)));
+                                              std::move(inputSchema),
+                                              std::move(outputSchema),
+                                              std::move(operatorHandler),
+                                              std::move(windowAggregation)));
 }
 
 GeneratableOperatorPtr GeneratableGlobalSliceMergingOperator::create(
@@ -59,10 +59,10 @@ GeneratableGlobalSliceMergingOperator::GeneratableGlobalSliceMergingOperator(
 void GeneratableGlobalSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr pipeline) {
     auto windowOperatorIndex = pipeline->registerOperatorHandler(windowHandler);
     codegen->generateGlobalSliceMergingOperatorSetup(windowHandler->getWindowDefinition(),
-                                                    pipeline,
-                                                    id,
-                                                    windowOperatorIndex,
-                                                    windowAggregation);
+                                                     pipeline,
+                                                     id,
+                                                     windowOperatorIndex,
+                                                     windowAggregation);
 }
 
 void GeneratableGlobalSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

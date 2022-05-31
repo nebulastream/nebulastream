@@ -1625,8 +1625,8 @@ ExpressionStatementPtr CCodeGenerator::createGetEntryCall(Windowing::LogicalWind
     for (int64_t i = keyDeclarations.size() - 1; i >= 0; i--) {
         makeTuple->addParameter(keyDeclarations[i]);
     }
-     for (auto& keyDeclaration : keyDeclarations) {
-         makeTuple->addParameter(keyDeclaration);
+    for (auto& keyDeclaration : keyDeclarations) {
+        makeTuple->addParameter(keyDeclaration);
     }
     context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(tuple).assign(makeTuple).copy());
     auto getEntry = call("getEntry<>");

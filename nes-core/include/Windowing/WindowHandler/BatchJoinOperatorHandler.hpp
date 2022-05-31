@@ -69,7 +69,8 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType terminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType terminationType,
+              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     LogicalBatchJoinDefinitionPtr getBatchJoinDefinition();
 

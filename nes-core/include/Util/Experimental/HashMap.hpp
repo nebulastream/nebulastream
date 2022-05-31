@@ -127,7 +127,7 @@ class Hashmap {
     inline void insert_tagged(Entry* entry, hash_t hash);
 
     template<typename K, bool useTags>
-    inline Entry* findOneEntry( K& key, hash_t h);
+    inline Entry* findOneEntry(K& key, hash_t h);
 
     template<class KeyType>
     inline auto calculateHash(KeyType& key) const;

@@ -14,7 +14,4 @@
 
 #include <Windowing/Experimental/GlobalSliceStore.hpp>
 
-namespace NES::Windowing::Experimental {
-
-
-}// namespace NES::Windowing::Experimental
+namespace NES::Windowing::Experimental {}// namespace NES::Windowing::Experimental

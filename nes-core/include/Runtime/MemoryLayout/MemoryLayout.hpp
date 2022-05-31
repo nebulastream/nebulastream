@@ -16,8 +16,8 @@
 #define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <unordered_map>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {

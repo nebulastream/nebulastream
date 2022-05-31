@@ -33,9 +33,9 @@ std::shared_ptr<PhysicalGlobalSlidingWindowSink> PhysicalGlobalSlidingWindowSink
     SchemaPtr outputSchema,
     Windowing::Experimental::GlobalSlidingWindowSinkOperatorHandlerPtr keyedEventTimeWindowHandler) {
     return std::make_shared<PhysicalGlobalSlidingWindowSink>(Util::getNextOperatorId(),
-                                                            inputSchema,
-                                                            outputSchema,
-                                                            keyedEventTimeWindowHandler);
+                                                             inputSchema,
+                                                             outputSchema,
+                                                             keyedEventTimeWindowHandler);
 }
 
 std::string PhysicalGlobalSlidingWindowSink::toString() const { return "PhysicalGlobalSlidingWindowSink"; }

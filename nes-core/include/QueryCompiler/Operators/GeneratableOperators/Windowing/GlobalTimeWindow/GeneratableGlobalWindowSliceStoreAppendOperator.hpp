@@ -30,10 +30,11 @@ class GeneratableGlobalWindowSliceStoreAppendOperator : public GeneratableOperat
      * @param windowAggregation window aggregations
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema,
-                                         SchemaPtr outputSchema,
-                                         Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
-                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+    static GeneratableOperatorPtr
+    create(SchemaPtr inputSchema,
+           SchemaPtr outputSchema,
+           Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
+           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
     /**
      * @brief Creates a new generatable slice merging operator, which consumes slices and merges them in the operator state.
@@ -44,11 +45,12 @@ class GeneratableGlobalWindowSliceStoreAppendOperator : public GeneratableOperat
      * @param windowAggregation window aggregations
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(OperatorId id,
-                                         SchemaPtr inputSchema,
-                                         SchemaPtr outputSchema,
-                                         Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
-                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
+    static GeneratableOperatorPtr
+    create(OperatorId id,
+           SchemaPtr inputSchema,
+           SchemaPtr outputSchema,
+           Windowing::Experimental::GlobalWindowGlobalSliceStoreAppendOperatorHandlerPtr operatorHandler,
+           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     [[nodiscard]] std::string toString() const override;

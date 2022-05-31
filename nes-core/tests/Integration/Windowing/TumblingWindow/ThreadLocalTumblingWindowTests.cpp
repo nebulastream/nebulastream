@@ -87,9 +87,7 @@ struct GlobalOutput {
     uint64_t start;
     uint64_t end;
     uint64_t value;
-    bool operator==(GlobalOutput const& rhs) const {
-        return (start == rhs.start && end == rhs.end && value == rhs.value);
-    }
+    bool operator==(GlobalOutput const& rhs) const { return (start == rhs.start && end == rhs.end && value == rhs.value); }
     friend ostream& operator<<(ostream& os, const GlobalOutput& output) {
         os << "start: " << output.start << " end: " << output.end << " value: " << output.value;
         return os;
