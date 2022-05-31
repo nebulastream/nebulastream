@@ -29,11 +29,12 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, C
     saveRate = configuration->saveRate.getValue();
     deltaAngle = S2Earth::MetersToChordAngle(configuration->pathDistanceDelta.getValue());
     nodeDownloadRadius = configuration->nodeDownloadRadius.getValue();
-    nodeIndexUpdateThreshold = configuration->nodeIndexUpdateThreshold.getValue();
+    //nodeIndexUpdateThreshold = configuration->nodeIndexUpdateThreshold.getValue();
     defaultCoverageAngle = S2Earth::MetersToChordAngle(configuration->defaultCoverageRadius.getValue());
     predictedPathLengthAngle = S2Earth::MetersToChordAngle(configuration->pathPredictionLength);
     //todo:  we might want to use a smaller search radius and add this as a parameter
     reconnectSearchRadius = S2Earth::MetersToAngle(nodeDownloadRadius);
+    coveredRadiusWithoutThreshold = S2Earth::MetersToAngle(nodeDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
     this->parentId = parentId;
     //maxPlannedReconnects =
     //setUpReconnectPlanning();
@@ -55,14 +56,33 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
     return std::make_shared<Mobility::Experimental::ReconnectSchedule>(start, end, vec);
 }
 
-void TrajectoryPredictor::setUpReconnectPlanning() {
-    //todo: this can also moved into the isMobile if condition?
-    auto nodeList = locationProvider->getNodeIdsInRange(nodeDownloadRadius);
+bool TrajectoryPredictor::downloadFieldNodes() {
+    NES_DEBUG("Downloading nodes in range")
+    auto positionAtUpdate = locationProvider->getLocation();
+    auto nodeList = locationProvider->getNodeIdsInRange(*positionAtUpdate, nodeDownloadRadius / 1000);
+
+    //if we actually received nodes in out vicinity, we can clear the old nodes
+    //todo: do we always want to do this?
+    if (!nodeList.empty()) {
+        fieldNodeMap.clear();
+        fieldNodeIndex.Clear();
+    } else {
+        return false;
+    }
+
     for (auto [nodeId, location] : nodeList) {
-        //todo: set the return type of the vector to be in the sma order as the parameters of add
+        NES_TRACE("adding node " << nodeId << " with location " << location.toString())
         fieldNodeIndex.Add(S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())), nodeId);
         fieldNodeMap.insert({nodeId, S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude()))});
     }
+    positionOfLastNodeIndexUpdate = locationToS2Point(*positionAtUpdate);
+    NES_TRACE("setting last index update position to " << positionAtUpdate->toString())
+    return true;
+}
+
+void TrajectoryPredictor::setUpReconnectPlanning() {
+    //todo: this can also moved into the isMobile if condition?
+    downloadFieldNodes();
     NES_DEBUG("Parent Id: " << parentId)
     auto elem = S2PointIndex<uint64_t>::Iterator(&fieldNodeIndex);
     elem.Begin();
@@ -84,9 +104,11 @@ void TrajectoryPredictor::setUpReconnectPlanning() {
 void TrajectoryPredictor::startReconnectPlanning() {
     //fill up the buffer before starting to calculate path
     for (size_t i = 0; i < locationBufferSize; ++i) {
-        locationBuffer.push_back(locationProvider->getCurrentLocation());
+        auto currentLocation = locationProvider->getCurrentLocation();
+        locationBuffer.push_back(currentLocation);
         NES_DEBUG("added: " << locationBuffer.back().first->toString() << locationBuffer.back().second);
         std::this_thread::sleep_for(std::chrono::milliseconds(pathUpdateInterval * saveRate));
+        updateDownloadedNodeIndex(*currentLocation.first);
     }
     NES_TRACE("Location buffer is filled");
 
@@ -112,7 +134,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
         }
 
         //check if we deviated more than delta from the old predicted path and update it if needed
-        if (updatePredictedPath(oldestKnownOwnLocation.first, currentOwnLocation.first)) {
+        if (updateDownloadedNodeIndex(*currentOwnLocation.first) || updatePredictedPath(oldestKnownOwnLocation.first, currentOwnLocation.first)) {
             NES_INFO("predicted path was recalculated")
 
             //we just recalculated the path, so the end of coverage of our current parent might have changed
@@ -158,6 +180,21 @@ void TrajectoryPredictor::startReconnectPlanning() {
         //todo: check how far we are from las index update and download new nodes
         std::this_thread::sleep_for(std::chrono::milliseconds(pathUpdateInterval));
     }
+}
+
+//Todo: implement
+bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Location currentLocation) {
+    S2Point currentS2Point(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
+    if (S1Angle(currentS2Point, positionOfLastNodeIndexUpdate) > coveredRadiusWithoutThreshold) {
+        if (downloadFieldNodes() && fieldNodeMap.count(parentId) == 0) {
+            NES_DEBUG("current parent was not present in downloaded list, adding it to the index")
+            //todo: put a tuples into the spatial index instead to get rid of the map
+            fieldNodeMap.insert({parentId, currentParentLocation});
+            fieldNodeIndex.Add(currentParentLocation, parentId);
+        }
+        return true;
+    }
+    return false;
 }
 
 bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental::LocationPtr& oldLocation, const Spatial::Index::Experimental::LocationPtr& currentLocation) {
@@ -281,5 +318,13 @@ void TrajectoryPredictor::scheduleReconnects() {
             break;
         }
     }
+}
+S2Point TrajectoryPredictor::locationToS2Point(Index::Experimental::Location location) {
+    return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
+}
+
+Index::Experimental::Location TrajectoryPredictor::s2pointToLocation(S2Point point) {
+    S2LatLng latLng(point);
+    return {latLng.lat().degrees(), latLng.lng().degrees()};
 }
 }

@@ -18,6 +18,7 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <Util/TimeMeasurement.hpp>
 
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
@@ -94,14 +95,20 @@ class TrajectoryPredictor {
     std::unordered_map<uint64_t, S2Point> fieldNodeMap;
     double nodeDownloadRadius;
     S1Angle reconnectSearchRadius;
-    uint64_t nodeIndexUpdateThreshold;
+    //uint64_t nodeIndexUpdateThreshold;
+    S1Angle coveredRadiusWithoutThreshold;
     //todo: maybe use a cap for this instead?
     S2Point currentParentLocation;
     uint64_t parentId;
 
     S1ChordAngle defaultCoverageAngle;
-    NES::Spatial::Index::Experimental::LocationPtr positionOfLastNodeIndexUpdate;
+    //NES::Spatial::Index::Experimental::LocationPtr positionOfLastNodeIndexUpdate;
+    S2Point positionOfLastNodeIndexUpdate;
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> reconnectVector;
+    bool updateDownloadedNodeIndex(Index::Experimental::Location currentLocation);
+    bool downloadFieldNodes();
+    S2Point locationToS2Point(Index::Experimental::Location location);
+    Index::Experimental::Location s2pointToLocation(S2Point point);
 };
 
 }
