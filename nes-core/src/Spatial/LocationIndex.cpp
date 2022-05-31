@@ -175,4 +175,20 @@ size_t LocationIndex::getSizeOfPointIndex() {
     return {};
 #endif
 }
+
+bool LocationIndex::updatePredictedReconnect(uint64_t deviceid, uint64_t reconnectNodeId, LocationPtr reconnectLocation, Timestamp reconnectTime) {
+    if (mobileNodes.contains(deviceid)) {
+        NES_DEBUG("LocationIndex: Updating reconnect prediciton for node " << deviceid)
+        if (reconnectLocation) {
+            NES_DEBUG("New reconnect prediction: id=" << reconnectNodeId << " location=" << reconnectLocation->toString()
+                                                      << " time=" << reconnectTime)
+        } else {
+            NES_DEBUG("reconnect location is nullptr, overwriting previously scheduled connect with empty connect")
+        }
+        reconnectPredictionMap.insert({deviceid, {reconnectNodeId, reconnectLocation, reconnectTime}});
+        return true;
+    }
+    NES_DEBUG("trying to update reconnect prediction but could not find a mobile node with id " << deviceid)
+    return false;
+}
 }// namespace NES::Spatial::Index::Experimental

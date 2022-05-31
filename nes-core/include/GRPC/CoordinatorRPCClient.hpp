@@ -23,6 +23,7 @@
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
+#include <Util/TimeMeasurement.hpp>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -213,6 +214,9 @@ class CoordinatorRPCClient {
      */
     bool notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId);
 
+    bool sendReconnectPrediction(uint64_t nodeId, std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp> scheduledReconnect);
+
+    bool sendLocationUpdate(uint64_t nodeId, std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> locationUpdate);
   private:
     uint64_t workerId;
     std::string address;

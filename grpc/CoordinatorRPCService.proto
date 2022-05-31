@@ -48,6 +48,11 @@ service CoordinatorRPCService {
   // queries for all field nodes within a specified radius around the supplied coordinates
   rpc GetNodesInRange (GetNodesInRangeRequest) returns (GetNodesInRangeReply) {}
 
+  //inform the coordinator about the a scheduled reconnect
+  rpc SendScheduledReconnect (SendScheduledReconnectRequest) returns (SendScheduledReconnectReply) {}
+
+  rpc SendLocationUpdate (LocationUpdateRequest) returns (LocationUpdateReply) {}
+
   // send a notification when a query fails to the coordinator
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 
@@ -185,6 +190,21 @@ message EpochBarrierPropagationReply{
 message GetNodesInRangeReply{
   repeated WorkerLocationInfo nodes = 1;
 }
+
+message SendScheduledReconnectRequest {
+  uint64 deviceId = 1;
+  ReconnectPoint reconnect = 2;
+}
+
+message SendScheduledReconnectReply {}
+
+message LocationUpdateRequest {
+  uint64 id = 1;
+  Coordinates coord = 2;
+  uint64 time = 3;
+}
+
+message LocationUpdateReply {}
 
 message SerializableRegistrationMetrics{
   uint64 totalMemoryBytes = 1;

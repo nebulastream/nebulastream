@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Util/TimeMeasurement.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Common/Location.hpp>
@@ -601,5 +602,44 @@ bool CoordinatorRPCClient::notifySoftStopCompleted(QueryId queryId, QuerySubPlan
     //return the response
     return softStopCompletionReply.success();
 }
+
+bool CoordinatorRPCClient::sendReconnectPrediction(uint64_t nodeId,
+    std::tuple<uint64_t, Spatial::Index::Experimental::LocationPtr, Timestamp> scheduledReconnect) {
+    ClientContext context;
+    SendScheduledReconnectRequest request;
+    SendScheduledReconnectReply reply;
+
+    request.set_deviceid(nodeId);
+    ReconnectPoint* reconnectPoint = request.mutable_reconnect();
+    reconnectPoint->set_id(get<0>(scheduledReconnect));
+    if (get<1>(scheduledReconnect)) {
+        Coordinates* coordinates = reconnectPoint->mutable_coord();
+        coordinates->set_lat(get<1>(scheduledReconnect)->getLatitude());
+        coordinates->set_lng(get<1>(scheduledReconnect)->getLongitude());
+    }
+    reconnectPoint->set_time(get<2>(scheduledReconnect));
+
+    coordinatorStub->SendScheduledReconnect(&context, request, &reply);
+    //todo: return false on fail?
+    return true;
+}
+bool CoordinatorRPCClient::sendLocationUpdate(uint64_t nodeId, std::pair<Spatial::Index::Experimental::LocationPtr, Timestamp> locationUpdate) {
+    ClientContext context;
+    LocationUpdateRequest request;
+    LocationUpdateReply reply;
+
+    request.set_id(nodeId);
+
+    Coordinates* coordinates = request.mutable_coord();
+    coordinates->set_lat(locationUpdate.first->getLatitude());
+    coordinates->set_lng(locationUpdate.first->getLongitude());
+
+    request.set_time(locationUpdate.second);
+    coordinatorStub->SendLocationUpdate(&context, request, &reply);
+    (void) locationUpdate;
+    return true;
+}
+
+
 
 }// namespace NES

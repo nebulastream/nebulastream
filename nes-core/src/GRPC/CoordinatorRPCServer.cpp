@@ -23,6 +23,8 @@
 #include <Services/SourceCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/Location.hpp>
+#include <Services/LocationService.hpp>
 
 using namespace NES;
 
@@ -31,9 +33,10 @@ CoordinatorRPCServer::CoordinatorRPCServer(QueryServicePtr queryService,
                                            SourceCatalogServicePtr sourceCatalogService,
                                            QueryCatalogServicePtr queryCatalogService,
                                            Monitoring::MonitoringManagerPtr monitoringManager,
-                                           ReplicationServicePtr replicationService)
+                                           ReplicationServicePtr replicationService,
+                                           Spatial::Index::Experimental::LocationServicePtr locationService)
     : queryService(queryService), topologyManagerService(topologyManagerService), sourceCatalogService(sourceCatalogService),
-      queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService){};
+      queryCatalogService(queryCatalogService), monitoringManager(monitoringManager), replicationService(replicationService), locationService(locationService) {};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     uint64_t id;
@@ -329,5 +332,30 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
 
     //update response
     response->set_success(success);
+    return Status::OK;
+}
+Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
+                                                    const SendScheduledReconnectRequest* request,
+                                                    SendScheduledReconnectReply* reply) {
+    (void) reply;
+    const ReconnectPoint& reconnectPoint = request->reconnect();
+    NES::Spatial::Index::Experimental::LocationPtr location;
+    if (reconnectPoint.has_coord()) {
+        const Coordinates& coordinates = reconnectPoint.coord();
+        location = std::make_shared<NES::Spatial::Index::Experimental::Location>(coordinates.lat(), coordinates.lng());
+    } else {
+        NES_DEBUG("incoming request did not contain coordinates")
+    }
+    if (locationService->updatePredictedReconnect(request->deviceid(), reconnectPoint.id(), location, reconnectPoint.time())) {
+        return Status::OK;
+    }
+    return Status::CANCELLED;
+}
+Status
+CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
+    (void) reply;
+    auto coordinates = request->coord();
+    NES_DEBUG("Coordinator received location update from node with id " << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS " << request->time());
+    //todo: what to do here?
     return Status::OK;
 }

@@ -223,6 +223,9 @@ const std::string NODE_INDEX_UPDATE_THRESHOLD = "nodeIndexUpdateThreshold";
 const std::string DEFAULT_COVERAGE_RADIUS = "defaultCoverageRadiusMeters";
 const std::string PATH_PREDICTION_LENGTH = "pathPredictionLengthMeters";
 const std::string MINUMUM_PLANNED_RECONNECTS = "minimumPlannedReconnects";
+const std::string SEND_DEVICE_POSITION_UPDATE_THRESHOLD_CONFIG = "sendDevicePositionUpdateThreshold";
+const std::string PUSH_DEVICE_POSITION_UPDATES = "pushPositionUpdates";
+const std::string SEND_LOCATION_UPDATE_INTERVAL = "sendLocationUpdateInterval";
 
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";

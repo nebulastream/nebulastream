@@ -228,6 +228,7 @@ class WorkerRPCClient {
 
     static NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule(const std::string& adress);
 
+
   private:
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;

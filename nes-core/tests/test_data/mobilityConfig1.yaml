@@ -1,7 +1,6 @@
 # ~~~ Configurations for the NES Mobile Worker ~~~
 
 # Set radius for node info to be downloaded
-#nodeInfoDownloadRadius: 20000
 nodeInfoDownloadRadius: 20000
 
 nodeIndexUpdateThreshold: 5000
@@ -14,3 +13,4 @@ pathPredictionLengthMeters: 40000
 
 defaultCoverageRadiusMeters: 5000
 
+sendLocationUpdateInterval: 1000

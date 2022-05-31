@@ -43,6 +43,7 @@
 #include <utility>
 #include <Util/Experimental/LocationProviderType.hpp>
 #include <Spatial/TrajectoryPredictor.hpp>
+#include <Spatial/ReconnectConfigurator.hpp>
 using namespace std;
 volatile sig_atomic_t flag = 0;
 
@@ -323,7 +324,8 @@ bool NesWorker::connect() {
 
         locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
         if (locationProvider->isMobileNode()) {
-            trajectoryPredictor->setUpReconnectPlanning();
+            auto reconnectConfigurator = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this, coordinatorRpcClient, mobilityConfig);
+            trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
         }
 
         auto configPhysicalSources = workerConfig->physicalSources.getValues();
