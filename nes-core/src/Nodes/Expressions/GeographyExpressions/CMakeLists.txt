@@ -14,4 +14,6 @@
 add_source_files(nes-core
         GeographyFieldsAccessExpressionNode.cpp
         STWithinExpressionNode.cpp
+        STDWithinExpressionNode.cpp
+        STKnnExpressionNode.cpp
         )

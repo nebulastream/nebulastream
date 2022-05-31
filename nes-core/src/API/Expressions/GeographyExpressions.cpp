@@ -12,10 +12,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/GeographyExpressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
 
 namespace NES {
 ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitudeFieldName,
