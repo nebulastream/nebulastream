@@ -17,8 +17,7 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
-//class GeographyFieldsAccessExpressionNode;
-//using GeographyFieldsAccessExpressionNodePtr = std::shared_ptr<GeographyFieldsAccessExpressionNode>;
+
 /**
  * @brief A geography field access expression represents expressions
  * which accesses two fields, latitude and longitude.
@@ -34,8 +33,7 @@ class GeographyFieldsAccessExpressionNode : public ExpressionNode {
      */
     static ExpressionNodePtr create(FieldAccessExpressionNodePtr const& latitude,
                                     FieldAccessExpressionNodePtr const& longitude);
-//    static GeographyFieldsAccessExpressionNodePtr create(FieldAccessExpressionNodePtr const& latitude,
-//                                                         FieldAccessExpressionNodePtr const& longitude);
+
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
