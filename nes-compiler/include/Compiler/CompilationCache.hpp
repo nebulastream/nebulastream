@@ -15,7 +15,8 @@
 #ifndef NES_COMPILATIONCACHE_HPP
 #define NES_COMPILATIONCACHE_HPP
 #include <Compiler/CompilerForwardDeclarations.hpp>
-#include <map>
+#include <Compiler/CompilationResult.hpp>
+#include <unordered_map>
 #include <string>
 #include <mutex>
 
@@ -49,7 +50,7 @@ class CompilationCache {
     CompilationResult get(std::shared_ptr<SourceCode> code);
 
   private:
-    std::map<std::shared_ptr<SourceCode>, CompilationResult> compilationReuseMap;
+    std::unordered_map<std::shared_ptr<SourceCode>, CompilationResult> compilationReuseMap;
     std::mutex mutex;
 };
 
