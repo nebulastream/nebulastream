@@ -297,7 +297,7 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         auto sharedQueryId = request->queryid();
         auto subQueryId = request->subqueryid();
         if (!queryCatalogService->checkAndMarkForFailure(sharedQueryId, subQueryId)) {
-            NES_ERROR("Unable to mark queries for failure");
+            NES_ERROR("Unable to mark queries for failure :: subQueryId=" << subQueryId);
             return Status::CANCELLED;
         }
 

@@ -65,6 +65,7 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
     }
 }
 void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason) {
+    NES_DEBUG("notifySourceFailure called for query id=" << failedSource->getOperatorId() << " reason=" << reason);
     std::unique_lock lock(queryMutex);
     auto qepToFail = sourceToQEPMapping[failedSource->getOperatorId()];
     lock.unlock();

@@ -14,13 +14,14 @@
 
 #include <API/Schema.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
-#include <utility>
 
+using namespace std::string_literals;
 namespace NES {
 
 CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
@@ -35,12 +36,12 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
 
     std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
 
-    NES_ASSERT(values.size() == schema->getSize(),
-               "CSVParser: The input line does not contain the right number of delited fiels."
-               " Fields in schema: "
-                   << schema->getSize() << " Fields in line: " << values.size() << " Schema: " << schema->toString()
-                   << " Line: " << csvInputLine);
-
+    if (values.size() != schema->getSize()) {
+        throw Exceptions::RuntimeException("CSVParser: The input line does not contain the right number of delited fiels."s
+                                           + " Fields in schema: " + std::to_string(schema->getSize())
+                                           + " Fields in line: " + std::to_string(values.size())
+                                           + " Schema: " + schema->toString() + " Line: " + csvInputLine);
+    }
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];
