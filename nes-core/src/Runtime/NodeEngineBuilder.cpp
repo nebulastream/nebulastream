@@ -123,11 +123,11 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                 hardwareManager->getGlobalAllocator()));
         } else {
             for (auto i = 0u; i < numberOfQueues; ++i) {
-                bufferManagers.push_back(
-                    std::make_shared<BufferManager>(workerConfiguration->bufferSizeInBytes.getValue(),
-                                                    //if we run in static with multiple queues, we divide the whole buffer manager among the queues
-                                                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues,
-                                                    hardwareManager->getGlobalAllocator()));
+                bufferManagers.push_back(std::make_shared<BufferManager>(
+                    workerConfiguration->bufferSizeInBytes.getValue(),
+                    //if we run in static with multiple queues, we divide the whole buffer manager among the queues
+                    workerConfiguration->numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues,
+                    hardwareManager->getGlobalAllocator()));
             }
         }
 
@@ -203,12 +203,18 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
         auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
-        auto jitCompiler = (!this->jitCompiler) ? Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler, workerConfiguration->useCompilationCache.getValue()).build()
-                                                : this->jitCompiler;
+        auto jitCompiler = (!this->jitCompiler)
+            ? Compiler::JITCompilerBuilder()
+                  .registerLanguageCompiler(cppCompiler, workerConfiguration->useCompilationCache.getValue())
+                  .build()
+            : this->jitCompiler;
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
         queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
-        auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler, workerConfiguration->enableSourceSharing.getValue());
+        auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions,
+                                                                       phaseFactory,
+                                                                       jitCompiler,
+                                                                       workerConfiguration->enableSourceSharing.getValue());
         if (!compiler) {
             NES_ERROR("Runtime: error while building NodeEngine: error while creating compiler");
             throw Exceptions::RuntimeException("Error while building NodeEngine : failed to create compiler",

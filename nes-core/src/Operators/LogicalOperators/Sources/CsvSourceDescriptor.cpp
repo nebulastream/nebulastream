@@ -27,11 +27,11 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
                                                 CSVSourceTypePtr csvSourceType,
                                                 std::string logicalSourceName,
                                                 std::string physicalSourceName) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(csvSourceType), logicalSourceName, physicalSourceName));
+    return std::make_shared<CsvSourceDescriptor>(
+        CsvSourceDescriptor(std::move(schema), std::move(csvSourceType), logicalSourceName, physicalSourceName));
 }
 
-SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
-                                                CSVSourceTypePtr csvSourceType) {
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, CSVSourceTypePtr csvSourceType) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(csvSourceType), "", ""));
 }
 

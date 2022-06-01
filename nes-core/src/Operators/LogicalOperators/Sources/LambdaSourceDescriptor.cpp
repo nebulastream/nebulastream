@@ -25,10 +25,11 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
     GatheringMode::Value gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
-    std::string logicalSourceName, std::string physicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), generationFunction(std::move(generationFunction)),
-      numBuffersToProcess(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
-      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
+    std::string logicalSourceName,
+    std::string physicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName),
+      generationFunction(std::move(generationFunction)), numBuffersToProcess(numBuffersToProduce), gatheringValue(gatheringValue),
+      gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
 std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     const SchemaPtr& schema,
