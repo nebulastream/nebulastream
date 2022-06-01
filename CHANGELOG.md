@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.2.44](https://github.com/nebulastream/nebulastream/tree/v0.2.44) (2022-06-01)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.43...v0.2.44)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Prototype of operator Implementation Framework [\#2819](https://github.com/nebulastream/nebulastream/issues/2819)
+- Prepare Batch Join implementation for pull request [\#2692](https://github.com/nebulastream/nebulastream/issues/2692)
+
 ## [v0.2.43](https://github.com/nebulastream/nebulastream/tree/v0.2.43) (2022-06-01)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.42...v0.2.43)
