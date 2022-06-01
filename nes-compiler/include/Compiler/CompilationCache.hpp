@@ -14,11 +14,11 @@
 
 #ifndef NES_COMPILATIONCACHE_HPP
 #define NES_COMPILATIONCACHE_HPP
-#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/CompilationResult.hpp>
-#include <unordered_map>
-#include <string>
+#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <mutex>
+#include <string>
+#include <unordered_map>
 
 namespace NES::Compiler {
 
@@ -27,7 +27,6 @@ namespace NES::Compiler {
  */
 class CompilationCache {
   public:
-
     /**
      * @brief check if the binary for a query already exists
      * @param code

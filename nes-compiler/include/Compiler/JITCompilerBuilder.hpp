@@ -32,7 +32,8 @@ class JITCompilerBuilder {
      * @param languageCompiler
      * @return JITCompilerBuilder
      */
-    JITCompilerBuilder& registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler, bool useCompilationCache = false);
+    JITCompilerBuilder& registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler,
+                                                 bool useCompilationCache = false);
     /**
      * @brief Creates a instance of the JITCompiler containing all language compilers.
      * @return JITCompiler

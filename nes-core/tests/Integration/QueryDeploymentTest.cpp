@@ -24,6 +24,7 @@
 #include <NesBaseTest.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -31,7 +32,6 @@
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 using namespace std;
 
@@ -461,7 +461,8 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->enableSourceSharing = true;
     workerConfig1->bufferSizeInBytes = 1024;
-    workerConfig1->queryCompiler.outputBufferOptimizationLevel = QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
+    workerConfig1->queryCompiler.outputBufferOptimizationLevel =
+        QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
     bool started = false;
@@ -472,8 +473,7 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
             uint64_t timestamp;
         };
 
-        if(!started)
-        {
+        if (!started) {
             start.get_future().get();
             started = true;
         }
@@ -612,8 +612,6 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
                               "40,0,0\n"
                               "41,1,0\n";
 
-
-
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath1));
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath2));
 
@@ -630,7 +628,6 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     EXPECT_TRUE(retStopCord);
     NES_DEBUG("testSourceSharing: Test finished");
 }
-
 
 TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
@@ -656,7 +653,8 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     workerConfig1->enableSourceSharing = true;
     workerConfig1->bufferSizeInBytes = 1024;
-    workerConfig1->queryCompiler.outputBufferOptimizationLevel = QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
+    workerConfig1->queryCompiler.outputBufferOptimizationLevel =
+        QueryCompilation::QueryCompilerOptions::OutputBufferOptimizationLevel::NO;
 
     std::promise<bool> start;
     bool started = false;
@@ -667,8 +665,7 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
             uint64_t timestamp;
         };
 
-        if(!started)
-        {
+        if (!started) {
             start.get_future().get();
             started = true;
         }

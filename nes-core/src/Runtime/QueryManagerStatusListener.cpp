@@ -101,7 +101,7 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
     //THIS is now shutting down all
     for (auto entry : sourceToQEPMapping[source->getOperatorId()]) {
         NES_TRACE("NOFITFY operator id=" << source->getOperatorId() << "plan id=" << entry->getQueryId()
-                                          << " subplan=" << entry->getQuerySubPlanId());
+                                         << " subplan=" << entry->getQuerySubPlanId());
 
         entry->notifySourceCompletion(source, terminationType);
         if (terminationType == QueryTerminationType::Graceful) {

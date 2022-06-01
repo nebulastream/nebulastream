@@ -33,7 +33,8 @@ class DefaultPhaseFactory : public PhaseFactory {
     createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) override;
     CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options,
                                                      Compiler::JITCompilerPtr jitCompiler) override;
-    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options, bool sourceSharing) override;
+    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options,
+                                                                             bool sourceSharing) override;
     BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
     PredicationOptimizationPhasePtr createPredicationOptimizationPhase(QueryCompilerOptionsPtr options) override;
 };

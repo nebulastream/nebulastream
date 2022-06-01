@@ -31,6 +31,7 @@
 #include <Util/AtomicCounter.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <chrono>
 #include <condition_variable>
@@ -42,7 +43,6 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
-#include <Util/libcuckoo/cuckoohash_map.hh>
 
 #ifdef ENABLE_PAPI_PROFILER
 #include <Runtime/Profiler/PAPIProfiler.hpp>
@@ -409,7 +409,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     AsyncTaskExecutorPtr asyncTaskExecutor;
 
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
-
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;

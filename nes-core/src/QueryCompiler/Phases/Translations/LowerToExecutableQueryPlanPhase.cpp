@@ -78,13 +78,7 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
     //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines) {
-        processSource(pipeline,
-                      sources,
-                      sinks,
-                      executablePipelines,
-                      nodeEngine,
-                      pipelineQueryPlan,
-                      pipelineToExecutableMap);
+        processSource(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
     }
 
     return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),

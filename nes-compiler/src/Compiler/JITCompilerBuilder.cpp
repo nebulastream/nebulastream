@@ -28,6 +28,8 @@ JITCompilerBuilder& JITCompilerBuilder::registerLanguageCompiler(const std::shar
     return *this;
 }
 
-std::shared_ptr<JITCompiler> JITCompilerBuilder::build() { return std::make_shared<JITCompiler>(languageCompilers, useCompilationCache); }
+std::shared_ptr<JITCompiler> JITCompilerBuilder::build() {
+    return std::make_shared<JITCompiler>(languageCompilers, useCompilationCache);
+}
 
 }// namespace NES::Compiler

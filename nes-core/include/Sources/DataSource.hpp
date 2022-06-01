@@ -201,7 +201,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines);
 
-
     /**
      * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
      * @tparam Derived the class type that we want to cast the shared ptr
@@ -253,13 +252,13 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @brief set source sharing value
      * @param value
      */
-    void setSourceSharing(bool value){sourceSharing = value;};
+    void setSourceSharing(bool value) { sourceSharing = value; };
 
     /**
      * @brief set the number of queries that use this source
      * @param value
      */
-    void incrementNumberOfConsumerQueries(){numberOfConsumerQueries++;};
+    void incrementNumberOfConsumerQueries() { numberOfConsumerQueries++; };
 
   protected:
     Runtime::QueryManagerPtr queryManager;

@@ -23,7 +23,6 @@ namespace NES::Compiler {
  */
 class SourceCode {
   public:
-
     /**
      * Overload == operator
      * @param rhs
@@ -66,24 +65,21 @@ class SourceCode {
 
 namespace std {
 
-template <>
-struct hash<NES::Compiler::SourceCode>
-{
-    std::size_t operator()(const NES::Compiler::SourceCode& k) const
-    {
-        using std::size_t;
+template<>
+struct hash<NES::Compiler::SourceCode> {
+    std::size_t operator()(const NES::Compiler::SourceCode& k) const {
         using std::hash;
+        using std::size_t;
         using std::string;
 
         // Compute individual hash values for first,
         // second and third and combine them using XOR
         // and bit shifting:
 
-        return ((hash<string>()(k.getCode())
-                 ^ (hash<string>()(k.getLanguage()) << 1)) >> 1);
+        return ((hash<string>()(k.getCode()) ^ (hash<string>()(k.getLanguage()) << 1)) >> 1);
     }
 };
 
-}
+}// namespace std
 
 #endif// NES_INCLUDE_COMPILER_SOURCECODE_HPP_

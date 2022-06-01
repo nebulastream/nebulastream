@@ -14,9 +14,9 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_
 #include <Operators/OperatorId.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -24,7 +24,7 @@ namespace QueryCompilation {
 /**
  * @brief Provider to transform a source descriptor to executable DataSource.
  */
-class SourceSharingDataSourceProvider : public DefaultDataSourceProvider{
+class SourceSharingDataSourceProvider : public DefaultDataSourceProvider {
   public:
     explicit SourceSharingDataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
     static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
@@ -45,7 +45,7 @@ class SourceSharingDataSourceProvider : public DefaultDataSourceProvider{
     virtual ~SourceSharingDataSourceProvider() = default;
 
   protected:
-    std::map<std::pair<std::string,std::string>,DataSourcePtr> sourceDescriptorToDataSourceMap;
+    std::map<std::pair<std::string, std::string>, DataSourcePtr> sourceDescriptorToDataSourceMap;
 };
 }// namespace QueryCompilation
 }// namespace NES
