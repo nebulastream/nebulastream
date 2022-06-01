@@ -109,6 +109,16 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      */
     std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> subs, int level, std::vector<Join::JoinEdgePtr> joins);
 
+    std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>>
+    createSequenceCandidates(std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> subs,
+                             int level,
+                             std::set<OptimizerPlanOperatorPtr> set,
+                             TimeSequenceList* pList,
+                             std::vector<AbstractJoinPlanOperatorPtr> vector,
+                             std::vector<JoinLogicalOperatorNodePtr> vector1);
+
+
+
     /**
      * @brief sets operator and cumulative costs for a joinStep on level 2 or above.
      */
@@ -196,6 +206,16 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
     NodePtr getPotentialParentNodes(NodePtr sharedPtr);
 
     TimeSequenceList* getTimeSequenceList(std::vector<FilterLogicalOperatorNodePtr> filterOperators);
+    AbstractJoinPlanOperatorPtr optimizeSequenceOrder(std::vector<OptimizerPlanOperatorPtr> sources,
+                                                      TimeSequenceList* globalSequenceOrder,
+                                                      std::vector<AbstractJoinPlanOperatorPtr> vector,
+                                                      std::vector<JoinLogicalOperatorNodePtr> vector1);
+    AbstractJoinPlanOperatorPtr getAbstractJoinPlanOperatorPtr(std::vector<AbstractJoinPlanOperatorPtr> abstractJoinPlanOperators,
+                                                               std::shared_ptr<OptimizerPlanOperator> source);
+    Join::LogicalJoinDefinitionPtr
+    constructSequenceJoinDefinition(std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperatorNodes,
+                                    AbstractJoinPlanOperatorPtr leftChild,
+                                    AbstractJoinPlanOperatorPtr rightChild);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_

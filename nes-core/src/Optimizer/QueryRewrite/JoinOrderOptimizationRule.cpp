@@ -47,6 +47,20 @@ namespace NES::Optimizer {
             }
             return false;
         }
+
+        int getPosition(std::string nodeName){
+            TimeSequenceList* currentNode = this;
+            int counter = 0;
+            while(currentNode != nullptr){
+                if(currentNode->name == nodeName){
+                    return counter;
+                }
+                counter++;
+                currentNode = currentNode->next;
+            }
+            return counter;
+        }
+
     };
 
     QueryPlanPtr JoinOrderOptimizationRule::apply(QueryPlanPtr queryPlan) {
@@ -101,23 +115,40 @@ namespace NES::Optimizer {
                         }
                     }
                 }
-                // TODO extract global sequence order
-                TimeSequenceList* timeSequenceList = getTimeSequenceList(filters);
+                // Extracting the overall order of sequence operators
+                // used to examine different sequence routes later.
+                TimeSequenceList* globalSequenceOrder = getTimeSequenceList(filters);
 
 
 
-                // TODO Convert Filter+Join to joinEdges and add filterPredicate information make sure that leftOperator is BEFORE rightOperator
-                // Converting Filter and Join to joinEdges, while minding order and leveraging predicate information.
-                joinEdges = retrieveJoinEdges(joinOperators, abstractJoinOperators, filters);
+                // joinEdges not really needed as potentially all edges are viable (cartesian products only)
+                // need only to make sure to have the correct order when constructing the table.
+                //joinEdges = retrieveJoinEdges(joinOperators, abstractJoinOperators, filters);
+
+                // TODO write a optimizeSequenceOrderFunction
+                // Construct dynamic programming table and retrieve the best optimization order
+                AbstractJoinPlanOperatorPtr finalPlan =
+                    optimizeSequenceOrder(sources, globalSequenceOrder, abstractJoinOperators, joinOperators);
+
+
+                // TODO: Write the remaining functions as they are still from joinOrderOptimization
+                // extract join order from final plan
+                std::any joinOrder = extractJoinOrder(finalPlan);
+
+                // print join order
+                std::cout << printJoinOrder(joinOrder) << std::endl;
+
+                queryPlan = updateJoinOrder(queryPlan, finalPlan, sourceOperators);
+
+                NES_DEBUG(queryPlan->toString());
+
+
 
             }
             else{
-
             //  Derive a join graph by getting all the join edges between the sources (logical streams)
             joinEdges = retrieveJoinEdges(joinOperators, abstractJoinOperators);
             getHardCodedJoinSelectivities(joinEdges);
-            }
-
             // print joinEdges
             NES_DEBUG(listJoinEdges(joinEdges));
 
@@ -134,7 +165,10 @@ namespace NES::Optimizer {
 
             NES_DEBUG(queryPlan->toString());
 
+            }
+
             return queryPlan;
+
 
         } else {
             NES_DEBUG("Not enough JoinOperator found to do JoinReordering. Amount of joinOperations: " << joinOperators.size());
@@ -199,16 +233,15 @@ namespace NES::Optimizer {
 
     // optimizing the join order given the join graph
     AbstractJoinPlanOperatorPtr JoinOrderOptimizationRule::optimizeJoinOrder(std::vector<OptimizerPlanOperatorPtr> sources, std::vector<Join::JoinEdgePtr> joins){
-        //For each key (number of joined relations) the HashMap includes a HashMap where for each possible sub-combination of joins
+        //For each key (number of joined sources) the Map includes a Map where for each possible sub-combination of joins
         // The optimal one is stored (exists only if it is possible using JoinPredicates)
         std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> subs;
 
-        //Estimate the cardinality for all relations and add them in the HashMap
+        //Estimate the cardinality for all sources and add them in the HashMap
         // adding empty map for int 1
         subs[1] = std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>();
         NES_DEBUG("Setting the base logical streams for Optimization table: ")
 
-        // CHECK IF I REALLY NEED TO GO OVER abstractJoinOperators here and match them with the source -- could do a simple for loop int i = 0; i < sources.size(); i++ and do it simultaneously for bot vectors.
         for (auto source : sources){
             // insert rows into first level of hashmap
             std::set<OptimizerPlanOperatorPtr> key;
@@ -219,21 +252,61 @@ namespace NES::Optimizer {
         }
         NES_DEBUG("For level 1 we are dealing with " << subs[1].size() << " base logical stream(s), while we should have: " << sources.size())
 
-        //Calculate for each level=number of relations involved the optimal combinations
-        //and add them to the main HashMap
-        // ab level 2 fängt man ja erst an mit diesen Kombinationen.
-        // createJoinCandidates gibt wieder eine subs hashmap zurück, bekommt momentane kombis, level und joinEdges
+        //Calculate for each level=number of sources involved the optimal combinations
+        //and add them to the main Map
         for (size_t i = 2; i <= sources.size(); i++) {
             NES_DEBUG("Starting with level " << i << " Adding join candidates to dynamic programming hashmap")
             subs = createJoinCandidates(subs, i, joins);
         }
 
-        //Select the plan in which all relations are involved
+        //Select the plan in which all sources are involved
         //Already optimal plan
         std::set<OptimizerPlanOperatorPtr> sourceSet(sources.begin(), sources.end());
         AbstractJoinPlanOperatorPtr finalPlan = subs[sources.size()][sourceSet];
         return finalPlan;
 
+    }
+
+    AbstractJoinPlanOperatorPtr
+    JoinOrderOptimizationRule::optimizeSequenceOrder(std::vector<OptimizerPlanOperatorPtr> sources,
+                                                     TimeSequenceList* globalSequenceOrder,
+                                                     std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators,
+                                                     std::vector<JoinLogicalOperatorNodePtr> joinOperators) {
+        //For each key (number of joined sources) the Map includes a Map where for each possible sub-combination of joins
+        // The optimal one is stored (exists only if it is possible using JoinPredicates)
+        std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> subs;
+
+        //Estimate the cardinality for all sources and add them in the Map
+        // adding empty map for int 1
+        subs[1] = std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>();
+        NES_DEBUG("Setting the base logical sources for Sequence Optimization Table: ")
+
+        for (auto source : sources){
+            // insert rows into first level of hashmap
+            std::set<OptimizerPlanOperatorPtr> key;
+            key.insert(source);
+            AbstractJoinPlanOperatorPtr joinSource = getAbstractJoinPlanOperatorPtr(abstractJoinOperators, source);
+            joinSource->setInvolvedOptimizerPlanOperators(key);
+            subs[1].insert(std::pair<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>(key, joinSource));
+        }
+        NES_DEBUG("For level 1 we are dealing with " << subs[1].size() << " base logical source(s), while we should have: " << sources.size())
+
+        // Create a set of sources. This is needed to see which candidates are open for a join.
+        std::set<OptimizerPlanOperatorPtr> sourceSet(sources.begin(), sources.end());
+
+
+        //Calculate for each level=number of sources involved the optimal combinations
+        //and add them to the main Map
+        // TODO: Change this to correctly capture sequence characteristics
+        for (size_t i = 2; i <= sources.size(); i++) {
+            NES_DEBUG("Starting with level " << i << " Adding sequence candidates to dynamic programming map")
+            subs = createSequenceCandidates(subs, i, sourceSet, globalSequenceOrder, abstractJoinOperators, joinOperators);
+        }
+
+        //Select the plan in which all sources are involved
+        //Already optimal plan
+        AbstractJoinPlanOperatorPtr finalPlan = subs[sources.size()][sourceSet];
+        return finalPlan;
     }
 
     std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> JoinOrderOptimizationRule::createJoinCandidates(std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> subs, int level, std::vector<Join::JoinEdgePtr> joins){
@@ -285,6 +358,97 @@ namespace NES::Optimizer {
                 outerLoopCount++;
             }
         }
+        return subs;
+    }
+
+    // TODO: Rewrite this function to capture behavior of sequences
+    std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>>
+    JoinOrderOptimizationRule::createSequenceCandidates(
+        std::map<int, std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>> subs,
+        int level,
+        std::set<OptimizerPlanOperatorPtr> set,
+        TimeSequenceList* pList,
+        std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators,
+        std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperators) {
+        //Add map for current level (number of involved log. sources)
+        subs[level] = std::map<std::set<OptimizerPlanOperatorPtr>, AbstractJoinPlanOperatorPtr>();
+
+        //Create source pairs and add them into the 2-level map
+        //(initial step therefore special case)
+        if (level == 2) {
+            auto firstLevel = subs[1];
+            for (auto row : firstLevel){
+                // get the base operator from first level
+                auto optimizerPlanOperator = *(row.first.begin());
+
+                // Retrieve position of optimizerPlanOperator in SequenceOrder
+                int basePosition = pList->getPosition(optimizerPlanOperator->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+
+                // create a join with every other base operator as long as the time constraint is met.
+                // this means the position in TimeSequenceList of the right side must be > than optimizerPlanOperators
+                for (auto source : set){
+                    int sourcePosition = pList->getPosition(source->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+                    // check if > base position
+                    if(sourcePosition > basePosition){
+                        // get respective abstractJoinPlanOperator
+                        auto joinOperatorRight = getAbstractJoinPlanOperatorPtr(abstractJoinOperators, source);
+
+                        // TODO take a joinDefinition from any other two joins and merge them
+                        Join::LogicalJoinDefinitionPtr joinDefinition = constructSequenceJoinDefinition(joinLogicalOperators, row.second, joinOperatorRight);
+
+
+                        // get the respective join selectivity
+                        float joinSelectivity = 1;
+                        // joinSelectivity = getJoinSelectivity(); // TODO write this method.
+
+                        // create a new match of optimizerPlanOperator and Source
+                        AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(row.second, joinOperatorRight, joinDefinition, joinSelectivity);
+
+
+                       // AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(row.second, graphEdge->getRightOperator(), graphEdge->getJoinDefinition(), graphEdge->getSelectivity());
+                        //setCosts(plan);
+                        //subs[2][plan->getInvolvedOptimizerPlanOperators()] = plan;
+
+                    }
+                }
+
+            }
+            return subs;
+        }
+        /*
+        //Get possible combinations (for a join of 3 relations => only 1 Relation joins 2 already Joined relations possible)
+        std::vector<std::vector<int>> combs = getCountCombs(level - 1);
+
+        //Create for each possible combination of joins an AbstractJoinPlanOperator
+        //Should a plan with an identical relation combination already exists the cost-efficient
+        //plan is added to the level-HashMap
+        for (auto comb : combs) {
+            // left side of comb is comb[0] and right side is comb[1] as we are dealing with pairs.
+            int outerLoopCount = 1;
+            for(auto left : subs[comb[0]]){
+                std::cout << "Outerloop " << outerLoopCount << " - Setting left id to: " << std::to_string(left.second->getId()) << std::endl;
+                int innerLoopCount = 1;
+                for (auto right : subs[comb[1]]){
+                    std::cout << "     Innerloop " << innerLoopCount << "Setting right ids to: " << std::to_string(right.second->getLeftChild()->getId()) << " x " << std::to_string(right.second->getRightChild()->getId()) << std::endl;
+
+                    // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
+                    std::optional<AbstractJoinPlanOperatorPtr> newPlan = join(left.second, right.second, joins);
+                    if (newPlan){
+                        setCosts(newPlan.value());
+                        // check if newPlan is currently the best
+                        // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
+                        AbstractJoinPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
+
+                        if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
+                            subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
+                        }
+                    }
+                    innerLoopCount++;
+                }
+                outerLoopCount++;
+            }
+        }
+         */
         return subs;
     }
 
@@ -635,6 +799,33 @@ namespace NES::Optimizer {
         }
 
         return timeSequenceList;
+    }
+    AbstractJoinPlanOperatorPtr
+    JoinOrderOptimizationRule::getAbstractJoinPlanOperatorPtr(std::vector<AbstractJoinPlanOperatorPtr> abstractJoinPlanOperators,
+                                                              std::shared_ptr<OptimizerPlanOperator> source) {
+
+        for (AbstractJoinPlanOperatorPtr joinOperator : abstractJoinPlanOperators){
+            if (joinOperator->getSourceNode()->getSourceDescriptor()->equal(source->getSourceNode()->getSourceDescriptor())){
+                return joinOperator;
+            }
+        }
+       // should never occur.
+        return nullptr;
+    }
+    Join::LogicalJoinDefinitionPtr
+    JoinOrderOptimizationRule::constructSequenceJoinDefinition(std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperatorNodes,
+                                                               AbstractJoinPlanOperatorPtr leftChild,
+                                                               AbstractJoinPlanOperatorPtr rightChild) {
+        NES_DEBUG(leftChild)
+        NES_DEBUG(rightChild)
+        // TODO: Write method that looks for leftChild being present in one of the joins and rightChild being present in one of the joins and simply copying the leftChild JoinDefinition and adding rightChild info to it.
+        for (size_t i = 0; i <= joinLogicalOperatorNodes.size(); i++) {
+            auto node = joinLogicalOperatorNodes[i];
+            NES_DEBUG(node->getJoinDefinition()->getLeftJoinKey())
+            NES_DEBUG(node->getJoinDefinition()->getLeftSourceType());
+        }
+
+        return NES::Join::LogicalJoinDefinitionPtr();
     }
 
     }// namespace NES::Optimizer
