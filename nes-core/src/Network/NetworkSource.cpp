@@ -106,26 +106,25 @@ bool NetworkSource::start() {
 bool NetworkSource::stop(Runtime::QueryTerminationType type) {
     using namespace Runtime;
     bool expected = true;
-    NES_ASSERT2_FMT(type == Runtime::QueryTerminationType::HardStop,
-                    "NetworkSource::stop only supports HardStop :: partition " << nesPartition);
+    NES_ASSERT2_FMT(type == QueryTerminationType::HardStop || type == QueryTerminationType::Failure,
+                    "NetworkSource::stop only supports HardStop or Failure :: partition " << nesPartition);
     if (running.compare_exchange_strong(expected, false)) {
+        auto tokenType = type == QueryTerminationType::HardStop ? HardEndOfStream : FailEndOfStream;
         NES_DEBUG("NetworkSource: stop called on " << nesPartition << " sending hard eos");
-        auto newReconf = ReconfigurationMessage(-1, -1, Runtime::HardEndOfStream, DataSource::shared_from_base<DataSource>());
+        auto newReconf = ReconfigurationMessage(-1, -1, tokenType, DataSource::shared_from_base<DataSource>());
         queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
-        queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
+        queryManager->notifySourceCompletion(shared_from_base<DataSource>(), type);
         for (const auto& successor : executableSuccessors) {
-            std::visit(detail::overloaded{[this](DataSinkPtr sink) {
+            std::visit(detail::overloaded{[this, tokenType](DataSinkPtr sink) {
                                               auto queryId = sink->getQueryId();
                                               auto subPlanId = sink->getParentPlanId();
-                                              auto newReconf =
-                                                  ReconfigurationMessage(queryId, subPlanId, Runtime::HardEndOfStream, sink);
+                                              auto newReconf = ReconfigurationMessage(queryId, subPlanId, tokenType, sink);
                                               queryManager->addReconfigurationMessage(queryId, subPlanId, newReconf, true);
                                           },
-                                          [this](Execution::ExecutablePipelinePtr pipeline) {
+                                          [this, tokenType](Execution::ExecutablePipelinePtr pipeline) {
                                               auto queryId = pipeline->getQueryId();
                                               auto subPlanId = pipeline->getQuerySubPlanId();
-                                              auto newReconf =
-                                                  ReconfigurationMessage(queryId, subPlanId, Runtime::HardEndOfStream, pipeline);
+                                              auto newReconf = ReconfigurationMessage(queryId, subPlanId, tokenType, pipeline);
                                               queryManager->addReconfigurationMessage(queryId, subPlanId, newReconf, true);
                                           }},
                        successor);
@@ -197,28 +196,23 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
 void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSource: postReconfigurationCallback() called " << nesPartition.toString());
     NES::DataSource::postReconfigurationCallback(task);
+    Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
-        case Runtime::FailEndOfStream: {
-            NES_NOT_IMPLEMENTED();
-        }
-        case Runtime::Destroy:
-        case Runtime::HardEndOfStream:
-        case Runtime::SoftEndOfStream: {
-            NES_DEBUG("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer "
-                      << nesPartition.toString());
-            networkManager->unregisterSubpartitionConsumer(nesPartition);
-            bool expected = true;
-            if (running.compare_exchange_strong(expected, false)) {
-                NES_DEBUG("NetworkSource is stopped on reconf task with id " << nesPartition.toString());
-                queryManager->notifySourceCompletion(shared_from_base<DataSource>(),
-                                                     task.getType() == Runtime::SoftEndOfStream
-                                                         ? Runtime::QueryTerminationType::Graceful
-                                                         : Runtime::QueryTerminationType::HardStop);
-            }
-            return;
-        }
+        case Runtime::FailEndOfStream: { terminationType = Runtime::QueryTerminationType::Failure; break; }
+        case Runtime::HardEndOfStream: { terminationType = Runtime::QueryTerminationType::HardStop; break; }
+        case Runtime::SoftEndOfStream: { terminationType = Runtime::QueryTerminationType::Graceful; break; }
         default: {
             break;
+        }
+    }
+    if (Runtime::QueryTerminationType::Invalid != terminationType) {
+        NES_DEBUG("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer "
+                  << nesPartition.toString());
+        networkManager->unregisterSubpartitionConsumer(nesPartition);
+        bool expected = true;
+        if (running.compare_exchange_strong(expected, false)) {
+            NES_DEBUG("NetworkSource is stopped on reconf task with id " << nesPartition.toString());
+            queryManager->notifySourceCompletion(shared_from_base<DataSource>(), terminationType);
         }
     }
 }
