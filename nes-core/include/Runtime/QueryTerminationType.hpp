@@ -31,6 +31,7 @@ static O& operator<<(O& os, const QueryTerminationType& type) {
         default: return os << "Invalid";
     }
 }
+
 }// namespace NES::Runtime
 
 #endif//NES_NES_CORE_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_

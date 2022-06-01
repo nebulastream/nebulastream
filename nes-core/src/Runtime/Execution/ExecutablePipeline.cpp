@@ -222,7 +222,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 }
                 fail();
                 queryManager->notifyPipelineCompletion(querySubPlanId,
-                                                       shared_from_this<ExecutablePipeline>(),
+                                                       inherited0::shared_from_this<ExecutablePipeline>(),
                                                        Runtime::QueryTerminationType::Failure);
                 for (const auto& successorPipeline : successorPipelines) {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {

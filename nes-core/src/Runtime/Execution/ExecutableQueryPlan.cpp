@@ -208,6 +208,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             NES_ASSERT2_FMT((numOfTerminationTokens.fetch_sub(1) == 1),
                             "Invalid HardEndOfStream on qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
             NES_ASSERT2_FMT(stop(), "Cannot hard stop qep queryId=" << queryId << " querySubPlanId=" << querySubPlanId);
+            queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(),
+                                                  Execution::ExecutableQueryPlanStatus::Stopped);
             break;
         }
         case SoftEndOfStream: {

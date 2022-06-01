@@ -173,6 +173,7 @@ bool DataSource::fail() {
         // it may happen that the source failed prior of sending its eos
         std::unique_lock lock(startStopMutex);// do not call stop if holding this mutex
         auto self = shared_from_base<DataSource>();
+        NES_DEBUG("Source " << operatorId << " has already injected failure? " << (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
         if (!this->endOfStreamSent) {
             queryManager->notifySourceCompletion(self, Runtime::QueryTerminationType::Failure);
             endOfStreamSent = queryManager->addEndOfStream(self, Runtime::QueryTerminationType::Failure);
@@ -246,7 +247,12 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
                 std::rethrow_exception(expPtr);
             }
         } catch (std::exception const& e) {// it would not work if you pass by value
-            queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
+            // i leave the following lines just as a reminder:
+            // here we do not need to call notifySourceFailure because it is done from the main thread
+            // the only reason to call notifySourceFailure is when the main thread was not stated
+            if (!wasStarted) {
+                queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
+            }
             return true;
         }
     }
