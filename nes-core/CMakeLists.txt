@@ -104,6 +104,7 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/deta
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/WorkerContext.hpp Runtime/WorkerContext.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/ExecutionResult.hpp Runtime/ExecutionResult.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Network/NetworkForwardRefs.hpp Network/NetworkForwardRefs.hpp)
+register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Network/NesPartition.hpp Network/NesPartition.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Expressions/FieldAccessExpressionNode.hpp Nodes/Expressions/FieldAccessExpressionNode.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Expressions/ExpressionNode.hpp Nodes/Expressions/ExpressionNode.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
