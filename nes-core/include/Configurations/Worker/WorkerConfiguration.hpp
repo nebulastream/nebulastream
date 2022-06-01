@@ -151,6 +151,12 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
 
+    UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, 0, "Lambda source"};
+
+    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1024, "Number of buffers to produce"};
+
+    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, 100, "Source gathering interval"};
+
     /**
      * @brief Enables the statistic output
      */
@@ -253,6 +259,9 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numberOfThreadsPerQueue,
                 &queryManagerMode,
                 &configPath,
+                &lambdaSource,
+                &numberOfBuffersToProduce,
+                &sourceGatheringInterval,
                 &enableStatisticOuput};
     }
 };

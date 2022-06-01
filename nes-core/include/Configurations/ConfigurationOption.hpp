@@ -156,6 +156,7 @@ const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string CONFIG_PATH = "configPath";
+const std::string LAMBDA_SOURCE_CONFIG = "lambdaSource";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";

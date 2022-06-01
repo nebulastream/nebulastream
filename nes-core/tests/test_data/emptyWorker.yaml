@@ -16,3 +16,9 @@ numberOfBuffersInGlobalBufferManager: 2048
 
 # Number buffers in source local buffer pool
 numberOfBuffersInSourceLocalBufferPool: 128
+
+lambdaSource: 3
+
+numberOfBuffersToProduce: 3
+
+sourceGatheringInterval: 3

@@ -253,6 +253,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     WorkerConfigurationPtr workerConfig;
     Catalogs::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
+    std::shared_ptr<std::thread> statisticOutputThread;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
