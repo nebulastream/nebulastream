@@ -48,7 +48,10 @@ void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
     NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
     watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
     if (!(bufferCount % buffersPerEpoch) && bufferCount != 0) {
-        notifyEpochTermination(watermarkProcessor->getCurrentWatermark());
+        auto timestamp = watermarkProcessor->getCurrentWatermark();
+        if(timestamp) {
+            notifyEpochTermination(timestamp);
+        }
     }
     bufferCount++;
 }
