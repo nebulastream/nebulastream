@@ -59,11 +59,11 @@ RestServer::RestServer(std::string host,
       host(std::move(host)), port(port) {}
 
 bool RestServer::start() {
+#ifdef NES_USE_OATPP
     NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
     RestServerInterruptHandler::hookUserInterruptHandler();
     //restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
     try {
-#ifdef NES_USE_OATPP
         oatpp::base::Environment::init();
         /* Run App */
         run();
@@ -72,7 +72,26 @@ bool RestServer::start() {
         /* Destroy oatpp Environment */
         oatpp::base::Environment::destroy();
         restEngine.reset();
-#else
+
+    } catch (const std::exception& e) {
+        NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
+        return false;
+    } catch (...) {
+        NES_FATAL_ERROR("RestServer: Unable to start REST server unknown exception.");
+        return false;
+    }
+    return true;
+#endif
+
+//#else
+    return RestServer::startWithRestSDK();
+}
+
+bool RestServer::startWithRestSDK(){
+    NES_DEBUG("RestServer: starting on " << host << ":" << std::to_string(port));
+    RestServerInterruptHandler::hookUserInterruptHandler();
+    //restEngine->setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
+    try {
         // wait for server initialization...
         auto task = restEngine->accept();
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
@@ -86,7 +105,7 @@ bool RestServer::start() {
         restEngine.reset();
         shutdownPromise.set_value(true);
         NES_DEBUG("RestServer: after waitForUserInterrupt");
-#endif
+
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
         shutdownPromise.set_exception(std::make_exception_ptr(e));
@@ -125,7 +144,7 @@ void RestServer::run() {
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
     /* Print info about server port */
-    OATPP_LOGI("MyApp", "Server running on port %s", connectionProvider->getProperty("port").getData());
+    OATPP_LOGI("nebula stream", "Server running on port %s", connectionProvider->getProperty("port").getData());
 
     /* Run server */
     server.run();

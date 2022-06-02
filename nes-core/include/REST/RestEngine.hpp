@@ -151,8 +151,6 @@ class RestEngine {
 
   protected:
     web::http::experimental::listener::http_listener _listener;// main micro service network endpoint
-#else
-
 
   private:
     QueryControllerPtr queryController;
@@ -163,10 +161,11 @@ class RestEngine {
     TopologyControllerPtr topologyController;
     UdfCatalogControllerPtr udfCatalogController;
     Experimental::MaintenanceControllerPtr maintenanceController;
-    LocationControllerPtr locationController;
+#else
+#endif
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;
 }// namespace NES
-#endif
+
 #endif// NES_INCLUDE_REST_RESTENGINE_HPP_
