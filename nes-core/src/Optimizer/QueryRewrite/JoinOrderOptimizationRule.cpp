@@ -406,24 +406,24 @@ namespace NES::Optimizer {
                         Join::LogicalJoinDefinitionPtr joinDefinition = constructSequenceJoinDefinition(joinLogicalOperators, row.second, joinOperatorRight);
 
 
-                        // get the respective join selectivity
-                        float joinSelectivity = 1;
-                        // joinSelectivity = getJoinSelectivity(); // TODO write this method.
+                        // get the respective join selectivity (HARDCODED!)
+                        float joinSelectivity = joinSelectivity = getJoinSelectivity(joinDefinition);
 
                         // create a new match of optimizerPlanOperator and Source
                         AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(row.second, joinOperatorRight, joinDefinition, joinSelectivity);
-
-
-                       // AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(row.second, graphEdge->getRightOperator(), graphEdge->getJoinDefinition(), graphEdge->getSelectivity());
-                        //setCosts(plan);
-                        //subs[2][plan->getInvolvedOptimizerPlanOperators()] = plan;
-
+                        setCosts(plan);
+                        subs[2][plan->getInvolvedOptimizerPlanOperators()] = plan;
                     }
                 }
 
             }
             return subs;
         }
+
+        if (level>2){
+            // TODO construct.
+        }
+
         /*
         //Get possible combinations (for a join of 3 relations => only 1 Relation joins 2 already Joined relations possible)
         std::vector<std::vector<int>> combs = getCountCombs(level - 1);
@@ -825,26 +825,141 @@ namespace NES::Optimizer {
     JoinOrderOptimizationRule::constructSequenceJoinDefinition(std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperatorNodes,
                                                                AbstractJoinPlanOperatorPtr leftChild,
                                                                AbstractJoinPlanOperatorPtr rightChild) {
-        NES_DEBUG(leftChild)
-        NES_DEBUG(rightChild)
+
+        Join::LogicalJoinDefinitionPtr leftDefinition;
+        Join::LogicalJoinDefinitionPtr rightDefinition;
+
         // TODO: Write method that looks for leftChild being present in one of the joins and rightChild being present in one of the joins and simply copying the leftChild JoinDefinition and adding rightChild info to it.
-        for (size_t i = 0; i <= joinLogicalOperatorNodes.size(); i++) {
-            auto node = joinLogicalOperatorNodes[i];
-            auto children = node->getChildren(); // should be the join candidates
-            auto leftChildJoinNode = children[0];
-            auto rightChildJoiNode = children[1];
+        for (size_t i = 0; i < joinLogicalOperatorNodes.size(); i++) {
+            auto joinDefinition = joinLogicalOperatorNodes[i]->getJoinDefinition();
+            auto leftKeyName = joinDefinition->getLeftJoinKey()->getFieldName();
+            auto rightKeyName = joinDefinition->getRightJoinKey()->getFieldName();
+
+            // keys need to be equivalent to e.g. string "Temperature" leftChild->optimizerPlanOperator->sourceNode->getSourceDescriptor->logicalsourcename
+            // The left keys look like: -_-_Quantity_Velocity_Temperature+leftKey_20, where the relevant part is the name before +leftKey
+            // TODO extract relevant name for comparison
+            size_t pos = leftKeyName.find('+');
+            std::string derivedLeftKeyName = leftKeyName.substr(0, pos);
+            while(derivedLeftKeyName.find('_') != std::string::npos){
+                pos = derivedLeftKeyName.find_last_of('_');
+                derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
+            }
+            if(leftChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName){
+                // TODO write some logic
+                leftDefinition = joinDefinition;
+            }
+
+            // right keys look like Velocity+rightKey_4, where the relevant part is everything before the +
+            pos = rightKeyName.find('+');
+            std::string derivedRightKeyName = rightKeyName.substr(0, pos);
+            if(rightChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName){
+                rightDefinition = joinDefinition;
+            }
 
 
-            NES_DEBUG(node->getJoinDefinition()->getLeftJoinKey()->getFieldName())
-            NES_DEBUG(node->getJoinDefinition()->getLeftSourceType());
+        }
+
+        if (leftDefinition == rightDefinition){
+            return leftDefinition;
+        } else{
+            // construct a joinDefinition where the leftKey comes from LeftDefinition and the rightKey from RightDefintion and return it.
+            // beispiel: quantity (links) mit velocity (rechts)
+            return Join::LogicalJoinDefinition::create(
+                leftDefinition->getLeftJoinKey(),
+                rightDefinition->getRightJoinKey(),
+                leftDefinition->getWindowType(),
+                leftDefinition->getDistributionType(),
+                leftDefinition->getTriggerPolicy(),
+                leftDefinition->getTriggerAction(),
+                leftDefinition->getNumberOfInputEdgesLeft(),
+                rightDefinition->getNumberOfInputEdgesRight(),
+                leftDefinition->getJoinType()
+                );
+        }
+
+        return nullptr;
+    }
+    float JoinOrderOptimizationRule::getJoinSelectivity(Join::LogicalJoinDefinitionPtr joinDefinition) {
+        // Extract names of the join partners and check if this combination has a unique selectivity.
+        // Mind the order is VERY important here.
+        size_t pos = joinDefinition->getLeftJoinKey()->getFieldName().find('+');
+        std::string derivedLeftKeyName = joinDefinition->getLeftJoinKey()->getFieldName().substr(0, pos);
+        while(derivedLeftKeyName.find('_') != std::string::npos){
+            pos = derivedLeftKeyName.find_last_of('_');
+            derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
+        }
+        pos = joinDefinition->getRightJoinKey()->getFieldName().find('+');
+        std::string derivedRightKeyName = joinDefinition->getRightJoinKey()->getFieldName().substr(0, pos);
+
+        // --- -- - -- - - -- -
+
+        if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "Velocity"){
+            return 0.1;
+        } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "Temperature"){
+            return 0.02;
+        } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "Humidity"){
+            return 0.5;
+        } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "PM25"){
+            return 0.3;
+        } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "PM10"){
+            return 0.8;
+        } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "Temperature"){
+            return 0.7;
+        } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "Humidity"){
+            return 0.33;
+        } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "PM25"){
+            return 0.23;
+        } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "PM10"){
+            return 0.5;
+        } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "Quantity"){
+            return 0.8;
+        } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "Velocity"){
+            return 0.1;
+        } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "Humidity"){
+            return 0.2;
+        } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "PM25"){
+            return 0.4;
+        } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "PM10"){
+            return 0.7;
+        } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "Quantity"){
+            return 0.9;
+        } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "Temperature"){
+            return 0.999;
+        } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "Velocity"){
+            return 0.111;
+        } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "PM25"){
+            return 0.1223;
+        } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "PM10"){
+            return 0.15;
+        } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "Quantity"){
+            return 0.52;
+        } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Temperature"){
+            return 0.482;
+        } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Velocity"){
+            return 0.3237;
+        } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Humidity"){
+            return 0.2382;
+        } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "PM10"){
+            return 0.674;
+        } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Quantity"){
+            return 0.3321;
+        } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Temperature"){
+            return 0.12328;
+        } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Velocity"){
+            return 0.19453;
+        } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Humidity"){
+            return 0.6847;
+        } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "PM25"){
+            return 0.854373;
+        } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Quantity"){
+            return 0.4373;
+        }else{
+            return 1;
         }
 
 
 
-        // note: We are getting random keys for leftKey and rightKey that look like cep_leftkey12 and respond to the next free operatorId.
-        // TODO: Find a way of distinguishing left and right keys so that i know, that they are properly matching the source
 
-        return NES::Join::LogicalJoinDefinitionPtr();
     }
 
     }// namespace NES::Optimizer

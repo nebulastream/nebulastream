@@ -306,13 +306,13 @@ class Times {
      * @brief: this function creates a virtual key for the left side of the binary operator
      * @return the unique name of the key
      */
-std::string keyAssignmentLeft();
+std::string keyAssignmentLeft(std::string string);
 
 /**
      * @brief: this function creates a virtual key for the right side of the binary operator
      * @return the unique name of the key
      */
-std::string keyAssignmentRight();
+std::string keyAssignmentRight(std::string string);
 
 }//namespace CEPOperatorBuilder
 

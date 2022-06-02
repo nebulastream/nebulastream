@@ -111,8 +111,8 @@ And::And(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignmentLeft();
-    std::string cepRightKey = keyAssignmentRight();
+    std::string cepLeftKey = keyAssignmentLeft(std::string());
+    std::string cepRightKey = keyAssignmentRight(std::string());
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -131,8 +131,9 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
-    std::string cepLeftKey = keyAssignmentLeft();
-    std::string cepRightKey = keyAssignmentRight();
+
+    std::string cepLeftKey = keyAssignmentLeft(originalQuery.queryPlan->getSourceConsumed());
+    std::string cepRightKey = keyAssignmentRight(subQueryRhs.queryPlan->getSourceConsumed());
     //next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
@@ -173,19 +174,19 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
 }
 
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-std::string keyAssignmentRight() {
+std::string keyAssignmentRight(std::string consumedSources) {
     //first, get unique ids for the key attributes
     auto cepRightId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepRightKey = "cep_rightkey" + std::to_string(cepRightId);
+    std::string cepRightKey = consumedSources + "+rightKey_" + std::to_string(cepRightId);
     return cepRightKey;
 }
 
-std::string keyAssignmentLeft() {
+std::string keyAssignmentLeft(std::string consumedSources) {
     //first, get unique ids for the key attributes
     auto cepLeftId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
+    std::string cepLeftKey = consumedSources + "+leftKey_" + std::to_string(cepLeftId);
     return cepLeftKey;
 }
 

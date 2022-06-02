@@ -216,6 +216,7 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
     constructSequenceJoinDefinition(std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperatorNodes,
                                     AbstractJoinPlanOperatorPtr leftChild,
                                     AbstractJoinPlanOperatorPtr rightChild);
+    float getJoinSelectivity(Join::LogicalJoinDefinitionPtr joinDefinition);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_
