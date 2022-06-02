@@ -100,6 +100,12 @@ class RestServer {
    */
     bool start();
 
+    /**
+   * @brief method to start the rest server with SDK
+   * @return bool indicating success
+   */
+    bool startWithRestSDK();
+
     void run();
 
     /**
