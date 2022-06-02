@@ -205,7 +205,7 @@ const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string IS_MOBILE_CONFIG = "isMobile";
 const std::string LOCATION_SOURCE_CONFIG = "locationSourceConfig";
 const std::string LOCATION_SOURCE_TYPE_CONFIG = "locationSourceType";
-const std::string NODE_LOCATION_WRAPPER_CONFIG = "locationWrapperConfig";
+const std::string MOBILITY_CONFIG_PATH_CONFIG = "mobilityConfigPath";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
@@ -214,18 +214,17 @@ const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
 //worker mobility config names
-const std::string PATH_PREDICTION_UPDATE_INTERVAL = "pathPredictionUpdateInterval";
-const std::string LOCATION_BUFFER_SIZE = "locationBufferSize";
-const std::string LOCATION_BUFFER_SAVE_RATE = "locationBufferSaveRate";
-const std::string PATH_DISTANCE_DELTA_METERS = "pathDistanceDeltaMeters";
-const std::string NODE_DOWNLOAD_RADIUS = "nodeInfoDownloadRadius";
-const std::string NODE_INDEX_UPDATE_THRESHOLD = "nodeIndexUpdateThreshold";
-const std::string DEFAULT_COVERAGE_RADIUS = "defaultCoverageRadiusMeters";
-const std::string PATH_PREDICTION_LENGTH = "pathPredictionLengthMeters";
-const std::string MINUMUM_PLANNED_RECONNECTS = "minimumPlannedReconnects";
-const std::string SEND_DEVICE_POSITION_UPDATE_THRESHOLD_CONFIG = "sendDevicePositionUpdateThreshold";
-const std::string PUSH_DEVICE_POSITION_UPDATES = "pushPositionUpdates";
-const std::string SEND_LOCATION_UPDATE_INTERVAL = "sendLocationUpdateInterval";
+const std::string PATH_PREDICTION_UPDATE_INTERVAL_CONFIG = "pathPredictionUpdateInterval";
+const std::string LOCATION_BUFFER_SIZE_CONFIG = "locationBufferSize";
+const std::string LOCATION_BUFFER_SAVE_RATE_CONFIG = "locationBufferSaveRate";
+const std::string PATH_DISTANCE_DELTA_CONFIG = "pathDistanceDelta";
+const std::string NODE_INFO_DOWNLOAD_RADIUS_CONFIG = "nodeInfoDownloadRadius";
+const std::string NODE_INDEX_UPDATE_THRESHOLD_CONFIG = "nodeIndexUpdateThreshold";
+const std::string DEFAULT_COVERAGE_RADIUS_CONFIG = "defaultCoverageRadius";
+const std::string PATH_PREDICTION_LENGTH_CONFIG = "pathPredictionLength";
+const std::string SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG = "sendDevicePositionUpdateThreshold";
+const std::string PUSH_DEVICE_LOCATION_UPDATES_CONFIG = "pushPositionUpdates";
+const std::string SEND_LOCATION_UPDATE_INTERVAL_CONFIG = "sendLocationUpdateInterval";
 
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";

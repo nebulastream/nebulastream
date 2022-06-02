@@ -27,9 +27,9 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, C
     //todo: make the names match to avoid confusion
     pathUpdateInterval = configuration->pathPredictionUpdateInterval.getValue();
     locationBufferSize = configuration->locationBufferSize.getValue();
-    saveRate = configuration->saveRate.getValue();
+    saveRate = configuration->locationBufferSaveRate.getValue();
     deltaAngle = S2Earth::MetersToChordAngle(configuration->pathDistanceDelta.getValue());
-    nodeDownloadRadius = configuration->nodeDownloadRadius.getValue();
+    nodeDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
     //nodeIndexUpdateThreshold = configuration->nodeIndexUpdateThreshold.getValue();
     defaultCoverageAngle = S2Earth::MetersToChordAngle(configuration->defaultCoverageRadius.getValue());
     predictedPathLengthAngle = S2Earth::MetersToChordAngle(configuration->pathPredictionLength);
@@ -122,7 +122,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
     while (true) {
         auto currentOwnLocation = locationProvider->getCurrentLocation();
 
-        //if saveRate updates have been done since last save: save current location to buffer
+        //if locationBufferSaveRate updates have been done since last save: save current location to buffer
         if (stepsSinceLastLocationSave == saveRate) {
             oldestKnownOwnLocation = locationBuffer.front();
             locationBuffer.pop_front();

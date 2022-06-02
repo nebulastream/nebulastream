@@ -9,8 +9,8 @@ pathPredictionUpdateInterval: 10
 
 locationBufferSaveRate: 1
 
-pathPredictionLengthMeters: 40000
+pathPredictionLength: 40000
 
-defaultCoverageRadiusMeters: 5000
+defaultCoverageRadius: 5000
 
 sendLocationUpdateInterval: 1000

@@ -61,27 +61,12 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Moni
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
     rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
-    //todo: set mobility config to zero in the beginning
-    /*
-    locationProvider =
-        std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->isMobile,
-                                                                                    workerConfig->locationCoordinates);
-                                                                                    */
 }
 
-//todo: check what the best way is to avoid the duplicate code in these constructors
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
                      NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort) {
-    setThreadName("NesWorker");
-    NES_DEBUG("NesWorker: constructed");
-    NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
-    rpcAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
-    //todo: move source type and config to mobility config to clean this up
-    this->mobilityConfig = mobilityConfig;
-    /*
-    locationProvider = createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig, mobilityConfig);
-     */
+    : NesWorker(std::shared_ptr(workerConfig)) {
+    this->mobilityConfig = std::move(mobilityConfig);
 }
 
 NesWorker::~NesWorker() { stop(true); }
