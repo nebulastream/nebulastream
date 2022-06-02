@@ -113,7 +113,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                         }
                     }
 
-                    NES_ERROR(channelName << ": Received error from server-> " << errorMsg.getErrorTypeAsString());
+                    NES_WARNING(channelName << ": Received error from server-> " << errorMsg.getErrorTypeAsString());
                     protocol.onChannelError(errorMsg);
                     break;
                 }

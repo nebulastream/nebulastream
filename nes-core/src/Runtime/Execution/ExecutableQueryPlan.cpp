@@ -262,6 +262,7 @@ void ExecutableQueryPlan::onEvent(BaseEvent&) {
     // nop :: left on purpose -> fill this in when you want to support events
 }
 void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {
+    NES_DEBUG("QEP " << querySubPlanId << " Source " << source->getOperatorId() << " is notifying completion: " << terminationType);
     NES_ASSERT2_FMT(qepStatus.load() == ExecutableQueryPlanStatus::Running,
                     "Cannot complete source on non running query plan id=" << querySubPlanId);
     auto it = std::find(sources.begin(), sources.end(), source);

@@ -62,7 +62,7 @@ class NetworkSource : public DataSource {
      * It registers the source on the NetworkManager
      * @return true if registration on the network stack is successful
      */
-    bool start() override;
+    bool start() final;
 
     /**
      * @brief This method is overridden here to prevent the NetworkSource to start a thread.
@@ -70,6 +70,14 @@ class NetworkSource : public DataSource {
      * @return true if deregistration on the network stack is successful
      */
     bool stop(Runtime::QueryTerminationType = Runtime::QueryTerminationType::Graceful) final;
+
+
+    /**
+     * @brief This method is overridden here to manage failures of NetworkSource.
+     * It de-registers the source on the NetworkManager
+     * @return true if deregistration on the network stack is successful
+     */
+    bool fail() final;
 
     /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.

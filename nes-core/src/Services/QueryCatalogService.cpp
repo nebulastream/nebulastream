@@ -127,7 +127,7 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
             }
         }
     }
-    NES_INFO("QueryCatalogService: Shared query id " << sharedQueryId << " is marked as soft stopped");
+    NES_INFO("QueryCatalogService: Shared query id " << sharedQueryId << " is marked as failed");
     return true;
 }
 
