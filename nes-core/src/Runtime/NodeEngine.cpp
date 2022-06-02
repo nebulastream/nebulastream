@@ -267,6 +267,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
                     try {
                         if (queryManager->stopQuery(deployedQEPs[querySubPlanId], terminationType)) {
                             NES_DEBUG("Runtime: stop of QEP " << querySubPlanId << " succeeded");
+                            return true;
                         } else {
                             NES_ERROR("Runtime: stop of QEP " << querySubPlanId << " failed");
                             return false;
@@ -282,6 +283,7 @@ bool NodeEngine::stopQuery(QueryId queryId, Runtime::QueryTerminationType termin
                     try {
                         if (queryManager->failQuery(deployedQEPs[querySubPlanId])) {
                             NES_DEBUG("Runtime: failure of QEP " << querySubPlanId << " succeeded");
+                            return true;
                         } else {
                             NES_ERROR("Runtime: failure of QEP " << querySubPlanId << " failed");
                             return false;

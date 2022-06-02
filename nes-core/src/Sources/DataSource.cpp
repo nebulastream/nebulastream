@@ -175,8 +175,8 @@ bool DataSource::fail() {
         auto self = shared_from_base<DataSource>();
         NES_DEBUG("Source " << operatorId << " has already injected failure? " << (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
         if (!this->endOfStreamSent) {
-            queryManager->notifySourceCompletion(self, Runtime::QueryTerminationType::Failure);
             endOfStreamSent = queryManager->addEndOfStream(self, Runtime::QueryTerminationType::Failure);
+            queryManager->notifySourceCompletion(self, Runtime::QueryTerminationType::Failure);
             NES_DEBUG("Source " << operatorId << " injecting failure " << (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
         }
         return isStopped && endOfStreamSent;

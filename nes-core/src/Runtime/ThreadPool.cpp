@@ -82,9 +82,9 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
         } catch (TaskExecutionException const& taskException) {
             NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << taskException.what());
             queryManager->notifyTaskFailure(taskException.getExecutable(), taskException.what());
-        } catch (std::exception const& error) {
-            NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
-            NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
+        } catch (std::exception const& genericError) {
+            NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << genericError.what());
+            queryManager->notifyTaskFailure(nullptr, genericError.what());
         }
     }
     // to drain the queue for pending reconfigurations

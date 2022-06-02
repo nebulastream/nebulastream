@@ -73,7 +73,6 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
 
@@ -86,7 +85,7 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
     QueryId queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }
 
 /**
@@ -131,12 +130,12 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     std::string outputFilePath1 = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query1 = R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1
-        + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query1 =
+        R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query=" << query1);
     QueryId queryId1 = queryService->validateAndQueueAddQueryRequest(query1, "BottomUp");
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalogService));
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalogService));
 
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
 
@@ -180,6 +179,44 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {}
+TEST_F(QueryFailureTest, failRunningQuery) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->bufferSizeInBytes = 2;
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical source
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    crd->getSourceCatalogService()->registerLogicalSource("test", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = port;
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource = PhysicalSource::create("default_logical", "default_source", defaultSourceType);
+    workerConfig1->physicalSources.add(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
+
+    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
+
+    auto query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId =
+        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+    EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
+}
 
 }// namespace NES
