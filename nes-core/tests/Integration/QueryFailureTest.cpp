@@ -13,7 +13,6 @@
 */
 
 #include "../util/NesBaseTest.hpp"
-#include <Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -22,6 +21,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -179,7 +179,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryFailureTest, failRunningQuery) {
+TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -198,6 +198,7 @@ TEST_F(QueryFailureTest, failRunningQuery) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType = DefaultSourceType::create();
+    defaultSourceType->setNumberOfBuffersToProduce(1000);
     auto physicalSource = PhysicalSource::create("default_logical", "default_source", defaultSourceType);
     workerConfig1->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
@@ -210,11 +211,11 @@ TEST_F(QueryFailureTest, failRunningQuery) {
 
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
-    auto query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + R"(", "CSV_FORMAT", "APPEND"));)";
+    auto query =
+        Query::from("default_logical").filter(Attribute("value") < 42).sink(FileSinkDescriptor::create(outputFilePath));
 
     QueryId queryId =
-        queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryService->addQueryRequest("", query.getQueryPlan(), "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalogService));
 }

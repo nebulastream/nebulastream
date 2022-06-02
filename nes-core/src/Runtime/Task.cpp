@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/TaskExecutionException.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -32,19 +33,23 @@ Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buffer, 
 ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     // execute this task.
     // a task could be a executable pipeline, or a data sink.
-    if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
-        return (*executablePipeline)->execute(buf, workerContext);
-    }
-    if (auto* dataSink = std::get_if<DataSinkPtr>(&pipeline)) {
-        auto result = (*dataSink)->writeData(buf, workerContext);
-        if (result) {
-            return ExecutionResult::Ok;
+    try {
+        if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
+            return (*executablePipeline)->execute(buf, workerContext);
+        }
+        if (auto* dataSink = std::get_if<DataSinkPtr>(&pipeline)) {
+            auto result = (*dataSink)->writeData(buf, workerContext);
+            if (result) {
+                return ExecutionResult::Ok;
+            } else {
+                return ExecutionResult::Error;
+            }
         } else {
+            NES_ERROR("Executable pipeline was not of any suitable type");
             return ExecutionResult::Error;
         }
-    } else {
-        NES_ERROR("Executable pipeline was not of any suitable type");
-        return ExecutionResult::Error;
+    } catch (std::exception const& error) {
+        throw TaskExecutionException(pipeline, std::string(error.what()));
     }
 }
 
