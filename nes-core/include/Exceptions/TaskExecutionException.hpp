@@ -30,7 +30,7 @@ class TaskExecutionException : public Exceptions::RuntimeException {
      * @brief Construct a PipelineExecutionException exception from a message.
      * @param message The exception message.
      */
-    explicit TaskExecutionException(const Runtime::Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
+    explicit TaskExecutionException(const Runtime::Execution::SuccessorExecutablePipeline pipeline, std::string&& message);
 
     Runtime::Execution::SuccessorExecutablePipeline getExecutable() const;
 

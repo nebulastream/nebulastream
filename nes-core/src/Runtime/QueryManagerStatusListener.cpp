@@ -93,16 +93,21 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink,
                                              const std::string& errorMessage) {
 
-    QuerySubPlanId planId;
+    QuerySubPlanId planId = 0;
     Execution::ExecutableQueryPlanPtr qepToFail;
     if (auto* pipe = std::get_if<Execution::ExecutablePipelinePtr>(&pipelineOrSink)) {
         planId = (*pipe)->getQuerySubPlanId();
     } else if (auto* sink = std::get_if<DataSinkPtr>(&pipelineOrSink)) {
-        planId = (*pipe)->getQuerySubPlanId();
+        planId = (*sink)->getParentPlanId();
     }
     {
         std::unique_lock lock(queryMutex);
-        qepToFail = runningQEPs[planId];
+        if (auto it = runningQEPs.find(planId); it != runningQEPs.end()) {
+            qepToFail = it->second;
+        } else {
+            NES_WARNING("Cannot fail non existing sub query plan: " << planId);
+            return;
+        }
     }
     auto future = asyncTaskExecutor->runAsync(
         [this, errorMessage](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {

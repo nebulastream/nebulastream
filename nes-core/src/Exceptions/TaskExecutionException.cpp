@@ -19,7 +19,7 @@
 namespace NES {
 
 TaskExecutionException::TaskExecutionException(Runtime::Execution::SuccessorExecutablePipeline pipeline,
-                                               const std::string& message)
+                                               std::string&& message)
     : Exceptions::RuntimeException(message), pipeline(pipeline) {}
 
 Runtime::Execution::SuccessorExecutablePipeline TaskExecutionException::getExecutable() const { return pipeline; }
