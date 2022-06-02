@@ -51,6 +51,7 @@ service CoordinatorRPCService {
   //inform the coordinator about the a scheduled reconnect
   rpc SendScheduledReconnect (SendScheduledReconnectRequest) returns (SendScheduledReconnectReply) {}
 
+  //lets a mobile device inform the coordinator about its current location
   rpc SendLocationUpdate (LocationUpdateRequest) returns (LocationUpdateReply) {}
 
   // send a notification when a query fails to the coordinator

@@ -82,6 +82,11 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
 
+    /**
+     * @brief constructor used for mobile nodes accecpting a mobility config as second parameter
+     * @param workerConfig
+     * @param mobilityConfig
+     */
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig,
                          NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig);
 
@@ -239,7 +244,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
       */
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
-
     /**
      * get the class containing all location info on this worker if it is a field node or mobile node
      * @return
@@ -247,7 +251,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NES::Spatial::Mobility::Experimental::LocationProviderPtr getLocationProvider();
 
   private:
-
     /**
      * @brief method to register physical source with the coordinator
      * @param physicalSources: physical sources containing relevant information

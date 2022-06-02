@@ -197,7 +197,7 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption locationSourceConfig = {LOCATION_SOURCE_CONFIG, "", "the configuration data for the location interface"};
 
-    StringOption locationWrapperConfig = {NODE_LOCATION_WRAPPER_CONFIG, "", "the configuration data for the location wrapper class"};
+    StringOption locationWrapperConfig = {MOBILITY_CONFIG_PATH_CONFIG, "", "the configuration data for the location wrapper class"};
 
     /**
      * @brief Configuration yaml path.
