@@ -211,7 +211,7 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryPlans();
+    globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 }// namespace NES::Optimizer

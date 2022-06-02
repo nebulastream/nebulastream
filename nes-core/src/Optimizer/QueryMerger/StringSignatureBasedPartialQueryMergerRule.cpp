@@ -114,7 +114,7 @@ bool StringSignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr global
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryPlans();
+    globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 

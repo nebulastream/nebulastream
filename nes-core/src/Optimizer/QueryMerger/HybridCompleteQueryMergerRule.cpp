@@ -133,7 +133,7 @@ bool HybridCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryPlans();
+    globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 }// namespace NES::Optimizer

@@ -121,7 +121,7 @@ bool Z3SignatureBasedPartialQueryMergerBottomUpRule::apply(GlobalQueryPlanPtr gl
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryPlans();
+    globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
