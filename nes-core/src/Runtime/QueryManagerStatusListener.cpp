@@ -66,39 +66,44 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
 }
 void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason) {
     NES_DEBUG("notifySourceFailure called for query id=" << failedSource->getOperatorId() << " reason=" << reason);
-    std::unique_lock lock(queryMutex);
-    auto qepToFail = sourceToQEPMapping[failedSource->getOperatorId()];
-    lock.unlock();
+    std::vector<Execution::ExecutableQueryPlanPtr> plansToFail;
+    {
+        std::unique_lock lock(queryMutex);
+        plansToFail = sourceToQEPMapping[failedSource->getOperatorId()];
+    }
     // we cant fail a query from a source because failing a query eventually calls stop on the failed query
     // this means we are going to call join on the source thread
     // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
-    auto future = asyncTaskExecutor->runAsync(
-        [this, reason](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
-            NES_DEBUG("Going to fail query id=" << qepToFail->getQuerySubPlanId()
-                                                << " subplan=" << qepToFail->getQuerySubPlanId());
-            if (failQuery(qepToFail)) {
-                NES_DEBUG("Failed query id=" << qepToFail->getQuerySubPlanId() << " subplan=" << qepToFail->getQuerySubPlanId());
-                queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), qepToFail->getQuerySubPlanId(), reason);
-                return qepToFail;
-            }
-            return nullptr;
-        },
-        std::move(qepToFail));
+    for (auto qepToFail : plansToFail) {
+        auto future =
+            asyncTaskExecutor->runAsync([this, reason, qepToFail = std::move(qepToFail)]() -> Execution::ExecutableQueryPlanPtr {
+                NES_DEBUG("Going to fail query id=" << qepToFail->getQuerySubPlanId()
+                                                    << " subplan=" << qepToFail->getQuerySubPlanId());
+                if (failQuery(qepToFail)) {
+                    NES_DEBUG("Failed query id=" << qepToFail->getQuerySubPlanId()
+                                                 << " subplan=" << qepToFail->getQuerySubPlanId());
+                    queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), qepToFail->getQuerySubPlanId(), reason);
+                    return qepToFail;
+                }
+                return nullptr;
+            });
+    }
 }
 
 void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink,
                                              const std::string& errorMessage) {
 
     QuerySubPlanId planId;
+    Execution::ExecutableQueryPlanPtr qepToFail;
     if (auto* pipe = std::get_if<Execution::ExecutablePipelinePtr>(&pipelineOrSink)) {
         planId = (*pipe)->getQuerySubPlanId();
     } else if (auto* sink = std::get_if<DataSinkPtr>(&pipelineOrSink)) {
         planId = (*pipe)->getQuerySubPlanId();
     }
-    std::unique_lock lock(queryMutex);
-    auto qepToFail = runningQEPs[planId];
-    lock.unlock();
-
+    {
+        std::unique_lock lock(queryMutex);
+        qepToFail = runningQEPs[planId];
+    }
     auto future = asyncTaskExecutor->runAsync(
         [this, errorMessage](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr {
             NES_DEBUG("Going to fail query id=" << qepToFail->getQuerySubPlanId()
@@ -116,16 +121,15 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
 void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
     //THIS is now shutting down all
-    for (auto entry : sourceToQEPMapping[source->getOperatorId()]) {
-        NES_TRACE("NOFITFY operator id=" << source->getOperatorId() << "plan id=" << entry->getQueryId()
-                                         << " subplan=" << entry->getQuerySubPlanId());
-
+    for (auto& entry : sourceToQEPMapping[source->getOperatorId()]) {
+        NES_TRACE("notifySourceCompletion operator id=" << source->getOperatorId() << "plan id=" << entry->getQueryId()
+                                                        << " subplan=" << entry->getQuerySubPlanId());
         entry->notifySourceCompletion(source, terminationType);
         if (terminationType == QueryTerminationType::Graceful) {
             queryStatusListener->notifySourceTermination(entry->getQueryId(),
                                                          entry->getQuerySubPlanId(),
                                                          source->getOperatorId(),
-                                                         terminationType);
+                                                         QueryTerminationType::Graceful);
         }
     }
 }

@@ -410,33 +410,27 @@ template<typename Predicate = std::equal_to<uint64_t>>
 }
 
 /**
-     * @brief Check if the query is been stopped successfully within the timeout.
+     * @brief Check if the query has failed within the timeout.
      * @param queryId: Id of the query to be stopped
-     * @param queryCatalogService: the catalog containig the queryIdAndCatalogEntryMapping in the system
+     * @param queryCatalogService: the catalog containig the queries in the system
      * @return true if successful
      */
 [[nodiscard]] bool checkFailedOrTimeout(QueryId queryId,
-                                        const QueryCatalogServicePtr& queryCatalogService,
-                                        std::chrono::seconds timeout = defaultTimeout) {
+                                         const QueryCatalogServicePtr& queryCatalogService,
+                                         std::chrono::seconds timeout = defaultTimeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
-        NES_TRACE("checkFailedOrTimeout: check query status.");
-        auto entry = queryCatalogService->getEntryForQuery(queryId);
-        if (entry->getQueryStatus() == QueryStatus::Failed) {
-            // the query failed so we return true as a failure append during execution.
-            NES_TRACE("checkStoppedOrTimeout: status reached failed");
+        NES_TRACE("checkFailedOrTimeout: check query status");
+        if (queryCatalogService->getEntryForQuery(queryId)->getQueryStatus() == QueryStatus::Failed) {
+            NES_DEBUG("checkFailedOrTimeout: status reached stopped");
             return true;
-        } else if (entry->getQueryStatus() == QueryStatus::Stopped) {
-            // the query already stopped so we can just leave the function and check the result.
-            NES_TRACE("checkStoppedOrTimeout: status reached stopped");
-            return false;
         }
         NES_TRACE("checkFailedOrTimeout: status not reached as status is="
                   << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
         std::this_thread::sleep_for(sleepDuration);
     }
-    NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
+    NES_WARNING("checkStoppedOrTimeout: expected status not reached within set timeout");
     return false;
 }
 
