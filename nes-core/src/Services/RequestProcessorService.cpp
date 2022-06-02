@@ -207,6 +207,9 @@ void RequestProcessorService::start() {
                     }
                 }
 
+                //Remove all query plans that are either stopped or failed
+                globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
+
                 //FIXME: This is a work-around for an edge case. To reproduce this:
                 // 1. The query merging feature is enabled.
                 // 2. A query from a shared query plan was removed but over all shared query plan is still serving other queryIdAndCatalogEntryMapping (Case 3.1).

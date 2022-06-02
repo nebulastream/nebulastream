@@ -117,7 +117,7 @@ bool GlobalQueryPlan::updateSharedQueryPlan(const SharedQueryPlanPtr& sharedQuer
     return true;
 }
 
-void GlobalQueryPlan::removeEmptySharedQueryPlans() {
+void GlobalQueryPlan::removeFailedOrStoppedSharedQueryPlans() {
     NES_INFO("GlobalQueryPlan: remove empty metadata information.");
     //Following associative-container erase idiom
     for (auto itr = sharedQueryIdToPlanMap.begin(); itr != sharedQueryIdToPlanMap.end();) {

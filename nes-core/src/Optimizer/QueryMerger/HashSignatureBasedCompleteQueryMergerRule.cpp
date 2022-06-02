@@ -108,7 +108,7 @@ bool HashSignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQ
         }
     }
     //Remove all empty shared query metadata
-    globalQueryPlan->removeEmptySharedQueryPlans();
+    globalQueryPlan->removeFailedOrStoppedSharedQueryPlans();
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 

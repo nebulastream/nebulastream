@@ -79,7 +79,7 @@ class GlobalQueryPlan {
     /**
      * @brief This method will remove all empty shared query plans that are deployed
      */
-    void removeEmptySharedQueryPlans();
+    void removeFailedOrStoppedSharedQueryPlans();
 
     /**
      * @brief Get the all the Query Meta Data to be deployed
