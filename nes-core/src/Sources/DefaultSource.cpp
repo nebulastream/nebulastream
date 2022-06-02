@@ -54,9 +54,6 @@ DefaultSource::DefaultSource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
     // 10 tuples of size one
-    NES_DEBUG("Source:" << this << " requesting buffer");
-
-    NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
 
     auto value = 1;
