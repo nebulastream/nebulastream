@@ -13,7 +13,7 @@
 */
 
 #include "../util/NesBaseTest.hpp"
-#include "Exceptions/InvalidQueryException.hpp"
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>

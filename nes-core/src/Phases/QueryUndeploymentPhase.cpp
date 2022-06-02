@@ -54,14 +54,14 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId, SharedQueryPlanStatu
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query");
     bool successStop = stopQuery(queryId, executionNodes, sharedQueryPlanStatus);
     if (successStop) {
-        NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful");
+        NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful for " << queryId);
     } else {
-        NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed");
+        NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed for " << queryId);
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
         throw QueryUndeploymentException("Failed to stop the query " + std::to_string(queryId) + '.');
     }
 
-    NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query");
+    NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query " << queryId);
     bool successUndeploy = undeployQuery(queryId, executionNodes);
     if (successUndeploy) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query successful");
