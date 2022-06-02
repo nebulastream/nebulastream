@@ -48,11 +48,20 @@ namespace NES::Optimizer {
             return false;
         }
 
+        const std::string getCleanName(std::string manipulatedSourceName) {
+            // find first '('
+            size_t pos = manipulatedSourceName.find('(');
+            std::string newString = manipulatedSourceName.substr(pos+1);
+            pos = newString.find('$');
+            newString = newString.substr(0, pos);
+            return newString;
+        }
+        // FIX: Always returns 4
         int getPosition(std::string nodeName){
             TimeSequenceList* currentNode = this;
             int counter = 0;
             while(currentNode != nullptr){
-                if(currentNode->name == nodeName){
+                if(getCleanName(currentNode->name) == nodeName){
                     return counter;
                 }
                 counter++;
@@ -821,9 +830,19 @@ namespace NES::Optimizer {
         // TODO: Write method that looks for leftChild being present in one of the joins and rightChild being present in one of the joins and simply copying the leftChild JoinDefinition and adding rightChild info to it.
         for (size_t i = 0; i <= joinLogicalOperatorNodes.size(); i++) {
             auto node = joinLogicalOperatorNodes[i];
-            NES_DEBUG(node->getJoinDefinition()->getLeftJoinKey())
+            auto children = node->getChildren(); // should be the join candidates
+            auto leftChildJoinNode = children[0];
+            auto rightChildJoiNode = children[1];
+
+
+            NES_DEBUG(node->getJoinDefinition()->getLeftJoinKey()->getFieldName())
             NES_DEBUG(node->getJoinDefinition()->getLeftSourceType());
         }
+
+
+
+        // note: We are getting random keys for leftKey and rightKey that look like cep_leftkey12 and respond to the next free operatorId.
+        // TODO: Find a way of distinguishing left and right keys so that i know, that they are properly matching the source
 
         return NES::Join::LogicalJoinDefinitionPtr();
     }
