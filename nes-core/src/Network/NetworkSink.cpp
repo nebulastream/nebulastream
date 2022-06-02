@@ -144,11 +144,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
                                                                  << "punctuation= " << task.getUserData<uint64_t>());
-            try {
-                workerContext.trimStorage(nesPartition, task.getUserData<uint64_t>());
-            } catch (std::exception const& error) {
-                NES_ERROR("Runtime::PropagateEpoch: " << task.getUserData<uint64_t>() << ": " << error.what());
-            }
+            workerContext.trimStorage(nesPartition, task.getUserData<uint64_t>());
             break;
         }
         case Runtime::StartBuffering: {
