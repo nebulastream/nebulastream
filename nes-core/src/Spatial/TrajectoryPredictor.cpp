@@ -276,12 +276,17 @@ std::pair<S2Point, S1Angle> TrajectoryPredictor::findPathCoverage(S2PolylinePtr 
 //todo: check if we want to use parameters instead of attributes
 void TrajectoryPredictor::scheduleReconnects() {
     //after a reconnect the the coverage of the current parent needs to be calculated
+    Timestamp bufferTravelTime = locationBuffer.back().second - locationBuffer.front().second;
+    S1Angle bufferDistance(locationToS2Point(*locationBuffer.front().first), locationToS2Point(*locationBuffer.back().first));
+    double meanDegreesPerNanosec = bufferDistance.degrees() / bufferTravelTime;
+    double remainingTime;
+
     if (!currentParentPathCoverageEnd.has_value()) {
         //todo: S1Angle or chordangle?
         auto reconnectionPointTuple = findPathCoverage(trajectoryLine, currentParentLocation, S1Angle(defaultCoverageAngle));
         currentParentPathCoverageEnd = reconnectionPointTuple.first;
-        //todo: use angle to calculate approx arrival time here
-        (void) endOfCoverageETA;
+        remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), currentParentPathCoverageEnd.value()).degrees() / meanDegreesPerNanosec;
+        endOfCoverageETA = locationBuffer.back().second + remainingTime;
     }
 
     reconnectVector.clear();
@@ -294,6 +299,11 @@ void TrajectoryPredictor::scheduleReconnects() {
     S2ClosestPointQuery<uint64_t> query(&fieldNodeIndex);
     S2Point nextReconnectLocationOnPath = reconnectLocationOnPath;
     uint64_t reconnectParentId;
+    S2Point previousReconnectLocationOnPath = locationToS2Point(*locationBuffer.back().first);
+    Timestamp previousEstimatedReconnectTime = locationBuffer.back().second;
+    //todo: update this also when reconnecting or get rid of the variable
+    Timestamp estimatedReconnectTime = endOfCoverageETA;
+    Timestamp nextEstimatedReconnectTime;
 
     query.mutable_options()->set_max_distance(defaultCoverageAngle);
 
@@ -310,6 +320,10 @@ void TrajectoryPredictor::scheduleReconnects() {
                 nextReconnectLocationOnPath = coverageTuple.first;
                 reconnectParentId = result.data();
                 minimumUncoveredRemainingPathDistance = currentUncoveredRemainingPathDistance;
+                //todo: implement calculation here too
+                //remainingTime = S1Angle(previousReconnectLocationOnPath, reconnectLocationOnPath).degrees() / meanDegreesPerNanosec;
+                remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), nextReconnectLocationOnPath).degrees() / meanDegreesPerNanosec;
+                nextEstimatedReconnectTime = locationBuffer.back().second + remainingTime;
             }
         }
         //todo: make some check here if currpoint has actually been set (maybe se tnext point t ocurrpoint in the beginning and then check if they are equal
@@ -318,9 +332,11 @@ void TrajectoryPredictor::scheduleReconnects() {
             auto currLoc =
                 std::make_shared<Index::Experimental::Location>(currLatLng.lat().degrees(), currLatLng.lng().degrees());
             //todo: add timestamp calculation
-            reconnectVector.emplace_back(reconnectParentId, currLoc, (uint64_t) 0);
+            reconnectVector.emplace_back(reconnectParentId, currLoc, (uint64_t) estimatedReconnectTime);
             NES_DEBUG("scheduled reconnect to worker with id" << reconnectParentId)
+            previousReconnectLocationOnPath = reconnectLocationOnPath;
             reconnectLocationOnPath = nextReconnectLocationOnPath;
+            estimatedReconnectTime = nextEstimatedReconnectTime;
         } else {
             NES_WARNING("no nodes available to cover rest of path")
             break;
