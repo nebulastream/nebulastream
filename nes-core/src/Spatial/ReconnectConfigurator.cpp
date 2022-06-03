@@ -21,6 +21,7 @@
 #include <s2/s1angle.h>
 #include <s2/s2latlng.h>
 #include <s2/s2earth.h>
+#include <Spatial/LocationProviderCSV.hpp>
 
 namespace NES {
 NES::Spatial::Mobility::Experimental::ReconnectConfigurator::ReconnectConfigurator(

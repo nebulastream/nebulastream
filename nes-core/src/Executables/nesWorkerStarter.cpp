@@ -72,8 +72,8 @@ int main(int argc, char** argv) {
         NES::Logger::getInstance()->setLogLevel(workerConfiguration->logLevel.getValue());
 
         auto mobilityConfiguration = std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
-        if (!workerConfiguration->locationWrapperConfig.getValue().empty()) {
-            mobilityConfiguration->overwriteConfigWithYAMLFileInput(workerConfiguration->locationWrapperConfig.getValue());
+        if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
+            mobilityConfiguration->overwriteConfigWithYAMLFileInput(workerConfiguration->mobilityConfigPath.getValue());
         }
 
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
