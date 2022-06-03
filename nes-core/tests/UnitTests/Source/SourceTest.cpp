@@ -150,6 +150,32 @@ struct __attribute__((packed)) IngestionRecord {
     }
 };
 
+struct __attribute__((packed)) ktmRecord {
+    float event_ts;
+    int32_t distance;
+    float front_wheel_press;
+    float rear_wheel_press;
+    float front_wheel_speed;
+    float rear_wheel_speed;
+    float v_gps;
+    float mmdd;
+    float hhmm;
+    float ax1;
+    float ay1;
+    float vertical_acc;
+    float lean_angle;
+    float pitch_info;
+    int32_t gear_position;
+    int32_t accel_position;
+    int32_t engine_rpm;
+    float water_temp;
+    float oil_temp;
+    int32_t side_stand;
+    float longitude;
+    float latitude;
+    float altitude;
+};
+
 using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::Exactly;
@@ -335,6 +361,7 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFile);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileColumnLayout);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
+    FRIEND_TEST(SourceTest, testCSVSourceKTMCommaFloatingPoint);
 };
 
 class GeneratorSourceProxy : public GeneratorSource {
@@ -481,6 +508,7 @@ class SourceTest : public Testing::NESBaseTest {
         this->path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
         this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
+        this->path_to_ktm_file = std::string(TEST_DATA_DIRECTORY) + "ktm.csv";
         this->schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -501,6 +529,30 @@ class SourceTest : public Testing::NESBaseTest {
                                  ->addField("d2", UINT64)
                                  ->addField("d3", UINT32)
                                  ->addField("d4", UINT16);
+        this->ktmSchema = Schema::create()
+                              ->addField("Time", FLOAT32)
+                              ->addField("Dist", INT32)
+                              ->addField("ABS_Front_Wheel_Press", FLOAT32)
+                              ->addField("ABS_Rear_Wheel_Press", FLOAT32)
+                              ->addField("ABS_Front_Wheel_Speed", FLOAT32)
+                              ->addField("ABS_Rear_Wheel_Speed", FLOAT32)
+                              ->addField("V_GPS", FLOAT32)
+                              ->addField("MMDD", FLOAT32)
+                              ->addField("HHMM", FLOAT32)
+                              ->addField("LAS_Ax1", FLOAT32)
+                              ->addField("LAS_Ay1", FLOAT32)
+                              ->addField("LAS_Az_Vertical_Acc", FLOAT32)
+                              ->addField("ABS_Lean_Angle", FLOAT32)
+                              ->addField("ABS_Pitch_Info", FLOAT32)
+                              ->addField("ECU_Gear_Position", INT32)
+                              ->addField("ECU_Accel_Position", INT32)
+                              ->addField("ECU_Engine_Rpm", INT32)
+                              ->addField("ECU_Water_Temperature", FLOAT32)
+                              ->addField("ECU_Oil_Temp_Sensor_Data", FLOAT32)
+                              ->addField("ECU_Side_StanD", INT32)
+                              ->addField("Longitude", FLOAT32)
+                              ->addField("Latitude", FLOAT32)
+                              ->addField("Altitude", FLOAT32);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
@@ -562,8 +614,8 @@ class SourceTest : public Testing::NESBaseTest {
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
-    std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head;
-    SchemaPtr schema, lambdaSchema;
+    std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head, path_to_ktm_file;
+    SchemaPtr schema, lambdaSchema, ktmSchema;
     uint8_t* singleMemoryArea;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, originId,
         numSourceLocalBuffersDefault, gatheringInterval, queryId, sourceAffinity;
@@ -1615,6 +1667,33 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     EXPECT_TRUE(content->true_entry);
     EXPECT_FALSE(content->falsey_entry);
     EXPECT_TRUE(content->truthy_entry);
+}
+
+TEST_F(SourceTest, testCSVSourceKTMCommaFloatingPoint) {
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(this->path_to_ktm_file);
+    csvSourceType->setDelimiter("*");
+    csvSourceType->setSkipHeader(true);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType->setGatheringInterval(this->gatheringInterval);
+
+    CSVSourceProxy csvDataSource(this->ktmSchema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 csvSourceType,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
+    auto buf = this->GetEmptyBuffer();
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
+        Runtime::MemoryLayouts::RowLayout::create(this->ktmSchema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
+    auto content = buf->getBuffer<ktmRecord>();
+    ASSERT_NEAR(content->mmdd, 9.09, 0.01);
+    ASSERT_NEAR(content->ay1, -0.5, 0.01);
+    ASSERT_NEAR(content->longitude, 13.1608002, 0.01);
 }
 
 TEST_F(SourceTest, testGeneratorSourceGetType) {

@@ -17,12 +17,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -94,6 +89,7 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 break;
             }
             case NES::BasicPhysicalType::FLOAT: {
+                NES::Util::findAndReplaceAll(inputString, ",", ".");
                 auto value = static_cast<float>(std::stof(inputString));
                 tupleBuffer[tupleCount][schemaFieldIndex].write<float>(value);
                 break;
