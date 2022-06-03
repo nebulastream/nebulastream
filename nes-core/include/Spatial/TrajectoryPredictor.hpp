@@ -67,7 +67,6 @@ class TrajectoryPredictor {
      */
     void startReconnectPlanning();
 
-    //todo: can this be private?
     static std::pair<S2Point, S1Angle> findPathCoverage(S2PolylinePtr path, S2Point coveringNode, S1Angle coverage);
 
   private:

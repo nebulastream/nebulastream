@@ -22,7 +22,6 @@
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
-//#include <Spatial/LocationProviderCSV.hpp>
 #include <map>
 #include <string>
 

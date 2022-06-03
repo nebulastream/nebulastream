@@ -271,7 +271,6 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     void handleRpcs(WorkerRPCServer& service);
 
-
     const Configurations::WorkerConfigurationPtr workerConfig;
     std::atomic<uint16_t> localWorkerRpcPort;
     std::string rpcAddress;
