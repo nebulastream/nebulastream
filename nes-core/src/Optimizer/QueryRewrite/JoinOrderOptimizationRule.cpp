@@ -33,9 +33,12 @@ namespace NES::Optimizer {
     class TimeSequenceList {
       public:
         std::string name;
+        std::string cleanName;
         TimeSequenceList *next = nullptr;
 
-        TimeSequenceList(std::string name) { this->name = name; }
+        TimeSequenceList(std::string name) {
+            this->name = name;
+        }
         // checks if string is found somewhere in the linkedlist
         bool isInList(std::string nodeName) {
             TimeSequenceList* currentNode = this;
@@ -402,9 +405,8 @@ namespace NES::Optimizer {
                         // get respective abstractJoinPlanOperator
                         auto joinOperatorRight = getAbstractJoinPlanOperatorPtr(abstractJoinOperators, source);
 
-                        // TODO take a joinDefinition from any other two joins and merge them
+                        // constructing a new joinDefinition where information come from previous joinDefinitions looking for matching keys (leftKey values and rightKey values)
                         Join::LogicalJoinDefinitionPtr joinDefinition = constructSequenceJoinDefinition(joinLogicalOperators, row.second, joinOperatorRight);
-
 
                         // get the respective join selectivity (HARDCODED!)
                         float joinSelectivity = joinSelectivity = getJoinSelectivity(joinDefinition);
@@ -421,44 +423,47 @@ namespace NES::Optimizer {
         }
 
         if (level>2){
-            // TODO construct.
-        }
+            // TODO change to reflect characteristics of sequence OP.
 
-        /*
-        //Get possible combinations (for a join of 3 relations => only 1 Relation joins 2 already Joined relations possible)
-        std::vector<std::vector<int>> combs = getCountCombs(level - 1);
+            //Get possible combinations (for a join of 3 relations => only 1 Relation joins 2 already Joined relations possible)
+            std::vector<std::vector<int>> combs = getCountCombs(level - 1);
 
-        //Create for each possible combination of joins an AbstractJoinPlanOperator
-        //Should a plan with an identical relation combination already exists the cost-efficient
-        //plan is added to the level-HashMap
-        for (auto comb : combs) {
-            // left side of comb is comb[0] and right side is comb[1] as we are dealing with pairs.
-            int outerLoopCount = 1;
-            for(auto left : subs[comb[0]]){
-                std::cout << "Outerloop " << outerLoopCount << " - Setting left id to: " << std::to_string(left.second->getId()) << std::endl;
-                int innerLoopCount = 1;
-                for (auto right : subs[comb[1]]){
-                    std::cout << "     Innerloop " << innerLoopCount << "Setting right ids to: " << std::to_string(right.second->getLeftChild()->getId()) << " x " << std::to_string(right.second->getRightChild()->getId()) << std::endl;
+                //Create for each possible combination of joins an AbstractJoinPlanOperator
+                //Should a plan with an identical relation combination already exists the cost-efficient
+                //plan is added to the level-HashMap
+                for (auto comb : combs) {
+                    // left side of comb is comb[0] and right side is comb[1] as we are dealing with pairs.
+                    int outerLoopCount = 1;
+                    for(auto left : subs[comb[0]]){
+                        std::cout << "Outerloop " << outerLoopCount << " - Left Join Partner:  " << left.second->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() << " this is ID: " << std::to_string(left.second->getId()) << std::endl;
+                        int innerLoopCount = 1;
+                        for (auto right : subs[comb[1]]){
+                            std::cout << "     Innerloop " << innerLoopCount << "Setting right ids to: " << std::to_string(right.second->getLeftChild()->getId()) << " x " << std::to_string(right.second->getRightChild()->getId()) << std::endl;
 
-                    // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
-                    std::optional<AbstractJoinPlanOperatorPtr> newPlan = join(left.second, right.second, joins);
-                    if (newPlan){
-                        setCosts(newPlan.value());
-                        // check if newPlan is currently the best
-                        // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
-                        AbstractJoinPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
+                            // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
+                            std::optional<AbstractJoinPlanOperatorPtr> newPlan =
+                                sequenceJoin(left.second, right.second, pList, joinLogicalOperators);
+                            if (newPlan){
+                                setCosts(newPlan.value());
+                                // check if newPlan is currently the best
+                                // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
+                                AbstractJoinPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
 
-                        if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
-                            subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
+                                if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
+                                    subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
+                                }
+                            }
+
+                            innerLoopCount++;
                         }
+                        outerLoopCount++;
                     }
-                    innerLoopCount++;
                 }
-                outerLoopCount++;
-            }
+
+            return subs;
+
         }
-         */
-        return subs;
+    return subs;
     }
 
 
@@ -531,6 +536,65 @@ namespace NES::Optimizer {
                                                                                                          joinEdge->getSelectivity()));
         }
     }
+    std::optional<AbstractJoinPlanOperatorPtr>
+    JoinOrderOptimizationRule::sequenceJoin(AbstractJoinPlanOperatorPtr leftChild,
+                                            AbstractJoinPlanOperatorPtr rightChild,
+                                            TimeSequenceList* pList,
+                                            std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperators) {
+
+
+
+
+        //Get for left and right the involved OptimizerPlanOperators (logical data streams, potentially joined)
+        std::set<OptimizerPlanOperatorPtr> leftInvolved = leftChild->getInvolvedOptimizerPlanOperators();
+        std::set<OptimizerPlanOperatorPtr> rightInvolved = rightChild->getInvolvedOptimizerPlanOperators();
+
+        // if there is an overlap. e.g. we want to join Id:3 to 3 x 4
+        for (auto optimizerPlanOperatorLeft : leftInvolved) {
+            if (rightInvolved.find(optimizerPlanOperatorLeft) != rightInvolved.end()){
+                return std::nullopt;
+            }
+        }
+
+        // check globalTimeOrder of left and right set
+        std::vector<int> leftPositions;
+        for (auto leftNode : leftInvolved){
+            leftPositions.push_back(pList->getPosition(leftNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName()));
+        }
+        std::vector<int> rightPositions;
+        for (auto rightNode : rightInvolved){
+            rightPositions.push_back(pList->getPosition(rightNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName()));
+        }
+
+        // check overlap w.r.t. global sequence (need to sort first as we are dealing with a set!)
+        // this returns a two layer vector [0][0] indicates whether there are values of left in between right and [0][1] vice-versa
+        std::sort(leftPositions.begin(), leftPositions.end());
+        std::sort(rightPositions.begin(), rightPositions.end());
+
+        // not needed atm
+        // std::vector<std::vector<int>> overlap = checkOverlap(leftPositions, rightPositions);
+
+
+        // investigate which AbstractJoinPlanOperatorPtr is left part of the join and which is right part
+        auto leftLowest = leftPositions[0];
+        auto rightLowest = rightPositions[0];
+        if(leftLowest > rightLowest){
+            // positions need to  be swapped
+            std::swap(leftChild, rightChild);
+        }
+
+        // constructing a new joinDefinition where information come from previous joinDefinitions looking for matching keys (leftKey values and rightKey values)
+        Join::LogicalJoinDefinitionPtr joinDefinition = constructSequenceJoinDefinition(joinLogicalOperators, leftChild, rightChild);
+
+        // get the respective join selectivity (HARDCODED!)
+        float joinSelectivity = joinSelectivity = getJoinSelectivity(joinDefinition);
+
+        return std::optional<AbstractJoinPlanOperatorPtr>(std::make_shared<AbstractJoinPlanOperator>(leftChild,
+                                                                                                     rightChild,
+                                                                                                     joinDefinition,
+                                                                                                     joinSelectivity));
+
+    }
 
     bool JoinOrderOptimizationRule::isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved,
                                          std::set<OptimizerPlanOperatorPtr> rightInvolved,
@@ -563,6 +627,7 @@ namespace NES::Optimizer {
         return inLeft && inRight && noOverlapping;
     }
     // NOTE: This is completely hardcoded. It would be better to have a singleton class here that takes care of all cases
+    // TODO: Add Cardinalities for CEP sources, check if the names are actually clean or need to be cleansed
     int JoinOrderOptimizationRule::getHardCodedCardinalitiesForSource(OptimizerPlanOperatorPtr source) {
             auto name = source->getSourceNode()->getSourceDescriptor()->getLogicalSourceName();
                 if (name == "NATION")
@@ -573,6 +638,18 @@ namespace NES::Optimizer {
                     return 200;
                 else if (name == "PARTSUPPLIER")
                     return 20;
+                else if (name == "Quantity")
+                    return 10076925;
+                else if (name == "Velocity")
+                    return 10076925;
+                else if (name == "PM10")
+                    return 69340;
+                else if (name == "PM25")
+                    return 69340;
+                else if (name == "Temperature")
+                    return 73384;
+                else if (name == "Humidity")
+                    return 73384;
                 else{
                     return 500;
                 }
@@ -844,18 +921,20 @@ namespace NES::Optimizer {
                 pos = derivedLeftKeyName.find_last_of('_');
                 derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
             }
-            if(leftChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName){
-                // TODO write some logic
-                leftDefinition = joinDefinition;
+
+            for (auto involved : leftChild->getInvolvedOptimizerPlanOperators()){
+                if(involved->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName)
+                    leftDefinition = joinDefinition;
             }
 
             // right keys look like Velocity+rightKey_4, where the relevant part is everything before the +
             pos = rightKeyName.find('+');
             std::string derivedRightKeyName = rightKeyName.substr(0, pos);
-            if(rightChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName){
-                rightDefinition = joinDefinition;
-            }
 
+            for (auto involved : rightChild->getInvolvedOptimizerPlanOperators()){
+                if(involved->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName)
+                    rightDefinition = joinDefinition;
+            }
 
         }
 
@@ -960,6 +1039,32 @@ namespace NES::Optimizer {
 
 
 
+    }
+    std::vector<std::vector<int>> JoinOrderOptimizationRule::checkOverlap(std::vector<int> leftPositions,
+                                                                          std::vector<int> rightPositions) {
+        std::vector<std::vector<int>> overlaps;
+        // leftOverlap
+        std::vector<int> leftOverlaps;
+        for (int i : leftPositions){
+            // check if i smaller than the leftmost or higher than the rightmost of rightPositions
+            if (i < rightPositions[0] || i > rightPositions[rightPositions.size()-1]){
+                leftOverlaps.push_back(0); // does not overlap
+            }else{
+                leftOverlaps.push_back(1); // does overlap
+            }
+        }
+        overlaps.push_back(leftOverlaps);
+        // rightOverlap
+        std::vector<int> rightOverlaps;
+        for(int i : rightPositions){
+            if (i < leftPositions[0] || i > leftPositions[leftPositions.size()-1]){
+                rightOverlaps.push_back(0); // does not overlap
+            }else{
+                rightOverlaps.push_back(1); // does overlap
+            }
+        }
+        overlaps.push_back(rightOverlaps);
+        return overlaps;
     }
 
     }// namespace NES::Optimizer

@@ -126,8 +126,8 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
 
     /**
      * @brief for a specific level of joins (number of involved logical streams) add all possible combinations of levels
-     * e.g. imagine we have consider all combination where we have 2 involved joins. We can only join them by joining sources of level 1 (base sources) with level 2 sources (already joined once)
-     * e.g. for 3 involved joins we could either join  a base source (level 1) with a source that is joined twice already (level 2) or join two sources of level 2 -- meaning two join products.
+     * e.g. imagine we have considered all combination where we have 2 involved joins. We can only join them by joining sources of level 1 (base sources) with level 2 sources (already joined once)
+     * e.g. for 3 involved joins we could either join  a base source (level 1) with a source that is joined twice already (level 2) or join two sources of level 1 -- meaning two join products.
      * @param level
      * @return
      */
@@ -217,6 +217,11 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
                                     AbstractJoinPlanOperatorPtr leftChild,
                                     AbstractJoinPlanOperatorPtr rightChild);
     float getJoinSelectivity(Join::LogicalJoinDefinitionPtr joinDefinition);
+    std::optional<AbstractJoinPlanOperatorPtr> sequenceJoin(AbstractJoinPlanOperatorPtr leftChild,
+                                                            AbstractJoinPlanOperatorPtr rightChild,
+                                                            TimeSequenceList* pList,
+                                                            std::vector<JoinLogicalOperatorNodePtr> vector);
+    std::vector<std::vector<int>> checkOverlap(std::vector<int> leftPositions, std::vector<int> rightPositions);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_
