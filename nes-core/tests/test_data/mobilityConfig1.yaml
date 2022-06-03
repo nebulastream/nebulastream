@@ -14,3 +14,7 @@ pathPredictionLength: 40000
 defaultCoverageRadius: 5000
 
 sendLocationUpdateInterval: 1000
+
+locationProviderConfig: "tests/test_data/testLocationsSlow2.csv"
+
+locationProviderType: "CSV"

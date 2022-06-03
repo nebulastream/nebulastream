@@ -164,7 +164,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         /*
         NES_DEBUG("Creating location source");
         bool success =
-            locationProvider->createLocationProvider(workerConfig->locationSourceType, workerConfig->locationSourceConfig);
+            locationProvider->createLocationProvider(workerConfig->locationProviderType, workerConfig->locationProviderConfig);
 
         NES_DEBUG("create location source= " << success);
         NES_ASSERT(success, "cannot create location source");

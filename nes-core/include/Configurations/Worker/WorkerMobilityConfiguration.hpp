@@ -5,6 +5,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <memory>
+#include <Util/Experimental/LocationProviderType.hpp>
 
 namespace NES {
 
@@ -15,10 +16,21 @@ using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfigurati
 
 class WorkerMobilityConfiguration : public BaseConfiguration {
   public:
+    /**
+     * @brief Factory function for a worker config
+     */
+    static std::shared_ptr<WorkerMobilityConfiguration> create() { return std::make_shared<WorkerMobilityConfiguration>(); }
+
+    /**
+     * @brief defines how many milliseconds to wait, between recalculations of the devices predicted path
+     */
     UIntOption pathPredictionUpdateInterval = {PATH_PREDICTION_UPDATE_INTERVAL_CONFIG,
                                                1000,
                                                "Sleep time after the last update of the predicted path"};
 
+    /**
+     * @brief defines how many locations should be saved in the buffer which is used to calculate the predicted path
+     */
     UIntOption locationBufferSize = {LOCATION_BUFFER_SIZE_CONFIG,
                                      30,
                                      "The amount of past locations to be recorded in order to predict the future trajectory"};
@@ -59,6 +71,20 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                                              10000,
                                              "the sleep amount between 2 checks if a locatin update should be sent to the coordinator"};
 
+    /**
+     * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
+     * a simulation
+     */
+    EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType> locationProviderType = {
+        LOCATION_PROVIDER_TYPE_CONFIG,
+        NES::Spatial::Mobility::Experimental::LocationProviderType::BASE,
+        "the kind of interface which the  mobile worker gets its geolocation info from"};
+
+    /**
+     * @brief specify the config data specific to the source of location data which was specified in the locationProviderType option
+     */
+    StringOption locationProviderConfig = {LOCATION_PROVIDER_CONFIG, "", "the configuration data for the location interface"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&pathPredictionUpdateInterval,
@@ -71,7 +97,9 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                 &pathPredictionLength,
                 &sendDevicePositionUpdateThreshold,
                 &pushDeviceLocationUpdates,
-                &sendLocationUpdateInterval};
+                &sendLocationUpdateInterval,
+                &locationProviderType,
+                &locationProviderConfig};
     }
 };
 }

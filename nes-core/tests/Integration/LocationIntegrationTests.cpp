@@ -32,6 +32,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 
 using std::map;
 using std::string;
@@ -195,16 +196,17 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->coordinatorPort = (port);
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf1->isMobile.setValue(true);
-    wrkConf1->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    wrkConf1->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    //wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    //wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
-    wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testTrajectoryUpdate.csv");
+    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    //wrkConf1->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    //wrkConf1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    //wrkConf1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+    //wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testTrajectoryUpdate.csv");
+    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -311,12 +313,13 @@ TEST_F(LocationIntegrationTests, testMovingDevice) {
 
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->coordinatorPort = (port);
     //we set a location which should get ignored, because we make this node mobile. so it should not show up as a field node
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf1->isMobile.setValue(true);
-    wrkConf1->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
+    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -421,10 +424,11 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     //test getting location of mobile node
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
     wrkConf1->rpcPort = rpcPortWrk1;
     wrkConf1->isMobile.setValue(true);
-    wrkConf1->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);

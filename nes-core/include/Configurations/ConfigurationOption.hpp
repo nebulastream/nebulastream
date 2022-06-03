@@ -203,8 +203,6 @@ const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string IS_MOBILE_CONFIG = "isMobile";
-const std::string LOCATION_SOURCE_CONFIG = "locationSourceConfig";
-const std::string LOCATION_SOURCE_TYPE_CONFIG = "locationSourceType";
 const std::string MOBILITY_CONFIG_PATH_CONFIG = "mobilityConfigPath";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
@@ -225,6 +223,8 @@ const std::string PATH_PREDICTION_LENGTH_CONFIG = "pathPredictionLength";
 const std::string SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG = "sendDevicePositionUpdateThreshold";
 const std::string PUSH_DEVICE_LOCATION_UPDATES_CONFIG = "pushPositionUpdates";
 const std::string SEND_LOCATION_UPDATE_INTERVAL_CONFIG = "sendLocationUpdateInterval";
+const std::string LOCATION_PROVIDER_CONFIG = "locationProviderConfig";
+const std::string LOCATION_PROVIDER_TYPE_CONFIG = "locationProviderType";
 
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";

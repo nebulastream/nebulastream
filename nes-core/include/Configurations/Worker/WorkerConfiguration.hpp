@@ -22,8 +22,7 @@
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Runtime/QueryExecutionMode.hpp>
-#include <Spatial/LocationProviderCSV.hpp>
-#include <Util/Experimental/LocationProviderType.hpp>
+//#include <Spatial/LocationProviderCSV.hpp>
 #include <map>
 #include <string>
 
@@ -183,21 +182,7 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     BoolOption isMobile = {IS_MOBILE_CONFIG, false, "define if this worker is running on a mobile device"};
 
-    /**
-     * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or
-     * a simulation
-     */
-    EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType> locationSourceType = {
-        LOCATION_SOURCE_TYPE_CONFIG,
-        NES::Spatial::Mobility::Experimental::LocationProviderType::BASE,
-        "the kind of interface which the  mobile worker gets its geolocation info from"};
-
-    /**
-     * @brief specify the config data specific to the source of location data which was specified in the locationSourceType option
-     */
-    StringOption locationSourceConfig = {LOCATION_SOURCE_CONFIG, "", "the configuration data for the location interface"};
-
-    StringOption locationWrapperConfig = {MOBILITY_CONFIG_PATH_CONFIG, "", "the configuration data for the location wrapper class"};
+    StringOption mobilityConfigPath = {MOBILITY_CONFIG_PATH_CONFIG, "", "the configuration data for the location wrapper class"};
 
     /**
      * @brief Configuration yaml path.
@@ -269,9 +254,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &physicalSources,
                 &locationCoordinates,
                 &isMobile,
-                &locationSourceType,
-                &locationSourceConfig,
-                &locationWrapperConfig,
+                &mobilityConfigPath,
                 &numberOfQueues,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,
