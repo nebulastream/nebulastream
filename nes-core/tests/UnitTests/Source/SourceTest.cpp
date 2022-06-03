@@ -1629,7 +1629,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     EXPECT_TRUE(content->truthy_entry);
 }
 
-TEST_F(SourceTest, testCSVSourceKTMCommaFloatingPoint) {
+TEST_F(SourceTest, testCSVSourceCommaFloatingPoint) {
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(this->path_to_decimals_file);
     csvSourceType->setDelimiter("*");
