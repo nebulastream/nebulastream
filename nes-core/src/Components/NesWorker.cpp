@@ -176,53 +176,67 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             break;
         }
         case 2: {
-            auto physicalSource1 = PhysicalSource::create("B", "B1", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("A", "A2", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
             break;
         }
         case 3: {
-            auto physicalSource1 = PhysicalSource::create("C", "C1", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("A", "A3", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
             break;
         }
         case 4: {
-            auto physicalSource1 = PhysicalSource::create("D", "D1", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("A", "A4", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
             break;
         }
         case 5: {
-            auto physicalSource1 = PhysicalSource::create("E", "E1", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("A", "A5", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("E", "E2", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource2);
             break;
         }
         case 6: {
-            auto physicalSource1 = PhysicalSource::create("F", "F1", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("A", "A6", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("F", "F2", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource2);
             break;
         }
         case 7: {
-            auto physicalSource1 = PhysicalSource::create("G", "G1", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("G", "G2", lambdaSourceType1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource2);
-            auto physicalSource3 = PhysicalSource::create("G", "G3", lambdaSourceType1);
-            workerConfig->physicalSources.add(physicalSource3);
             break;
         }
         case 8: {
-            auto physicalSource1 = PhysicalSource::create("H", "H1", lambdaSourceType1);
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource1);
-            auto physicalSource2 = PhysicalSource::create("H", "H2", lambdaSourceType1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource2);
-            auto physicalSource3 = PhysicalSource::create("H", "H3", lambdaSourceType1);
+            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            break;
+        }
+        case 9: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource3);
-            auto physicalSource4 = PhysicalSource::create("H", "H4", lambdaSourceType1);
+            auto physicalSource4 = PhysicalSource::create("A", "A4", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource3);
+            break;
+        }
+        case 10: {
+            auto physicalSource1 = PhysicalSource::create("A", "A1", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource1);
+            auto physicalSource2 = PhysicalSource::create("A", "A2", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource2);
+            auto physicalSource3 = PhysicalSource::create("A", "A3", lambdaSourceType1);
+            workerConfig->physicalSources.add(physicalSource3);
+            auto physicalSource4 = PhysicalSource::create("A", "A4", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource4);
-            auto physicalSource5 = PhysicalSource::create("H", "H5", lambdaSourceType1);
+            auto physicalSource5 = PhysicalSource::create("A", "A5", lambdaSourceType1);
             workerConfig->physicalSources.add(physicalSource5);
             break;
         }
