@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 namespace Configurations {
