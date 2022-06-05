@@ -69,24 +69,17 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
     NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer.getBuffer().getBufferSize(),
                     "value to write is larger than the buffer");
 
-    //    if (!buffer) {
-    //        return std::nullopt;
-    //    }
-    auto buffer2 = buffer.getBuffer();
-    generationFunction(buffer2, numberOfTuplesToProduce);
+    auto rawBuffer = buffer.getBuffer();
+    generationFunction(rawBuffer, numberOfTuplesToProduce);
     buffer.setNumberOfTuples(numberOfTuplesToProduce);
-
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
 
-    NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << buffer.toString(schema));
-    //    NES_TRACE("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
-    //                                                                     << " outOrgID=" << buffer.getOriginId());
-    if (buffer.getNumberOfTuples() == 0) {
-        NES_ASSERT(false, "this should not happen");
-        return std::nullopt;
-    }
-    return buffer2;
+    NES_TRACE("LambdaSource: Current buffer content" << buffer.toString(schema));
+    NES_TRACE("LambdaSource: ReceiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
+                                                                     << " outOrgID=" << rawBuffer.getOriginId());
+
+    return rawBuffer;
 }
 
 std::string LambdaSource::toString() const { return "LambdaSource"; }
