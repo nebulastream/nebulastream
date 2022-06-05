@@ -73,9 +73,14 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         "Indicates the windowingStrategy "
         "[DEFAULT|THREAD_LOCAL]. "};
 
+    /**
+     * @brief Enables compilation cache
+     * */
+    BoolOption useCompilationCache = {ENABLE_USE_COMPILATION_CACHE_CONFIG, false, "Enable use compilation caching"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&compilationStrategy, &pipeliningStrategy, &outputBufferOptimizationLevel, &windowingStrategy};
+        return {&compilationStrategy, &pipeliningStrategy, &outputBufferOptimizationLevel, &windowingStrategy, &useCompilationCache};
     }
 };
 

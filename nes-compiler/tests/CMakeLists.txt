@@ -23,5 +23,9 @@ add_executable(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest
 target_link_libraries(compiler-sharedlibrary-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
 add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)
 
+add_executable(compiler-compilationcache-test "UnitTests/Compiler/CompilationCacheTest.cpp")
+target_link_libraries(compiler-compilationcache-test nes-tests-util ${GTEST_LIBRARIES} nes-compiler)
+add_test(NAME compiler-compilationcache-test COMMAND compiler-compilationcache-test)
+
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 

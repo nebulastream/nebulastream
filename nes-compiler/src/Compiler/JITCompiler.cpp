@@ -26,7 +26,8 @@ namespace NES::Compiler {
 
 JITCompiler::JITCompiler(std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers,
                          bool useCompilationCache)
-    : languageCompilers(std::move(languageCompilers)), useCompilationCache(useCompilationCache) {}
+    : languageCompilers(std::move(languageCompilers)), useCompilationCache(useCompilationCache),
+      compilationCache(std::make_shared<CompilationCache>()) {}
 
 std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const CompilationRequest> request) {
     if (request->getSourceCode() == nullptr) {
@@ -40,26 +41,19 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
     }
 
     auto compiler = languageCompiler->second;
-    if (useCompilationCache) {
-        auto asyncResult = std::async(std::launch::async, [compiler, request, this]() {
-            if (compilationCache->exists(request->getSourceCode())) {
-                NES_DEBUG("Reuse existing binary instead of compiling it");
-                return compilationCache->get(request->getSourceCode());
-            } else {
-                NES_DEBUG("Compiling Binary for the first time");
-                auto result = compiler->compile(request);
-                auto par = std::pair<std::shared_ptr<SourceCode>, CompilationResult>(request->getSourceCode(), result);
-                compilationCache->insert(par);
-                return result;
-            }
-        });
-        return asyncResult;
-    } else {
-        auto asyncResult = std::async(std::launch::async, [compiler, request]() {
-            return compiler->compile(request);
-        });
-        return asyncResult;
-    }
+    auto asyncResult = std::async(std::launch::async, [compiler, request, this]() {
+        auto sourceCode = *request->getSourceCode();
+        if (useCompilationCache && compilationCache->contains(sourceCode)) {
+            NES_DEBUG("Reuse existing binary instead of compiling it");
+            return compilationCache->get(sourceCode);
+        } else {
+            NES_DEBUG("Compiling Binary");
+            auto result = compiler->compile(request);
+            compilationCache->insert(sourceCode, result);
+            return result;
+        }
+    });
+    return asyncResult;
 }
 
 std::future<CompilationResult> JITCompiler::compile(std::shared_ptr<const CompilationRequest> request) {
