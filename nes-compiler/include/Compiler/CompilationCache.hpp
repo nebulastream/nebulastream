@@ -16,8 +16,8 @@
 #define NES_COMPILATIONCACHE_HPP
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/CompilerForwardDeclarations.hpp>
+#include <Compiler/SourceCode.hpp>
 #include <mutex>
-#include <string>
 #include <unordered_map>
 
 namespace NES::Compiler {
@@ -32,25 +32,25 @@ class CompilationCache {
      * @param code
      * @return bool if for this code the binary already exists
      */
-    bool exists(std::shared_ptr<SourceCode> code);
+    bool contains(const SourceCode& code);
 
     /**
      * @brief inserts a compilation result for a new source code
-     * @param souceCode
+     * @param sourceCode
      * @param compilationResult
      */
-    void insert(std::pair<std::shared_ptr<SourceCode>, CompilationResult> newEntry);
+    void insert(const SourceCode& code, CompilationResult& compilationResult);
 
     /**
      * @brief method to retrieve the compilation result for a given source code
      * @param code
      * @return compilation result
      */
-    CompilationResult get(std::shared_ptr<SourceCode> code);
+    CompilationResult get(const SourceCode& code);
 
   private:
-    std::unordered_map<std::shared_ptr<SourceCode>, CompilationResult> compilationReuseMap;
-    std::mutex mutex;
+    std::unordered_map<const SourceCode, CompilationResult> compilationReuseMap;
+    std::recursive_mutex mutex;
 };
 
 }// namespace NES::Compiler

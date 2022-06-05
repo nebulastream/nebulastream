@@ -202,10 +202,13 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
             throw Exceptions::RuntimeException("Error while building NodeEngine : error while creating MaterializedViewManager",
                                                NES::collectAndPrintStacktrace());
         }
-        auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
-        auto jitCompiler = (!this->jitCompiler)
+        if(!this->languageCompiler){
+            this->languageCompiler = Compiler::CPPCompiler::create();
+        }
+        auto jitCompilerBuilder = (!this->jitCompiler)
             ? Compiler::JITCompilerBuilder()
-                  .registerLanguageCompiler(cppCompiler, workerConfiguration->useCompilationCache.getValue())
+                  .registerLanguageCompiler(languageCompiler)
+                  .enableCompilationCache(workerConfiguration->queryCompiler.useCompilationCache)
                   .build()
             : this->jitCompiler;
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;

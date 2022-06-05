@@ -32,8 +32,14 @@ class JITCompilerBuilder {
      * @param languageCompiler
      * @return JITCompilerBuilder
      */
-    JITCompilerBuilder& registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler,
-                                                 bool useCompilationCache = false);
+    JITCompilerBuilder& registerLanguageCompiler(const std::shared_ptr<const LanguageCompiler> languageCompiler);
+
+    /**
+     * @brief Enables or disables the compilation cache
+     * @param useCompilationCache
+     * @return JITCompilerBuilder
+     */
+    JITCompilerBuilder& enableCompilationCache(bool useCompilationCache);
     /**
      * @brief Creates a instance of the JITCompiler containing all language compilers.
      * @return JITCompiler
@@ -42,7 +48,7 @@ class JITCompilerBuilder {
 
   private:
     std::map<const std::string, std::shared_ptr<const LanguageCompiler>> languageCompilers;
-    bool useCompilationCache;
+    bool useCompilationCache = false;
 };
 
 }// namespace NES::Compiler

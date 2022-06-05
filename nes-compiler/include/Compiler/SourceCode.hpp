@@ -66,7 +66,7 @@ class SourceCode {
 namespace std {
 
 template<>
-struct hash<NES::Compiler::SourceCode> {
+struct hash<const NES::Compiler::SourceCode> {
     std::size_t operator()(const NES::Compiler::SourceCode& k) const {
         using std::hash;
         using std::size_t;
