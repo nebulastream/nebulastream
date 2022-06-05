@@ -13,7 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 
 using namespace Configurations;
