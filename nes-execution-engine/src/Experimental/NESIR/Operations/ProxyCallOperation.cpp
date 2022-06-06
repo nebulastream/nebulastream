@@ -27,5 +27,16 @@ ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string 
     std::vector<std::string> ProxyCallOperation::getInputArgNames() { return inputArgNames; }
     std::vector<Operation::BasicType> ProxyCallOperation::getInputArgTypes() { return inputArgTypes; }
     Operation::BasicType ProxyCallOperation::getResultType() { return resultType; }
+
+    std::string ProxyCallOperation::toString() {
+        std::string baseString = "ProxyCallOperation_" + identifier + "(";
+        if(inputArgNames.size() > 0) {
+            baseString += inputArgNames[0];
+            for(int i = 1; i < (int) inputArgNames.size(); ++i) { 
+                baseString += ", " + inputArgNames.at(i);
+            }
+        }
+        return baseString + ")";
+    }
     
 }// namespace NES

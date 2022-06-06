@@ -28,6 +28,8 @@ class AddIntOperation : public Operation {
     std::string getIdentifier();
     std::string getLeftArgName();
     std::string getRightArgName();
+
+    std::string toString() override;
     bool classof(const Operation* Op);
 
   private:

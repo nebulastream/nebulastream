@@ -27,6 +27,8 @@ class NESIR {
 
     std::shared_ptr<Operations::FunctionOperation> addRootOperation(std::shared_ptr<Operations::FunctionOperation> rootOperation);
     std::shared_ptr<Operations::FunctionOperation> getRootOperation();
+
+    std::string toString();
   private:
     std::shared_ptr<Operations::FunctionOperation> rootOperation;
 };

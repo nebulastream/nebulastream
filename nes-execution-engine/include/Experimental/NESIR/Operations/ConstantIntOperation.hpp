@@ -30,6 +30,8 @@ class ConstantIntOperation : public Operation {
 
     template<class T>
     T getIntegerViaType();
+
+    std::string toString() override;
     static bool classof(const Operation* Op);
   private:
   std::string identifier;

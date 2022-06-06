@@ -26,7 +26,8 @@ class StoreOperation : public Operation{
 
     std::string getValueArgName();
     std::string getAddressArgName();
-    static bool classof(const Operation* Op);
+    
+    std::string toString() override;
 
   private:
     std::string valueArgName;

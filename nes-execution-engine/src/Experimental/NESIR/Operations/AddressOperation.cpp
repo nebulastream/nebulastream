@@ -13,6 +13,7 @@
 */
 
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
+#include <string>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 AddressOperation::AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, 
@@ -26,6 +27,11 @@ uint64_t AddressOperation::getRecordWidth() { return recordWidth; }
 uint64_t AddressOperation::getFieldOffset() { return fieldOffset; }
 std::string AddressOperation::getRecordIdxName() { return recordIdxName; }
 std::string AddressOperation::getAddressSourceName() { return addressSourceName; }
+
+std::string AddressOperation::toString() { 
+    return "AddressOperation_" + identifier + "("  + std::to_string(recordWidth) + std::to_string(fieldOffset)
+                               + recordIdxName + addressSourceName + ")";
+}
 
 bool AddressOperation::classof(const Operation *Op) {
     return Op->getOperationType() == OperationType::AddressOp;

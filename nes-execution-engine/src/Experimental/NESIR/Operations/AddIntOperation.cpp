@@ -17,6 +17,10 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 AddIntOperation::AddIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName)
     : Operation(OperationType::AddOp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)), rightArgName(std::move(rightArgName)) {}
 
+
+std::string AddIntOperation::toString() { 
+    return "AddIntOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")";
+}
 bool AddIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
 std::string AddIntOperation::getIdentifier() { return identifier; }

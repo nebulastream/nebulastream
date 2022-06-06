@@ -23,5 +23,7 @@ StoreOperation::StoreOperation(std::string valueArgName, std::string addressArgN
 std::string StoreOperation::getValueArgName() { return valueArgName; }
 std::string StoreOperation::getAddressArgName() { return addressArgName; }
 
-bool StoreOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::StoreOp; }
+std::string StoreOperation::toString() {
+    return "StoreOperation(" + valueArgName + ", " + addressArgName + ")";
+}
 }// namespace NES

@@ -27,7 +27,6 @@
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
-#include <Experimental/NESIR/Operations/PredicateOperation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
