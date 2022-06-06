@@ -47,12 +47,11 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock, uint64_t inde
     out << "):" << '\n';
     ++indent;
     //Todo might make sense to iterate over complete operations then start with next block(s)
-    for(int i = 0; i < (int) basicBlock->getOperations().size() - 1; ++i) {
-        dumpHelper(basicBlock->getOperations().at(i), indent, out);
+    for(auto operation: basicBlock->getOperations()) {
+        dumpHelper(operation, indent, out);
     }
     --indent;
     OperationPtr terminatorOp = basicBlock->getOperations().back();
-    terminatorOp->toString();
     switch(terminatorOp->getOperationType()) {
         case IR::Operations::Operation::OperationType::BranchOp: {
             auto loopOperation = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
