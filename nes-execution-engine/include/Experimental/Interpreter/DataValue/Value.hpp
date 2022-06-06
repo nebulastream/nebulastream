@@ -26,9 +26,9 @@
 #include <Experimental/Interpreter/Operations/OrOp.hpp>
 #include <Experimental/Interpreter/Operations/SubOp.hpp>
 #include <Experimental/Interpreter/Util/Casting.hpp>
+#include <Experimental/Trace/ConstantValue.hpp>
 #include <Experimental/Trace/OpCode.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
-#include <Experimental/Trace/ConstantValue.hpp>
 #include <Experimental/Trace/TraceManager.hpp>
 #include <Experimental/Trace/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -76,11 +76,18 @@ class Value : BaseValue {
     }
 
     operator bool() {
-        //std::cout << "trace bool eval" << std::endl;
         if (instanceOf<Boolean>(value)) {
             auto boolValue = cast<Boolean>(value);
-            TraceOperation(Trace::OpCode::CMP, *this, *this);
-            return boolValue->value;
+            if (Trace::isInSymbolicExecution()) {
+                auto* sec = Trace::getThreadLocalSymbolicExecutionContext();
+                auto result = sec->executeCMP(this->ref);
+                auto ctx = Trace::getThreadLocalTraceContext();
+                ctx->traceCMP(ref, result);
+                return result;
+            } else {
+                TraceOperation(Trace::OpCode::CMP, *this, *this);
+                return boolValue->value;
+            }
         }
         return false;
     };
@@ -310,7 +317,8 @@ auto inline operator<(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator<(const LHS& left, const RHS& right) {
-    auto result = Operations::LessThan(left.value, right.value);
+    auto result =
+        Trace::isInSymbolicExecution() ? std::make_unique<Boolean>(true) : Operations::LessThan(left.value, right.value);
     auto resValue = Value(std::move(result));
     TraceOperation(Trace::OpCode::LESS_THAN, left, right, resValue);
     return resValue;
@@ -409,15 +417,24 @@ auto inline operator||(const LHS& left, const RHS& right) {
 
 template<class Type>
 auto load(Value<MemRef>& ref) {
-    auto value = ref.value->load<Type>();
-    auto resValue = Value<Type>(std::move(value));
-    TraceOperation(Trace::OpCode::LOAD, ref, resValue);
-    return resValue;
+    if (Trace::isInSymbolicExecution()) {
+        auto value = std::make_unique<Type>();
+        auto resValue = Value<Type>(std::move(value));
+        TraceOperation(Trace::OpCode::LOAD, ref, resValue);
+        return resValue;
+    } else {
+        auto value = ref.value->load<Type>();
+        auto resValue = Value<Type>(std::move(value));
+        TraceOperation(Trace::OpCode::LOAD, ref, resValue);
+        return resValue;
+    }
 }
 
 template<class Type>
 void store(Value<MemRef>& ref, Value<Type>& value) {
-    ref.value->store(value);
+    if (!Trace::isInSymbolicExecution()) {
+        ref.value->store(value);
+    }
     if (auto* ctx = Trace::getThreadLocalTraceContext()) {
         auto operation = Trace::Operation(Trace::STORE, {ref.ref, value.ref});
         ctx->trace(operation);

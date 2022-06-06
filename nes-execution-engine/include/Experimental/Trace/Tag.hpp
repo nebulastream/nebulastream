@@ -15,38 +15,55 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TAG_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TAG_HPP_
 
-#include <functional>
-#include <iostream>
 #include <memory>
 #include <ostream>
-#include <unordered_map>
-#include <variant>
 #include <vector>
 
-namespace NES::ExecutionEngine::Experimental::Trace{
+namespace NES::ExecutionEngine::Experimental::Trace {
 
+/**
+ * @brief The tag address references a function on the callstack.
+ */
+using TagAddress = uint64_t;
+
+/**
+ * @brief The tag identifies a specific executed operation in the interpreter.
+ * It is represented by a list of all stack frame addresses between the operation and the execution root.
+ */
 class Tag {
   public:
-    bool operator==(const Tag& other) const { return other.addresses == addresses; }
+    /**
+     * @brief The hasher enables to leverage the tag in a std::map
+     */
+    class TagHasher {
+      public:
+        std::size_t operator()(const Tag& k) const;
+    };
+
+    /**
+     * @brief Creates a new, which represents the current operation.
+     * @param startAddress
+     * @return Tag
+     */
+    static Tag createTag(TagAddress startAddress);
+
+    /**
+     * @brief Returns the return address of the root operation
+     * @return TagAddress
+     */
+    static TagAddress createCurrentAddress();
+    bool operator==(const Tag& other) const;
     friend std::ostream& operator<<(std::ostream& os, const Tag& tag);
-    std::vector<uint64_t> addresses;
+  private:
+    /**
+     * @brief Constructor to create a new tag.
+     * @param addresses
+     */
+    Tag(std::vector<TagAddress> addresses);
+    std::vector<TagAddress> addresses;
+    friend TagHasher;
 };
 
-struct TagHasher {
-    std::size_t operator()(const Tag& k) const {
-        using std::hash;
-        using std::size_t;
-        using std::string;
-        auto hasher = std::hash<uint64_t>();
-        std::size_t hashVal = 1;
-        for (auto address : k.addresses) {
-            hashVal = hashVal ^ hasher(address) << 1;
-        }
-        return hashVal;
-    }
-};
-
-}
-
+}// namespace NES::ExecutionEngine::Experimental::Trace
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_TAG_HPP_
