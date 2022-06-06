@@ -28,8 +28,15 @@ BasicBlockPtr LoopOperation::setLoopHeadBlock(BasicBlockPtr loopHeadBlock) {
 
 BasicBlockPtr LoopOperation::getLoopHeadBlock() { return loopHeadBlock; }
 
-bool LoopOperation::classof(const Operation *Op) {
-    return Op->getOperationType() == Operation::LoopOp;
+std::string LoopOperation::toString() {
+    std::string baseString = "LoopOperation(";
+        if(loopBlockArgs.size() > 0) {
+            baseString += loopBlockArgs[0];
+            for(int i = 1; i < (int) loopBlockArgs.size(); ++i) { 
+                baseString += ", " + loopBlockArgs.at(i);
+            }
+        }
+        return baseString + ")";
 }
 
 }// namespace NES

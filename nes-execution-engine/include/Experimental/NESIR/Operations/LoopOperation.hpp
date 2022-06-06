@@ -34,7 +34,8 @@ class LoopOperation : public Operation {
     std::vector<std::string> getLoopBlockArgs();
     BasicBlockPtr setLoopHeadBlock(BasicBlockPtr loopHeadBlock);
     BasicBlockPtr getLoopHeadBlock();
-    static bool classof(const Operation *Op);
+
+    std::string toString() override;
 
   private:
     LoopType loopType;

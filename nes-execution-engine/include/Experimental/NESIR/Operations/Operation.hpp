@@ -50,12 +50,13 @@ class Operation {
         GetDataBuffer = 1,
         Other = 50
     };
-    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, PredicateOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp, 
+    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp, 
                        CompareOp, ReturnOp, ProxyCallOp};
 
     explicit Operation(OperationType opType);
     virtual ~Operation() = default;
 
+    virtual std::string toString() = 0;
     OperationType getOperationType() const;
 
   private:

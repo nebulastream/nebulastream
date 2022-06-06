@@ -16,7 +16,6 @@ add_source_files(nes-execution-engine
         LoadOperation.cpp
         StoreOperation.cpp
         AddIntOperation.cpp
-        PredicateOperation.cpp
         ConstantIntOperation.cpp
         LoopOperation.cpp
         AddressOperation.cpp

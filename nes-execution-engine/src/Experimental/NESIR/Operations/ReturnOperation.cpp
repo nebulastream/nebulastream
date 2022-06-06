@@ -15,11 +15,16 @@
 
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
 #include <cstdint>
+#include <string>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 ReturnOperation::ReturnOperation(uint8_t returnOpCode) 
     : Operation(Operation::ReturnOp), returnOpCode(returnOpCode){}
 
     uint8_t ReturnOperation::getReturnOpCode() { return returnOpCode; }
+
+    std::string ReturnOperation::toString() {
+        return "ReturnOperation(" + std::to_string(returnOpCode) + ")";
+    }
     
 }// namespace NES

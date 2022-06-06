@@ -22,6 +22,8 @@ LoadOperation::LoadOperation(std::string identifier, std::string argName)
 std::string LoadOperation::getIdentifier() { return identifier; }
 std::string LoadOperation::getArgName() { return argName; }
 
-bool LoadOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::LoadOp; }
+std::string LoadOperation::toString() {
+    return "LoadOperation_" + identifier + "(" + argName + ")";
+}
 
 }// namespace NES

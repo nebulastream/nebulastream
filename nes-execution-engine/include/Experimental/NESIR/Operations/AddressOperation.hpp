@@ -32,6 +32,7 @@ public:
     std::string getRecordIdxName();
     std::string getAddressSourceName();
 
+    std::string toString() override;
     static bool classof(const Operation *Op);
 private:
     std::string identifier;

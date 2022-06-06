@@ -13,7 +13,9 @@
 */
 
 #include <Experimental/NESIR/NESIR.hpp>
+#include <sstream>
 #include <utility>
+#include <Experimental/Utility/NESIRDumpHandler.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR {
 
@@ -27,6 +29,15 @@ std::shared_ptr<Operations::FunctionOperation> NESIR::addRootOperation(std::shar
 
 std::shared_ptr<Operations::FunctionOperation> NESIR::getRootOperation() {
     return rootOperation;
+}
+
+std::string NESIR::toString() {
+    std::stringstream ss;
+    ss << "NESIR {\n";
+    auto dumpHandler = ExecutionEngine::Experimental::IR::NESIRDumpHandler::create(ss);
+    dumpHandler->dump(rootOperation);
+    ss << "}";
+    return ss.str();
 }
 
 }// namespace NES

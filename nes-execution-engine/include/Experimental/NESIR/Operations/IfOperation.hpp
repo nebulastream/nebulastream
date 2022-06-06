@@ -33,6 +33,7 @@ class IfOperation : public Operation {
     std::vector<std::string> getThenBlockArgs();
     std::vector<std::string> getElseBlockArgs();
 
+    std::string toString() override;
   private:
     std::string boolArgName;
     BasicBlockPtr thenBranchBlock;

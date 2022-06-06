@@ -15,6 +15,7 @@
 #include "Experimental/NESIR/Operations/Operation.hpp"
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <cstdint>
+#include <string>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
@@ -25,6 +26,10 @@ std::string ConstantIntOperation::getIdentifier() { return identifier; }
 int64_t ConstantIntOperation::getConstantIntValue() { return constantValue; }
 int8_t ConstantIntOperation::getNumBits() { return numBits; }
 bool ConstantIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstantOp; }
+
+std::string ConstantIntOperation::toString() {
+    return "ConstantInt" + std::to_string(numBits) + "Operation_" + identifier + "(" + std::to_string(constantValue) + ")";
+}
 
 template<class T>
 T ConstantIntOperation::getIntegerViaType() {

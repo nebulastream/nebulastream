@@ -20,7 +20,6 @@
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
-#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
 #include <cstdint>
 #include <exception>
@@ -285,9 +284,6 @@ void MLIRGenerator::generateMLIR(const IR::Operations::OperationPtr& operation, 
         case IR::Operations::Operation::OperationType::StoreOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::StoreOperation>(operation), blockArgs);
             break;
-        case IR::Operations::Operation::OperationType::PredicateOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::PredicateOperation>(operation), blockArgs);
-            break;
         case IR::Operations::Operation::OperationType::BranchOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::BranchOperation>(operation), blockArgs);
             break;
@@ -349,14 +345,14 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     auto loopBodyBB = loopIfOp->getThenBranchBlock();
     auto afterLoopBB = loopIfOp->getElseBranchBlock();
 
-    std::string loopInductionVarName = compareOp->getFirstArgName();
+    std::string loopInductionVarName = compareOp->getLeftArgName();
     inductionVars.emplace(loopInductionVarName);
 
     // Define index variables for loop.
     // For now we assume that loops always use the "i" as the induction var and always increase "i" by one each step.
     auto lowerBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("LowerBound"),
                                                                 builder->getIndexType(),
-                                                                blockArgs[compareOp->getFirstArgName()]);
+                                                                blockArgs[compareOp->getLeftArgName()]);
     auto stepSize =
         builder->create<mlir::arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs["const1Op"]);
 
@@ -383,7 +379,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     insertComment("// For Loop Start");
     auto upperBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("UpperBound"),
                                                                 builder->getIndexType(),
-                                                                blockArgs[compareOp->getSecondArgName()]);
+                                                                blockArgs[compareOp->getRightArgName()]);
 
     auto forLoop = builder->create<mlir::scf::ForOp>(getNameLoc("forLoop"), lowerBound, upperBound, stepSize, iteratorArgs);
     //Replace header input args that are changed in body with dynamic iter args from ForOp.
@@ -396,7 +392,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     // Set Insertion Point(IP) to loop BasicBlock. Process all Operations in loop BasicBlock. Restore IP to parent's BasicBlock.
     builder->setInsertionPointToStart(forLoop.getBody());
     std::unordered_map<std::string, mlir::Value> loopBodyArgs = blockArgs;
-    loopBodyArgs[compareOp->getFirstArgName()] = builder->create<mlir::arith::IndexCastOp>(getNameLoc("InductionVar Cast"),
+    loopBodyArgs[compareOp->getLeftArgName()] = builder->create<mlir::arith::IndexCastOp>(getNameLoc("InductionVar Cast"),
                                                                                            builder->getI64Type(),
                                                                                            forLoop.getInductionVar());
     generateMLIR(loopBodyBB, loopBodyArgs);
@@ -567,8 +563,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::CompareOperatio
     blockArgs.emplace(std::pair{compareOp->getIdentifier(),
                                 builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
                                                                convertToMLIRComparison(compareOp->getComparator()),
-                                                               blockArgs[compareOp->getFirstArgName()],
-                                                               blockArgs[compareOp->getSecondArgName()])});
+                                                               blockArgs[compareOp->getLeftArgName()],
+                                                               blockArgs[compareOp->getRightArgName()])});
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.

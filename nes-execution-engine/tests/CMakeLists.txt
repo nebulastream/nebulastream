@@ -36,6 +36,11 @@ target_link_libraries(mlir-nesir-if-test
         nes-execution-engine)
 add_test(NAME mlir-nesir-if-test COMMAND mlir-nesir-if-test)
 
+add_executable(mlir-nesir-print-test "UnitTests/MLIR_Experimental/NESIRPrintTest.cpp")
+target_link_libraries(mlir-nesir-print-test
+        nes-execution-engine)
+add_test(NAME mlir-nesir-print-test COMMAND mlir-nesir-print-test)
+
 #add_executable(mlir-nesir-types-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Types.cpp")
 #target_link_libraries(mlir-nesir-types-test
 #        nes-execution-engine)
