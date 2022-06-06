@@ -37,13 +37,22 @@ IfOperation::IfOperation(std::string boolArgName, std::vector<std::string> thenB
     std::vector<std::string> IfOperation::getElseBlockArgs() { return elseBlockArgs; }
     
     std::string IfOperation::toString() {
-        std::string baseString = "IfOperation(";
+        std::string baseString = "br " + boolArgName + ", " + thenBranchBlock->getIdentifier() + '(';
         if(thenBlockArgs.size() > 0) {
             baseString += thenBlockArgs[0];
             for(int i = 1; i < (int) thenBlockArgs.size(); ++i) { 
                 baseString += ", " + thenBlockArgs.at(i);
             }
         }
-        return baseString + ")";
+        if(elseBranchBlock) {
+            baseString += "), " + elseBranchBlock->getIdentifier() + '(';
+            if(elseBlockArgs.size() > 0) {
+            baseString += elseBlockArgs[0];
+            for(int i = 1; i < (int) elseBlockArgs.size(); ++i) { 
+                baseString += ", " + elseBlockArgs.at(i);
+            }
+        }
+        }
+        return baseString += ')';
     }
 }// namespace NES

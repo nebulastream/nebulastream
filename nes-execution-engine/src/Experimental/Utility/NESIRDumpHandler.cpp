@@ -32,13 +32,13 @@ std::shared_ptr<NESIRDumpHandler> NESIRDumpHandler::create(std::ostream& out) {
     return std::make_shared<NESIRDumpHandler>(out);
 }
 
-OperationPtr NESIRDumpHandler::findLastTerminatorOp(BasicBlockPtr thenBlock, int ifParentBlockLevel) const {
+IR::BasicBlockPtr NESIRDumpHandler::findLastTerminatorOp(BasicBlockPtr thenBlock, int ifParentBlockLevel) {
     auto terminatorOp = thenBlock->getOperations().back();
     // Generate Args for next block
     if (terminatorOp->getOperationType() == Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
         if (branchOp->getNextBlock()->getScopeLevel() <= ifParentBlockLevel) {
-            return branchOp;
+            return branchOp->getNextBlock();
         } else {
             return findLastTerminatorOp(branchOp->getNextBlock(), ifParentBlockLevel);
         }
@@ -46,7 +46,7 @@ OperationPtr NESIRDumpHandler::findLastTerminatorOp(BasicBlockPtr thenBlock, int
         auto loopOp = std::static_pointer_cast<Operations::LoopOperation>(terminatorOp);
         auto loopIfOp = std::static_pointer_cast<Operations::IfOperation>(loopOp->getLoopHeadBlock()->getOperations().back());
         if (loopIfOp->getElseBranchBlock()->getScopeLevel() <= ifParentBlockLevel) {
-            return loopIfOp;
+            return loopIfOp->getElseBranchBlock();
         } else {
             return findLastTerminatorOp(loopIfOp->getElseBranchBlock(), ifParentBlockLevel);
         }
@@ -60,12 +60,17 @@ OperationPtr NESIRDumpHandler::findLastTerminatorOp(BasicBlockPtr thenBlock, int
     }
 }
 
-void NESIRDumpHandler::dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out) const {
+void NESIRDumpHandler::dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out) {
     out << std::string(indent * 4, ' ') << op->toString() << std::endl;
 }
 
+
+// Idea: Do not loop into this function again, but continue with blocks of terminatorOps
+// If block was visited before, do not create it again.
+
+
 void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, uint64_t indent, std::ostream& out, 
-                                  int32_t scopeLevel, bool isLoopHead) const {
+                                  int32_t scopeLevel, bool isLoopHead) {
     switch(terminatorOp->getOperationType()) {
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
@@ -81,14 +86,14 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, uint64_t ind
         }
         case Operations::Operation::OperationType::IfOp: {
             auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
-            auto lastTerminatorOp = findLastTerminatorOp(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getScopeLevel() -1);
+            BasicBlockPtr lastTerminatorOp = findLastTerminatorOp(ifOp->getThenBranchBlock(), ifOp->getThenBranchBlock()->getScopeLevel() -1);
             dumpHelper(ifOp->getThenBranchBlock(), indent, out);
             if(ifOp->getElseBranchBlock() && ifOp->getElseBranchBlock()->getScopeLevel() >= scopeLevel) {
                 dumpHelper(ifOp->getElseBranchBlock(), indent, out);
             }
             if(!isLoopHead) {
             // if(ifOp->getBoolArgName() != "loopHeadCompareOp") {
-                dumpHelper(lastTerminatorOp, indent, out, scopeLevel);
+                dumpHelper(lastTerminatorOp, indent, out);
             }
             break;
         }
@@ -100,31 +105,33 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, uint64_t ind
 }
 
 void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock, uint64_t indent, std::ostream& out, 
-                                  bool isLoopHead) const {
-    out << '\n' << std::string(indent * 4, ' ') << basicBlock->getIdentifier() << '(';
-    if(basicBlock->getInputArgs().size() > 0) {
-        out << basicBlock->getInputArgs().at(0);
-        for(int i = 1; i < (int) basicBlock->getInputArgs().size(); ++i) {
-            out << ", " << basicBlock->getInputArgs().at(i);
+                                  bool isLoopHead) {
+    if(!visitedBlocks.contains(basicBlock->getIdentifier())) {
+        indent = basicBlock->getScopeLevel()+1;
+        visitedBlocks.emplace(basicBlock->getIdentifier());
+        out << '\n' << std::string(basicBlock->getScopeLevel() * 4, ' ') << basicBlock->getIdentifier() << '(';
+        if(basicBlock->getInputArgs().size() > 0) {
+            out << basicBlock->getInputArgs().at(0);
+            for(int i = 1; i < (int) basicBlock->getInputArgs().size(); ++i) {
+                out << ", " << basicBlock->getInputArgs().at(i);
+            }
         }
+        out << "):" << '\n';
+        //Todo might make sense to iterate over complete operations then start with next block(s)
+        for(auto operation: basicBlock->getOperations()) {
+            dumpHelper(operation, indent, out);
+        }
+        OperationPtr terminatorOp = basicBlock->getOperations().back();
+        dumpHelper(terminatorOp, indent, out, basicBlock->getScopeLevel(), isLoopHead);
     }
-    out << "):" << '\n';
-    ++indent;
-    //Todo might make sense to iterate over complete operations then start with next block(s)
-    for(auto operation: basicBlock->getOperations()) {
-        dumpHelper(operation, indent, out);
-    }
-    --indent;
-    OperationPtr terminatorOp = basicBlock->getOperations().back();
-    dumpHelper(terminatorOp, indent, out, basicBlock->getScopeLevel(), isLoopHead);
-    
 }
 
 
 
 void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation> funcOp) { 
-    out << std::string(4, ' ') << funcOp->toString() << std::endl;
+    out << funcOp->toString() << " {";
     dumpHelper(funcOp->getFunctionBasicBlock(), 1, out); 
+    out << "}\n";
 }
 // void NESIRDumpHandler::dump(BasicBlockPtr basicBlock) { 
 
