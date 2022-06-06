@@ -37,14 +37,14 @@ Operation::BasicType FunctionOperation::getOutputArg() const { return outputArg;
 
 
 std::string FunctionOperation::toString() {
-    std::string baseString = "FunctionOperation(";
+    std::string baseString = name + '(';
     if(inputArgNames.size() > 0) {
         baseString += inputArgNames[0];
         for(int i = 1; i < (int) inputArgNames.size(); ++i) { 
             baseString += ", " + inputArgNames.at(i);
         }
     }
-    return baseString + ")";
+    return baseString + ')';
 }
 bool FunctionOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::FunctionOp; }
 const std::vector<std::string>& FunctionOperation::getInputArgNames() const { return inputArgNames; }

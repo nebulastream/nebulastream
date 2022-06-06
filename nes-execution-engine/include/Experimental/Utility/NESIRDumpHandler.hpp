@@ -17,7 +17,7 @@
 
 #include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
 #include "Experimental/NESIR/NESIR.hpp"
-// #include <Experimental/NESIR/Operations/Operation.hpp>
+#include <unordered_set>
 #include <memory>
 
 namespace NES {
@@ -41,11 +41,12 @@ class NESIRDumpHandler {
 
   private:
     std::ostream& out;
+    std::unordered_set<std::string> visitedBlocks;
 
-    IR::Operations::OperationPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel) const;
-    void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out) const;
-    void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out, int32_t scopeLevel, bool isLoopHead = false) const;
-    void dumpHelper(BasicBlockPtr const& basicBlock, uint64_t indent, std::ostream& out, bool isLoopHead = false) const;
+    IR::BasicBlockPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel) ;
+    void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out) ;
+    void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out, int32_t scopeLevel, bool isLoopHead = false) ;
+    void dumpHelper(BasicBlockPtr const& basicBlock, uint64_t indent, std::ostream& out, bool isLoopHead = false) ;
 };
 
 }// namespace ExecutionEngine::Experimental::IR

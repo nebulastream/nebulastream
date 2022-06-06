@@ -29,7 +29,7 @@ BasicBlockPtr BranchOperation::getNextBlock() { return nextBlock; }
 std::vector<std::string> BranchOperation::getNextBlockArgs() { return nextBlockArgs; }
 
 std::string BranchOperation::toString() { 
-    std::string baseString = "BranchOperation(";
+    std::string baseString = "br " + nextBlock->getIdentifier() + "(";
     if(nextBlockArgs.size() > 0) {
         baseString += nextBlockArgs[0];
         for(int i = 1; i < (int) nextBlockArgs.size(); ++i) { 
