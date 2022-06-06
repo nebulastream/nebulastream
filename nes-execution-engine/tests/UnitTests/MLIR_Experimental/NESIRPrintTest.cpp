@@ -77,7 +77,17 @@ TEST_F(MLIRGeneratorIfTest, executeQueryMergerPhaseForSingleQueryPlan) {
                 // TODO enable return of add result
                 ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ReturnOperation>(0)));
 
+    std::string resultString = R"result(NESIR {
+    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
+
+    executeBodyBB(InputTupleBuffer, OutputTupleBuffer):
+        ConstantInt64Operation_int1(5)
+        ConstantInt64Operation_int2(4)
+        AddIntOperation_add(int1, int2)
+        ReturnOperation(0)
+})result";
     NES_DEBUG("\n\n" << nesIR->toString());
+    assert(resultString == nesIR->toString());
 }
 
 }// namespace NES
