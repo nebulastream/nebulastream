@@ -21,18 +21,19 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class CompareOperation : public Operation {
   public:
     enum Comparator{ISLT, ISLE, ISGT, ISGE, IEQ, FSLT, FSLE, FSGT, FSGE, FEQ};
-    CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName, Comparator comparator);
+    CompareOperation(std::string identifier, std::string leftArgName, std::string rightArgName, Comparator comparator);
     ~CompareOperation() override = default;
 
     std::string getIdentifier();
-    std::string getFirstArgName();
-    std::string getSecondArgName();
+    std::string getLeftArgName();
+    std::string getRightArgName();
     Comparator getComparator();
 
+    std::string toString() override;
   private:
     std::string identifier;
-    std::string firstArgName;
-    std::string secondArgName;
+    std::string leftArgName;
+    std::string rightArgName;
     Comparator comparator;
 };
 }// namespace NES

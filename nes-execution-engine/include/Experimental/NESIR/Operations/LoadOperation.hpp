@@ -26,7 +26,7 @@ class LoadOperation : public Operation {
     std::string getIdentifier();
     std::string getArgName();
 
-    static bool classof(const Operation *Op);
+    std::string toString() override;
   private:
     std::string identifier;
     std::string argName;

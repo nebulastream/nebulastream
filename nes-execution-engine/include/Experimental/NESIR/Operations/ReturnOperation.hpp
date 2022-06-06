@@ -26,6 +26,8 @@ class ReturnOperation : public Operation {
 
     uint8_t getReturnOpCode();
 
+    std::string toString() override;
+
   private:
     uint8_t returnOpCode;
 };

@@ -31,6 +31,7 @@ class BranchOperation : public Operation {
     BasicBlockPtr getNextBlock();
     std::vector<std::string> getNextBlockArgs();
 
+    std::string toString() override;
     static bool classof(const Operation *Op);
   private:
     BasicBlockPtr nextBlock;

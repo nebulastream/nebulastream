@@ -30,6 +30,8 @@ class ProxyCallOperation : public Operation {
     std::vector<std::string> getInputArgNames();
     std::vector<Operation::BasicType> getInputArgTypes();
     Operation::BasicType getResultType();
+    
+    std::string toString() override;
 
   private:
     ProxyCallType proxyCallType;

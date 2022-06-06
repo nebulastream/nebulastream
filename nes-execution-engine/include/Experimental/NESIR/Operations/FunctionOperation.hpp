@@ -32,6 +32,7 @@ class FunctionOperation : public Operation {
     [[nodiscard]] BasicType getOutputArg() const;
     [[nodiscard]] const std::vector<std::string>& getInputArgNames() const;
 
+    std::string toString() override;
     static bool classof(const Operation *Op);
   private:
     std::string name;

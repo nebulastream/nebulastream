@@ -15,14 +15,18 @@
 #include <Experimental/NESIR/Operations/CompareOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-CompareOperation::CompareOperation(std::string identifier, std::string firstArgName, std::string secondArgName, 
+CompareOperation::CompareOperation(std::string identifier, std::string leftArgName, std::string rightArgName, 
                                     Comparator comparator) 
-    : Operation(Operation::CompareOp), identifier(std::move(identifier)), firstArgName(std::move(firstArgName)), 
-      secondArgName(std::move(secondArgName)), comparator(comparator) {}
+    : Operation(Operation::CompareOp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)), 
+      rightArgName(std::move(rightArgName)), comparator(comparator) {}
 
 std::string CompareOperation::getIdentifier() { return identifier; }
-std::string CompareOperation::getFirstArgName() { return firstArgName; }
-std::string CompareOperation::getSecondArgName() { return secondArgName; }
+std::string CompareOperation::getLeftArgName() { return leftArgName; }
+std::string CompareOperation::getRightArgName() { return rightArgName; }
 CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
+
+std::string CompareOperation::toString() { 
+    return "CompareOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")";
+}
 
 }// namespace NES

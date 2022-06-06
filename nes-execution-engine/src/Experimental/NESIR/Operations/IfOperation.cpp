@@ -36,4 +36,14 @@ IfOperation::IfOperation(std::string boolArgName, std::vector<std::string> thenB
     std::vector<std::string> IfOperation::getThenBlockArgs() { return thenBlockArgs; }
     std::vector<std::string> IfOperation::getElseBlockArgs() { return elseBlockArgs; }
     
+    std::string IfOperation::toString() {
+        std::string baseString = "IfOperation(";
+        if(thenBlockArgs.size() > 0) {
+            baseString += thenBlockArgs[0];
+            for(int i = 1; i < (int) thenBlockArgs.size(); ++i) { 
+                baseString += ", " + thenBlockArgs.at(i);
+            }
+        }
+        return baseString + ")";
+    }
 }// namespace NES

@@ -28,6 +28,16 @@ BasicBlockPtr BranchOperation::setNextBlock(BasicBlockPtr nextBlock) {
 BasicBlockPtr BranchOperation::getNextBlock() { return nextBlock; }
 std::vector<std::string> BranchOperation::getNextBlockArgs() { return nextBlockArgs; }
 
+std::string BranchOperation::toString() { 
+    std::string baseString = "BranchOperation(";
+    if(nextBlockArgs.size() > 0) {
+        baseString += nextBlockArgs[0];
+        for(int i = 1; i < (int) nextBlockArgs.size(); ++i) { 
+            baseString += ", " + nextBlockArgs.at(i);
+        }
+    }
+    return baseString + ")";
+}
 bool BranchOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::BranchOp; }
 
 }// namespace NES
