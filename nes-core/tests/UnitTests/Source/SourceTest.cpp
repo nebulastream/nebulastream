@@ -341,7 +341,6 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFile);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileColumnLayout);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
-    FRIEND_TEST(SourceTest, testCSVSourceKTMCommaFloatingPoint);
 };
 
 class GeneratorSourceProxy : public GeneratorSource {
