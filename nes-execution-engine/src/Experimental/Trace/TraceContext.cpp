@@ -14,10 +14,10 @@
 
 #include <Experimental/Interpreter/DataValue/Boolean.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/OperationRef.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
-#include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <execinfo.h>
 #include <iostream>
@@ -25,14 +25,16 @@
 namespace NES::ExecutionEngine::Experimental::Trace {
 
 static thread_local TraceContext threadLocalTraceContext;
-
+static thread_local SymbolicExecutionContext threadLocalSymbolicExecutionContext;
 void initThreadLocalTraceContext() { threadLocalTraceContext = TraceContext(); }
+void initThreadSymbolicExecutinContext() { threadLocalSymbolicExecutionContext = SymbolicExecutionContext(); }
 TraceContext* getThreadLocalTraceContext() { return &threadLocalTraceContext; }
+SymbolicExecutionContext* getThreadLocalSymbolicExecutionContext() { return &threadLocalSymbolicExecutionContext; }
+bool isInSymbolicExecution() { return true; }
 
 TraceContext::TraceContext() : executionTrace(std::make_unique<ExecutionTrace>()) {
     reset();
-#pragma GCC diagnostic ignored "-Wframe-address"
-    startAddress = (uint64_t) (__builtin_return_address(2));
+    startAddress = Tag::createCurrentAddress();
     std::cout << startAddress << std::endl;
 }
 
@@ -48,39 +50,11 @@ ValueRef TraceContext::createNextRef() { return ValueRef(executionTrace->getCurr
 
 std::shared_ptr<ExecutionTrace> TraceContext::getExecutionTrace() { return executionTrace; }
 
-Tag TraceContext::createTag() {
-    void* buffer[20];
-    // First add the RIP pointers
-    int size = backtrace(buffer, 20);
-    std::vector<uint64_t> addresses;
-    for (int i = 0; i < size; i++) {
-        auto address = (uint64_t) buffer[i];
-        if (address == startAddress) {
-            size = i;
-            break;
-        }
-    }
-
-    for (int i = 0; i < size - 2; i++) {
-        auto address = (uint64_t) buffer[i];
-        addresses.push_back(address);
-    }
-    char** backtrace_functions = backtrace_symbols(buffer, size);
-    int i;
-    bool found = false;
-    for (i = 0; i < size; i++) {
-        unsigned int offset;
-        unsigned long long address;
-        printf("%s\n", backtrace_functions[i]);
-    }
-    return {addresses};
-}
-
 uint64_t TraceContext::createStartAddress() {
     void* buffer[20];
     // First add the RIP pointers
     int size = backtrace(buffer, 20);
-    char** backtrace_functions = backtrace_symbols(buffer, size);
+   /* char** backtrace_functions = backtrace_symbols(buffer, size);
     int i;
     bool found = false;
     for (i = 0; i < size; i++) {
@@ -93,7 +67,7 @@ uint64_t TraceContext::createStartAddress() {
         // bad\n");
         //  continue;
         // }
-    }
+    }*/
     return (uint64_t) buffer[5];
 }
 
@@ -217,7 +191,7 @@ void TraceContext::trace(Operation& operation) {
     // std::cout << "Add operation: " << operation << std::endl;
     // std::cout << *executionTrace.get() << std::endl;
     if (!isExpectedOperation(operation.op)) {
-        auto tag = createTag();
+        auto tag = Tag::createTag(startAddress);
         if (auto ref = isKnownOperation(tag)) {
             if (ref->blockId != this->executionTrace->getCurrentBlockIndex()) {
                 // std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
@@ -237,6 +211,38 @@ void TraceContext::trace(Operation& operation) {
     }
 
     currentOperationCounter++;
+}
+
+void ExecutionPath::append(bool outcome, Tag& tag) { path.emplace_back(std::make_tuple(outcome, tag)); }
+
+bool SymbolicExecutionContext::executeCMP(ValueRef& valRef) {
+
+    std::cout << "Trace CMP " << valRef << std::endl;
+    auto tag = Tag::createTag(startAddress);
+    bool result = true;
+    if (currentMode == FOLLOW) {
+        auto operation = currentExecutionPath->operator[](currentOperation);
+        if (currentOperation == currentExecutionPath->getSize() - 1) {
+            bool outcome = get<0>(operation);
+            currentMode = EXECUTE;
+            result = !outcome;
+        } else {
+            result = get<0>(operation);
+        }
+        currentOperation++;
+    } else {
+        if (tagMap.contains(tag)) {
+            std::cout << "Loop detected" << std::endl;
+            result = !tagMap[tag];
+        } else {
+            tagMap[tag] = result;
+        }
+        currentExecutionPath->append(result, tag);
+        auto subPath = std::make_shared<ExecutionPath>(*currentExecutionPath);
+        inflightExecutionPaths.emplace_back(subPath);
+    }
+
+    return result;
 }
 
 /*
@@ -332,14 +338,6 @@ void TraceContext::trace(OpCode op, const Value& input, Value& result) {
 }
  */
 
-std::ostream& operator<<(std::ostream& os, const Tag& tag) {
-    os << "addresses: [";
-    for (auto address : tag.addresses) {
-        os << address << ";";
-    }
-    os << "]";
-    return os;
-}
 
 std::ostream& operator<<(std::ostream& os, const ValueRef& valueRef) {
     os << "$" << valueRef.blockId << "_" << valueRef.operationId;
@@ -393,4 +391,4 @@ std::ostream& operator<<(std::ostream& os, const Operation& operation) {
     return os;
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Trace

@@ -41,8 +41,8 @@ class ExecutionTrace {
     Block& processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex);
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
-    std::unordered_map<Tag, std::shared_ptr<OperationRef>, TagHasher> tagMap;
-    std::unordered_map<Tag, std::shared_ptr<OperationRef>, TagHasher> localTagMap;
+    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> tagMap;
+    std::unordered_map<Tag, std::shared_ptr<OperationRef>, Tag::TagHasher> localTagMap;
 
     void traceAssignment(ValueRef value, ValueRef value1);
     std::shared_ptr<OperationRef> returnRef;

@@ -78,7 +78,6 @@ ValueRef ExecutionTrace::createBlockArgument(uint32_t blockIndex, ValueRef ref, 
 }
 
 Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex) {
-    std::cout << *this << std::endl;
     // perform a control flow merge and merge the current block with operations in some other block.
     // create new block
     auto mergedBlockId = createBlock();

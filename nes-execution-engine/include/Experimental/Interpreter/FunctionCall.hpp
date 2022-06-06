@@ -100,6 +100,16 @@ auto transformReturn(Arg argument) {
     }
 }
 
+template<typename R>
+auto createDefault() {
+    if constexpr (std::is_same<R, uint64_t>::value) {
+        return Value<Integer>(std::make_unique<Integer>(0));
+    }
+    if constexpr (std::is_same<R, void*>::value) {
+        return Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
+    }
+}
+
 class AbstractFunction {
   public:
     virtual ~AbstractFunction() = default;
@@ -162,25 +172,32 @@ auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... argume
     }
 
     if constexpr (std::is_void_v<R>) {
-        fnptr(transform(std::forward<Args>(arguments))...);
+        if (!Trace::isInSymbolicExecution()) {
+            fnptr(transform(std::forward<Args>(arguments))...);
+        }
         auto ctx = Trace::getThreadLocalTraceContext();
         if (ctx != nullptr) {
             auto operation = Trace::Operation(Trace::CALL, varRefs);
             ctx->trace(operation);
         }
-        //((c->setArg(index++, arguments)), ...);
     } else {
-        std::cout << "call function " << &fnptr << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
+        if (!Trace::isInSymbolicExecution()) {
+            auto res = fnptr(transform(std::forward<Args>(arguments))...);
+            auto resultValue = transformReturn(res);
+            auto ctx = Trace::getThreadLocalTraceContext();
+            if (ctx != nullptr) {
 
-        auto res = fnptr(transform(std::forward<Args>(arguments))...);
-        auto resultValue = transformReturn(res);
-        auto ctx = Trace::getThreadLocalTraceContext();
-        if (ctx != nullptr) {
-
+                auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+                ctx->trace(operation);
+            }
+            return resultValue;
+        } else {
+            auto resultValue = createDefault<R>();
+            auto ctx = Trace::getThreadLocalTraceContext();
             auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
             ctx->trace(operation);
+            return resultValue;
         }
-        return resultValue;
     }
     //}
 }

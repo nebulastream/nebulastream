@@ -22,4 +22,5 @@ add_source_files(nes-execution-engine
         FunctionCallTarget.cpp
         SSACreationPhase.cpp
         TraceToIRConversionPhase.cpp
+        Tag.cpp
         )

@@ -21,6 +21,7 @@ class Integer : public Any {
   public:
     const static Kind type = Kind::IntegerValue;
 
+    Integer() : Any(type), value(0){};
     Integer(int64_t value) : Any(type), value(value){};
     Integer(Integer& a) : Integer(a.value) {}
 
