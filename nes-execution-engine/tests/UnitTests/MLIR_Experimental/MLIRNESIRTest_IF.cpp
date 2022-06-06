@@ -49,6 +49,7 @@ using namespace std;
 using namespace NES::ExecutionEngine::Experimental::MLIR;
 using namespace NES::ExecutionEngine::Experimental::IR;
 using namespace NES::ExecutionEngine::Experimental::IR::Operations;
+
 namespace NES {
 class MLIRNESIRTest : public testing::Test {
   public:
