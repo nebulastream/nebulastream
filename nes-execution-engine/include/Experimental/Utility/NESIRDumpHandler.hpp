@@ -41,8 +41,11 @@ class NESIRDumpHandler {
 
   private:
     std::ostream& out;
+
+    IR::Operations::OperationPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel) const;
     void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out) const;
-    void dumpHelper(BasicBlockPtr const& basicBlock, uint64_t indent, std::ostream& out) const;
+    void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out, int32_t scopeLevel, bool isLoopHead = false) const;
+    void dumpHelper(BasicBlockPtr const& basicBlock, uint64_t indent, std::ostream& out, bool isLoopHead = false) const;
 };
 
 }// namespace ExecutionEngine::Experimental::IR
