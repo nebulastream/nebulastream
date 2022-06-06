@@ -15,8 +15,10 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_
 #include "Operation.hpp"
 #include <Experimental/Trace/OpCode.hpp>
+#include <Experimental/Trace/Tag.hpp>
 #include <functional>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <ostream>
 #include <unordered_map>
@@ -44,16 +46,50 @@ class TraceContext {
     ValueRef createNextRef();
 
   private:
-    Tag createTag();
     uint64_t createStartAddress();
     Operation& getLastOperation();
     std::shared_ptr<ExecutionTrace> executionTrace;
     uint64_t currentOperationCounter = 0;
-    uint64_t startAddress;
+    TagAddress startAddress;
 };
 
 TraceContext* getThreadLocalTraceContext();
 void initThreadLocalTraceContext();
+void initThreadSymbolicExecutinContext();
+bool isInSymbolicExecution();
+
+class ExecutionPath {
+  public:
+    void append(bool outcome, Tag& tag);
+    std::tuple<bool, Tag> operator[](uint64_t size){
+        return path[size];
+    }
+    uint64_t getSize(){
+        return path.size();
+    };
+  private:
+    std::vector<std::tuple<bool, Tag>> path;
+};
+
+class SymbolicExecutionContext {
+  public:
+    enum MODE {FOLLOW, EXECUTE};
+    SymbolicExecutionContext() {
+        startAddress = Tag::createCurrentAddress();
+    }
+    bool executeCMP(ValueRef& valRef);
+
+    std::list<std::shared_ptr<ExecutionPath>> inflightExecutionPaths;
+    MODE currentMode;
+    std::shared_ptr<ExecutionPath> currentExecutionPath;
+
+    uint64_t currentOperation;
+  private:
+    std::unordered_map<Tag, bool, Tag::TagHasher> tagMap;
+    TagAddress startAddress;
+};
+
+SymbolicExecutionContext* getThreadLocalSymbolicExecutionContext();
 
 template<typename Functor>
 std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
@@ -65,6 +101,32 @@ std::shared_ptr<ExecutionTrace> traceFunction(Functor func) {
     return tracer->getExecutionTrace();
 }
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+template<typename Functor>
+std::shared_ptr<ExecutionTrace> traceFunctionSymbolically(Functor func) {
+    initThreadSymbolicExecutinContext();
+    initThreadLocalTraceContext();
+    auto tracer = getThreadLocalTraceContext();
+    auto symCtx = getThreadLocalSymbolicExecutionContext();
+    symCtx->currentMode = SymbolicExecutionContext::EXECUTE;
+    symCtx->currentExecutionPath = std::make_shared<ExecutionPath>();
+    func();
+    uint64_t iterations = 1;
+    while (symCtx->inflightExecutionPaths.size() > 0) {
+        auto trace = symCtx->inflightExecutionPaths.front();
+        symCtx->currentMode = SymbolicExecutionContext::FOLLOW;
+        symCtx->currentExecutionPath = trace;
+        symCtx->currentOperation = 0;
+        tracer->reset();
+        func();
+        symCtx->inflightExecutionPaths.pop_front();
+        iterations++;
+    }
+    std::cout << "Symbolic Executin: iterations " << iterations << std::endl;
+    Operation result = Operation(RETURN);
+    tracer->trace(result);
+    return tracer->getExecutionTrace();
+}
+
+}// namespace NES::ExecutionEngine::Experimental::Trace
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACER_HPP_

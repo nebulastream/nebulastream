@@ -51,6 +51,12 @@ target_link_libraries(execution-engine-trace-test
         nes-execution-engine)
 add_test(NAME execution-engine-trace-test COMMAND execution-engine-trace-test)
 
+add_executable(execution-engine-symbolic-execution-test "UnitTests/Experimental/SymbolicExecutionTest.cpp")
+target_link_libraries(execution-engine-symbolic-execution-test
+        nes-execution-engine)
+add_test(NAME execution-engine-symbolic-execution-test COMMAND execution-engine-symbolic-execution-test)
+
+
 add_executable(execution-engine-value-test "UnitTests/Experimental/ValueTest.cpp")
 target_link_libraries(execution-engine-value-test
         nes-execution-engine)
