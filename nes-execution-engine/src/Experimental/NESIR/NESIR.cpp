@@ -36,7 +36,7 @@ std::string NESIR::toString() {
     ss << "NESIR {\n";
     auto dumpHandler = ExecutionEngine::Experimental::IR::NESIRDumpHandler::create(ss);
     dumpHandler->dump(rootOperation);
-    ss << "}";
+    ss << "} //NESIR";
     return ss.str();
 }
 

@@ -29,8 +29,8 @@ std::string AddressOperation::getRecordIdxName() { return recordIdxName; }
 std::string AddressOperation::getAddressSourceName() { return addressSourceName; }
 
 std::string AddressOperation::toString() { 
-    return "AddressOperation_" + identifier + "("  + std::to_string(recordWidth) + std::to_string(fieldOffset)
-                               + recordIdxName + addressSourceName + ")";
+    return "AddressOperation_" + identifier + "("  + std::to_string(recordWidth) + ", " + std::to_string(fieldOffset)
+                               + ", " + recordIdxName  + ", " + addressSourceName + ")";
 }
 
 bool AddressOperation::classof(const Operation *Op) {
