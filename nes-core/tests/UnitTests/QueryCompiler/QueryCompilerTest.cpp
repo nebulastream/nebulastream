@@ -177,7 +177,9 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -231,8 +233,9 @@ TEST_F(QueryCompilerTest, mapQuery) {
     workerConfiguration->numberOfBuffersPerWorker.setValue(12);
 
 
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration)
+                          .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                          .build();    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 

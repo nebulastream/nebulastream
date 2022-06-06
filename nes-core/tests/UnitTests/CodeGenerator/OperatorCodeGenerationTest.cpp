@@ -932,7 +932,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     auto workerConfiguration  = WorkerConfiguration::create();
     workerConfiguration->dataPort.setValue(*dataPort);
     workerConfiguration->physicalSources.add(physicalSource);
-    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).build();
+    auto nodeEngine = Runtime::NodeEngineBuilder::create(workerConfiguration).setQueryStatusListener(listener).build();
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());

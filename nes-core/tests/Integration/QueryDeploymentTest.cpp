@@ -862,10 +862,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
                         {Attribute("id"), Attribute("id"), Attribute("id"), Attribute("id")},
                         {Attribute("iris0", FLOAT32), Attribute("iris1", FLOAT32), Attribute("iris2", FLOAT32)})
                         .filter(Attribute("iris0") > 0))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("test") //2
-                                  .attachWorkerWithMemorySourceToCoordinator("test");//3
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("test", defaultLogicalSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("test") //2
+                           .attachWorkerWithMemorySourceToCoordinator("test");//3
 
     for (int i = 0; i < 10; ++i) {
         testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
@@ -884,7 +884,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
         bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
     };
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "MlHeuristic", "NONE", "IN_MEMORY");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(20, "BottomUp", "NONE", "IN_MEMORY");
 //    for (auto record : actualOutput){
 //        std::cout << record.id << ", " << record.value << ", " << record.iris0 << ", " << record.iris1 << ", " << record.iris2 << std::endl;
 //    }
