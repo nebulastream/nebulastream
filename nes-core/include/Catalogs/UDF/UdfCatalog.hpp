@@ -19,6 +19,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Catalogs/UDF/PythonUdfDescriptor.hpp>
+#include <Catalogs/UDF/UdfDescriptor.hpp>
 #include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 
 namespace NES::Catalogs {
@@ -48,11 +50,26 @@ class UdfCatalog {
     void registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor);
 
     /**
+     * @brief Register the descriptor data of a Python UDF.
+     * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
+     * @param descriptor The implementation data of the UDF.
+     * @throws UdfException If descriptor is a nullptr or if a UDF under the name is already registered.
+     */
+    void registerPythonUdf(const std::string& name, PythonUdfDescriptorPtr descriptor);
+
+    /**
      * @brief Retrieve the implementation data for a Java UDF.
      * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @return The implementation data of the UDF, or nullptr if the UDF is not registered.
      */
-    JavaUdfDescriptorPtr getUdfDescriptor(const std::string& name);
+    JavaUdfDescriptorPtr getJavaUdfDescriptor(const std::string& name);
+
+    /**
+     * @brief Retrieve the implementation data for a Python UDF.
+     * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
+     * @return The implementation data of the UDF, or nullptr if the UDF is not registered.
+     */
+    PythonUdfDescriptorPtr getPythonUdfDescriptor(const std::string& name);
 
     /**
      * @brief Remove the UDF from the catalog.
@@ -73,10 +90,10 @@ class UdfCatalog {
     // It's not really used to support UDFs. It could be used by a visualization tool.
     // It would be nice to show more information about the UDFs (signature, size of dependencies),
     // but that's not needed right now.
-    const std::vector<std::string> listUdfs() const;
+    std::vector<std::string> listUdfs() const;
 
   private:
-    std::unordered_map<std::string, JavaUdfDescriptorPtr> udfStore;
+    std::unordered_map<std::string, UdfDescriptorPtr> udfStore;
 };
 
 }// namespace NES::Catalogs

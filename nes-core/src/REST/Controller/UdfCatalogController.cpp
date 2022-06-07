@@ -92,7 +92,7 @@ void UdfCatalogController::handleGetUdfDescriptor(web::http::http_request& reque
     if (!found) {
         return;
     }
-    auto udfDescriptor = udfCatalog->getUdfDescriptor(udfName);
+    auto udfDescriptor = udfCatalog->getJavaUdfDescriptor(udfName);
     GetJavaUdfDescriptorResponse response;
     if (udfDescriptor == nullptr) {
         // Signal that the UDF does not exist in the catalog.
@@ -128,10 +128,10 @@ void UdfCatalogController::handleListUdfs(web::http::http_request& request) {
 }
 
 void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoints(path, {"getUdfDescriptor", "listUdfs"}, request)) {
+    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoints(path, {"getJavaUdfDescriptor", "listUdfs"}, request)) {
         return;
     }
-    if (path[1] == "getUdfDescriptor") {
+    if (path[1] == "getJavaUdfDescriptor") {
         handleGetUdfDescriptor(request);
     } else if (path[1] == "listUdfs") {
         handleListUdfs(request);

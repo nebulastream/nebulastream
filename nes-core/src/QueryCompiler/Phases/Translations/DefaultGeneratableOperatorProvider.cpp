@@ -158,7 +158,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         return;
     }
 #ifdef PYTHON_UDF_ENABLED
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalPythonUdfOperator>()) {
+    else if (operatorNode->instanceOf<PhysicalOperators::Experimental::PhysicalPythonUdfOperator>()) {
         return;
     }
 #endif

@@ -35,21 +35,46 @@ void UdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr d
     }
 }
 
-JavaUdfDescriptorPtr UdfCatalog::getUdfDescriptor(const std::string& name) {
+void UdfCatalog::registerPythonUdf(const std::string& name, PythonUdfDescriptorPtr descriptor) {
+    NES_DEBUG("Registering Python UDF '" << name << "'");
+    if (descriptor == nullptr) {
+        throw UdfException("Python UDF descriptor must not be null");
+    }
+    if (auto success = udfStore.insert({name, descriptor}).second; !success) {
+        std::stringstream ss;
+        ss << "UDF '" << name << "' already exists";
+        throw UdfException(ss.str());
+    }
+}
+
+JavaUdfDescriptorPtr UdfCatalog::getJavaUdfDescriptor(const std::string& name) {
     NES_DEBUG("Looking up descriptor for Java UDF '" << name << "'");
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
         NES_DEBUG("Java UDF '" << name << "' does not exist");
         return nullptr;
     }
-    return entry->second;
+    return dynamic_pointer_cast<JavaUdfDescriptor>(entry->second);
+}
+
+PythonUdfDescriptorPtr UdfCatalog::getPythonUdfDescriptor(const std::string& name) {
+    NES_DEBUG("Looking up descriptor for UDF '" << name << "'");
+    auto entry = udfStore.find(name);
+    if (entry == udfStore.end()) {
+        NES_DEBUG("Python UDF '" << name << "' does not exist");
+        return nullptr;
+    }
+    if (auto pythonUdfDescriptor = dynamic_pointer_cast<PythonUdfDescriptor>(entry->second)) {
+        return pythonUdfDescriptor;
+    }
+    return nullptr;
 }
 
 bool UdfCatalog::removeUdf(const std::string& name) {
-    NES_DEBUG("Removing Java UDF '" << name << "'");
+    NES_DEBUG("Removing UDF '" << name << "'");
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
-        NES_DEBUG("Did not find Java UDF '" << name << "'");
+        NES_DEBUG("Did not find UDF '" << name << "'");
         // Removing an unregistered UDF is not an error condition
         // because it could have been removed by another user.
         // We just notify the user by returning false.
@@ -59,8 +84,8 @@ bool UdfCatalog::removeUdf(const std::string& name) {
     return true;
 }
 
-const std::vector<std::string> UdfCatalog::listUdfs() const {
-    NES_DEBUG("Listing names of Java UDFs");
+std::vector<std::string> UdfCatalog::listUdfs() const {
+    NES_DEBUG("Listing names of registered UDFs");
     auto list = std::vector<std::string>{};
     list.reserve(udfStore.size());
     for (const auto& [key, _] : udfStore) {
