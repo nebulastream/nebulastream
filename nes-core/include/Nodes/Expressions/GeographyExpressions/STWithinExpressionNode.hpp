@@ -22,7 +22,23 @@ class ConstantValueExpressionNode;
 using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
 
 /**
- * @brief This node represents STWithin predicate.
+ * @brief This node represents ST_WITHIN predicate, where ST stands for Spatial Type.
+ * ST_WITHIN predicate in general defines the relationship between two objects (i.e.,
+ * whether a geometric object is within another geometric object or not). In NES, we
+ * only expect the stream to report the GPS coordinates from a source (i.e., a Point).
+ * Thus in NES, by using ST_WITHIN expression a user can determine whether a point is
+ * within a geometric object or not. For now, the geometric object will be limited to
+ * a rectangle. ST_Within is supposed to be used with the filter operator as follows:
+ *
+ * stream.filter(ST_WITHIN(Attribute("latitude"), Attribute("longitude"), WKT_POLYGON))
+ *
+ * where latitude, and longitude represent the attributes lat/long in the stream, and
+ * WKT_POLYGON is the well-known text (WKT) representation of a rectangle (i.e., Envelope
+ * as defined by OGC: see https://postgis.net/docs/ST_Envelope.html for more details).
+ *
+ * WKT_POLYGON can be defined either by the bounding coordinates of the envelope
+ * (i.e., (min_lat, min_long), (max_lat, max_long), or all four coordinates of the
+ * envelope as defined in the link above.
  */
 class STWithinExpressionNode : public ExpressionNode {
   public:

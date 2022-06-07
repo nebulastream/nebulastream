@@ -22,7 +22,20 @@ class ConstantValueExpressionNode;
 using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
 
 /**
- * @brief This node represents ST_DWithin predicate.
+ * @brief This node represents ST_DWithin predicate, where ST stands for Spatial type,
+ * and DWithin stands for distance within. In general, the ST_DWITHIN predicate
+ * defines whether a geometric object is within distance "d" of another geometric object.
+ * In NES, we only expect the stream to report the GPS coordinates from a source (i.e.,
+ * a Point). Thus in NES, by using ST_DWITHIN predicate a user can determine whether a
+ * point is within distance "d" of another geometric object or not. For now, the geometric
+ * object will be limited to another point, and the distance is assumed to be in meters.
+ * ST_DWithin is supposed to be used with the filter operator as follows:
+ *
+ * stream.filter(ST_DWITHIN(Attribute("latitude"), Attribute("longitude"), WKT_POINT, distance))
+ *
+ * where latitude, and longitude represent the attributes lat/long in the stream, and
+ * WKT_POINT is the well-known text representation of the query point, and the distance
+ * is the distance (defined in meters).
  */
 class STDWithinExpressionNode : public ExpressionNode {
   public:
