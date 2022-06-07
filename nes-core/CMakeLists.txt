@@ -61,7 +61,7 @@ install(TARGETS nes-grpc
 
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
-add_library(nes SHARED ${NES_CORE_SOURCE_FILES})
+add_library(nes SHARED ${NES_CORE_SOURCE_FILES} include/REST/DTOs.hpp include/REST/Controller/TestController.hpp include/REST/AppComponent.hpp)
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -132,7 +132,6 @@ register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/FaultTo
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Monitoring/MetricCollectors/MetricCollectorType.hpp Monitoring/MetricCollectors/MetricCollectorType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/LineageType.hpp Util/LineageType.hpp)
 register_public_header_file(nes ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/OriginId.hpp Operators/OriginId.hpp)
-
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
