@@ -92,6 +92,9 @@ ExpressionNodePtr ST_KNN(const ExpressionItem& latitudeFieldName,
                          const ExpressionItem& longitudeFieldName,
                          const ExpressionItem& wkt,
                          const ExpressionItem& k) {
+    // Throw not implemented exception. ST_KNN requires more deliberate thinking.
+    NES_THROW_RUNTIME_ERROR("Spatial Query: ST_KNN not supported at the moment.");
+
     // GeographyFieldsAccessExpressionNode for latitude and longitude fields
     auto latitudeExpression = latitudeFieldName.getExpressionNode();
     if (!latitudeExpression->instanceOf<FieldAccessExpressionNode>()) {

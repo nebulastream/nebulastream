@@ -22,7 +22,12 @@ class ConstantValueExpressionNode;
 using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
 
 /**
- * @brief This node represents ST_KNN predicate.
+ * @brief This node represents ST_KNN predicate, where ST stands for Spatial Type and
+ * KNN stands for "K" nearest neighbor. In general, ST_KNN predicate retrieves the "k"
+ * nearest neighbors of a query point from a group of geometric objects. In NES, we will
+ * combine ST_KNN expression with a window which would allow us to define the batch of
+ * objects from which to select the "k" nearest neighbors of the query point. For now,
+ * this query remains unimplemented.
  */
 class STKnnExpressionNode : public ExpressionNode {
   public:
@@ -60,7 +65,7 @@ class STKnnExpressionNode : public ExpressionNode {
     ExpressionNodePtr getWKT() const;
 
     /**
-     * @brief gets the wkt.
+     * @brief gets the parameter k.
      */
     ExpressionNodePtr getK() const;
 
