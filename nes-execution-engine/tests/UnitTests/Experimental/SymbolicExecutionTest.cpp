@@ -27,6 +27,7 @@
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/SSACreationPhase.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
+#include <Experimental/Trace/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
