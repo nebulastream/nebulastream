@@ -14,6 +14,7 @@
 
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std::string_literals;
 
@@ -27,12 +28,19 @@ class UdfCatalogTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
 
-    static JavaUdfDescriptorPtr createDescriptor() {
+    static JavaUdfDescriptorPtr createJavaDescriptor() {
         auto className = "some_package.my_udf"s;
         auto methodName = "udf_method"s;
         auto instance = JavaSerializedInstance{1};// byte-array containing 1 byte
         auto byteCodeList = JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}};
         return JavaUdfDescriptor::create(className, methodName, instance, byteCodeList);
+    }
+
+    static PythonUdfDescriptorPtr createPythonDescriptor() {
+        auto methodName = "python_udf_method"s;
+        int numberOfArgs = 2;
+        DataTypePtr returnType = DataTypeFactory::createInt32();
+        return PythonUdfDescriptor::create(methodName, numberOfArgs, returnType);
     }
 
   protected:
@@ -41,14 +49,36 @@ class UdfCatalogTest : public Testing::NESBaseTest {
 
 // Test behavior of RegisterJavaUdf
 
-TEST_F(UdfCatalogTest, RetrieveRegisteredUdfDescriptor) {
+TEST_F(UdfCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
     // given
     auto udfName = "my_udf"s;
-    auto udfDescriptor = createDescriptor();
+    auto udfDescriptor = createJavaDescriptor();
     // when
     udfCatalog.registerJavaUdf(udfName, udfDescriptor);
     // then
-    ASSERT_EQ(udfDescriptor, udfCatalog.getUdfDescriptor(udfName));
+    ASSERT_EQ(udfDescriptor, udfCatalog.getJavaUdfDescriptor(udfName));
+}
+
+/**
+ * @brief test behaviour of registerPythonUdf
+ */
+TEST_F(UdfCatalogTest, RetrieveRegisteredPythonUdfDescriptor) {
+    auto udfName = "py_udf"s;
+    auto udfDescriptor = createPythonDescriptor();
+    udfCatalog.registerPythonUdf(udfName, udfDescriptor);
+    ASSERT_EQ(udfDescriptor, udfCatalog.getPythonUdfDescriptor(udfName));
+}
+
+TEST_F(UdfCatalogTest, RetrieveCorrectUdfDescriptors) {
+    auto pyUdfName = "py_udf"s;
+    auto javaUdfName = "java_udf"s;
+    auto pyUdfDescriptor = createPythonDescriptor();
+    auto javaUdfDescriptor = createJavaDescriptor();
+    udfCatalog.registerPythonUdf(pyUdfName, pyUdfDescriptor);
+    udfCatalog.registerJavaUdf(javaUdfName, javaUdfDescriptor);
+
+    auto wrongUdfDescriptor = udfCatalog.getPythonUdfDescriptor(javaUdfName);
+    ASSERT_EQ(wrongUdfDescriptor, nullptr);
 }
 
 TEST_F(UdfCatalogTest, RegisteredDescriptorMustNotBeNull) {
@@ -58,16 +88,16 @@ TEST_F(UdfCatalogTest, RegisteredDescriptorMustNotBeNull) {
 TEST_F(UdfCatalogTest, CannotRegisterUdfUnderExistingName) {
     // given
     auto udfName = "my_udf"s;
-    auto udfDescriptor1 = createDescriptor();
+    auto udfDescriptor1 = createJavaDescriptor();
     udfCatalog.registerJavaUdf(udfName, udfDescriptor1);
     // then
-    auto udfDescriptor2 = createDescriptor();
+    auto udfDescriptor2 = createJavaDescriptor();
     EXPECT_THROW(udfCatalog.registerJavaUdf(udfName, udfDescriptor2), UdfException);
 }
 
 // Test behavior of GetUdfDescriptor
 
-TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getUdfDescriptor("unknown_udf"), nullptr); }
+TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getJavaUdfDescriptor("unknown_udf"), nullptr); }
 
 // Test behavior of RemoveUdf
 
@@ -76,7 +106,7 @@ TEST_F(UdfCatalogTest, CannotRemoveUnknownUdf) { ASSERT_EQ(udfCatalog.removeUdf(
 TEST_F(UdfCatalogTest, SignalRemovalOfUdf) {
     // given
     auto udfName = "my_udf"s;
-    auto udfDescriptor = createDescriptor();
+    auto udfDescriptor = createJavaDescriptor();
     udfCatalog.registerJavaUdf(udfName, udfDescriptor);
     // then
     ASSERT_EQ(udfCatalog.removeUdf(udfName), true);
@@ -85,21 +115,21 @@ TEST_F(UdfCatalogTest, SignalRemovalOfUdf) {
 TEST_F(UdfCatalogTest, AfterRemovalTheUdfDoesNotExist) {
     // given
     auto udfName = "my_udf"s;
-    auto udfDescriptor = createDescriptor();
+    auto udfDescriptor = createJavaDescriptor();
     udfCatalog.registerJavaUdf(udfName, udfDescriptor);
     udfCatalog.removeUdf(udfName);
     // then
-    ASSERT_EQ(udfCatalog.getUdfDescriptor(udfName), nullptr);
+    ASSERT_EQ(udfCatalog.getJavaUdfDescriptor(udfName), nullptr);
 }
 
 TEST_F(UdfCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
     // given
     auto udfName = "my_udf"s;
-    auto udfDescriptor1 = createDescriptor();
+    auto udfDescriptor1 = createJavaDescriptor();
     udfCatalog.registerJavaUdf(udfName, udfDescriptor1);
     udfCatalog.removeUdf(udfName);
     // then
-    auto udfDescriptor2 = createDescriptor();
+    auto udfDescriptor2 = createJavaDescriptor();
     EXPECT_NO_THROW(udfCatalog.registerJavaUdf(udfName, udfDescriptor2));
 }
 
@@ -108,7 +138,7 @@ TEST_F(UdfCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
 TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
     // given
     auto udfName = "my_udf"s;
-    auto udfDescriptor1 = createDescriptor();
+    auto udfDescriptor1 = createJavaDescriptor();
     udfCatalog.registerJavaUdf(udfName, udfDescriptor1);
     // then
     auto udfs = udfCatalog.listUdfs();

@@ -19,6 +19,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <Catalogs/UDF/UdfDescriptor.hpp>
 
 namespace NES::Catalogs {
 
@@ -33,7 +34,7 @@ using JavaUdfDescriptorPtr = std::shared_ptr<JavaUdfDescriptor>;
 /**
  * @brief Container for all the data required to execute a Java UDF inside an embedded JVM.
  */
-class JavaUdfDescriptor {
+class JavaUdfDescriptor : public UdfDescriptor {
   public:
     /**
      * @brief Construct a container of the data required to execute a Java UDF inside an embedded JVM.
@@ -76,12 +77,6 @@ class JavaUdfDescriptor {
     [[nodiscard]] const std::string& getClassName() const { return className; }
 
     /**
-     * @brief Return the name of the UDF method.
-     * @return The name of the UDF method.
-     */
-    [[nodiscard]] const std::string& getMethodName() const { return methodName; }
-
-    /**
      * @brief Return the serialized instance of the UDF class which stores captured free variables.
      * @return Serialized instance of the UDF class.
      */
@@ -95,7 +90,6 @@ class JavaUdfDescriptor {
 
   private:
     const std::string className;
-    const std::string methodName;
     const JavaSerializedInstance serializedInstance;
     const JavaUdfByteCodeList byteCodeList;
 };

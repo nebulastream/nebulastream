@@ -528,7 +528,7 @@ TEST_F(RESTEndpointTest, DISABLED_DelegatePostRequestToRegisterUdf) {
     request.wait();
     // then the Java UDF is stored in the UDF catalog of the coordinator
     auto udfCatalog = coordinator->getUdfCatalog();
-    ASSERT_NE(udfCatalog->getUdfDescriptor(udfName), nullptr);
+    ASSERT_NE(udfCatalog->getJavaUdfDescriptor(udfName), nullptr);
     stopCoordinator(*coordinator);
 }
 
@@ -546,7 +546,7 @@ TEST_F(RESTEndpointTest, DISABLED_DelegateDeleteRequestToRemoveUdf) {
     auto request = restClient.request(web::http::methods::DEL, "removeUdf?udfName="s + udfName);
     request.wait();
     // then the Java UDF is no longer stored in the UDF catalog
-    ASSERT_EQ(udfCatalog->getUdfDescriptor(udfName), nullptr);
+    ASSERT_EQ(udfCatalog->getJavaUdfDescriptor(udfName), nullptr);
     stopCoordinator(*coordinator);
 }
 
@@ -561,7 +561,7 @@ TEST_F(RESTEndpointTest, DISABLED_DelegateGetRequestToRetrieveUdfDescriptor) {
     udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
     // when a REST client tries to remove the Java UDF
     auto restClient = createRestClient(UdfCatalogController::path_prefix);
-    auto request = restClient.request(web::http::methods::GET, "getUdfDescriptor?udfName="s + udfName);
+    auto request = restClient.request(web::http::methods::GET, "getJavaUdfDescriptor?udfName="s + udfName);
     // then the response contains the Java UDF
     GetJavaUdfDescriptorResponse response;
     request
