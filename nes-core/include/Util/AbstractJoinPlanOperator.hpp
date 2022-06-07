@@ -28,6 +28,7 @@ namespace NES {
 class AbstractJoinPlanOperator;
 using AbstractJoinPlanOperatorPtr = std::shared_ptr<AbstractJoinPlanOperator>;
 
+typedef long double;
 class AbstractJoinPlanOperator : public OptimizerPlanOperator {
 
           public:
@@ -71,18 +72,18 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
       * This is usually the output cardinality of, e.g., a join.
       * Sum of operators input sizes.
       */
-            long operatorCosts;
+            long double operatorCosts;
 
             /**
       * Cost of the whole subplan cumulated.
       * OP cost of root + children's cumulative costs
       */
-            long cumulativeCosts;
+            long double cumulativeCosts;
 
             /**
       * source cardinality, i.e. size of tuples in window // or if joined the output cardinality of this join.
       */
-            long cardinality;
+            long double cardinality;
 
           public:
             float getSelectivity() const;
@@ -113,12 +114,12 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
 
             const std::set<NES::OptimizerPlanOperatorPtr>& getInvolvedOptimizerPlanOperators();
             void setInvolvedOptimizerPlanOperators(const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators);
-            long getCardinality() const;
-            void setCardinality(long cardinality);
-            long getOperatorCosts() const;
-            void setOperatorCosts(long operatorCosts);
-            long getCumulativeCosts() const;
-            void setCumulativeCosts(long cumulativeCosts);
+            long double getCardinality() const;
+            void setCardinality(long double cardinality);
+            long double getOperatorCosts() const;
+            void setOperatorCosts(long double operatorCosts);
+            long double getCumulativeCosts() const;
+            void setCumulativeCosts(long double cumulativeCosts);
         };
 
     } // namespace NES

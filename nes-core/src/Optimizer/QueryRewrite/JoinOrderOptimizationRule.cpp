@@ -137,19 +137,11 @@ namespace NES::Optimizer {
                 // need only to make sure to have the correct order when constructing the table.
                 //joinEdges = retrieveJoinEdges(joinOperators, abstractJoinOperators, filters);
 
-                // TODO write a optimizeSequenceOrderFunction
                 // Construct dynamic programming table and retrieve the best optimization order
                 AbstractJoinPlanOperatorPtr finalPlan =
                     optimizeSequenceOrder(sources, globalSequenceOrder, abstractJoinOperators, joinOperators);
 
-
-                // TODO: Write the remaining functions as they are still from joinOrderOptimization
-                // extract join order from final plan
-                std::any joinOrder = extractJoinOrder(finalPlan);
-
-                // print join order
-                std::cout << printJoinOrder(joinOrder) << std::endl;
-
+                // TODO: Rewrite this function
                 queryPlan = updateJoinOrder(queryPlan, finalPlan, sourceOperators);
 
                 NES_DEBUG(queryPlan->toString());
@@ -435,11 +427,18 @@ namespace NES::Optimizer {
                     // left side of comb is comb[0] and right side is comb[1] as we are dealing with pairs.
                     int outerLoopCount = 1;
                     for(auto left : subs[comb[0]]){
-                        std::cout << "Outerloop " << outerLoopCount << " - Left Join Partner:  " << left.second->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() << " this is ID: " << std::to_string(left.second->getId()) << std::endl;
+                        std::string leftSourceName = "Multiples";
+                        if(left.second->getSourceNode()){
+                            leftSourceName = left.second->getSourceNode()->getSourceDescriptor()->getLogicalSourceName();
+                        }
+                        std::cout << "Outerloop " << outerLoopCount << " - Left Join Partner:  " << leftSourceName << " this is ID: " << std::to_string(left.second->getId()) << std::endl;
                         int innerLoopCount = 1;
                         for (auto right : subs[comb[1]]){
                             std::cout << "     Innerloop " << innerLoopCount << "Setting right ids to: " << std::to_string(right.second->getLeftChild()->getId()) << " x " << std::to_string(right.second->getRightChild()->getId()) << std::endl;
 
+                            if(outerLoopCount == 4 && innerLoopCount == 4 && level == 4){
+                                size_t xyz = 4;
+                            }
                             // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
                             std::optional<AbstractJoinPlanOperatorPtr> newPlan =
                                 sequenceJoin(left.second, right.second, pList, joinLogicalOperators);
@@ -627,7 +626,6 @@ namespace NES::Optimizer {
         return inLeft && inRight && noOverlapping;
     }
     // NOTE: This is completely hardcoded. It would be better to have a singleton class here that takes care of all cases
-    // TODO: Add Cardinalities for CEP sources, check if the names are actually clean or need to be cleansed
     int JoinOrderOptimizationRule::getHardCodedCardinalitiesForSource(OptimizerPlanOperatorPtr source) {
             auto name = source->getSourceNode()->getSourceDescriptor()->getLogicalSourceName();
                 if (name == "NATION")
@@ -973,65 +971,65 @@ namespace NES::Optimizer {
         // --- -- - -- - - -- -
 
         if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "Velocity"){
-            return 0.1;
+            return 0.49994687450315867;
         } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "Temperature"){
-            return 0.02;
+            return 0.6608865822742288;
         } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "Humidity"){
-            return 0.5;
+            return 0.6608865822742288;
         } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "PM25"){
-            return 0.3;
+            return 0.6479306560779976;
         } else if(derivedLeftKeyName == "Quantity" && derivedRightKeyName == "PM10"){
-            return 0.8;
+            return 0.6479306560779976;
         } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "Temperature"){
-            return 0.7;
+            return 0.6608865822742288;
         } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "Humidity"){
-            return 0.33;
+            return 0.6608865822742288;
         } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "PM25"){
-            return 0.23;
+            return 0.6479306560779976;
         } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "PM10"){
-            return 0.5;
+            return 0.6479306560779976;
         } else if(derivedLeftKeyName == "Velocity" && derivedRightKeyName == "Quantity"){
-            return 0.8;
+            return 0.49994687450315867;
         } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "Velocity"){
-            return 0.1;
+            return 0.33911340433867426;
         } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "Humidity"){
-            return 0.2;
+            return 0.499959120268171;
         } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "PM25"){
-            return 0.4;
+            return 0.5064125856742011;
         } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "PM10"){
-            return 0.7;
+            return 0.5064125856742011;
         } else if(derivedLeftKeyName == "Temperature" && derivedRightKeyName == "Quantity"){
-            return 0.9;
+            return 0.33911340433867426;
         } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "Temperature"){
-            return 0.999;
+            return 0.499959120268171;
         } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "Velocity"){
-            return 0.111;
+            return 0.33911340433867426;
         } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "PM25"){
-            return 0.1223;
+            return 0.5064125856742011;
         } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "PM10"){
-            return 0.15;
+            return 0.5064125856742011;
         } else if(derivedLeftKeyName == "Humidity" && derivedRightKeyName == "Quantity"){
-            return 0.52;
+            return 0.33911340433867426;
         } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Temperature"){
-            return 0.482;
+            return 0.49358221460218643;
         } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Velocity"){
-            return 0.3237;
+            return 0.35206934392200245;
         } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Humidity"){
-            return 0.2382;
+            return 0.49358221460218643;
         } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "PM10"){
-            return 0.674;
+            return 0.4999567361772086;
         } else if(derivedLeftKeyName == "PM25" && derivedRightKeyName == "Quantity"){
-            return 0.3321;
+            return 0.35206934392200245;
         } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Temperature"){
-            return 0.12328;
+            return 0.49358221460218643;
         } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Velocity"){
-            return 0.19453;
+            return 0.35206934392200245;
         } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Humidity"){
-            return 0.6847;
+            return 0.49358221460218643;
         } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "PM25"){
-            return 0.854373;
+            return 0.4999567361772086;
         } else if(derivedLeftKeyName == "PM10" && derivedRightKeyName == "Quantity"){
-            return 0.4373;
+            return 0.35206934392200245;
         }else{
             return 1;
         }

@@ -78,17 +78,17 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
         const std::set<OptimizerPlanOperatorPtr>& involvedOptimizerPlanOperators) {
         AbstractJoinPlanOperator::involvedOptimizerPlanOperators = involvedOptimizerPlanOperators;
     }
-    long NES::AbstractJoinPlanOperator::getCardinality() const { return cardinality; }
-    void NES::AbstractJoinPlanOperator::setCardinality(long cardinality) { AbstractJoinPlanOperator::cardinality = cardinality; }
+    long double NES::AbstractJoinPlanOperator::getCardinality() const { return cardinality; }
+    void NES::AbstractJoinPlanOperator::setCardinality(long double cardinality) { AbstractJoinPlanOperator::cardinality = cardinality; }
 
     float NES::AbstractJoinPlanOperator::getSelectivity() const { return selectivity; }
     void NES::AbstractJoinPlanOperator::setSelectivity(float selectivity) { AbstractJoinPlanOperator::selectivity = selectivity; }
-    long NES::AbstractJoinPlanOperator::getOperatorCosts() const { return operatorCosts; }
-    void NES::AbstractJoinPlanOperator::setOperatorCosts(long operatorCosts) {
+    long double NES::AbstractJoinPlanOperator::getOperatorCosts() const { return operatorCosts; }
+    void NES::AbstractJoinPlanOperator::setOperatorCosts(long double operatorCosts) {
         AbstractJoinPlanOperator::operatorCosts = operatorCosts;
     }
-    long NES::AbstractJoinPlanOperator::getCumulativeCosts() const { return cumulativeCosts; }
-    void NES::AbstractJoinPlanOperator::setCumulativeCosts(long cumulativeCosts) {
+    long double NES::AbstractJoinPlanOperator::getCumulativeCosts() const { return cumulativeCosts; }
+    void NES::AbstractJoinPlanOperator::setCumulativeCosts(long double cumulativeCosts) {
         AbstractJoinPlanOperator::cumulativeCosts = cumulativeCosts;
     }
     const NES::AbstractJoinPlanOperatorPtr& NES::AbstractJoinPlanOperator::getLeftChild() const { return leftChild; }
