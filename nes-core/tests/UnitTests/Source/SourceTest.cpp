@@ -509,9 +509,9 @@ class SourceTest : public Testing::NESBaseTest {
                                  ->addField("d3", UINT32)
                                  ->addField("d4", UINT16);
         this->decimalsSchema = Schema::create()
-                              ->addField("positive_with_decimal", FLOAT32)
-                              ->addField("negative_with_decimal", FLOAT32)
-                              ->addField("longer_precision_decimal", FLOAT32);
+                                   ->addField("positive_with_decimal", FLOAT32)
+                                   ->addField("negative_with_decimal", FLOAT32)
+                                   ->addField("longer_precision_decimal", FLOAT32);
         this->tuple_size = this->schema->getSchemaSizeInBytes();
         this->buffer_size = this->nodeEngine->getBufferManager()->getBufferSize();
         this->numberOfBuffers = 1;
