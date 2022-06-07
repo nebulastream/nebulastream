@@ -28,8 +28,8 @@ STKnnExpressionNode::STKnnExpressionNode(STKnnExpressionNode* other) : Expressio
 }
 
 ExpressionNodePtr STKnnExpressionNode::create(const GeographyFieldsAccessExpressionNodePtr& point,
-                                                  const ConstantValueExpressionNodePtr& wkt,
-                                                  const ConstantValueExpressionNodePtr& k) {
+                                              const ConstantValueExpressionNodePtr& wkt,
+                                              const ConstantValueExpressionNodePtr& k) {
     auto stKnnNode = std::make_shared<STKnnExpressionNode>();
     stKnnNode->setChildren(point, wkt, k);
     return stKnnNode;
@@ -52,8 +52,8 @@ std::string STKnnExpressionNode::toString() const {
 }
 
 void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point,
-                                          ExpressionNodePtr const& wkt,
-                                          ExpressionNodePtr const& k) {
+                                      ExpressionNodePtr const& wkt,
+                                      ExpressionNodePtr const& k) {
     addChildWithEqual(point);
     addChildWithEqual(wkt);
     addChildWithEqual(k);
