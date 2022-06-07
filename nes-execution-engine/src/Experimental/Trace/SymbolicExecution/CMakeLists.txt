@@ -13,16 +13,6 @@
 
 
 add_source_files(nes-execution-engine
-        TraceContext.cpp
-        ConstantValue.cpp
-        Operation.cpp
-        ExecutionTrace.cpp
-        Block.cpp
-        ValueRef.cpp
-        FunctionCallTarget.cpp
-        SSACreationPhase.cpp
-        TraceToIRConversionPhase.cpp
-        Tag.cpp
+        SymbolicExecutionContext.cpp
+        SymbolicExecutionPath.cpp
         )
-
-add_subdirectory(SymbolicExecution)
