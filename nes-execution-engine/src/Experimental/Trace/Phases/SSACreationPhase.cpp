@@ -13,13 +13,14 @@
 */
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/OperationRef.hpp>
-#include <Experimental/Trace/SSACreationPhase.hpp>
+#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
 
 std::shared_ptr<ExecutionTrace> SSACreationPhase::apply(std::shared_ptr<ExecutionTrace> trace) {
+    // Initialize a new context and perform the inference of the SSA values
     auto phaseContext = SSACreationPhaseContext(std::move(trace));
     return phaseContext.process();
 };
@@ -28,13 +29,20 @@ SSACreationPhase::SSACreationPhaseContext::SSACreationPhaseContext(std::shared_p
     : trace(std::move(trace)) {}
 
 std::shared_ptr<ExecutionTrace> SSACreationPhase::SSACreationPhaseContext::process() {
+    // In the first step we get the return block, which contains the return call.
+    // Starting with this block we trace all inputs
     auto& returnBlock = trace->getBlock(trace->returnRef->blockId);
     processBlock(returnBlock);
-    removeAssignments();
+    // Eliminate all assign operations. We only needed them to create the SSA from.
+    removeAssignOperations();
+    // Finally we make all block arguments unique to their local block.
+    // As a result two blocks, can't use the same value references.
+    makeBlockArgumentsUnique();
     return std::move(trace);
 }
 
 bool SSACreationPhase::SSACreationPhaseContext::isLocalValueRef(Block& block, ValueRef& type, uint32_t operationIndex) {
+    // A value ref is defined in the local scope, if it is the result of an operation before the operationIndex
     for (uint32_t i = 0; i < operationIndex; i++) {
         auto& resOperation = block.operations[i];
         if (auto resultValueRef = std::get_if<ValueRef>(&resOperation.result)) {
@@ -43,12 +51,38 @@ bool SSACreationPhase::SSACreationPhaseContext::isLocalValueRef(Block& block, Va
             }
         }
     }
+    // check if the operation is defined in the block arguments
     return std::find(block.arguments.begin(), block.arguments.end(), type) != block.arguments.end();
 }
 
-void SSACreationPhase::SSACreationPhaseContext::processVariableRef(Block& block, ValueRef& type, uint32_t operationIndex) {
+void SSACreationPhase::SSACreationPhaseContext::processBlock(Block& block) {
+    // Process the inputs of all operations in the current block
+    for (int64_t i = block.operations.size() - 1; i >= 0; i--) {
+        auto& operation = block.operations[i];
+        // process input for each variable
+        for (auto& input : operation.input) {
+            if (auto* valueRef = std::get_if<ValueRef>(&input)) {
+                processValueRef(block, *valueRef, i);
+            } else if (auto* blockRef = std::get_if<BlockRef>(&input)) {
+                processBlockRef(block, *blockRef, i);
+            }
+        }
+    }
+    processedBlocks.emplace(block.blockId);
+    // Recursively process the predecessors of this block
+    // If the current block is a control-flow merge it may have multiple predecessors.
+    // We avoid visiting them again by checking the processedBlocks set.
+    for (auto pred : block.predecessors) {
+        auto& predBlock = trace->getBlock(pred);
+        if (!processedBlocks.contains(pred)) {
+            processBlock(predBlock);
+        }
+    }
+}
+
+void SSACreationPhase::SSACreationPhaseContext::processValueRef(Block& block, ValueRef& type, uint32_t operationIndex) {
     if (isLocalValueRef(block, type, operationIndex)) {
-        // variable is a local ref -> don't do anything.
+        // variable is a local ref -> don't do anything as the value is defined in the current block
     } else {
         // The valeRef references a different block, so we have to add it to the local arguments and append it to the pre-predecessor calls
         block.addArgument(type);
@@ -77,12 +111,14 @@ void SSACreationPhase::SSACreationPhaseContext::processVariableRef(Block& block,
 }
 
 void SSACreationPhase::SSACreationPhaseContext::processBlockRef(Block& block, BlockRef& blockRef, uint32_t operationIndex) {
+    // a block ref has a set of arguments, which are handled the same as all other value references.
     for (auto& input : blockRef.arguments) {
-        processVariableRef(block, input, operationIndex);
+        processValueRef(block, input, operationIndex);
     }
 };
 
-void SSACreationPhase::SSACreationPhaseContext::removeAssignments() {
+void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
+    // Iterate over all block and eliminate the ASSIGN operation.
     for (Block& block : trace->getBlocks()) {
         std::unordered_map<ValueRef, ValueRef, ValueRefHasher> assignmentMap;
         for (uint64_t i = 0; i < block.operations.size(); i++) {
@@ -115,24 +151,45 @@ void SSACreationPhase::SSACreationPhaseContext::removeAssignments() {
         });
     }
 }
+void SSACreationPhase::SSACreationPhaseContext::makeBlockArgumentsUnique() {
+    for (Block& block : trace->getBlocks()) {
+        std::unordered_map<ValueRef, ValueRef, ValueRefHasher> blockArgumentMap;
 
-void SSACreationPhase::SSACreationPhaseContext::processBlock(Block& block) {
-    for (int64_t i = block.operations.size() - 1; i >= 0; i--) {
-        auto& operation = block.operations[i];
-        // process input for each variable
-        for (auto& input : operation.input) {
-            if (auto* valueRef = std::get_if<ValueRef>(&input)) {
-                processVariableRef(block, *valueRef, i);
-            } else if (auto* blockRef = std::get_if<BlockRef>(&input)) {
-                processBlockRef(block, *blockRef, i);
+        // iterate over all arguments of this block and create new ValRefs if the argument ref is not local.
+        for (uint64_t argIndex = 0; argIndex < block.arguments.size(); argIndex++) {
+            auto argRef = block.arguments[argIndex];
+            if (argRef.blockId != block.blockId) {
+                auto newLocalRef = ValueRef(block.blockId, block.operations.size() + blockArgumentMap.size());
+                blockArgumentMap[argRef] = newLocalRef;
+                block.arguments[argIndex] = newLocalRef;
             }
         }
-    }
-    processedBlocks.emplace(block.blockId);
-    for (auto pred : block.predecessors) {
-        auto& predBlock = trace->getBlock(pred);
-        if (!processedBlocks.contains(pred))
-            processBlock(predBlock);
+
+        // set the new ValRefs to all depending operations.
+        for (uint64_t i = 0; i < block.operations.size(); i++) {
+            auto& operation = block.operations[i];
+            for (auto& input : operation.input) {
+                if (auto* valueRef = std::get_if<ValueRef>(&input)) {
+                    auto foundAssignment = blockArgumentMap.find(*valueRef);
+                    if (foundAssignment != blockArgumentMap.end()) {
+                        valueRef->blockId = foundAssignment->second.blockId;
+                        valueRef->operationId = foundAssignment->second.operationId;
+                    }
+                } else if (auto* blockRef = std::get_if<BlockRef>(&input)) {
+                    for (auto& blockArgument : blockRef->arguments) {
+                        auto foundAssignment = blockArgumentMap.find(blockArgument);
+                        if (foundAssignment != blockArgumentMap.end()) {
+                            blockArgument.blockId = foundAssignment->second.blockId;
+                            blockArgument.operationId = foundAssignment->second.operationId;
+                        }
+                    }
+                }
+            }
+        }
+
+        std::erase_if(block.operations, [&](const auto& item) {
+            return item.op == ASSIGN;
+        });
     }
 }
 

@@ -30,7 +30,6 @@
 #include <Experimental/Trace/OpCode.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
 #include <Experimental/Trace/SymbolicExecution/SymbolicExecutionContext.hpp>
-#include <Experimental/Trace/TraceManager.hpp>
 #include <Experimental/Trace/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>

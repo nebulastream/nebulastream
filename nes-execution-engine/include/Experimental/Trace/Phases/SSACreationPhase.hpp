@@ -14,6 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_SSACREATIONPHASE_HPP_
 
+#include <memory>
 #include <set>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
@@ -29,20 +30,54 @@ class BlockRef;
  */
 class SSACreationPhase {
   public:
+    /**
+     * @brief Applies the phase on a execution trace
+     * @param trace
+     * @return the modified execution trace.
+     */
     std::shared_ptr<ExecutionTrace> apply(std::shared_ptr<ExecutionTrace> trace);
 
   private:
+    /**
+     * @brief The SSACreationPhaseContext maintains local state, which is required to calculate the ssa from.
+     */
     class SSACreationPhaseContext {
       public:
         SSACreationPhaseContext(std::shared_ptr<ExecutionTrace> trace);
+        /*
+         * Starts the conversion of the trace to SSA from
+         */
         std::shared_ptr<ExecutionTrace> process();
 
       private:
-        bool isLocalValueRef(Block& block, ValueRef& type, uint32_t operationIndex);
-        void processVariableRef(Block& block, ValueRef& type, uint32_t operationIndex);
-        void processBlockRef(Block& block, BlockRef& blockRef, uint32_t operationIndex);
-        void removeAssignments();
+
+        /**
+         * @brief Converts a single basic block to SSA form
+         * @param block reference to the basic block
+         */
         void processBlock(Block& block);
+
+        /**
+         * @brief Checks if an ValueRef is defined in a specific block by an argument or an operation before the current operationIndex
+         * @param block reference to the current basic block
+         * @param valRef reference to the the value ref we are looking fore
+         * @param operationIndex the operation index, which accesses the ValueRef
+         * @return true if Value Ref is defined locally.
+         */
+        bool isLocalValueRef(Block& block, ValueRef& valRef, uint32_t operationIndex);
+        void processValueRef(Block& block, ValueRef& type, uint32_t operationIndex);
+        void processBlockRef(Block& block, BlockRef& blockRef, uint32_t operationIndex);
+
+        /**
+         * @brief Removes the assignment operations from all blocks.
+         * Assignment operations are only required to infer SSA form.
+         */
+        void removeAssignOperations();
+
+        /**
+         * @brief In this step we finalise the block arguments of all blocks and create unique variances of them.
+         */
+        void makeBlockArgumentsUnique();
 
       private:
         std::shared_ptr<ExecutionTrace> trace;

@@ -25,9 +25,9 @@
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/Trace/SSACreationPhase.hpp>
+#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
-#include <Experimental/Trace/TraceToIRConversionPhase.hpp>
+#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
