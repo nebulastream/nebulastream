@@ -18,8 +18,7 @@
 #include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
 
 namespace NES {
-STWithinExpressionNode::STWithinExpressionNode()
-    : ExpressionNode(DataTypeFactory::createBoolean()) {}
+STWithinExpressionNode::STWithinExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
 
 STWithinExpressionNode::STWithinExpressionNode(STWithinExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getPoint()->copy());
@@ -36,8 +35,7 @@ ExpressionNodePtr STWithinExpressionNode::create(const GeographyFieldsAccessExpr
 bool STWithinExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STWithinExpressionNode>()) {
         auto otherAndNode = rhs->as<STWithinExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint())
-            && getWKT()->equal(otherAndNode->getWKT());
+        return getPoint()->equal(otherAndNode->getPoint()) && getWKT()->equal(otherAndNode->getWKT());
     }
     return false;
 }
@@ -48,8 +46,7 @@ std::string STWithinExpressionNode::toString() const {
     return ss.str();
 }
 
-void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point,
-                                         ExpressionNodePtr const& wkt) {
+void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt) {
     addChildWithEqual(point);
     addChildWithEqual(wkt);
 }

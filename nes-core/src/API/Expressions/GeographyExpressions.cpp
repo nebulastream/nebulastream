@@ -17,14 +17,13 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
-#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
 
 namespace NES {
-ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitudeFieldName,
-                            const ExpressionItem& longitudeFieldName,
-                            const ExpressionItem& wkt) {
+ExpressionNodePtr
+ST_WITHIN(const ExpressionItem& latitudeFieldName, const ExpressionItem& longitudeFieldName, const ExpressionItem& wkt) {
     // GeographyFieldsAccessExpressionNode for latitude and longitude fields
     auto latitudeExpression = latitudeFieldName.getExpressionNode();
     if (!latitudeExpression->instanceOf<FieldAccessExpressionNode>()) {
@@ -47,7 +46,8 @@ ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitudeFieldName,
     }
     auto wktConstantValueExpressionNode = wktExpression->as<ConstantValueExpressionNode>();
 
-    return STWithinExpressionNode::create(std::move(geographyFieldsAccess->as<GeographyFieldsAccessExpressionNode>()), std::move(wktConstantValueExpressionNode));
+    return STWithinExpressionNode::create(std::move(geographyFieldsAccess->as<GeographyFieldsAccessExpressionNode>()),
+                                          std::move(wktConstantValueExpressionNode));
 }
 
 ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitudeFieldName,
@@ -79,7 +79,8 @@ ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitudeFieldName,
     // ConstantValueExpressionNode for the distance
     auto distanceExpression = distance.getExpressionNode();
     if (!distanceExpression->instanceOf<ConstantValueExpressionNode>()) {
-        NES_ERROR("Spatial Query: the distance has to be an ConstantValueExpression but it was a " + distanceExpression->toString());
+        NES_ERROR("Spatial Query: the distance has to be an ConstantValueExpression but it was a "
+                  + distanceExpression->toString());
     }
     auto distanceConstantValueExpressionNode = distanceExpression->as<ConstantValueExpressionNode>();
 

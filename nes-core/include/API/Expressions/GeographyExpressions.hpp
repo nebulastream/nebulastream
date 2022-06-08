@@ -44,9 +44,7 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
  * (i.e., (min_lat, min_long), (max_lat, max_long), or all four coordinates of the
  * envelope as defined in the link above.
  */
-ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude,
-                            const ExpressionItem& longitude,
-                            const ExpressionItem& wkt);
+ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude, const ExpressionItem& longitude, const ExpressionItem& wkt);
 
 /**
  * @brief This expression represents ST_DWithin predicate, where ST stands for Spatial
@@ -77,10 +75,8 @@ ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitude,
  * objects from which to select the "k" nearest neighbors of the query point. For now,
  * this expression remains unimplemented and an error is thrown.
  */
-ExpressionNodePtr ST_KNN(const ExpressionItem& latitude,
-                         const ExpressionItem& longitude,
-                         const ExpressionItem& wkt,
-                         const ExpressionItem& k);
+ExpressionNodePtr
+ST_KNN(const ExpressionItem& latitude, const ExpressionItem& longitude, const ExpressionItem& wkt, const ExpressionItem& k);
 
 }// namespace NES
 
