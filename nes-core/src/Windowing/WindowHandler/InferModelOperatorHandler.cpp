@@ -39,7 +39,7 @@ void InferModelOperatorHandler::start(Runtime::Execution::PipelineExecutionConte
     std::cout << localStateVariableId << std::endl;
 }
 
-void InferModelOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+void InferModelOperatorHandler::stop(Runtime::QueryTerminationType, Runtime::Execution::PipelineExecutionContextPtr) {
 
 }
 void InferModelOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
