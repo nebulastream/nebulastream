@@ -53,7 +53,6 @@ namespace TestUtils {
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
-static constexpr auto sleepDurationStop = std::chrono::seconds(5);
 static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last processed task, the query should be done.
 
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
@@ -371,7 +370,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
         }
         NES_DEBUG("checkStoppedOrTimeout: status not reached for "
                   << queryId << " as status is=" << queryCatalogService->getEntryForQuery(queryId)->getQueryStatusAsString());
-        std::this_thread::sleep_for(sleepDurationStop);
+        std::this_thread::sleep_for(sleepDuration);
     }
     NES_TRACE("checkStoppedOrTimeout: expected status not reached within set timeout");
     return false;

@@ -683,7 +683,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorker
     for (auto queryIdPair : queryIds) {
         auto queryId = queryIdPair.second;
         NES_DEBUG("MultiThreadedTest: Validating query " << queryId);
-        ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2, std::chrono::seconds(120)));
+        ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
         for (uint64_t i = 0; i <= worker_count; i++) {
             ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(workers[i], queryId, globalQueryPlan, 2));
         }
@@ -706,6 +706,7 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorker
     }
 
     NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
+    //TODO: This issue needs to be fixed
     //bool retStopCord = crd->stopCoordinator(true);
     //ASSERT_TRUE(retStopCord);
     NES_DEBUG("MultipleJoinsTest: Test finished");
