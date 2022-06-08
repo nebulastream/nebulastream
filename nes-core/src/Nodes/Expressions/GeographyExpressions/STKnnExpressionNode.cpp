@@ -18,8 +18,7 @@
 #include <Nodes/Expressions/GeographyExpressions/STKnnExpressionNode.hpp>
 
 namespace NES {
-STKnnExpressionNode::STKnnExpressionNode()
-    : ExpressionNode(DataTypeFactory::createBoolean()) {}
+STKnnExpressionNode::STKnnExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
 
 STKnnExpressionNode::STKnnExpressionNode(STKnnExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getPoint()->copy());
@@ -38,8 +37,7 @@ ExpressionNodePtr STKnnExpressionNode::create(const GeographyFieldsAccessExpress
 bool STKnnExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STKnnExpressionNode>()) {
         auto otherAndNode = rhs->as<STKnnExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint())
-            && getWKT()->equal(otherAndNode->getWKT())
+        return getPoint()->equal(otherAndNode->getPoint()) && getWKT()->equal(otherAndNode->getWKT())
             && getK()->equal(otherAndNode->getK());
     }
     return false;
@@ -51,9 +49,7 @@ std::string STKnnExpressionNode::toString() const {
     return ss.str();
 }
 
-void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point,
-                                      ExpressionNodePtr const& wkt,
-                                      ExpressionNodePtr const& k) {
+void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt, ExpressionNodePtr const& k) {
     addChildWithEqual(point);
     addChildWithEqual(wkt);
     addChildWithEqual(k);
@@ -93,16 +89,14 @@ void STKnnExpressionNode::inferStamp(SchemaPtr schema) {
     if (!point->getStamp()->isFloat() || !wkt->getStamp()->isCharArray() || !k->getStamp()->isNumeric()) {
         throw std::logic_error(
             "ST_KnnExpressionNode: Error during stamp inference. Types need to be Float and Text but Point was:"
-            + point->getStamp()->toString() + ", WKT was: " + wkt->getStamp()->toString() + ", and the k was: "
-            + k->getStamp()->toString());
+            + point->getStamp()->toString() + ", WKT was: " + wkt->getStamp()->toString()
+            + ", and the k was: " + k->getStamp()->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();
     NES_TRACE("ST_KnnExpressionNode: The following stamp was assigned: " << toString());
 }
 
-ExpressionNodePtr STKnnExpressionNode::copy() {
-    return std::make_shared<STKnnExpressionNode>(STKnnExpressionNode(this));
-}
+ExpressionNodePtr STKnnExpressionNode::copy() { return std::make_shared<STKnnExpressionNode>(STKnnExpressionNode(this)); }
 
 }// namespace NES

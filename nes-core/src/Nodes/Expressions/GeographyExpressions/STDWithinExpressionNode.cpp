@@ -18,8 +18,7 @@
 #include <Nodes/Expressions/GeographyExpressions/STDWithinExpressionNode.hpp>
 
 namespace NES {
-STDWithinExpressionNode::STDWithinExpressionNode()
-    : ExpressionNode(DataTypeFactory::createBoolean()) {}
+STDWithinExpressionNode::STDWithinExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
 
 STDWithinExpressionNode::STDWithinExpressionNode(STDWithinExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getPoint()->copy());
@@ -38,8 +37,7 @@ ExpressionNodePtr STDWithinExpressionNode::create(const GeographyFieldsAccessExp
 bool STDWithinExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STDWithinExpressionNode>()) {
         auto otherAndNode = rhs->as<STDWithinExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint())
-            && getWKT()->equal(otherAndNode->getWKT())
+        return getPoint()->equal(otherAndNode->getPoint()) && getWKT()->equal(otherAndNode->getWKT())
             && getDistance()->equal(otherAndNode->getDistance());
     }
     return false;
@@ -93,8 +91,8 @@ void STDWithinExpressionNode::inferStamp(SchemaPtr schema) {
     if (!point->getStamp()->isFloat() || !wkt->getStamp()->isCharArray() || !distance->getStamp()->isNumeric()) {
         throw std::logic_error(
             "ST_DWithinExpressionNode: Error during stamp inference. Types need to be Float and Text but Point was:"
-            + point->getStamp()->toString() + ", WKT was: " + wkt->getStamp()->toString() + ", and the Distance was: "
-            + distance->getStamp()->toString());
+            + point->getStamp()->toString() + ", WKT was: " + wkt->getStamp()->toString()
+            + ", and the Distance was: " + distance->getStamp()->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();

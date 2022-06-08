@@ -19,7 +19,8 @@
 namespace NES {
 GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)){};
 
-GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(GeographyFieldsAccessExpressionNode* other) : ExpressionNode(other) {
+GeographyFieldsAccessExpressionNode::GeographyFieldsAccessExpressionNode(GeographyFieldsAccessExpressionNode* other)
+    : ExpressionNode(other) {
     addChildWithEqual(getLatitude()->copy());
     addChildWithEqual(getLongitude()->copy());
 }

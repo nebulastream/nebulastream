@@ -31,8 +31,7 @@ class GeographyFieldsAccessExpressionNode : public ExpressionNode {
      * @param latitude is the latitude field.
      * @param longitude is the longitude field.
      */
-    static ExpressionNodePtr create(FieldAccessExpressionNodePtr const& latitude,
-                                    FieldAccessExpressionNodePtr const& longitude);
+    static ExpressionNodePtr create(FieldAccessExpressionNodePtr const& latitude, FieldAccessExpressionNodePtr const& longitude);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;

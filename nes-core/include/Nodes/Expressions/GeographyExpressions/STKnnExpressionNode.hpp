@@ -50,9 +50,7 @@ class STKnnExpressionNode : public ExpressionNode {
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& point,
-                     ExpressionNodePtr const& wkt,
-                     ExpressionNodePtr const& k);
+    void setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt, ExpressionNodePtr const& k);
 
     /**
      * @brief gets the point.

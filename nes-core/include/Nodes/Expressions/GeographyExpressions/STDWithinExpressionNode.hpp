@@ -58,9 +58,7 @@ class STDWithinExpressionNode : public ExpressionNode {
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& point,
-                     ExpressionNodePtr const& wkt,
-                     ExpressionNodePtr const& distance);
+    void setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt, ExpressionNodePtr const& distance);
 
     /**
      * @brief gets the point.
