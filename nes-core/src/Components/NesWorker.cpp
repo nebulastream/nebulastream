@@ -24,6 +24,7 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/Storage/AbstractMetricStore.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -48,9 +49,9 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
+NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, MetricStorePtr metricStore)
     : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort),
-      topologyNodeId(std::make_shared<TopologyNodeId>(INVALID_TOPOLOGY_NODE_ID)) {
+      topologyNodeId(std::make_shared<TopologyNodeId>(INVALID_TOPOLOGY_NODE_ID)), metricStore(metricStore) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -141,6 +142,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
         nodeEngine =
             Runtime::NodeEngineBuilder::create(workerConfig).setQueryStatusListener(this->inherited0::shared_from_this()).build();
+        if (metricStore != nullptr) {
+            nodeEngine->setMetricStore(metricStore);
+        }
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
@@ -221,8 +225,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             //cout << "NesWorker wait" << endl;
             sleep(5);
         }
-        NES_DEBUG("NesWorker: joined, return");
-        return true;
     }
     NES_DEBUG("NesWorker: started, return without blocking");
     return true;

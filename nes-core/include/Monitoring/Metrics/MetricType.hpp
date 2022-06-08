@@ -36,6 +36,8 @@ enum MetricType {
 
 std::string toString(MetricType type);
 
+MetricType parse(std::string metricTypeStr);
+
 }// namespace NES
 
 #endif// NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_

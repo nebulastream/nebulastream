@@ -604,7 +604,10 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
 }
 
 MetricStorePtr NodeEngine::getMetricStore() { return metricStore; }
-void NodeEngine::setMetricStore(MetricStorePtr metricStore) { this->metricStore = metricStore; }
+void NodeEngine::setMetricStore(MetricStorePtr metricStore) {
+    NES_ASSERT(metricStore != nullptr, "NodeEngine: MetricStore is null.");
+    this->metricStore = metricStore;
+}
 const std::shared_ptr<TopologyNodeId> NodeEngine::getNodeId() const { return nodeId; }
 void NodeEngine::setNodeId(const std::shared_ptr<TopologyNodeId> NodeId) { nodeId = NodeId; }
 

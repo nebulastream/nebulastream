@@ -52,6 +52,9 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
+class AbstractMetricStore;
+using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
+
 static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
 
 class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
@@ -62,10 +65,10 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
   public:
     /**
-     * @brief default constructor which creates a sensor node
+     * @brief default constructor which creates a sensor node with a metric store
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig);
+    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, MetricStorePtr metricStore=nullptr);
 
     /**
      * @brief default dtor
@@ -259,6 +262,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
+    MetricStorePtr metricStore;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     std::atomic<bool> connected{false};
     bool withParent{false};

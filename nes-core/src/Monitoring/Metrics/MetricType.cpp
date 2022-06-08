@@ -30,4 +30,25 @@ std::string toString(MetricType type) {
     }
 };
 
+MetricType parse(std::string metricTypeString) {
+    if (metricTypeString == "cpu") {
+        return MetricType::CpuMetric;
+    } else if (metricTypeString == "disk") {
+        return MetricType::DiskMetric;
+    } else if (metricTypeString == "memory") {
+        return MetricType::MemoryMetric;
+    } else if (metricTypeString == "network") {
+        return MetricType::NetworkMetric;
+    } else if (metricTypeString == "runtime") {
+        return MetricType::RuntimeMetric;
+    } else if (metricTypeString == "registration") {
+        return MetricType::RegistrationMetric;
+    } else if (metricTypeString == "wrapped_cpu") {
+        return MetricType::WrappedCpuMetrics;
+    } else if (metricTypeString == "wrapped_network") {
+        return MetricType::WrappedNetworkMetrics;
+    }
+    return MetricType::UnknownMetric;
+}
+
 }// namespace NES

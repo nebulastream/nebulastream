@@ -76,11 +76,11 @@ std::vector<SharedQueryPlanPtr> GlobalQueryPlan::getSharedQueryPlansToDeploy() {
 }
 
 SharedQueryId GlobalQueryPlan::getSharedQueryId(QueryId queryId) {
-    NES_DEBUG("GlobalQueryPlan: Get the Global Query Id for the query " << queryId);
+    NES_TRACE("GlobalQueryPlan: Get the Global Query Id for the query " << queryId);
     if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
         return queryIdToSharedQueryIdMap[queryId];
     }
-    NES_WARNING("GlobalQueryPlan: Unable to find Global Query Id for the query " << queryId);
+    NES_TRACE("GlobalQueryPlan: Unable to find Global Query Id for the query " << queryId);
     return INVALID_SHARED_QUERY_ID;
 }
 

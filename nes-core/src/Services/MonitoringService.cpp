@@ -27,13 +27,21 @@
 #include <utility>
 
 namespace NES {
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : MonitoringService(workerClient, topology, true) {}
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
+                                     TopologyPtr topology,
+                                     QueryServicePtr queryService,
+                                     QueryCatalogServicePtr catalogService)
+    : MonitoringService(workerClient, topology, queryService, catalogService, true) {}
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enable)
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
+                                     TopologyPtr topology,
+                                     QueryServicePtr queryService,
+                                     QueryCatalogServicePtr catalogService,
+                                     bool enable)
     : topology(topology), enableMonitoring(enable) {
     NES_DEBUG("MonitoringService: Initializing with monitoring=" << enable);
-    monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology, enableMonitoring);
+    monitoringManager =
+        std::make_shared<MonitoringManager>(workerClient, topology, queryService, catalogService, enableMonitoring);
 }
 
 web::json::value MonitoringService::registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan) {
@@ -96,4 +104,25 @@ web::json::value MonitoringService::requestNewestMonitoringDataFromMetricStoreAs
 const MonitoringManagerPtr MonitoringService::getMonitoringManager() const { return monitoringManager; }
 
 bool MonitoringService::isMonitoringEnabled() const { return enableMonitoring; }
+
+web::json::value MonitoringService::startMonitoringStreams() {
+    web::json::value output{};
+    auto queryIds = monitoringManager->startOrRedeployMonitoringQueries(true);
+
+    web::json::value elem{};
+    int i = 0;
+    for (auto queryIdPair : queryIds) {
+        elem["logical_stream"] = web::json::value::string(queryIdPair.first);
+        elem["query_ID"] = web::json::value::number(queryIdPair.second);
+        output[i++] = elem;
+    }
+
+    return output;
+}
+
+web::json::value MonitoringService::stopMonitoringStreams() {
+    bool success = monitoringManager->stopRunningMonitoringQueries(true);
+    return web::json::value::boolean(success);
+}
+
 }// namespace NES

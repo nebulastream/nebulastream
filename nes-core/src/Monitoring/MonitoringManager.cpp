@@ -43,18 +43,34 @@
 #include <utility>
 
 namespace NES {
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : MonitoringManager(workerClient, topology, true) {}
-
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
-    : MonitoringManager(workerClient, topology, std::make_shared<LatestEntriesMetricStore>(), enableMonitoring) {}
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
+                                     TopologyPtr topology,
+                                     QueryServicePtr queryService,
+                                     QueryCatalogServicePtr catalogService)
+    : MonitoringManager(workerClient, topology, queryService, catalogService, true) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
                                      TopologyPtr topology,
+                                     QueryServicePtr queryService,
+                                     QueryCatalogServicePtr catalogService,
+                                     bool enableMonitoring)
+    : MonitoringManager(workerClient,
+                        topology,
+                        queryService,
+                        catalogService,
+                        std::make_shared<LatestEntriesMetricStore>(),
+                        enableMonitoring) {}
+
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient,
+                                     TopologyPtr topology,
+                                     QueryServicePtr queryService,
+                                     QueryCatalogServicePtr catalogService,
                                      MetricStorePtr metricStore,
                                      bool enableMonitoring)
     : metricStore(metricStore), workerClient(workerClient), topology(topology), enableMonitoring(enableMonitoring),
       monitoringCollectors(MonitoringPlan::defaultCollectors()) {
+    this->queryService = queryService;
+    this->catalogService = catalogService;
     NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring << ", storage=" << toString(metricStore->getType()));
 }
 
@@ -181,82 +197,108 @@ bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::C
     return false;
 }
 
-std::unordered_map<MetricType, QueryId> MonitoringManager::startOrRedeployMonitoringQueries(NesCoordinatorPtr crd, bool sync) {
+QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoringStream, bool sync) {
+    QueryId queryId = 0;
+
+    if (!enableMonitoring) {
+        NES_ERROR("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
+    }
+
+    bool success;
+    if (deployedMonitoringQueries.contains(monitoringStream)) {
+        success = stopRunningMonitoringQuery(monitoringStream, sync);
+    } else {
+        success = true;
+    }
+
+    // params for iteration
+    if (success) {
+        MetricType metricType = parse(monitoringStream);
+        std::string metricCollectorStr = NES::toString(MetricUtils::createCollectorTypeFromMetricType(metricType));
+        std::string query =
+            R"(Query::from("%STREAM%").sink(MonitoringSinkDescriptor::create(MetricCollectorType::%COLLECTOR%));)";
+        query = std::regex_replace(query, std::regex("%STREAM%"), monitoringStream);
+        query = std::regex_replace(query, std::regex("%COLLECTOR%"), metricCollectorStr);
+
+        // create new monitoring query
+        NES_INFO("MonitoringManager: Creating query for " << monitoringStream);
+        queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
+            NES_INFO("MonitoringManager: Successfully started query " << queryId << "::" << monitoringStream);
+            deployedMonitoringQueries.insert({monitoringStream, queryId});
+        } else {
+            NES_ERROR("MonitoringManager: Query " << queryId << "::" << monitoringStream << " failed to start in time.");
+        }
+    } else {
+        NES_ERROR("MonitoringManager: Failed to deploy monitoring query. Queries are still running and could not be stopped for "
+                  << monitoringStream);
+    }
+    return queryId;
+}
+
+std::unordered_map<std::string, QueryId> MonitoringManager::startOrRedeployMonitoringQueries(bool sync) {
     if (!enableMonitoring) {
         NES_ERROR("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
         return deployedMonitoringQueries;
     }
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr catalogService = crd->getQueryCatalogService();
-    std::unordered_map<MetricType, QueryId> newQueries;
-    bool success = stopRunningMonitoringQueries(crd, sync);
-
     // params for iteration
-    if (success) {
-        for (auto collectorType : monitoringCollectors) {
-            MetricType metricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
-            std::string metricCollectorStr = NES::toString(collectorType);
-            std::string metricTypeString = NES::toString(metricType);
-            std::string query =
-                R"(Query::from("%STREAM%").sink(MonitoringSinkDescriptor::create(MetricCollectorType::%COLLECTOR%));)";
-            query = std::regex_replace(query, std::regex("%COLLECTOR%"), metricCollectorStr);
-            query = std::regex_replace(query, std::regex("%STREAM%"), metricTypeString);
+    for (auto monitoringStream : logicalMonitoringSources) {
+        bool success = stopRunningMonitoringQuery(monitoringStream, sync);
 
-            // create new monitoring query
-            NES_INFO("MonitoringManager: Creating query for " << NES::toString(metricType));
-            QueryId queryId =
-                queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-            if (sync && waitForQueryToStart(queryId, catalogService, std::chrono::seconds(60))) {
-                NES_INFO("MonitoringManager: Successfully started query " << queryId << "::" << NES::toString(metricType));
-            } else {
-                NES_ERROR("MonitoringManager: Query " << queryId << "::" << NES::toString(metricType)
-                                                      << " failed to start in time.");
-                continue;
-            }
-            newQueries.insert({metricType, queryId});
+        if (success) {
+            startOrRedeployMonitoringQuery(monitoringStream, sync);
         }
-    } else {
-        NES_ERROR("MonitoringManager: Failed to deploy monitoring queries. Queries are still running and could not be stopped.");
-        return deployedMonitoringQueries;
     }
 
-    deployedMonitoringQueries = std::move(newQueries);
     return deployedMonitoringQueries;
 }
 
-bool MonitoringManager::stopRunningMonitoringQueries(NesCoordinatorPtr crd, bool sync) {
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogServicePtr catalogService = crd->getQueryCatalogService();
-    std::unordered_map<MetricType, QueryId> newQueries;
+bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool sync) {
     bool success = true;
 
     // params for iteration
-    for (auto deployedQuery : deployedMonitoringQueries) {
-        auto metricType = deployedQuery.first;
-        auto queryId = deployedQuery.second;
+    if (deployedMonitoringQueries.contains(streamName)) {
+        auto metricType = streamName;
+        auto queryId = deployedMonitoringQueries[streamName];
 
-        NES_INFO("MonitoringManager: Stopping query " << queryId << " for " << NES::toString(metricType));
+        NES_INFO("MonitoringManager: Stopping query " << queryId << " for " << metricType);
         if (queryService->validateAndQueueStopRequest(queryId)) {
-            if (sync && checkStoppedOrTimeout(queryId, catalogService, std::chrono::seconds(60))) {
-                NES_INFO("MonitoringManager: Query " << queryId << "::" << NES::toString(metricType) << " terminated.");
+            if ((sync && checkStoppedOrTimeout(queryId, std::chrono::seconds(60))) || (!sync)) {
+                NES_INFO("MonitoringManager: Query " << queryId << "::" << metricType << " terminated.");
+            } else {
+                NES_ERROR("MonitoringManager: Failed to stop query " << queryId << "::" << metricType);
+                success = false;
             }
         } else {
-            NES_ERROR("MonitoringManager: Query " << queryId << "::" << NES::toString(metricType)
-                                                  << " failed to terminate in time.");
+            NES_ERROR("MonitoringManager: Failed to validate query " << queryId << "::" << metricType);
             success = false;
         }
     }
     if (success) {
-        deployedMonitoringQueries.clear();
-        NES_INFO("MonitoringManager: All running monitoring queries stopped successfully.");
+        deployedMonitoringQueries.erase(streamName);
+        NES_INFO("MonitoringManager: Monitoring query stopped successfully " << streamName);
     }
     return success;
 }
 
-bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId,
-                                              const QueryCatalogServicePtr& catalogService,
-                                              std::chrono::seconds timeout) {
+bool MonitoringManager::stopRunningMonitoringQueries(bool sync) {
+    bool success = true;
+    if (!enableMonitoring) {
+        NES_ERROR("MonitoringManager: Deploying queries failed. Monitoring is disabled.");
+    }
+
+    // params for iteration
+    for (auto monitoringStream : logicalMonitoringSources) {
+        if (!stopRunningMonitoringQuery(monitoringStream, sync)) {
+            success = false;
+        }
+    }
+
+    return success;
+}
+
+bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId, std::chrono::seconds timeout) {
     auto timeoutInSec = std::chrono::seconds(timeout);
     auto start_timestamp = std::chrono::system_clock::now();
     while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -273,9 +315,7 @@ bool MonitoringManager::checkStoppedOrTimeout(QueryId queryId,
     return false;
 }
 
-bool MonitoringManager::waitForQueryToStart(QueryId queryId,
-                                            const QueryCatalogServicePtr& catalogService,
-                                            std::chrono::seconds timeout) {
+bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::seconds timeout) {
     NES_INFO("MonitoringManager: wait till the query " << queryId << " gets into Running status.");
     auto start_timestamp = std::chrono::system_clock::now();
 
@@ -290,12 +330,10 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId,
 
         switch (queryCatalogEntry->getQueryStatus()) {
             case QueryStatus::Running: {
+                NES_DEBUG("MonitoringManager: Query is now running " << queryId);
                 return true;
             }
-            case QueryStatus::Scheduling: break;
             default: {
-                NES_ERROR("MonitoringManager: Query failed to start. Expected: Running but found "
-                          + QueryStatus::toString(status));
                 break;
             }
         }
@@ -303,6 +341,12 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId,
     }
     NES_ERROR("MonitoringManager: Starting query " << queryId << " has timed out.");
     return false;
+}
+
+bool MonitoringManager::isMonitoringStream(std::string streamName) { return logicalMonitoringSources.contains(streamName); }
+
+const std::unordered_map<std::string, QueryId>& MonitoringManager::getDeployedMonitoringQueries() const {
+    return deployedMonitoringQueries;
 }
 
 }// namespace NES
