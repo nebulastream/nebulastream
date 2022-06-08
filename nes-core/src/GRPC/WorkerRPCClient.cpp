@@ -480,6 +480,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         auto schedule = reply.schedule();
         auto start = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathstart());
         auto end = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathend());
+        auto lastUpdatePosition = std::make_shared<Spatial::Index::Experimental::Location>(schedule.lastindexupdateposition());
         auto vec = std::make_shared<std::vector<std::tuple<uint64_t, Spatial::Index::Experimental::LocationPtr , Timestamp>>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             auto reconnectData = schedule.reconnectpoints(i);
@@ -487,7 +488,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
             vec->push_back(std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>(reconnectData.id(), loc, reconnectData.time()));
         }
         return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(
-            start, end, vec);
+            start, end, lastUpdatePosition, vec);
     }
     return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
 }
