@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.46](https://github.com/nebulastream/nebulastream/tree/v0.2.46) (2022-06-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.45...v0.2.46)
+
+#### Spatial Query Processing 🌇
+
+- Add Geography Expressions [\#2338](https://github.com/nebulastream/nebulastream/issues/2338)
+
 ## [v0.2.45](https://github.com/nebulastream/nebulastream/tree/v0.2.45) (2022-06-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.44...v0.2.45)
