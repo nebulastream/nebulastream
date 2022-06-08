@@ -570,8 +570,8 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
 }
 
 TEST_F(SinkTest, testMonitoringSink) {
-    uint64_t nodeId1 = 4711;
-    uint64_t nodeId2 = 7356;
+    auto nodeId1 = std::make_shared<TopologyNodeId>(4711);
+    auto nodeId2 = std::make_shared<TopologyNodeId>(7356);
 
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
@@ -580,7 +580,8 @@ TEST_F(SinkTest, testMonitoringSink) {
     auto metricStore = std::make_shared<AllEntriesMetricStore>();
 
     //write metrics to tuple buffer for disk collector
-    auto diskCollector = DiskCollector(nodeId1);
+    auto diskCollector = DiskCollector();
+    diskCollector.setNodeId(nodeId1);
     MetricPtr diskMetric = diskCollector.readMetric();
     DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
     ASSERT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
@@ -590,7 +591,8 @@ TEST_F(SinkTest, testMonitoringSink) {
     ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     //write metrics to tuple buffer for cpu collector
-    auto cpuCollector = CpuCollector(nodeId2);
+    auto cpuCollector = CpuCollector();
+    cpuCollector.setNodeId(nodeId2);
     MetricPtr cpuMetric = cpuCollector.readMetric();
     CpuMetricsWrapper typedMetricCpu = cpuMetric->getValue<CpuMetricsWrapper>();
     ASSERT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
@@ -608,7 +610,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics
-    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId1);
+    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(static_cast<uint64_t>(*nodeId1.get()));
     auto metricVec = storedMetrics->at(MetricType::DiskMetric);
     TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
     MetricPtr retMetric = pairedDiskMetric->second;
@@ -619,7 +621,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     ASSERT_EQ(parsedMetrics, typedMetric);
 
     // test cpu metrics
-    StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(nodeId2);
+    StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(*nodeId2.get()));
     auto metricVecCpu = storedMetricsCpu->at(MetricType::WrappedCpuMetrics);
     TimestampMetricPtr pairedCpuMetric = metricVecCpu->at(0);
     MetricPtr retMetricCpu = pairedCpuMetric->second;
