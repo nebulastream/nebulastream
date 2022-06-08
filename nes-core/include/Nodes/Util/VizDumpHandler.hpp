@@ -145,7 +145,7 @@ class VizDumpHandler : public DumpHandler {
      */
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) override;
 
-  private:
+  protected:
     static void extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode);
     void dump(QueryPlanPtr queryPlan, const std::string& parent, detail::VizGraph& graph);
     void writeToFile(const std::string& scope, const std::string& name, const std::string& content);
