@@ -37,7 +37,16 @@ class MonitoringSource : public DataSource {
 
     std::optional<Runtime::TupleBuffer> receiveData() override;
 
+    /**
+     * @brief Returns the collector type of the monitoring source.
+     * @return the collector type
+     */
     MetricCollectorType getCollectorType();
+
+    /**
+     * @brief Returns the wait time of the monitoring source
+     * @return wait time
+     */
     std::chrono::milliseconds getWaitTime() const;
 
     /**

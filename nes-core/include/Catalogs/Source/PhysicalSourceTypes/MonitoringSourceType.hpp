@@ -24,8 +24,7 @@ class MonitoringSourceType;
 using MonitoringSourceTypePtr = std::shared_ptr<MonitoringSourceType>;
 
 /**
- * @brief Configuration object for csv source config
- * define configurations for a csv source, i.e. this source reads from data from a csv file
+ * @brief Configuration object for monitoring source config
  */
 class MonitoringSourceType : public PhysicalSourceType {
   public:
@@ -59,7 +58,7 @@ class MonitoringSourceType : public PhysicalSourceType {
     void reset() override;
 
     /**
-     * @brief gets a int object with the wait time
+     * @brief gets a chrono object with the wait time
      */
     [[nodiscard]] std::chrono::milliseconds getWaitTime() const;
 
