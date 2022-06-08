@@ -634,71 +634,80 @@ TEST_F(MonitoringIntegrationTest, requestMemoryMetricsWithMonitoringSinkMultiWor
 
 TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorkerWithMonitoringManager) {
     bool monitoring = true;
-    uint64_t worker_count = 2;
+    uint64_t worker_count = 4;
     std::vector<NesWorkerPtr> workers;
 
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->enableMonitoring = monitoring;
+    coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 8;
+    coordinatorConfig->numberOfBuffersInGlobalBufferManager = 1024*8;
 
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    auto monitoringManager = crd->getMonitoringService()->getMonitoringManager();
+    auto monitoringService = crd->getMonitoringService();
+    auto metricSize = MonitoringPlan::defaultCollectors().size();
 
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0UL);
+    ASSERT_NE(port, 0UL);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     for (uint64_t i = 0; i <= worker_count; i++) {
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfSlots = (12);
+        workerConfig->numberOfBuffersInGlobalBufferManager = 8192;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = 2;
+        workerConfig->numberOfBuffersPerWorker = 8;
         workerConfig->enableMonitoring = (monitoring);
 
         NES_DEBUG("MultipleJoinsTest: Start worker " << i);
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
         workers.emplace_back(wrk);
         bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-        EXPECT_TRUE(retStart);
+        ASSERT_TRUE(retStart);
         NES_INFO("MultipleJoinsTest: Worker " << i << " started successfully");
 
-        EXPECT_EQ(wrk->getWorkerConfiguration()->physicalSources.size(), MonitoringPlan::defaultCollectors().size());
+        ASSERT_EQ(wrk->getWorkerConfiguration()->physicalSources.size(), MonitoringPlan::defaultCollectors().size());
     }
 
-    auto queryIds = monitoringManager->startOrRedeployMonitoringQueries(crd, true);
+    auto queryIdsJson = monitoringService->startMonitoringStreams();
+    NES_INFO("MonitoringIntegrationTest: " << queryIdsJson);
+    auto queryIds = monitoringService->getMonitoringManager()->getDeployedMonitoringQueries();
+    ASSERT_EQ(queryIds.size(), metricSize);
+    ASSERT_EQ(queryIdsJson.size(), metricSize);
 
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     for (auto queryIdPair : queryIds) {
         auto queryId = queryIdPair.second;
         NES_DEBUG("MultiThreadedTest: Validating query " << queryId);
-        EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+        ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2, std::chrono::seconds(120)));
         for (uint64_t i = 0; i <= worker_count; i++) {
-            EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(workers[i], queryId, globalQueryPlan, 2));
+            ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(workers[i], queryId, globalQueryPlan, 2));
         }
     }
-    EXPECT_TRUE(monitoringManager->stopRunningMonitoringQueries(crd, true));
+    ASSERT_TRUE(monitoringService->stopMonitoringStreams().as_bool());
 
     for (uint64_t i = 0; i <= worker_count; i++) {
         NES_DEBUG("MultipleJoinsTest: Stop worker " << i);
         auto wrk = workers[i];
         bool retStopWrk = wrk->stop(true);
-        EXPECT_TRUE(retStopWrk);
+        ASSERT_TRUE(retStopWrk);
     }
 
     auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
     // test network metrics
-    for (uint64_t nodeId = 2; nodeId <= workers.size(); nodeId++) {
+    for (uint64_t nodeId = 1; nodeId <= workers.size(); nodeId++) {
         StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
         NES_INFO("MetricStoreTest: Stored metrics for ID " << nodeId << ": " << MetricUtils::toJson(storedMetrics));
         ASSERT_EQ(storedMetrics->size(), 5);
     }
 
-    // TODO: This is currently an open problem in such a scenario
-    //NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
+    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
     //bool retStopCord = crd->stopCoordinator(true);
-    //EXPECT_TRUE(retStopCord);
+    //ASSERT_TRUE(retStopCord);
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 

@@ -90,8 +90,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     setThreadName("NesCoordinator");
     topology = Topology::create();
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, enableMonitoring);
-    monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -132,6 +130,10 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                                  queryRequestQueue,
                                                                                  globalExecutionPlan);
     locationService = std::make_shared<NES::Spatial::Index::Experimental::LocationService>(topology);
+
+    monitoringService =
+        std::make_shared<MonitoringService>(workerRpcClient, topology, queryService, queryCatalogService, enableMonitoring);
+    monitoringService->getMonitoringManager()->registerLogicalMonitoringStreams(this->coordinatorConfiguration);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -203,9 +205,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->enableMonitoring = enableMonitoring;
     }
     auto workerConfigCopy = workerConfig;
-    worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
+    worker =
+        std::make_shared<NesWorker>(std::move(workerConfigCopy), monitoringService->getMonitoringManager()->getMetricStore());
     worker->start(/**blocking*/ false, /**withConnect*/ true);
-    worker->getNodeEngine()->setMetricStore(monitoringService->getMonitoringManager()->getMetricStore());
 
     NES::Exceptions::installGlobalErrorListener(worker);
 

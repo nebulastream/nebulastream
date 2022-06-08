@@ -42,7 +42,9 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                  querySubPlanId,
                  faultToleranceType,
                  numberOfOrigins),
-      metricStore(metricStore), collectorType(collectorType) {}
+      metricStore(metricStore), collectorType(collectorType) {
+    NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
+}
 
 MonitoringSink::~MonitoringSink() = default;
 

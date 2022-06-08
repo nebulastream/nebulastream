@@ -27,13 +27,26 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
+class QueryCatalogService;
+using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
+
+class QueryService;
+using QueryServicePtr = std::shared_ptr<QueryService>;
+
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
  */
 class MonitoringService {
   public:
-    MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology);
-    MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
+    MonitoringService(WorkerRPCClientPtr workerClient,
+                      TopologyPtr topology,
+                      QueryServicePtr queryService,
+                      QueryCatalogServicePtr catalogService);
+    MonitoringService(WorkerRPCClientPtr workerClient,
+                      TopologyPtr topology,
+                      QueryServicePtr queryService,
+                      QueryCatalogServicePtr catalogService,
+                      bool enableMonitoring);
 
     /**
      * @brief Registers a monitoring plan at all nodes. A MonitoringPlan indicates which metrics have to be sampled at a node.
@@ -59,6 +72,18 @@ class MonitoringService {
      * @return a json with all metrics indicated by the registered MonitoringPlan.
     */
     web::json::value requestNewestMonitoringDataFromMetricStoreAsJson();
+
+    /**
+     * @brief Starts the monitoring streams for monitoring data.
+     * @return a json with all query IDs and the status indicated by the registered MonitoringPlan.
+    */
+    web::json::value startMonitoringStreams();
+
+    /**
+     * @brief Starts the monitoring streams for monitoring data.
+     * @return a json with all query IDs and the status indicated by the registered MonitoringPlan.
+    */
+    web::json::value stopMonitoringStreams();
 
     /**
      * @brief Getter for MonitoringManager

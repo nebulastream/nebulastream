@@ -31,7 +31,22 @@ MonitoringController::MonitoringController(MonitoringServicePtr mService, Runtim
 
 void MonitoringController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     NES_DEBUG("MonitoringController: Processing GET request");
-    if (path.size() > 1 && path.size() < 4 && path[1] == "metrics") {
+    if (path[1] == "start") {
+        NES_DEBUG("MonitoringController: GET start monitoring streams");
+        auto metricsJson = monitoringService->startMonitoringStreams();
+        successMessageImpl(message, metricsJson);
+        return;
+    } else if (path[1] == "stop") {
+        NES_DEBUG("MonitoringController: GET stop monitoring streams");
+        auto metricsJson = monitoringService->stopMonitoringStreams();
+        successMessageImpl(message, metricsJson);
+        return;
+    } else if (path[1] == "storage") {
+        NES_DEBUG("MonitoringController: GET content of metric store");
+        auto metricsJson = monitoringService->requestNewestMonitoringDataFromMetricStoreAsJson();
+        successMessageImpl(message, metricsJson);
+        return;
+    } else if (path.size() > 1 && path.size() < 4 && path[1] == "metrics") {
         NES_DEBUG("MonitoringController: GET metrics with path size " + std::to_string(path.size()));
         if (path.size() == 2) {
             NES_DEBUG("MonitoringController: GET metrics for all nodes");
