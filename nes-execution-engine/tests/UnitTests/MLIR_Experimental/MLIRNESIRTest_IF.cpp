@@ -33,6 +33,7 @@
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
+#include <Experimental/NESIR/Util/NesIrVizDumpHandler.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
@@ -316,6 +317,10 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                                                 ->addNextBlock(savedBBs["loopHeadBB"]))))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
+
+    // dump nes ir
+    auto dumpHandler = NesIrVizDumpHandler::createIrDumpHandler();
+    dumpHandler->dumpIr("Ir", "TestIr", nesIR);
     // NESIR to MLIR
     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
     int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
