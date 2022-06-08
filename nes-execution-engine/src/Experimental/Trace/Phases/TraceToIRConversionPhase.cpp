@@ -16,7 +16,7 @@
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
-#include <Experimental/Trace/TraceToIRConversionPhase.hpp>
+#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
@@ -185,7 +185,7 @@ std::vector<std::string> TraceToIRConversionPhase::IRConversionContext::createBl
 
 std::string TraceToIRConversionPhase::IRConversionContext::createValueIdentifier(InputVariant val) {
     auto valueRef = get<ValueRef>(val);
-    return std::to_string(valueRef.operationId) + "_" + std::to_string(valueRef.blockId);
+    return std::to_string(valueRef.blockId) + "_" + std::to_string(valueRef.operationId);
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processAdd(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
