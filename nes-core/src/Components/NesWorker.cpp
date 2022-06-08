@@ -171,17 +171,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(con, "cannot connect");
     }
 
-    auto configPhysicalSources = workerConfig->physicalSources.getValues();
-    if (!configPhysicalSources.empty()) {
-        std::vector<PhysicalSourcePtr> physicalSources;
-        for (auto physicalSource : configPhysicalSources) {
-            physicalSources.push_back(physicalSource);
-        }
-        NES_DEBUG("NesWorker: start with register source");
-        bool success = registerPhysicalSources(physicalSources);
-        NES_DEBUG("registered= " << success);
-        NES_ASSERT(success, "cannot register");
-    }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
         bool success = addParent(parentId);
@@ -226,7 +215,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
             sleep(5);
         }
     }
-    NES_DEBUG("NesWorker: started, return without blocking");
+
+    NES_DEBUG("NesWorker: started, return");
     return true;
 }
 
@@ -304,6 +294,19 @@ bool NesWorker::connect() {
                                                                         this->inherited0::shared_from_this());
         NES_DEBUG("NesWorker start health check");
         healthCheckService->startHealthCheck();
+
+        auto configPhysicalSources = workerConfig->physicalSources.getValues();
+        if (!configPhysicalSources.empty()) {
+            std::vector<PhysicalSourcePtr> physicalSources;
+            for (auto physicalSource : configPhysicalSources) {
+                physicalSources.push_back(physicalSource);
+            }
+            NES_DEBUG("NesWorker: start with register source");
+            bool success = registerPhysicalSources(physicalSources);
+            NES_DEBUG("registered= " << success);
+            NES_ASSERT(success, "cannot register");
+        }
+
         return true;
     }
     NES_DEBUG("NesWorker::registerNode rpc register failed");

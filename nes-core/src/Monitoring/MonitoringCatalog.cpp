@@ -35,13 +35,19 @@ MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
     NES_DEBUG("MonitoringCatalog: Init default catalog");
 
     std::unordered_map<MetricType, MetricCollectorPtr> metrics(
-        {{MetricType::CpuMetric, std::shared_ptr<MetricCollector>(new CpuCollector())},
+        {{MetricType::WrappedCpuMetrics, std::shared_ptr<MetricCollector>(new CpuCollector())},
          {MetricType::DiskMetric, std::shared_ptr<MetricCollector>(new DiskCollector())},
          {MetricType::MemoryMetric, std::shared_ptr<MetricCollector>(new MemoryCollector())},
-         {MetricType::NetworkMetric, std::shared_ptr<MetricCollector>(new NetworkCollector())}});
+         {MetricType::WrappedNetworkMetrics, std::shared_ptr<MetricCollector>(new NetworkCollector())}});
     return create(metrics);
 }
 
-MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) { return metricMap.at(metricType); }
+MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType) {
+    if (metricMap.contains(metricType)) {
+        return metricMap[metricType];
+    }
+    NES_ERROR("MonitoringCatalog: MetricType " << toString(metricType) << " is not in catalog.");
+    return nullptr;
+}
 
 }// namespace NES

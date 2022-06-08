@@ -19,6 +19,7 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/Metrics/MetricType.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/MonitoringCatalog.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -83,11 +84,14 @@ web::json::value MonitoringAgent::getMetricsAsJson() {
     web::json::value metricsJson{};
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
+            NES_INFO("MonitoringAgent: Collecting metrics of type " << toString(type));
             auto collector = catalog->getMetricCollector(type);
             auto metric = collector->readMetric();
             metricsJson[toString(metric->getMetricType())] = asJson(metric);
         }
     }
+    NES_INFO("MonitoringAgent: Metrics collected " << metricsJson);
+
     return metricsJson;
 }
 
