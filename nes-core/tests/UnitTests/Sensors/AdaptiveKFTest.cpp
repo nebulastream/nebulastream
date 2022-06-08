@@ -35,7 +35,7 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
     SchemaPtr schema;
     PhysicalSourcePtr sourceConf;
     Runtime::NodeEnginePtr nodeEngine;
-    std::vector<double> measurements;
+    std::vector<double> measurements, sineMeasurements;
     float defaultEstimationErrorDivider = 2.9289684;
     std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> now_ms;
 
@@ -85,6 +85,17 @@ class AdaptiveKFTest : public Testing::NESBaseTest {
                         0.562381751596, 0.355468474885, 500, 900, 900,
                         500, 0.355468474885, 0.572381751596, 0.658547664519, 0.916168349913,
                         0.926168349913
+        };
+
+        sineMeasurements = {
+            0.0, 0.38472343552628496, 0.7136991707164312, 0.9299974996719369,
+            0.99936574139776, 0.912997692911855, 0.685999485294986,
+            0.3534664961714897, -0.02838770166931892, -0.41041241783302107,
+            -0.7257361440521488, -0.9321121984624824, -0.9986077305092097,
+            -0.9963525412722536, -0.9886230109195111, -0.9800997788282131,
+            -0.9742176943379146, -0.9730412774398549, -0.9706884436437355,
+            -0.9695120267456757, -0.968335609847616, -0.9671591929495563,
+            -0.9659827760514966, -0.9659827760514966,
         };
     }
 
@@ -557,6 +568,33 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialWithLimitTest) {
         std::cout << "Old freq: " << kfProxy.getCurrentGatheringInterval().count() << std::endl;
         kfProxy.update(y);
         auto newFreq = kfProxy.getExponentialFrequencyWithHalfLimit();
+        std::cout << "New freq: " << newFreq.count() << std::endl;
+    }
+
+    EXPECT_TRUE(true);
+}
+
+TEST_F(AdaptiveKFTest, kfNewGatheringIntervalVerySmallFrequency) {
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, sineMeasurements[0], sineMeasurements[0];
+
+    // empty filter
+    KFProxy kfProxy{10};
+    kfProxy.init(initialState);
+    kfProxy.setGatheringInterval(std::chrono::milliseconds{4000});
+    kfProxy.setGatheringIntervalRange(std::chrono::milliseconds{8000});
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+
+    // predict and update
+    for(uint64_t i = 1; i < sineMeasurements.size(); ++i) {
+        y << sineMeasurements[i];
+        std::cout << "Measurement: " << y.value() << std::endl;
+        std::cout << "Old freq: " << kfProxy.getCurrentGatheringInterval().count() << std::endl;
+        kfProxy.update(y);
+        auto newFreq = kfProxy.getNewGatheringInterval();
         std::cout << "New freq: " << newFreq.count() << std::endl;
     }
 
