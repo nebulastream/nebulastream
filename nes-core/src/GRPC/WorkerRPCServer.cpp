@@ -196,6 +196,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     auto schedule = trajectoryPredictor->getReconnectSchedule();
     ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
 
+    //todo: set these to empty, if there is no value
     auto startLoc = schedule->getPathStart();
     Coordinates* startCoord = scheduleMsg->mutable_pathstart();
     startCoord->set_lat(startLoc->getLatitude());
@@ -205,6 +206,11 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     Coordinates* endCoord = scheduleMsg->mutable_pathend();
     endCoord->set_lat(endLoc->getLatitude());
     endCoord->set_lng(endLoc->getLongitude());
+
+    auto updateLocation = schedule->getLastIndexUpatePosition();
+    Coordinates* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
+    updateCoordinates->set_lat(updateLocation->getLatitude());
+    updateCoordinates->set_lng(updateLocation->getLongitude());
 
     for (auto elem : *(schedule->getReconnectVector())) {
         ReconnectPoint* reconnectPoint = scheduleMsg->add_reconnectpoints();

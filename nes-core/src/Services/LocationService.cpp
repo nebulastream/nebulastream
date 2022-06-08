@@ -41,6 +41,7 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
     web::json::value scheduleJson;
     scheduleJson["pathStart"] = convertLocationToJson(schedule->getPathStart());
     scheduleJson["pathEnd"] = convertLocationToJson(schedule->getPathEnd());
+    scheduleJson["indexUpdatePosition"] = convertLocationToJson(schedule->getLastIndexUpatePosition());
 
     auto reconnectArray = web::json::value::array();
     int i = 0;

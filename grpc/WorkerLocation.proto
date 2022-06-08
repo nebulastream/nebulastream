@@ -27,7 +27,8 @@ message WorkerLocationInfo {
 message ReconnectSchedule {
   Coordinates pathStart = 1;
   Coordinates pathEnd = 2;
-  repeated ReconnectPoint reconnectPoints = 3;
+  Coordinates lastIndexUpdatePosition = 3;
+  repeated ReconnectPoint reconnectPoints = 4;
 }
 
 message ReconnectPoint {

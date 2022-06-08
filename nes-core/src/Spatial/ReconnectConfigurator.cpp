@@ -55,6 +55,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::update(
     return false;
 }
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::reconnect(uint64_t oldParent, uint64_t newParent) {
+    //todo: tell nesWorker to buffer
     return worker.replaceParent(oldParent, newParent);
 }
 
