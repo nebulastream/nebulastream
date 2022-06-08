@@ -413,9 +413,8 @@ namespace NES::Optimizer {
             }
             return subs;
         }
-
+        // TODO change to also reflect join projection
         if (level>2){
-            // TODO change to reflect characteristics of sequence OP.
 
             //Get possible combinations (for a join of 3 relations => only 1 Relation joins 2 already Joined relations possible)
             std::vector<std::vector<int>> combs = getCountCombs(level - 1);
@@ -436,21 +435,29 @@ namespace NES::Optimizer {
                         for (auto right : subs[comb[1]]){
                             std::cout << "     Innerloop " << innerLoopCount << "Setting right ids to: " << std::to_string(right.second->getLeftChild()->getId()) << " x " << std::to_string(right.second->getRightChild()->getId()) << std::endl;
 
+                            // breakpoint reasons TODO: delete later
                             if(outerLoopCount == 4 && innerLoopCount == 4 && level == 4){
                                 size_t xyz = 4;
                             }
                             // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
+                            // TODO: Change this method to return a list of AbstractJoinPlanOperator, with an AJPO for each access path.
                             std::optional<AbstractJoinPlanOperatorPtr> newPlan =
                                 sequenceJoin(left.second, right.second, pList, joinLogicalOperators);
-                            if (newPlan){
-                                setCosts(newPlan.value());
-                                // check if newPlan is currently the best
-                                // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
-                                AbstractJoinPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
 
-                                if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
-                                    subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
-                                }
+                            // check if plans can actually be constructed from these pairs.
+                            if (newPlan){
+                                    setCosts(newPlan.value());
+                                    // check if newPlan is currently the best
+                                    // note: if an empty OptimizerPlanOperator is made from belows statement, the operatorCosts of that plan are set to -1
+                                    AbstractJoinPlanOperatorPtr oldPlan = subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()]; // this returns for the very same logicalStreams the current best plan
+
+                                    if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
+                                        subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
+                                    }
+
+
+
+
                             }
 
                             innerLoopCount++;
@@ -539,60 +546,88 @@ namespace NES::Optimizer {
     JoinOrderOptimizationRule::sequenceJoin(AbstractJoinPlanOperatorPtr leftChild,
                                             AbstractJoinPlanOperatorPtr rightChild,
                                             TimeSequenceList* pList,
-                                            std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperators) {
+                                            std::vector<JoinLogicalOperatorNodePtr> joinOperators) {
 
-
-
+        //std::vector<AbstractJoinPlanOperatorPtr> newJoins;
 
         //Get for left and right the involved OptimizerPlanOperators (logical data streams, potentially joined)
         std::set<OptimizerPlanOperatorPtr> leftInvolved = leftChild->getInvolvedOptimizerPlanOperators();
         std::set<OptimizerPlanOperatorPtr> rightInvolved = rightChild->getInvolvedOptimizerPlanOperators();
 
-        // if there is an overlap. e.g. we want to join Id:3 to 3 x 4
+        // if there is an overlap. e.g. we want to join Id:3 to 3 x 4 -- returns newJoins with size of 0
         for (auto optimizerPlanOperatorLeft : leftInvolved) {
             if (rightInvolved.find(optimizerPlanOperatorLeft) != rightInvolved.end()){
                 return std::nullopt;
             }
         }
 
-        // check globalTimeOrder of left and right set
-        std::vector<int> leftPositions;
-        for (auto leftNode : leftInvolved){
-            leftPositions.push_back(pList->getPosition(leftNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName()));
-        }
+        // rightPositions are getting joined onto, thats why we need them. for left we take them one by one.
         std::vector<int> rightPositions;
         for (auto rightNode : rightInvolved){
             rightPositions.push_back(pList->getPosition(rightNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName()));
         }
 
-        // check overlap w.r.t. global sequence (need to sort first as we are dealing with a set!)
-        // this returns a two layer vector [0][0] indicates whether there are values of left in between right and [0][1] vice-versa
-        std::sort(leftPositions.begin(), leftPositions.end());
+        // Sort them so that we know where to put each left involved node. (need to know if it is pre, post or inbetween poned
         std::sort(rightPositions.begin(), rightPositions.end());
 
-        // not needed atm
-        // std::vector<std::vector<int>> overlap = checkOverlap(leftPositions, rightPositions);
+        // This is the overall selectivity of the join/filter step.
+        float totalSelectivity = 1;
+        Join::LogicalJoinDefinitionPtr joinDefinition;
+
+        // one by one inserts left involved nodes into the right nodes minding the overall order, multiplying the selectivity
+        for (auto leftNode : leftInvolved){
+            int newPosition = pList->getPosition(leftNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+
+            // check if that position is inbetween the right Positions.
+            bool isBetween = checkIsBetween(newPosition, rightPositions);
+            if(!isBetween){
+                // newPosition must be either pre or postponed.
+                auto rightLowest = rightPositions[0];
+                auto leftJoinPartner = leftChild;
+                auto rightJoinPartner = rightChild;
+                if(newPosition > rightLowest){
+                    // rear
+                    std::swap(leftJoinPartner, rightJoinPartner);
+                    // add newPosition to end of rightPosition array
+                    rightPositions.push_back(newPosition);
+                } else{
+                    // add newPosition to FRONT of rightPositions array
+                    rightPositions.insert(rightPositions.begin(), newPosition);
+                }
+                // constructing a new joinDefinition where information come from previous joinDefinitions looking for matching keys (leftKey values and rightKey values)
+                joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+
+                // get the respective join selectivity (HARDCODED!)
+                totalSelectivity *= getJoinSelectivity(joinDefinition);
+
+            }else{
+                // newPosition is inbetween. The exact location needs to be found now.
+                std::vector<int> neighbours = getNeighbours(newPosition, rightPositions);
+
+                // build joinDefinitions for lower and upper end.
+                // lower joinDefinition leftNeighbour SEQ newPosition
+                joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
 
 
-        // investigate which AbstractJoinPlanOperatorPtr is left part of the join and which is right part
-        auto leftLowest = leftPositions[0];
-        auto rightLowest = rightPositions[0];
-        if(leftLowest > rightLowest){
-            // positions need to  be swapped
-            std::swap(leftChild, rightChild);
+                // upper joinDefinition newPosition SEQ rightNeighbour
+
+
+                // Add newPosition to rightPositions
+
+                // adjust selectivity
+            }
+
+
+
         }
-
-        // constructing a new joinDefinition where information come from previous joinDefinitions looking for matching keys (leftKey values and rightKey values)
-        Join::LogicalJoinDefinitionPtr joinDefinition = constructSequenceJoinDefinition(joinLogicalOperators, leftChild, rightChild);
-
-        // get the respective join selectivity (HARDCODED!)
-        float joinSelectivity = joinSelectivity = getJoinSelectivity(joinDefinition);
 
         return std::optional<AbstractJoinPlanOperatorPtr>(std::make_shared<AbstractJoinPlanOperator>(leftChild,
                                                                                                      rightChild,
                                                                                                      joinDefinition,
-                                                                                                     joinSelectivity));
+                                                                                                     totalSelectivity));
 
+
+       // return newJoins;
     }
 
     bool JoinOrderOptimizationRule::isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved,
@@ -904,7 +939,8 @@ namespace NES::Optimizer {
         Join::LogicalJoinDefinitionPtr leftDefinition;
         Join::LogicalJoinDefinitionPtr rightDefinition;
 
-        // TODO: Write method that looks for leftChild being present in one of the joins and rightChild being present in one of the joins and simply copying the leftChild JoinDefinition and adding rightChild info to it.
+        //  looks for leftChild being present in one of the joins and rightChild being present in one of the joins
+        //  and simply copying the leftChild JoinDefinition and adding rightChild info to it.
         for (size_t i = 0; i < joinLogicalOperatorNodes.size(); i++) {
             auto joinDefinition = joinLogicalOperatorNodes[i]->getJoinDefinition();
             auto leftKeyName = joinDefinition->getLeftJoinKey()->getFieldName();
@@ -912,7 +948,7 @@ namespace NES::Optimizer {
 
             // keys need to be equivalent to e.g. string "Temperature" leftChild->optimizerPlanOperator->sourceNode->getSourceDescriptor->logicalsourcename
             // The left keys look like: -_-_Quantity_Velocity_Temperature+leftKey_20, where the relevant part is the name before +leftKey
-            // TODO extract relevant name for comparison
+            // extract relevant name for comparison
             size_t pos = leftKeyName.find('+');
             std::string derivedLeftKeyName = leftKeyName.substr(0, pos);
             while(derivedLeftKeyName.find('_') != std::string::npos){
@@ -1063,6 +1099,29 @@ namespace NES::Optimizer {
         }
         overlaps.push_back(rightOverlaps);
         return overlaps;
+    }
+    bool JoinOrderOptimizationRule::checkIsBetween(int newPosition, std::vector<int> currentPositions) {
+        if (currentPositions.size() > 1){
+            int lowerBound = currentPositions[0];
+            int upperBound = currentPositions[currentPositions.size() - 1];
+            if (newPosition > lowerBound && newPosition < upperBound){
+                return true;
+            }
+        }
+        return false;
+    }
+    std::vector<int> JoinOrderOptimizationRule::getNeighbours(int newPosition, std::vector<int> currentPositions) {
+        int lowerBound = 0;
+        int upperBound = INT_MAX;
+        for (auto position : currentPositions){
+            if (position < newPosition){
+                lowerBound = position;
+            } else if (position > newPosition){
+                upperBound = position;
+                break;
+            }
+        }
+        return {lowerBound, upperBound};
     }
 
     }// namespace NES::Optimizer

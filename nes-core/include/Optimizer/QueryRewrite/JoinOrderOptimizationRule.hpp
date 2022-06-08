@@ -222,6 +222,22 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
                                                             TimeSequenceList* pList,
                                                             std::vector<JoinLogicalOperatorNodePtr> vector);
     std::vector<std::vector<int>> checkOverlap(std::vector<int> leftPositions, std::vector<int> rightPositions);
+
+    /**
+     * @brief checks whether the position of a new sequence operator is in between the current operator positions or not
+       * @param newPosition - position of the new operator
+        * @param currentPositions  - positions of exisiting operators
+     * @return
+     */
+    bool checkIsBetween(int newPosition, std::vector<int> currentPositions);
+
+    /**
+     * @brief returns the lower left neighbour and the upper right neighbour of a new sequence operator in an exisiting sequence operator position list.
+     * @param newPosition - position of the new operator
+     * @param currentPositions  - positions of exisiting operators
+     * @return vector<int> with two values, position of lower and position of upper neighbour
+     */
+    std::vector<int> getNeighbours(int newPosition, std::vector<int> currentPositions);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_
