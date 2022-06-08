@@ -695,11 +695,6 @@ target_link_libraries(network-stack-integration-test nes-tests)
 add_test(NAME network-stack-integration-test COMMAND network-stack-integration-test)
 
 # ResourcesReaderTest
-add_executable(continuous-monitoring-test "UnitTests/Monitoring/ContinuousMonitoringTest.cpp")
-target_link_libraries(continuous-monitoring-test nes-tests)
-add_test(NAME continuous-monitoring-test COMMAND continuous-monitoring-test)
-
-# ResourcesReaderTest
 add_executable(resources-reader-test "UnitTests/Monitoring/ResourcesReaderTest.cpp")
 target_link_libraries(resources-reader-test nes-tests)
 add_test(NAME resources-reader-test COMMAND resources-reader-test)
