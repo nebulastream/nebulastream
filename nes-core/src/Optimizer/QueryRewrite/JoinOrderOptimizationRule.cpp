@@ -436,11 +436,10 @@ namespace NES::Optimizer {
                             std::cout << "     Innerloop " << innerLoopCount << "Setting right ids to: " << std::to_string(right.second->getLeftChild()->getId()) << " x " << std::to_string(right.second->getRightChild()->getId()) << std::endl;
 
                             // breakpoint reasons TODO: delete later
-                            if(outerLoopCount == 4 && innerLoopCount == 4 && level == 4){
+                            if(outerLoopCount == 1 && innerLoopCount == 6 && level == 4){
                                 size_t xyz = 4;
                             }
                             // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
-                            // TODO: Change this method to return a list of AbstractJoinPlanOperator, with an AJPO for each access path.
                             std::optional<AbstractJoinPlanOperatorPtr> newPlan =
                                 sequenceJoin(left.second, right.second, pList, joinLogicalOperators);
 
@@ -561,14 +560,30 @@ namespace NES::Optimizer {
             }
         }
 
-        // rightPositions are getting joined onto, thats why we need them. for left we take them one by one.
+        // create a map indicating source to position. is used later to retrieve the corresponding joinPartners.
+        std::map<int, OptimizerPlanOperatorPtr> leftOperatorMap;
+        std::map<int, OptimizerPlanOperatorPtr> rightOperatorMap;
+
+        // get the positions for right and left children.
         std::vector<int> rightPositions;
         for (auto rightNode : rightInvolved){
-            rightPositions.push_back(pList->getPosition(rightNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName()));
+            int pos = pList->getPosition(rightNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+            rightPositions.push_back(pos);
+            rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(pos, rightNode));
         }
+
+       // std::vector<int> leftPositions;
+        for (auto leftNode : leftInvolved){
+            int pos = pList->getPosition(leftNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+           // leftPositions.push_back(pos);
+            leftOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(pos, leftNode));
+        }
+
 
         // Sort them so that we know where to put each left involved node. (need to know if it is pre, post or inbetween poned
         std::sort(rightPositions.begin(), rightPositions.end());
+     //   std::sort(leftPositions.begin(), leftPositions.end());
+
 
         // This is the overall selectivity of the join/filter step.
         float totalSelectivity = 1;
@@ -583,17 +598,30 @@ namespace NES::Optimizer {
             if(!isBetween){
                 // newPosition must be either pre or postponed.
                 auto rightLowest = rightPositions[0];
-                auto leftJoinPartner = leftChild;
-                auto rightJoinPartner = rightChild;
+                auto rightHighest = rightPositions[rightPositions.size() -1];
+                OptimizerPlanOperatorPtr leftJoinPartner;
+                OptimizerPlanOperatorPtr rightJoinPartner;
+
                 if(newPosition > rightLowest){
                     // rear
-                    std::swap(leftJoinPartner, rightJoinPartner);
+                    // set joinPartners -- left is rightHighest and right is newPosition
+                    leftJoinPartner = rightOperatorMap[rightHighest];
+                    rightJoinPartner = leftNode;
                     // add newPosition to end of rightPosition array
                     rightPositions.push_back(newPosition);
+                    rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
                 } else{
+                    //front
+                    // set joinPartners -- left is new, right is rightLowest
+                    leftJoinPartner = leftNode;
+                    rightJoinPartner = rightOperatorMap[rightLowest];
+
                     // add newPosition to FRONT of rightPositions array
                     rightPositions.insert(rightPositions.begin(), newPosition);
+                    rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
+
                 }
+
                 // constructing a new joinDefinition where information come from previous joinDefinitions looking for matching keys (leftKey values and rightKey values)
                 joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
 
@@ -606,15 +634,24 @@ namespace NES::Optimizer {
 
                 // build joinDefinitions for lower and upper end.
                 // lower joinDefinition leftNeighbour SEQ newPosition
+                OptimizerPlanOperatorPtr leftJoinPartner = rightOperatorMap[neighbours[0]];
+                OptimizerPlanOperatorPtr rightJoinPartner = leftNode;
                 joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
-
+                totalSelectivity *= getJoinSelectivity(joinDefinition);
 
                 // upper joinDefinition newPosition SEQ rightNeighbour
-
+                leftJoinPartner = leftNode;
+                rightJoinPartner = rightOperatorMap[neighbours[1]];
+                joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+                totalSelectivity *= getJoinSelectivity(joinDefinition);
 
                 // Add newPosition to rightPositions
+                rightPositions.push_back(newPosition);
+                std::sort(rightPositions.begin(), rightPositions.end()); // programm this in a less lazy way maybe ;)
 
-                // adjust selectivity
+                // add also to rightOperatorMap
+                rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
+
             }
 
 
@@ -933,8 +970,8 @@ namespace NES::Optimizer {
     }
     Join::LogicalJoinDefinitionPtr
     JoinOrderOptimizationRule::constructSequenceJoinDefinition(std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperatorNodes,
-                                                               AbstractJoinPlanOperatorPtr leftChild,
-                                                               AbstractJoinPlanOperatorPtr rightChild) {
+                                                               OptimizerPlanOperatorPtr leftChild,
+                                                               OptimizerPlanOperatorPtr rightChild) {
 
         Join::LogicalJoinDefinitionPtr leftDefinition;
         Join::LogicalJoinDefinitionPtr rightDefinition;
@@ -956,17 +993,15 @@ namespace NES::Optimizer {
                 derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
             }
 
-            for (auto involved : leftChild->getInvolvedOptimizerPlanOperators()){
-                if(involved->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName)
-                    leftDefinition = joinDefinition;
+            if(leftChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName){
+                leftDefinition = joinDefinition;
             }
 
             // right keys look like Velocity+rightKey_4, where the relevant part is everything before the +
             pos = rightKeyName.find('+');
             std::string derivedRightKeyName = rightKeyName.substr(0, pos);
 
-            for (auto involved : rightChild->getInvolvedOptimizerPlanOperators()){
-                if(involved->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName)
+            if(rightChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName){
                     rightDefinition = joinDefinition;
             }
 
@@ -984,8 +1019,8 @@ namespace NES::Optimizer {
                 leftDefinition->getDistributionType(),
                 leftDefinition->getTriggerPolicy(),
                 leftDefinition->getTriggerAction(),
-                leftDefinition->getNumberOfInputEdgesLeft(),
-                rightDefinition->getNumberOfInputEdgesRight(),
+                leftDefinition->getNumberOfInputEdgesLeft() + leftDefinition->getNumberOfInputEdgesRight(),
+                rightDefinition->getNumberOfInputEdgesRight() + rightDefinition->getNumberOfInputEdgesLeft(),
                 leftDefinition->getJoinType()
                 );
         }

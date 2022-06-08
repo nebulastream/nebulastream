@@ -214,8 +214,8 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
                                                                std::shared_ptr<OptimizerPlanOperator> source);
     Join::LogicalJoinDefinitionPtr
     constructSequenceJoinDefinition(std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperatorNodes,
-                                    AbstractJoinPlanOperatorPtr leftChild,
-                                    AbstractJoinPlanOperatorPtr rightChild);
+                                    OptimizerPlanOperatorPtr leftChild,
+                                    OptimizerPlanOperatorPtr rightChild);
     float getJoinSelectivity(Join::LogicalJoinDefinitionPtr joinDefinition);
     std::optional<AbstractJoinPlanOperatorPtr> sequenceJoin(AbstractJoinPlanOperatorPtr leftChild,
                                                             AbstractJoinPlanOperatorPtr rightChild,
