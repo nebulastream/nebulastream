@@ -84,8 +84,9 @@ class MonitoringAgent {
     RegistrationMetrics getRegistrationMetrics();
 
     /**
-     * @brief
+     * @brief Adds the monitoring streams based on the monitoring plan to the worker config
      * @param workerConfig
+     * @return true if success, else false
      */
     bool addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig);
 

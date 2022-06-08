@@ -92,9 +92,6 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
         bool success = sourceCatalogService->registerPhysicalSource(physicalNode,
                                                                     physicalSourceDefinition.physicalsourcename(),
                                                                     physicalSourceDefinition.logicalsourcename());
-        if (success) {
-
-        }
         if (!success) {
             NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource failed");
             reply->set_success(false);

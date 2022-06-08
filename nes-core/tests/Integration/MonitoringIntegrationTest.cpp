@@ -634,15 +634,17 @@ TEST_F(MonitoringIntegrationTest, requestMemoryMetricsWithMonitoringSinkMultiWor
 
 TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorkerWithMonitoringManager) {
     bool monitoring = true;
-    uint64_t worker_count = 4;
+    uint64_t worker_count = 1;
     std::vector<NesWorkerPtr> workers;
+    uint64_t localBuffers = 2;
+    uint64_t globalBuffers = 1024*8;
 
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->enableMonitoring = monitoring;
-    coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 8;
-    coordinatorConfig->numberOfBuffersInGlobalBufferManager = 1024*8;
+    coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = localBuffers;
+    coordinatorConfig->numberOfBuffersInGlobalBufferManager = globalBuffers;
 
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -657,9 +659,9 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorker
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numberOfSlots = (12);
-        workerConfig->numberOfBuffersInGlobalBufferManager = 8192;
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = 2;
-        workerConfig->numberOfBuffersPerWorker = 8;
+        workerConfig->numberOfBuffersInGlobalBufferManager = globalBuffers;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = localBuffers;
+        workerConfig->numberOfBuffersPerWorker = 4;
         workerConfig->enableMonitoring = (monitoring);
 
         NES_DEBUG("MultipleJoinsTest: Start worker " << i);
@@ -706,9 +708,8 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorker
     }
 
     NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
-    //TODO: This issue needs to be fixed
-    //bool retStopCord = crd->stopCoordinator(true);
-    //ASSERT_TRUE(retStopCord);
+    bool retStopCord = crd->stopCoordinator(true);
+    ASSERT_TRUE(retStopCord);
     NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
