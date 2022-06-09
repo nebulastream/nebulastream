@@ -25,14 +25,14 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 /*
-LocationProviderCSV::LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc,
+LocationProviderCSV::LocationProviderCSV(bool spatialType, Index::Experimental::Location fieldNodeLoc,
                                    uint64_t parentId,
-                                   NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration, const std::string& csvPath) : LocationProvider(isMobile, fieldNodeLoc, parentId, configuration) {
+                                   NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration, const std::string& csvPath) : LocationProvider(spatialType, fieldNodeLoc, parentId, configuration) {
     startTime = getTimestamp();
     readMovementSimulationDataFromCsv(std::move(csvPath));
 }
  */
-LocationProviderCSV::LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc, const std::string& csvPath) : LocationProvider(isMobile, fieldNodeLoc) {
+LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationProvider(Index::Experimental::WorkerSpatialType::MOBILE_NODE, {}) {
     startTime = getTimestamp();
     readMovementSimulationDataFromCsv(std::move(csvPath));
 }

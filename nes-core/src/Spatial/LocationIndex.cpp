@@ -14,6 +14,7 @@
 #include <Spatial/LocationIndex.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <unordered_map>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 #ifdef S2DEF
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
@@ -40,6 +41,10 @@ bool LocationIndex::updateFieldNodeCoordinates(const TopologyNodePtr& node, Loca
 }
 
 bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc) {
+    if (!geoLoc.isValid()) {
+        NES_WARNING("trying to set node coordinates to invalid value")
+        return false;
+    }
 #ifdef S2DEF
     double newLat = geoLoc.getLatitude();
     double newLng = geoLoc.getLongitude();
@@ -54,7 +59,7 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
 }
 
 bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
-    if (node->isMobileNode()) {
+    if (node->getSpatialType() == WorkerSpatialType::MOBILE_NODE) {
         mobileNodes.erase(node->getId());
     }
 #ifdef S2DEF

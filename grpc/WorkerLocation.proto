@@ -19,6 +19,12 @@ message Coordinates {
   double lng = 2;
 }
 
+enum SpatialType {
+  NO_LOCATION = 0;
+  FIELD_NODE = 1;
+  MOBILE_NODE = 2;
+}
+
 message WorkerLocationInfo {
   uint64 id = 1;
   Coordinates coord = 2;

@@ -21,6 +21,7 @@
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 #include <vector>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 
 namespace NES {
 
@@ -191,7 +192,7 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
         currentNodeJsonValue["id"] = web::json::value::number(currentNode->getId());
         currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
         currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
-        if (!currentNode->isMobileNode()) {
+        if (currentNode->getSpatialType() != Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
             Spatial::Index::Experimental::LocationPtr locPtr = currentNode->getCoordinates();
             if (locPtr) {
                 auto arrJson = web::json::value::array(2);
@@ -202,7 +203,7 @@ web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
                 currentNodeJsonValue["location"] = web::json::value::null();
             }
         }
-        currentNodeJsonValue["isMobile"] = web::json::value::boolean(currentNode->isMobileNode());
+        currentNodeJsonValue["spatialType"] = web::json::value::string(toString(currentNode->getSpatialType()));
 
         for (const auto& child : currentNode->getChildren()) {
             // Add edge information for current topology node

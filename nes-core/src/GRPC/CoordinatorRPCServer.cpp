@@ -25,6 +25,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/Location.hpp>
 #include <Services/LocationService.hpp>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 
 using namespace NES;
 
@@ -46,7 +47,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->grpcport(),
                                                   request->dataport(),
                                                   request->numberofslots(),
-                                                  request->ismobile(),
+                                                  NES::Spatial::Index::Experimental::protobufEnumToWorkerSpatialType(request->spatialtype()),
                                                   NES::Spatial::Index::Experimental::Location(request->coordinates()));
     } else {
         /* if we did not get a valid location via the request, just pass an invalid location by using the default constructor
@@ -55,7 +56,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->grpcport(),
                                                   request->dataport(),
                                                   request->numberofslots(),
-                                                  request->ismobile(),
+                                                  NES::Spatial::Index::Experimental::protobufEnumToWorkerSpatialType(request->spatialtype()),
                                                   NES::Spatial::Index::Experimental::Location());
     }
 

@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
 #include <s2/s2point.h>
@@ -37,6 +38,7 @@ using NesWorkerPtr = std::shared_ptr<NesWorker>;
 namespace Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
+
 }// namespace NES::Spatial::Index::Experimental
 namespace Configurations {
 
@@ -63,10 +65,10 @@ using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 
 class LocationProvider {
   public:
-    explicit LocationProvider(bool isMobile, Index::Experimental::Location fieldNodeLoc);
+    explicit LocationProvider(Index::Experimental::WorkerSpatialType spatialType, Index::Experimental::Location fieldNodeLoc);
 
     /*
-    LocationProvider(bool isMobile, Index::Experimental::Location fieldNodeLoc,
+    LocationProvider(bool spatialType, Index::Experimental::Location fieldNodeLoc,
                         uint64_t parentid,
                         NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration);
                         */
@@ -80,13 +82,13 @@ class LocationProvider {
      * Experimental
      * @brief checks if this Worker runs on a non-mobile device with a known location (Field Node)
      */
-    bool isFieldNode();
+    //bool isFieldNode();
 
     /**
      * Experimental
      * @brief check if this worker runs on a mobile device
      */
-    [[nodiscard]] bool isMobileNode() const;
+    [[nodiscard]] Index::Experimental::WorkerSpatialType getSpatialType() const;
 
     /**
      * Experimental
@@ -135,7 +137,7 @@ class LocationProvider {
      * @return
      */
     static LocationProviderPtr create(Configurations::WorkerConfigurationPtr workerConfig,
-                                   const NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfig);
+                                   NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig);
 
     /**
      * @brief get the last known location of the device
@@ -145,7 +147,7 @@ class LocationProvider {
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::LocationPtr fixedLocationCoordinates;
-    bool isMobile;
+    Index::Experimental::WorkerSpatialType spatialType;
 
     TrajectoryPredictorPtr trajectoryPredictor;
 };

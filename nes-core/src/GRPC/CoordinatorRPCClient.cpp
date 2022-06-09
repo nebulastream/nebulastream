@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include "Util/TimeMeasurement.hpp"
+#include <Util/TimeMeasurement.hpp>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Common/Location.hpp>
@@ -384,14 +385,14 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int16_t numberOfSlots,
                                         const Monitoring::RegistrationMetrics& registrationMetrics,
                                         Spatial::Index::Experimental::Location fixedCoordinates,
-                                        bool isMobile) {
+                                        Spatial::Index::Experimental::WorkerSpatialType spatialType) {
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
-    request.set_ismobile(isMobile);
+    request.set_spatialtype(toProtobufEnum(spatialType));
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     Coordinates* pCoordinates = request.mutable_coordinates();

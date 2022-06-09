@@ -17,12 +17,13 @@
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 
 namespace NES {
 
 TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources)
     : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
-      maintenanceFlag(false), isMobile(false) {}
+      maintenanceFlag(false), spatialType(Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION) {}
 
 TopologyNodePtr
 TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
@@ -138,19 +139,26 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-bool TopologyNode::isFieldNode() { return (bool) fixedCoordinates; }
+//bool TopologyNode::isFieldNode() { return (bool) fixedCoordinates; }
 
 Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
-    if (isMobile) {
-        std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
-        return WorkerRPCClient::getLocation(destAddress);
+    std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
+    switch (spatialType) {
+        case Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE:
+            NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
+            return WorkerRPCClient::getLocation(destAddress);
+        case Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE:
+            return fixedCoordinates;
+        case Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION:
+            return nullptr;
+        case Spatial::Index::Experimental::WorkerSpatialType::INVALID:
+            NES_WARNING("trying to access location of a node with invalid spatial tyep")
+            return nullptr;
     }
-    return fixedCoordinates;
 }
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr TopologyNode::getReconnectSchedule() {
-    if (isMobile) {
+    if (spatialType == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
         std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
         NES_DEBUG("getting location data for mobile node with adress: " << destAddress)
         return WorkerRPCClient::getReconnectSchedule(destAddress);
@@ -166,7 +174,7 @@ void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location ge
     fixedCoordinates = std::make_shared<Spatial::Index::Experimental::Location>(geoLoc);
 }
 
-void TopologyNode::setMobile(bool isMobile) { this->isMobile = isMobile; }
+void TopologyNode::setSpatialType(Spatial::Index::Experimental::WorkerSpatialType workerSpatialType) { this->spatialType = workerSpatialType; }
 
-bool TopologyNode::isMobileNode() { return isMobile; }
+Spatial::Index::Experimental::WorkerSpatialType TopologyNode::getSpatialType() { return spatialType; }
 }// namespace NES

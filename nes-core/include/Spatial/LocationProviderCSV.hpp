@@ -18,6 +18,10 @@
 #include <Common/Location.hpp>
 #include <vector>
 
+namespace NES::Spatial::Index::Experimental {
+enum class WorkerSpatialType;
+}
+
 namespace NES::Spatial::Mobility::Experimental {
 
 /**
@@ -26,12 +30,7 @@ namespace NES::Spatial::Mobility::Experimental {
  */
 class LocationProviderCSV : public LocationProvider {
   public:
-    /*
-    LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc,
-                                       uint64_t parentId,
-                                       NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration, const std::string& csvPath);
-                                       */
-    LocationProviderCSV(bool isMobile, Index::Experimental::Location fieldNodeLoc, const std::string& csvPath);
+    LocationProviderCSV(const std::string& csvPath);
     /**
      * @brief construct a location source that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
      * @param csvPath: The path of the csv file

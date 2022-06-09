@@ -32,6 +32,10 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class AbstractHealthCheckService;
 using HealthCheckServicePtr = std::shared_ptr<AbstractHealthCheckService>;
 
+namespace Spatial::Index::Experimental {
+enum class WorkerSpatialType;
+}
+
 /**
  * @brief: This class is responsible for registering/unregistering nodes and adding and removing parentNodes.
  */
@@ -55,7 +59,7 @@ class TopologyManagerService {
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          bool isMobile,
+                          NES::Spatial::Index::Experimental::WorkerSpatialType spatialType,
                           NES::Spatial::Index::Experimental::Location fixedCoordinates);
 
     /**

@@ -159,18 +159,11 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
     locationProvider = NES::Spatial::Mobility::Experimental::LocationProvider::create(workerConfig, mobilityConfig);
-    if (locationProvider->isMobileNode()) {
+    if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
+        NES_DEBUG("Worker has spatial type MOBILE_NODE, creating trajectory predictor")
         trajectoryPredictor = std::make_shared<NES::Spatial::Mobility::Experimental::TrajectoryPredictor>(locationProvider, mobilityConfig, parentId);
-        /*
-        NES_DEBUG("Creating location source");
-        bool success =
-            locationProvider->createLocationProvider(workerConfig->locationProviderType, workerConfig->locationProviderConfig);
-
-        NES_DEBUG("create location source= " << success);
-        NES_ASSERT(success, "cannot create location source");
-        */
-
     }
+
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
         NES_DEBUG("NesWorker: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
@@ -293,7 +286,7 @@ bool NesWorker::connect() {
                                                                  workerConfig->numberOfSlots,
                                                                  registrationMetrics,
                                                                  *(locationProvider->getLocation()),
-                                                                 locationProvider->isMobileNode());
+                                                                 locationProvider->getSpatialType());
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(topologyNodeId);
@@ -308,7 +301,7 @@ bool NesWorker::connect() {
         healthCheckService->startHealthCheck();
 
         locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
-        if (locationProvider->isMobileNode()) {
+        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
             auto reconnectConfigurator = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this, coordinatorRpcClient, mobilityConfig);
             trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
         }
