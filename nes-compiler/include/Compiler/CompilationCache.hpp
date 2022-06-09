@@ -36,8 +36,8 @@ class CompilationCache {
 
     /**
      * @brief inserts a compilation result for a new source code
-     * @param sourceCode
-     * @param compilationResult
+     * @param sourceCode reference to the source code
+     * @param compilationResult reference to the compilation result
      */
     void insert(const SourceCode& code, CompilationResult& compilationResult);
 
