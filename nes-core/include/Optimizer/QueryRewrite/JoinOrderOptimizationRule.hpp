@@ -68,17 +68,6 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
     std::vector<Join::JoinEdgePtr> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators, std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators);
 
     /**
-     * @brief Retrieves possible (minding time-constraints) join edges between event streams. As they are cartesian products it is not necessary to check the join key,
-     * but it is important to check if this generally is in line with the event order given by a sequence operator.
-     * @param abstractJoinOperators a vector of AbstractJoinPlanOperatorPtr - which are logical sources with some join optimization relevant information, joinOperators of the query, filter operators attached to joins.
-     * @return list of source connections
-     */
-    std::vector<Join::JoinEdgePtr> retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators,
-                                                     std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators,
-                                                     std::vector<FilterLogicalOperatorNodePtr> filterOperators);
-
-
-    /**
      * @brief Optimize order of join operators according to cost-model
      * @param Sources logical streams to optimize on, joins - edges between streams
      * @return AbstractJoinPlanOperatorPtr that is the optimal join order according to cost-model
@@ -205,23 +194,57 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      */
     NodePtr getPotentialParentNodes(NodePtr sharedPtr);
 
+    /**
+     * @brief scans the query for the overall sequence order and returns a LinkedList that contains the order
+     * @param filterOperators the filter operators of the query plan used to find an ordering in the sequences by predicates (e.g. ts1 < ts2)
+     * @return
+     */
     TimeSequenceList* getTimeSequenceList(std::vector<FilterLogicalOperatorNodePtr> filterOperators);
+
+    /**
+     * @brief optimizes the order of sequences based on a simple I/O cost model
+     * @param sources SourceOperators of QueryPlan converted to OptimizerPlanOperatorPtr
+     * @param globalSequenceOrder global ordering of the sequence operators in the query plan
+     * @param abstractJoinOperators enhanced objects for sources
+     * @param joinOperators joinOperators found in the original queryPlan
+     * @return a finalPlan object that contains children Nodes showing the exact join/filter order.
+     */
     AbstractJoinPlanOperatorPtr optimizeSequenceOrder(std::vector<OptimizerPlanOperatorPtr> sources,
                                                       TimeSequenceList* globalSequenceOrder,
-                                                      std::vector<AbstractJoinPlanOperatorPtr> vector,
-                                                      std::vector<JoinLogicalOperatorNodePtr> vector1);
+                                                      std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators,
+                                                      std::vector<JoinLogicalOperatorNodePtr> joinOperators);
+    /**
+     * @brief Queries a vector of AbstractJoinPLanOperatorPtr for the corresponding AbstractJoinPLanOperatorPtr of a OptimizerPlanOperator (source)
+     * @param abstractJoinPlanOperators vector of AbstractJoinPLanOperatorPtr
+     * @param source OptimizerPlanOperator that is searched for
+     * @return
+     */
     AbstractJoinPlanOperatorPtr getAbstractJoinPlanOperatorPtr(std::vector<AbstractJoinPlanOperatorPtr> abstractJoinPlanOperators,
                                                                std::shared_ptr<OptimizerPlanOperator> source);
+
+    /**
+     * @brief As we are dealing with cartesian products, retrieving joinEdges is more complicated than for join reordering.
+     * Here, the corresponding keys of left and rightChild are checked for matching (in accordance to global time ordering)
+     * and a joinDefinition is build using the original joinDefinitions
+     * @param joinLogicalOperatorNodes original join nodes, which carry the joinDefinitions
+     * @param leftChild left joinPartner
+     * @param rightChild right joinPartner
+     * @return LogicalJoinDefinitionPtr containing information about the join
+     */
     Join::LogicalJoinDefinitionPtr
     constructSequenceJoinDefinition(std::vector<JoinLogicalOperatorNodePtr> joinLogicalOperatorNodes,
                                     OptimizerPlanOperatorPtr leftChild,
                                     OptimizerPlanOperatorPtr rightChild);
+    /**
+     * @brief retrieves hardcoded joinSelectivities given a joinDefinition. The selectivity is stemming from the filter selectivity, as the "join" is a cartesian product
+     * @param joinDefinition
+     * @return float number between 1 and 0
+     */
     float getJoinSelectivity(Join::LogicalJoinDefinitionPtr joinDefinition);
     std::optional<AbstractJoinPlanOperatorPtr> sequenceJoin(AbstractJoinPlanOperatorPtr leftChild,
                                                             AbstractJoinPlanOperatorPtr rightChild,
                                                             TimeSequenceList* pList,
                                                             std::vector<JoinLogicalOperatorNodePtr> vector);
-    std::vector<std::vector<int>> checkOverlap(std::vector<int> leftPositions, std::vector<int> rightPositions);
 
     /**
      * @brief checks whether the position of a new sequence operator is in between the current operator positions or not
@@ -238,6 +261,17 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      * @return vector<int> with two values, position of lower and position of upper neighbour
      */
     std::vector<int> getNeighbours(int newPosition, std::vector<int> currentPositions);
+    QueryPlanPtr updateSequenceOrder(QueryPlanPtr oldPlan,
+                                     AbstractJoinPlanOperatorPtr finalPlan,
+                                     const std::vector<SourceLogicalOperatorNodePtr> sources,
+                                     TimeSequenceList* pList);
+    FilterLogicalOperatorNodePtr constructSequence(const AbstractJoinPlanOperatorPtr& leftChild,
+                                                   const AbstractJoinPlanOperatorPtr& rightChild,
+                                                   const Join::LogicalJoinDefinitionPtr& joinDefinition,
+                                                   const std::vector<SourceLogicalOperatorNodePtr> sources,
+                                                   TimeSequenceList* pList,
+                                                   const ExpressionNodePtr filterPredicate);
+    bool checkPerfectlyBetween(std::vector<int> outer, std::vector<int> inner);
 };
 } // namespace NES::Optimizer
 #endif NES_JOINORDEROPTIMIZATIONRULE_HPP_

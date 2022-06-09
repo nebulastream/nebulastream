@@ -18,11 +18,13 @@ limitations under the License.
 NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(AbstractJoinPlanOperatorPtr leftChild,
                                                         AbstractJoinPlanOperatorPtr rightChild,
                                                         Join::LogicalJoinDefinitionPtr joinPredicate,
-                                                        float selectivity){
+                                                        float selectivity,
+                                                        ExpressionNodePtr filterPredicate){
         this->leftChild = leftChild;
         this->rightChild = rightChild;
         this->joinPredicate = joinPredicate;
         this->selectivity = selectivity;
+        this->predicate = filterPredicate;
     }
 
 NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr source){
@@ -30,9 +32,10 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
     this->rightChild = nullptr;
     this->joinPredicate = nullptr;
     this->selectivity = 1;
+    this->predicate = nullptr;
     this->setSourceNode(source->getSourceNode());
     this->setId(source->getId());
-    this->setCardinality(Optimizer::JoinOrderOptimizationRule::getHardCodedCardinalitiesForSource(source)); // JVS TRY THIS OUT (and line below)
+    this->setCardinality(Optimizer::JoinOrderOptimizationRule::getHardCodedCardinalitiesForSource(source));
     this->setCumulativeCosts(this->getCardinality());
     this->setOperatorCosts(0);
     std::set<OptimizerPlanOperatorPtr> involvedOptimizerPlanOperators;
@@ -98,4 +101,8 @@ NES::AbstractJoinPlanOperator::AbstractJoinPlanOperator(OptimizerPlanOperatorPtr
     const NES::AbstractJoinPlanOperatorPtr& NES::AbstractJoinPlanOperator::getRightChild() const { return rightChild; }
     void NES::AbstractJoinPlanOperator::setRightChild(const NES::AbstractJoinPlanOperatorPtr& rightChild) {
         AbstractJoinPlanOperator::rightChild = rightChild;
+    }
+    const NES::ExpressionNodePtr& NES::AbstractJoinPlanOperator::getPredicate() const { return predicate; }
+    void NES::AbstractJoinPlanOperator::setPredicate(const NES::ExpressionNodePtr& predicate) {
+        AbstractJoinPlanOperator::predicate = predicate;
     }

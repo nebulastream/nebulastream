@@ -14,14 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <set>
+#include "Optimizer/QueryRewrite/JoinOrderOptimizationRule.hpp"
+#include <API/AttributeField.hpp>
+#include "API/Expressions/Expressions.hpp"
+#include <API/Expressions/LogicalExpressions.hpp>
+#include "Util/AbstractJoinPlanOperator.hpp"
+#include "Windowing/LogicalJoinDefinition.hpp"
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include "Optimizer/QueryRewrite/JoinOrderOptimizationRule.hpp"
-#include "Windowing/LogicalJoinDefinition.hpp"
-#include "Util/AbstractJoinPlanOperator.hpp"
+#include <set>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+
+
 
 namespace NES::Optimizer {
 
@@ -127,6 +134,8 @@ namespace NES::Optimizer {
                         }
                     }
                 }
+
+
                 // Extracting the overall order of sequence operators
                 // used to examine different sequence routes later.
                 TimeSequenceList* globalSequenceOrder = getTimeSequenceList(filters);
@@ -142,7 +151,7 @@ namespace NES::Optimizer {
                     optimizeSequenceOrder(sources, globalSequenceOrder, abstractJoinOperators, joinOperators);
 
                 // TODO: Rewrite this function
-                queryPlan = updateJoinOrder(queryPlan, finalPlan, sourceOperators);
+                queryPlan = updateSequenceOrder(queryPlan, finalPlan, sourceOperators, globalSequenceOrder);
 
                 NES_DEBUG(queryPlan->toString());
 
@@ -216,24 +225,6 @@ namespace NES::Optimizer {
 
     }
 
-    // TODO Implement for CEP
-    std::vector<Join::JoinEdgePtr> JoinOrderOptimizationRule::retrieveJoinEdges(std::vector<JoinLogicalOperatorNodePtr> joinOperators,
-                                                 std::vector<AbstractJoinPlanOperatorPtr> abstractJoinOperators,
-                                                 std::vector<FilterLogicalOperatorNodePtr> filterOperators) {
-
-        NES_DEBUG("JoinOrderOptimizationRule: Retrieving Join Edges for CEP Operator")
-        // Iterate over joinOperators and detect all JoinEdges
-        std::vector<Join::JoinEdgePtr> joinEdges;
-
-        NES_DEBUG(joinOperators.size() << abstractJoinOperators.size() << filterOperators.size())
-
-
-
-       // Join::JoinEdge joinEdge = Join::JoinEdge(leftOperatorNode, rightOperatorNode, join->getJoinDefinition(), 0.5);
-       // joinEdges.push_back(std::make_shared<Join::JoinEdge>(joinEdge));
-
-        return joinEdges;
-    }
 
     // optimizing the join order given the join graph
     AbstractJoinPlanOperatorPtr JoinOrderOptimizationRule::optimizeJoinOrder(std::vector<OptimizerPlanOperatorPtr> sources, std::vector<Join::JoinEdgePtr> joins){
@@ -403,9 +394,18 @@ namespace NES::Optimizer {
                         // get the respective join selectivity (HARDCODED!)
                         float joinSelectivity = joinSelectivity = getJoinSelectivity(joinDefinition);
 
+                        // get filter predicate
+                        std::string timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+                        // source is right joinPartner, row.second is left join partner. both are sources!
+                        std::string sourceNameLeft = row.second->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp;
+                        std::string sourceNameRight = source->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp;
+                        ExpressionNodePtr filterExpression = Attribute(sourceNameLeft) < Attribute(sourceNameRight);
+
+
                         // create a new match of optimizerPlanOperator and Source
-                        AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(row.second, joinOperatorRight, joinDefinition, joinSelectivity);
+                        AbstractJoinPlanOperatorPtr plan = std::make_shared<AbstractJoinPlanOperator>(row.second, joinOperatorRight, joinDefinition, joinSelectivity, filterExpression);
                         setCosts(plan);
+
                         subs[2][plan->getInvolvedOptimizerPlanOperators()] = plan;
                     }
                 }
@@ -413,7 +413,6 @@ namespace NES::Optimizer {
             }
             return subs;
         }
-        // TODO change to also reflect join projection
         if (level>2){
 
             //Get possible combinations (for a join of 3 relations => only 1 Relation joins 2 already Joined relations possible)
@@ -435,10 +434,6 @@ namespace NES::Optimizer {
                         for (auto right : subs[comb[1]]){
                             std::cout << "     Innerloop " << innerLoopCount << "Setting right ids to: " << std::to_string(right.second->getLeftChild()->getId()) << " x " << std::to_string(right.second->getRightChild()->getId()) << std::endl;
 
-                            // breakpoint reasons TODO: delete later
-                            if(outerLoopCount == 1 && innerLoopCount == 6 && level == 4){
-                                size_t xyz = 4;
-                            }
                             // create a new AbstractJoinPlanOperator for each combination therefore and set its costs.
                             std::optional<AbstractJoinPlanOperatorPtr> newPlan =
                                 sequenceJoin(left.second, right.second, pList, joinLogicalOperators);
@@ -453,10 +448,6 @@ namespace NES::Optimizer {
                                     if (oldPlan == nullptr  || oldPlan->getCumulativeCosts() > newPlan.value()->getCumulativeCosts()){
                                         subs[level][newPlan.value()->getInvolvedOptimizerPlanOperators()] = newPlan.value();
                                     }
-
-
-
-
                             }
 
                             innerLoopCount++;
@@ -547,15 +538,14 @@ namespace NES::Optimizer {
                                             TimeSequenceList* pList,
                                             std::vector<JoinLogicalOperatorNodePtr> joinOperators) {
 
-        //std::vector<AbstractJoinPlanOperatorPtr> newJoins;
-
         //Get for left and right the involved OptimizerPlanOperators (logical data streams, potentially joined)
         std::set<OptimizerPlanOperatorPtr> leftInvolved = leftChild->getInvolvedOptimizerPlanOperators();
         std::set<OptimizerPlanOperatorPtr> rightInvolved = rightChild->getInvolvedOptimizerPlanOperators();
 
+
         // if there is an overlap. e.g. we want to join Id:3 to 3 x 4 -- returns newJoins with size of 0
         for (auto optimizerPlanOperatorLeft : leftInvolved) {
-            if (rightInvolved.find(optimizerPlanOperatorLeft) != rightInvolved.end()){
+            if (rightInvolved.find(optimizerPlanOperatorLeft) != rightInvolved.end()) {
                 return std::nullopt;
             }
         }
@@ -566,105 +556,200 @@ namespace NES::Optimizer {
 
         // get the positions for right and left children.
         std::vector<int> rightPositions;
-        for (auto rightNode : rightInvolved){
+        for (auto rightNode : rightInvolved) {
             int pos = pList->getPosition(rightNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
             rightPositions.push_back(pos);
             rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(pos, rightNode));
         }
 
-       // std::vector<int> leftPositions;
-        for (auto leftNode : leftInvolved){
+        std::vector<int> leftPositions;
+        for (auto leftNode : leftInvolved) {
             int pos = pList->getPosition(leftNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
-           // leftPositions.push_back(pos);
+            leftPositions.push_back(pos);
             leftOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(pos, leftNode));
         }
 
-
         // Sort them so that we know where to put each left involved node. (need to know if it is pre, post or inbetween poned
         std::sort(rightPositions.begin(), rightPositions.end());
-     //   std::sort(leftPositions.begin(), leftPositions.end());
-
+        std::sort(leftPositions.begin(), leftPositions.end());
 
         // This is the overall selectivity of the join/filter step.
         float totalSelectivity = 1;
         Join::LogicalJoinDefinitionPtr joinDefinition;
 
-        // one by one inserts left involved nodes into the right nodes minding the overall order, multiplying the selectivity
-        for (auto leftNode : leftInvolved){
-            int newPosition = pList->getPosition(leftNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+        // This is the overall filterPredicate
+        ExpressionNodePtr totalFilterPredicate;
 
-            // check if that position is inbetween the right Positions.
-            bool isBetween = checkIsBetween(newPosition, rightPositions);
-            if(!isBetween){
-                // newPosition must be either pre or postponed.
-                auto rightLowest = rightPositions[0];
-                auto rightHighest = rightPositions[rightPositions.size() -1];
-                OptimizerPlanOperatorPtr leftJoinPartner;
-                OptimizerPlanOperatorPtr rightJoinPartner;
+        // check if all leftPostions are in front or in rear
+        bool isAllRear = rightPositions[rightPositions.size() - 1] < leftPositions[0];
+        bool isAllFront = rightPositions[0] > leftPositions[leftPositions.size() - 1];
 
-                if(newPosition > rightLowest){
-                    // rear
-                    // set joinPartners -- left is rightHighest and right is newPosition
-                    leftJoinPartner = rightOperatorMap[rightHighest];
-                    rightJoinPartner = leftNode;
-                    // add newPosition to end of rightPosition array
-                    rightPositions.push_back(newPosition);
-                    rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
-                } else{
-                    //front
-                    // set joinPartners -- left is new, right is rightLowest
+        if(isAllRear){
+            // all leftPositions are higher than rightPositions
+            OptimizerPlanOperatorPtr leftJoinPartner = rightOperatorMap[rightPositions[rightPositions.size() - 1]];
+            OptimizerPlanOperatorPtr rightJoinPartner = leftOperatorMap[leftPositions[0]];
+            joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+            totalSelectivity *= getJoinSelectivity(joinDefinition);
+
+            std::string timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+            totalFilterPredicate =
+                Attribute(leftJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp)
+                < Attribute(rightJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp);
+
+        } else if(isAllFront) {
+            // all leftPositions are lower than rightPositions
+            OptimizerPlanOperatorPtr leftJoinPartner = leftOperatorMap[leftPositions[leftPositions.size() - 1]];;
+            OptimizerPlanOperatorPtr rightJoinPartner = rightOperatorMap[rightPositions[0]];
+            joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+            totalSelectivity *= getJoinSelectivity(joinDefinition);
+
+            std::string timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+            totalFilterPredicate =
+                Attribute(leftJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp)
+                < Attribute(rightJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp);
+
+        }
+        // check if the rightPositions completely cover the left positions
+        // the nodes can be partially or fully be inbetween.
+        else if (checkPerfectlyBetween(rightPositions, leftPositions)) {
+            // leftNodes are fully inbetween of rightNodes. This allows us to have a shortened predicate
+
+            // first we need to find respective neighbourNodes for leftLowest and leftHeighest
+            int lowestNeighbour = getNeighbours(leftPositions[0], rightPositions)[0];
+            int highestNeighbour = getNeighbours(leftPositions[leftPositions.size() - 1], rightPositions)[1];
+
+            // join lowestNeighbour and leftPositions[0]
+            OptimizerPlanOperatorPtr leftJoinPartner = rightOperatorMap[lowestNeighbour];
+            OptimizerPlanOperatorPtr rightJoinPartner = leftOperatorMap[leftPositions[0]];
+            joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+            totalSelectivity *= getJoinSelectivity(joinDefinition);
+
+            // add Predicate for lowerJoinDef
+            std::string timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+            ExpressionNodePtr lowerLocalFilterPredicate =
+                Attribute(leftJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp)
+                < Attribute(rightJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp);
+
+            // join highestNeighbour and leftPositions[1]
+            leftJoinPartner = leftOperatorMap[leftPositions[leftPositions.size() - 1]];
+            rightJoinPartner = rightOperatorMap[highestNeighbour];
+            joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+            totalSelectivity *= getJoinSelectivity(joinDefinition);
+
+            timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+            ExpressionNodePtr upperLocalFilterPredicate =
+                Attribute(leftJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp)
+                < Attribute(rightJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp);
+
+            // add complete predicate
+            totalFilterPredicate = lowerLocalFilterPredicate && upperLocalFilterPredicate;
+
+        } else{
+            // left and rightPositions are mixed up, we need to iterate over both lists and construct filterpredicates.
+            for (auto leftNode : leftInvolved){
+                int newPosition = pList->getPosition(leftNode->getSourceNode()->getSourceDescriptor()->getLogicalSourceName());
+
+                // check if that position is inbetween the right Positions.
+                bool isBetween = checkIsBetween(newPosition, rightPositions);
+                if(!isBetween){
+                    // newPosition must be either pre or postponed.
+                    auto rightLowest = rightPositions[0];
+                    auto rightHighest = rightPositions[rightPositions.size() - 1];
+                    OptimizerPlanOperatorPtr leftJoinPartner;
+                    OptimizerPlanOperatorPtr rightJoinPartner;
+
+                    if (newPosition > rightLowest) {
+                        // rear
+                        // set joinPartners -- left is rightHighest and right is newPosition
+                        leftJoinPartner = rightOperatorMap[rightHighest];
+                        rightJoinPartner = leftNode;
+                        // add newPosition to end of rightPosition array
+                        rightPositions.push_back(newPosition);
+                        rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
+
+                    } else {
+                        //front
+                        // set joinPartners -- left is new, right is rightLowest
+                        leftJoinPartner = leftNode;
+                        rightJoinPartner = rightOperatorMap[rightLowest];
+
+                        // add newPosition to FRONT of rightPositions array
+                        rightPositions.insert(rightPositions.begin(), newPosition);
+                        rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
+                    }
+
+                    // constructing a new joinDefinition where information come from previous joinDefinitions looking for matching keys (leftKey values and rightKey values)
+                    joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+
+                    // get the respective join selectivity (HARDCODED!)
+                    totalSelectivity *= getJoinSelectivity(joinDefinition);
+
+                    // add filterPredicate
+                    std::string timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+                    ExpressionNodePtr localFilterPredicate =
+                        Attribute(leftJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp)
+                        < Attribute(rightJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$"
+                                    + timestamp);
+                    if (totalFilterPredicate) {
+                        // there is an existing filterPredicate present, need to add a second one to it.
+                        totalFilterPredicate = totalFilterPredicate && localFilterPredicate;
+                    } else {
+                        totalFilterPredicate = localFilterPredicate;
+                    }
+                } else {
+                    // newPosition is inbetween. but only partially. The exact location needs to be found now.
+                    std::vector<int> neighbours = getNeighbours(newPosition, rightPositions);
+
+                    // build joinDefinitions for lower and upper end.
+                    // lower joinDefinition leftNeighbour SEQ newPosition
+                    OptimizerPlanOperatorPtr leftJoinPartner = rightOperatorMap[neighbours[0]];
+                    OptimizerPlanOperatorPtr rightJoinPartner = leftNode;
+                    joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+                    totalSelectivity *= getJoinSelectivity(joinDefinition);
+
+                    // add Predicate for lowerJoinDef
+                    std::string timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+                    ExpressionNodePtr lowerLocalFilterPredicate =
+                        Attribute(leftJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp)
+                        < Attribute(rightJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$"
+                                    + timestamp);
+
+                    // upper joinDefinition newPosition SEQ rightNeighbour
                     leftJoinPartner = leftNode;
-                    rightJoinPartner = rightOperatorMap[rightLowest];
+                    rightJoinPartner = rightOperatorMap[neighbours[1]];
+                    joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
+                    totalSelectivity *= getJoinSelectivity(joinDefinition);
 
-                    // add newPosition to FRONT of rightPositions array
-                    rightPositions.insert(rightPositions.begin(), newPosition);
+                    // add Predicate for upperJoinDef
+                    timestamp = joinDefinition->getWindowType()->getTimeCharacteristic()->getField()->getName();
+                    ExpressionNodePtr upperLocalFilterPredicate =
+                        Attribute(leftJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$" + timestamp)
+                        < Attribute(rightJoinPartner->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() + "$"
+                                    + timestamp);
+
+                    // add complete predicate
+                    if (totalFilterPredicate) {
+                        // there is an existing filterPredicate present, need to add a second one to it.
+                        totalFilterPredicate = totalFilterPredicate && lowerLocalFilterPredicate && upperLocalFilterPredicate;
+                    } else {
+                        totalFilterPredicate = lowerLocalFilterPredicate && upperLocalFilterPredicate;
+                    }
+                    // Add newPosition to rightPositions
+                    rightPositions.push_back(newPosition);
+                    std::sort(rightPositions.begin(), rightPositions.end());// programm this in a less lazy way maybe ;)
+
+                    // add also to rightOperatorMap
                     rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
-
                 }
 
-                // constructing a new joinDefinition where information come from previous joinDefinitions looking for matching keys (leftKey values and rightKey values)
-                joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
-
-                // get the respective join selectivity (HARDCODED!)
-                totalSelectivity *= getJoinSelectivity(joinDefinition);
-
-            }else{
-                // newPosition is inbetween. The exact location needs to be found now.
-                std::vector<int> neighbours = getNeighbours(newPosition, rightPositions);
-
-                // build joinDefinitions for lower and upper end.
-                // lower joinDefinition leftNeighbour SEQ newPosition
-                OptimizerPlanOperatorPtr leftJoinPartner = rightOperatorMap[neighbours[0]];
-                OptimizerPlanOperatorPtr rightJoinPartner = leftNode;
-                joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
-                totalSelectivity *= getJoinSelectivity(joinDefinition);
-
-                // upper joinDefinition newPosition SEQ rightNeighbour
-                leftJoinPartner = leftNode;
-                rightJoinPartner = rightOperatorMap[neighbours[1]];
-                joinDefinition = constructSequenceJoinDefinition(joinOperators, leftJoinPartner, rightJoinPartner);
-                totalSelectivity *= getJoinSelectivity(joinDefinition);
-
-                // Add newPosition to rightPositions
-                rightPositions.push_back(newPosition);
-                std::sort(rightPositions.begin(), rightPositions.end()); // programm this in a less lazy way maybe ;)
-
-                // add also to rightOperatorMap
-                rightOperatorMap.insert(std::pair<int, OptimizerPlanOperatorPtr>(newPosition, leftNode));
-
             }
-
-
-
         }
 
         return std::optional<AbstractJoinPlanOperatorPtr>(std::make_shared<AbstractJoinPlanOperator>(leftChild,
-                                                                                                     rightChild,
-                                                                                                     joinDefinition,
-                                                                                                     totalSelectivity));
-
-
-       // return newJoins;
+                                                                                                          rightChild,
+                                                                                                          joinDefinition,
+                                                                                                          totalSelectivity,
+                                                                                                        totalFilterPredicate));
     }
 
     bool JoinOrderOptimizationRule::isIn(std::set<OptimizerPlanOperatorPtr> leftInvolved,
@@ -783,6 +868,39 @@ namespace NES::Optimizer {
 
     }
 
+    QueryPlanPtr JoinOrderOptimizationRule::updateSequenceOrder(QueryPlanPtr oldPlan,
+                                                                AbstractJoinPlanOperatorPtr finalPlan,
+                                                                const std::vector<SourceLogicalOperatorNodePtr> sources,
+                                                                TimeSequenceList* pList) {
+        // copy current plan
+        QueryPlanPtr newPlan = oldPlan.get()->copy();
+
+        // Check if we have a finalPlan
+        FilterLogicalOperatorNodePtr topSequence;
+        if (finalPlan != nullptr){
+            // additional check!
+            if (finalPlan->getLeftChild() == nullptr && finalPlan->getRightChild() == nullptr){
+                return oldPlan;
+            }
+            // Recursively construct joins based on Children nodes.
+            topSequence = constructSequence(finalPlan->getLeftChild(),
+                                            finalPlan->getRightChild(),
+                                            finalPlan->getJoinPredicate(),
+                                            sources,
+                                            pList,
+                                            finalPlan->getPredicate());
+
+        } else{
+            NES_DEBUG("FinalPlan is nullptr - returning old plan")
+            return oldPlan;
+        }
+
+        newPlan->replaceRootOperator(newPlan->getRootOperators()[0], topSequence);
+        NES_DEBUG(newPlan->toString());
+
+        return newPlan;
+    }
+
     // simple join order print method, which will show the proposed "optimal" join order.
     std::string JoinOrderOptimizationRule::printJoinOrder(std::any joinOrder) {
         std::stringstream ss;
@@ -802,6 +920,9 @@ namespace NES::Optimizer {
 
     }
 
+
+
+
     // Method recursively constructs join operators
     JoinLogicalOperatorNodePtr JoinOrderOptimizationRule::constructJoin(const AbstractJoinPlanOperatorPtr& leftChild,
                                                                         const AbstractJoinPlanOperatorPtr& rightChild,
@@ -811,7 +932,7 @@ namespace NES::Optimizer {
 
 
 
-        // Check if we are dealing with a source OR a join respectively for left and right child
+        // Check if we are dealing with a source OR an already joined construct respectively for left and right child
         // leftChild
         SourceLogicalOperatorNodePtr leftSourceNode; // If leftChild == source, find corresponding SourceLogicalOperatorNodePtr in sources array
         JoinLogicalOperatorNodePtr leftJoinNode; // if leftChild == join, construct a join by invoked a recursion with its children.
@@ -917,6 +1038,181 @@ namespace NES::Optimizer {
         }
 
         return NES::JoinLogicalOperatorNodePtr();
+    }
+
+    FilterLogicalOperatorNodePtr
+    JoinOrderOptimizationRule::constructSequence(const AbstractJoinPlanOperatorPtr& leftChild,
+                                                 const AbstractJoinPlanOperatorPtr& rightChild,
+                                                 const Join::LogicalJoinDefinitionPtr& joinDefinition,
+                                                 const std::vector<SourceLogicalOperatorNodePtr> sources,
+                                                 TimeSequenceList* pList,
+                                                 const ExpressionNodePtr filterPredicate) {
+
+        NES_DEBUG(joinDefinition)
+        // Check if we are dealing with a source OR an already joined construct respectively for left and right child
+        // leftChild
+        SourceLogicalOperatorNodePtr leftSourceNode; // If leftChild == source, find corresponding SourceLogicalOperatorNodePtr in sources array
+        FilterLogicalOperatorNodePtr leftSequenceNode; // if leftChild == join, construct a join by invoked a recursion with its children.
+        if (leftChild->getSourceNode()!=nullptr){
+            // source
+            for (auto source: sources){
+                // iterate over sources to find matching source (by id)
+                if(leftChild->getSourceNode()->getId() == source->getId()){
+                    leftSourceNode = source;
+                    break;
+                }
+            }
+        } else{
+            // sequence
+            leftSequenceNode = constructSequence(leftChild->getLeftChild(),
+                                                 leftChild->getRightChild(),
+                                                 leftChild->getJoinPredicate(),
+                                                 sources,
+                                                 pList,
+                                                 leftChild->getPredicate());
+        }
+
+        // rightChild
+        SourceLogicalOperatorNodePtr rightSourceNode;
+        FilterLogicalOperatorNodePtr rightSequenceNode;
+        if(rightChild->getSourceNode()!=nullptr){
+            // source
+            for(auto source: sources){
+                if(rightChild->getSourceNode()->getId() == source->getId()){
+                    rightSourceNode = source;
+                    break;
+                }
+            }
+        }else{
+            // sequence
+            rightSequenceNode = constructSequence(rightChild->getLeftChild(),
+                                                  rightChild->getRightChild(),
+                                                  rightChild->getJoinPredicate(),
+                                                  sources,
+                                                  pList,
+                                                  rightChild->getPredicate());
+        }
+
+
+        // List all 4 cases possible and construct respective FilterLogicalOperatorNodePtr
+        if(leftSourceNode != nullptr && rightSourceNode != nullptr){
+            NES_DEBUG("Dealing with two sources: " << leftSourceNode->getSourceDescriptor()->getLogicalSourceName() << " and " << rightSourceNode->getSourceDescriptor()->getLogicalSourceName());
+            NES_DEBUG("As this is a sequence operation, we add a filter to the join: " << filterPredicate->toString())
+
+            // FieldAccessNode(Temperature$ts[Undefined])<FieldAccessNode(Humidity$ts[Undefined])
+            // leftSource_ts < rightSource_ts. this is ensured by level == 2
+            // TODO check if timestamp actually retrieves something useful. also check if filterPredicate works...
+            FilterLogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(filterPredicate)->as<FilterLogicalOperatorNode>();
+
+
+            // both sources
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
+
+            // add left and right source as children to newly constructed Join.
+            // these sources may have additional parent nodes like a watermark assigner or a filter. by calling getPotentialParentNodes()
+            // we retrieve them and return the parent the furthest ancestor node before the join
+            join->addChild(getPotentialParentNodes(leftSourceNode ));
+            join->addChild(getPotentialParentNodes(rightSourceNode));
+
+            // Add the join as the Child to filter
+            filter->addChild(join);
+
+            return filter;
+
+        }
+        else if(leftSequenceNode != nullptr && rightSequenceNode != nullptr){
+            JoinLogicalOperatorNodePtr leftSequenceNodeJoin = leftSequenceNode->getChildren()[0]->as<JoinLogicalOperatorNode>();
+            JoinLogicalOperatorNodePtr rightSequenceNodeJoin = rightSequenceNode->getChildren()[0]->as<JoinLogicalOperatorNode>();
+
+
+            NES_DEBUG("Dealing with two joins. On the left we join fields : " << leftSequenceNodeJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << leftSequenceNodeJoin->getJoinDefinition()->getRightJoinKey()->getFieldName());
+            NES_DEBUG("On The right we join field: " << rightSequenceNodeJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightSequenceNodeJoin->getJoinDefinition()->getRightJoinKey()->getFieldName())
+            NES_DEBUG("As this is a sequence operation, we add a filter to the join: " << filterPredicate->toString())
+
+            // construct local order according to pList (globalOrder) // TODO maybe make this an own function.
+            std::set<OptimizerPlanOperatorPtr> leftInvolved = leftChild->getInvolvedOptimizerPlanOperators();
+            std::set<OptimizerPlanOperatorPtr> rightInvolved = rightChild->getInvolvedOptimizerPlanOperators();
+
+
+
+
+            // construct filter
+            FilterLogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(filterPredicate)->as<FilterLogicalOperatorNode>();
+
+            // both joins
+            // join of joins...
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
+
+            // add left and right join to this.
+            join->addChild(leftSequenceNode);
+            join->addChild(rightSequenceNode);
+
+            filter->addChild(join);
+
+            return filter;
+
+
+        }
+        // left Join, right Source
+        else if(leftSequenceNode != nullptr && rightSourceNode != nullptr){
+
+            NES_DEBUG("Joining a left join and a right source");
+            JoinLogicalOperatorNodePtr leftSequenceNodeJoin = leftSequenceNode->getChildren()[0]->as<JoinLogicalOperatorNode>();
+            NES_DEBUG("On the left we join with the product of join : " << leftSequenceNodeJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << leftSequenceNodeJoin->getJoinDefinition()->getRightJoinKey()->getFieldName());
+            NES_DEBUG("On the right we join with " << rightSourceNode->getSourceDescriptor()->getLogicalSourceName());
+            NES_DEBUG("As this is a sequence operation, we add a filter to the join: " << filterPredicate->toString())
+
+            // construct filter
+            FilterLogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(filterPredicate)->as<FilterLogicalOperatorNode>();
+
+            // construct join
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
+
+            // add left join and right source to this
+            join->addChild(leftSequenceNode);
+            join->addChild(getPotentialParentNodes(rightSourceNode));
+
+            filter->addChild(join);
+            return filter;
+
+
+        }
+        // left Source, right join
+        else if (leftSourceNode != nullptr && rightSequenceNode != nullptr){
+            NES_DEBUG("Joining a left source and a right join");
+            NES_DEBUG("On the left we join with " << leftSourceNode->getSourceDescriptor()->getLogicalSourceName());
+            JoinLogicalOperatorNodePtr rightSequenceNodeJoin = rightSequenceNode->getChildren()[0]->as<JoinLogicalOperatorNode>();
+
+            NES_DEBUG("On the right we join with the product of join : " << rightSequenceNodeJoin->getJoinDefinition()->getLeftJoinKey()->getFieldName() << " and " << rightSequenceNodeJoin->getJoinDefinition()->getRightJoinKey()->getFieldName());
+
+            NES_DEBUG("As this is a sequence operation, we add a filter to the join: " << filterPredicate->toString())
+
+            // construct filter
+            FilterLogicalOperatorNodePtr filter = LogicalOperatorFactory::createFilterOperator(filterPredicate)->as<FilterLogicalOperatorNode>();
+
+            JoinLogicalOperatorNodePtr join = std::make_shared<JoinLogicalOperatorNode>(JoinLogicalOperatorNode(joinDefinition, Util::getNextOperatorId()));
+
+            // add left source and right join to this;
+            join->addChild(getPotentialParentNodes(leftSourceNode));
+            join->addChild(rightSequenceNodeJoin);
+
+            filter->addChild(join);
+
+            return filter;
+        }
+        else {
+            NES_ERROR("Join Children neither sources nor joins. Cannot optimize.");
+        }
+        return NES::FilterLogicalOperatorNodePtr();
+
+
+
+
+
+
+
+
+
     }
 
     NodePtr JoinOrderOptimizationRule::getPotentialParentNodes(NodePtr sharedPtr) {
@@ -1109,32 +1405,7 @@ namespace NES::Optimizer {
 
 
     }
-    std::vector<std::vector<int>> JoinOrderOptimizationRule::checkOverlap(std::vector<int> leftPositions,
-                                                                          std::vector<int> rightPositions) {
-        std::vector<std::vector<int>> overlaps;
-        // leftOverlap
-        std::vector<int> leftOverlaps;
-        for (int i : leftPositions){
-            // check if i smaller than the leftmost or higher than the rightmost of rightPositions
-            if (i < rightPositions[0] || i > rightPositions[rightPositions.size()-1]){
-                leftOverlaps.push_back(0); // does not overlap
-            }else{
-                leftOverlaps.push_back(1); // does overlap
-            }
-        }
-        overlaps.push_back(leftOverlaps);
-        // rightOverlap
-        std::vector<int> rightOverlaps;
-        for(int i : rightPositions){
-            if (i < leftPositions[0] || i > leftPositions[leftPositions.size()-1]){
-                rightOverlaps.push_back(0); // does not overlap
-            }else{
-                rightOverlaps.push_back(1); // does overlap
-            }
-        }
-        overlaps.push_back(rightOverlaps);
-        return overlaps;
-    }
+
     bool JoinOrderOptimizationRule::checkIsBetween(int newPosition, std::vector<int> currentPositions) {
         if (currentPositions.size() > 1){
             int lowerBound = currentPositions[0];
@@ -1157,6 +1428,28 @@ namespace NES::Optimizer {
             }
         }
         return {lowerBound, upperBound};
+    }
+    bool JoinOrderOptimizationRule::checkPerfectlyBetween(std::vector<int> outer, std::vector<int> inner) {
+        int lowestInner = inner[0];
+        int highestInner = inner[inner.size() - 1];
+
+        int lowestOuter = outer[0];
+        int highestOuter = outer[outer.size() - 1];
+        // check isFront
+        if(lowestOuter > highestInner)
+            return false;
+
+        // check isRear
+        if(highestOuter < lowestInner)
+            return false;
+
+        // if not front or rear, check if it is fully inbetween
+        for(int i : outer){
+            if(i > lowestInner && i <  highestInner){
+                return false;
+            }
+        }
+        return true;
     }
 
     }// namespace NES::Optimizer

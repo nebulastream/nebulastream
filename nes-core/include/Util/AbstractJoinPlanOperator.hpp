@@ -38,7 +38,8 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
             AbstractJoinPlanOperator(AbstractJoinPlanOperatorPtr leftChild,
                                      AbstractJoinPlanOperatorPtr rightChild,
                                      Join::LogicalJoinDefinitionPtr joinPredicate,
-                                     float selectivity);
+                                     float selectivity,
+                                     ExpressionNodePtr filterPredicate = nullptr);
 
             /**
              * @brief - constructor for building an AbstractJoinPlanOperator from a source (OptimizerPlanOperator
@@ -67,6 +68,11 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
              */
             float selectivity;
 
+          public:
+            const ExpressionNodePtr& getPredicate() const;
+            void setPredicate(const ExpressionNodePtr& predicate);
+
+          private:
             /**
       * Cost issued by this operator
       * This is usually the output cardinality of, e.g., a join.
@@ -84,6 +90,12 @@ class AbstractJoinPlanOperator : public OptimizerPlanOperator {
       * source cardinality, i.e. size of tuples in window // or if joined the output cardinality of this join.
       */
             long double cardinality;
+
+            /**
+             * Defines the attached filter predicate in case of a sequence operator.
+             * If the AJPO is only an extended source, it can be a nullptr
+             */
+            ExpressionNodePtr predicate;
 
           public:
             float getSelectivity() const;
