@@ -208,7 +208,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         auto jitCompilerBuilder = (!this->jitCompiler)
             ? Compiler::JITCompilerBuilder()
                   .registerLanguageCompiler(languageCompiler)
-                  .enableCompilationCache(workerConfiguration->queryCompiler.useCompilationCache)
+                  .setUseCompilationCache(workerConfiguration->queryCompiler.useCompilationCache)
                   .build()
             : this->jitCompiler;
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
