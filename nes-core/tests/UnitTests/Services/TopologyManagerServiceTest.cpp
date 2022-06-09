@@ -26,6 +26,7 @@
 #include <Topology/Topology.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <string>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 
 using namespace std;
 using namespace NES;
@@ -69,16 +70,16 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
     uint64_t nodeId =
-        topologyManagerService->registerNode(ip, publish_port, 5000, 6, false, NES::Spatial::Index::Experimental::Location());
+        topologyManagerService->registerNode(ip, publish_port, 5000, 6, NES::Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION, NES::Spatial::Index::Experimental::Location());
     EXPECT_NE(nodeId, 0u);
 
     uint64_t nodeId1 =
-        topologyManagerService->registerNode(ip, publish_port + 2, 5000, 6, false, NES::Spatial::Index::Experimental::Location());
+        topologyManagerService->registerNode(ip, publish_port + 2, 5000, 6, NES::Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION, NES::Spatial::Index::Experimental::Location());
     EXPECT_NE(nodeId1, 0u);
 
     //test register existing node
     uint64_t nodeId2 =
-        topologyManagerService->registerNode(ip, publish_port, 5000, 6, false, NES::Spatial::Index::Experimental::Location());
+        topologyManagerService->registerNode(ip, publish_port, 5000, 6, NES::Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION, NES::Spatial::Index::Experimental::Location());
     EXPECT_EQ(nodeId2, 0u);
     //test unregister not existing node
     bool successUnregisterNotExistingNode = topologyManagerService->unregisterNode(552);

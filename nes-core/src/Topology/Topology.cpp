@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <deque>
 #include <utility>
+#include <Util/Experimental/WorkerSpatialType.hpp>
 
 namespace NES {
 
@@ -61,7 +62,8 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
-        if (nodeToRemove->isFieldNode()) {
+        //todo: do we also need to remove wit this function when dealing with a mobile node?
+        if (nodeToRemove->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE) {
             locationIndex->removeNodeFromSpatialIndex(nodeToRemove);
         }
         indexOnNodeIds.erase(idOfNodeToRemove);

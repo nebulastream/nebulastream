@@ -76,7 +76,7 @@ message RegisterNodeRequest {
   uint32 numberOfSlots = 4;
   SerializableRegistrationMetrics registrationMetrics = 5;
   Coordinates coordinates = 6;
-  bool isMobile = 7;
+  SpatialType spatialType = 7;
 }
 
 message RegisterNodeReply {

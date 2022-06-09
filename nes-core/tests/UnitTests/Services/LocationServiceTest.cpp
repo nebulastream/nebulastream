@@ -23,6 +23,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <cmath>
 #include <gtest/gtest.h>
+#include <Util/Experimental/WorkerSpatialType.hpp>
+#include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 
 namespace NES {
 
@@ -74,8 +76,9 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
     node2->setFixedCoordinates(13.4, -23);
+    node2->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE);
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    node3->setMobile(true);
+    node3->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
 
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
@@ -85,10 +88,11 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->isMobile.setValue(true);
-    wrkConf3->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf3->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+    wrkConf3->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
+    auto mobConf3 = std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
+    mobConf3->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    mobConf3->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3), std::move(mobConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
     topology->addNewTopologyNodeAsChild(node1, node3);
@@ -130,11 +134,12 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     TopologyNodePtr node1 = TopologyNode::create(1, "127.0.0.1", rpcPortWrk1, 0, 0);
     TopologyNodePtr node2 = TopologyNode::create(2, "127.0.0.1", rpcPortWrk2, 0, 0);
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
+    node2->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE);
     node2->setFixedCoordinates(13.4, -23);
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
-    node3->setMobile(true);
+    node3->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
     TopologyNodePtr node4 = TopologyNode::create(4, "127.0.0.1", rpcPortWrk4, 0, 0);
-    node4->setMobile(true);
+    node4->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
@@ -149,10 +154,11 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
-    wrkConf3->isMobile.setValue(true);
-    wrkConf3->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf3->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+    wrkConf3->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
+    auto mobConf3 = std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
+    mobConf3->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    mobConf3->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3), std::move(mobConf3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);
     topology->addNewTopologyNodeAsChild(node1, node3);
@@ -175,10 +181,11 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     NES_INFO("start worker 4");
     WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
     wrkConf4->rpcPort = rpcPortWrk4;
-    wrkConf4->isMobile.setValue(true);
-    wrkConf4->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    wrkConf4->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv");
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
+    wrkConf4->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
+    auto mobConf4 = std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
+    mobConf4->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    mobConf4->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation2.csv");
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4), std::move(mobConf4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart4);
     topology->addNewTopologyNodeAsChild(node1, node4);

@@ -28,6 +28,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 namespace Spatial::Index::Experimental {
 using LocationPtr = std::shared_ptr<Location>;
+enum class WorkerSpatialType;
 }
 
 namespace Spatial::Mobility::Experimental {
@@ -160,7 +161,7 @@ class TopologyNode : public Node {
      * @brief indicates if the node is a field node (a node with a fixed and known location)
      * @return true if a location is set
      */
-    bool isFieldNode();
+    //bool isFieldNode();
 
     /**
      * Experimental
@@ -192,16 +193,16 @@ class TopologyNode : public Node {
      * Experimental
      * @brief sets the status of the node as running on a mobile device or a fixed location device.
      * To be run right after node creation. Fixed nodes should not become mobile or vice versa at a later point
-     * @param isMobile
+     * @param workerSpatialType
      */
-    void setMobile(bool isMobile);
+    void setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType workerSpatialType);
 
     /**
      * Experimental
      * @brief check if the node is a running on a mobile device or not
      * @return true if the node is running on a mobile device
      */
-    bool isMobileNode();
+    NES::Spatial::Index::Experimental::WorkerSpatialType getSpatialType();
 
   private:
     uint64_t id;
@@ -212,7 +213,7 @@ class TopologyNode : public Node {
     uint16_t usedResources;
     bool maintenanceFlag;
     NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
-    bool isMobile;
+    NES::Spatial::Index::Experimental::WorkerSpatialType spatialType;
 
     /**
      * @brief A field to store a map of node properties

@@ -15,12 +15,25 @@
 #ifndef NES_UTIL_EXPERIMENTL_WORKERSPATIALTYPE_HPP
 #define NES_UTIL_EXPERIMENTL_WORKERSPATIALTYPE_HPP
 #include <string>
+#include <WorkerLocation.grpc.pb.h>
 
-namespace NES::Spatial::Index::Experimetnal {
+namespace NES::Spatial::Index::Experimental {
 enum class WorkerSpatialType {
     NO_LOCATION = 0, //the worker does not have a known location
-    FIELD_NODE
+    FIELD_NODE = 1, //the worker has a known fixed location that will not change after its creation
+    MOBILE_NODE = 2, //the worker runs on a mobile device which might change its location anytime
+    INVALID = 3 //no valid worker type
 };
+
+WorkerSpatialType stringToWorkerSpatialType(std::string spatialTypeString);
+
+WorkerSpatialType protobufEnumToWorkerSpatialType(SpatialType spatielType);
+
+std::string toString(WorkerSpatialType spatialType);
+
+SpatialType toProtobufEnum(WorkerSpatialType spatialType);
+
+
 }
 
 #endif//NES_UTIL_EXPERIMENTL_WORKERSPATIALTYPE_HPP
