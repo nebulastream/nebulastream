@@ -22,12 +22,16 @@
 #include <Experimental/Interpreter/Operations/NegateOp.hpp>
 #include <Experimental/Interpreter/Operations/OrOp.hpp>
 #include <Experimental/Interpreter/Operations/SubOp.hpp>
+#include <Experimental/Interpreter/Exceptions/InterpreterException.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 Record::Record(std::vector<Value<Any>> records): records(std::move(records)) {}
 
 Value<Any>& Record::read(uint64_t fieldIndex) {
+    if(fieldIndex >= records.size()){
+        throw new InterpreterException("Filed dose not exists");
+    }
     return records[fieldIndex];
 }
 

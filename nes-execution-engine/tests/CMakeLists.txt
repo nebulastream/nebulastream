@@ -67,5 +67,15 @@ target_link_libraries(execution-engine-ir-creation-test
         nes-execution-engine)
 add_test(NAME execution-engine-ir-creation-test COMMAND execution-engine-ir-creation-test)
 
+add_executable(execution-engine-operator-test "UnitTests/Experimental/Interpreter/OperatorTest.cpp")
+target_link_libraries(execution-engine-operator-test
+        nes-execution-engine)
+add_test(NAME execution-engine-operator-test COMMAND execution-engine-operator-test)
+
+add_executable(execution-engine-expression-test "UnitTests/Experimental/Interpreter/ExpressionTest.cpp")
+target_link_libraries(execution-engine-expression-test
+        nes-execution-engine)
+add_test(NAME execution-engine-expression-test COMMAND execution-engine-expression-test)
+
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
