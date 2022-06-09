@@ -39,7 +39,7 @@ class JITCompilerBuilder {
      * @param useCompilationCache
      * @return JITCompilerBuilder
      */
-    JITCompilerBuilder& enableCompilationCache(bool useCompilationCache);
+    JITCompilerBuilder& setUseCompilationCache(bool useCompilationCache);
     /**
      * @brief Creates a instance of the JITCompiler containing all language compilers.
      * @return JITCompiler

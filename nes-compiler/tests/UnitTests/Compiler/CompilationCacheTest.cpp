@@ -29,7 +29,6 @@ namespace NES::Compiler {
 
 class CompilationCacheTest : public Testing::TestWithErrorHandling<testing::Test> {
   public:
-    uint64_t waitForCompilation = 10;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("CompilationCacheTest.log", NES::LogLevel::LOG_DEBUG);
