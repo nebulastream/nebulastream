@@ -634,7 +634,7 @@ TEST_F(MonitoringIntegrationTest, requestMemoryMetricsWithMonitoringSinkMultiWor
 
 TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorkerWithMonitoringManager) {
     bool monitoring = true;
-    uint64_t worker_count = 2;
+    uint64_t worker_count = 1;
     std::vector<NesWorkerPtr> workers;
     uint64_t localBuffers = 2;
     uint64_t globalBuffers = 1024*8;
