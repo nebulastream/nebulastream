@@ -20,13 +20,15 @@
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
+/**
+ * @brief This expression reads a specific field from the input record and returns its value.
+ */
 class ReadFieldExpression : public Expression {
-  private:
-    uint64_t fieldIndex;
-
   public:
     ReadFieldExpression(uint64_t fieldIndex);
     Value<> execute(Record& record) override;
+  private:
+    const uint64_t fieldIndex;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
