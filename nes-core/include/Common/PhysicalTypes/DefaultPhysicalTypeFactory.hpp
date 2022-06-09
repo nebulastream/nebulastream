@@ -48,6 +48,13 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
      */
     PhysicalTypePtr getPhysicalType(DataTypePtr dataType) override;
 
+    /**
+    * @brief Translates a array data type into a corresponding physical type.
+    * @param tensorType
+    * @return PhysicalTypePtr
+    */
+    PhysicalTypePtr getPhysicalType(const TensorPtr& tensorType);
+
   private:
     /**
     * @brief Translates an integer data type into a corresponding physical type.
@@ -77,12 +84,6 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     */
     PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType);
 
-    /**
-    * @brief Translates a array data type into a corresponding physical type.
-    * @param tensorType
-    * @return PhysicalTypePtr
-    */
-    PhysicalTypePtr getPhysicalType(const TensorPtr& tensorType);
 };
 
 }// namespace NES

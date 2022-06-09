@@ -249,6 +249,8 @@ const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
+const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_SHAPE = "shape";
+const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_TENSOR_MEMORY_FORMAT = "tensorMemoryFormat";
 
 }// namespace Configurations
 }// namespace NES

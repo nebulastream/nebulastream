@@ -25,6 +25,9 @@ namespace NES {
 
 class CSVParser;
 using CSVParserPtr = std::shared_ptr<CSVParser>;
+
+class CSVTensorParser;
+using CSVTensorParserPtr = std::shared_ptr<CSVTensorParser>;
 /**
  * @brief this class implement the CSV as an input source
  */
@@ -118,6 +121,7 @@ class CSVSource : public DataSource {
     size_t fileSize;
     bool skipHeader;
     CSVParserPtr inputParser;
+    CSVTensorParserPtr tensorParser;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

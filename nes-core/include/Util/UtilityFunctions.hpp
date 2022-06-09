@@ -94,6 +94,13 @@ struct SplitFunctionHelper<double> {
     };
 };
 
+template<>
+struct SplitFunctionHelper<float> {
+    static constexpr auto FUNCTION = [](std::string&& str) {
+        return std::stof(str.c_str());
+    };
+};
+
 }// namespace detail
 /**
  * @brief escapes all non text characters in a input string, such that the string could be processed as json.

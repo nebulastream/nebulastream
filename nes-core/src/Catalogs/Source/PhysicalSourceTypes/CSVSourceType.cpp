@@ -52,7 +52,7 @@ CSVSourceType::CSVSourceType()
       sourceGatheringInterval(
           Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
                                                                 1,
-                                                                "Gathering interval of the source.")) {
+                                                                "Gathering interval of the source.")){
     NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
