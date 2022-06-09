@@ -138,7 +138,7 @@ ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& 
     return candidateExecutionNode;
 }
 
-TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId, bool partialPlacement) {
+TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId, OperatorId operatorId) {
 
     NES_TRACE("BasePlacementStrategy: Get the topology node for logical operator with id " << nodeId);
     auto found = nodeIdToTopologyNodeMap.find(nodeId);
@@ -149,7 +149,7 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId, bool par
                                           + " not considered for the placement.");
     }
 
-    if (found->second->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(nodeId) && !partialPlacement) {
+    if (found->second->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(operatorId)) { //TODO: why are we using the TopologyNodeId to check in a map that takes Operator Ids as keys?
         NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
         throw log4cxx::helpers::Exception(
             "BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
@@ -273,12 +273,12 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
         // 7. if the upstream and downstream execution nodes are different and the upstream and downstream operators are not already
         // connected using network sink and source pairs then enter the if condition.
         if (upStreamExecutionNode->getId() != downStreamExecutionNode->getId()
-            && (partialPlacement || !isSourceAndDestinationConnected(upStreamOperator, downStreamOperator))) { //skip if partial placement ?
+            && !isSourceAndDestinationConnected(upStreamOperator, downStreamOperator)) { //skip if partial placement ?
 
             // 7.1. Find nodes between the upstream and downstream topology nodes for placing the network source and sink pairs
             NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Find the nodes between the topology node (inclusive) for "
                       "child and parent operators.");
-            TopologyNodePtr upstreamTopologyNode = topology->findNodeWithId(upStreamExecutionNode->getTopologyNode()->getId());
+            TopologyNodePtr upstreamTopologyNode = topology->findNodeWithId(upStreamExecutionNode->getTopologyNode()->getId()); //necessary since executionNode doesnt hold maintenance flag
             TopologyNodePtr downstreamTopologyNode = topology->findNodeWithId(downStreamExecutionNode->getTopologyNode()->getId());
             std::vector<TopologyNodePtr> nodesBetween = topology->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
             TopologyNodePtr previousParent = nullptr;
@@ -288,8 +288,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                       "add network source or sink operator.");
             const SchemaPtr& inputSchema = upStreamOperator->getOutputSchema();
             uint64_t sourceOperatorId = Util::getNextOperatorId();
-            bool upstreamIsNetworkSource = upStreamOperator->instanceOf<SourceLogicalOperatorNode>() && upStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>();
-            bool downstreamIsNetworkSink = parent->instanceOf<SinkLogicalOperatorNode>() && parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>();
+            //bool upstreamIsNetworkSource = upStreamOperator->instanceOf<SourceLogicalOperatorNode>() && upStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>();
+            //bool downstreamIsNetworkSink = parent->instanceOf<SinkLogicalOperatorNode>() && parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>();
             // hint to understand the for loop below:
             // give a path from node0 (source) to nodeN (root)
             // base case: place network sink on node0 to send data to node1
@@ -303,9 +303,9 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                 ExecutionNodePtr candidateExecutionNode = getExecutionNode(nodesBetween[i]);
                 NES_ASSERT2_FMT(candidateExecutionNode, "Invalid candidate execution node while placing query " << queryId);
                 if (i == 0) {
-                    if(upstreamIsNetworkSource) {
-                        continue;
-                    }
+                    //if(upstreamIsNetworkSource) {
+                    //    continue;
+                    //}
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Find the query plan with child operator.");
                     std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
                     bool found = false;
@@ -315,9 +315,9 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                             NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Add network sink operator as root of the "
                                       "query plan with child "
                                       "operator.");
-                            if(downstreamIsNetworkSink && (i== nodesBetween.size() - 2)){
-                                sourceOperatorId = parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
-                            }
+                            //if(downstreamIsNetworkSink && (i== nodesBetween.size() - 2)){
+                            //    sourceOperatorId = parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+                            // }
                             OperatorNodePtr networkSink =
                                 createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
                             targetUpStreamOperator->addParent(networkSink);
@@ -337,12 +337,12 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     }
                 } else if (i == nodesBetween.size() - 1) {
                     auto sinkNode = previousParent = nodesBetween[i - 1];
-                    if(!downstreamIsNetworkSink) {
+                    //if(!downstreamIsNetworkSink) {
                         NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Find the query plan with parent operator.");
                         std::vector<QueryPlanPtr> querySubPlans = candidateExecutionNode->getQuerySubPlans(queryId);
-                        if(upstreamIsNetworkSource){
-                            sourceOperatorId = upStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
-                        }
+                        //if(upstreamIsNetworkSource){
+                        //    sourceOperatorId = upStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+                        //}
                         OperatorNodePtr sourceOperator =
                             createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId, sinkNode);
                         bool found = false;
@@ -369,7 +369,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                                 "BasePlacementStrategy::placeNetworkOperator: unable to place network source operator "
                                 "for the parent operator");
                         }
-                    }
+                    //}
                 } else {
 
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Create a new query plan and add pair of network "
@@ -382,21 +382,21 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: add network source operator");
                     auto sinkNode = previousParent = nodesBetween[i - 1];
                     NES_ASSERT2_FMT(sinkNode, "Invalid sink node while placing query " << queryId);
-                    if(upstreamIsNetworkSource && ( i == 1)){
-                        sourceOperatorId = upStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
-                    }
+                    //if(upstreamIsNetworkSource && ( i == 1)){
+                    //    sourceOperatorId = upStreamOperator->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition().getOperatorId();
+                    //}
                     const OperatorNodePtr networkSource =
                         createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId, sinkNode);
                     querySubPlan->appendOperatorAsNewRoot(networkSource);
                     operatorToSubPlan[networkSource->getId()] = querySubPlan;
 
                     NES_TRACE("BasePlacementStrategy::placeNetworkOperator: add network sink operator");
-                    if(downstreamIsNetworkSink && (i == nodesBetween.size() - 2)){
-                        sourceOperatorId = parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
-                    }
-                    else{
+                    //if(downstreamIsNetworkSink && (i == nodesBetween.size() - 2)){
+                    //    sourceOperatorId = parent->as<SinkLogicalOperatorNode>()->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
+                    //}
+                    //else{
                         sourceOperatorId = Util::getNextOperatorId();
-                    }
+                    //}
                     OperatorNodePtr networkSink = createNetworkSinkOperator(queryId, sourceOperatorId, nodesBetween[i + 1]);
                     querySubPlan->appendOperatorAsNewRoot(networkSink);
                     operatorToSubPlan[networkSink->getId()] = querySubPlan;

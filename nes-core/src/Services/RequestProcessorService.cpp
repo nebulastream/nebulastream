@@ -43,6 +43,7 @@
 #include <log4cxx/helpers/exception.h>
 #include <utility>
 #include <z3++.h>
+#include "WorkQueues/RequestTypes/StopQueryRequest.hpp"
 
 namespace NES {
 

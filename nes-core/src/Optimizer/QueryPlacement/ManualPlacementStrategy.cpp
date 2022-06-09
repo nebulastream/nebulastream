@@ -47,7 +47,8 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(
     FaultToleranceType faultToleranceType /*faultToleranceType*/,
     LineageType lineageType /*lineageType*/,
     const std::vector<OperatorNodePtr>& pinnedUpStreamOperators /*pinnedUpStreamNodes*/,
-    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/) {
+    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators /*pinnedDownStreamNodes*/,
+    [[maybe_unused]] bool partialPlacement) {
 
     try {
         // 1. Find the path where operators need to be placed
@@ -76,7 +77,7 @@ void ManualPlacementStrategy::performOperatorPlacement(QueryId queryId,
                                                                                         << " placement.");
 
         auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamOperator->getProperty(PINNED_NODE_ID));
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId, pinnedUpStreamOperator->getId());
 
         // 1. If pinned up stream node was already placed then place all its downstream operators
         if (pinnedUpStreamOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedUpStreamOperator->getProperty(PLACED))) {
@@ -136,7 +137,7 @@ void ManualPlacementStrategy::placeOperator(QueryId queryId,
             if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_TRACE("ManualPlacementStrategy: Received Sink operator for placement.");
                 auto nodeId = std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID));
-                auto pinnedSinkOperatorLocation = getTopologyNode(nodeId);
+                auto pinnedSinkOperatorLocation = getTopologyNode(nodeId, operatorNode->getId());
                 if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSinkOperatorLocation;

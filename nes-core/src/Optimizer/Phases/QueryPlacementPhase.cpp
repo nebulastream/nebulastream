@@ -17,9 +17,11 @@
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -28,6 +30,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
+
 
 namespace NES::Optimizer {
 
@@ -64,15 +67,21 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
 
     auto queryId = sharedQueryPlan->getSharedQueryId();
     auto queryPlan = sharedQueryPlan->getQueryPlan();
+    bool partialPlacement = sharedQueryPlan->isDeployed() && sharedQueryPlan->getChangeLog()->getAddition().empty();
+    //if sharedQueryPlan has already been deployed, it means we are performing partial placement. This probably interferes with
+    if(sharedQueryPlan->isDeployed() && !queryReconfiguration) {
+        cleanQueryPlan(queryPlan);
+    }
+
     auto faultToleranceType = queryPlan->getFaultToleranceType();
     auto lineageType = queryPlan->getLineageType();
     NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
 
     //1. Fetch all upstream pinned operators
-    auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);
+    auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan, partialPlacement);
 
     //2. Fetch all downstream pinned operators
-    auto downStreamPinnedOperators = getDownStreamPinnedOperators(upStreamPinnedOperators);
+    auto downStreamPinnedOperators = getDownStreamPinnedOperators(upStreamPinnedOperators,partialPlacement);
 
     //3. Check if all operators are pinned
     if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
@@ -89,47 +98,6 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
     return success;
 }
 
-bool QueryPlacementPhase::executePartialPlacement(PlacementStrategy::Value placementStrategy,
-                                                  const QueryPlanPtr& queryPlan) {
-    NES_INFO("QueryPlacementPhase: Perform partial query placement phase for query plan "
-             + std::to_string(queryPlan->getQuerySubPlanId()));
-    //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
-    // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
-    if(placementStrategy != PlacementStrategy::BottomUp){
-        NES_DEBUG("Partial Placement currently only supports Bottom Up Placement");
-        return false;
-    }
-    auto placementStrategyPtr =
-        PlacementStrategyFactory::getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, z3Context);
-
-    auto queryId = queryPlan->getQueryId();
-    auto faultToleranceType = queryPlan->getFaultToleranceType();
-    auto lineageType = queryPlan->getLineageType();
-    NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
-
-    //1. Fetch all upstream pinned operators
-    auto upStreamPinnedOperators = getUpStreamPinnedOperatorsForPartialPlacement(queryPlan);
-
-    //2. Fetch all downstream pinned operators
-    auto downStreamPinnedOperators = getDownStreamPinnedOperatorsForPartialPlacement(queryPlan);
-
-    //3. Check if all operators are pinned
-    if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
-        throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
-    }
-
-    //4. Clean operators of placed status and where they are placed, so they can be processed again
-    cleanQueryPlan(queryPlan);
-
-    bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
-                                                                   faultToleranceType,
-                                                                   lineageType,
-                                                                   upStreamPinnedOperators,
-                                                                   downStreamPinnedOperators);
-    NES_DEBUG("QueryPlacementPhase: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
-
-    return success;
-}
 
 bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators) {
 
@@ -141,10 +109,10 @@ bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr
     return true;
 }
 
-std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan) {
+std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan, bool partialPlacement) {
     std::vector<OperatorNodePtr> upStreamPinnedOperators;
     auto queryPlan = sharedQueryPlan->getQueryPlan();
-    if (!queryReconfiguration || sharedQueryPlan->isNew()) {
+    if (!queryReconfiguration || sharedQueryPlan->isNew() || partialPlacement) {
         //Fetch all Source operators
         upStreamPinnedOperators = queryPlan->getLeafOperators();
     } else {
@@ -161,7 +129,7 @@ std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(Sha
 }
 
 std::vector<OperatorNodePtr>
-QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators) {
+QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators, bool partialPlacement) {
     std::vector<OperatorNodePtr> downStreamPinnedOperators;
     auto rootTopologyNode = topology->getRoot();
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
@@ -187,52 +155,43 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
                 logicalOperator->addProperty(PINNED_NODE_ID, rootTopologyNode->getId());
                 downStreamPinnedOperators.emplace_back(logicalOperator);
             }
+            else if (partialPlacement){
+                //Check if the operator already in the pinned operator list
+                auto found = std::find_if(downStreamPinnedOperators.begin(),
+                                          downStreamPinnedOperators.end(),
+                                          [logicalOperator](const OperatorNodePtr& operatorNode) {
+                                              return operatorNode->getId() == logicalOperator->getId();
+                                          });
+
+                if (found != downStreamPinnedOperators.end()) {
+                    continue;
+                }
+                downStreamPinnedOperators.emplace_back(logicalOperator);
+            }
         }
     }
     return downStreamPinnedOperators;
 }
 
-std::vector<OperatorNodePtr>  QueryPlacementPhase::getUpStreamPinnedOperatorsForPartialPlacement(QueryPlanPtr queryPlan){
-    std::vector<OperatorNodePtr> pinnedSourceOperators;
-    for(auto sourceOperator : queryPlan->getSourceOperators()){
-        //pin Network Sources onto the node from which they receive data from
-        sourceOperator->addProperty(PINNED_NODE_ID, sourceOperator->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNodeLocation().getNodeId());
-        //PLACED = true will ensure they are ignored during processes down the line
-        sourceOperator->addProperty(PLACED, true);
-        pinnedSourceOperators.emplace_back(sourceOperator);
-    }
-    return pinnedSourceOperators;
-};
-
-std::vector<OperatorNodePtr>  QueryPlacementPhase::getDownStreamPinnedOperatorsForPartialPlacement(QueryPlanPtr queryPlan) {
-    std::vector<OperatorNodePtr> pinnedSinkOperators;
-    for(auto sinkOperator : queryPlan->getSinkOperators()){
-        //pin Network Sinks onto the node to which they send data to
-        sinkOperator->addProperty(PINNED_NODE_ID, sinkOperator->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNodeLocation().getNodeId());
-        //PLACED = true will ensure they are ignored during processes down the line
-        sinkOperator->addProperty(PLACED, true);
-        pinnedSinkOperators.emplace_back(sinkOperator);
-    }
-    return pinnedSinkOperators;
-}
 void QueryPlacementPhase::cleanQueryPlan(const QueryPlanPtr& queryPlan){
-    auto rootOperator = queryPlan->getRootOperators();
-    if(rootOperator.size() > 1){
-        throw QueryPlacementException( queryPlan->getQueryId(),"QueryPlacementPhase: partial placement only supports one root node.");
+    QueryId queryId = queryPlan->getQueryId();
+    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    std::vector<uint64_t> nodeIds;
+    for(auto node : executionNodes){
+        if (node->getTopologyNode()->getMaintenanceFlag()){
+            nodeIds.emplace_back(node->getId());
+        }
     }
-    std::vector<NodePtr> childNodes = rootOperator[0]->getAndFlattenAllChildren(false);
-    for(NodePtr node : childNodes){
-        bool isSourceOperator = node->instanceOf<SourceLogicalOperatorNode>();
-        bool isNetworkSource = false;
-        if(isSourceOperator){
-            isNetworkSource = node->as<SourceLogicalOperatorNode>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>();
-        }
-        if(isNetworkSource){
-            continue;
-        }
-        OperatorNodePtr opNode = node->as<OperatorNode>();
-        opNode->removeProperty(PLACED);
-        opNode->removeProperty(PINNED_NODE_ID);
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto iterator = queryPlanIterator.begin(); iterator != QueryPlanIterator::end(); ++iterator) {
+        OperatorNodePtr operatorNode = (*iterator)->as<OperatorNode>();
+        auto it = std::find(nodeIds.begin(), nodeIds.end(),std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID)));
+        if(it != nodeIds.end()){
+            //Operator is pinned/placed on a node marked for maintenance
+            //remove PINNED_NODE_ID and PLACED property, so that this operator can be placed again
+            operatorNode->removeProperty(PINNED_NODE_ID);
+            operatorNode->removeProperty(PLACED);
+        };
     }
 };
 

@@ -269,8 +269,11 @@ TEST_F(QueryPlacementTest, testPartialPlacementWithNoOperators) {
     }
 
     topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true);
+    auto exeNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark);
+    NES_DEBUG(exeNode->getTopologyNode()->getMaintenanceFlag());
     QueryPlanPtr queryToMigrate = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getQuerySubPlans(queryId)[0];
-    queryPlacementPhase->executePartialPlacement(NES::PlacementStrategy::BottomUp, queryToMigrate);
+    sharedQueryPlan->markAsDeployed();
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     //Assertion
     ASSERT_EQ(executionNodes.size(), 4);
@@ -367,9 +370,13 @@ TEST_F(QueryPlacementTest, testPartialPlacementWithSingleOperator) {
         }
     }
 
-    topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true);
+    topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true); //this isnt enough to mark the node for maintenance
+    globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getTopologyNode()->setMaintenanceFlag(true);
+    auto exeNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark);
+    NES_DEBUG(exeNode->getTopologyNode()->getMaintenanceFlag());
     QueryPlanPtr queryToMigrate = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getQuerySubPlans(queryId)[0];
-    queryPlacementPhase->executePartialPlacement(NES::PlacementStrategy::BottomUp, queryToMigrate);
+    sharedQueryPlan->markAsDeployed();
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     //Assertion
     ASSERT_EQ(executionNodes.size(), 4);
@@ -421,9 +428,13 @@ TEST_F(QueryPlacementTest, testPartialPlacementWithMultipleOperators) {
         }
     }
 
-    topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true);
+    topology->findNodeWithId(nodeToMark)->setMaintenanceFlag(true); //this isnt enough to mark the node for maintenance
+    globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getTopologyNode()->setMaintenanceFlag(true);
+    auto exeNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark);
+    NES_DEBUG(exeNode->getTopologyNode()->getMaintenanceFlag());
     QueryPlanPtr queryToMigrate = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getQuerySubPlans(queryId)[0];
-    queryPlacementPhase->executePartialPlacement(NES::PlacementStrategy::BottomUp, queryToMigrate);
+    sharedQueryPlan->markAsDeployed();
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     //Assertion
     ASSERT_EQ(executionNodes.size(), 4);

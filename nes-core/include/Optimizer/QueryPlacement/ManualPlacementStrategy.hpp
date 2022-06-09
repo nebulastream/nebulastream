@@ -30,7 +30,8 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators,
+                                   bool partialPlacement = false) override;
 
     static std::unique_ptr<ManualPlacementStrategy>
     create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);

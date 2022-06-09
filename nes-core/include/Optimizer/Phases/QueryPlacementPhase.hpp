@@ -83,16 +83,6 @@ class QueryPlacementPhase {
      */
     bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
 
-    /**
-     * @brief method takes as input a query plan that has as its root operators network sinks and as its leaf operators network sources. It then places
-     * all operators of the query
-     * @param placementStrategy : name of the placement strategy
-     * @param intermediateQueryPlan : query plan to place
-     * @return true if placement was succesful.
-     * @throws QueryPlacementException
-     */
-    bool executePartialPlacement(PlacementStrategy::Value placementStrategy, const QueryPlanPtr& queryPlan);
-
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
@@ -106,29 +96,15 @@ class QueryPlacementPhase {
      * @param sharedQueryPlan : shared query plan to investigate
      * @return collection of upstream operators
      */
-    std::vector<OperatorNodePtr> getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan);
+    std::vector<OperatorNodePtr> getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan, bool partialPlacement = false);
 
     /**
      * This method extracts the downstream pinned operators connected to the collection of upstream operators.
      * @param upStreamPinnedOperators : collection of upstream pinned operators
+     * @param partialPlacement : true if shared query plan is deployed and change log additions is not empty
      * @return collection of downstream operators
      */
-    std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators);
-
-    /**
-     * This method extracts the upstream pinned operators from the shared query plan. IF the reconfiguration is enabled then the
-     * method brows through the change log to extract the upstream operators
-     * @param sharedQueryPlan : shared query plan to investigate
-     * @return collection of upstream operators
-     */
-    std::vector<OperatorNodePtr> getUpStreamPinnedOperatorsForPartialPlacement(QueryPlanPtr queryPlan);
-
-    /**
-     * This method extracts the downstream pinned operators connected to the collection of upstream operators.
-     * @param upStreamPinnedOperators : collection of upstream pinned operators
-     * @return collection of downstream operators
-     */
-    std::vector<OperatorNodePtr> getDownStreamPinnedOperatorsForPartialPlacement(QueryPlanPtr queryPlan);
+    std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators, bool partialPlacement = false);
 
     /**
      * This method checks if the operators in the list are pinned or not

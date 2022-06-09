@@ -75,7 +75,7 @@ void TopDownStrategy::performOperatorPlacement(QueryId queryId,
     for (const auto& pinnedDownStreamOperator : pinnedDownStreamOperators) {
         NES_TRACE("TopDownStrategy: Get the topology node for the sink operator.");
         auto nodeId = std::any_cast<uint64_t>(pinnedDownStreamOperator->getProperty(PINNED_NODE_ID));
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId, pinnedDownStreamOperator->getId());
 
         // 1. If pinned down stream operator was already placed then place all its upstream operators
         if (pinnedDownStreamOperator->hasProperty(PLACED) && std::any_cast<bool>(pinnedDownStreamOperator->getProperty(PLACED))) {
@@ -140,7 +140,7 @@ void TopDownStrategy::placeOperator(QueryId queryId,
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
                 NES_DEBUG("TopDownStrategy: Received Source operator for placement.");
                 auto nodeId = std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID));
-                auto pinnedSourceOperatorLocation = getTopologyNode(nodeId);
+                auto pinnedSourceOperatorLocation = getTopologyNode(nodeId, operatorNode->getId());
                 if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSourceOperatorLocation;
@@ -334,7 +334,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(
         upStreamOperators.pop_back();
         if (upStreamOperator->hasProperty(PINNED_NODE_ID)) {
             auto nodeId = std::any_cast<uint64_t>(upStreamOperator->getProperty(PINNED_NODE_ID));
-            auto pinnedTopologyNode = getTopologyNode(nodeId);
+            auto pinnedTopologyNode = getTopologyNode(nodeId,upStreamOperator->getId());
             upStreamTopologyNodes.emplace_back(pinnedTopologyNode);
             continue;
         }
