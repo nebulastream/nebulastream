@@ -34,8 +34,7 @@ class DefaultQueryCompiler : public QueryCompiler {
     static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options,
                                    Phases::PhaseFactoryPtr const& phaseFactory,
                                    Compiler::JITCompilerPtr jitCompiler,
-                                   bool sourceSharing = false,
-                                   bool useCompilationCache = false);
+                                   bool sourceSharing = false);
 
     /**
     * @brief Submits a new query compilation request for compilation.
@@ -48,8 +47,7 @@ class DefaultQueryCompiler : public QueryCompiler {
     DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                          Phases::PhaseFactoryPtr const& phaseFactory,
                          Compiler::JITCompilerPtr jitCompiler,
-                         bool sourceSharing,
-                         bool useCompilationCache);
+                         bool sourceSharing);
 
     LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
@@ -60,7 +58,6 @@ class DefaultQueryCompiler : public QueryCompiler {
     PredicationOptimizationPhasePtr predicationOptimizationPhase;
     CodeGenerationPhasePtr codeGenerationPhase;
     bool sourceSharing;
-    bool useCompilationCache;
 };
 
 }// namespace NES::QueryCompilation

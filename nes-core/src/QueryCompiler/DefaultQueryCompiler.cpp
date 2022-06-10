@@ -38,8 +38,7 @@ namespace NES::QueryCompilation {
 DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                                            Phases::PhaseFactoryPtr const& phaseFactory,
                                            Compiler::JITCompilerPtr jitCompiler,
-                                           bool sourceSharing,
-                                           bool useCompilationCache)
+                                           bool sourceSharing)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
       lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options, sourceSharing)),
@@ -47,16 +46,15 @@ DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& option
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
       bufferOptimizationPhase(phaseFactory->createBufferOptimizationPhase(options)),
       predicationOptimizationPhase(phaseFactory->createPredicationOptimizationPhase(options)),
-      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))), sourceSharing(sourceSharing),
-      useCompilationCache(useCompilationCache) {}
+      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))), sourceSharing(sourceSharing)
+       {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& options,
                                               Phases::PhaseFactoryPtr const& phaseFactory,
                                               Compiler::JITCompilerPtr jitCompiler,
-                                              bool sourceSharing,
-                                              bool useCompilationCache) {
+                                              bool sourceSharing) {
     return std::make_shared<DefaultQueryCompiler>(
-        DefaultQueryCompiler(options, phaseFactory, std::move(jitCompiler), sourceSharing, useCompilationCache));
+        DefaultQueryCompiler(options, phaseFactory, std::move(jitCompiler), sourceSharing));
 }
 
 QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationRequestPtr request) {
