@@ -59,7 +59,7 @@ class LogicalSourceFactory {
      * @param fieldLength the length of the field from yaml
      * @return the appropriate DataTypePtr
      */
-    static DataTypePtr stringToFieldType(std::string fieldType, std::string fieldLength);
+    static DataTypePtr stringToFieldType(std::string fieldType, std::string fieldLength, std::string fieldNodeShape, std::string fieldNodeTensorMemoryFormat);
 };
 }// namespace Configurations
 }// namespace NES

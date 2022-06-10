@@ -18,6 +18,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Common/DataTypes/TensorType.hpp>
 #include <any>
 #include <functional>
 #include <map>
@@ -231,6 +232,13 @@ std::string replaceFirst(std::string origin, const std::string& search, const st
  * @return true if the assignment success, and false otherwise
  */
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
+
+/**
+ *
+ * @param tensorMemoryFormat string with tensor memory format
+ * @return enum for tensor memory format
+ */
+TensorMemoryFormat convertStringToTensorMemoryFormat(const std::string tensorMemoryFormat);
 
 };// namespace Util
 }// namespace NES

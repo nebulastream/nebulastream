@@ -67,7 +67,6 @@ class TensorType : public DataType {
     */
     std::string toString() final;
 
-
     const std::vector<std::size_t> shape;
     DataTypePtr const component;
     TensorMemoryFormat const tensorMemoryFormat;

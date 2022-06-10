@@ -22,9 +22,11 @@ BaseConfiguration::BaseConfiguration(const std::string& name, const std::string&
 
 void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
     auto optionMap = getOptionMap();
+    std::cout << "And now?" << std::endl;
     if (!config.IsMap()) {
         throw ConfigurationException("Malformed YAML configuration file");
     }
+    std::cout << "And now?1" << std::endl;
     for (auto entry = config.Begin(); entry != config.End(); entry++) {
         auto identifier = (*entry).first;
         auto node = (*entry).second;
@@ -36,6 +38,7 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
         if (!config.As<std::string>().empty() && config.As<std::string>() != "\n") {
             throw ConfigurationException("Value for " + identifier + " is empty.");
         }
+        std::cout << "And now?2" << std::endl;
         optionMap[identifier]->parseFromYAMLNode(node);
     }
 }
@@ -57,10 +60,13 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
 void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
     try {
         Yaml::Node config;
+        std::cout << "Where do you stop?" << std::endl;
         Yaml::Parse(config, filePath.c_str());
+        std::cout << "Where do you stop?1" << std::endl;
         if (config.IsNone()) {
             return;
         }
+        std::cout << "Where do you stop?2" << std::endl;
         parseFromYAMLNode(config);
     } catch (std::exception& ex) {
         throw ConfigurationException("Exception while loading configurations from " + filePath + ". Exception: " + ex.what());

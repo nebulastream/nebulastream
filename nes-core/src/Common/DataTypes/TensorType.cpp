@@ -14,15 +14,24 @@ limitations under the License.
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/TensorType.hpp>
+#include <iostream>
 
 namespace NES {
 
 bool TensorType::isEquals(DataTypePtr otherDataType) {
+    std::cout << "Do you have a problem here?" << std::endl;
     if (otherDataType->isTensor()) {
+        std::cout << "Do you have a problem here?1" << std::endl;
         auto const otherTensor = as<TensorType>(otherDataType);
+        std::cout << "Do you have a problem here?2" << std::endl;
+        //todo find out why I cannot use these components
+        bool helper = shape == otherTensor->shape && component->isEquals(otherTensor->component)
+            && tensorMemoryFormat == otherTensor->tensorMemoryFormat;
+        std::cout << (helper ? "true" : "false") << std::endl;
         return shape == otherTensor->shape && component->isEquals(otherTensor->component)
             && tensorMemoryFormat == otherTensor->tensorMemoryFormat;
     }
+    std::cout << "Do you return false?" << std::endl;
     return false;
 }
 

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Util/UtilityFunctions.hpp"
 #include <API/Schema.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -73,8 +74,10 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
             }
 
             auto fieldNodeLength = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH].As<std::string>();
+            auto fieldNodeShape = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_SHAPE].As<std::string>();
+            auto fieldNodeTensorMemoryFormat = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_TENSOR_MEMORY_FORMAT].As<std::string>();
 
-            schema->addField(fieldNodeName, stringToFieldType(fieldNodeType, fieldNodeLength));
+            schema->addField(fieldNodeName, stringToFieldType(fieldNodeType, fieldNodeLength, fieldNodeShape, fieldNodeTensorMemoryFormat));
         }
     } else {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Schema Fields.");
@@ -84,12 +87,20 @@ LogicalSourcePtr LogicalSourceFactory::createFromYaml(Yaml::Node& yamlConfig) {
 }
 
 // TODO: ask in review if this can be moved elsewhere
-DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType, std::string fieldNodeLength) {
+DataTypePtr LogicalSourceFactory::stringToFieldType(std::string fieldNodeType, std::string fieldNodeLength, std::string fieldNodeShape, std::string fieldNodeTensorMemoryFormat) {
     if (fieldNodeType == "CHAR") {
         if (fieldNodeLength.empty() || fieldNodeLength == "\n" || fieldNodeLength == "0") {
             NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length properly.");
         }
         return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
+    }
+
+    if (fieldNodeTensorMemoryFormat == "DENSE"){
+        if (fieldNodeShape.empty() || fieldNodeShape == "\n" || fieldNodeShape == "0") {
+            NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length properly.");
+        }
+        std::vector<size_t> shape = NES::Util::splitWithStringDelimiter<uint64_t>(fieldNodeShape, ",");
+        return DataTypeFactory::createTensor(shape, fieldNodeType, fieldNodeTensorMemoryFormat);
     }
 
     if (fieldNodeType == "BOOLEAN") {

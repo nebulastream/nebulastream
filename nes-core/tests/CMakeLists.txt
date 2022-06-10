@@ -376,6 +376,11 @@ target_link_libraries(query-plan-tests nes-tests)
 add_test(NAME query-plan-tests COMMAND query-plan-tests)
 
 
+# Tensor Integration tests
+add_executable(tensor-test "Integration/TensorTest.cpp")
+target_link_libraries(tensor-test nes-tests)
+add_test(NAME tensor-test COMMAND tensor-test)
+
 # Lambda Source Integration tests
 add_executable(lambda-source-integration-test "Integration/LambdaSourceIntegrationTest.cpp")
 target_link_libraries(lambda-source-integration-test nes-tests)

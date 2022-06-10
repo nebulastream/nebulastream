@@ -25,6 +25,7 @@
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -87,11 +88,36 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& com
     return std::make_shared<ArrayType>(length, component);
 }
 
-DataTypePtr DataTypeFactory::createTensor(std::vector<std::size_t> shape, const DataTypePtr& component, TensorMemoryFormat tensorType){
-    return std::make_shared<TensorType>(shape, component, tensorType);
+DataTypePtr DataTypeFactory::createTensor(std::vector<std::size_t> shape, const std::string component, std::string tensorType) {
+
+    DataTypePtr dataType;
+
+    if (component == "INT8") {
+        dataType = DataTypeFactory::createInt8();
+    } else if (component == "UINT8") {
+        dataType = DataTypeFactory::createUInt8();
+    } else if (component == "INT16") {
+        dataType = DataTypeFactory::createInt16();
+    } else if (component == "UINT16") {
+        dataType = DataTypeFactory::createUInt16();
+    } else if (component == "INT32") {
+        dataType = DataTypeFactory::createInt32();
+    } else if (component == "UINT32") {
+        dataType = DataTypeFactory::createUInt32();
+    } else if (component == "INT64") {
+        dataType = DataTypeFactory::createInt64();
+    } else if (component == "UINT64") {
+        dataType = DataTypeFactory::createUInt64();
+    } else if (component == "FLOAT32") {
+        dataType = DataTypeFactory::createFloat();
+    } else if (component == "FLOAT64") {
+        dataType = DataTypeFactory::createDouble();
+    }
+
+    TensorMemoryFormat tensorMemoryFormat = NES::Util::convertStringToTensorMemoryFormat(tensorType);
+
+    return std::make_shared<TensorType>(shape, dataType, tensorMemoryFormat);
 }
-
-
 
 DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }
 

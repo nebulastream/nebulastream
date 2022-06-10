@@ -181,4 +181,13 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
 
     return true;
 }
+
+TensorMemoryFormat Util::convertStringToTensorMemoryFormat(const std::string tensorMemoryFormat){
+
+    if (tensorMemoryFormat == "DENSE"){
+        return TensorMemoryFormat::DENSE;
+    }
+    return TensorMemoryFormat::DENSE;
+}
+
 }// namespace NES
