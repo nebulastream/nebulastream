@@ -205,7 +205,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
         if(!this->languageCompiler){
             this->languageCompiler = Compiler::CPPCompiler::create();
         }
-        auto jitCompilerBuilder = (!this->jitCompiler)
+        this->jitCompiler = (!this->jitCompiler)
             ? Compiler::JITCompilerBuilder()
                   .registerLanguageCompiler(languageCompiler)
                   .setUseCompilationCache(workerConfiguration->queryCompiler.useCompilationCache)
