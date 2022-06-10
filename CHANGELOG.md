@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.2.47](https://github.com/nebulastream/nebulastream/tree/v0.2.47) (2022-06-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.46...v0.2.47)
+
+### Bug Fixes 🐛
+
+- \[BUG\] remove debug output in lambda source [\#2832](https://github.com/nebulastream/nebulastream/issues/2832)
+
 ## [v0.2.46](https://github.com/nebulastream/nebulastream/tree/v0.2.46) (2022-06-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.45...v0.2.46)
