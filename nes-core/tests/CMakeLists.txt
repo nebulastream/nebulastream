@@ -581,6 +581,10 @@ add_executable(location-provider-csv-unit-tests "UnitTests/Spatial/LocationProvi
 target_link_libraries(location-provider-csv-unit-tests nes-tests)
 add_test(NAME location-provider-csv-unit-tests COMMAND location-provider-csv-unit-tests)
 
+### Trajectory Predictor Test ###
+add_executable(trajectory-predictor-tests "UnitTests/Spatial/TrajectoryPredictorTest.cpp")
+target_link_libraries(trajectory-predictor-tests nes-tests)
+add_test(NAME trajectory-predictor-tests COMMAND trajectory-predictor-tests)
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")

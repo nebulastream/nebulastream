@@ -275,7 +275,6 @@ std::pair<S2Point, S1Angle> TrajectoryPredictor::findPathCoverage(const S2Polyli
     return {coverageEnd, coverageAngleOnLine};
 }
 
-//todo: check if we want to use parameters instead of attributes
 void TrajectoryPredictor::scheduleReconnects() {
     //after a reconnect the the coverage of the current parent needs to be calculated
     Timestamp bufferTravelTime = locationBuffer.back().second - locationBuffer.front().second;

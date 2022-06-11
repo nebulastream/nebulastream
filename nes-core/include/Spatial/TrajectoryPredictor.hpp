@@ -109,8 +109,8 @@ class TrajectoryPredictor {
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> reconnectVector;
     bool updateDownloadedNodeIndex(Index::Experimental::Location currentLocation);
     bool downloadFieldNodes();
-    S2Point locationToS2Point(Index::Experimental::Location location);
-    Index::Experimental::Location s2pointToLocation(S2Point point);
+    static S2Point locationToS2Point(Index::Experimental::Location location);
+    static Index::Experimental::Location s2pointToLocation(S2Point point);
 
     ReconnectConfiguratorPtr reconnectConfigurator;
     std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> getNextReconnect();
