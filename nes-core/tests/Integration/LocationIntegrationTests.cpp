@@ -480,6 +480,7 @@ TEST_F(LocationIntegrationTests, buildReconnectScheduleScenario) {
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     //coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    uint64_t rpcPortWrk1 = 6000;
     coordinatorConfig->restPort = 8081;
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -566,6 +567,18 @@ TEST_F(LocationIntegrationTests, buildReconnectScheduleScenario) {
         locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getCoordinates()));
         idCount++;
     }
+
+    NES_INFO("start worker 1");
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
+    wrkConf1->rpcPort = rpcPortWrk1;
+    wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
+    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), std::move(mobilityConfiguration1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart1);
+
     //std::getchar();
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);

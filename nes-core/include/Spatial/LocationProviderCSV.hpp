@@ -57,6 +57,8 @@ class LocationProviderCSV : public LocationProvider {
      */
     std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation() override;
 
+    const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& getWaypoints();
+
   private:
 
     Timestamp startTime;
