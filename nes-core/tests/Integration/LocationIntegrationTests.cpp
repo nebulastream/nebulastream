@@ -34,6 +34,9 @@
 #include <Util/TimeMeasurement.hpp>
 #include <gtest/gtest.h>
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
+#include <Spatial/TrajectoryPredictor.hpp>
+#include <Spatial/ReconnectSchedule.hpp>
+#include <Util/Experimental/S2Conversion.hpp>
 
 using std::map;
 using std::string;
@@ -475,6 +478,178 @@ TEST_F(LocationIntegrationTests, testGetLocationViaRPC) {
     EXPECT_FALSE(loc4->isValid());
 }
 
+TEST_F(LocationIntegrationTests, testReconnecting) {
+    NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
+    size_t coverage = 5000;
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    //coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    //uint64_t rpcPortWrk1 = 6000;
+    //coordinatorConfig->restPort = 8081;
+    NES_INFO("start coordinator")
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("coordinator started successfully")
+
+    TopologyPtr topology = crd->getTopology();
+    auto locIndex = topology->getLocationIndex();
+
+    //TopologyNodePtr node = TopologyNode::create(3, "127.0.0.1", 0, 0, 0);
+    TopologyNodePtr node = topology->getRoot();
+    //TopologyNodePtr node2 = TopologyNode::create(4, "127.0.0.1", 1, 0, 0);
+    //node2->setFixedCoordinates(52.51, 13.4);
+    //topology->addNewTopologyNodeAsChild(node, node2);
+    std::vector<NES::Spatial::Index::Experimental::Location> locVec = {
+        {52.53024925374664, 13.440408001670573},
+        {52.44959193751221, 12.994693532702838},
+        {52.58394737653231, 13.404557656002641},
+        {52.48534029037908, 12.984138457171484},
+        {52.37433823627218, 13.558651957244951},
+        {52.51533875315059, 13.241771507925069},
+        {52.55973107205912, 13.015653271890772},
+        {52.63119966549814, 13.441159505328082},
+        {52.52554704888443, 13.140415389311752},
+        {52.482596286130494, 13.292443465145574},
+        {52.54298642356826, 13.73191525503437},
+        {52.42678133005856, 13.253118169911525},
+        {52.49621174869779, 13.660943763979146},
+        {52.45590365225229, 13.683553731893118},
+        {52.62859441558, 13.135969230535936},
+        {52.49564618880393, 13.333672868668472},
+        {52.58790396655713, 13.283405589901832},
+        {52.43730546215479, 13.288472865017477},
+        {52.452625895558846, 13.609715377620118},
+        {52.604381034747234, 13.236153100778251},
+        {52.52406858008703, 13.202905224067974},
+        {52.48532771063918, 13.248322218507269},
+        {52.50023010173765, 13.35516100143647},
+        {52.5655774963026, 13.416236069617133},
+        {52.56839177666675, 13.311990021109548},
+        {52.42881523569258, 13.539510531504995},
+        {52.55745803205775, 13.521177091034348},
+        {52.378590211721814, 13.39387224077735},
+        {52.45968932886132, 13.466172426273232},
+        {52.60131778672673, 13.6759151640276},
+        {52.59382248148305, 13.17751716953493},
+        {52.51690603363213, 13.627430091500505},
+        {52.40035318355461, 13.386405495784041},
+        {52.49369404130713, 13.503477002208028},
+        {52.52102316662499, 13.231109595273479},
+        {52.6264057419334, 13.239482930461145},
+        {52.45997462557177, 13.038370380285766},
+        {52.405581430754694, 12.994506535621692},
+        {52.5165220102255, 13.287867202522792},
+        {52.61937748717004, 13.607622490869543},
+        {52.620153404197254, 13.236774758123099},
+        {52.53095039302521, 13.150218024942914},
+        {52.60042748492653, 13.591960614892749},
+        {52.44688258081577, 13.091132219453291},
+        {52.44810624782493, 13.189186365976528},
+        {52.631904019035325, 13.099599387131189},
+        {52.51607843891218, 13.361003233097668},
+        {52.63920358795863, 13.365640690678045},
+        {52.51050545031392, 13.687455299147123},
+        {52.42516226249599, 13.597154340475155},
+        {52.585620728658185, 13.177440252255762},
+        {52.54251642039891, 13.270687079693818},
+        {52.62589583837628, 13.58922212327232},
+        {52.63840628658707, 13.336777486335386},
+        {52.382935034604074, 13.54689828854007},
+        {52.46173261319607, 13.637993027984113},
+        {52.45558349451082, 13.774558360650097},
+        {52.50660545385822, 13.171564805090318},
+        {52.38586011054127, 13.772290920473052},
+        {52.4010561708298, 13.426889487526187}
+    };
+
+    S2PointIndex<uint64_t> nodeIndex;
+    size_t idCount = 10000;
+    for (auto elem : locVec) {
+        TopologyNodePtr currNode = TopologyNode::create(idCount, "127.0.0.1", 1, 0, 0);
+        currNode->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE);
+        currNode->setFixedCoordinates(elem);
+        topology->addNewTopologyNodeAsChild(node, currNode);
+        locIndex->initializeFieldNodeCoordinates(currNode, *(currNode->getCoordinates()));
+        nodeIndex.Add(NES::Spatial::Index::Experimental::locationToS2Point(*currNode->getCoordinates()), currNode->getId());
+        idCount++;
+    }
+
+    NES_INFO("start worker 1");
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
+    //wrkConf1->rpcPort = rpcPortWrk1;
+    wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
+    wrkConf1->parentId.setValue(10006);
+    mobilityConfiguration1->nodeInfoDownloadRadius.setValue(20000);
+    mobilityConfiguration1->nodeIndexUpdateThreshold.setValue(5000);
+    mobilityConfiguration1->pathPredictionUpdateInterval.setValue(10);
+    mobilityConfiguration1->locationBufferSaveRate.setValue(1);
+    mobilityConfiguration1->pathPredictionLength.setValue(40000);
+    mobilityConfiguration1->defaultCoverageRadius.setValue(5000);
+    mobilityConfiguration1->sendLocationUpdateInterval.setValue(1000);
+    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
+    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocationsSlow2.csv");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), mobilityConfiguration1);
+    if (wrk1->getWorkerConfiguration()->parentId.getValue() != 0) {
+        NES_INFO("start with dedicated parent=" << wrk1->getWorkerConfiguration()->parentId.getValue());
+        wrk1->setWithParent(wrk1->getWorkerConfiguration()->parentId.getValue());
+    }
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    auto waypoints = std::dynamic_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(wrk1->getLocationProvider())->getWaypoints();
+    auto reconnectSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
+    while (!reconnectSchedule->getLastIndexUpatePosition()) {
+        NES_DEBUG("reconnect schedule does not yet contain index update position")
+        reconnectSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
+    }
+
+    //keep looping until the final waypoint is reched
+    for (auto workerLocation = wrk1->getLocationProvider()->getLocation(); *workerLocation != *waypoints.back().first; workerLocation = wrk1->getLocationProvider()->getLocation()) {
+        //test local node index
+        NES::Spatial::Index::Experimental::LocationPtr indexUpdatePosition = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpatePosition();
+        if (indexUpdatePosition) {
+            S2ClosestPointQuery<uint64_t> query(&nodeIndex);
+            query.mutable_options()->set_max_distance(
+                S2Earth::MetersToAngle(mobilityConfiguration1->nodeInfoDownloadRadius.getValue()));
+            S2ClosestPointQuery<int>::PointTarget target(
+                NES::Spatial::Index::Experimental::locationToS2Point(*indexUpdatePosition));
+            auto closestNodeList = query.FindClosestPoints(&target);
+            EXPECT_GT(closestNodeList.size(), 1);
+            if (closestNodeList.size(), wrk1->getTrajectoryPredictor()->getSizeOfSpatialIndex()) {
+                for (auto result : closestNodeList) {
+                    NES::Spatial::Index::Experimental::Location loc;
+                    loc = wrk1->getTrajectoryPredictor()->getNodeLocationById(result.data());
+                    if (!loc.isValid()) {
+                        auto newDownloadPos = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpatePosition();
+                        if (newDownloadPos) {
+                            NES_DEBUG("new downloaded position is not null, checking if it changed and breaking out of loop")
+                            EXPECT_NE(*indexUpdatePosition, *(newDownloadPos));
+                        } else {
+                            NES_DEBUG("new downloaded node index is null, breaking out of loop")
+                        }
+                        break;
+                    }
+                    EXPECT_TRUE(S2::ApproxEquals(NES::Spatial::Index::Experimental::locationToS2Point(loc), result.point()));
+                }
+            } else {
+                auto newDownloadPos = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpatePosition();
+                EXPECT_NE(*indexUpdatePosition, *(newDownloadPos));
+                break;
+            }
+        }
+
+        //testing path prediction
+
+    }
+
+    //std::getchar();
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+}
+
 TEST_F(LocationIntegrationTests, buildReconnectScheduleScenario) {
     NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
@@ -568,18 +743,9 @@ TEST_F(LocationIntegrationTests, buildReconnectScheduleScenario) {
         idCount++;
     }
 
-    NES_INFO("start worker 1");
-    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
-    wrkConf1->rpcPort = rpcPortWrk1;
-    wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
-    mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), std::move(mobilityConfiguration1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    EXPECT_TRUE(retStart1);
 
-    //std::getchar();
+
+    std::getchar();
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 };

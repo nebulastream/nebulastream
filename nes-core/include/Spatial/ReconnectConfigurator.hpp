@@ -20,6 +20,8 @@
 #include <s2/s2point.h>
 #include <s2/s1angle.h>
 #include <thread>
+#include <atomic>
+#include <mutex>
 
 namespace NES {
 class NesWorker;
@@ -49,6 +51,8 @@ namespace Mobility::Experimental {
 
         void periodicallyUpdateLocation();
 
+        bool stopPeriodicUpdating();
+
         /**
          *
          * @param scheduledReconnect
@@ -57,6 +61,9 @@ namespace Mobility::Experimental {
         bool update(const std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>& scheduledReconnect);
         bool reconnect(uint64_t oldParent, uint64_t newParent);
       private:
+        //todo: where do we need mutexes here?
+        std::atomic<bool> sendUpdates;
+        std::recursive_mutex reconnectConfigMutex;
         NesWorker& worker;
         CoordinatorRPCCLientPtr coordinatorRpcClient;
         std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> lastTransmittedReconnectPrediction;
