@@ -34,19 +34,40 @@ class NESIRDumpHandler {
     virtual ~NESIRDumpHandler() = default;
     static std::shared_ptr<NESIRDumpHandler> create(std::ostream& out);
     explicit NESIRDumpHandler(std::ostream& out);
+
     /**
-    * Dump the specific node and its children.
+    * @brief Dump the NESIR of the funcOp into the 'out' stringstream.
+    * @param funcOp: FunctionOperation that exists on the top level of a NESIR module.
     */
     void dump(const std::shared_ptr<Operations::FunctionOperation> funcOp);
 
   private:
     std::ostream& out;
-    std::unordered_set<std::string> visitedBlocks;
+    std::unordered_set<std::string> visitedBlocks; //We keep track of visited blocks to avoid multi or infinite dumping.
 
-    IR::BasicBlockPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel) ;
-    void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out) ;
-    void dumpHelper(OperationPtr const& op, uint64_t indent, std::ostream& out, int32_t scopeLevel, bool isLoopHead = false) ;
-    void dumpHelper(BasicBlockPtr const& basicBlock, uint64_t indent, std::ostream& out, bool isLoopHead = false) ;
+    /**
+     * @brief Traverses the NESIR to find a BB that is on the same or higher 'blockScopeLevel' compared to the initial 'basicBlock'.
+     *        Note: There is always a 'next block', since we always have a return block at the very end of a function.
+     * @param basicBlock: Initially the block that we want to find the next BB for. Replaced while recursively traversing NESIR. 
+     * @param blockScopeLevel: The scopeLevel of the initial BB that we are searching the next same/higher level BB for.
+     * @return IR::BasicBlockPtr: SharedPtr to the next block that resides on the same or on a higher level.
+     */
+    IR::BasicBlockPtr getNextLowerOrEqualLevelBasicBlock(IR::BasicBlockPtr basicBlock, int blockScopeLevel) ;
+
+    /**
+     * @brief Handle dumping terminator operations(LoopOp, BranchOp, IfOp, ReturnOp) to the 'out' stringstream.
+     * 
+     * @param terminatorOp: Terminator operation that we append to the 'out' stringstream.
+     * @param scopeLevel: scopeLevel of the BasicBlock that is terminated by the terminator operation.
+     */
+    void dumpHelper(OperationPtr const& terminatorOp, int32_t scopeLevel) ;
+
+    /**
+     * @brief Handle dumping BasicBlocks to the 'out' stringstream. Print all operations, then handle the terminatorOp.
+     * 
+     * @param basicBlock: The basicBlock that is dumped to the 'out' stringstream.
+     */
+    void dumpHelper(BasicBlockPtr const& basicBlock) ;
 };
 
 }// namespace ExecutionEngine::Experimental::IR

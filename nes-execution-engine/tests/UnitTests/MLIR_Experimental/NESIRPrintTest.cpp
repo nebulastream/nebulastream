@@ -103,13 +103,11 @@ saveBB(BasicBlockPtr basicBlock, std::unordered_map<std::string, BasicBlockPtr>&
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing an AddOperation.
  */
-TEST_F(MLIRGeneratorIfTest, DISABLED_printSimpleNESIRwithAddOperation) {
+TEST_F(MLIRGeneratorIfTest, printSimpleNESIRwithAddOperation) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
-    // std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<ExecutionEngine::Experimental::IR::NESIR>();
-
 
     nesIR->addRootOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::FunctionOperation>("execute", executeArgTypes, executeArgNames, ExecutionEngine::Experimental::IR::Operations::Operation::INT64))
         ->addFunctionBasicBlock(
@@ -117,26 +115,14 @@ TEST_F(MLIRGeneratorIfTest, DISABLED_printSimpleNESIRwithAddOperation) {
                 ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstantIntOperation>("int1", 5, 64))
                 ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstantIntOperation>("int2", 4, 64))
                 ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::AddIntOperation>("add", "int1", "int2"))
-                // TODO enable return of add result
                 ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ReturnOperation>(0)));
-
-    std::string resultString = R"result(NESIR {
-    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
-
-    executeBodyBB(InputTupleBuffer, OutputTupleBuffer):
-        ConstantInt64Operation_int1(5)
-        ConstantInt64Operation_int2(4)
-        AddIntOperation_add(int1, int2)
-        ReturnOperation(0)
-})result";
     NES_DEBUG("\n\n" << nesIR->toString());
-    assert(resultString == nesIR->toString());
 }
 
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing an AddOperation.
  */
-TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRwithIFOperation) {
+TEST_F(MLIRGeneratorIfTest, printNESIRwithIFOperation) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -197,51 +183,13 @@ TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRwithIFOperation) {
                                                     std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
                                                 ->addNextBlock(savedBBs["loopHeadBB"]))))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))));
-
-    std::string resultString = R"result(NESIR {
-    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
-
-    executeBodyBB(inputTupleBuffer, outputTupleBuffer):
-        ConstantInt64Operation_iOp(0)
-        ConstantInt64Operation_const1Op(1)
-        ProxyCallOperation_getInDataBufOp(inputTupleBuffer)
-        ProxyCallOperation_getOutDataBufOp(outputTupleBuffer)
-        ProxyCallOperation_getNumTuplesOp(inputTupleBuffer)
-        LoopOperation()
-
-    loopHeadBB(iOp):
-        CompareOperation_loopHeadCompareOp(iOp, getNumTuplesOp)
-        IfOperation(iOp)
-
-    loopBodyBB(iOp):
-        AddressOperation_inputAddressOp(9, 1, iOp, getInDataBufOp)
-        LoadOperation_loadValOp(inputAddressOp)
-        ConstantInt64Operation_const42Op(42)
-        AddIntOperation_loopBodyAddOp(loadValOp, const42Op)
-        ConstantInt64Operation_const46Op(46)
-        CompareOperation_loopBodyIfCompareOp(loopBodyAddOp, const46Op)
-        IfOperation(iOp, loopBodyAddOp)
-
-    thenBB(iOp, loopBodyAddOp):
-        AddressOperation_outputAddressOp(8, 0, iOp, getOutDataBufOp)
-        StoreOperation(loopBodyAddOp, outputAddressOp)
-        BranchOperation(iOp)
-
-    loopEndBB(iOp):
-        AddIntOperation_loopEndIncIOp(iOp, const1Op)
-        BranchOperation(loopEndIncIOp)
-
-    executeReturnBB():
-        ReturnOperation(0)
-})result";
     NES_DEBUG("\n\n" << nesIR->toString());
-    // assert(resultString == nesIR->toString());
 }
 
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing a loop and If-Else cases.
  */
-TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRwithIFElseOperation) {
+TEST_F(MLIRGeneratorIfTest, printNESIRwithIFElseOperation) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -310,45 +258,7 @@ TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRwithIFElseOperation) {
                                         ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
                                         ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))));
-
-    std::string resultString = R"result(NESIR {
-    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
-
-    executeBodyBB(inputTupleBuffer, outputTupleBuffer):
-        ConstantInt64Operation_iOp(0)
-        ConstantInt64Operation_const1Op(1)
-        ProxyCallOperation_getInDataBufOp(inputTupleBuffer)
-        ProxyCallOperation_getOutDataBufOp(outputTupleBuffer)
-        ProxyCallOperation_getNumTuplesOp(inputTupleBuffer)
-        LoopOperation()
-
-    loopHeadBB(iOp):
-        CompareOperation_loopHeadCompareOp(iOp, getNumTuplesOp)
-        IfOperation(iOp)
-
-    loopBodyBB(iOp):
-        AddressOperation_inputAddressOp(9, 1, iOp, getInDataBufOp)
-        LoadOperation_loadValOp(inputAddressOp)
-        ConstantInt64Operation_const42Op(42)
-        AddIntOperation_loopBodyAddOp(loadValOp, const42Op)
-        ConstantInt64Operation_const46Op(46)
-        CompareOperation_loopBodyIfCompareOp(loopBodyAddOp, const46Op)
-        IfOperation(iOp, loopBodyAddOp)
-
-    thenBB(iOp, loopBodyAddOp):
-        AddressOperation_outputAddressOp(8, 0, iOp, getOutDataBufOp)
-        StoreOperation(loopBodyAddOp, outputAddressOp)
-        BranchOperation(iOp)
-
-    loopEndBB(iOp):
-        AddIntOperation_loopEndIncIOp(iOp, const1Op)
-        BranchOperation(loopEndIncIOp)
-
-    executeReturnBB():
-        ReturnOperation(0)
-})result";
     NES_DEBUG("\n\n" << nesIR->toString());
-    // assert(resultString == nesIR->toString());
 }
 
 /**
@@ -432,51 +342,13 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithIfElseFollowUp) {
                                             std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "elseAddOp"}))
                                         ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))));
-
-    std::string resultString = R"result(NESIR {
-    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
-
-    executeBodyBB(inputTupleBuffer, outputTupleBuffer):
-        ConstantInt64Operation_iOp(0)
-        ConstantInt64Operation_const1Op(1)
-        ProxyCallOperation_getInDataBufOp(inputTupleBuffer)
-        ProxyCallOperation_getOutDataBufOp(outputTupleBuffer)
-        ProxyCallOperation_getNumTuplesOp(inputTupleBuffer)
-        LoopOperation()
-
-    loopHeadBB(iOp):
-        CompareOperation_loopHeadCompareOp(iOp, getNumTuplesOp)
-        IfOperation(iOp)
-
-    loopBodyBB(iOp):
-        AddressOperation_inputAddressOp(9, 1, iOp, getInDataBufOp)
-        LoadOperation_loadValOp(inputAddressOp)
-        ConstantInt64Operation_const42Op(42)
-        AddIntOperation_loopBodyAddOp(loadValOp, const42Op)
-        ConstantInt64Operation_const46Op(46)
-        CompareOperation_loopBodyIfCompareOp(loopBodyAddOp, const46Op)
-        IfOperation(iOp, loopBodyAddOp)
-
-    thenBB(iOp, loopBodyAddOp):
-        AddressOperation_outputAddressOp(8, 0, iOp, getOutDataBufOp)
-        StoreOperation(loopBodyAddOp, outputAddressOp)
-        BranchOperation(iOp)
-
-    loopEndBB(iOp):
-        AddIntOperation_loopEndIncIOp(iOp, const1Op)
-        BranchOperation(loopEndIncIOp)
-
-    executeReturnBB():
-        ReturnOperation(0)
-})result";
     NES_DEBUG("\n\n" << nesIR->toString());
-    // assert(resultString == nesIR->toString());
 }
 
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing a loop and If-Else cases.
  */
-TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRWithNestedIfElse) {
+TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -584,51 +456,14 @@ TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRWithNestedIfElse) {
                                         std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
                                     ->addNextBlock(savedBBs["loopEndBB"])))
                     ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))));
-
-    std::string resultString = R"result(NESIR {
-    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
-
-    executeBodyBB(inputTupleBuffer, outputTupleBuffer):
-        ConstantInt64Operation_iOp(0)
-        ConstantInt64Operation_const1Op(1)
-        ProxyCallOperation_getInDataBufOp(inputTupleBuffer)
-        ProxyCallOperation_getOutDataBufOp(outputTupleBuffer)
-        ProxyCallOperation_getNumTuplesOp(inputTupleBuffer)
-        LoopOperation()
-
-    loopHeadBB(iOp):
-        CompareOperation_loopHeadCompareOp(iOp, getNumTuplesOp)
-        IfOperation(iOp)
-
-    loopBodyBB(iOp):
-        AddressOperation_inputAddressOp(9, 1, iOp, getInDataBufOp)
-        LoadOperation_loadValOp(inputAddressOp)
-        ConstantInt64Operation_const42Op(42)
-        AddIntOperation_loopBodyAddOp(loadValOp, const42Op)
-        ConstantInt64Operation_const46Op(46)
-        CompareOperation_loopBodyIfCompareOp(loopBodyAddOp, const46Op)
-        IfOperation(iOp, loopBodyAddOp)
-
-    thenBB(iOp, loopBodyAddOp):
-        AddressOperation_outputAddressOp(8, 0, iOp, getOutDataBufOp)
-        StoreOperation(loopBodyAddOp, outputAddressOp)
-        BranchOperation(iOp)
-
-    loopEndBB(iOp):
-        AddIntOperation_loopEndIncIOp(iOp, const1Op)
-        BranchOperation(loopEndIncIOp)
-
-    executeReturnBB():
-        ReturnOperation(0)
-})result";
     NES_DEBUG("\n\n" << nesIR->toString());
-    // assert(resultString == nesIR->toString());
 }
 
 /**
- * @brief Here, we dump the string representation for a simple NESIR containing a loop and If-Else cases.
+ * @brief Constructing an execute func, with a loop that contains an IfOperation. The if-case has a nested IfOperation.
+          In addition to the nested IfOperation has simple follow up Operations after the nested IfOperation.
  */
-TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRWithNestedIfElseFollowUp) {
+TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -753,51 +588,14 @@ TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRWithNestedIfElseFollowUp) {
                                             std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
                                         ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))));
-
-    std::string resultString = R"result(NESIR {
-    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
-
-    executeBodyBB(inputTupleBuffer, outputTupleBuffer):
-        ConstantInt64Operation_iOp(0)
-        ConstantInt64Operation_const1Op(1)
-        ProxyCallOperation_getInDataBufOp(inputTupleBuffer)
-        ProxyCallOperation_getOutDataBufOp(outputTupleBuffer)
-        ProxyCallOperation_getNumTuplesOp(inputTupleBuffer)
-        LoopOperation()
-
-    loopHeadBB(iOp):
-        CompareOperation_loopHeadCompareOp(iOp, getNumTuplesOp)
-        IfOperation(iOp)
-
-    loopBodyBB(iOp):
-        AddressOperation_inputAddressOp(9, 1, iOp, getInDataBufOp)
-        LoadOperation_loadValOp(inputAddressOp)
-        ConstantInt64Operation_const42Op(42)
-        AddIntOperation_loopBodyAddOp(loadValOp, const42Op)
-        ConstantInt64Operation_const46Op(46)
-        CompareOperation_loopBodyIfCompareOp(loopBodyAddOp, const46Op)
-        IfOperation(iOp, loopBodyAddOp)
-
-    thenBB(iOp, loopBodyAddOp):
-        AddressOperation_outputAddressOp(8, 0, iOp, getOutDataBufOp)
-        StoreOperation(loopBodyAddOp, outputAddressOp)
-        BranchOperation(iOp)
-
-    loopEndBB(iOp):
-        AddIntOperation_loopEndIncIOp(iOp, const1Op)
-        BranchOperation(loopEndIncIOp)
-
-    executeReturnBB():
-        ReturnOperation(0)
-})result";
     NES_DEBUG("\n\n" << nesIR->toString());
-    // assert(resultString == nesIR->toString());
 }
 
 /**
- * @brief Here, we dump the string representation for a simple NESIR containing a loop and If-Else cases.
+ * @brief Constructing an execute func, with a loop that contains an IfOperation. The if-case has a nested IfOperation.
+          In addition to the nested IfOperation, the if-case also contains a nested LoopOperation.
  */
-TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRWithNestedIfElseAndLoopFollowUp) {
+TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -980,45 +778,7 @@ TEST_F(MLIRGeneratorIfTest, DISABLED_printNESIRWithNestedIfElseAndLoopFollowUp) 
                                             std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
                                         ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))));
-
-    std::string resultString = R"result(NESIR {
-    FunctionOperation(InputTupleBuffer, OutputTupleBuffer)
-
-    executeBodyBB(inputTupleBuffer, outputTupleBuffer):
-        ConstantInt64Operation_iOp(0)
-        ConstantInt64Operation_const1Op(1)
-        ProxyCallOperation_getInDataBufOp(inputTupleBuffer)
-        ProxyCallOperation_getOutDataBufOp(outputTupleBuffer)
-        ProxyCallOperation_getNumTuplesOp(inputTupleBuffer)
-        LoopOperation()
-
-    loopHeadBB(iOp):
-        CompareOperation_loopHeadCompareOp(iOp, getNumTuplesOp)
-        IfOperation(iOp)
-
-    loopBodyBB(iOp):
-        AddressOperation_inputAddressOp(9, 1, iOp, getInDataBufOp)
-        LoadOperation_loadValOp(inputAddressOp)
-        ConstantInt64Operation_const42Op(42)
-        AddIntOperation_loopBodyAddOp(loadValOp, const42Op)
-        ConstantInt64Operation_const46Op(46)
-        CompareOperation_loopBodyIfCompareOp(loopBodyAddOp, const46Op)
-        IfOperation(iOp, loopBodyAddOp)
-
-    thenBB(iOp, loopBodyAddOp):
-        AddressOperation_outputAddressOp(8, 0, iOp, getOutDataBufOp)
-        StoreOperation(loopBodyAddOp, outputAddressOp)
-        BranchOperation(iOp)
-
-    loopEndBB(iOp):
-        AddIntOperation_loopEndIncIOp(iOp, const1Op)
-        BranchOperation(loopEndIncIOp)
-
-    executeReturnBB():
-        ReturnOperation(0)
-})result";
     NES_DEBUG("\n\n" << nesIR->toString());
-    // assert(resultString == nesIR->toString());
 }
 
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations;
