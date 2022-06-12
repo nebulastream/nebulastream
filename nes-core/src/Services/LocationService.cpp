@@ -35,7 +35,7 @@ web::json::value LocationService::requestNodeLocationDataAsJson(uint64_t nodeId)
 
 web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId) {
     auto nodePtr = topology->findNodeWithId(nodeId);
-    if (!nodePtr || !(nodePtr->getSpatialType() == WorkerSpatialType::MOBILE_NODE)) {
+    if (!nodePtr || nodePtr->getSpatialType() != WorkerSpatialType::MOBILE_NODE) {
         return web::json::value::null();
     }
     auto schedule = nodePtr->getReconnectSchedule();

@@ -476,14 +476,13 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
     Status status = workerStub->GetReconnectSchedule(&context, request, &reply);
 
     if (reply.has_schedule()) {
-        //todo: also implement the passing of the list of reconnect points here
-        auto schedule = reply.schedule();
+        const auto& schedule = reply.schedule();
         auto start = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathstart());
         auto end = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathend());
         auto lastUpdatePosition = std::make_shared<Spatial::Index::Experimental::Location>(schedule.lastindexupdateposition());
         auto vec = std::make_shared<std::vector<std::tuple<uint64_t, Spatial::Index::Experimental::LocationPtr , Timestamp>>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
-            auto reconnectData = schedule.reconnectpoints(i);
+            const auto& reconnectData = schedule.reconnectpoints(i);
             auto loc = std::make_shared<NES::Spatial::Index::Experimental::Location>(reconnectData.coord().lat(), reconnectData.coord().lng());
             vec->push_back(std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>(reconnectData.id(), loc, reconnectData.time()));
         }

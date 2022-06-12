@@ -256,6 +256,12 @@ bool NesWorker::stop(bool) {
             NES_DEBUG("NesWorker: join rpcThread");
             rpcThread->join();
         }
+
+        if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
+            trajectoryPredictor->stopReconnectPlanning();
+            reconnectConfigurator->stopPeriodicUpdating();
+            NES_DEBUG("joined mobility threads");
+        }
         rpcServer.reset();
         rpcThread.reset();
         if (statisticOutputThread && statisticOutputThread->joinable()) {
@@ -273,8 +279,6 @@ bool NesWorker::stop(bool) {
 bool NesWorker::connect() {
     std::string coordinatorAddress = workerConfig->coordinatorIp.getValue() + ":" + std::to_string(workerConfig->coordinatorPort);
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(coordinatorAddress);
-    //todo: does this need to be set for all kinds of noces or only for mobile ones?
-    //locationProvider->setUpReconnectPlanning(coordinatorRpcClient);
     std::string localAddress = workerConfig->localWorkerIp.getValue() + ":" + std::to_string(localWorkerRpcPort);
     auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
 
@@ -302,7 +306,7 @@ bool NesWorker::connect() {
 
         locationProvider->setCoordinatorRPCCLient(coordinatorRpcClient);
         if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
-            auto reconnectConfigurator = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this, coordinatorRpcClient, mobilityConfig);
+            reconnectConfigurator = std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectConfigurator>(*this, coordinatorRpcClient, mobilityConfig);
             trajectoryPredictor->setUpReconnectPlanning(reconnectConfigurator);
         }
 
@@ -507,5 +511,7 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 NES::Spatial::Mobility::Experimental::LocationProviderPtr NesWorker::getLocationProvider() { return locationProvider; }
+
+NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr NesWorker::getTrajectoryPredictor() { return trajectoryPredictor; }
 
 }// namespace NES

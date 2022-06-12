@@ -20,6 +20,8 @@
 #include <Configurations/Worker/WorkerMobilityConfiguration.hpp>
 #include <Spatial/ReconnectSchedule.hpp>
 #include <Spatial/ReconnectConfigurator.hpp>
+#include <Util/Experimental/S2Conversion.hpp>
+#include <stdexcept>
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -27,32 +29,43 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, C
     pathPredictionUpdateInterval = configuration->pathPredictionUpdateInterval.getValue();
     locationBufferSize = configuration->locationBufferSize.getValue();
     locationBufferSaveRate = configuration->locationBufferSaveRate.getValue();
-    pathDistanceDeltaAngle = S2Earth::MetersToChordAngle(configuration->pathDistanceDelta.getValue());
+    pathDistanceDeltaAngle = S2Earth::MetersToAngle(configuration->pathDistanceDelta.getValue());
     nodeInfoDownloadRadius = configuration->nodeInfoDownloadRadius.getValue();
     defaultCoverageRadiusAngle = S2Earth::MetersToAngle(configuration->defaultCoverageRadius.getValue());
-    predictedPathLengthAngle = S2Earth::MetersToChordAngle(configuration->pathPredictionLength);
+    predictedPathLengthAngle = S2Earth::MetersToAngle(configuration->pathPredictionLength);
     //todo:  we might want to use a smaller search radius and add this as a parameter
     reconnectSearchRadius = S2Earth::MetersToAngle(nodeInfoDownloadRadius);
     coveredRadiusWithoutThreshold = S2Earth::MetersToAngle(nodeInfoDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
     this->parentId = parentId;
+    updatePrediction = false;
 }
 
 Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSchedule() {
     std::shared_ptr<Index::Experimental::Location> start;
     std::shared_ptr<Index::Experimental::Location> end;
 
-    //check if a path exists and insert invelid locations if it doesn't
+    //check if a path exists and insert invalid locations if it doesn't
     if (trajectoryLine) {
+        std::unique_lock lineLock(trajectoryLineMutex);
         S2LatLng startLatLng(trajectoryLine->vertices_span()[0]);
         start = std::make_shared<Index::Experimental::Location>(startLatLng.lat().degrees(), startLatLng.lng().degrees());
         S2LatLng endLatLng(trajectoryLine->vertices_span()[1]);
         end = std::make_shared<Index::Experimental::Location>(endLatLng.lat().degrees(), endLatLng.lng().degrees());
+        lineLock.unlock();
     } else {
        start = std::make_shared<Index::Experimental::Location>();
        end = std::make_shared<Index::Experimental::Location>();
     }
     auto reconnectVectorPtr = std::make_shared<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>>(reconnectVector);
-    return std::make_shared<Mobility::Experimental::ReconnectSchedule>(start, end, std::make_shared<Index::Experimental::Location>(s2pointToLocation(positionOfLastNodeIndexUpdate)),
+    Index::Experimental::LocationPtr indexUpdatePointer;
+    std::unique_lock indexUpdatePosLock(indexUpdatePositionMutex);
+    if (positionOfLastNodeIndexUpdate) {
+        indexUpdatePointer = std::make_shared<Index::Experimental::Location>(Index::Experimental::s2pointToLocation(positionOfLastNodeIndexUpdate.value()));
+    } else {
+        indexUpdatePointer = nullptr;
+    }
+    indexUpdatePosLock.unlock();
+    return std::make_shared<Mobility::Experimental::ReconnectSchedule>(start, end, indexUpdatePointer,
         reconnectVectorPtr);
 }
 
@@ -63,6 +76,7 @@ bool TrajectoryPredictor::downloadFieldNodes() {
     auto nodeList = locationProvider->getNodeIdsInRange(*positionAtUpdate, nodeInfoDownloadRadius / 1000);
 
     //if we actually received nodes in out vicinity, we can clear the old nodes
+    std::unique_lock nodeIndexLock(nodeIndexMutex);
     if (!nodeList.empty()) {
         fieldNodeMap.clear();
         fieldNodeIndex.Clear();
@@ -76,17 +90,26 @@ bool TrajectoryPredictor::downloadFieldNodes() {
         fieldNodeIndex.Add(S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())), nodeId);
         fieldNodeMap.insert({nodeId, S2Point(S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude()))});
     }
+    nodeIndexLock.unlock();
+
     //save the position of the update so we can check how far we have moved from there later on
+    std::unique_lock positionAtUpdateLock(indexUpdatePositionMutex);
     positionOfLastNodeIndexUpdate = locationToS2Point(*positionAtUpdate);
     NES_TRACE("setting last index update position to " << positionAtUpdate->toString())
     return true;
 }
 
 void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconnectConfigurator) {
+    if (updatePrediction) {
+        NES_DEBUG("there is already a prediction thread running, cannot start another one")
+        return;
+    }
+    updatePrediction = true;
     this->reconnectConfigurator = std::move(reconnectConfigurator);
     downloadFieldNodes();
     NES_DEBUG("Parent Id is: " << parentId)
 
+    std::unique_lock nodeIndexLock(nodeIndexMutex);
     auto iterator = S2PointIndex<uint64_t>::Iterator(&fieldNodeIndex);
     iterator.Begin();
     while(!iterator.done()) {
@@ -101,6 +124,7 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
         NES_DEBUG("parent id does not match any field node in the coverage area. Cannot start reconnect planning")
         return;
     }
+    nodeIndexLock.unlock();
 
     //start reconnect planner thread
     locationUpdateThread = std::make_shared<std::thread>(&TrajectoryPredictor::startReconnectPlanning, this);
@@ -122,7 +146,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
     S2Point nextReconnectNodeLocation;
     auto oldestKnownOwnLocation = locationBuffer.front();
 
-    while (true) {
+    while (updatePrediction) {
         auto currentOwnLocation = locationProvider->getCurrentLocation();
 
         //if locationBufferSaveRate updates have been done since last save: save current location to buffer
@@ -130,8 +154,8 @@ void TrajectoryPredictor::startReconnectPlanning() {
             oldestKnownOwnLocation = locationBuffer.front();
             locationBuffer.pop_front();
             locationBuffer.push_back(currentOwnLocation);
-            NES_DEBUG("added: " << currentOwnLocation.first->toString() << "; " << currentOwnLocation.second);
-            NES_DEBUG("removed: " << oldestKnownOwnLocation.first->toString() << "; " << oldestKnownOwnLocation.second);
+            //NES_DEBUG("added: " << currentOwnLocation.first->toString() << "; " << currentOwnLocation.second);
+            //NES_DEBUG("removed: " << oldestKnownOwnLocation.first->toString() << "; " << oldestKnownOwnLocation.second);
             stepsSinceLastLocationSave = 0;
             //todo: does it make sense here to update since the last position in buffer or should we use the path beginning?
         } else {
@@ -147,6 +171,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             scheduleReconnects();
 
             //check if there are scheduled reconnects
+            std::unique_lock reconnectVectorLock(reconnectVectorMutex);
             if (!reconnectVector.empty()) {
                 nextReconnectNodeLocation = fieldNodeMap.at(get<0>(reconnectVector[0]));
 
@@ -159,6 +184,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
             }
         }
 
+        std::unique_lock reconnectVectorLock(reconnectVectorMutex);
         //if we entered the coverage of the next schedules reconnect node, then reconnect
         if (!reconnectVector.empty() &&
               S1Angle(locationToS2Point(*currentOwnLocation.first),currentParentLocation) >= S1Angle(defaultCoverageRadiusAngle)) {
@@ -185,14 +211,34 @@ void TrajectoryPredictor::startReconnectPlanning() {
                 }
             }
         }
+        reconnectVectorLock.unlock();
         //sleep for the specified amount of time
         std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
     }
 }
 
+bool TrajectoryPredictor::stopReconnectPlanning() {
+    std::unique_lock lineLock(trajectoryLineMutex);
+    std::unique_lock indexPosLock(indexUpdatePositionMutex);
+    std::unique_lock indexLock(nodeIndexMutex);
+    std::unique_lock reconnectVecLock(reconnectVectorMutex);
+    updatePrediction = false;
+    if (locationUpdateThread->joinable()) {
+        NES_DEBUG("TrajectoryPredictor: join reconnect planner thread");
+        locationUpdateThread->join();
+        //locationUpdateThread.reset();
+        return true;
+    } else {
+        NES_ERROR("Trajectory predictor: reconnect planner thread not joinable");
+        NES_THROW_RUNTIME_ERROR("error while stopping thread->join");
+        return false;
+    }
+}
+
 bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Location currentLocation) {
     S2Point currentS2Point(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
-    if (S1Angle(currentS2Point, positionOfLastNodeIndexUpdate) > coveredRadiusWithoutThreshold) {
+    std::unique_lock nodeIndexLock(nodeIndexMutex);
+    if (S1Angle(currentS2Point, positionOfLastNodeIndexUpdate.value()) > coveredRadiusWithoutThreshold) {
         if (downloadFieldNodes() && fieldNodeMap.count(parentId) == 0) {
             NES_DEBUG("current parent was not present in downloaded list, adding it to the index")
             fieldNodeMap.insert({parentId, currentParentLocation});
@@ -207,14 +253,13 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
     int vertexIndex = 0;
     int* vertexIndexPtr = &vertexIndex;
     S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
-    S1ChordAngle distAngle = S2Earth::MetersToChordAngle(0);
+    S1Angle distAngle = S2Earth::MetersToAngle(0);
 
     //if a predicted path exists, calculate how far the workers current location is from the path
+    std::unique_lock trajectoryLock(trajectoryLineMutex);
     if (trajectoryLine) {
         auto pointOnLine = trajectoryLine->Project(currentPoint, vertexIndexPtr);
-        NES_DEBUG("point on line" << pointOnLine);
-        distAngle = S1ChordAngle(currentPoint, pointOnLine);
-        NES_DEBUG("dist: " << S2Earth::ToMeters(distAngle));
+        distAngle = S1Angle(currentPoint, pointOnLine);
     }
 
     //if a predicted path exists and the current position is further away than delta: recompute the path
@@ -281,8 +326,10 @@ void TrajectoryPredictor::scheduleReconnects() {
     S1Angle bufferDistance(locationToS2Point(*locationBuffer.front().first), locationToS2Point(*locationBuffer.back().first));
     double meanDegreesPerNanosec = bufferDistance.degrees() / bufferTravelTime;
     double remainingTime;
-    //reconnectVector.clear();
-    reconnectVector.erase(reconnectVector.begin(), reconnectVector.end());
+    std::unique_lock reconnectVectorLock(reconnectVectorMutex);
+    std::unique_lock trajecotryLock(trajectoryLineMutex);
+    reconnectVector.clear();
+    //reconnectVector.erase(reconnectVector.begin(), reconnectVector.end());
 
         //todo: S1Angle or chordangle?
         auto reconnectionPointTuple = findPathCoverage(trajectoryLine, currentParentLocation, S1Angle(defaultCoverageRadiusAngle));
@@ -347,20 +394,27 @@ void TrajectoryPredictor::scheduleReconnects() {
         }
     }
 }
-S2Point TrajectoryPredictor::locationToS2Point(Index::Experimental::Location location) {
-    return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
-}
-
-Index::Experimental::Location TrajectoryPredictor::s2pointToLocation(S2Point point) {
-    S2LatLng latLng(point);
-    return {latLng.lat().degrees(), latLng.lng().degrees()};
-}
 
 std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> TrajectoryPredictor::getNextReconnect() {
+    std::unique_lock lock(reconnectVectorMutex);
     if (reconnectVector.size() > 1) {
         return reconnectVector.at(0);
     } else {
         return std::nullopt;
     }
 }
+NES::Spatial::Index::Experimental::Location TrajectoryPredictor::getNodeLocationById(uint64_t id) {
+    std::unique_lock lock(nodeIndexMutex);
+    try {
+        return Index::Experimental::s2pointToLocation(fieldNodeMap.at(id));
+    } catch (std::out_of_range& e) {
+        NES_DEBUG("trajectory predictor was queried for node which is not found in its location index")
+        return {};
+    }
+}
+size_t TrajectoryPredictor::getSizeOfSpatialIndex() {
+    std::unique_lock lock(nodeIndexMutex);
+    return fieldNodeMap.size();
+}
+
 }

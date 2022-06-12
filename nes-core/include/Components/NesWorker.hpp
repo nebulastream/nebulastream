@@ -47,6 +47,9 @@ using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 class TrajectoryPredictor;
 using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
 
+class ReconnectConfigurator;
+using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
+
 enum class LocationProviderType;
 }// namespace Spatial::Mobility::Experimental
 
@@ -250,6 +253,8 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     NES::Spatial::Mobility::Experimental::LocationProviderPtr getLocationProvider();
 
+    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr getTrajectoryPredictor();
+
   private:
     /**
      * @brief method to register physical source with the coordinator
@@ -276,6 +281,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     std::string rpcAddress;
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
+    NES::Spatial::Mobility::Experimental::ReconnectConfiguratorPtr reconnectConfigurator;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId;
     HealthCheckServicePtr healthCheckService;

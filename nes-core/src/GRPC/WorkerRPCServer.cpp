@@ -179,6 +179,10 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
 Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) {
     (void) request;
     NES_DEBUG("WorkerRPCServer received location request")
+    if (!locationWrapper) {
+        NES_DEBUG("WorkerRPCServer: locationWrapper not set")
+        return Status::CANCELLED;
+    }
     auto loc = locationWrapper->getLocation();
     Coordinates* coord = reply->mutable_coord();
     coord->set_lat(loc->getLatitude());
