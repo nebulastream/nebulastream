@@ -16,13 +16,13 @@
 #include <cstdint>
 #include <gtest/gtest.h>
 
-#include "API/Query.hpp"
-#include "Common/DataTypes/BasicTypes.hpp"
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
-#include "mlir/IR/AsmState.h"
-#include "mlir/Pass/PassManager.h"
-#include "mlir/Transforms/DialectConversion.h"
-#include "llvm/ExecutionEngine/JITSymbol.h"
+#include <API/Query.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <mlir/IR/AsmState.h>
+#include <mlir/Pass/PassManager.h>
+#include <mlir/Transforms/DialectConversion.h>
+#include <llvm/ExecutionEngine/JITSymbol.h>
 
 #include <Experimental/MLIR/MLIRUtility.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -160,7 +160,6 @@ pair<NES::Runtime::TupleBuffer, NES::Runtime::TupleBuffer> createInAndOutputBuff
         int8_t a;
         int64_t b;
     };
-    //Todo try with vector -> maybe could insert numTuples dynamically
     testTupleStruct testTuplesArray[numTuples] = {testTupleStruct{1, 2}, testTupleStruct{3, 4}};
     auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
     memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
@@ -209,7 +208,6 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFAdd) {
                 ->addOperation(std::make_shared<ConstantIntOperation>("int1", 5, 64))
                 ->addOperation(std::make_shared<ConstantIntOperation>("int2", 4, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("add", "int1", "int2"))
-                // TODO enable return of add result
                 ->addOperation(make_shared<ReturnOperation>(0)));
 
     // NESIR to MLIR
