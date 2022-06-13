@@ -16,7 +16,9 @@
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
+#include <Runtime/Events.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -135,6 +137,23 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
         NES_DEBUG("NetworkSource: stop called on " << nesPartition << " but was already stopped");
     }
     return true;
+}
+
+void NetworkSource::onEvent(Runtime::BaseEvent& event) {
+    NES_DEBUG("NetworkSource: received an event");
+    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+        auto buffer = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<uint64_t>();
+        auto epochBarrier = buffer[0];
+        auto queryId = buffer[1];
+        auto success = queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
+        if (success) {
+            NES_DEBUG("NetworkSource::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
+        }
+        else {
+
+            NES_ERROR("NetworkSource::onEvent:: could not propagate epoch " << epochBarrier << " queryId " << queryId);
+        }
+    }
 }
 
 void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {

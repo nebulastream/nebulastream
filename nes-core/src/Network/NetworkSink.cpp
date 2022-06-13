@@ -14,6 +14,7 @@
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Runtime/Events.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -123,10 +124,17 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::PropagateEpoch: {
+            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
+            auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
-                                                                 << "punctuation= " << task.getUserData<uint64_t>());
-            workerContext.trimStorage(nesPartition, task.getUserData<uint64_t>());
+                                                                 << "punctuation= " << timestamp);
+            auto buffer = bufferManager->getBufferBlocking();
+            auto* writer = buffer.getBuffer<int64_t>();
+            writer[0] = timestamp;
+            writer[1] = queryId;
+            channel->sendEvent<Runtime::CustomEventWrapper>(std::move(buffer));
+            workerContext.trimStorage(nesPartition, timestamp);
             break;
         }
         default: {

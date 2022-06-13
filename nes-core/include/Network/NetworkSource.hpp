@@ -53,6 +53,12 @@ class NetworkSource : public DataSource {
     std::string toString() const override;
 
     /**
+     * @brief This method is called once an event is triggered for the current source
+     * @param event
+     */
+    void onEvent(Runtime::BaseEvent& event) override;
+
+    /**
      * @brief Get source type
      */
     SourceType getType() const override;
