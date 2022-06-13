@@ -47,7 +47,7 @@ class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
 
 class ReconnectConfigurator;
 using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
@@ -76,6 +76,10 @@ class TrajectoryPredictor {
 
     size_t getSizeOfSpatialIndex();
 
+    std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> getNextReconnect();
+
+    std::tuple<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLocationAndTime();
+
   private:
     bool updatePredictedPath(const NES::Spatial::Index::Experimental::LocationPtr& oldLocation, const NES::Spatial::Index::Experimental::LocationPtr& currentLocation);
 
@@ -85,6 +89,7 @@ class TrajectoryPredictor {
     std::recursive_mutex indexUpdatePositionMutex;
     std::recursive_mutex nodeIndexMutex;
     std::recursive_mutex reconnectVectorMutex;
+    std::recursive_mutex lastReconnectTimeMutex; //todo: rename
     std::atomic<bool> updatePrediction;
 
     LocationProviderPtr locationProvider;
@@ -120,7 +125,11 @@ class TrajectoryPredictor {
     bool downloadFieldNodes();
 
     ReconnectConfiguratorPtr reconnectConfigurator;
-    std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> getNextReconnect();
+
+    double bufferAverageMovementSpeed;
+    double allowedSpeedDifferenceFactor;
+    bool updateAverageMovementSpeed();
+    std::tuple<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
 };
 
 }

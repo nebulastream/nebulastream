@@ -38,6 +38,7 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, C
     coveredRadiusWithoutThreshold = S2Earth::MetersToAngle(nodeInfoDownloadRadius - configuration->nodeIndexUpdateThreshold.getValue());
     this->parentId = parentId;
     updatePrediction = false;
+    allowedSpeedDifferenceFactor = 0.00001;
 }
 
 Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSchedule() {
@@ -163,7 +164,7 @@ void TrajectoryPredictor::startReconnectPlanning() {
         }
 
         //check if we deviated more than delta from the old predicted path and update it if needed
-        if (updateDownloadedNodeIndex(*currentOwnLocation.first) || updatePredictedPath(oldestKnownOwnLocation.first, currentOwnLocation.first)) {
+        if (updateDownloadedNodeIndex(*currentOwnLocation.first) || updatePredictedPath(oldestKnownOwnLocation.first, currentOwnLocation.first) || updateAverageMovementSpeed()) {
             NES_INFO("predicted path was recalculated")
 
             //because the path might have changed, the reconnect sequence needs to be recalculated
@@ -193,7 +194,9 @@ void TrajectoryPredictor::startReconnectPlanning() {
             std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> nextReconnect = getNextReconnect();
             if (S1Angle(currentOwnPoint, nextReconnectNodeLocation) <= S1Angle(defaultCoverageRadiusAngle)) {
                 //reconnect and inform coordinator about upcoming reconnect
+                std::unique_lock lastReconnectLock(lastReconnectTimeMutex);
                 reconnectConfigurator->reconnect(parentId, get<0>(reconnectVector.front()));
+                devicePositionTupleAtLastReconnect = currentOwnLocation;
                 reconnectConfigurator->update(nextReconnect);
 
                 //update locally saved information about parent
@@ -209,12 +212,27 @@ void TrajectoryPredictor::startReconnectPlanning() {
                 } else {
                     NES_INFO("no next reconnect scheduled")
                 }
+                lastReconnectLock.unlock();
             }
         }
         reconnectVectorLock.unlock();
         //sleep for the specified amount of time
         std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
     }
+}
+
+bool TrajectoryPredictor::updateAverageMovementSpeed() {
+    Timestamp bufferTravelTime = locationBuffer.back().second - locationBuffer.front().second;
+    S1Angle bufferDistance(locationToS2Point(*locationBuffer.front().first), locationToS2Point(*locationBuffer.back().first));
+    double meanDegreesPerNanosec = bufferDistance.degrees() / bufferTravelTime;
+    if (abs(meanDegreesPerNanosec - bufferAverageMovementSpeed) > bufferAverageMovementSpeed * allowedSpeedDifferenceFactor) {
+       bufferAverageMovementSpeed = meanDegreesPerNanosec;
+       NES_DEBUG("average movement speed was updated to " << bufferAverageMovementSpeed)
+       //NES_DEBUG("meters: " << )
+       NES_DEBUG("threshhold is " << bufferAverageMovementSpeed * allowedSpeedDifferenceFactor)
+       return true;
+    }
+    return false;
 }
 
 bool TrajectoryPredictor::stopReconnectPlanning() {
@@ -290,7 +308,7 @@ std::pair<S2Point, S1Angle> TrajectoryPredictor::findPathCoverage(const S2Polyli
     int vertexIndex = 0;
     auto projectedPoint = path->Project(coveringNode, &vertexIndex);
     auto distanceAngle = S1Angle(coveringNode, projectedPoint);
-    NES_DEBUG("distance from path in meters: " << S2Earth::ToMeters(distanceAngle))
+    NES_TRACE("distance from path in meters: " << S2Earth::ToMeters(distanceAngle))
 
     //if the distance is more than the coverage, it is not possible to cover the line
     if (distanceAngle > coverage) {
@@ -308,23 +326,21 @@ std::pair<S2Point, S1Angle> TrajectoryPredictor::findPathCoverage(const S2Polyli
         return {S2Point(), S1Angle::Degrees(0)};
     }
     double coverageRadiansOnLine = acos(cos(coverage) / divisor);
-    NES_DEBUG("coverage radians on line: " << coverageRadiansOnLine)
     auto coverageAngleOnLine = S1Angle::Radians(coverageRadiansOnLine);
 
     auto verticeSpan = path->vertices_span();
-    NES_INFO("projected point" << S2LatLng(projectedPoint))
     //the polyline always only consists of 2 points, so index 1 is its end
     S2Point coverageEnd = S2::GetPointOnLine(projectedPoint, verticeSpan[1], coverageAngleOnLine);
-    NES_INFO("coverage end" << S2LatLng(coverageEnd))
-    NES_INFO("coverage angle on line" << coverageAngleOnLine.degrees())
     return {coverageEnd, coverageAngleOnLine};
 }
 
 void TrajectoryPredictor::scheduleReconnects() {
     //after a reconnect the the coverage of the current parent needs to be calculated
+    /*
     Timestamp bufferTravelTime = locationBuffer.back().second - locationBuffer.front().second;
     S1Angle bufferDistance(locationToS2Point(*locationBuffer.front().first), locationToS2Point(*locationBuffer.back().first));
     double meanDegreesPerNanosec = bufferDistance.degrees() / bufferTravelTime;
+     */
     double remainingTime;
     std::unique_lock reconnectVectorLock(reconnectVectorMutex);
     std::unique_lock trajecotryLock(trajectoryLineMutex);
@@ -337,7 +353,8 @@ void TrajectoryPredictor::scheduleReconnects() {
             return;
         }
         auto currentParentPathCoverageEnd = reconnectionPointTuple.first;
-        remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), currentParentPathCoverageEnd).degrees() / meanDegreesPerNanosec;
+        //remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), currentParentPathCoverageEnd).degrees() / meanDegreesPerNanosec;
+        remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), currentParentPathCoverageEnd).degrees() / bufferAverageMovementSpeed;
         endOfCoverageETA = locationBuffer.back().second + remainingTime;
 
     auto reconnectLocationOnPath = currentParentPathCoverageEnd;
@@ -374,7 +391,8 @@ void TrajectoryPredictor::scheduleReconnects() {
                 minimumUncoveredRemainingPathDistance = currentUncoveredRemainingPathDistance;
                 //todo: implement calculation here too
                 //remainingTime = S1Angle(previousReconnectLocationOnPath, reconnectLocationOnPath).degrees() / meanDegreesPerNanosec;
-                remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), nextReconnectLocationOnPath).degrees() / meanDegreesPerNanosec;
+                //remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), nextReconnectLocationOnPath).degrees() / meanDegreesPerNanosec;
+                remainingTime = S1Angle(locationToS2Point(*locationBuffer.back().first), nextReconnectLocationOnPath).degrees() / bufferAverageMovementSpeed;
                 nextEstimatedReconnectTime = locationBuffer.back().second + remainingTime;
             }
         }
@@ -389,7 +407,7 @@ void TrajectoryPredictor::scheduleReconnects() {
             reconnectLocationOnPath = nextReconnectLocationOnPath;
             estimatedReconnectTime = nextEstimatedReconnectTime;
         } else {
-            NES_WARNING("no nodes available to cover rest of path")
+            NES_DEBUG("no nodes available to cover rest of path")
             break;
         }
     }
@@ -415,6 +433,12 @@ NES::Spatial::Index::Experimental::Location TrajectoryPredictor::getNodeLocation
 size_t TrajectoryPredictor::getSizeOfSpatialIndex() {
     std::unique_lock lock(nodeIndexMutex);
     return fieldNodeMap.size();
+}
+
+std::tuple<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>
+TrajectoryPredictor::getLastReconnectLocationAndTime() {
+    std::unique_lock lock(lastReconnectTimeMutex);
+    return devicePositionTupleAtLastReconnect;
 }
 
 }

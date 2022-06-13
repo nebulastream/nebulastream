@@ -56,7 +56,7 @@ using LocationPtr = std::shared_ptr<Location>;
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
 }
 
 enum RpcClientModes { Register, Unregister, Start, Stop };

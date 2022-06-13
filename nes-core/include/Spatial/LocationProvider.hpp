@@ -61,7 +61,7 @@ class TrajectoryPredictor;
 using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
 
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
 
 class LocationProvider {
   public:

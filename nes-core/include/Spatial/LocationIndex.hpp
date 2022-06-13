@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
+#include <mutex>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -119,6 +120,8 @@ class LocationIndex {
 
     bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, LocationPtr reconnectLocation, Timestamp reconnectTime);
 
+    std::optional<std::tuple<uint64_t, LocationPtr, Timestamp>> getScheduledReconnect(uint64_t nodeId);
+
   private:
     /**
      * Experimental
@@ -130,6 +133,7 @@ class LocationIndex {
      */
     bool setFieldNodeCoordinates(const TopologyNodePtr& node, Location geoLoc);
 
+    std::recursive_mutex locationIndexMutex;
 
     // a map containing all registered mobile nodes
     std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
