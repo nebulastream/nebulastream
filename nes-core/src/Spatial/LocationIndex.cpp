@@ -50,15 +50,18 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
     double newLng = geoLoc.getLongitude();
     S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));
     NES_DEBUG("updating location of Node to: " << newLat << ", " << newLng);
+    std::unique_lock lock(locationIndexMutex);
     nodePointIndex.Add(newLoc, node);
 #else
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
 #endif
     node->setFixedCoordinates(geoLoc);
+    lock.unlock();
     return true;
 }
 
 bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
+    std::unique_lock lock(locationIndexMutex);
     if (node->getSpatialType() == WorkerSpatialType::MOBILE_NODE) {
         mobileNodes.erase(node->getId());
     }
@@ -80,6 +83,7 @@ bool LocationIndex::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
 }
 
 std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const Location& geoLoc, int radius) {
+    std::unique_lock lock(locationIndexMutex);
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
@@ -108,6 +112,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNod
 
     auto geoLoc = *GeoLocPtr;
 
+    std::unique_lock lock(locationIndexMutex);
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(
@@ -138,6 +143,7 @@ std::optional<TopologyNodePtr> LocationIndex::getClosestNodeTo(const TopologyNod
 
 std::vector<std::pair<TopologyNodePtr, Location>> LocationIndex::getNodesInRange(Location center, double radius) {
 #ifdef S2DEF
+    std::unique_lock lock(locationIndexMutex);
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
 
@@ -158,10 +164,14 @@ std::vector<std::pair<TopologyNodePtr, Location>> LocationIndex::getNodesInRange
 #endif
 }
 
-void LocationIndex::addMobileNode(TopologyNodePtr node) { mobileNodes.insert({node->getId(), node}); }
+void LocationIndex::addMobileNode(TopologyNodePtr node) {
+    std::unique_lock lock(locationIndexMutex);
+    mobileNodes.insert({node->getId(), node});
+}
 
 std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLocations() {
     std::vector<std::pair<uint64_t, LocationPtr>> loccationVector;
+    std::unique_lock lock(locationIndexMutex);
     loccationVector.reserve(mobileNodes.size());
     for (const auto& [nodeId, topologyNode] : mobileNodes) {
         LocationPtr location = topologyNode->getCoordinates();
@@ -173,6 +183,7 @@ std::vector<std::pair<uint64_t, LocationPtr>> LocationIndex::getAllMobileNodeLoc
 }
 
 size_t LocationIndex::getSizeOfPointIndex() {
+    std::unique_lock lock(locationIndexMutex);
 #ifdef S2DEF
     return nodePointIndex.num_points();
 #else
@@ -182,6 +193,7 @@ size_t LocationIndex::getSizeOfPointIndex() {
 }
 
 bool LocationIndex::updatePredictedReconnect(uint64_t deviceid, uint64_t reconnectNodeId, LocationPtr reconnectLocation, Timestamp reconnectTime) {
+    std::unique_lock lock(locationIndexMutex);
     if (mobileNodes.contains(deviceid)) {
         NES_DEBUG("LocationIndex: Updating reconnect prediciton for node " << deviceid)
         if (reconnectLocation) {
@@ -190,10 +202,17 @@ bool LocationIndex::updatePredictedReconnect(uint64_t deviceid, uint64_t reconne
         } else {
             NES_DEBUG("reconnect location is nullptr, overwriting previously scheduled connect with empty connect")
         }
-        reconnectPredictionMap.insert({deviceid, {reconnectNodeId, reconnectLocation, reconnectTime}});
+        reconnectPredictionMap[deviceid] = {reconnectNodeId, reconnectLocation, reconnectTime};
         return true;
     }
     NES_DEBUG("trying to update reconnect prediction but could not find a mobile node with id " << deviceid)
     return false;
+}
+std::optional<std::tuple<uint64_t, LocationPtr, Timestamp>> LocationIndex::getScheduledReconnect(uint64_t nodeId) {
+   std::unique_lock lock(locationIndexMutex);
+   if (reconnectPredictionMap.contains(nodeId)) {
+       return reconnectPredictionMap[nodeId];
+   }
+   return {};
 }
 }// namespace NES::Spatial::Index::Experimental

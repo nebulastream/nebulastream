@@ -22,22 +22,22 @@ ReconnectSchedule::ReconnectSchedule(Index::Experimental::LocationPtr pathBeginn
                   std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> reconnectVector)
     : pathStart(std::move(pathBeginning)), pathEnd(std::move(pathEnd)), lastIndexUpdatePosition(lastIndexUpdatePosition), reconnectVector(std::move(reconnectVector)) {}
 
-Index::Experimental::LocationPtr ReconnectSchedule::getPathStart() {
+Index::Experimental::LocationPtr ReconnectSchedule::getPathStart() const {
     return pathStart;
 }
 
-Index::Experimental::LocationPtr ReconnectSchedule::getPathEnd() {
+Index::Experimental::LocationPtr ReconnectSchedule::getPathEnd() const {
     return pathEnd;
 }
 
-std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> ReconnectSchedule::getReconnectVector() {
+std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> ReconnectSchedule::getReconnectVector() const {
     return reconnectVector;
 }
 
 ReconnectSchedule ReconnectSchedule::Empty() {
    return {{}, {}, {}, {}};
 }
-Index::Experimental::LocationPtr ReconnectSchedule::getLastIndexUpatePosition() {
+Index::Experimental::LocationPtr ReconnectSchedule::getLastIndexUpatePosition() const {
     return lastIndexUpdatePosition;
 }
 

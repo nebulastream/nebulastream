@@ -33,7 +33,7 @@ enum class WorkerSpatialType;
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
 }
 
 /**

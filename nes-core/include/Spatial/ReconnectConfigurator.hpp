@@ -60,8 +60,9 @@ namespace Mobility::Experimental {
          */
         bool update(const std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>& scheduledReconnect);
         bool reconnect(uint64_t oldParent, uint64_t newParent);
+        std::tuple<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLcationAndTime();
+
       private:
-        //todo: where do we need mutexes here?
         std::atomic<bool> sendUpdates;
         std::recursive_mutex reconnectConfigMutex;
         NesWorker& worker;
@@ -71,6 +72,7 @@ namespace Mobility::Experimental {
         S1Angle locationUpdateThreshold;
         uint64_t locationUpdateInterval;
         std::shared_ptr<std::thread> sendLocationUpdateThread;
+
     };
     using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
 }

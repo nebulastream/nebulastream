@@ -352,6 +352,7 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
     }
     return Status::CANCELLED;
 }
+
 Status
 CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) {
     (void) reply;
