@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/TopologyManagerService.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -43,6 +44,10 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
     CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr workerConfig1;
     WorkerConfigurationPtr workerConfig2;
+    WorkerConfigurationPtr workerConfig3;
+    WorkerConfigurationPtr workerConfig4;
+    WorkerConfigurationPtr workerConfig5;
+    WorkerConfigurationPtr workerConfig6;
     CSVSourceTypePtr csvSourceTypeInfinite;
     CSVSourceTypePtr csvSourceTypeFinite;
     SchemaPtr inputSchema;
@@ -68,7 +73,6 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 10;
-        workerConfig1->numWorkerThreads = 4;
         workerConfig1->numberOfBuffersInSourceLocalBufferPool = 1024;
         workerConfig1->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig1->coordinatorPort = *rpcCoordinatorPort;
@@ -78,13 +82,52 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
 
         workerConfig2 = WorkerConfiguration::create();
         workerConfig2->numberOfBuffersPerEpoch = 10;
-        workerConfig2->numWorkerThreads = 4;
         workerConfig2->numberOfBuffersInSourceLocalBufferPool = 1024;
         workerConfig2->numberOfBuffersInGlobalBufferManager = 65536;
         workerConfig2->coordinatorPort = *rpcCoordinatorPort;
         workerConfig2->enableStatisticOutput = true;
         workerConfig2->numberOfBuffersToProduce = 5000000;
         workerConfig2->sourceGatheringInterval = 0;
+
+        workerConfig3 = WorkerConfiguration::create();
+        workerConfig3->numberOfBuffersPerEpoch = 10;
+        workerConfig3->numWorkerThreads = 4;
+        workerConfig3->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig3->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig3->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig3->enableStatisticOutput = true;
+        workerConfig3->numberOfBuffersToProduce = 5000000;
+        workerConfig3->sourceGatheringInterval = 0;
+
+        workerConfig4 = WorkerConfiguration::create();
+        workerConfig4->numberOfBuffersPerEpoch = 10;
+        workerConfig4->numWorkerThreads = 4;
+        workerConfig4->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig4->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig4->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig4->enableStatisticOutput = true;
+        workerConfig4->numberOfBuffersToProduce = 5000000;
+        workerConfig4->sourceGatheringInterval = 0;
+
+        workerConfig5 = WorkerConfiguration::create();
+        workerConfig5->numberOfBuffersPerEpoch = 10;
+        workerConfig5->numWorkerThreads = 4;
+        workerConfig5->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig5->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig5->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig5->enableStatisticOutput = true;
+        workerConfig5->numberOfBuffersToProduce = 5000000;
+        workerConfig5->sourceGatheringInterval = 0;
+
+        workerConfig6 = WorkerConfiguration::create();
+        workerConfig6->numberOfBuffersPerEpoch = 10;
+        workerConfig6->numWorkerThreads = 4;
+        workerConfig6->numberOfBuffersInSourceLocalBufferPool = 1024;
+        workerConfig6->numberOfBuffersInGlobalBufferManager = 65536;
+        workerConfig6->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig6->enableStatisticOutput = true;
+        workerConfig6->numberOfBuffersToProduce = 5000000;
+        workerConfig6->sourceGatheringInterval = 0;
 
         csvSourceTypeInfinite = CSVSourceType::create();
         csvSourceTypeInfinite->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -431,6 +474,7 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 //    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceTypeInfinite);
 //    workerConfig1->physicalSources.add(physicalSource1);
 
+
     workerConfig1->lambdaSource = 3;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -438,11 +482,15 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
 
-    workerConfig2->lambdaSource = 2;
+    //workerConfig2->lambdaSource = 2;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+
+
+    crd->getTopologyManagerService()->removeParent(1,3);
+    crd->getTopologyManagerService()->addParent(2,3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
