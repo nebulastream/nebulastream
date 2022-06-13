@@ -227,17 +227,17 @@ SchemaPtr SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSou
     return logicalSourceNameToSchemaMapping[logicalSourceName];
 }
 
-LogicalSourcePtr SourceCatalog::getSourceForLogicalSource(const std::string& logicalSourceName) {
+LogicalSourcePtr SourceCatalog::getLogicalSource(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
 }
 
-LogicalSourcePtr SourceCatalog::getSourceForLogicalSourceOrThrowException(const std::string& logicalSourceName) {
+LogicalSourcePtr SourceCatalog::getLogicalSourceOrThrowException(const std::string& logicalSourceName) {
     std::unique_lock lock(catalogMutex);
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) != logicalSourceNameToSchemaMapping.end()) {
         return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
     }
-    NES_ERROR("SourceCatalog::getSourceForLogicalSourceOrThrowException: source does not exists " << logicalSourceName);
+    NES_ERROR("SourceCatalog::getLogicalSourceOrThrowException: source does not exists " << logicalSourceName);
     throw log4cxx::helpers::Exception("Required source does not exists " + logicalSourceName);
 }
 

@@ -53,7 +53,7 @@ class SemanticQueryValidationTest : public Testing::TestWithErrorHandling<testin
         PrintQString(queryString);
         SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         std::string logicalSourceName = "default_logical";
-        auto logicalSource = sourceCatalog->getSourceForLogicalSource(logicalSourceName);
+        auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
         auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
@@ -172,7 +172,7 @@ TEST_F(SemanticQueryValidationTest, validProjectionTest) {
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "default_logical";
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource(logicalSourceName);
+    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
@@ -194,7 +194,7 @@ TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
 
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     std::string logicalSourceName = "default_logical";
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource(logicalSourceName);
+    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     auto physicalSource = PhysicalSource::create(logicalSourceName, "phy1");
     TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
     auto sourceCatalogEntry = SourceCatalogEntry::create(physicalSource, logicalSource, sourceNode1);
