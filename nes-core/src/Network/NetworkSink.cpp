@@ -146,11 +146,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch on qep queryId=" << queryId
                                                                  << "punctuation= " << timestamp);
-            auto buffer = bufferManager->getBufferBlocking();
-            auto* writer = buffer.getBuffer<int64_t>();
-            writer[0] = timestamp;
-            writer[1] = queryId;
-            channel->sendEvent<Runtime::CustomEventWrapper>(std::move(buffer));
+            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, queryId);
             workerContext.trimStorage(nesPartition, timestamp);
             break;
         }
