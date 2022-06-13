@@ -142,9 +142,9 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
 void NetworkSource::onEvent(Runtime::BaseEvent& event) {
     NES_DEBUG("NetworkSource: received an event");
     if (event.getEventType() == Runtime::EventType::kCustomEvent) {
-        auto buffer = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<uint64_t>();
-        auto epochBarrier = buffer[0];
-        auto queryId = buffer[1];
+        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto queryId = epochEvent->queryIdValue();
         auto success = queryManager->addEpochPropagation(shared_from_base<DataSource>(), queryId, epochBarrier);
         if (success) {
             NES_DEBUG("NetworkSource::onEvent: epoch" << epochBarrier << " queryId " << queryId << " propagated");
