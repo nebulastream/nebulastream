@@ -31,7 +31,8 @@ class Metric;
 class MetricCollector {
   protected:
     //  -- Constructors --
-    MetricCollector(std::shared_ptr<TopologyNodeId> nodeId = std::make_shared<TopologyNodeId>(0));
+    MetricCollector();
+    MetricCollector(std::shared_ptr<TopologyNodeId> nodeId);
     MetricCollector(const MetricCollector&) = default;
     MetricCollector(MetricCollector&&) = default;
     //  -- Assignment --

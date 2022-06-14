@@ -24,7 +24,7 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical CSV source
+ * @brief Descriptor defining properties used for creating physical source for monitoring
  */
 class MonitoringSourceDescriptor : public SourceDescriptor {
   public:

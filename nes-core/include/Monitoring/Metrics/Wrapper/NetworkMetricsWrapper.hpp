@@ -26,7 +26,8 @@ namespace NES {
  */
 class NetworkMetricsWrapper {
   public:
-    NetworkMetricsWrapper(uint64_t nodeId = 0);
+    NetworkMetricsWrapper() = default;
+    NetworkMetricsWrapper(uint64_t nodeId);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.

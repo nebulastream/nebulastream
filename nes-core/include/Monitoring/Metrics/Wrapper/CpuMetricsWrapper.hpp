@@ -26,7 +26,8 @@ namespace NES {
  */
 class CpuMetricsWrapper {
   public:
-    CpuMetricsWrapper(uint64_t nodeId = 0);
+    CpuMetricsWrapper() = default;
+    CpuMetricsWrapper(uint64_t nodeId);
     explicit CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
 
     /**

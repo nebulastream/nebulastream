@@ -150,22 +150,21 @@ class MonitoringManager {
 
     /**
      * @brief Registers the logical monitoring streams at the coordinator.
-     * @param the coordiantor
      * @return true if monitoring is disabled or if the streams have been registered successfully, else false
      */
     bool registerLogicalMonitoringStreams(const Configurations::CoordinatorConfigurationPtr config);
 
     /**
      * @brief Starts or redeploys monitoring queries at the coordinator
-     * @param the coordinator
      * @return true if successful, else false
      */
     std::unordered_map<std::string, QueryId> startOrRedeployMonitoringQueries(bool sync);
 
     /**
      * @brief Starts or redeploys monitoring queries at the coordinator
-     * @param the coordinator
-     * @return true if successful, else false
+     * @param the logical stream name of the monitoring stream
+     * @param bool true if it should block, else false
+     * @return the QueryID the of the monitoring stream
      */
     QueryId startOrRedeployMonitoringQuery(std::string monitoringStream, bool sync);
 
@@ -174,20 +173,19 @@ class MonitoringManager {
      * @param streamName
      * @return true if monitoring stream, else false
      */
-    bool isMonitoringStream(std::string streamName);
+    bool isMonitoringStream(std::string streamName) const;
 
     /**
-     * @brief Stops all running monitoring queries;
-     * @param crd
-     * @param sync
+     * @brief Stops a given running monitoring query;
+     * @param the name of the monitoring stream
+     * @param sync if it should block or not
      * @return true if success
      */
     bool stopRunningMonitoringQuery(std::string streamName, bool sync);
 
     /**
      * @brief Stops all running monitoring queries;
-     * @param crd
-     * @param sync
+     * @param sync if to true then block
      * @return true if success
      */
     bool stopRunningMonitoringQueries(bool sync);

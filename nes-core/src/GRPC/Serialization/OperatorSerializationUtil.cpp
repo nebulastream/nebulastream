@@ -1057,8 +1057,8 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
                   "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
         auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
         auto monitoringSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMonitoringSourceDescriptor();
-        const auto metricCollectorType = monitoringSourceDescriptor->getMetricCollectorType();
-        const auto waitTime = monitoringSourceDescriptor->getWaitTime();
+        auto metricCollectorType = monitoringSourceDescriptor->getMetricCollectorType();
+        auto waitTime = monitoringSourceDescriptor->getWaitTime();
         // serialize source schema
         monitoringSerializedSourceDescriptor.set_metriccollectortype(metricCollectorType);
         monitoringSerializedSourceDescriptor.set_waittime(waitTime.count());

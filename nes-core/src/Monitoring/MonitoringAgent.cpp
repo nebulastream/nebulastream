@@ -117,7 +117,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
         }
         return true;
     }
-    NES_ERROR("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
+    NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
     return false;
 }
 

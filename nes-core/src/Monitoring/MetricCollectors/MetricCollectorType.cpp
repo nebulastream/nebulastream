@@ -13,6 +13,7 @@
 */
 
 #include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES {
 
@@ -24,7 +25,7 @@ std::string toString(MetricCollectorType type) {
         case MetricCollectorType::NETWORK_COLLECTOR: return "NETWORK_COLLECTOR";
         case MetricCollectorType::STATIC_SYSTEM_METRICS_COLLECTOR: return "STATIC_SYSTEM_METRICS_COLLECTOR";
         case MetricCollectorType::RUNTIME_METRICS_COLLECTOR: return "RUNTIME_METRICS_COLLECTOR";
-        default: return "unknown";
+        default: NES_THROW_RUNTIME_ERROR("MetricCollectorType: Unknown type " << type);
     }
 };
 
