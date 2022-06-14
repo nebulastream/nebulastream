@@ -56,27 +56,36 @@ bool LogicalBinaryOperatorNode::inferSchema() {
     return true;
 }
 
-std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsBySchema(const SchemaPtr& schema) {
+std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsByIds(const std::vector<OperatorId>& operatorIds) {
     std::vector<OperatorNodePtr> operators;
     for (const auto& child : getChildren()) {
         auto childOperator = child->as<OperatorNode>();
-        if (childOperator->getOutputSchema()->equals(schema, false)) {
+
+        //Check if the child operator matches an id in the operator id vector
+        auto found = std::find_if(operatorIds.begin(), operatorIds.end(), [childOperator](const OperatorId operatorId) {
+            return childOperator->getId() == operatorId;
+        });
+
+        //Add the matched child to the vector of operators to return
+        if (found == operatorIds.end()) {
             operators.emplace_back(childOperator);
         }
     }
     return operators;
 }
 
-std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getLeftOperators() { return getOperatorsBySchema(getLeftInputSchema()); }
+std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getLeftOperators() {
+    return getOperatorsByIds(leftOperatorIds);
+}
 
 std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getRightOperators() {
-    return getOperatorsBySchema(getRightInputSchema());
+    return getOperatorsByIds(rightOperatorIds);
 }
 
 void LogicalBinaryOperatorNode::inferInputOrigins() {
     // in the default case we collect all input origins from the children/upstream operators
     std::vector<uint64_t> leftInputOriginIds;
-    for (auto child : this->getLeftOperators()) {
+    for (const auto& child : this->getLeftOperators()) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
@@ -85,7 +94,7 @@ void LogicalBinaryOperatorNode::inferInputOrigins() {
     this->leftInputOriginIds = leftInputOriginIds;
 
     std::vector<uint64_t> rightInputOriginIds;
-    for (auto child : this->getRightOperators()) {
+    for (const auto& child : this->getRightOperators()) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
@@ -93,5 +102,13 @@ void LogicalBinaryOperatorNode::inferInputOrigins() {
     }
     this->rightInputOriginIds = rightInputOriginIds;
 }
+
+void LogicalBinaryOperatorNode::addLeftOperatorId(OperatorId operatorId) { leftOperatorIds.push_back(operatorId); }
+
+void LogicalBinaryOperatorNode::addRightOperatorId(OperatorId operatorId) { rightOperatorIds.push_back(operatorId); }
+
+std::vector<OperatorId> LogicalBinaryOperatorNode::getLeftOperatorIds() { return leftOperatorIds; }
+
+std::vector<OperatorId> LogicalBinaryOperatorNode::getRightOperatorIds() { return rightOperatorIds; }
 
 }// namespace NES

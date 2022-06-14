@@ -26,6 +26,30 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
     explicit LogicalBinaryOperatorNode(OperatorId id);
 
     /**
+     * Add operator part of left side
+     * @param operatorId : operatorId of the left operator
+     */
+    void addLeftOperatorId(OperatorId operatorId);
+
+    /**
+     * Get ids of the operators that are in the left
+     * @return left operator ids
+     */
+    std::vector<OperatorId> getLeftOperatorIds();
+
+    /**
+     * Add operator part of the right side
+     * @param operatorId : operatorId of the right operator
+     */
+    void addRightOperatorId(OperatorId operatorId);
+
+    /**
+     * Get ids of the operators that are in the right
+     * @return right operator ids
+     */
+    std::vector<OperatorId> getRightOperatorIds();
+
+    /**
     * @brief infers the input and out schema of this operator depending on its child.
     * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
     * @return true if schema was correctly inferred
@@ -47,7 +71,18 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
     std::vector<OperatorNodePtr> getRightOperators();
 
   private:
-    std::vector<OperatorNodePtr> getOperatorsBySchema(const SchemaPtr& schema);
+
+    /**
+     * Get me all operator ids matching the operators in the list
+     * @param operatorIds : Id of operators to fetch
+     * @return vector of operators
+     */
+    std::vector<OperatorNodePtr> getOperatorsByIds(const std::vector<OperatorId>& operatorIds);
+
+    //To store ids of the left and the right operators (Note: there can be more than one operator in the left or the right side
+    // after source expansion)
+    std::vector<OperatorId> leftOperatorIds;
+    std::vector<OperatorId> rightOperatorIds;
 };
 }// namespace NES
 

@@ -40,11 +40,13 @@ void BinaryOperatorNode::setRightInputSchema(SchemaPtr inputSchema) {
         this->rightInputSchema = std::move(inputSchema);
     }
 }
+
 void BinaryOperatorNode::setOutputSchema(SchemaPtr outputSchema) {
     if (outputSchema) {
         this->outputSchema = std::move(outputSchema);
     }
 }
+
 SchemaPtr BinaryOperatorNode::getLeftInputSchema() const { return leftInputSchema; }
 
 SchemaPtr BinaryOperatorNode::getRightInputSchema() const { return rightInputSchema; }

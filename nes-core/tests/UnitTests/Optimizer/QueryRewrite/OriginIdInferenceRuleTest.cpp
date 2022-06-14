@@ -319,7 +319,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSelfUnionOperators) {
 
     auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
     auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 3);
+    ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 4);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[0], sourceOps[0]->getOutputOriginIds()[0]);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[1], sourceOps[1]->getOutputOriginIds()[0]);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[2], sourceOps[2]->getOutputOriginIds()[0]);
@@ -328,10 +328,6 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSelfUnionOperators) {
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOps[0]->getOutputOriginIds()[0]);
 }
 
-/**
- * @brief Tests inference on a query plan with multiple sources and a central window operator.
- * Thus the root operator should contain the origin id from the window operator and the window operator from all sources.
- */
 TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
 
     auto query = Query::from("A")
