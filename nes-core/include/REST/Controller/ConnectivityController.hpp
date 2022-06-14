@@ -44,13 +44,6 @@ class ConnectivityController : public BaseController {
     ConnectivityController(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper))
         : oatpp::web::server::api::ApiController(objectMapper)
     {}
-
-    ENDPOINT("GET", "/path", handleGet) {
-        auto dto = handleGetDto::createShared();
-        dto->statusCode = 200;
-        dto->message = "success";
-        return createDtoResponse(Status::CODE_200, dto);
-    }
 };
 
 using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
