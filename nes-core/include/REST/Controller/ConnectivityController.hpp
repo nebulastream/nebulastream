@@ -35,15 +35,6 @@ class ConnectivityController : public BaseController {
      */
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
 #endif
-
-  public:
-    /**
-   * Constructor with object mapper.
-   * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
-   */
-    ConnectivityController(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, objectMapper))
-        : oatpp::web::server::api::ApiController(objectMapper)
-    {}
 };
 
 using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
