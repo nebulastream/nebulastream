@@ -29,25 +29,51 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
      * Add operator part of left side
      * @param operatorId : operatorId of the left operator
      */
-    void addLeftOperatorId(OperatorId operatorId);
+    void addLeftUpStreamOperatorId(OperatorId operatorId);
 
     /**
      * Get ids of the operators that are in the left
      * @return left operator ids
      */
-    std::vector<OperatorId> getLeftOperatorIds();
+    std::vector<OperatorId> getLeftUpStreamOperatorIds();
 
     /**
      * Add operator part of the right side
      * @param operatorId : operatorId of the right operator
      */
-    void addRightOperatorId(OperatorId operatorId);
+    void addRightUpStreamOperatorId(OperatorId operatorId);
 
     /**
      * Get ids of the operators that are in the right
      * @return right operator ids
      */
-    std::vector<OperatorId> getRightOperatorIds();
+    std::vector<OperatorId> getRightUpStreamOperatorIds();
+
+    /**
+     * @brief remove operator id from left upstream operator ids
+     * @param operatorId: operator id to remove
+     */
+    void removeLeftUpstreamOperatorId(OperatorId operatorId);
+
+    /**
+     * @brief remove operator id from right upstream operator ids
+     * @param operatorId: operator id to remove
+     */
+    void removeRightUpstreamOperatorId(OperatorId operatorId);
+
+    /**
+     * Is the operator in left upstream operator
+     * @param operatorId : operator id to check
+     * @return true if exists else false
+     */
+    bool isLeftUpstreamOperatorId(OperatorId operatorId);
+
+    /**
+     * Is the operator in right upstream operator
+     * @param operatorId : operator id to check
+     * @return true if exists else false
+     */
+    bool isRightUpstreamOperatorId(OperatorId operatorId);
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
@@ -81,8 +107,8 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
 
     //To store ids of the left and the right operators (Note: there can be more than one operator in the left or the right side
     // after source expansion)
-    std::vector<OperatorId> leftOperatorIds;
-    std::vector<OperatorId> rightOperatorIds;
+    std::vector<OperatorId> leftUpStreamOperatorIds;
+    std::vector<OperatorId> rightUpStreamOperatorIds;
 };
 }// namespace NES
 

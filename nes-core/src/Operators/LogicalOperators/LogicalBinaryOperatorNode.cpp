@@ -75,11 +75,11 @@ std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsByIds(const 
 }
 
 std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getLeftUpstreamOperators() {
-    return getOperatorsByIds(leftOperatorIds);
+    return getOperatorsByIds(leftUpStreamOperatorIds);
 }
 
 std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getRightUpstreamOperators() {
-    return getOperatorsByIds(rightOperatorIds);
+    return getOperatorsByIds(rightUpStreamOperatorIds);
 }
 
 void LogicalBinaryOperatorNode::inferInputOrigins() {
@@ -103,12 +103,34 @@ void LogicalBinaryOperatorNode::inferInputOrigins() {
     this->rightInputOriginIds = rightInputOriginIds;
 }
 
-void LogicalBinaryOperatorNode::addLeftOperatorId(OperatorId operatorId) { leftOperatorIds.push_back(operatorId); }
+void LogicalBinaryOperatorNode::addLeftUpStreamOperatorId(OperatorId operatorId) {
+    leftUpStreamOperatorIds.push_back(operatorId);
+}
 
-void LogicalBinaryOperatorNode::addRightOperatorId(OperatorId operatorId) { rightOperatorIds.push_back(operatorId); }
+void LogicalBinaryOperatorNode::addRightUpStreamOperatorId(OperatorId operatorId) {
+    rightUpStreamOperatorIds.push_back(operatorId);
+}
 
-std::vector<OperatorId> LogicalBinaryOperatorNode::getLeftOperatorIds() { return leftOperatorIds; }
+std::vector<OperatorId> LogicalBinaryOperatorNode::getLeftUpStreamOperatorIds() { return leftUpStreamOperatorIds; }
 
-std::vector<OperatorId> LogicalBinaryOperatorNode::getRightOperatorIds() { return rightOperatorIds; }
+std::vector<OperatorId> LogicalBinaryOperatorNode::getRightUpStreamOperatorIds() { return rightUpStreamOperatorIds; }
+
+void LogicalBinaryOperatorNode::removeLeftUpstreamOperatorId(OperatorId operatorId) {
+    std::remove(leftUpStreamOperatorIds.begin(), leftUpStreamOperatorIds.end(), operatorId);
+}
+
+void LogicalBinaryOperatorNode::removeRightUpstreamOperatorId(OperatorId operatorId) {
+    std::remove(rightUpStreamOperatorIds.begin(), rightUpStreamOperatorIds.end(), operatorId);
+}
+
+bool LogicalBinaryOperatorNode::isLeftUpstreamOperatorId(OperatorId operatorId) {
+    auto found = std::find(leftUpStreamOperatorIds.begin(), leftUpStreamOperatorIds.end(), operatorId);
+    return found != leftUpStreamOperatorIds.end();
+}
+
+bool LogicalBinaryOperatorNode::isRightUpstreamOperatorId(OperatorId operatorId) {
+    auto found = std::find(rightUpStreamOperatorIds.begin(), rightUpStreamOperatorIds.end(), operatorId);
+    return found != rightUpStreamOperatorIds.end();
+}
 
 }// namespace NES

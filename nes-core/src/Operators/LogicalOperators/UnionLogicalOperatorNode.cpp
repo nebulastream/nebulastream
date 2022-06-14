@@ -94,6 +94,15 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     copy->setRightInputSchema(rightInputSchema);
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
+
+    for (const auto& operatorId : getLeftUpStreamOperatorIds()) {
+        copy->addLeftUpStreamOperatorId(operatorId);
+    }
+
+    for (const auto& operatorId : getRightUpStreamOperatorIds()) {
+        copy->addRightUpStreamOperatorId(operatorId);
+    }
+
     for (auto [key, value] : properties) {
         copy->addProperty(key, value);
     }

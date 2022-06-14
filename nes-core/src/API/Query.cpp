@@ -268,8 +268,8 @@ Query& Query::unionWith(const Query& subQuery) {
     //Fetch the root operators of the query plan and assign one to the left and other to the right
     auto rootOperators = queryPlan->getRootOperators();
     NES_ASSERT(rootOperators.size() == 2, "Union can have only two upstream operators");
-    op->as_if<LogicalBinaryOperatorNode>()->addLeftOperatorId(rootOperators[0]->getId());
-    op->as_if<LogicalBinaryOperatorNode>()->addRightOperatorId(rootOperators[1]->getId());
+    op->as_if<LogicalBinaryOperatorNode>()->addLeftUpStreamOperatorId(rootOperators[0]->getId());
+    op->as_if<LogicalBinaryOperatorNode>()->addRightUpStreamOperatorId(rootOperators[1]->getId());
 
     queryPlan->appendOperatorAsNewRoot(op);
     //Update the Source names by sorting and then concatenating the source names from the sub query plan
@@ -367,8 +367,8 @@ Query& Query::join(const Query& subQueryRhs,
     //Fetch the root operators of the query plan and assign one to the left and other to the right
     auto rootOperators = queryPlan->getRootOperators();
     NES_ASSERT(rootOperators.size() == 2, "Union can have only two upstream operators");
-    op->as_if<LogicalBinaryOperatorNode>()->addLeftOperatorId(rootOperators[0]->getId());
-    op->as_if<LogicalBinaryOperatorNode>()->addRightOperatorId(rootOperators[1]->getId());
+    op->as_if<LogicalBinaryOperatorNode>()->addLeftUpStreamOperatorId(rootOperators[0]->getId());
+    op->as_if<LogicalBinaryOperatorNode>()->addRightUpStreamOperatorId(rootOperators[1]->getId());
 
     queryPlan->appendOperatorAsNewRoot(op);
 

@@ -47,19 +47,21 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
     //Compute a map of all blocking operators in the query plan
     std::unordered_map<uint64_t, OperatorNodePtr> blockingOperators;
+    std::unordered_map<uint64_t, OperatorNodePtr> copyOfBlockingOperators;
     if (expandSourceOnly) {
         //Add upstream operators of the source operators as blocking operator
         for (auto& sourceOperator : sourceOperators) {
-            for (auto& upstreamOp : sourceOperator->getParents()) {
-                auto upstreamOperator = upstreamOp->as<OperatorNode>();
-                blockingOperators[upstreamOperator->getId()] = upstreamOperator;
+            for (auto& downStreamOp : sourceOperator->getParents()) {
+                auto downStreamOperator = downStreamOp->as<OperatorNode>();
+                blockingOperators[downStreamOperator->getId()] = downStreamOperator;
+                copyOfBlockingOperators[downStreamOperator->getId()] = downStreamOperator->copy();
             }
         }
     } else {
         for (auto rootOperator : queryPlan->getRootOperators()) {
             DepthFirstNodeIterator depthFirstNodeIterator(rootOperator);
             for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-                NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
+                NES_TRACE("LogicalSourceExpansionRule: Iterate and find the blocking operator");
                 auto operatorToIterate = (*itr)->as<OperatorNode>();
                 if (isBlockingOperator(operatorToIterate)) {
                     blockingOperators[operatorToIterate->getId()] = operatorToIterate;
@@ -86,14 +88,24 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             removeConnectedBlockingOperators(sourceOperator);
         } else {
             //disconnect all parent operators of the source operator
-            for (auto& upstreamOp : sourceOperator->getParents()) {
-                auto upstreamOperator = upstreamOp->as<OperatorNode>();
-                removeAndAddBlockingUpstreamOperator(sourceOperator, upstreamOperator);
+            for (auto& downStreamOperator : sourceOperator->getParents()) {
+                //If downStreamOperator is blocking then remove source operator as its upstream operator.
+                if (!downStreamOperator->removeChild(sourceOperator)) {
+                    throw log4cxx::helpers::Exception(
+                        "LogicalSourceExpansionRule: Unable to remove non-blocking upstream operator from the blocking operator");
+                }
+
+                //Add information about blocking operator to the source operator
+                addBlockingDownStreamOperator(sourceOperator, downStreamOperator->as<OperatorNode>()->getId());
             }
         }
         NES_TRACE("LogicalSourceExpansionRule: Create " << sourceCatalogEntries.size()
                                                         << " duplicated logical sub-graph and add to original graph");
-        //Create one duplicate operator for each physical source
+
+        bool isLeftUpStreamOperator = false;
+        bool isRightUpStreamOperator = false;
+
+        //Create one duplicate operator chain for each physical source
         for (auto& sourceCatalogEntry : sourceCatalogEntries) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
             auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperatorNode>();
@@ -101,7 +113,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             //NOTE: This is required at the time of placement to know where the source operator is pinned
             duplicateSourceOperator->addProperty(PINNED_NODE_ID, sourceCatalogEntry->getNode()->getId());
             //Add Physical Source Name to the source descriptor
-            auto sourceDescriptor = duplicateSourceOperator->getSourceDescriptor();
             auto duplicateSourceDescriptor = sourceDescriptor->copy();
             duplicateSourceDescriptor->setPhysicalSourceName(sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
             duplicateSourceOperator->setSourceDescriptor(duplicateSourceDescriptor);
@@ -111,13 +122,12 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
             for (auto& node : allOperators) {
                 auto operatorNode = node->as<OperatorNode>();
-                //Assign new operator id
-                operatorNode->setId(Util::getNextOperatorId());
 
-                //Fetch the connected blocking operators to the operator
-                const std::any& value = operatorNode->getProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
-                //Check if the operator need to be connected to a blocking parent
-                if (value.has_value()) {
+                //Check if the operator has the property containing list of connected blocking downstream operator ids.
+                // If so, then connect the operator to the blocking downstream operator
+                if (operatorNode->hasProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS)) {
+                    //Fetch the blocking upstream operators of this operator
+                    const std::any& value = operatorNode->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
                     auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
                     //Iterate over all blocking parent ids and connect the duplicated operator
                     for (auto blockingParentId : listOfConnectedBlockingParents) {
@@ -127,11 +137,46 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                                 "LogicalSourceExpansionRule: Unable to find blocking operator with id "
                                 + std::to_string(blockingParentId));
                         }
+
+                        OperatorId newOperatorId = Util::getNextOperatorId();
+
+                        //Check if the operator part of left or the right upstream operator of the blocked operator.
+                        // If this was identified before already then on of the two boolean flags will be true.
+                        if (blockingOperator->instanceOf<LogicalBinaryOperatorNode>() && !isLeftUpStreamOperator
+                            && !isRightUpStreamOperator) {
+                            auto binaryOperator = blockingOperator->as<LogicalBinaryOperatorNode>();
+
+                            //check if it is a left upstream operator
+                            isLeftUpStreamOperator = binaryOperator->isLeftUpstreamOperatorId(operatorNode->getId());
+                            if (isLeftUpStreamOperator) {
+                                binaryOperator->removeLeftUpstreamOperatorId(operatorNode->getId());
+                            }
+
+                            //check if it is a right upstream operator
+                            isRightUpStreamOperator = binaryOperator->isRightUpstreamOperatorId(operatorNode->getId());
+                            if (isRightUpStreamOperator) {
+                                binaryOperator->removeRightUpstreamOperatorId(operatorNode->getId());
+                            }
+
+                            //Assertions to make sure the operator was in one of the two lists (xor)
+                            NES_ASSERT(isLeftUpStreamOperator != isRightUpStreamOperator,
+                                       "An Operator must be and can only be either the left or right upstream operator.");
+                        } else if (isLeftUpStreamOperator) {
+                            blockingOperator->as_if<LogicalBinaryOperatorNode>()->addLeftUpStreamOperatorId(newOperatorId);
+                        } else if (isRightUpStreamOperator) {
+                            blockingOperator->as_if<LogicalBinaryOperatorNode>()->addRightUpStreamOperatorId(newOperatorId);
+                        }
+
+                        //Assign new operator id
+                        operatorNode->setId(newOperatorId);
                         blockingOperator->addChild(operatorNode);
                     }
+                    //Remove the property
+                    operatorNode->removeProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
+                } else {
+                    //Assign new operator id
+                    operatorNode->setId(Util::getNextOperatorId());
                 }
-                //Remove the property
-                operatorNode->removeProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
             }
         }
     }
@@ -139,48 +184,54 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const OperatorNodePtr& operatorNode) {
+void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr& operatorNode) {
 
-    //Check if upstream (parent) operator of this operator is blocking or not if not then recursively call this method for the upstream
-    // operator
-    auto parentOperators = operatorNode->getParents();
+    //Check if downstream (parent) operator of this operator is blocking or not if not then recursively call this method for the
+    // downstream operator
+    auto downStreamOperators = operatorNode->getParents();
     NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
-    for (const auto& parent : parentOperators) {
+    for (const auto& downStreamOperator : downStreamOperators) {
 
-        //Check if the parent operator is a blocking operator or not
-        auto parentOperator = parent->as<OperatorNode>();
-        if (!isBlockingOperator(parentOperator)) {
-            removeConnectedBlockingOperators(parentOperator);
+        //Check if the downStreamOperator operator is a blocking operator or not
+        if (!isBlockingOperator(downStreamOperator)) {
+            removeConnectedBlockingOperators(downStreamOperator);
         } else {
-            //If parent is blocking then remove current operator as its child.
-            // Add to the current operator information about operator id of the removed parent.
-            // We use this information post expansion to re-add the connection later.
-            removeAndAddBlockingUpstreamOperator(operatorNode, parentOperator);
+            //If downStreamOperator is blocking then remove current operator as its upstream operator.
+            if (!downStreamOperator->removeChild(operatorNode)) {
+                throw log4cxx::helpers::Exception(
+                    "LogicalSourceExpansionRule: Unable to remove non-blocking upstream operator from the blocking operator");
+            }
+
+            if (downStreamOperator->instanceOf<LogicalBinaryOperatorNode>()) {
+
+                downStreamOperator->as<LogicalBinaryOperatorNode>();
+            }
+
+            // Add to the current operator information about operator id of the removed downStreamOperator.
+            // We will use this information post expansion to re-add the connection later.
+            addBlockingDownStreamOperator(operatorNode, downStreamOperator->as_if<OperatorNode>()->getId());
         }
     }
 }
 
-void LogicalSourceExpansionRule::removeAndAddBlockingUpstreamOperator(const OperatorNodePtr& operatorNode,
-                                                                      const OperatorNodePtr& upstreamOperator) {
-    if (!operatorNode->removeParent(upstreamOperator)) {
-        throw log4cxx::helpers::Exception(
-            "LogicalSourceExpansionRule: Unable to remove non-blocking child operator from the blocking operator");
-    }
+void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const NodePtr& operatorNode, OperatorId downStreamOperatorId) {
 
     //extract the list of connected blocking parents and add the current parent to the list
-    std::any value = operatorNode->getProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
+    std::any value = operatorNode->as_if<OperatorNode>()->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
     if (value.has_value()) {//update the existing list
         auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
-        listOfConnectedBlockingParents.emplace_back(upstreamOperator->getId());
-        operatorNode->addProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
+        listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
+        operatorNode->as_if<OperatorNode>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS,
+                                                         listOfConnectedBlockingParents);
     } else {//create a new entry if value doesn't exist
         std::vector<OperatorId> listOfConnectedBlockingParents;
-        listOfConnectedBlockingParents.emplace_back(upstreamOperator->getId());
-        operatorNode->addProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
+        listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
+        operatorNode->as_if<OperatorNode>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS,
+                                                         listOfConnectedBlockingParents);
     }
 }
 
-bool LogicalSourceExpansionRule::isBlockingOperator(const OperatorNodePtr& operatorNode) {
+bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode) {
     return (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()
             || operatorNode->instanceOf<UnionLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
             || operatorNode->instanceOf<Experimental::BatchJoinLogicalOperatorNode>());

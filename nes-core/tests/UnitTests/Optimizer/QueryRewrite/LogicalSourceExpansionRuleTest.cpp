@@ -188,7 +188,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
     EXPECT_EQ(rootOperators[0]->getChildren().size(), 2U);
 }
 
-TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMergeOperator) {
+TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithUnionOperator) {
     SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
