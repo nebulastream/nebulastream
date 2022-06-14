@@ -61,7 +61,7 @@ install(TARGETS nes-grpc
 
 # Add nes-core library
 get_source(nes-core NES_CORE_SOURCE_FILES)
-add_library(nes SHARED ${NES_CORE_SOURCE_FILES} include/REST/DTOs.hpp include/REST/Controller/TestController.hpp include/REST/AppComponent.hpp)
+add_library(nes SHARED ${NES_CORE_SOURCE_FILES} include/REST/DTOs.hpp include/REST/Controller/TestController.hpp include/REST/AppComponent.hpp include/REST/TestComponent.hpp include/REST/testsForOatpp/MyApiTestClient.hpp include/REST/testsForOatpp/TestControllerTest.hpp)
 target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

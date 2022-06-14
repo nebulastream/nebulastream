@@ -552,7 +552,7 @@ target_link_libraries(timer-test nes-tests)
 add_test(NAME timer-test COMMAND timer-test)
 
 ### Adaptive Source Tests ###
-add_executable(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp")
+add_executable(adaptive-sensor-tests "UnitTests/Sensors/AdaptiveKFTest.cpp" UnitTests/REST/Controller/TestControllerTest.cpp UnitTests/REST/TestsForOatppEndpoints.cpp)
 target_link_libraries(adaptive-sensor-tests nes-tests)
 add_test(NAME adaptive-sensor-tests COMMAND adaptive-sensor-tests)
 
