@@ -62,13 +62,13 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
      * @brief Get all left input operators.
      * @return std::vector<OperatorNodePtr>
      */
-    std::vector<OperatorNodePtr> getLeftOperators();
+    std::vector<OperatorNodePtr> getLeftUpstreamOperators();
 
     /**
     * @brief Get all right input operators.
     * @return std::vector<OperatorNodePtr>
     */
-    std::vector<OperatorNodePtr> getRightOperators();
+    std::vector<OperatorNodePtr> getRightUpstreamOperators();
 
   private:
 

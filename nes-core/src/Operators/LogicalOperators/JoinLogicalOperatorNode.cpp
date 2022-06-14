@@ -58,19 +58,28 @@ bool JoinLogicalOperatorNode::inferSchema() {
     leftInputSchema->clear();
     rightInputSchema->clear();
 
+    auto leftUpstreamOperator = getLeftUpstreamOperators()[0];
+    auto rightUpstreamOperator = getRightUpstreamOperators()[0];
+
+    if (distinctSchemas[0]->equals(leftUpstreamOperator->getOutputSchema())
+        && distinctSchemas[1]->equals(rightUpstreamOperator->getOutputSchema())) {
+        leftInputSchema->copyFields(distinctSchemas[0]);
+        rightInputSchema->copyFields(distinctSchemas[1]);
+    } else if (distinctSchemas[1]->equals(leftUpstreamOperator->getOutputSchema())
+               && distinctSchemas[0]->equals(rightUpstreamOperator->getOutputSchema())) {
+        leftInputSchema->copyFields(distinctSchemas[1]);
+        rightInputSchema->copyFields(distinctSchemas[0]);
+    } else {
+        NES_ERROR("None of the distinct schema matches left or the right upstream operator. Left upstream operator schema "
+                  + leftUpstreamOperator->getOutputSchema()->toString() + " and Right upstream operator schema "
+                  + rightUpstreamOperator->getOutputSchema()->toString() + ". Two identified distinct schemas are: "
+                  + distinctSchemas[0]->toString() + " and " + distinctSchemas[1]->toString());
+        throw TypeInferenceException("None of the distinct schema matches left upstream operator.");
+    }
+
     //Find the schema for left join key
     FieldAccessExpressionNodePtr leftJoinKey = joinDefinition->getLeftJoinKey();
     auto leftJoinKeyName = leftJoinKey->getFieldName();
-    for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-        if ((*itr)->hasFieldName(leftJoinKeyName)) {
-            leftInputSchema->copyFields(*itr);
-            leftJoinKey->inferStamp(leftInputSchema);
-            //remove the schema from distinct schema list
-            distinctSchemas.erase(itr);
-            break;
-        }
-        itr++;
-    }
 
     //Find the schema for right join key
     FieldAccessExpressionNodePtr rightJoinKey = joinDefinition->getRightJoinKey();

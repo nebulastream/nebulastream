@@ -38,14 +38,33 @@ bool UnionLogicalOperatorNode::inferSchema() {
         return false;
     }
 
+    //Assign left and the right input schemas
     leftInputSchema->clear();
     rightInputSchema->clear();
     if (distinctSchemas.size() == 1) {
         leftInputSchema->copyFields(distinctSchemas[0]);
         rightInputSchema->copyFields(distinctSchemas[0]);
     } else {
-        leftInputSchema->copyFields(distinctSchemas[0]);
-        rightInputSchema->copyFields(distinctSchemas[1]);
+        auto leftUpstreamOperator = getLeftUpstreamOperators()[0];
+        auto rightUpstreamOperator = getRightUpstreamOperators()[0];
+
+        if (distinctSchemas[0]->equals(leftUpstreamOperator->getOutputSchema())
+            && distinctSchemas[1]->equals(rightUpstreamOperator->getOutputSchema())) {
+
+            leftInputSchema->copyFields(distinctSchemas[0]);
+            rightInputSchema->copyFields(distinctSchemas[1]);
+        } else if (distinctSchemas[1]->equals(leftUpstreamOperator->getOutputSchema())
+                   && distinctSchemas[0]->equals(rightUpstreamOperator->getOutputSchema())) {
+
+            leftInputSchema->copyFields(distinctSchemas[1]);
+            rightInputSchema->copyFields(distinctSchemas[0]);
+        } else {
+            NES_ERROR("None of the distinct schema matches left or the right upstream operator. Left upstream operator schema "
+                      + leftUpstreamOperator->getOutputSchema()->toString() + " and Right upstream operator schema "
+                      + rightUpstreamOperator->getOutputSchema()->toString() + ". Two identified distinct schemas are: "
+                      + distinctSchemas[0]->toString() + " and " + distinctSchemas[1]->toString());
+            throw TypeInferenceException("None of the distinct schema matches left upstream operator.");
+        }
     }
 
     if (!leftInputSchema->hasEqualTypes(rightInputSchema)) {
