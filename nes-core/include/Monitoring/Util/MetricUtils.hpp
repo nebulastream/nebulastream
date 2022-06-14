@@ -56,7 +56,7 @@ class MetricUtils {
     static web::json::value toJson(StoredNodeMetricsPtr metrics);
 
     /**
-     * Creates a metric collector from the according type.
+     * Creates a metric collector from the corresponding type.
      * @param type
      * @return the metric collector shared ptr.
      */

@@ -223,7 +223,7 @@ void NESBaseTest::SetUp() {
     auto future = testCompletion.get_future();
     auto self = this;
     waitThread = std::make_unique<std::thread>([future = std::move(future), self = std::move(self)]() mutable {
-        switch (future.wait_for(std::chrono::minutes(5))) {
+        switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP))) {
             case std::future_status::ready: {
                 try {
                     auto res = future.get();

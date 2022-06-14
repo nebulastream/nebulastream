@@ -22,7 +22,7 @@
 namespace NES {
 
 /**
- * @brief Descriptor defining properties used for creating physical Monitoring sink
+ * @brief Descriptor defining properties used for creating a Monitoring sink as physical source
  */
 class MonitoringSinkDescriptor : public SinkDescriptor {
   public:

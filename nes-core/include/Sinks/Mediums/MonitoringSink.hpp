@@ -29,7 +29,7 @@ class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
 
 /**
- * @brief this class provides a print sink
+ * @brief this class provides a monitoring sink to collecct metrics based on a given metric collector.
  */
 class MonitoringSink : public SinkMedium {
   public:

@@ -343,7 +343,7 @@ bool MonitoringManager::waitForQueryToStart(QueryId queryId, std::chrono::second
     return false;
 }
 
-bool MonitoringManager::isMonitoringStream(std::string streamName) { return logicalMonitoringSources.contains(streamName); }
+bool MonitoringManager::isMonitoringStream(std::string streamName) const { return logicalMonitoringSources.contains(streamName); }
 
 const std::unordered_map<std::string, QueryId>& MonitoringManager::getDeployedMonitoringQueries() const {
     return deployedMonitoringQueries;

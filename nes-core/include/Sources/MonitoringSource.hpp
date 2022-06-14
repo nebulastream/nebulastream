@@ -22,8 +22,22 @@
 
 namespace NES {
 
+/**
+ * @brief this class provides a monitoring source to generate metrics based on a given metric collector.
+ */
 class MonitoringSource : public DataSource {
   public:
+    /**
+     * @brief Ctor for the monitoring source
+     * @param metricCollector the metric collector
+     * @param waitTime wait time during fill buffer until a new metric is read
+     * @param bufferManager
+     * @param queryManager
+     * @param operatorId
+     * @param originId
+     * @param numSourceLocalBuffers
+     * @param successors
+     */
     MonitoringSource(MetricCollectorPtr metricCollector,
                      std::chrono::milliseconds waitTime,
                      Runtime::BufferManagerPtr bufferManager,
