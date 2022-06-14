@@ -148,19 +148,21 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
                             //check if it is a left upstream operator
                             isLeftUpStreamOperator = binaryOperator->isLeftUpstreamOperatorId(operatorNode->getId());
-                            if (isLeftUpStreamOperator) {
-                                binaryOperator->removeLeftUpstreamOperatorId(operatorNode->getId());
-                            }
 
                             //check if it is a right upstream operator
                             isRightUpStreamOperator = binaryOperator->isRightUpstreamOperatorId(operatorNode->getId());
-                            if (isRightUpStreamOperator) {
-                                binaryOperator->removeRightUpstreamOperatorId(operatorNode->getId());
-                            }
 
                             //Assertions to make sure the operator was in one of the two lists (xor)
                             NES_ASSERT(isLeftUpStreamOperator != isRightUpStreamOperator,
                                        "An Operator must be and can only be either the left or right upstream operator.");
+
+                            if (isLeftUpStreamOperator) {
+                                binaryOperator->removeLeftUpstreamOperatorId(operatorNode->getId());
+                                binaryOperator->addLeftUpStreamOperatorId(newOperatorId);
+                            } else if (isRightUpStreamOperator) {
+                                binaryOperator->removeRightUpstreamOperatorId(operatorNode->getId());
+                                binaryOperator->addRightUpStreamOperatorId(newOperatorId);
+                            }
                         } else if (isLeftUpStreamOperator) {
                             blockingOperator->as_if<LogicalBinaryOperatorNode>()->addLeftUpStreamOperatorId(newOperatorId);
                         } else if (isRightUpStreamOperator) {

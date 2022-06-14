@@ -67,7 +67,7 @@ std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsByIds(const 
         });
 
         //Add the matched child to the vector of operators to return
-        if (found == operatorIds.end()) {
+        if (found != operatorIds.end()) {
             operators.emplace_back(childOperator);
         }
     }
@@ -116,11 +116,17 @@ std::vector<OperatorId> LogicalBinaryOperatorNode::getLeftUpStreamOperatorIds() 
 std::vector<OperatorId> LogicalBinaryOperatorNode::getRightUpStreamOperatorIds() { return rightUpStreamOperatorIds; }
 
 void LogicalBinaryOperatorNode::removeLeftUpstreamOperatorId(OperatorId operatorId) {
-    std::remove(leftUpStreamOperatorIds.begin(), leftUpStreamOperatorIds.end(), operatorId);
+    auto found = std::find(leftUpStreamOperatorIds.begin(), leftUpStreamOperatorIds.end(), operatorId);
+    if (found != leftUpStreamOperatorIds.end()) {
+        leftUpStreamOperatorIds.erase(found);
+    }
 }
 
 void LogicalBinaryOperatorNode::removeRightUpstreamOperatorId(OperatorId operatorId) {
-    std::remove(rightUpStreamOperatorIds.begin(), rightUpStreamOperatorIds.end(), operatorId);
+    auto found = std::find(rightUpStreamOperatorIds.begin(), rightUpStreamOperatorIds.end(), operatorId);
+    if (found != rightUpStreamOperatorIds.end()) {
+        rightUpStreamOperatorIds.erase(found);
+    }
 }
 
 bool LogicalBinaryOperatorNode::isLeftUpstreamOperatorId(OperatorId operatorId) {

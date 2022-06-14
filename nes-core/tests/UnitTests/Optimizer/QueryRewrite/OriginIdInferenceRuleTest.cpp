@@ -320,9 +320,10 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSelfUnionOperators) {
     auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
     auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
     ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 4);
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds()[0], sourceOps[0]->getOutputOriginIds()[0]);
+    ASSERT_EQ(unionOps[0]->getOutputOriginIds(), ElementsAre [0], sourceOps[0]->getOutputOriginIds()[0]);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[1], sourceOps[1]->getOutputOriginIds()[0]);
     ASSERT_EQ(unionOps[0]->getOutputOriginIds()[2], sourceOps[2]->getOutputOriginIds()[0]);
+    ASSERT_EQ(unionOps[0]->getOutputOriginIds()[3], sourceOps[3]->getOutputOriginIds()[0]);
 
     auto sinkOps = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOps[0]->getOutputOriginIds()[0]);
@@ -352,7 +353,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
 
     auto unionOps = updatedPlan->getOperatorByType<UnionLogicalOperatorNode>();
 
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 2);
+    ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 3);
 
     auto joinOps = updatedPlan->getOperatorByType<JoinLogicalOperatorNode>();
 
