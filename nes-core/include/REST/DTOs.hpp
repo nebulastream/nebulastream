@@ -45,6 +45,15 @@ class MessageDto : public oatpp::DTO {
 
 /* TODO - Add more DTOs here */
 
+class handleGetDto : public oatpp::DTO {
+
+    DTO_INIT(handleGetDto, DTO /* Extends */)
+
+    DTO_FIELD(Int32, statusCode);   // Status code field
+    DTO_FIELD(String, message);     // Message field
+
+};
+
 /* End DTO code-generation */
 #include OATPP_CODEGEN_END(DTO)
 
