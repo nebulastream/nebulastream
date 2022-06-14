@@ -70,6 +70,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         coordinatorConfig->numberOfBuffersPerEpoch = 10;
         coordinatorConfig->numberOfBuffersInGlobalBufferManager = 65536;
         coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
+        coordinatorConfig->numWorkerThreads = 4;
 
         workerConfig1 = WorkerConfiguration::create();
         workerConfig1->numberOfBuffersPerEpoch = 10;
@@ -79,6 +80,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig1->enableStatisticOutput = true;
         workerConfig1->numberOfBuffersToProduce = 5000000;
         workerConfig1->sourceGatheringInterval = 0;
+        workerConfig1->numWorkerThreads = 4;
 
         workerConfig2 = WorkerConfiguration::create();
         workerConfig2->numberOfBuffersPerEpoch = 10;
@@ -88,6 +90,7 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         workerConfig2->enableStatisticOutput = true;
         workerConfig2->numberOfBuffersToProduce = 5000000;
         workerConfig2->sourceGatheringInterval = 0;
+        workerConfig2->numWorkerThreads = 4;
 
         workerConfig3 = WorkerConfiguration::create();
         workerConfig3->numberOfBuffersPerEpoch = 10;
@@ -475,22 +478,22 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 //    workerConfig1->physicalSources.add(physicalSource1);
 
 
-    workerConfig1->lambdaSource = 3;
+//    workerConfig1->lambdaSource = 3;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
 
-    //workerConfig2->lambdaSource = 2;
+    workerConfig2->lambdaSource = 2;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
 
-    crd->getTopologyManagerService()->removeParent(1,3);
-    crd->getTopologyManagerService()->addParent(2,3);
+    crd->getTopologyManagerService()->removeParent(3,1);
+    crd->getTopologyManagerService()->addParent(3,2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
