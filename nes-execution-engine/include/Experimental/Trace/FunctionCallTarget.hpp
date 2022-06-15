@@ -19,9 +19,9 @@ namespace NES::ExecutionEngine::Experimental::Trace {
 
 class FunctionCallTarget {
   public:
-    FunctionCallTarget(const std::string& functionName, const std::string& mangledName);
-    std::string functionName;
-    std::string mangledName;
+    FunctionCallTarget(const std::string& mangledFunctionName,  void* functionPtr);
+     std::string mangledName;
+     void* functionPtr;
     friend std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target);
 };
 

@@ -42,7 +42,7 @@ void TraceContext::reset() {
     executionTrace->localTagMap.clear();
 };
 
-ValueRef TraceContext::createNextRef(IR::Operations::Operation::BasicType type) { return ValueRef(executionTrace->getCurrentBlockIndex(), currentOperationCounter, type); }
+ValueRef TraceContext::createNextRef(IR::Types::StampPtr type) { return ValueRef(executionTrace->getCurrentBlockIndex(), currentOperationCounter, type); }
 
 std::shared_ptr<ExecutionTrace> TraceContext::getExecutionTrace() { return executionTrace; }
 
@@ -350,7 +350,7 @@ std::ostream& operator<<(std::ostream& os, const Operation& operation) {
         } else if (auto ref = std::get_if<ConstantValue>(&input)) {
             os << *ref << "\t";
         } else if (auto ref = std::get_if<FunctionCallTarget>(&input)) {
-            os << ref->functionName << "\t";
+            os << ref->mangledName << "\t";
         }
     }
     return os;

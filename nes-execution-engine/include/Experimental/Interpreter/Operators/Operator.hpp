@@ -18,19 +18,19 @@
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class RecordBuffer;
 class ExecutableOperator;
-class ExecutionContext;
+class RuntimeExecutionContext;
 using ExecuteOperatorPtr = std::shared_ptr<ExecutableOperator>;
 class TraceContext;
 class Operator {
   public:
 
-    virtual void setup(ExecutionContext& executionCtx) const;
+    virtual void setup(RuntimeExecutionContext& executionCtx) const;
     /**
      * @brief Open is called for each record buffer and is used to initializes execution local state.
      * @param recordBuffer
      */
-    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    virtual void close(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void setChild(ExecuteOperatorPtr child);
     virtual ~Operator();
 

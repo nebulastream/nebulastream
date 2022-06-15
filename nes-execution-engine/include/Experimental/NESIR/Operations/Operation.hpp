@@ -15,54 +15,61 @@
 #ifndef NES_OPERATION_HPP
 #define NES_OPERATION_HPP
 
+#include <Experimental/NESIR/Types/BasicTypes.hpp>
+#include <Experimental/NESIR/Types/Stamp.hpp>
 #include <memory>
 
-namespace NES::ExecutionEngine::Experimental::IR::Operations {
+namespace NES::ExecutionEngine::Experimental::IR::Types {
+class Stamp;
+using StampPtr = std::shared_ptr<Stamp>;
+}// namespace NES::ExecutionEngine::Experimental::IR::Types
 
+namespace NES::ExecutionEngine::Experimental::IR::Operations {
+using OperationIdentifier = std::string;
 class Operation {
   public:
-    enum BasicType {
-        //BasicTypes
-        // Type < 5 is INT
-        INT1    = 0,
-        INT8    = 1,
-        INT16   = 2,
-        INT32   = 3,
-        INT64   = 4,
-        // Type < 7 is Float
-        FLOAT   = 5,
-        DOUBLE  = 6,
-
-        BOOLEAN = 7,
-        CHAR    = 8,
-        VOID    = 9,
-
-        // Pointer Types
-        INT8PTR = 10,
-
-        //DerivedTypes
-        ARRAY     = 32,
-        CHARARRAY = 33,
-        STRUCT    = 34
+    enum ProxyCallType { GetNumTuples = 0, SetNumTuples = 1, GetDataBuffer = 2, Other = 50 };
+    enum OperationType {
+        LoopOp,
+        AddOp,
+        LoadOp,
+        StoreOp,
+        ConstIntOp,
+        ConstBooleanOp,
+        ConstFloatOp,
+        AddressOp,
+        FunctionOp,
+        BranchOp,
+        IfOp,
+        CompareOp,
+        ReturnOp,
+        ProxyCallOp,
+        DivOp,
+        MulOp,
+        SubOp,
+        OrOp,
+        AndOp,
+        NegateOp,
+        BasicBlockArgument,
+        MLIR_YIELD,
+        CastOp
     };
-    enum ProxyCallType{
-        GetNumTuples = 0, 
-        GetDataBuffer = 1,
-        Other = 50
-    };
-    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp,
-                       CompareOp, ReturnOp, ProxyCallOp};
 
-    explicit Operation(OperationType opType);
+    explicit Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp);
+    explicit Operation(OperationType opType, Types::StampPtr stamp);
     virtual ~Operation() = default;
-
+    OperationIdentifier getIdentifier();
     virtual std::string toString() = 0;
     OperationType getOperationType() const;
+    const Types::StampPtr& getStamp() const;
 
-  private:
+  protected:
     OperationType opType;
+    OperationIdentifier identifier;
+    const Types::StampPtr stamp;
 };
 using OperationPtr = std::shared_ptr<Operation>;
+using OperationWPtr = std::weak_ptr<Operation>;
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_OPERATION_HPP

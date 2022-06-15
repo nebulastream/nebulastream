@@ -17,14 +17,17 @@
 #include <Experimental/Interpreter/Record.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+Scan::Scan(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout) : memoryLayout(memoryLayout) {}
+
+void Scan::open(RuntimeExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // call open on all child operators
     child->open(ctx, recordBuffer);
     // iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
-    for (Value<Integer> i = 0; i < numberOfRecords; i = i + 1) {
-        auto record = recordBuffer.read(i);
-        child->execute(ctx,record);
+    auto bufferAddress = recordBuffer.getBuffer();
+    for (Value<UInt64> i = 0ul; i <= numberOfRecords; i = i + 1ul) {
+        auto record = recordBuffer.read(memoryLayout, bufferAddress, i);
+        child->execute(ctx, record);
     }
 }
 

@@ -21,24 +21,28 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class ProxyCallOperation : public Operation {
   public:
-    ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, std::vector<std::string> inputArgNames,
-                       std::vector<Operation::BasicType> inputArgTypes, Operation::BasicType resultType);
+    ProxyCallOperation(ProxyCallType proxyCallType,
+                       OperationIdentifier identifier,
+                       std::vector<OperationWPtr> inputArguments,
+                       Types::StampPtr resultType);
+    ProxyCallOperation(ProxyCallType proxyCallType,
+                       std::string mangedFunctionSymbol,
+                       void* functionPtr,
+                       OperationIdentifier identifier,
+                       std::vector<OperationWPtr> inputArguments,
+                       Types::StampPtr resultType);
     ~ProxyCallOperation() override = default;
-
     ProxyCallType getProxyCallType();
-    std::string getIdentifier();
-    std::vector<std::string> getInputArgNames();
-    std::vector<Operation::BasicType> getInputArgTypes();
-    Operation::BasicType getResultType();
-    
+    std::vector<OperationPtr> getInputArguments();
+    std::string getFunctionSymbol();
     std::string toString() override;
+    void* getFunctionPtr();
 
   private:
     ProxyCallType proxyCallType;
-    std::string identifier;
-    std::vector<std::string> inputArgNames; // We need this to get the correct input args from the value map.
-    std::vector<Operation::BasicType> inputArgTypes;
-    Operation::BasicType resultType;
+    std::string mangedFunctionSymbol;
+    void* functionPtr;
+    std::vector<OperationWPtr> inputArguments;
 };
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_PROXYCALLOPERATION_HPP

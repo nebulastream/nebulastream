@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Record.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-void Map::execute(ExecutionContext& ctx, Record& record) const {
+void Map::execute(RuntimeExecutionContext& ctx, Record& record) const {
     // assume that map expression performs a field write
     mapExpression->execute(record);
     // call next operator

@@ -17,10 +17,11 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-FunctionOperation::FunctionOperation(std::string name, std::vector<Operation::BasicType> inputArgs, 
-                                     std::vector<std::string> inputArgNames, Operation::BasicType outputArg)
-    : Operation(OperationType::FunctionOp), name(std::move(name)), inputArgs(std::move(inputArgs)), 
-      inputArgNames(std::move(inputArgNames)), outputArg(outputArg) {}
+FunctionOperation::FunctionOperation(std::string name, std::vector<PrimitiveStamp> inputArgs,
+                                     std::vector<std::string> inputArgNames,
+                                     Types::StampPtr outputArg)
+    : Operation(OperationType::FunctionOp, outputArg), name(std::move(name)), inputArgs(std::move(inputArgs)),
+      inputArgNames(std::move(inputArgNames)) {}
 
 const std::string& FunctionOperation::getName() const { return name; }
 
@@ -32,8 +33,8 @@ BasicBlockPtr FunctionOperation::addFunctionBasicBlock(BasicBlockPtr functionBas
 BasicBlockPtr FunctionOperation::getFunctionBasicBlock() {
     return functionBasicBlock;
 }
-const std::vector<Operation::BasicType>& FunctionOperation::getInputArgs() const { return inputArgs; }
-Operation::BasicType FunctionOperation::getOutputArg() const { return outputArg; }
+const std::vector<PrimitiveStamp>& FunctionOperation::getInputArgs() const { return inputArgs; }
+Types::StampPtr FunctionOperation::getOutputArg() const { return getStamp(); }
 
 
 std::string FunctionOperation::toString() {

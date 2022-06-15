@@ -21,17 +21,17 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class StoreOperation : public Operation{
   public:
-    explicit StoreOperation(std::string valueArgName, std::string addressArgName);
+    explicit StoreOperation(OperationPtr value, OperationPtr address);
     ~StoreOperation() override = default;
 
-    std::string getValueArgName();
-    std::string getAddressArgName();
+    OperationPtr getValue();
+    OperationPtr getAddress();
     
     std::string toString() override;
 
   private:
-    std::string valueArgName;
-    std::string addressArgName;
+    OperationWPtr value;
+    OperationWPtr address;
 };
 }// namespace NES
 #endif//NES_STOREOPERATION_HPP

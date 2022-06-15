@@ -15,17 +15,11 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_VALUE_HPP_
 #include <Experimental/Interpreter/DataValue/Any.hpp>
 #include <Experimental/Interpreter/DataValue/Boolean.hpp>
-#include <Experimental/Interpreter/DataValue/Integer.hpp>
-#include <Experimental/Interpreter/Operations/AddOp.hpp>
-#include <Experimental/Interpreter/Operations/AndOp.hpp>
-#include <Experimental/Interpreter/Operations/DivOp.hpp>
-#include <Experimental/Interpreter/Operations/EqualsOp.hpp>
-#include <Experimental/Interpreter/Operations/LessThenOp.hpp>
-#include <Experimental/Interpreter/Operations/MulOp.hpp>
-#include <Experimental/Interpreter/Operations/NegateOp.hpp>
-#include <Experimental/Interpreter/Operations/OrOp.hpp>
-#include <Experimental/Interpreter/Operations/SubOp.hpp>
+#include <Experimental/Interpreter/DataValue/Float/Double.hpp>
+#include <Experimental/Interpreter/DataValue/Float/Float.hpp>
+#include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/Util/Casting.hpp>
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 #include <Experimental/Trace/ConstantValue.hpp>
 #include <Experimental/Trace/OpCode.hpp>
 #include <Experimental/Trace/SymbolicExecution/SymbolicExecutionContext.hpp>
@@ -35,6 +29,22 @@
 #include <memory>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
+template<class T>
+Trace::ValueRef createNextRef(std::unique_ptr<T>& t) {
+
+    auto dynCast = dynamic_cast<TraceableType*>(t.get());
+
+    if (dynCast) {
+        auto ctx = Trace::getThreadLocalTraceContext();
+        if (ctx) {
+            return ctx->createNextRef(dynCast->getType());
+        }
+        return Trace::ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
+    } else {
+        return Trace::ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
+    }
+}
+
 class BaseValue {
   public:
 };
@@ -42,23 +52,33 @@ class BaseValue {
 template<class ValueType = Any>
 class Value : BaseValue {
   public:
-    Value(std::unique_ptr<ValueType> wrappedValue)
-        : value(std::move(wrappedValue)), ref(Trace::createNextRef(value->getType())){};
+    Value(ValueType wrappedValue) : value(std::make_unique<ValueType>(wrappedValue)), ref(createNextRef(value)){};
+    Value(std::unique_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(createNextRef(value)){};
+
     Value(std::unique_ptr<ValueType> wrappedValue, Trace::ValueRef& ref) : value(std::move(wrappedValue)), ref(ref){};
 
-    Value(int value) : Value(std::make_unique<Integer>(value)) {
-        TraceOperation(Trace::CONST, *this, *this);
-        //traceContext->trace(CONST, *this, *this);
-    };
-
-    explicit Value(int64_t value) : Value(std::make_unique<Integer>(value)) { TraceOperation(Trace::CONST, *this, *this); };
-    explicit Value(bool value) : Value(std::make_unique<Boolean>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(int8_t value) : Value(std::make_unique<Int8>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(int16_t value) : Value(std::make_unique<Int16>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(int32_t value) : Value(std::make_unique<Int32>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(int64_t value) : Value(std::make_unique<Int64>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(uint8_t value) : Value(std::make_unique<UInt8>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(uint16_t value) : Value(std::make_unique<UInt16>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(uint32_t value) : Value(std::make_unique<UInt32>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(uint64_t value) : Value(std::make_unique<UInt64>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(float value) : Value(Any::create<Float>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(double value) : Value(Any::create<Double>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(int8_t* value) : Value(std::make_unique<MemRef>(value)) { TraceOperation(Trace::CONST, *this, *this); };
+    Value(bool value) : Value(std::make_unique<Boolean>(value)) { TraceOperation(Trace::CONST, *this, *this); };
 
     // copy constructor
-    template<class OType>
-    Value(const Value<OType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {}
+    //template<class OType>
+    //Value(const Value<OType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {
+    //    std::cout << "copy temp value" << std::endl;
+    //}
 
-    Value(const Value<ValueType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {}
+    Value(const Value<ValueType>& other) : value(cast<ValueType>((other.value)->copy())), ref(other.ref) {
+        std::cout << "copy value" << std::endl;
+    }
 
     // move constructor
     template<class OType>
@@ -77,7 +97,7 @@ class Value : BaseValue {
     }
 
     operator bool() {
-        if (instanceOf<Boolean>(value)) {
+        if (isa<Boolean>(value)) {
             auto boolValue = cast<Boolean>(value);
             if (Trace::isInSymbolicExecution()) {
                 auto* sec = Trace::getThreadLocalSymbolicExecutionContext();
@@ -86,12 +106,47 @@ class Value : BaseValue {
                 ctx->traceCMP(ref, result);
                 return result;
             } else {
-                TraceOperation(Trace::OpCode::CMP, *this, *this);
+                auto ctx = Trace::getThreadLocalTraceContext();
+                ctx->traceCMP(ref, boolValue->value);
                 return boolValue->value;
             }
         }
         return false;
+        //NES_THROW_RUNTIME_ERROR("Can't evaluate bool on non Boolean value");
     };
+
+    operator const Value<>() const {
+
+        std::unique_ptr<Any> copy = value->copy();
+        auto lRef = this->ref;
+        return Value<>(std::move(copy), lRef);
+    };
+
+    template<typename ResultType, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
+    auto load() {
+        std::unique_ptr<ResultType> result;
+        if (Trace::isInSymbolicExecution()) {
+            result = std::make_unique<ResultType>(0l);
+        } else {
+            result = ((MemRef*) this->value.get())->load<ResultType>();
+        }
+        auto resultValue = Value<ResultType>(std::move(result));
+        TraceOperation(Trace::OpCode::LOAD, *this, resultValue);
+        return resultValue;
+    }
+
+    template<typename InputValue, typename T = ValueType, typename = std::enable_if_t<std::is_same<T, MemRef>::value>>
+    auto store(Value<InputValue> value) {
+        if (!Trace::isInSymbolicExecution()) {
+            this->value->store(value);
+        }
+        if (auto* ctx = Trace::getThreadLocalTraceContext()) {
+            auto operation = Trace::Operation(Trace::STORE, {ref, value.ref});
+            ctx->trace(operation);
+        }
+    }
+
+    Value<> castTo(const TypeIdentifier* toStamp) const;
 
     template<class T>
     auto as() {
@@ -101,10 +156,24 @@ class Value : BaseValue {
     // destructor
     ~Value() {}
 
+    ValueType& getValue() const { return *value.get(); };
+
   public:
-    std::unique_ptr<ValueType> value;
+    mutable std::unique_ptr<ValueType> value;
     Trace::ValueRef ref;
 };
+
+Value<> AddOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> SubOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> MulOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> DivOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> EqualsOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> NegateOp(const Value<>& exp);
+Value<> LessThanOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> AndOp(const Value<>& leftExp, const Value<>& rightExp);
+Value<> OrOp(const Value<>& leftExp, const Value<>& rightExp);
+
+Value<> CastToOp(const Value<>& leftExp, IR::Types::StampPtr toStamp);
 
 template<class ValueType, class ResultType>
 void TraceOperation(Trace::OpCode op, const Value<ValueType>& input, Value<ResultType>& result) {
@@ -149,28 +218,28 @@ inline auto toValue(T&& t) -> Value<> {
 }
 
 template<class T>
+    requires(std::is_same_v<T, const float> == true)
+inline auto toValue(T&& t) -> Value<> {
+    return Value<Float>(t);
+}
+
+template<class T>
+    requires(std::is_same_v<T, const int64_t> == true)
+inline auto toValue(T&& t) -> Value<> {
+    return Value<Int64>(t);
+}
+
+template<class T>
     requires(std::is_same_v<T, const uint64_t> == true)
 inline auto toValue(T&& t) -> Value<> {
-    auto value = Value<Integer>(std::make_unique<Integer>(t));
-    TraceOperation(Trace::CONST, value, value);
-    return value;
+    return Value<UInt64>(t);
 }
 
 template<class T>
     requires(std::is_same_v<T, const int32_t> == true)
 inline auto toValue(T&& t) -> Value<> {
-    auto value = Value<Integer>(std::make_unique<Integer>(t));
-    TraceOperation(Trace::CONST, value, value);
-    return value;
+    return Value<Int32>(t);
 }
-
-/*
-template<class T>
-    requires(std::is_fundamental<T>::value == true)
-inline auto toValue(T&& t) -> Value<> {
-    return Value{std::forward<T>(t)};
-}
- */
 
 template<IsNotValueType LHS, IsValueType RHS>
 auto inline operator+(const LHS& left, const RHS& right) {
@@ -186,10 +255,7 @@ auto inline operator+(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator+(const LHS& left, const RHS& right) {
-    auto result = Operations::AddOp(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::ADD, left, right, resValue);
-    return resValue;
+    return AddOp(left, right);
 };
 
 template<IsValueType LHS>
@@ -211,10 +277,7 @@ auto inline operator-(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator-(const LHS& left, const RHS& right) {
-    auto result = Operations::SubOp(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::SUB, left, right, resValue);
-    return resValue;
+    return SubOp(left, right);
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -231,10 +294,7 @@ auto inline operator*(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator*(const LHS& left, const RHS& right) {
-    auto result = Operations::MulOp(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::MUL, left, right, resValue);
-    return resValue;
+    return MulOp(left, right);
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -251,10 +311,7 @@ auto inline operator/(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator/(const LHS& left, const RHS& right) {
-    auto result = Operations::DivOp(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::DIV, left, right, resValue);
-    return resValue;
+    return DivOp(left, right);
 };
 
 // --- logical operations ----
@@ -273,18 +330,12 @@ auto inline operator==(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator==(const LHS& left, const RHS& right) {
-    auto result = Operations::EqualsOp(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::EQUALS, left, right, resValue);
-    return resValue;
+    return EqualsOp(left, right);
 };
 
 template<IsValueType LHS>
 auto inline operator!(const LHS& left) {
-    auto result = Operations::NegateOp(left.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::NEGATE, left, resValue);
-    return resValue;
+    return NegateOp(left);
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -318,11 +369,7 @@ auto inline operator<(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator<(const LHS& left, const RHS& right) {
-    auto result =
-        Trace::isInSymbolicExecution() ? std::make_unique<Boolean>(true) : Operations::LessThan(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::LESS_THAN, left, right, resValue);
-    return resValue;
+    return LessThanOp(left, right);
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -390,10 +437,8 @@ auto inline operator&&(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator&&(const LHS& left, const RHS& right) {
-    auto result = Operations::AndOp(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::AND, left, right, resValue);
-    return resValue;
+    auto result = AndOp(left, right);
+    return result;
 };
 
 template<IsNotValueType LHS, IsValueType RHS>
@@ -410,37 +455,8 @@ auto inline operator||(const LHS& left, const RHS& right) {
 
 template<IsValueType LHS, IsValueType RHS>
 auto inline operator||(const LHS& left, const RHS& right) {
-    auto result = Operations::OrOp(left.value, right.value);
-    auto resValue = Value(std::move(result));
-    TraceOperation(Trace::OpCode::OR, left, right, resValue);
-    return resValue;
+    return OrOp(left, right);
 };
-
-template<class Type>
-auto load(Value<MemRef>& ref) {
-    if (Trace::isInSymbolicExecution()) {
-        auto value = std::make_unique<Type>();
-        auto resValue = Value<Type>(std::move(value));
-        TraceOperation(Trace::OpCode::LOAD, ref, resValue);
-        return resValue;
-    } else {
-        auto value = ref.value->load<Type>();
-        auto resValue = Value<Type>(std::move(value));
-        TraceOperation(Trace::OpCode::LOAD, ref, resValue);
-        return resValue;
-    }
-}
-
-template<class Type>
-void store(Value<MemRef>& ref, Value<Type>& value) {
-    if (!Trace::isInSymbolicExecution()) {
-        ref.value->store(value);
-    }
-    if (auto* ctx = Trace::getThreadLocalTraceContext()) {
-        auto operation = Trace::Operation(Trace::STORE, {ref.ref, value.ref});
-        ctx->trace(operation);
-    }
-}
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
 

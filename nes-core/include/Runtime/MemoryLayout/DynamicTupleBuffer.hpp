@@ -208,6 +208,8 @@ class DynamicTupleBuffer {
      */
     void setNumberOfTuples(uint64_t value);
 
+    const MemoryLayoutPtr& getMemoryLayout() const;
+
     /**
      * @brief Accesses an individual tuple in the buffer.
      * @param tupleIndex the index of the record.

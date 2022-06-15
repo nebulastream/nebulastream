@@ -1,0 +1,198 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <API/Schema.hpp>
+#include <Experimental/Interpreter/DataValue/MemRef.hpp>
+#include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
+#include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
+#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Experimental/Interpreter/Operators/Aggregation.hpp>
+#include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/Interpreter/Operators/Emit.hpp>
+#include <Experimental/Interpreter/Operators/Scan.hpp>
+#include <Experimental/Interpreter/Operators/Selection.hpp>
+#include <Experimental/Interpreter/RecordBuffer.hpp>
+#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Experimental/NESIR/Phases/LoopInferencePhase.hpp>
+#include <Experimental/Trace/ExecutionTrace.hpp>
+#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
+#include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
+#include <Experimental/Trace/TraceContext.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <cstdint>
+#include <execinfo.h>
+#include <gtest/gtest.h>
+#include <memory>
+
+namespace NES::ExecutionEngine::Experimental::Interpreter {
+class TypeConversionTest : public testing::Test {
+  public:
+    Trace::SSACreationPhase ssaCreationPhase;
+    Trace::TraceToIRConversionPhase irCreationPhase;
+    IR::LoopInferencePhase loopInferencePhase;
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("TypeConversionTest.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup TypeConversionTest test class." << std::endl;
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() override { std::cout << "Setup TraceTest test case." << std::endl; }
+
+    /* Will be called before a test is executed. */
+    void TearDown() override { std::cout << "Tear down TraceTest test case." << std::endl; }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
+};
+
+Value<> negativeIntegerTest() {
+    Value four = Value<>(4);
+    Value five = Value<>(5);
+    Value minusOne = four - five;
+    return minusOne;
+}
+
+TEST_F(TypeConversionTest, negativeIntegerTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return negativeIntegerTest();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int32_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), -1);
+}
+
+Value<> unsignedIntegerTest() {
+    uint32_t four = 4;
+    uint32_t five = 5;
+    Value unsignedFour = Value(four);
+    Value unsignedFive = Value(five);
+    Value minusOne = unsignedFour - unsignedFive;
+    return minusOne;
+}
+
+// We should be able to create Values with unsigned ints, but currently we cannot.
+TEST_F(TypeConversionTest, DISABLED_unsignedIntegerTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return unsignedIntegerTest();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (uint32_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), UINT32_MAX);
+}
+
+Value<> boolCompareTest() {
+    Value iw = Value(true);
+    if (iw == false) {
+        return iw + 41;
+    } else {
+        return iw;
+    }
+}
+
+// Should return 1, but returns 41 (Value(true) in interpreted as 0).
+TEST_F(TypeConversionTest, DISABLED_boolCompareTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return boolCompareTest();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
+
+Value<> floatTest() {
+    // Value iw = Value(1.3);
+    // return iw;
+    return Value(1);
+}
+
+// Above approach, to return a float Value, does not work.
+TEST_F(TypeConversionTest, DISABLED_floatTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return floatTest();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 1);
+}
+
+Value<> mixBoolAndIntTest() {
+    Value boolValue = Value(true);
+    Value intValue = Value(4);
+    return boolValue + intValue;
+}
+
+// Should return 5, but returns 4. Could extend to check for bool-int edge cases
+TEST_F(TypeConversionTest, DISABLED_mixBoolAndIntTest) {
+    auto executionTrace = Trace::traceFunctionSymbolicallyWithReturn([]() {
+        return mixBoolAndIntTest();
+    });
+    std::cout << *executionTrace.get() << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace.get() << std::endl;
+    auto ir = irCreationPhase.apply(executionTrace);
+    std::cout << ir->toString() << std::endl;
+
+    // create and print MLIR
+    auto mlirUtility = new MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(ir, nullptr, ir->getIsSCF());
+    auto engine = mlirUtility->prepareEngine();
+    auto function = (int64_t(*)()) engine->lookup("execute").get();
+    ASSERT_EQ(function(), 5);
+}
+
+}// namespace NES::ExecutionEngine::Experimental::Interpreter

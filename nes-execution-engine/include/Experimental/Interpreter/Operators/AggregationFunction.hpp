@@ -21,17 +21,22 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class AggregationState {};
 
+class GlobalSumState : public AggregationState {
+  public:
+    uint64_t sum;
+};
+
 class SumState : public AggregationState {
   public:
-    SumState() : currentSum(Value<Integer>((int) 42)) {}
-    SumState(Value<Integer> value) : currentSum(value) {}
-    Value<Integer> currentSum;
+    SumState(Value<> value) : currentSum(value) {}
+    Value<> currentSum;
 };
 
 class AggregationFunction {
   public:
     AggregationFunction(){};
     virtual ~AggregationFunction(){};
+    virtual std::unique_ptr<AggregationState> createGlobalState() = 0;
     virtual std::unique_ptr<AggregationState> createState() = 0;
     virtual std::unique_ptr<AggregationState> loadState(Value<MemRef>& ref) = 0;
     virtual void storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) = 0;
@@ -40,11 +45,10 @@ class AggregationFunction {
     virtual Value<Any> lower(std::unique_ptr<AggregationState>& ctx) = 0;
 };
 
-
-
-class SumFunction : public AggregationFunction{
+class SumFunction : public AggregationFunction {
   public:
-    SumFunction(std::shared_ptr<ReadFieldExpression> readFieldExpression);
+    SumFunction(std::shared_ptr<ReadFieldExpression> readFieldExpression, IR::Types::StampPtr stamp);
+    std::unique_ptr<AggregationState> createGlobalState() override;
     std::unique_ptr<AggregationState> createState() override;
     void liftCombine(std::unique_ptr<AggregationState>& ctx, Record& recordBuffer) override;
     void combine(std::unique_ptr<AggregationState>& ctx1, std::unique_ptr<AggregationState>& ctx2) override;
@@ -54,6 +58,7 @@ class SumFunction : public AggregationFunction{
 
   private:
     std::shared_ptr<ReadFieldExpression> readFieldExpression;
+    IR::Types::StampPtr stamp;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

@@ -21,4 +21,7 @@ add_source_files(nes-execution-engine
         Record.cpp
         RecordBuffer.cpp
         ExecutionContext.cpp
+        FunctionCall.cpp
+        WorkerContext.cpp
+        PipelineContext.cpp
         )

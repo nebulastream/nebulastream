@@ -13,16 +13,18 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_
-#include <memory>
 #include <Experimental/NESIR/Operations/Operation.hpp>
-namespace NES::ExecutionEngine::Experimental::Trace{
+#include <Experimental/NESIR/Types/Stamp.hpp>
+#include <memory>
+namespace NES::ExecutionEngine::Experimental::Trace {
 
 class None {};
 
 class ValueRef {
   public:
     ValueRef() : blockId(), operationId(){};
-    ValueRef(uint32_t blockId, uint32_t operationId, IR::Operations::Operation::BasicType type) : blockId(blockId), operationId(operationId), type(type){};
+    ValueRef(uint32_t blockId, uint32_t operationId, IR::Types::StampPtr type)
+        : blockId(blockId), operationId(operationId), type(type){};
     ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type) {}
     ValueRef& operator=(const ValueRef& other) {
         this->operationId = other.operationId;
@@ -32,7 +34,7 @@ class ValueRef {
     }
     uint32_t blockId;
     uint32_t operationId;
-    IR::Operations::Operation::BasicType type;
+    IR::Types::StampPtr type;
     bool operator==(const ValueRef& rhs) const;
     bool operator!=(const ValueRef& rhs) const;
     friend std::ostream& operator<<(std::ostream& os, const ValueRef& tag);
@@ -46,8 +48,8 @@ struct ValueRefHasher {
     }
 };
 
-ValueRef createNextRef(IR::Operations::Operation::BasicType type);
+ValueRef createNextRef(IR::Types::StampPtr type);
 
-}
+}// namespace NES::ExecutionEngine::Experimental::Trace
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_VALUEREF_HPP_

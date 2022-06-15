@@ -13,10 +13,10 @@
 */
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_FUNCTIONCALL_HPP_
-#include <Experimental/Interpreter/DataValue/Integer.hpp>
+#include <Experimental/Interpreter/DataValue/Integer/Int.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
-#include <execinfo.h>
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 #include <memory>
 #include <stdio.h>
 #include <unistd.h>
@@ -76,7 +76,21 @@ auto bind(Fn T::*__pm, T* obj, Args... args) {
 */
 template<typename Arg>
 auto transform(Arg argument) {
-    if constexpr (std::is_same<Arg, Value<Integer>>::value) {
+    if constexpr (std::is_same<Arg, Value<Int8>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<Int16>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<Int32>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<Int64>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<UInt8>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<UInt16>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<UInt32>>::value) {
+        return argument.value->getValue();
+    } else if constexpr (std::is_same<Arg, Value<UInt64>>::value) {
         return argument.value->getValue();
     } else if constexpr (std::is_same<Arg, Value<Boolean>>::value) {
         return argument.value->getValue();
@@ -93,23 +107,29 @@ Trace::InputVariant getRefs(Arg argument) {
 template<typename Arg>
 auto transformReturn(Arg argument) {
     if constexpr (std::is_same<Arg, uint64_t>::value) {
-        return Value<Integer>(std::make_unique<Integer>(argument));
+        return Value<UInt64>(std::make_unique<UInt64>(argument));
+    }
+    if constexpr (std::is_same<Arg, int64_t>::value) {
+        return Value<Int64>(std::make_unique<Int64>(argument));
     }
     if constexpr (std::is_same<Arg, void*>::value) {
-        return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
+        return Value<MemRef>(std::make_unique<MemRef>((int8_t*) argument));
     }
-    if constexpr (std::is_same<Arg, uint8_t *>::value) {
+    if constexpr (std::is_same<Arg, uint8_t*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
     }
 }
 
 template<typename R>
 auto createDefault() {
+    if constexpr (std::is_same<R, int64_t>::value) {
+        return Value<Int64>(std::make_unique<Int64>(0));
+    }
     if constexpr (std::is_same<R, uint64_t>::value) {
-        return Value<Integer>(std::make_unique<Integer>(0));
+        return Value<UInt64>(std::make_unique<UInt64>(0));
     }
     if constexpr (std::is_same<R, void*>::value) {
-        return Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
+        return Value<MemRef>(std::make_unique<MemRef>(nullptr));
     }
 }
 
@@ -133,7 +153,7 @@ class ProxyFunction : public AbstractFunction {
 
     ProxyFunction(CallbackFunction&& function, std::string& name) : function(function), name(name) {
         void* funptr = reinterpret_cast<void*>(&function);
-        backtrace_symbols_fd(&funptr, 1, 1);
+        //backtrace_symbols_fd(&funptr, 1, 1);
     }
     CallbackFunction function;
     std::string name;
@@ -166,11 +186,52 @@ void myFunction(CallbackFunction&& function) {
     std::cout << "call function " << &function << "__func__" << __func__ << " ---- " << __PRETTY_FUNCTION__;
 }
 
+std::string getMangledName(void* funcPtr);
+
+template<typename R>
+auto FunctionCall(std::string functionName, R (*fnptr)()) {
+    //auto mangledName = getMangledName((void*) fnptr);
+    //NES_DEBUG("Function " << mangledName);
+    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, (void*) fnptr)};
+
+    if constexpr (std::is_void_v<R>) {
+        if (!Trace::isInSymbolicExecution()) {
+            fnptr();
+        }
+        auto ctx = Trace::getThreadLocalTraceContext();
+        if (ctx != nullptr) {
+            auto operation = Trace::Operation(Trace::CALL, varRefs);
+            ctx->trace(operation);
+        }
+    } else {
+        if (!Trace::isInSymbolicExecution()) {
+            auto res = fnptr();
+            auto resultValue = transformReturn(res);
+            auto ctx = Trace::getThreadLocalTraceContext();
+            if (ctx != nullptr) {
+
+                auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+                ctx->trace(operation);
+            }
+            return resultValue;
+        } else {
+            auto resultValue = createDefault<R>();
+            auto ctx = Trace::getThreadLocalTraceContext();
+            auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
+            ctx->trace(operation);
+            return resultValue;
+        }
+    }
+    //}
+}
+
 template<typename R, typename... Args2, typename... Args>
 auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... arguments) {
+    //auto mangledName = getMangledName((void*) fnptr);
+    //NES_DEBUG("Function " << mangledName);
+    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, (void*) fnptr)};
 
-    std::vector<Trace::InputVariant> varRefs = {Trace::FunctionCallTarget(functionName, functionName)};
-    for (auto& p : {getRefs(arguments)...}) {
+    for (const Trace::InputVariant& p : {getRefs(arguments)...}) {
         varRefs.emplace_back(p);
     }
 
@@ -189,7 +250,6 @@ auto FunctionCall(std::string functionName, R (*fnptr)(Args2...), Args... argume
             auto resultValue = transformReturn(res);
             auto ctx = Trace::getThreadLocalTraceContext();
             if (ctx != nullptr) {
-
                 auto operation = Trace::Operation(Trace::CALL, resultValue.ref, varRefs);
                 ctx->trace(operation);
             }

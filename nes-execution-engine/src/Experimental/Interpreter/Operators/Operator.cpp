@@ -16,15 +16,19 @@
 #include <Experimental/Interpreter/Operators/Operator.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-void Operator::setup(ExecutionContext& ) const {}
+void Operator::setup(RuntimeExecutionContext& executionCtx) const {
+    if (hasChildren()) {
+        child->setup(executionCtx);
+    }
+}
 
-void Operator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const {
+void Operator::open(RuntimeExecutionContext& executionCtx, RecordBuffer& rb) const {
     if (hasChildren()) {
         child->open(executionCtx, rb);
     }
 }
 
-void Operator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const {
+void Operator::close(RuntimeExecutionContext& executionCtx, RecordBuffer& rb) const {
     if (hasChildren()) {
         child->close(executionCtx, rb);
     }

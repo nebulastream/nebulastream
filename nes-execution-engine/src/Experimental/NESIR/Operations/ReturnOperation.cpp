@@ -12,19 +12,23 @@
     limitations under the License.
 */
 
-
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 #include <cstdint>
 #include <string>
-
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-ReturnOperation::ReturnOperation(uint8_t returnOpCode) 
-    : Operation(Operation::ReturnOp), returnOpCode(returnOpCode){}
+ReturnOperation::ReturnOperation() : Operation(Operation::ReturnOp, Types::StampFactory::createVoidStamp()) {}
+ReturnOperation::ReturnOperation(OperationPtr returnValue)
+    : Operation(Operation::ReturnOp, returnValue->getStamp()), returnValue(returnValue) {}
 
-    uint8_t ReturnOperation::getReturnOpCode() { return returnOpCode; }
-
-    std::string ReturnOperation::toString() {
-        return "ReturnOperation(" + std::to_string(returnOpCode) + ")";
+std::string ReturnOperation::toString() {
+    if (hasReturnValue()) {
+        return "return (" + getReturnValue()->getIdentifier() + ")";
+    } else {
+        return "return";
     }
-    
-}// namespace NES
+}
+OperationPtr ReturnOperation::getReturnValue() { return returnValue.lock(); }
+bool ReturnOperation::hasReturnValue() { return !stamp->isVoid(); }
+
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

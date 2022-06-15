@@ -11,14 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operations/AddOp.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/preprocessor/stringize.hpp>
@@ -52,13 +50,13 @@ TEST_F(ExpressionTest, EqualsExpressionInteger) {
     auto readField1 = std::make_shared<ReadFieldExpression>(0);
     auto readField2 = std::make_shared<ReadFieldExpression>(1);
     auto equalsExpression = std::make_shared<EqualsExpression>(readField1, readField2);
-    auto r1 = Record({Value<Integer>(1), Value<Integer>(1)});
+    auto r1 = Record({Value<Int32>(1), Value<Int32>(1)});
     ASSERT_TRUE(equalsExpression->execute(r1).as<Boolean>().value->value);
 }
 
 TEST_F(ExpressionTest, ExpressionReadInvalidField) {
     auto readField1 = std::make_shared<ReadFieldExpression>(3);
-    auto r1 = Record({Value<Integer>(1), Value<Integer>(1)});
+    auto r1 = Record({Value<Int32>(1), Value<Int32>(1)});
     ASSERT_ANY_THROW(readField1->execute(r1));
 }
 

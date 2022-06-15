@@ -20,7 +20,10 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 
 class Scan : public Operator {
   public:
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    Scan(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    void open(RuntimeExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+  private:
+    const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

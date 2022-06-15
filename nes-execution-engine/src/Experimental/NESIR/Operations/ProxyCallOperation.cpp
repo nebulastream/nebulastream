@@ -12,31 +12,48 @@
     limitations under the License.
 */
 
-
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier,
-                                        std::vector<std::string> inputArgNames, std::vector<Operation::BasicType> inputArgTypes,
-                                        Operation::BasicType resultType) 
-    : Operation(Operation::ProxyCallOp), proxyCallType(proxyCallType), identifier(identifier), inputArgNames(std::move(inputArgNames)),
-      inputArgTypes(inputArgTypes), resultType(resultType) {}
+ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
+                                       OperationIdentifier identifier,
+                                       std::vector<OperationWPtr> inputArguments,
+                                       Types::StampPtr resultType)
+    : Operation(Operation::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+      inputArguments(std::move(inputArguments)) {}
 
-    Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
-    std::string ProxyCallOperation::getIdentifier() { return identifier; }
-    std::vector<std::string> ProxyCallOperation::getInputArgNames() { return inputArgNames; }
-    std::vector<Operation::BasicType> ProxyCallOperation::getInputArgTypes() { return inputArgTypes; }
-    Operation::BasicType ProxyCallOperation::getResultType() { return resultType; }
+ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
+                                       std::string functionSymbol,
+                                       void* functionPtr,
+                                       OperationIdentifier identifier,
+                                       std::vector<OperationWPtr> inputArguments,
+                                       Types::StampPtr resultType)
+    : Operation(Operation::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+      mangedFunctionSymbol(functionSymbol), functionPtr(functionPtr), inputArguments(std::move(inputArguments)) {}
 
-    std::string ProxyCallOperation::toString() {
-        std::string baseString = "ProxyCallOperation_" + identifier + "(";
-        if(inputArgNames.size() > 0) {
-            baseString += inputArgNames[0];
-            for(int i = 1; i < (int) inputArgNames.size(); ++i) { 
-                baseString += ", " + inputArgNames.at(i);
-            }
-        }
-        return baseString + ")";
+Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
+std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
+    std::vector<OperationPtr> args;
+    for (auto input : inputArguments) {
+        args.emplace_back(input.lock());
     }
+    return args;
+}
 
-}// namespace NES
+std::string ProxyCallOperation::toString() {
+    std::string baseString = identifier + " = " + getFunctionSymbol() + "(";
+    if (inputArguments.size() > 0) {
+        baseString += inputArguments[0].lock()->getIdentifier();
+        for (int i = 1; i < (int) inputArguments.size(); ++i) {
+            baseString += ", " + inputArguments.at(i).lock()->getIdentifier();
+        }
+    }
+    return baseString + ")";
+}
+std::string ProxyCallOperation::getFunctionSymbol() { return mangedFunctionSymbol; }
+
+void* ProxyCallOperation::getFunctionPtr(){
+    return functionPtr;
+}
+
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

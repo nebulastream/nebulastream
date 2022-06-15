@@ -15,7 +15,7 @@
 add_source_files(nes-execution-engine
         TraceContext.cpp
         ConstantValue.cpp
-        Operation.cpp
+        TraceOperation.cpp
         ExecutionTrace.cpp
         Block.cpp
         ValueRef.cpp

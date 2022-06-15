@@ -13,4 +13,6 @@
 
 add_source_files(nes-execution-engine
         BasicBlock.cpp
+        BasicBlockArgument.cpp
+        BasicBlockInvocation.cpp
 )

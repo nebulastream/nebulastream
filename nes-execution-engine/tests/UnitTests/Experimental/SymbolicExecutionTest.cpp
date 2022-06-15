@@ -13,7 +13,6 @@
 */
 
 #include <API/Schema.hpp>
-#include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/ExecutionContext.hpp>
@@ -26,8 +25,8 @@
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
 #include <Experimental/Trace/SymbolicExecution/SymbolicExecutionContext.hpp>
+#include <Experimental/Trace/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -327,6 +326,65 @@ TEST_F(SymbolicExecutionTest, ifElseConditionTest) {
     ASSERT_EQ(block3.operations[1].op, Trace::ADD);
 }
 
+void nestedIfThenElseCondition() {
+    Value value = Value(1);
+    Value iw = Value(1);
+    if (value == 42) {
+    } else {
+        if (iw == 8) {
+        }else{
+            iw = iw +2;
+        }
+    }
+}
+
+TEST_F(SymbolicExecutionTest, nestedIfElseConditionTest) {
+    auto executionTrace = Trace::traceFunctionSymbolically([]() {
+        nestedIfThenElseCondition();
+    });
+    std::cout << *executionTrace << std::endl;
+    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
+    std::cout << *executionTrace << std::endl;
+    auto basicBlocks = executionTrace->getBlocks();
+    ASSERT_EQ(basicBlocks.size(), 7);
+    auto block0 = basicBlocks[0];
+    ASSERT_EQ(block0.operations[0].op, Trace::CONST);
+    ASSERT_EQ(block0.operations[1].op, Trace::CONST);
+    ASSERT_EQ(block0.operations[2].op, Trace::CONST);
+    ASSERT_EQ(block0.operations[3].op, Trace::EQUALS);
+    ASSERT_EQ(block0.operations[4].op, Trace::CMP);
+
+    auto block1 = basicBlocks[1];
+    ASSERT_EQ(block1.predecessors[0], 0);
+    ASSERT_EQ(block1.operations[0].op, Trace::JMP);
+    auto blockref = std::get<Trace::BlockRef>(block1.operations[0].input[0]);
+    ASSERT_EQ(blockref.block, 5);
+
+    auto block2 = basicBlocks[2];
+    ASSERT_EQ(block2.predecessors[0], 0);
+    ASSERT_EQ(block2.arguments.size(), 1);
+    ASSERT_EQ(block2.operations[0].op, Trace::CONST);
+    ASSERT_EQ(block2.operations[1].op, Trace::EQUALS);
+    ASSERT_EQ(block2.operations[2].op, Trace::CMP);
+
+    auto block3 = basicBlocks[3];
+    ASSERT_EQ(block3.predecessors[0], 2);
+    ASSERT_EQ(block3.arguments.size(), 0);
+    ASSERT_EQ(block3.operations[0].op, Trace::JMP);
+
+    auto block4 = basicBlocks[4];
+    ASSERT_EQ(block4.predecessors[0], 2);
+    ASSERT_EQ(block4.arguments.size(), 1);
+    ASSERT_EQ(block4.operations[0].op, Trace::CONST);
+    ASSERT_EQ(block4.operations[1].op, Trace::ADD);
+    ASSERT_EQ(block4.operations[2].op, Trace::JMP);
+
+    auto block5 = basicBlocks[5];
+    ASSERT_EQ(block5.predecessors[0], 1);
+    ASSERT_EQ(block5.predecessors[1], 3);
+    ASSERT_EQ(block5.operations[0].op, Trace::JMP);
+}
+
 void emptyLoop() {
     Value iw = Value(1);
     Value iw2 = Value(2);
@@ -563,140 +621,4 @@ TEST_F(SymbolicExecutionTest, invertedLoopTest) {
     ASSERT_EQ(block3.operations[3].op, Trace::CMP);
 }
 
-/*
-void loadStoreValue() {
-    auto   Trace::ADDressVal = Value(10);
-      Trace::ADDress   Trace::ADDress =   Trace::ADDress(  Trace::ADDressVal);
-    auto value =   Trace::ADDress.load();
-    value = value + 10;
-      Trace::ADDress.store(value);
-}
-
-TEST_F(SymbolicExecutionTest, loadStoreValueTest) {
-
-    auto execution =  Trace::traceFunction([]() {
-        loadStoreValue();
-    });
-    std::cout << execution << std::endl;
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << execution << std::endl;
-    auto basicBlocks = execution->getBlocks();
-    ASSERT_EQ(basicBlocks.size(), 4);
-    auto block0 = basicBlocks[0];
-    std::cout << execution << std::endl;
-    ASSERT_EQ(block0.operations[0].op,  Trace::CONST);
-    ASSERT_EQ(block0.operations[1].op,  Trace::CONST);
-    ASSERT_EQ(block0.operations[2].op,  Trace::JMP);
-
-    auto block1 = basicBlocks[1];
-    ASSERT_EQ(block1.predecessors[0], 3);
-    ASSERT_EQ(block1.operations[0].op,  Trace::JMP);
-
-    auto block2 = basicBlocks[2];
-    ASSERT_EQ(block2.predecessors[0], 3);
-    ASSERT_EQ(block2.arguments.size(), 0);
-
-    auto block3 = basicBlocks[3];
-    ASSERT_EQ(block3.predecessors[0], 0);
-    ASSERT_EQ(block3.predecessors[1], 1);
-    ASSERT_EQ(block3.arguments.size(), 2);
-    ASSERT_EQ(block3.operations[0].op,  Trace::CONST);
-    ASSERT_EQ(block3.operations[1].op,   Trace::ADD);
-    ASSERT_EQ(block3.operations[2].op,  Trace::LESS_THAN);
-    ASSERT_EQ(block3.operations[3].op,  Trace::CMP);
-}
-*/
-
-class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
-  public:
-    MockedPipelineExecutionContext()
-        : PipelineExecutionContext(
-            0,
-            0,
-            nullptr,
-            [](Runtime::TupleBuffer&, Runtime::WorkerContextRef) {
-
-            },
-            [](Runtime::TupleBuffer&) {
-            },
-            std::vector<Runtime::Execution::OperatorHandlerPtr>()){};
-};
-
-void emitTest(Runtime::BufferManagerPtr bm) {
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-    Scan scan = Scan();
-    auto emit = std::make_shared<Emit>(memoryLayout);
-    scan.setChild(emit);
-
-    auto memRef = Value<MemRef>(std::make_unique<MemRef>(0));
-    RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
-
-    auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
-    auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
-
-    auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
-        scan.open(executionContext, recordBuffer);
-        scan.close(executionContext, recordBuffer);
-    });
-}
-
-TEST_F(SymbolicExecutionTest, emitQueryTest) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
-
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    emitTest(bm);
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]"
-              << std::endl;
-
-    //  execution = ssaCreationPhase.apply(std::move(execution));
-    // std::cout << *execution << std::endl;
-}
-
-TEST_F(SymbolicExecutionTest, selectionQueryTest) {
-    auto bm = std::make_shared<Runtime::BufferManager>(100);
-
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::UINT64);
-    schema->addField("f2", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-    Scan scan = Scan();
-    auto readFieldF1 = std::make_shared<ReadFieldExpression>(0);
-    auto readFieldF2 = std::make_shared<ReadFieldExpression>(0);
-    auto equalsExpression = std::make_shared<EqualsExpression>(readFieldF1, readFieldF2);
-    auto selection = std::make_shared<Selection>(equalsExpression);
-    scan.setChild(selection);
-
-    auto emit = std::make_shared<Emit>(memoryLayout);
-    selection->setChild(emit);
-
-    auto buffer = bm->getBufferBlocking();
-    buffer.setNumberOfTuples(10);
-
-    auto address = std::addressof(buffer);
-    auto value = (int64_t) address;
-    auto memRef = Value<MemRef>(std::make_unique<MemRef>(value));
-    memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
-    RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
-
-    auto pctx = MockedPipelineExecutionContext();
-    auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
-    auto wctx = Runtime::WorkerContext(0, bm, 10);
-    auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::Operation::INT8PTR);
-    ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
-
-    auto execution = Trace::traceFunction([&scan, &executionContext, &recordBuffer]() {
-        scan.open(executionContext, recordBuffer);
-        scan.close(executionContext, recordBuffer);
-    });
-    execution = ssaCreationPhase.apply(std::move(execution));
-    std::cout << *execution << std::endl;
-}
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
