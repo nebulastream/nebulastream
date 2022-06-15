@@ -141,7 +141,6 @@ QueryCatalogEntryPtr QueryCatalogService::getEntryForQuery(QueryId queryId) {
     }
 
     //return query catalog entry
-    //FIXME: this is dangerous as we can have data race if we return the shared pointer here
     return queryCatalog->getQueryCatalogEntry(queryId);
 }
 

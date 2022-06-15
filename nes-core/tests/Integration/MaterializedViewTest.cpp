@@ -213,11 +213,11 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
 
     // Stop Queries
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Remove maintenance query");
-    //queryService->validateAndQueueStopQueryRequest(maintenanceQueryId);
+    maintenanceQueryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(maintenanceQueryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Remove ad hoc query");
-    //queryService->validateAndQueueStopQueryRequest(adhocQueryId);
+    adhocQueryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(adhocQueryId, queryCatalogService));
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Stop Coordinator");

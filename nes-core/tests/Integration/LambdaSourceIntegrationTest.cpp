@@ -108,12 +108,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSources) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    //    ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    //    sleep(2);
-    //    std::cout << "E2EBase: Remove query" << std::endl;
-    //    ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
-    //    std::cout << "E2EBase: wait for stop" << std::endl;
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
         NES_ERROR("query was not stopped within 30 sec");
@@ -196,16 +191,10 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId1 =
         queryService->validateAndQueueAddQueryRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    //    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId1, queryCatalog), "failed start wait");
 
     auto queryId2 =
         queryService->validateAndQueueAddQueryRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    //    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId2, queryCatalog), "failed start wait");
 
-    //    sleep(2);
-    //    std::cout << "E2EBase: Remove query" << std::endl;
-    //    NES_ASSERT(queryService->validateAndQueueStopQueryRequest(queryId1), "no vaild stop quest");
-    //    std::cout << "E2EBase: wait for stop" << std::endl;
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
         NES_ERROR("query 1 was not stopped within 30 sec");
@@ -247,11 +236,6 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     wrkConf->coordinatorPort = port;
 
     for (int64_t i = 0; i < 2; i++) {
-        //        auto func_lamb_ptr = new std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>(lamb);
-        //        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
-        //        [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        //        auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        //        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
         auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             struct Record {
                 uint64_t id;
@@ -286,12 +270,7 @@ TEST_F(LambdaSourceIntegrationTest, testTwoLambdaSourcesMultiThread) {
     auto queryCatalog = crd->getQueryCatalogService();
     auto queryId =
         queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    //    ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    //    sleep(2);
-    //    std::cout << "E2EBase: Remove query" << std::endl;
-    //    ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
-    //    std::cout << "E2EBase: wait for stop" << std::endl;
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
         NES_ERROR("query was not stopped within 30 sec");

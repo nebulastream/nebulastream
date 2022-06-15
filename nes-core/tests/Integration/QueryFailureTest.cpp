@@ -179,6 +179,8 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     EXPECT_EQ(response2, 0);
 }
 
+
+// This test will be enabled when fixing #2857
 TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

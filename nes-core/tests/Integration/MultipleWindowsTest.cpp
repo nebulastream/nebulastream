@@ -102,7 +102,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
@@ -189,7 +189,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
@@ -275,7 +275,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
@@ -374,7 +374,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
@@ -466,7 +466,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
@@ -559,7 +559,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
@@ -648,7 +648,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
@@ -791,7 +791,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
@@ -949,7 +949,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");

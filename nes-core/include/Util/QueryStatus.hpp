@@ -32,8 +32,13 @@ class QueryStatus {
      * Optimizing: Coordinator is optimizing the query.
      * Running: Query is now running successfully.
      * MarkedForHardStop: A request arrived into the system for stopping a query and system marks the query for stopping (added to the queue).
+     * MarkedForSoftStop: marked for soft stop after a source completed
+     * SoftStopTriggered: soft stop triggered after source completed
+     * SoftStopCompleted: soft stop completed after all sources complete
      * Stopped: Query was explicitly stopped either by system or by user.
      * Failed: Query failed because of some reason.
+     * Restarting: restarting the query
+     * Migrating: migrating query
      */
     enum Value : uint8_t {
         Registered = 0,
