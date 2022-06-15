@@ -51,8 +51,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        OriginId originId,
                        size_t numSourceLocalBuffers,
                        GatheringMode::Value gatheringMode,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                       SourceDescriptor::InputFormat inputFormat)
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(schema,
                  bufferManager,
                  queryManager,
@@ -63,7 +62,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  std::move(executableSuccessors)),
       sourceConfig(sourceConfig), connected(false), serverAddress(sourceConfig->getUrl()->getValue()),
       clientId(sourceConfig->getClientId()->getValue()), user(sourceConfig->getUserName()->getValue()),
-      topic(sourceConfig->getTopic()->getValue()), inputFormat(inputFormat), tupleSize(schema->getSchemaSizeInBytes()),
+      topic(sourceConfig->getTopic()->getValue()), tupleSize(schema->getSchemaSizeInBytes()),
       qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())),
       cleanSession(sourceConfig->getCleanSession()->getValue()),
       bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue()),
@@ -90,11 +89,11 @@ MQTTSource::MQTTSource(SchemaPtr schema,
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size() - 1));
     }
 
-    switch (inputFormat) {
-        case SourceDescriptor::JSON:
+    switch (sourceConfig->getInputFormat()->getValue()) {
+        case Configurations::InputFormat::JSON:
             inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
             break;
-        case SourceDescriptor::CSV: inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ","); break;
+        case Configurations::InputFormat::CSV: inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ","); break;
     }
 
     NES_DEBUG("MQTTSource::MQTTSource  " << this << ": Init MQTTSource to " << serverAddress << " with client id: " << clientId
@@ -139,7 +138,7 @@ std::string MQTTSource::toString() const {
     ss << "CLIENTID=" << clientId << ", ";
     ss << "USER=" << user << ", ";
     ss << "TOPIC=" << topic << ", ";
-    ss << "DATATYPE=" << inputFormat << ", ";
+    ss << "DATATYPE=" << sourceConfig->getInputFormat()->getValue() << ", ";
     ss << "QOS=" << qualityOfService << ", ";
     ss << "CLEANSESSION=" << cleanSession << ". ";
     ss << "BUFFERFLUSHINTERVALMS=" << bufferFlushIntervalMs << ". ";
@@ -296,8 +295,6 @@ const string& MQTTSource::getClientId() const { return clientId; }
 const string& MQTTSource::getUser() const { return user; }
 
 const string& MQTTSource::getTopic() const { return topic; }
-
-SourceDescriptor::InputFormat MQTTSource::getInputFormat() const { return inputFormat; }
 
 uint64_t MQTTSource::getTupleSize() const { return tupleSize; }
 

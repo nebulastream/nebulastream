@@ -1013,14 +1013,18 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         mqttSerializedSourceConfig.set_cleansession(mqttSourceDescriptor->getSourceConfigPtr()->getCleanSession()->getValue());
         mqttSerializedSourceConfig.set_flushintervalms(
             mqttSourceDescriptor->getSourceConfigPtr()->getFlushIntervalMS()->getValue());
-        mqttSerializedSourceConfig.set_inputformat(mqttSourceDescriptor->getSourceConfigPtr()->getInputFormat()->getValue());
+        switch (mqttSourceDescriptor->getSourceConfigPtr()->getInputFormat()->getValue()) {
+            case Configurations::JSON:
+                mqttSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_JSON);
+                break;
+            case Configurations::CSV:
+                mqttSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
+                break;
+        }
         serializedPhysicalSourceType->mutable_specificphysicalsourcetype()->PackFrom(mqttSerializedSourceConfig);
         //init serializable mqtt source descriptor
         auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
         mqttSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedPhysicalSourceType);
-        mqttSerializedSourceDescriptor.set_inputformat(
-            (SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor_InputFormat)
-                mqttSourceDescriptor->getInputFormat());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(mqttSourceDescriptor->getSchema(),
                                                  mqttSerializedSourceDescriptor.mutable_sourceschema());
@@ -1203,10 +1207,12 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfig->setQos(mqttSourceConfig->qos());
         sourceConfig->setCleanSession(mqttSourceConfig->cleansession());
         sourceConfig->setFlushIntervalMS(mqttSourceConfig->flushintervalms());
-        sourceConfig->setInputFormat(mqttSourceConfig->inputformat());
-        auto ret = MQTTSourceDescriptor::create(schema,
-                                                sourceConfig,
-                                                (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor->inputformat());
+        if (mqttSourceConfig->inputformat() == 0) {
+            sourceConfig->setInputFormat(Configurations::InputFormat::JSON);
+        } else {
+            sourceConfig->setInputFormat(Configurations::InputFormat::CSV);
+        }
+        auto ret = MQTTSourceDescriptor::create(schema, sourceConfig);
         return ret;
     }
 #endif

@@ -12,12 +12,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <Util/UtilityFunctions.hpp>
 #include <Sources/TCPSource.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <arpa/inet.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/socket.h>
+#include <unistd.h> // For read
+#include <sys/socket.h> // For socket functions
+#include <netinet/in.h> // For sockaddr_in
 
 namespace NES {
 
@@ -37,13 +38,16 @@ TCPSource::TCPSource(SchemaPtr schema,
                  originId,
                  numSourceLocalBuffers,
                  gatheringMode,
-                 std::move(executableSuccessors)),tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)) {
+                 std::move(executableSuccessors)),
+      tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)) {
     NES_DEBUG("TCPSource::TCPSource " << this << ": Init TCPSource.");
 }
 
 TCPSource::~TCPSource() {
     NES_DEBUG("TCPSource::~TCPSource()");
-
+    // Close the connections
+    ::close(connection);
+    ::close(sockfd);
     NES_DEBUG("TCPSource::~TCPSource  " << this << ": Destroy TCP Source");
 }
 
@@ -56,23 +60,39 @@ std::string TCPSource::toString() const {
 }
 
 bool TCPSource::connected() {
-    struct sockaddr_in serv_addr;
-    if ((sock = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0)) < 0){
-        NES_ERROR("TCPSource::connect: could not create socket.");
-        connection = -1;
-        return false;
-    }
-    serv_addr.sin_family = sourceConfig->getSocketDomain()->getValue();
-    serv_addr.sin_port = htons(sourceConfig->getSocketPort()->getValue());
-
-    if (inet_pton(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketHost()->getValue().c_str(), &serv_addr.sin_addr) <= 0){
-        NES_ERROR("TCPSource::connect: address: " << sourceConfig->getSocketHost()->getValue() << " not supported");
+    sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
+    if (sockfd == -1) {
+        NES_ERROR("Failed to create socket. errno: " << errno);
         connection = -1;
         return false;
     }
 
-    if ((connection = connect(sock, (struct sockaddr*)&serv_addr, sizeof (serv_addr))) < 0){
-        NES_ERROR("TPCSource::connect: connection failed");
+    // Listen to port 9999 on any address
+    sockaddr_in sockaddr;
+    sockaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
+    sockaddr.sin_addr.s_addr = INADDR_ANY;
+    sockaddr.sin_port =
+        htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
+
+    if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0) {
+        NES_ERROR("Failed to bind to port " << sourceConfig->getSocketPort()->getValue() << " errno: " << errno);
+        connection = -1;
+        return false;
+    }
+
+    // Start listening. Hold at most 10 connections in the queue
+    if (listen(sockfd, 10) < 0) {
+        NES_ERROR("Failed to listen on socket. errno: " << errno);
+        connection = -1;
+        return false;
+    }
+
+    // Grab a connection from the queue
+    auto addrlen = sizeof(sockaddr);
+    connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
+    if (connection < 0) {
+        NES_ERROR("Failed to grab connection. errno: " << errno);
+        connection = -1;
         return false;
     }
     return true;
@@ -80,6 +100,7 @@ bool TCPSource::connected() {
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
     NES_DEBUG("TCPSource  " << this << ": receiveData ");
+    //todo: something is wrong with allocate buffer
     auto buffer = allocateBuffer();
     if (connected()) {
         if (!fillBuffer(buffer)) {
@@ -104,43 +125,21 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuff
 
     uint64_t tupleCount = 0;
 
-    char *buffer = new char[tupleBuffer.getBuffer().getBufferSize()];
-    //Todo: what buffer size to choose and how to convert the buffer to
-    read(sock, buffer, tupleBuffer.getBuffer().getBufferSize());
+    while (tupleCount < tuplesThisPass){
+        char* buffer = new char[tupleBuffer.getBuffer().getBufferSize()];
+        //Todo: what buffer size to choose and how to convert the buffer to
+        read(sock, buffer, tupleBuffer.getBuffer().getBufferSize());
+        NES_TRACE("Client consume message: '" << buffer << "'");
 
-    std::cout << buffer << std::endl;
+        inputParser->writeInputTupleToTupleBuffer(buffer, tupleCount, tupleBuffer, schema);
+    }
 
-
+    tupleBuffer.setNumberOfTuples(tupleCount);
+    generatedTuples += tupleCount;
+    generatedBuffers++;
     return true;
 }
 
 SourceType TCPSource::getType() const { return TCP_SOURCE; }
 
 }// namespace NES
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

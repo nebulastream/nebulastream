@@ -406,8 +406,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                OperatorId operatorId,
                                OriginId originId,
                                size_t numSourceLocalBuffers,
-                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               SourceDescriptor::InputFormat inputFormat) {
+                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<MQTTSource>(schema,
                                         bufferManager,
                                         queryManager,
@@ -416,8 +415,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         originId,
                                         numSourceLocalBuffers,
                                         GatheringMode::INTERVAL_MODE,
-                                        successors,
-                                        inputFormat);
+                                        successors);
 }
 #endif
 

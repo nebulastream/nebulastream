@@ -22,20 +22,17 @@
 namespace NES {
 
 SourceDescriptorPtr
-MQTTSourceDescriptor::create(SchemaPtr schema, MQTTSourceTypePtr sourceConfig, SourceDescriptor::InputFormat inputFormat) {
-    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(sourceConfig), inputFormat));
+MQTTSourceDescriptor::create(SchemaPtr schema, MQTTSourceTypePtr sourceConfig) {
+    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(sourceConfig)));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
-                                           MQTTSourceTypePtr mqttSourceType,
-                                           SourceDescriptor::InputFormat inputFormat)
-    : SourceDescriptor(std::move(schema)), mqttSourceType(std::move(mqttSourceType)), inputFormat(inputFormat) {}
+                                           MQTTSourceTypePtr mqttSourceType)
+    : SourceDescriptor(std::move(schema)), mqttSourceType(std::move(mqttSourceType)) {}
 
 MQTTSourceTypePtr MQTTSourceDescriptor::getSourceConfigPtr() const { return mqttSourceType; }
 
 std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor(" + mqttSourceType->toString() + ")"; }
-
-SourceDescriptor::InputFormat MQTTSourceDescriptor::getInputFormat() const { return inputFormat; }
 
 bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 
@@ -47,7 +44,7 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 }
 
 SourceDescriptorPtr MQTTSourceDescriptor::copy() {
-    auto copy = MQTTSourceDescriptor::create(schema->copy(), mqttSourceType, inputFormat);
+    auto copy = MQTTSourceDescriptor::create(schema->copy(), mqttSourceType);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }

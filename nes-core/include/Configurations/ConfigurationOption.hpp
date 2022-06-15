@@ -26,6 +26,8 @@ namespace NES {
 
 namespace Configurations {
 
+enum InputFormat { JSON, CSV };
+
 /**
  * @brief Template for a ConfigurationOption object
  * @tparam T template parameter, depends on ConfigOptions
@@ -113,6 +115,20 @@ class ConfigurationOption {
         return false;
     };
 
+    /**
+     * @brief converts a string to the appropriate InputFormat enum value and sets it
+     * @param inputFormat
+     */
+    void setInputFormatEnum(std::string inputFormat) {
+        if (inputFormat == "CSV") {
+            this->value = InputFormat::CSV;
+        }
+        if (inputFormat == "JSON") {
+            this->value = InputFormat::JSON;
+        }
+
+    }
+
   private:
     /**
      * @brief Constructs a ConfigurationOption<T> object
@@ -136,6 +152,7 @@ using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
+using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
 
 //Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";

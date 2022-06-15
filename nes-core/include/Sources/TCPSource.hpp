@@ -76,6 +76,7 @@ class TCPSource : public DataSource{
     int sock = 0;
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
+    int sockfd;
 
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
