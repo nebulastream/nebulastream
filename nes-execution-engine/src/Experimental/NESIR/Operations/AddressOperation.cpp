@@ -23,8 +23,8 @@ AddressOperation::AddressOperation(std::string identifier, Operation::BasicType 
 
 std::string AddressOperation::getIdentifier() { return identifier; }
 Operation::BasicType AddressOperation::getDataType() { return dataType; }
-uint64_t AddressOperation::getRecordWidth() { return recordWidth; }
-uint64_t AddressOperation::getFieldOffset() { return fieldOffset; }
+uint64_t AddressOperation::getRecordWidthInBytes() { return recordWidth; }
+uint64_t AddressOperation::getFieldOffsetInBytes() { return fieldOffset; }
 std::string AddressOperation::getRecordIdxName() { return recordIdxName; }
 std::string AddressOperation::getAddressSourceName() { return addressSourceName; }
 

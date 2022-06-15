@@ -41,10 +41,15 @@ target_link_libraries(mlir-nesir-print-test
         nes-execution-engine)
 add_test(NAME mlir-nesir-print-test COMMAND mlir-nesir-print-test)
 
-#add_executable(mlir-nesir-types-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Types.cpp")
-#target_link_libraries(mlir-nesir-types-test
-#        nes-execution-engine)
-#add_test(NAME mlir-nesir-types-test COMMAND mlir-nesir-types-test)
+add_executable(mlir-nesir-types-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_Types.cpp")
+target_link_libraries(mlir-nesir-types-test
+       nes-execution-engine)
+add_test(NAME mlir-nesir-types-test COMMAND mlir-nesir-types-test)
+
+add_executable(mlir-nesir-arithmetic-ops-test "UnitTests/MLIR_Experimental/MLIRNESIRTest_ArithmeticOps.cpp")
+target_link_libraries(mlir-nesir-arithmetic-ops-test
+       nes-execution-engine)
+add_test(NAME mlir-nesir-arithmetic-ops-test COMMAND mlir-nesir-arithmetic-ops-test)
 
 add_executable(execution-engine-trace-test "UnitTests/Experimental/TraceTest.cpp")
 target_link_libraries(execution-engine-trace-test

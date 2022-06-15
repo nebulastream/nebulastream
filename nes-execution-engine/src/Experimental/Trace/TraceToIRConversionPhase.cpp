@@ -111,7 +111,7 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             auto valueRef = get<ConstantValue>(operation.input[0]);
             // TODO check data type
             auto intValue = std::static_pointer_cast<Interpreter::Integer>(valueRef.value);
-            auto constOperation = std::make_shared<IR::Operations::ConstantIntOperation>(createValueIdentifier(operation.result),
+            auto constOperation = std::make_shared<IR::Operations::ConstIntOperation>(createValueIdentifier(operation.result),
                                                                                          intValue->value,
                                                                                          64);
             currentIrBlock->addOperation(constOperation);

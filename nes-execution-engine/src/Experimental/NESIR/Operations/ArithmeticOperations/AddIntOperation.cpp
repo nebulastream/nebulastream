@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 AddIntOperation::AddIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName)
-    : Operation(OperationType::AddOp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)), rightArgName(std::move(rightArgName)) {}
+    : Operation(OperationType::AddIntOp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)), rightArgName(std::move(rightArgName)) {}
 
 
 std::string AddIntOperation::toString() { 
     return "AddIntOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")";
 }
-bool AddIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
+bool AddIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddIntOp; }
 
 std::string AddIntOperation::getIdentifier() { return identifier; }
 std::string AddIntOperation::getLeftArgName() { return leftArgName; }

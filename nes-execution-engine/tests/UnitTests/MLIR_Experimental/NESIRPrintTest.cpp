@@ -20,10 +20,10 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-#include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
@@ -37,13 +37,10 @@
 #include <Experimental/NESIR/Operations/CompareOperation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
 
-#include <sstream>
-
 namespace NES {
 
-class MLIRGeneratorIfTest : public testing::Test {
+class MLIRGeneratorArithmeticOpsTest : public testing::Test {
   public:
-
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MLIRGeneratorIfTest.log", NES::LogLevel::LOG_DEBUG);
@@ -103,7 +100,7 @@ saveBB(BasicBlockPtr basicBlock, std::unordered_map<std::string, BasicBlockPtr>&
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing an AddOperation.
  */
-TEST_F(MLIRGeneratorIfTest, printSimpleNESIRwithAddOperation) {
+TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -112,8 +109,8 @@ TEST_F(MLIRGeneratorIfTest, printSimpleNESIRwithAddOperation) {
     nesIR->addRootOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::FunctionOperation>("execute", executeArgTypes, executeArgNames, ExecutionEngine::Experimental::IR::Operations::Operation::INT64))
         ->addFunctionBasicBlock(
             std::make_shared<ExecutionEngine::Experimental::IR::BasicBlock>("executeBodyBB", 0, std::vector<ExecutionEngine::Experimental::IR::Operations::OperationPtr>{}, executeArgNames, executeArgTypes)
-                ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstantIntOperation>("int1", 5, 64))
-                ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstantIntOperation>("int2", 4, 64))
+                ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>("int1", 5, 64))
+                ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ConstIntOperation>("int2", 4, 64))
                 ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::AddIntOperation>("add", "int1", "int2"))
                 ->addOperation(std::make_shared<ExecutionEngine::Experimental::IR::Operations::ReturnOperation>(0)));
     NES_DEBUG("\n\n" << nesIR->toString());
@@ -122,7 +119,7 @@ TEST_F(MLIRGeneratorIfTest, printSimpleNESIRwithAddOperation) {
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing an AddOperation.
  */
-TEST_F(MLIRGeneratorIfTest, printNESIRwithIFOperation) {
+TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRwithIFOperation) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -132,8 +129,8 @@ TEST_F(MLIRGeneratorIfTest, printNESIRwithIFOperation) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -156,9 +153,9 @@ TEST_F(MLIRGeneratorIfTest, printNESIRwithIFOperation) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(std::make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(std::make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -189,7 +186,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRwithIFOperation) {
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing a loop and If-Else cases.
  */
-TEST_F(MLIRGeneratorIfTest, printNESIRwithIFElseOperation) {
+TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRwithIFElseOperation) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -199,8 +196,8 @@ TEST_F(MLIRGeneratorIfTest, printNESIRwithIFElseOperation) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -223,9 +220,9 @@ TEST_F(MLIRGeneratorIfTest, printNESIRwithIFElseOperation) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(std::make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(std::make_shared<AddressOperation>("outputAddressOp",
                                                                              Operation::BasicType::INT64,
                                                                              8,
@@ -251,7 +248,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRwithIFElseOperation) {
                                                 ->addNextBlock(savedBBs["loopHeadBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "outputAddressOp")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(std::make_shared<StoreOperation>("elseAddOp", "outputAddressOp"))
@@ -264,7 +261,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRwithIFElseOperation) {
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing a loop and If-Else cases.
  */
-TEST_F(MLIRGeneratorIfTest, printNESIRWithIfElseFollowUp) {
+TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithIfElseFollowUp) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
@@ -274,8 +271,8 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithIfElseFollowUp) {
       nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -298,9 +295,9 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithIfElseFollowUp) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(std::make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(std::make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -335,7 +332,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithIfElseFollowUp) {
                                                 ->addNextBlock(savedBBs["loopHeadBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(
@@ -348,7 +345,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithIfElseFollowUp) {
 /**
  * @brief Here, we dump the string representation for a simple NESIR containing a loop and If-Else cases.
  */
-TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
+TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElse) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -358,8 +355,8 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
     ->addFunctionBasicBlock(
         createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-            ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-            ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+            ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+            ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
             ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
             ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
             ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -382,10 +379,10 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
                                                                             "iOp",
                                                                             "getInDataBufOp"))
                             ->addOperation(std::make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                            ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                            ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                             ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                            ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
-                            ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                            ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
+                            ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                             ->addOperation(std::make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                             "loopBodyAddOp",
                                                                             "const46Op",
@@ -398,7 +395,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
                                 createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
                                     ->addOperation(
                                         std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
-                                    ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
+                                    ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
                                     ->addOperation(std::make_shared<CompareOperation>("nestedIfCompare",
                                                                                     "thenAddOp",
                                                                                     "const100Op",
@@ -409,7 +406,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
                                                                     std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}))
                                     ->addThenBlock(
                                         createBB("thenThenBB", 4, {}, "iOp", "thenAddOp", "branchVal")
-                                            ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                                            ->addOperation(std::make_shared<ConstIntOperation>("thenThenBranchVal", 1, 64))
                                             ->addOperation(std::make_shared<BranchOperation>(
                                                 std::vector<std::string>{"iOp", "thenAddOp", "thenThenBranchVal"}))
                                             ->addNextBlock(
@@ -440,7 +437,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
                                     ->addElseBlock(
                                         createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
                                             ->addOperation(
-                                                std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                                                std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
                                             ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
                                                                                                 "thenAddOp",
                                                                                                 "thenElseBranchVal"))
@@ -449,7 +446,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
                                             ->addNextBlock(savedBBs["loopEndBB"])))
                             ->addElseBlock(
                                 createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                    ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                    ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                     ->addOperation(
                                         std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                     ->addOperation(std::make_shared<BranchOperation>(
@@ -463,7 +460,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElse) {
  * @brief Constructing an execute func, with a loop that contains an IfOperation. The if-case has a nested IfOperation.
           In addition to the nested IfOperation has simple follow up Operations after the nested IfOperation.
  */
-TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
+TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElseFollowUp) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -473,8 +470,8 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -497,10 +494,10 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(std::make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(std::make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -513,7 +510,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
                                         ->addOperation(std::make_shared<CompareOperation>("nestedIfCompare",
                                                                                      "thenAddOp",
                                                                                      "const100Op",
@@ -524,7 +521,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
                                                                      std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}))
                                         ->addThenBlock(
                                             createBB("thenThenBB", 4, {}, "iOp", "thenAddOp", "branchVal")
-                                                ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenThenBranchVal", 1, 64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "thenAddOp", "thenThenBranchVal"}))
                                                 ->addNextBlock(
@@ -572,7 +569,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
                                                 ->addOperation(
-                                                    std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
                                                 ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
                                                                                                  "thenAddOp",
                                                                                                  "thenElseBranchVal"))
@@ -581,7 +578,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
                                                 ->addNextBlock(savedBBs["nestedIfFollowUpBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(std::make_shared<BranchOperation>(
@@ -595,7 +592,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseFollowUp) {
  * @brief Constructing an execute func, with a loop that contains an IfOperation. The if-case has a nested IfOperation.
           In addition to the nested IfOperation, the if-case also contains a nested LoopOperation.
  */
-TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
+TEST_F(MLIRGeneratorArithmeticOpsTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
 
     std::vector<ExecutionEngine::Experimental::IR::Operations::Operation::BasicType> executeArgTypes{};
     std::vector<std::string> executeArgNames{"InputTupleBuffer", "OutputTupleBuffer"};
@@ -605,8 +602,8 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -629,10 +626,10 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(std::make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(std::make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -645,8 +642,8 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("jOp", 0, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("jOp", 0, 64))
                                         ->addOperation(std::make_shared<CompareOperation>("nestedIfCompare",
                                                                                      "thenAddOp",
                                                                                      "const100Op",
@@ -657,7 +654,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
                                             std::vector<std::string>{"iOp", "jOp", "thenAddOp", "branchVal"}))
                                         ->addThenBlock(
                                             createBB("thenThenBB", 4, {}, "iOp", "jOp", "thenAddOp", "branchVal")
-                                                ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenThenBranchVal", 1, 64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "jOp", "thenAddOp", "thenThenBranchVal"}))
                                                 ->addNextBlock(
@@ -762,7 +759,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "jOp", "thenAddOp", "branchVal")
                                                 ->addOperation(
-                                                    std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
                                                 ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
                                                                                                  "thenAddOp",
                                                                                                  "thenElseBranchVal"))
@@ -771,7 +768,7 @@ TEST_F(MLIRGeneratorIfTest, printNESIRWithNestedIfElseAndLoopFollowUp) {
                                                 ->addNextBlock(savedBBs["nestedIfFollowUpBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(std::make_shared<BranchOperation>(

@@ -1,0 +1,307 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
+
+
+#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddFloatOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/SubIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/SubFloatOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/MulIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/MulFloatOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/DivIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/DivFloatOperation.hpp>
+#include <Experimental/NESIR/Operations/AddressOperation.hpp>
+#include <Experimental/NESIR/Operations/BranchOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstFloatOperation.hpp>
+#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
+#include <Experimental/NESIR/Operations/LoadOperation.hpp>
+#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/StoreOperation.hpp>
+
+#include <Experimental/NESIR/Operations/IfOperation.hpp>
+
+#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
+#include "Experimental/NESIR/Operations/Operation.hpp"
+#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
+#include <Experimental/NESIR/Operations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+
+namespace NES {
+
+class MLIRGeneratorArithmeticOpsTest : public testing::Test {
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MLIRGeneratorIfTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup MLIRGeneratorIfTest test case.");
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() override { NES_INFO("Tear down MLIRGeneratorIfTest test case."); }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { NES_INFO("Tear down MLIRGeneratorIfTest test class."); }
+};
+
+
+namespace ExecutionEngine::Experimental::IR {
+namespace Operations {
+
+void printBuffer(std::vector<Operations::Operation::BasicType> types, uint64_t numTuples, int8_t* bufferPointer) {
+    for (uint64_t i = 0; i < numTuples; ++i) {
+        printf("------------\nTuple Nr. %lu\n------------\n", i + 1);
+        for (auto type : types) {
+            switch (type) {
+                case Operation::BasicType::INT1: {
+                    printf("Value(INT1): %d \n", *bufferPointer);
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::INT8: {
+                    printf("Value(INT8): %d \n", *bufferPointer);
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::INT16: {
+                    int16_t* value = (int16_t*) bufferPointer;
+                    printf("Value(INT16): %d \n", *value);
+                    bufferPointer += 2;
+                    break;
+                }
+                case Operation::BasicType::INT32: {
+                    int32_t* value = (int32_t*) bufferPointer;
+                    printf("Value(INT32): %d \n", *value);
+                    bufferPointer += 4;
+                    break;
+                }
+                case Operation::BasicType::INT64: {
+                    int64_t* value = (int64_t*) bufferPointer;
+                    printf("Value(INT64): %ld \n", *value);
+                    bufferPointer += 8;
+                    break;
+                }
+                case Operation::BasicType::UINT8: {
+                    uint8_t* value = (uint8_t*) bufferPointer;
+                    printf("Value(UINT8): %u \n", *value);
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::UINT16: {
+                    uint16_t* value = (uint16_t*) bufferPointer;
+                    printf("Value(UINT16): %u \n", *value);
+                    bufferPointer += 2;
+                    break;
+                }
+                case Operation::BasicType::UINT32: {
+                    uint32_t* value = (uint32_t*) bufferPointer;
+                    printf("Value(UINT32): %u \n", *value);
+                    bufferPointer += 4;
+                    break;
+                }
+                case Operation::BasicType::UINT64: {
+                    uint64_t* value = (uint64_t*) bufferPointer;
+                    printf("Value(UINT64): %lu \n", *value);
+                    bufferPointer += 8;
+                    break;
+                }
+                case Operation::BasicType::BOOLEAN: {
+                    bool* value = (bool*) bufferPointer;
+                    printf("Value(BOOL): %s \n", (*value) ? "true" : "false");
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::CHAR: {
+                    char* value = (char*) bufferPointer;
+                    printf("Value(CHAR): %c \n", *value);
+                    bufferPointer += 1;
+                    break;
+                }
+                case Operation::BasicType::FLOAT: {
+                    float* value = (float*) bufferPointer;
+                    printf("Value(FLOAT): %f \n", *value);
+                    bufferPointer += 4;
+                    break;
+                }
+                case Operation::BasicType::DOUBLE: {
+                    double* value = (double*) bufferPointer;
+                    printf("Value(DOUBLE): %f \n", *value);
+                    bufferPointer += 8;
+                    break;
+                }
+                default: break;
+            }
+        }
+    }
+}
+
+std::shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::ProxyCallType proxyCallType, bool getInputTB) {
+
+    std::vector<Operation::BasicType> proxyDataBufferReturnArgs{Operation::BasicType::INT8PTR};
+    std::vector<std::string> proxyCallOpArgs{"inputTupleBuffer"};
+    switch(proxyCallType) {
+        case ProxyCallOperation::GetDataBuffer: {
+            std::string proxyCallOpName = "getInDataBufOp";
+            if(getInputTB) {
+                proxyCallOpName = "getOutDataBufOp";
+                proxyCallOpArgs = {"outputTupleBuffer"};
+            }
+            return std::make_shared<ProxyCallOperation>(Operation::GetDataBuffer, proxyCallOpName, proxyCallOpArgs,
+                                                    proxyDataBufferReturnArgs, Operation::BasicType::INT8PTR);
+        } 
+        case ProxyCallOperation::GetNumTuples: { 
+            return std::make_shared<ProxyCallOperation>(Operation::GetNumTuples, "getNumTuplesOp", proxyCallOpArgs,
+                                                proxyDataBufferReturnArgs, Operation::BasicType::INT64);
+        } 
+        case ProxyCallOperation::SetNumTuples: { 
+            return std::make_shared<ProxyCallOperation>(Operation::SetNumTuples, "setNumTuplesOp", 
+                                                std::vector<std::string>{"outputTupleBuffer", "getNumTuplesOp"},
+                                                proxyDataBufferReturnArgs, Operation::BasicType::INT64);
+        }
+        case ProxyCallOperation::Other: { 
+            return nullptr;
+        }
+    }
+}
+
+template<typename... Args>
+BasicBlockPtr createBB(std::string identifier, int level, std::vector<Operation::BasicType> argTypes, Args... args) {
+    std::vector<std::string> argList({args...});
+    return std::make_shared<BasicBlock>(identifier, level, std::vector<OperationPtr>{}, argList, argTypes);
+}
+
+BasicBlockPtr
+saveBB(BasicBlockPtr basicBlock, std::unordered_map<std::string, BasicBlockPtr>& savedBBs, const std::string& basicBlockName) {
+    savedBBs.emplace(std::pair{basicBlockName, basicBlock});
+    return savedBBs[basicBlockName];
+}
+
+/**
+ * @brief Here, we dump the string representation for a simple NESIR containing an AddOperation.
+ */
+TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
+ const uint64_t numTuples = 2;
+    auto buffMgr = std::make_shared<NES::Runtime::BufferManager>();
+    // Create InputBuffer and fill it with data.
+    auto inputBuffer = buffMgr->getBufferBlocking();
+    struct __attribute__((packed)) testTupleStruct {
+        int64_t d;
+        uint64_t h;
+        double j;
+    };
+    testTupleStruct testTuplesArray[numTuples] = {
+        testTupleStruct{64, INT64_MAX, 4.2},
+        testTupleStruct{-64, 64, -4.2}
+    };
+    auto inputBufferPointer = inputBuffer.getBuffer<testTupleStruct>();
+    memcpy(inputBufferPointer, &testTuplesArray, sizeof(testTupleStruct) * numTuples);
+    inputBuffer.setNumberOfTuples(numTuples);
+    auto outputBuffer = buffMgr->getBufferBlocking();
+
+    //Debug Print
+    auto proxyPrintOp = std::make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other,
+                                                        "printValueFromMLIR",
+                                                        std::vector<std::string>{"iOp"},
+                                                        std::vector<Operation::BasicType>{},
+                                                        Operation::BasicType::VOID);
+
+    //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
+    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
+    std::unordered_map<std::string, BasicBlockPtr> savedBBs;
+    auto nesIR = std::make_shared<NESIR>();
+
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+        ->addFunctionBasicBlock(
+            createBB("executeBodyBB", 0, {})
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
+                ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
+                ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
+                ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
+                ->addOperation(getProxyCallOperation(Operation::SetNumTuples, false))
+                ->addOperation(make_shared<LoopOperation>(LoopOperation::ForLoop, std::vector<std::string>{"iOp"}))
+                ->addLoopHeadBlock(
+                    saveBB(createBB("loopHeadBB", 1, {}, "iOp"), savedBBs, "loopHeadBB")
+                    ->addOperation(std::make_shared<CompareOperation>("loopHeadCompareOp", "iOp", "getNumTuplesOp", CompareOperation::ISLT))
+                    ->addOperation(make_shared<IfOperation>("loopHeadCompareOp", std::vector<std::string>{"iOp"}, std::vector<std::string>{"iOp"}))
+                    ->addThenBlock(
+                        createBB("loopBodyBB", 2, {}, "iOp")
+                        ->addOperation(std::make_shared<AddressOperation>("inBufAddrOp4", Operation::INT64, 24, 0, "iOp", "getInDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("inBufAddrOp8", Operation::UINT64, 24, 8, "iOp", "getInDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("inBufAddrOp10", Operation::DOUBLE, 24, 16, "iOp", "getInDataBufOp"))
+                        ->addOperation(std::make_shared<LoadOperation>("int64", "inBufAddrOp4"))
+                        ->addOperation(std::make_shared<LoadOperation>("uint64", "inBufAddrOp8"))
+                        ->addOperation(std::make_shared<LoadOperation>("double", "inBufAddrOp10"))
+
+                        ->addOperation(std::make_shared<ConstIntOperation>("int64Const1", 65, /*bits*/ 64))
+                        ->addOperation(std::make_shared<SubIntOperation>("subInt64", "int64", "int64Const1"))
+                        ->addOperation(std::make_shared<SubIntOperation>("subUInt64", "uint64", "int64Const1"))
+                        ->addOperation(std::make_shared<ConstIntOperation>("int64Const2", -3, /*bits*/ 64))
+                        ->addOperation(std::make_shared<MulIntOperation>("mulInt64", "int64", "int64Const2"))
+                        ->addOperation(std::make_shared<DivIntOperation>("divInt64", "int64", "int64Const2", true))
+                        ->addOperation(std::make_shared<ConstIntOperation>("uint64Const2", 3, /*bits*/ 64))
+                        ->addOperation(std::make_shared<DivIntOperation>("divUInt64", "uint64", "uint64Const2", false))
+                        ->addOperation(std::make_shared<ConstFloatOperation>("doubleConst", -4.2, /*bits*/ 64))
+                        ->addOperation(std::make_shared<MulFloatOperation>("mulDouble", "double", "doubleConst"))
+                        ->addOperation(std::make_shared<DivFloatOperation>("divDouble", "double", "doubleConst"))
+                        ->addOperation(std::make_shared<SubFloatOperation>("subDouble", "double", "doubleConst"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp0", Operation::INT64,   64, 0, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp1", Operation::UINT64,  64, 8, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp3", Operation::INT64,   64, 16, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp4", Operation::INT64,   64, 24, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp8", Operation::UINT64,  64, 32, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp10", Operation::DOUBLE, 64, 40, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp12", Operation::DOUBLE, 64, 48, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<AddressOperation>("outBufAddrOp13", Operation::DOUBLE, 64, 56, "iOp", "getOutDataBufOp"))
+                        ->addOperation(std::make_shared<StoreOperation>("subInt64", "outBufAddrOp0"))
+                        ->addOperation(std::make_shared<StoreOperation>("subUInt64", "outBufAddrOp1"))
+                        ->addOperation(std::make_shared<StoreOperation>("mulInt64", "outBufAddrOp3"))
+                        ->addOperation(std::make_shared<StoreOperation>("divInt64", "outBufAddrOp4"))
+                        ->addOperation(std::make_shared<StoreOperation>("divUInt64", "outBufAddrOp8"))
+                        ->addOperation(std::make_shared<StoreOperation>("mulDouble", "outBufAddrOp10"))
+                        ->addOperation(std::make_shared<StoreOperation>("divDouble", "outBufAddrOp12"))
+                        ->addOperation(std::make_shared<StoreOperation>("subDouble", "outBufAddrOp13"))
+
+                        ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
+                        ->addNextBlock(savedBBs["loopHeadBB"])
+                    )
+                    ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(std::make_shared<ReturnOperation>(0)))
+                )
+            );
+    // NESIR to MLIR
+    auto mlirUtility = new NES::ExecutionEngine::Experimental::MLIR::MLIRUtility("", false);
+    int loadedModuleSuccess = mlirUtility->loadAndProcessMLIR(nesIR);
+    assert(loadedModuleSuccess == 0);
+
+    mlirUtility->runJit(false, std::addressof(inputBuffer), std::addressof(outputBuffer));
+
+    // Print OutputBuffer after execution.
+    std::vector<Operation::BasicType> types{Operation::INT64, Operation::UINT64, Operation::INT64, Operation::INT64, 
+                                            Operation::UINT64, Operation::DOUBLE, Operation::DOUBLE, Operation::DOUBLE};
+    auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
+    printBuffer(types, numTuples, outputBufferPointer);
+    NES_DEBUG("Number of tuples in OutputTupleBuffer: " << outputBuffer.getNumberOfTuples());
+}
+
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations;
+}// namespace NES::ExecutionEngine::Experimental::IR;
+}// namespace NES

@@ -28,10 +28,10 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-#include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
@@ -51,7 +51,7 @@ using namespace NES::ExecutionEngine::Experimental::IR;
 using namespace NES::ExecutionEngine::Experimental::IR::Operations;
 
 namespace NES {
-class MLIRNESIRTest : public testing::Test {
+class MLIRNESIRTest_ArithmeticOps : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::Logger::setupLogging("MLIRNESIRTest.log", NES::LogLevel::LOG_DEBUG);
@@ -123,6 +123,7 @@ void printBuffer(std::vector<Operations::Operation::BasicType> types, uint64_t n
         }
     }
 }
+
 shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::ProxyCallType proxyCallType, bool getInputTB) {
     std::vector<string> getInputDataBufArgs{"inputTupleBuffer"};
     std::vector<string> getOutputDataBufArgs{"outputTupleBuffer"};
@@ -205,8 +206,8 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFAdd) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {})
-                ->addOperation(std::make_shared<ConstantIntOperation>("int1", 5, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("int2", 4, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("int1", 5, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("int2", 4, 64))
                 ->addOperation(std::make_shared<AddIntOperation>("add", "int1", "int2"))
                 ->addOperation(make_shared<ReturnOperation>(0)));
 
@@ -264,8 +265,8 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -288,9 +289,9 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -374,8 +375,8 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -398,9 +399,9 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<AddressOperation>("outputAddressOp",
                                                                              Operation::BasicType::INT64,
                                                                              8,
@@ -426,7 +427,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                                                 ->addNextBlock(savedBBs["loopHeadBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "outputAddressOp")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(make_shared<StoreOperation>("elseAddOp", "outputAddressOp"))
@@ -492,8 +493,8 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -516,9 +517,9 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -553,7 +554,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                                                 ->addNextBlock(savedBBs["loopHeadBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(
@@ -629,8 +630,8 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -653,10 +654,10 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -669,7 +670,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
                                         ->addOperation(make_shared<CompareOperation>("nestedIfCompare",
                                                                                      "thenAddOp",
                                                                                      "const100Op",
@@ -680,7 +681,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                                      std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}))
                                         ->addThenBlock(
                                             createBB("thenThenBB", 4, {}, "iOp", "thenAddOp", "branchVal")
-                                                ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenThenBranchVal", 1, 64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "thenAddOp", "thenThenBranchVal"}))
                                                 ->addNextBlock(
@@ -711,7 +712,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
                                                 ->addOperation(
-                                                    std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
                                                 ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
                                                                                                  "thenAddOp",
                                                                                                  "thenElseBranchVal"))
@@ -720,7 +721,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                 ->addNextBlock(savedBBs["loopEndBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(std::make_shared<BranchOperation>(
@@ -796,8 +797,8 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -820,10 +821,10 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -836,7 +837,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
                                         ->addOperation(make_shared<CompareOperation>("nestedIfCompare",
                                                                                      "thenAddOp",
                                                                                      "const100Op",
@@ -847,7 +848,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                                      std::vector<std::string>{"iOp", "thenAddOp", "branchVal"}))
                                         ->addThenBlock(
                                             createBB("thenThenBB", 4, {}, "iOp", "thenAddOp", "branchVal")
-                                                ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenThenBranchVal", 1, 64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "thenAddOp", "thenThenBranchVal"}))
                                                 ->addNextBlock(
@@ -895,7 +896,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
                                                 ->addOperation(
-                                                    std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
                                                 ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
                                                                                                  "thenAddOp",
                                                                                                  "thenElseBranchVal"))
@@ -904,7 +905,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                 ->addNextBlock(savedBBs["nestedIfFollowUpBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(std::make_shared<BranchOperation>(
@@ -979,8 +980,8 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
-                ->addOperation(std::make_shared<ConstantIntOperation>("iOp", 0, 64))
-                ->addOperation(std::make_shared<ConstantIntOperation>("const1Op", 1, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
+                ->addOperation(std::make_shared<ConstIntOperation>("const1Op", 1, 64))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, true))
                 ->addOperation(getProxyCallOperation(Operation::GetDataBuffer, false))
                 ->addOperation(getProxyCallOperation(Operation::GetNumTuples, false))
@@ -1003,10 +1004,10 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                              "iOp",
                                                                              "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const42Op", 42, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("branchVal", 0, 64))
-                                ->addOperation(std::make_shared<ConstantIntOperation>("const46Op", 46, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
+                                ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
                                                                              "const46Op",
@@ -1019,8 +1020,8 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const100Op", 100, 64))
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("jOp", 0, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("jOp", 0, 64))
                                         ->addOperation(make_shared<CompareOperation>("nestedIfCompare",
                                                                                      "thenAddOp",
                                                                                      "const100Op",
@@ -1031,7 +1032,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                             std::vector<std::string>{"iOp", "jOp", "thenAddOp", "branchVal"}))
                                         ->addThenBlock(
                                             createBB("thenThenBB", 4, {}, "iOp", "jOp", "thenAddOp", "branchVal")
-                                                ->addOperation(std::make_shared<ConstantIntOperation>("thenThenBranchVal", 1, 64))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenThenBranchVal", 1, 64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "jOp", "thenAddOp", "thenThenBranchVal"}))
                                                 ->addNextBlock(
@@ -1136,7 +1137,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "jOp", "thenAddOp", "branchVal")
                                                 ->addOperation(
-                                                    std::make_shared<ConstantIntOperation>("thenElseBranchVal", 47, 64))
+                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
                                                 ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
                                                                                                  "thenAddOp",
                                                                                                  "thenElseBranchVal"))
@@ -1145,7 +1146,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                 ->addNextBlock(savedBBs["nestedIfFollowUpBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstantIntOperation>("const8Op", 8, 64))
+                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
                                         ->addOperation(
                                             std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
                                         ->addOperation(std::make_shared<BranchOperation>(
