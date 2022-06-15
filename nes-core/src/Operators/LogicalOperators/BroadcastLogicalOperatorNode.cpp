@@ -71,6 +71,7 @@ bool BroadcastLogicalOperatorNode::inferSchema() {
 }
 
 void BroadcastLogicalOperatorNode::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
+
 void BroadcastLogicalOperatorNode::inferInputOrigins() {
     // in the default case we collect all input origins from the children/upstream operators
     std::vector<uint64_t> inputOriginIds;

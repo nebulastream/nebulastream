@@ -110,6 +110,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
 }
 
 bool UnionLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<UnionLogicalOperatorNode>(); }
+
 void UnionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("UnionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());

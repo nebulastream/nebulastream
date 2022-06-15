@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP_
 
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 

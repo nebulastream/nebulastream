@@ -106,7 +106,6 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSinglePhysicalSource) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
-    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
     auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
@@ -136,7 +135,6 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultiplePhysicalSources) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
-    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
     auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
@@ -294,7 +292,6 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForUnionOperators) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
-    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
     auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -315,33 +312,76 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSelfUnionOperators) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
-    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
     auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 4);
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds(), ElementsAre [0], sourceOps[0]->getOutputOriginIds()[0]);
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds()[1], sourceOps[1]->getOutputOriginIds()[0]);
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds()[2], sourceOps[2]->getOutputOriginIds()[0]);
-    ASSERT_EQ(unionOps[0]->getOutputOriginIds()[3], sourceOps[3]->getOutputOriginIds()[0]);
+    const std::vector<OriginId>& unionOutputOriginIds = unionOps[0]->getOutputOriginIds();
+    ASSERT_EQ(unionOutputOriginIds.size(), 4);
+
+    auto found = std::find(unionOutputOriginIds.begin(), unionOutputOriginIds.end(), sourceOps[0]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != unionOutputOriginIds.end());
+    found = std::find(unionOutputOriginIds.begin(), unionOutputOriginIds.end(), sourceOps[1]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != unionOutputOriginIds.end());
+    found = std::find(unionOutputOriginIds.begin(), unionOutputOriginIds.end(), sourceOps[2]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != unionOutputOriginIds.end());
+    found = std::find(unionOutputOriginIds.begin(), unionOutputOriginIds.end(), sourceOps[3]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != unionOutputOriginIds.end());
 
     auto sinkOps = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
-    ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOps[0]->getOutputOriginIds()[0]);
+    ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOutputOriginIds[0]);
+}
+
+TEST_F(OriginIdInferenceRuleTest, testRuleForSelfJoinOperator) {
+
+    auto query = Query::from("A")
+                     .joinWith(Query::from("A").as("C"))
+                     .where(Attribute("id"))
+                     .equalsTo(Attribute("id"))
+                     .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(3)))
+                     .sink(NullOutputSinkDescriptor::create());
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
+    updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
+
+    auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto joinOps = updatedQueryPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinInputOriginIds = joinOps[0]->getLeftInputOriginIds();
+    auto rightInputOriginIds = joinOps[0]->getRightInputOriginIds();
+    joinInputOriginIds.insert(joinInputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
+
+    ASSERT_EQ(joinInputOriginIds.size(), 4);
+
+    auto found = std::find(joinInputOriginIds.begin(), joinInputOriginIds.end(), sourceOps[0]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != joinInputOriginIds.end());
+    found = std::find(joinInputOriginIds.begin(), joinInputOriginIds.end(), sourceOps[1]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != joinInputOriginIds.end());
+    found = std::find(joinInputOriginIds.begin(), joinInputOriginIds.end(), sourceOps[2]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != joinInputOriginIds.end());
+    found = std::find(joinInputOriginIds.begin(), joinInputOriginIds.end(), sourceOps[3]->getOutputOriginIds()[0]);
+    ASSERT_TRUE(found != joinInputOriginIds.end());
+
+    const std::vector<OriginId>& joinOutputOriginIds = joinOps[0]->getOutputOriginIds();
+    ASSERT_EQ(joinOutputOriginIds.size(), 1);
+
+    auto sinkOps = updatedQueryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], joinOutputOriginIds[0]);
 }
 
 TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
 
-    auto query = Query::from("A")
-                     .unionWith(Query::from("B"))
+    auto query = Query::from("B")
+                     .unionWith(Query::from("A"))
                      .map(Attribute("x") = Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(3)))
                      .byKey(Attribute("value"))
                      .apply(Sum(Attribute("x")))
                      .joinWith(Query::from("A")
-                                   .map(Attribute("x") = Attribute("id"))
-                                   .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(3)))
-                                   .byKey(Attribute("value"))
-                                   .apply(Sum(Attribute("x"))))
+                                   .map(Attribute("x") = Attribute("id")))
+//                                   .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(3)))
+//                                   .byKey(Attribute("value"))
+//                                   .apply(Sum(Attribute("x"))))
                      .where(Attribute("id"))
                      .equalsTo(Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("x")), Seconds(3)))
@@ -349,15 +389,16 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
 
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto updatedPlan = originIdInferenceRule->apply(queryPlan);
+    auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
+    updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
 
-    auto unionOps = updatedPlan->getOperatorByType<UnionLogicalOperatorNode>();
+    auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
 
     ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 3);
 
-    auto joinOps = updatedPlan->getOperatorByType<JoinLogicalOperatorNode>();
+    auto joinOps = updatedQueryPlan->getOperatorByType<JoinLogicalOperatorNode>();
 
-    ASSERT_EQ(joinOps[0]->getOutputOriginIds().size(), 2);
+    ASSERT_EQ(joinOps[0]->getOutputOriginIds().size(), 1);
 
     // the source should always expose its own origin id as an output
     //    ASSERT_EQ(source1->getOutputOriginIds().size(), 1);
