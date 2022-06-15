@@ -29,16 +29,23 @@ class Operation {
         INT16   = 2,
         INT32   = 3,
         INT64   = 4,
-        // Type < 7 is Float
-        FLOAT   = 5,
-        DOUBLE  = 6,
+        // Type < 10 is UINT
+        UINT1    = 5,
+        UINT8    = 6,
+        UINT16   = 7,
+        UINT32   = 8,
+        UINT64   = 9,
 
-        BOOLEAN = 7,
-        CHAR    = 8,
-        VOID    = 9,
+        // Type < 12 is Float
+        FLOAT   = 10,
+        DOUBLE  = 11,
+
+        BOOLEAN = 12,
+        CHAR    = 13,
+        VOID    = 14,
 
         // Pointer Types
-        INT8PTR = 10,
+        INT8PTR = 15,
 
         //DerivedTypes
         ARRAY     = 32,
@@ -47,11 +54,12 @@ class Operation {
     };
     enum ProxyCallType{
         GetNumTuples = 0, 
-        GetDataBuffer = 1,
+        SetNumTuples = 1,
+        GetDataBuffer = 2,
         Other = 50
     };
-    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp,
-                       CompareOp, ReturnOp, ProxyCallOp};
+    enum OperationType{LoopOp, AddIntOp, AddFloatOp, LoadOp, StoreOp, ConstIntOp, ConstFloatOp, AddressOp, FunctionOp, BranchOp, IfOp,
+                       CompareOp, ReturnOp, ProxyCallOp, DivIntOp, DivFloatOp, MulIntOp, MulFloatOp, SubIntOp, SubFloatOp};
 
     explicit Operation(OperationType opType);
     virtual ~Operation() = default;

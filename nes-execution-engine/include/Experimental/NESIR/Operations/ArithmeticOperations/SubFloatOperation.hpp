@@ -12,49 +12,29 @@
     limitations under the License.
 */
 
-#ifndef NES_COMPAREOPERATION_HPP
-#define NES_COMPAREOPERATION_HPP
+#ifndef NES_SUBFLOATOPERATION_HPP
+#define NES_SUBFLOATOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-class CompareOperation : public Operation {
+
+class SubFloatOperation : public Operation {
   public:
-    enum Comparator{
-      // Comparator < 6 is signed int.
-      IEQ = 0,
-      INE = 1,
-      ISLT = 2,
-      ISLE = 3,
-      ISGT = 4,
-      ISGE = 5,
-      // Comparator (> 5 && < 10) is unsigned int.
-      IULT = 6,
-      IULE = 7,
-      IUGT = 8,
-      IUGE = 9,
-      // Comparator > 9 is float.
-      FOLT = 10,
-      FOLE = 11,
-      FOGT = 12,
-      FOGE = 13,
-      FOEQ = 14,
-      FONE = 15
-    };
-    CompareOperation(std::string identifier, std::string leftArgName, std::string rightArgName, Comparator comparator);
-    ~CompareOperation() override = default;
+    SubFloatOperation(std::string identifier, std::string leftArgName, std::string rightArgName);
+    ~SubFloatOperation() override = default;
 
     std::string getIdentifier();
     std::string getLeftArgName();
     std::string getRightArgName();
-    Comparator getComparator();
 
     std::string toString() override;
+    bool classof(const Operation* Op);
+
   private:
     std::string identifier;
     std::string leftArgName;
     std::string rightArgName;
-    Comparator comparator;
 };
 }// namespace NES
-#endif//NES_COMPAREOPERATION_HPP
+#endif//NES_SUBFLOATOPERATION_HPP

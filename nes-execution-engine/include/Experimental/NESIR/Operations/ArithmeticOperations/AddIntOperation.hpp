@@ -19,7 +19,6 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-//Todo: Decide: Leave type
 class AddIntOperation : public Operation {
   public:
     AddIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName);

@@ -12,32 +12,29 @@
     limitations under the License.
 */
 
-#ifndef NES_CONSTANTINTOPERATION_HPP
-#define NES_CONSTANTINTOPERATION_HPP
+#ifndef NES_MULINTOPERATION_HPP
+#define NES_MULINTOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-class ConstantIntOperation : public Operation {
+class MulIntOperation : public Operation {
   public:
-    explicit ConstantIntOperation(std::string identifier, int64_t constantValue, int8_t numBits);
-    ~ConstantIntOperation() override = default;
+    MulIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName);
+    ~MulIntOperation() override = default;
 
     std::string getIdentifier();
-    int64_t getConstantIntValue();
-    int8_t getNumBits();
-
-    template<class T>
-    T getIntegerViaType();
+    std::string getLeftArgName();
+    std::string getRightArgName();
 
     std::string toString() override;
-    static bool classof(const Operation* Op);
-  private:
-  std::string identifier;
-    int64_t constantValue;
-    int8_t numBits;
-};
+    bool classof(const Operation* Op);
 
+  private:
+    std::string identifier;
+    std::string leftArgName;
+    std::string rightArgName;
+};
 }// namespace NES
-#endif//NES_CONSTANTINTOPERATION_HPP
+#endif//NES_MULINTOPERATION_HPP

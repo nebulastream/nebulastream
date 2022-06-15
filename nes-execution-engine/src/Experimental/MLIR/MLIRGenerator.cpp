@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include "Experimental/NESIR/Operations/ArithmeticOperations/DivIntOperation.hpp"
+#include "Experimental/NESIR/Operations/ConstFloatOperation.hpp"
 #include <Experimental/MLIR/MLIRGenerator.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
-#include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/CompareOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
@@ -56,9 +58,13 @@ mlir::Type MLIRGenerator::getMLIRType(IR::Operations::Operation::BasicType type)
         case IR::Operations::Operation::INT1:
         case IR::Operations::Operation::BOOLEAN: return builder->getIntegerType(1);
         case IR::Operations::Operation::INT8:
+        case IR::Operations::Operation::UINT8:
         case IR::Operations::Operation::CHAR: return builder->getIntegerType(8);
+        case IR::Operations::Operation::UINT16:
         case IR::Operations::Operation::INT16: return builder->getIntegerType(16);
+        case IR::Operations::Operation::UINT32:
         case IR::Operations::Operation::INT32: return builder->getIntegerType(32);
+        case IR::Operations::Operation::UINT64:
         case IR::Operations::Operation::INT64: return builder->getIntegerType(64);
         case IR::Operations::Operation::FLOAT: return mlir::Float32Type::get(context);
         case IR::Operations::Operation::DOUBLE: return mlir::Float64Type::get(context);
@@ -96,11 +102,33 @@ mlir::Location MLIRGenerator::getNameLoc(const std::string& name) {
     return mlir::NameLoc::get(builder->getStringAttr(name), baseLocation);
 }
 
-mlir::arith::CmpIPredicate convertToMLIRComparison(IR::Operations::CompareOperation::Comparator comparisonType) {
+mlir::arith::CmpIPredicate convertToIntMLIRComparison(IR::Operations::CompareOperation::Comparator comparisonType) {
     //TODO extend to all comparison types
     switch (comparisonType) {
+        case (IR::Operations::CompareOperation::Comparator::IEQ): return mlir::arith::CmpIPredicate::eq;
+        case (IR::Operations::CompareOperation::Comparator::INE): return mlir::arith::CmpIPredicate::ne;
         case (IR::Operations::CompareOperation::Comparator::ISLT): return mlir::arith::CmpIPredicate::slt;
+        case (IR::Operations::CompareOperation::Comparator::ISLE): return mlir::arith::CmpIPredicate::sle;
+        case (IR::Operations::CompareOperation::Comparator::ISGT): return mlir::arith::CmpIPredicate::sgt;
+        case (IR::Operations::CompareOperation::Comparator::ISGE): return mlir::arith::CmpIPredicate::sge;
+        //Unsigned Comparisons. Necessary, otherwise: slt(unsigned(8), 3) = true.
+        case (IR::Operations::CompareOperation::Comparator::IULT): return mlir::arith::CmpIPredicate::ult;
+        case (IR::Operations::CompareOperation::Comparator::IULE): return mlir::arith::CmpIPredicate::ule;
+        case (IR::Operations::CompareOperation::Comparator::IUGT): return mlir::arith::CmpIPredicate::ugt;
+        case (IR::Operations::CompareOperation::Comparator::IUGE): return mlir::arith::CmpIPredicate::uge;
         default: return mlir::arith::CmpIPredicate::slt;
+    }
+}
+mlir::arith::CmpFPredicate convertToFloatMLIRComparison(IR::Operations::CompareOperation::Comparator comparisonType) {
+    switch (comparisonType) {
+        // the U in U(LT/LE/..) stands for unordered, not unsigned! Float always comparisons are always signed.
+        case (IR::Operations::CompareOperation::Comparator::FOLT): return mlir::arith::CmpFPredicate::OLT;
+        case (IR::Operations::CompareOperation::Comparator::FOLE): return mlir::arith::CmpFPredicate::OLE;
+        case (IR::Operations::CompareOperation::Comparator::FOEQ): return mlir::arith::CmpFPredicate::OEQ;
+        case (IR::Operations::CompareOperation::Comparator::FOGT): return mlir::arith::CmpFPredicate::OGT;
+        case (IR::Operations::CompareOperation::Comparator::FOGE): return mlir::arith::CmpFPredicate::OGE;
+        case (IR::Operations::CompareOperation::Comparator::FONE): return mlir::arith::CmpFPredicate::ONE;
+        default: return mlir::arith::CmpFPredicate::OLT;
     }
 }
 
@@ -170,6 +198,18 @@ std::vector<mlir::FuncOp> MLIRGenerator::GetMemberFunctions(mlir::MLIRContext& c
                 %6 = llvm.zext %5 : i32 to i64
                 return %6 : i64
             }
+            // llvm.func @__gxx_personality_v0(...) -> i32
+            func private @setNumTuples(%arg0: !llvm.ptr<i8>, %arg1: i64) {// attributes {personality = @__gxx_personality_v0} {
+                %0 = llvm.mlir.constant(1 : i32) : i32
+                %1 = llvm.mlir.constant(0 : i64) : i64
+                %2 = llvm.bitcast %arg0 : !llvm.ptr<i8> to !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
+                %3 = llvm.load %2 : !llvm.ptr<ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>>
+                %4 = llvm.trunc %arg1 : i64 to i32
+                %5 = llvm.getelementptr %3[%1, 1] : (!llvm.ptr<struct<"class.NES::Runtime::detail::BufferControlBlock", (struct<"struct.std::atomic", (struct<"struct.std::__atomic_base", (i32)>)>, i32, i64, i64, i64, i64, ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>, struct<"struct.std::atomic.0", (struct<"struct.std::__atomic_base.1", (ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>)>)>, struct<"class.std::function", (struct<"class.std::_Function_base", (struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>, ptr<func<i1 (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, i32)>>)>, ptr<func<void (ptr<struct<"union.std::_Any_data", (struct<"union.std::_Nocopy_types", (struct<(i64, i64)>)>)>>, ptr<ptr<struct<"class.NES::Runtime::detail::MemorySegment", (ptr<i8>, i32, ptr<struct<"class.NES::Runtime::detail::BufferControlBlock">>)>>>, ptr<ptr<struct<"class.NES::Runtime::BufferRecycler", opaque>>>)>>)>)>>, i64) -> !llvm.ptr<i32>
+                llvm.store %4, %5 : !llvm.ptr<i32>
+                llvm.return
+            }
+
             func private @getDataBuffer(%arg0: !llvm.ptr<i8>) -> !llvm.ptr<i8> {
                 %0 = llvm.mlir.constant(8 : i64) : i64
                 %1 = llvm.getelementptr %arg0[%0] : (!llvm.ptr<i8>, i64) -> !llvm.ptr<i8>
@@ -269,11 +309,35 @@ void MLIRGenerator::generateMLIR(const IR::Operations::OperationPtr& operation, 
         case IR::Operations::Operation::OperationType::LoopOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::LoopOperation>(operation), blockArgs);
             break;
-        case IR::Operations::Operation::OperationType::ConstantOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::ConstantIntOperation>(operation), blockArgs);
+        case IR::Operations::Operation::OperationType::ConstIntOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::ConstIntOperation>(operation), blockArgs);
             break;
-        case IR::Operations::Operation::OperationType::AddOp:
+        case IR::Operations::Operation::OperationType::ConstFloatOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::ConstFloatOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::AddIntOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::AddIntOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::AddFloatOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::AddFloatOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::SubIntOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::SubIntOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::SubFloatOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::SubFloatOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::MulIntOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::MulIntOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::MulFloatOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::MulFloatOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::DivIntOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::DivIntOperation>(operation), blockArgs);
+            break;
+        case IR::Operations::Operation::OperationType::DivFloatOp:
+            generateMLIR(std::static_pointer_cast<IR::Operations::DivFloatOperation>(operation), blockArgs);
             break;
         case IR::Operations::Operation::OperationType::LoadOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::LoadOperation>(operation), blockArgs);
@@ -423,16 +487,23 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     }
 }
 
-// No Recursion. No dependencies. Requires addressMap insertion.
+//==--------------------------==//
+//==-- MEMORY (LOAD, STORE) --==//
+//==--------------------------==//
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp,
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("AddressOp");
-    mlir::Value recordOffset = builder->create<mlir::LLVM::MulOp>(getNameLoc("recordOffset"),
-                                                                  blockArgs[addressOp->getRecordIdxName()],
-                                                                  getConstInt("1", 64, addressOp->getRecordWidth()));
+    mlir::Value recordOffset;
+    if(addressOp->getRecordIdxName() != "") {
+        recordOffset = builder->create<mlir::LLVM::MulOp>(getNameLoc("recordOffset"),
+                                                          blockArgs[addressOp->getRecordIdxName()],
+                                                          getConstInt("1", 64, addressOp->getRecordWidthInBytes()));
+    } else {
+        recordOffset = getConstInt("0", 64, 0);
+    }
     mlir::Value fieldOffset = builder->create<mlir::LLVM::AddOp>(getNameLoc("fieldOffset"),
                                                                  recordOffset,
-                                                                 getConstInt("1", 64, addressOp->getFieldOffset()));
+                                                                 getConstInt("1", 64, addressOp->getFieldOffsetInBytes()));
     // Return I8* to first byte of field data
     mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(getNameLoc("fieldAccess"),
                                                                     mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
@@ -454,7 +525,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> 
 }
 
 // No Recursion. No dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstantIntOperation> constIntOp,
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstIntOperation> constIntOp,
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("ConstIntOp");
     if (!blockArgs.contains(constIntOp->getIdentifier())) {
@@ -466,23 +537,120 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstantIntOper
     }
 }
 
-// No recursion. Dependencies. Requires addressMap insertion.
-void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddIntOperation> addOp,
+// No Recursion. No dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ConstFloatOperation> constFloatOp,
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
-    printf("AddOp");
-    // Only generate Add, if not loop induction variable ++ operation (only loopInduction vars have length 1).
-    if (!inductionVars.contains(addOp->getLeftArgName())) {
-        if (!blockArgs.contains(addOp->getIdentifier())) {
-            blockArgs.emplace(std::pair{addOp->getIdentifier(),
+    printf("ConstFloatOp");
+    auto floatType = (constFloatOp->getNumBits() == 32) ? builder->getF32Type() : builder->getF64Type();
+    if (!blockArgs.contains(constFloatOp->getIdentifier())) {
+        blockArgs.emplace(std::pair{constFloatOp->getIdentifier(),
+            builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"), floatType,
+            builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue()))});
+    } else {
+        blockArgs[constFloatOp->getIdentifier()] =
+            builder->create<mlir::LLVM::ConstantOp>(getNameLoc("constantFloat"), floatType, 
+            builder->getFloatAttr(floatType, constFloatOp->getConstantFloatValue()));
+    }
+}
+
+//==---------------------------==//
+//==-- ARITHMETIC OPERATIONS --==//
+//==---------------------------==//
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddIntOperation> addIntOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    if (!inductionVars.contains(addIntOp->getLeftArgName())) {
+        if (!blockArgs.contains(addIntOp->getIdentifier())) {
+            blockArgs.emplace(std::pair{addIntOp->getIdentifier(),
                                         builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
-                                                                     blockArgs[addOp->getLeftArgName()],
-                                                                     blockArgs[addOp->getRightArgName()])});
+                                                                     blockArgs[addIntOp->getLeftArgName()],
+                                                                     blockArgs[addIntOp->getRightArgName()])});
         } else {
-            blockArgs[addOp->getIdentifier()] = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
-                                                                             blockArgs[addOp->getLeftArgName()],
-                                                                             blockArgs[addOp->getRightArgName()]);
+            blockArgs[addIntOp->getIdentifier()] = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
+                                                                             blockArgs[addIntOp->getLeftArgName()],
+                                                                             blockArgs[addIntOp->getRightArgName()]);
         }
     }
+}
+
+// No recursion. Dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddFloatOperation> addFloatOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    blockArgs.emplace(std::pair{addFloatOp->getIdentifier(),
+                                builder->create<mlir::LLVM::FAddOp>(getNameLoc("binOpResult"),
+                                    blockArgs[addFloatOp->getLeftArgName()].getType(),
+                                    blockArgs[addFloatOp->getLeftArgName()],
+                                    blockArgs[addFloatOp->getRightArgName()],
+                                    mlir::LLVM::FastmathFlags::fast)});
+}
+
+// No recursion. Dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::SubIntOperation> subIntOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+        blockArgs.emplace(std::pair{subIntOp->getIdentifier(), 
+                                    builder->create<mlir::LLVM::SubOp>(getNameLoc("binOpResult"),
+                                        // blockArgs[subIntOp->getLeftArgName()].getType(), 
+                                        blockArgs[subIntOp->getLeftArgName()], 
+                                        blockArgs[subIntOp->getRightArgName()])});
+}
+
+// No recursion. Dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::SubFloatOperation> subFloatOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    blockArgs.emplace(std::pair{subFloatOp->getIdentifier(), 
+                                builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
+                                    // blockArgs[subFloatOp->getLeftArgName()].getType(),
+                                    blockArgs[subFloatOp->getLeftArgName()], 
+                                    blockArgs[subFloatOp->getRightArgName()],
+                                    mlir::LLVM::FMFAttr::get(context, mlir::LLVM::FastmathFlags::fast))});
+}
+
+// No recursion. Dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::MulIntOperation> mulIntOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+        blockArgs.emplace(std::pair{mulIntOp->getIdentifier(), 
+                                    builder->create<mlir::LLVM::MulOp>(getNameLoc("binOpResult"),
+                                        blockArgs[mulIntOp->getLeftArgName()].getType(), 
+                                        blockArgs[mulIntOp->getLeftArgName()], 
+                                        blockArgs[mulIntOp->getRightArgName()])});
+}
+
+// No recursion. Dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::MulFloatOperation> mulFloatOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    blockArgs.emplace(std::pair{mulFloatOp->getIdentifier(), 
+                                builder->create<mlir::LLVM::FMulOp>(getNameLoc("binOpResult"),
+                                    blockArgs[mulFloatOp->getLeftArgName()].getType(), 
+                                    blockArgs[mulFloatOp->getLeftArgName()], 
+                                    blockArgs[mulFloatOp->getRightArgName()],
+                                    mlir::LLVM::FastmathFlags::fast)});
+}
+
+// No recursion. Dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::DivIntOperation> divIntOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    auto resultType = blockArgs[divIntOp->getLeftArgName()].getType();
+    if(divIntOp->getIsSigned()) {
+        blockArgs.emplace(std::pair{divIntOp->getIdentifier(), 
+                                    builder->create<mlir::LLVM::SDivOp>(getNameLoc("binOpResult"),
+                                        resultType, blockArgs[divIntOp->getLeftArgName()], 
+                                        blockArgs[divIntOp->getRightArgName()])});
+    } else {
+        blockArgs.emplace(std::pair{divIntOp->getIdentifier(), 
+                                    builder->create<mlir::LLVM::UDivOp>(getNameLoc("binOpResult"),
+                                        resultType, blockArgs[divIntOp->getLeftArgName()], 
+                                        blockArgs[divIntOp->getRightArgName()])});
+    }
+}
+
+// No recursion. Dependencies. Requires addressMap insertion.
+void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::DivFloatOperation> divFloatOp,
+                                 std::unordered_map<std::string, mlir::Value>& blockArgs) {
+    blockArgs.emplace(std::pair{divFloatOp->getIdentifier(), 
+                                builder->create<mlir::LLVM::FDivOp>(getNameLoc("binOpResult"),
+                                    blockArgs[divFloatOp->getLeftArgName()].getType(), 
+                                    blockArgs[divFloatOp->getLeftArgName()], 
+                                    blockArgs[divFloatOp->getRightArgName()],
+                                    mlir::LLVM::FastmathFlags::fast)});
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
@@ -510,25 +678,29 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
     printf("ProxyCallOperation identifier: %s\n", proxyCallOp->getIdentifier().c_str());
     printf("ProxyCallOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
 
+    //Todo simplify!!!!
     switch (proxyCallOp->getProxyCallType()) {
         case IR::Operations::Operation::GetDataBuffer:
-            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(),
-                                        builder
-                                            ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                                                   memberFunctions[IR::Operations::Operation::GetDataBuffer],
-                                                                   blockArgs[proxyCallOp->getInputArgNames().at(0)])
-                                            .getResult(0)});
+            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(), 
+                                        builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                        memberFunctions[IR::Operations::Operation::GetDataBuffer],
+                                        blockArgs[proxyCallOp->getInputArgNames().at(0)]).getResult(0)});
             break;
+        case IR::Operations::Operation::SetNumTuples: {
+            std::vector<mlir::Value> operands = {blockArgs[proxyCallOp->getInputArgNames().at(0)], blockArgs[proxyCallOp->getInputArgNames().at(1)]};
+            blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(),
+                                        builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                        memberFunctions[IR::Operations::Operation::SetNumTuples],
+                                        operands).getResult(0)});
+            break;
+        }
         case IR::Operations::Operation::GetNumTuples:
             blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(),
-                                        builder
-                                            ->create<mlir::CallOp>(getNameLoc("memberCall"),
-                                                                   memberFunctions[IR::Operations::Operation::GetNumTuples],
-                                                                   blockArgs[proxyCallOp->getInputArgNames().at(0)])
-                                            .getResult(0)});
+                                        builder->create<mlir::CallOp>(getNameLoc("memberCall"),
+                                        memberFunctions[IR::Operations::Operation::GetNumTuples],
+                                        blockArgs[proxyCallOp->getInputArgNames().at(0)]).getResult(0)});
             break;
         default:
-            //Todo probably have create new function call map, because Functions are not representable by mlir::Value
             mlir::FlatSymbolRefAttr functionRef;
             if (theModule.lookupSymbol<mlir::LLVM::LLVMFuncOp>(proxyCallOp->getIdentifier())) {
                 functionRef = mlir::SymbolRefAttr::get(context, proxyCallOp->getIdentifier());
@@ -552,28 +724,34 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
             }
             break;
     }
-    //Todo Insert function call. Use blockArgs is input args, if function has args.
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp,
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("CompareOperation identifier: %s\n", compareOp->getIdentifier().c_str());
-    printf("CompareOperation first BlockArg name: %s\n", blockArgs.begin()->first.c_str());
-    blockArgs.emplace(std::pair{compareOp->getIdentifier(),
-                                builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
-                                                               convertToMLIRComparison(compareOp->getComparator()),
-                                                               blockArgs[compareOp->getLeftArgName()],
-                                                               blockArgs[compareOp->getRightArgName()])});
+    // Comparator Enum < 10 is either a signed or unsigned Integer comparison.
+    if(compareOp->getComparator() < 10)  {
+        blockArgs.emplace(std::pair{compareOp->getIdentifier(),
+            builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
+                convertToIntMLIRComparison(compareOp->getComparator()),
+                    blockArgs[compareOp->getLeftArgName()], blockArgs[compareOp->getRightArgName()])});
+    } else {
+        blockArgs.emplace(std::pair{compareOp->getIdentifier(),
+            builder->create<mlir::arith::CmpFOp>(getNameLoc("comparison"),
+                convertToFloatMLIRComparison(compareOp->getComparator()),
+                    blockArgs[compareOp->getLeftArgName()], blockArgs[compareOp->getRightArgName()])});
+    }
 }
+
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp,
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     // Find next block that is on the same or on a higher scopeLevel than ifOp and get its input args.
-    auto ifOpTerminatorOp =
-        findLastTerminatorOp(ifOp->getThenBranchBlock(),
-                             ifOp->getThenBranchBlock()->getScopeLevel() - 1);// Todo change to ifOp->getElseBranchBlock()
+    // (could use else Block, if exists -> allows for possibly faster traversal, but we will change this part anyway)
+    auto ifOpTerminatorOp = findLastTerminatorOp(ifOp->getThenBranchBlock(), 
+                                                 ifOp->getThenBranchBlock()->getScopeLevel() - 1);
     IR::BasicBlockPtr afterIfOpBlock = (ifOpTerminatorOp->getOperationType() == IR::Operations::Operation::BranchOp)
         ? std::static_pointer_cast<IR::Operations::BranchOperation>(ifOpTerminatorOp)->getNextBlock()
         : std::static_pointer_cast<IR::Operations::IfOperation>(ifOpTerminatorOp)->getElseBranchBlock();
@@ -584,42 +762,59 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
     auto currentInsertionPoint = builder->saveInsertionPoint();
     std::vector<mlir::Type> mlirIfOpResultTypes;
     // Register all blockArgs for the IfOperation as output/yield args. All values that are not modified, will just be returned.
-    for (auto afterIfBlockArgType : afterIfOpBlock->getInputArgTypes()) {
-        mlirIfOpResultTypes.push_back(getMLIRType(afterIfBlockArgType));
+    bool hasElse = (ifOp->getElseBranchBlock() != nullptr);
+    bool requiresYield = false;
+    for(auto nextBlockArg : afterIfOpBlockArgs) { 
+        if(!inductionVars.contains(nextBlockArg)) { requiresYield = true; break; } 
     }
-    mlirIfOp =
-        builder->create<mlir::scf::IfOp>(getNameLoc("ifOperation"), mlirIfOpResultTypes, blockArgs[ifOp->getBoolArgName()], true);
+    if(requiresYield) {
+        for (auto afterIfBlockArgType : afterIfOpBlock->getInputArgTypes()) {
+            mlirIfOpResultTypes.push_back(getMLIRType(afterIfBlockArgType));
+        }
+    }
+    mlirIfOp = builder->create<mlir::scf::IfOp>(getNameLoc("ifOperation"), mlirIfOpResultTypes, 
+                                                blockArgs[ifOp->getBoolArgName()], (hasElse || requiresYield));
 
     // IF case -> Change scope to Then Branch. Finish by setting obligatory YieldOp for THEN case.
     builder->setInsertionPointToStart(mlirIfOp.getThenBodyBuilder().getInsertionBlock());
     std::unordered_map<std::string, mlir::Value> ifBlockArgs = blockArgs;
     generateMLIR(ifOp->getThenBranchBlock(), ifBlockArgs);
 
-    std::vector<mlir::Value> ifYieldOps;
-    for (auto afterIfBlockArg : afterIfOpBlockArgs) {
-        ifYieldOps.push_back(ifBlockArgs[afterIfBlockArg]);
-    }
-    builder->create<mlir::scf::YieldOp>(getNameLoc("ifYield"), ifYieldOps);
-
-    // ELSE case -> Change scope to ELSE Branch. Finish by setting obligatory YieldOp for ELSE case.
-    builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
-    std::unordered_map<std::string, mlir::Value> elseBlockArgs = blockArgs;
-
-    std::vector<mlir::Value> elseYieldOps;
-    if (ifOp->getElseBranchBlock() != nullptr) {
-        generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs);
-        for (auto afterIfBlockArg : afterIfOpBlockArgs) {//Todo MUST use elseOpTerminator outArgs
-            elseYieldOps.push_back(elseBlockArgs[afterIfBlockArg]);
+    // An MLIR ifOp MUST have an else case, if it returns values (YieldOp). The else case must return the same arg types.
+    // But, an MLIR ifOp might still have an else case, even it does not require a YieldOp.
+    if(requiresYield) {
+        std::vector<mlir::Value> ifYieldOps;
+        for (auto afterIfBlockArg : afterIfOpBlockArgs) {
+            ifYieldOps.push_back(ifBlockArgs[afterIfBlockArg]);
         }
-        builder->create<mlir::scf::YieldOp>(getNameLoc("elseYield"), elseYieldOps);
-    } else {
-        builder->create<mlir::scf::YieldOp>(getNameLoc("copiedElseYield"), ifYieldOps);
+        builder->create<mlir::scf::YieldOp>(getNameLoc("ifYield"), ifYieldOps);
+        // No else case, but yielding required. Insert hollow else case with duplicated if-yield.
+        if(!hasElse) {
+            builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
+            builder->create<mlir::scf::YieldOp>(getNameLoc("copiedElseYield"), ifYieldOps);
+        }
+    }
+    if(hasElse) {
+        builder->setInsertionPointToStart(mlirIfOp.getElseBodyBuilder().getInsertionBlock());
+        std::unordered_map<std::string, mlir::Value> elseBlockArgs = blockArgs;
+        if(requiresYield) {
+            std::vector<mlir::Value> elseYieldOps;
+            if (ifOp->getElseBranchBlock() != nullptr) {
+                generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs);
+                for (auto afterIfBlockArg : afterIfOpBlockArgs) {
+                    elseYieldOps.push_back(elseBlockArgs[afterIfBlockArg]);
+                }
+                builder->create<mlir::scf::YieldOp>(getNameLoc("elseYield"), elseYieldOps);
+            }
+        }
     }
 
     // Back to IfOp scope. Get all yielded result values from IfOperation, write to blockArgs and proceed.
     builder->restoreInsertionPoint(currentInsertionPoint);
-    for (int i = 0; i < (int) afterIfOpBlock->getInputArgs().size(); ++i) {
-        blockArgs[afterIfOpBlock->getInputArgs().at(i)] = mlirIfOp.getResult(i);
+    if(requiresYield) {
+        for (int i = 0; i < (int) afterIfOpBlock->getInputArgs().size(); ++i) {
+            blockArgs[afterIfOpBlock->getInputArgs().at(i)] = mlirIfOp.getResult(i);
+        }
     }
     if (afterIfOpBlock->getScopeLevel() == (ifOp->getThenBranchBlock()->getScopeLevel()) - 1) {
         generateMLIR(afterIfOpBlock, blockArgs);

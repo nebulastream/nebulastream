@@ -11,20 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(ArithmeticOperations)
-
 add_source_files(nes-execution-engine
-        Operation.cpp
-        LoadOperation.cpp
-        StoreOperation.cpp
-        ConstIntOperation.cpp
-        ConstFloatOperation.cpp
-        LoopOperation.cpp
-        AddressOperation.cpp
-        FunctionOperation.cpp
-        IfOperation.cpp
-        ProxyCallOperation.cpp
-        CompareOperation.cpp
-        ReturnOperation.cpp
-        BranchOperation.cpp
+        AddIntOperation.cpp
+        AddFloatOperation.cpp
+        SubIntOperation.cpp
+        SubFloatOperation.cpp
+        DivIntOperation.cpp
+        DivFloatOperation.cpp
+        MulIntOperation.cpp
+        MulFloatOperation.cpp
 )

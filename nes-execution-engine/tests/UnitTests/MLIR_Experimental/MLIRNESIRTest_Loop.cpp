@@ -28,7 +28,7 @@
 // #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 // #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 // #include <Experimental/NESIR/Operations/AddressOperation.hpp>
-// #include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+// #include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
 // #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 // #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 // #include <Experimental/NESIR/Operations/StoreOperation.hpp>
