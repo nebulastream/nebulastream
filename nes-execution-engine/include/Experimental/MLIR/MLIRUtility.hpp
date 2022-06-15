@@ -55,7 +55,7 @@ class MLIRUtility {
     * @param debugFlags: Determine whether and how to print/write MLIR.
     * @return int: 1 if error occurred, else 0
     */
-    int loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* debugFlags = nullptr);
+    int loadAndProcessMLIR(std::shared_ptr<IR::NESIR> nesIR, DebugFlags* debugFlags = nullptr, bool useSCF = true);
 
     int loadModuleFromString(const std::string& mlirString, DebugFlags* debugFlags = nullptr);
     int loadModuleFromStrings(const std::string& mlirString, const std::string& mlirString2, DebugFlags* debugFlags);
@@ -67,6 +67,7 @@ class MLIRUtility {
      * @return int: 1 if error occurred, else 0
      */
     int runJit(bool useProxyFunctions, void* inputBufferPtr = nullptr, void* outputBufferPtr = nullptr);
+    std::unique_ptr<mlir::ExecutionEngine> prepareEngine();
 
     /**
      * @brief Can print a module and write it to a file, depending on debugFlags.

@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/Record.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-void Selection::execute(ExecutionContext& ctx, Record& record) const {
+void Selection::execute(RuntimeExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
     if (expression->execute(record)) {
         child->execute(ctx, record);

@@ -23,19 +23,19 @@ namespace NES::ExecutionEngine::Experimental::IR {
 class ExternalDataSource {
   public:
     enum ExternalDataSourceType{TupleBuffer};
-    ExternalDataSource(ExternalDataSourceType externalDataSourceType, std::string identfifier, std::vector<Operations::Operation::BasicType> types);
+    ExternalDataSource(ExternalDataSourceType externalDataSourceType, std::string identfifier, std::vector<Operations::PrimitiveStamp> types);
     ~ExternalDataSource() = default;
 
     [[nodiscard]] ExternalDataSourceType getExternalDataSourceType() const;
 
     [[nodiscard]] const std::string &getIdentifier() const;
 
-    [[nodiscard]] const std::vector<Operations::Operation::BasicType> &getTypes() const;
+    [[nodiscard]] const std::vector<Operations::PrimitiveStamp> &getTypes() const;
 
 private:
     ExternalDataSourceType externalDataSourceType;
     std::string identifier;
-    std::vector<Operations::Operation::BasicType> types;
+    std::vector<Operations::PrimitiveStamp> types;
 };
 using ExternalDataSourcePtr = std::shared_ptr<ExternalDataSource>;
 

@@ -13,14 +13,61 @@
 */
 
 #include <Experimental/Interpreter/Operators/AggregationFunction.hpp>
+#include <Experimental/NESIR/Types/FloatStamp.hpp>
+#include <Experimental/NESIR/Types/IntegerStamp.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
+std::unique_ptr<AggregationState> SumFunction::createGlobalState() { return std::make_unique<GlobalSumState>(); }
 
+std::unique_ptr<AggregationState> SumFunction::createState() {
+    if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stamp.get())) {
+        if (integerStamp->isUnsigned()) {
+            switch (integerStamp->getBitWidth()) {
+                case IR::Types::IntegerStamp::I8: {
+                    return std::make_unique<SumState>(Value<>((uint8_t) 0));
+                };
+                case IR::Types::IntegerStamp::I16: {
+                    return std::make_unique<SumState>(Value<>((uint16_t) 0));
+                };
+                case IR::Types::IntegerStamp::I32: {
+                    return std::make_unique<SumState>(Value<>((uint32_t) 0));
+                };
+                case IR::Types::IntegerStamp::I64: {
+                    return std::make_unique<SumState>(Value<>((uint64_t) 0));
+                };
+            }
+        } else {
+            switch (integerStamp->getBitWidth()) {
+                case IR::Types::IntegerStamp::I8: {
+                    return std::make_unique<SumState>(Value<>((int8_t) 0));
+                };
+                case IR::Types::IntegerStamp::I16: {
+                    return std::make_unique<SumState>(Value<>((int16_t) 0));
+                };
+                case IR::Types::IntegerStamp::I32: {
+                    return std::make_unique<SumState>(Value<>((int32_t) 0));
+                };
+                case IR::Types::IntegerStamp::I64: {
+                    return std::make_unique<SumState>(Value<>((int64_t) 0));
+                };
+            }
+        }
+    } else if (auto floatStamp = cast_if<IR::Types::FloatStamp>(stamp.get())) {
+        switch (floatStamp->getBitWidth()) {
+            case IR::Types::FloatStamp::F32: {
+                return std::make_unique<SumState>(Value<>(0.0f));
+            };
+            case IR::Types::FloatStamp::F64: {
+                return std::make_unique<SumState>(Value<>(0.0));
+            };
+        }
+    }
+    NES_THROW_RUNTIME_ERROR("Sum state on " << stamp->toString() << " is not supported.");
+}
 
-std::unique_ptr<AggregationState> SumFunction::createState() { return std::make_unique<SumState>(); }
-
-SumFunction::SumFunction(std::shared_ptr<ReadFieldExpression> readFieldExpression) : readFieldExpression(readFieldExpression) {}
+SumFunction::SumFunction(std::shared_ptr<ReadFieldExpression> readFieldExpression, IR::Types::StampPtr stamp)
+    : readFieldExpression(readFieldExpression), stamp(stamp) {}
 
 void SumFunction::liftCombine(std::unique_ptr<AggregationState>& state, Record& record) {
     auto sumState = (SumState*) state.get();
@@ -39,12 +86,53 @@ Value<Any> SumFunction::lower(std::unique_ptr<AggregationState>& state) {
     return sumState->currentSum;
 }
 std::unique_ptr<AggregationState> SumFunction::loadState(Value<MemRef>& ref) {
-    auto value = load<Integer>(ref);
-    return std::make_unique<SumState>(value);
+    if (auto integerStamp = cast_if<IR::Types::IntegerStamp>(stamp.get())) {
+        if (integerStamp->isUnsigned()) {
+            switch (integerStamp->getBitWidth()) {
+                case IR::Types::IntegerStamp::I8: {
+                    return std::make_unique<SumState>(ref.load<UInt8>());
+                };
+                case IR::Types::IntegerStamp::I16: {
+                    return std::make_unique<SumState>(ref.load<UInt16>());
+                };
+                case IR::Types::IntegerStamp::I32: {
+                    return std::make_unique<SumState>(ref.load<UInt32>());
+                };
+                case IR::Types::IntegerStamp::I64: {
+                    return std::make_unique<SumState>(ref.load<UInt64>());
+                };
+            }
+        } else {
+            switch (integerStamp->getBitWidth()) {
+                case IR::Types::IntegerStamp::I8: {
+                    return std::make_unique<SumState>(ref.load<Int8>());
+                };
+                case IR::Types::IntegerStamp::I16: {
+                    return std::make_unique<SumState>(ref.load<Int16>());
+                };
+                case IR::Types::IntegerStamp::I32: {
+                    return std::make_unique<SumState>(ref.load<Int32>());
+                };
+                case IR::Types::IntegerStamp::I64: {
+                    return std::make_unique<SumState>(ref.load<Int64>());
+                };
+            }
+        }
+    } else if (auto floatStamp = cast_if<IR::Types::FloatStamp>(stamp.get())) {
+        switch (floatStamp->getBitWidth()) {
+            case IR::Types::FloatStamp::F32: {
+                return std::make_unique<SumState>(ref.load<Float>());
+            };
+            case IR::Types::FloatStamp::F64: {
+                return std::make_unique<SumState>(ref.load<Double>());
+            };
+        }
+    }
+    NES_THROW_RUNTIME_ERROR("Sum state on " << stamp->toString() << " is not supported.");
 }
 void SumFunction::storeState(Value<MemRef>& ref, std::unique_ptr<AggregationState>& state) {
     auto sumState = (SumState*) state.get();
-    store(ref, sumState->currentSum);
+    ref.store(sumState->currentSum);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

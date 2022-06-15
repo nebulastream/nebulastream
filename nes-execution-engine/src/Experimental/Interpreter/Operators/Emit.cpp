@@ -22,39 +22,39 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 class EmitState : public OperatorState {
   public:
     EmitState(RecordBuffer resultBuffer) : resultBuffer(resultBuffer) {}
-    Value<Integer> outputIndex = 0;
+    Value<UInt64> outputIndex = 0ul;
     RecordBuffer resultBuffer;
 };
 
-void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
+void Emit::open(RuntimeExecutionContext& ctx, RecordBuffer&) const {
     // initialize state variable and create new buffer
-    auto resultBufferRef = ctx.allocateBuffer();
-    auto resultBuffer = RecordBuffer(resultMemoryLayout, resultBufferRef);
+    auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
+    auto resultBuffer = RecordBuffer(resultBufferRef);
     ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
 }
 
-void Emit::execute(ExecutionContext& ctx, Record& recordBuffer) const {
+void Emit::execute(RuntimeExecutionContext& ctx, Record& recordBuffer) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;
     auto outputIndex = emitState->outputIndex;
-    resultBuffer.write(outputIndex, recordBuffer);
-    emitState->outputIndex = outputIndex + 1;
+    resultBuffer.write(resultMemoryLayout, outputIndex, recordBuffer);
+    emitState->outputIndex = outputIndex + 1ul;
     // emit buffer if it reached the maximal capacity
     if (outputIndex >= maxRecordsPerBuffer) {
         resultBuffer.setNumRecords(emitState->outputIndex);
-        ctx.emitBuffer(resultBuffer);
-        auto resultBufferRef = ctx.allocateBuffer();
-        emitState->resultBuffer = RecordBuffer(resultMemoryLayout, resultBufferRef);
-        emitState->outputIndex = 0;
+        ctx.getPipelineContext().emitBuffer(resultBuffer);
+        auto resultBufferRef = ctx.getWorkerContext().allocateBuffer();
+        emitState->resultBuffer = RecordBuffer(resultBufferRef);
+        emitState->outputIndex = 0ul;
     }
 }
 
-void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
+void Emit::close(RuntimeExecutionContext& ctx, RecordBuffer&) const {
     // emit current buffer and set the number of records
     auto emitState = (EmitState*) ctx.getLocalState(this);
     auto resultBuffer = emitState->resultBuffer;
     resultBuffer.setNumRecords(emitState->outputIndex);
-    ctx.emitBuffer(resultBuffer);
+    ctx.getPipelineContext().emitBuffer(resultBuffer);
 }
 
 Emit::Emit(Runtime::MemoryLayouts::MemoryLayoutPtr resultMemoryLayout)

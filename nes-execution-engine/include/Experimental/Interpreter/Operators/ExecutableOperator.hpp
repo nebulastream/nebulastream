@@ -20,7 +20,7 @@ class Record;
 
 class ExecutableOperator : public Operator {
   public:
-    virtual void execute(ExecutionContext& ctx, Record& record) const = 0;
+    virtual void execute(RuntimeExecutionContext& ctx, Record& record) const = 0;
     virtual ~ExecutableOperator() = default;
 };
 

@@ -14,24 +14,26 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_BOOLEAN_HPP_
 #include <Experimental/Interpreter/DataValue/Any.hpp>
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-class Boolean : public Any {
+class Boolean : public TraceableType {
   public:
-    const static Kind type = Kind::IntegerValue;
+    static const inline auto type = TypeIdentifier::create<Boolean>();
 
-    Boolean(int64_t value) : Any(type), value(value){};
-    Boolean(Boolean& a) : Boolean(a.value) {}
+    Boolean(bool value);
 
-    std::unique_ptr<Any> copy() { return std::make_unique<Boolean>(this->value); }
+    std::unique_ptr<Any> copy() override;
 
     ~Boolean() {}
 
-    bool getValue() { return value; }
+    operator bool() const;
+
+    bool getValue();
 
     const bool value;
 
-    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::BOOLEAN; }
+    IR::Types::StampPtr getType() const override;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

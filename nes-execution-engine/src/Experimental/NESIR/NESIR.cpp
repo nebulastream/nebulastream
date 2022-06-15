@@ -31,6 +31,9 @@ std::shared_ptr<Operations::FunctionOperation> NESIR::getRootOperation() {
     return rootOperation;
 }
 
+bool NESIR::getIsSCF() { return isSCF; }
+void NESIR::setIsSCF(bool isSCF) { this->isSCF = isSCF; }
+
 std::string NESIR::toString() {
     std::stringstream ss;
     ss << "NESIR {\n";

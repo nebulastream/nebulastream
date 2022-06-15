@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
@@ -45,15 +44,17 @@ class ValueTest : public testing::Test {
 };
 
 TEST_F(ValueTest, assignMentTest) {
-    auto intValue = std::make_unique<Integer>(42);
+    auto intValue = std::make_unique<Int32>(42);
     std::unique_ptr<Any> valAny = cast<Any>(intValue);
     std::unique_ptr<Any> valAny2 = cast<Any>(valAny);
 
-    auto anyValue = Value<Integer>(std::move(intValue));
+    auto anyValue = Value<Int32>(std::move(intValue));
     anyValue = anyValue + 10;
 
-    Value<Integer> val = Value<Integer>((int64_t) 42);
-    Value<Integer> val2 = 42;
+    Value<Int8> val = Value<Int8>((int8_t) 42);
+    ASSERT_TRUE(val.value->getType()->isInteger());
+    Value<Int8> val2 = (int8_t) 42;
+    ASSERT_TRUE(val2.value->getType()->isInteger());
     Value<Any> va = val2;
     Value<Any> va2 = Value<>(10);
     auto anyValueNew1 = Value<>(10);
@@ -63,14 +64,9 @@ TEST_F(ValueTest, assignMentTest) {
     val2 = val;
 }
 
-uint64_t addFunc(uint64_t x, bool) {
-    return x;
-}
+uint64_t addFunc(uint64_t x, bool) { return x; }
 
-[[proxy_function]] uint64_t addFunc2(uint64_t x, bool) {
-    return x;
-}
-
+[[proxy_function]] uint64_t addFunc2(uint64_t x, bool) { return x; }
 
 TEST_F(ValueTest, addValueTest) {
     auto x = Value<>(1);

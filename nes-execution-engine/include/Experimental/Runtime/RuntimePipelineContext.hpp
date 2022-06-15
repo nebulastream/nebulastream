@@ -1,0 +1,40 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#ifndef NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
+#define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_
+#include <Runtime/TupleBuffer.hpp>
+#include <Experimental/Interpreter/ExecutionContext.hpp>
+#include <memory>
+
+namespace NES::Runtime::Execution {
+
+/**
+ * @brief The PipelineExecutionContext is passed to a compiled pipeline and offers basic functionality to interact with the Runtime.
+ * Via the context, the compile code is able to allocate new TupleBuffers and to emit tuple buffers to the Runtime.
+ */
+class RuntimePipelineContext : public std::enable_shared_from_this<RuntimePipelineContext> {
+  public:
+    using OperatorStateTag = uint32_t;
+    RuntimePipelineContext::OperatorStateTag
+    registerGlobalOperatorState(std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState> operatorState);
+    __attribute__((always_inline)) ExecutionEngine::Experimental::Interpreter::OperatorState* getGlobalOperatorState(RuntimePipelineContext::OperatorStateTag tag);
+    void dispatchBuffer(Runtime::TupleBuffer& tb);
+
+  private:
+    std::vector<std::unique_ptr<ExecutionEngine::Experimental::Interpreter::OperatorState>> operatorStates;
+};
+
+}// namespace NES::Runtime::Execution
+
+#endif//NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_RUNTIME_RUNTIMEPIPELINECONTEXT_HPP_

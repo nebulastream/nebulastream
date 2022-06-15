@@ -13,6 +13,7 @@
 */
 #include <Experimental/Trace/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Experimental/Trace/TraceContext.hpp>
+#include <Experimental/NESIR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
@@ -37,7 +38,10 @@ SymbolicExecutionContext* initThreadSymbolicExecutionContext() {
  * @brief Checks if the symbolic execution context is initialized.
  * @return boolean
  */
-bool isInSymbolicExecution() { return threadLocalSymbolicExecutionContext != nullptr; }
+bool isInSymbolicExecution() {
+    return threadLocalSymbolicExecutionContext != nullptr; }
+void disableSymbolicExecution() {
+    threadLocalSymbolicExecutionContext = nullptr; }
 
 /**
  * @brief Returns the symbolic execution context.
@@ -57,6 +61,10 @@ bool SymbolicExecutionContext::executeCMP(ValueRef&) {
             bool outcome = get<0>(operation);
             currentMode = RECORD;
             result = !outcome;
+            if (!tagMap.contains(tag)) {
+                currentExecutionPath->getPath().pop_back();
+                currentExecutionPath->append(result, tag);
+            }
         } else {
             result = get<0>(operation);
         }
@@ -84,7 +92,8 @@ bool SymbolicExecutionContext::executeCMP(ValueRef&) {
  * @param function that will be evaluated
  * @return ExecutionTrace the collected trace
  */
-std::shared_ptr<ExecutionTrace> SymbolicExecutionContext::apply(const std::function<void()>& function) {
+std::shared_ptr<ExecutionTrace>
+SymbolicExecutionContext::apply(const std::function<NES::ExecutionEngine::Experimental::Trace::ValueRef()>& function) {
     // initialize trace context
     initThreadLocalTraceContext();
     auto tracCtx = getThreadLocalTraceContext();
@@ -94,21 +103,40 @@ std::shared_ptr<ExecutionTrace> SymbolicExecutionContext::apply(const std::funct
     symExCtx->currentMode = SymbolicExecutionContext::RECORD;
     symExCtx->currentExecutionPath = std::make_shared<SymbolicExecutionPath>();
     // evaluate the function for the first time
-    function();
+    auto resultRef = function();
+    Operation result = Operation(RETURN);
+    if(!resultRef.type->isVoid()){
+        auto intV = cast<IR::Types::IntegerStamp>(resultRef.type);
+        result.input.emplace_back(resultRef);
+        result.result = resultRef;
+    }else{
+        result.result = resultRef;
+    }
+    tracCtx->trace(result);
     uint64_t iterations = 1;
     // for each control-flow split in the function we will have recorded an execution path in inflightExecutionPaths.
     // in the following we will explore all remaining control-flow splits.
     // as each function evaluation can cause another execution path this loop processes as long inflightExecutionPaths has elements.
     while (symExCtx->inflightExecutionPaths.size() > 0) {
+        NES_DEBUG("InflightExecutions: " << symExCtx->inflightExecutionPaths.size())
         // get the next trace and start in follow mode as we first want to follow the execution till we reach the target control-flow split.
         auto trace = symExCtx->inflightExecutionPaths.front();
+        NES_DEBUG(*trace);
         symExCtx->inflightExecutionPaths.pop_front();
         symExCtx->currentMode = SymbolicExecutionContext::FOLLOW;
         symExCtx->currentExecutionPath = trace;
         symExCtx->currentOperation = 0;
         tracCtx->reset();
         // evaluate function
-        function();
+        auto resultRef = function();
+        Operation result = Operation(RETURN);
+        if(!resultRef.type->isVoid()){
+            result.input.emplace_back(resultRef);
+            result.result = resultRef;
+        }else{
+            result.result = resultRef;
+        }
+        tracCtx->trace(result);
         iterations++;
         if (iterations > MAX_ITERATIONS) {
             NES_THROW_RUNTIME_ERROR("Symbolic execution caused more than MAX_ITERATIONS iterations. "
@@ -116,8 +144,7 @@ std::shared_ptr<ExecutionTrace> SymbolicExecutionContext::apply(const std::funct
         }
     }
     NES_DEBUG("Symbolic Execution: iterations " << iterations);
-    Operation result = Operation(RETURN);
-    tracCtx->trace(result);
+
     return tracCtx->getExecutionTrace();
 }
 

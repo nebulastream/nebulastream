@@ -15,32 +15,36 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_MEMREF_HPP_
 #include <Experimental/Interpreter/DataValue/Any.hpp>
 #include <Experimental/Interpreter/DataValue/Boolean.hpp>
-#include <Experimental/Interpreter/DataValue/Integer.hpp>
+#include <Experimental/Interpreter/DataValue/Integer/Int.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-class MemRef : public Any {
+class MemRef : public TraceableType {
   public:
-    const static Kind type = Kind::IntegerValue;
+    static const inline auto type = TypeIdentifier::create<Boolean>();
 
-    MemRef(int64_t value) : Any(type), value(value){};
+    MemRef(int8_t* value) : TraceableType(&type), value(value){};
     MemRef(MemRef&& a) : MemRef(a.value) {}
     MemRef(MemRef& a) : MemRef(a.value) {}
-    MemRef(Integer& a) : MemRef(a.value) {}
     std::unique_ptr<Any> copy() override { return std::make_unique<MemRef>(this->value); }
-    std::unique_ptr<MemRef> add(std::unique_ptr<MemRef>& otherValue) const {
-        return std::make_unique<MemRef>(value + otherValue->value);
+
+    std::unique_ptr<MemRef> add(Int8&) const {
+        auto val1 = value + (int64_t) 45;
+        return std::make_unique<MemRef>(val1);
     };
     ~MemRef() {}
 
-    int64_t getValue() { return value; }
+    void* getValue() { return value; }
+
     template<class ResultType>
-    std::unique_ptr<ResultType> load() { return std::make_unique<Integer>(value); }
+    std::unique_ptr<ResultType> load() {
+        return std::make_unique<ResultType>(0);
+    }
 
     template<class ValueType>
-    void store(ValueType value) { std::make_unique<Integer>(value); }
+    void store(ValueType) {}
 
-    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::INT8PTR; }
-    const int64_t value;
+    IR::Types::StampPtr getType() const override { return IR::Types::StampFactory::createAddressStamp(); }
+    int8_t* value;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

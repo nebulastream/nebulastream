@@ -15,8 +15,11 @@
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-
-Operation::Operation(OperationType opType) : opType(opType) {}
+Operation::Operation(OperationType opType, OperationIdentifier identifier, Types::StampPtr stamp)
+    : opType(opType), identifier(identifier), stamp(stamp) {}
+Operation::Operation(OperationType opType, Types::StampPtr stamp) : opType(opType), identifier(""), stamp(stamp) {}
 Operation::OperationType Operation::getOperationType() const { return opType; }
+OperationIdentifier Operation::getIdentifier() { return identifier; }
+const Types::StampPtr& Operation::getStamp() const { return stamp; }
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

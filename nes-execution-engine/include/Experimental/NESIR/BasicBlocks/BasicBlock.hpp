@@ -16,6 +16,7 @@
 #define NES_BASICBLOCK_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlockArgument.hpp>
 #include <memory>
 #include <vector>
 
@@ -31,31 +32,34 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     explicit BasicBlock(std::string identifier,
                         int32_t scopeLevel,
                         std::vector<Operations::OperationPtr> operations,
-                        std::vector<std::string> inputArgs,
-                        std::vector<Operations::Operation::BasicType> inputArgTypes);
+                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] int32_t getScopeLevel();
     [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
-    [[nodiscard]] std::vector<std::string> getInputArgs();
-    [[nodiscard]] std::vector<Operations::Operation::BasicType> getInputArgTypes();
+    [[nodiscard]] std::vector<std::shared_ptr<Operations::BasicBlockArgument>> getArguments();
 
     // NESIR Assembly
     std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
     std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
     std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
+    void addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector<Operations::OperationPtr> inputArguments);
     std::shared_ptr<BasicBlock> addThenBlock(std::shared_ptr<BasicBlock> thenBlock);
     std::shared_ptr<BasicBlock> addElseBlock(std::shared_ptr<BasicBlock> elseBlock);
-
+    void removeOperation(Operations::OperationPtr operation);
+    void addOperationBefore(Operations::OperationPtr before, Operations::OperationPtr operation);
+    void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
+    std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
+    uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
     void popOperation();
 
   private:
     std::string identifier;
     int32_t scopeLevel;
     std::vector<Operations::OperationPtr> operations;
-    std::vector<std::string> inputArgs;
-    std::vector<Operations::Operation::BasicType> inputArgTypes;
+    std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
+    std::vector<std::weak_ptr<BasicBlock>> predecessors;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 

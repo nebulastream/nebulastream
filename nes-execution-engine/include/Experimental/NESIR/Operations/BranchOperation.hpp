@@ -16,6 +16,7 @@
 #define NES_BRANCHOPERATION_HPP
 
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlockInvocation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 /**
@@ -24,19 +25,14 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
  */
 class BranchOperation : public Operation {
   public:
-    explicit BranchOperation(const std::vector<std::string>& nextBlockArgs = {});
+    explicit BranchOperation();
     ~BranchOperation() override = default;
 
-    BasicBlockPtr setNextBlock(BasicBlockPtr nextBlock);
-    BasicBlockPtr getNextBlock();
-    std::vector<std::string> getNextBlockArgs();
-
+    BasicBlockInvocation& getNextBlockInvocation();
     std::string toString() override;
     static bool classof(const Operation *Op);
   private:
-    BasicBlockPtr nextBlock;
-    std::vector<std::string> nextBlockArgs;
-    // Todo std::vector<void*> nextBlockArgs
+    BasicBlockInvocation basicBlock;
 };
 }// namespace NES
 #endif//NES_BRANCHOPERATION_HPP

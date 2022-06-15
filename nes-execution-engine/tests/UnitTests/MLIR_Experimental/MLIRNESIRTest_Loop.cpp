@@ -26,9 +26,9 @@
 // #include <Runtime/TupleBuffer.hpp>
 
 // #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-// #include <Experimental/NESIR/Operations/LoopOperation.hpp>
+// #include <Experimental/NESIR/Operations/Loop/LoopOperation.hpp>
 // #include <Experimental/NESIR/Operations/AddressOperation.hpp>
-// #include <Experimental/NESIR/Operations/AddIntOperation.hpp>
+// #include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
 // #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 // #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 // #include <Experimental/NESIR/Operations/StoreOperation.hpp>
@@ -52,59 +52,59 @@
 //     static void TearDownTestCase() { NES_INFO("MLIRNESIRTest test class TearDownTestCase."); }
 // };
 
-// void printBuffer(std::vector<Operation::BasicType> types,
+// void printBuffer(std::vector<BasicType> types,
 //                  uint64_t numTuples, int8_t *bufferPointer) {
 //     for(uint64_t i = 0; i < numTuples; ++i) {
 //         printf("------------\nTuple Nr. %lu\n------------\n", i+1);
 //         for(auto type : types) {
 //             switch(type) {
-//                 case Operation::BasicType::INT1: {
+//                 case BasicType::INT1: {
 //                     printf("Value(INT32): %d \n", *bufferPointer);
 //                     bufferPointer += 1;
 //                     break;
 //                 }
-//                 case Operation::BasicType::INT8: {
+//                 case BasicType::INT8: {
 //                     printf("Value(INT32): %d \n", *bufferPointer);
 //                     bufferPointer += 1;
 //                     break;
 //                 }
-//                 case Operation::BasicType::INT16: {
+//                 case BasicType::INT16: {
 //                     int16_t *value = (int16_t*) bufferPointer;
 //                     printf("Value(INT32): %d \n", *value);
 //                     bufferPointer += 2;
 //                     break;
 //                 }
-//                 case Operation::BasicType::INT32: {
+//                 case BasicType::INT32: {
 //                     int32_t *value = (int32_t*) bufferPointer;
 //                     printf("Value(INT32): %d \n", *value);
 //                     bufferPointer += 4;
 //                     break;
 //                 }
-//                 case Operation::BasicType::INT64: {
+//                 case BasicType::INT64: {
 //                     int64_t *value = (int64_t*) bufferPointer;
 //                     printf("Value(INT32): %ld \n", *value);
 //                     bufferPointer += 8;
 //                     break;
 //                 }
-//                 case Operation::BasicType::BOOLEAN: {
+//                 case BasicType::BOOLEAN: {
 //                     bool *value = (bool*) bufferPointer;
 //                     printf("Value(BOOL): %s \n", (*value) ? "true" : "false");
 //                     bufferPointer += 1;
 //                     break;
 //                 }
-//                 case Operation::BasicType::CHAR: {
+//                 case BasicType::CHAR: {
 //                     char *value = (char*) bufferPointer;
 //                     printf("Value(CHAR): %c \n", *value);
 //                     bufferPointer += 1;
 //                     break;
 //                 }
-//                 case Operation::BasicType::FLOAT: {
+//                 case BasicType::FLOAT: {
 //                     float *value = (float*) bufferPointer;
 //                     printf("Value(FLOAT): %f \n", *value);
 //                     bufferPointer += 4;
 //                     break;
 //                 }
-//                 case Operation::BasicType::DOUBLE: {
+//                 case BasicType::DOUBLE: {
 //                     double *value = (double*) bufferPointer;
 //                     printf("Value(DOUBLE): %f \n", *value);
 //                     bufferPointer += 8;
@@ -156,11 +156,11 @@
 //     OperationPtr constOneOp = std::make_shared<ConstantIntOperation>("constOne", 1, 64);
 
 //     // Loop BodyBlock Operations
-//     auto inputAddressOp = std::make_shared<AddressOperation>("inTBAddressOp", NES::Operation::BasicType::INT64, 9, 1, "inputDataBuffer");
+//     auto inputAddressOp = std::make_shared<AddressOperation>("inTBAddressOp", NES::BasicType::INT64, 9, 1, "inputDataBuffer");
 //     auto loadOp = std::make_shared<LoadOperation>("loadTBValOp", inputAddressOp, "inTBAddressOp");
 //     auto constOp = std::make_shared<ConstantIntOperation>("constInt42Op", 42, 64);
 //     auto addOp = std::make_shared<AddIntOperation>("inputAddOp", "loadTBValOp", "constInt42Op");
-//     auto outputAddressOp = std::make_shared<AddressOperation>("outTBAddressOp", NES::Operation::BasicType::INT64, 8, 0, "outputDataBuffer");
+//     auto outputAddressOp = std::make_shared<AddressOperation>("outTBAddressOp", NES::BasicType::INT64, 8, 0, "outputDataBuffer");
 //     auto storeOp = std::make_shared<StoreOperation>("inputAddOp", "outTBAddressOp");
 //     auto loopIncAdd = std::make_shared<AddIntOperation>("loopIncAdd", "i", "constOne");
 
@@ -197,7 +197,7 @@
 //     std::vector<OperationPtr> executeBlockOps{inputDataBufferProxy, outputtDataBufferProxy, numTuplesProxy, constIOp, constOneOp, loopOperation};
 //     std::vector<std::string> executeBodyBlockArgs{"inputTupleBuffer", "outputTupleBuffer"};
 //     NES::BasicBlockPtr executeBodyBlock = std::make_shared<NES::BasicBlock>("executeFuncBB", executeBlockOps, executeBodyBlockArgs, 0);
-//     std::vector<Operation::BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
+//     std::vector<BasicType> executeArgTypes{ Operation::INT8PTR, Operation::INT8PTR};
 //     std::vector<std::string> executeArgNames{ "inputTupleBuffer", "outputTupleBuffer"};
 //     auto executeFuncOp = std::make_shared<FunctionOperation>("execute", executeBodyBlock, executeArgTypes, executeArgNames, Operation::INT64);
 
@@ -218,7 +218,7 @@
 //     mlirUtility->runJit(symbolNames, jitAddresses, false, std::addressof(inputBuffer), std::addressof(outputBuffer));
 
 //     // Print OutputBuffer after execution.
-//     std::vector<Operation::BasicType> types{Operation::INT64};
+//     std::vector<BasicType> types{Operation::INT64};
 //     auto outputBufferPointer = outputBuffer.getBuffer<int8_t>();
 //     printBuffer(types, numTuples, outputBufferPointer);
 // }

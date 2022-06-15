@@ -21,13 +21,16 @@
 namespace NES::ExecutionEngine::Experimental::Trace {
 class Block {
   public:
-    Block(uint32_t blockId) : blockId(blockId), frame(){};
+    enum Type { Default, ControlFlowMerge };
+    Block(uint32_t blockId) : blockId(blockId), frame(), type(Default){};
+
     uint32_t blockId;
     // sequential list of operations
     std::vector<Operation> operations;
     std::vector<ValueRef> arguments;
     std::vector<uint32_t> predecessors;
     std::unordered_map<ValueRef, ValueRef, ValueRefHasher> frame;
+    Type type;
     /**
      * @brief Check if this block defines a specific ValueRef as a parameter or result of an operation
      * @param ref
@@ -38,6 +41,6 @@ class Block {
     friend std::ostream& operator<<(std::ostream& os, const Block& block);
 };
 
-}// namespace NES::ExecutionEngine::Experimental::Interpreter
+}// namespace NES::ExecutionEngine::Experimental::Trace
 
 #endif//NES_NES_EXECUTION_INCLUDE_INTERPRETER_TRACE_BLOCK_HPP_

@@ -14,6 +14,7 @@
 
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/OperationRef.hpp>
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
 
@@ -82,6 +83,7 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     // create new block
     auto mergedBlockId = createBlock();
     auto& mergeBlock = getBlock(mergedBlockId);
+    mergeBlock.type = Block::ControlFlowMerge;
     // move operation to new block
     auto& oldBlock = getBlock(blockIndex);
     // copy everything between opId and end;
@@ -130,8 +132,8 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
 */
     // remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
-    oldBlock.operations.emplace_back(Operation(JMP, ValueRef(0, 0, IR::Operations::Operation::VOID), {oldBlockRef}));
-    auto operation = Operation(JMP, ValueRef(0, 0, IR::Operations::Operation::VOID), {BlockRef(mergedBlockId)});
+    oldBlock.operations.emplace_back(Operation(JMP, ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
+    auto operation = Operation(JMP, ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp()), {BlockRef(mergedBlockId)});
     addOperation(operation);
 
     mergeBlock.predecessors.emplace_back(blockIndex);

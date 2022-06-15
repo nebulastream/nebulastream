@@ -11,10 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+set(CMAKE_VERBOSE_MAKEFILE on)
+
+include(../cmake/LLVMIRUtil.cmake)
+
+add_library(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Interpreter/PipelineContext.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/Experimental/Runtime/RuntimePipelineContext.cpp)
+target_include_directories(nes-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(nes-runtime PUBLIC nes)
+target_include_directories(nes-runtime PUBLIC ${CMAKE_BINARY_DIR}/include/nebulastream)
+set_target_properties(nes-runtime PROPERTIES LINKER_LANGUAGE CXX)
+llvmir_attach_bc_target(nes-runtime_bc nes-runtime)
+llvmir_attach_link_target(nes-runtime_link nes-runtime_bc)
+llvmir_attach_opt_pass_target(nes-runtime_opt nes-runtime_link -S -O3)
+get_target_property(OP_BINARY_DIR nes-runtime_opt LLVMIR_DIR)
+get_target_property(OP_BINARY_LLVMIR_FILES nes-runtime_opt LLVMIR_FILES)
+message(STATUS "OP_BINARY_DIR: ${OP_BINARY_DIR}")
+message(STATUS "OP_BINARY_LLVMIR_FILES: ${OP_BINARY_LLVMIR_FILES}")
 
 # Set Sources and Headers
 add_subdirectory(src)
-
 get_source(nes-execution-engine NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
@@ -32,6 +47,10 @@ if (MLIR_FOUND)
             $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
             $<INSTALL_INTERFACE:include/nebulastream/>)
     add_compile_definitions(MLIR_COMPILER)
+    get_property(mlir_libs GLOBAL PROPERTY MLIR_ALL_LIBS)
+    message(STATUS "mlir_libs: ${mlir_libs}")
+    target_link_libraries(nes-execution-engine PRIVATE ${mlir_libs} )
+
 else ()
     message(FATAL_ERROR "Cannot find mlir")
 endif (MLIR_FOUND)

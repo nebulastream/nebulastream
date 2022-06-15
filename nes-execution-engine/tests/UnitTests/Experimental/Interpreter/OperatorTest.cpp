@@ -11,11 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
 #include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operations/AddOp.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/Expressions/ReadFieldExpression.hpp>
 #include <Experimental/Interpreter/Expressions/WriteFieldExpression.hpp>
@@ -55,7 +53,7 @@ TEST_F(OperatorTest, FilterOperatorTest) {
    auto equalsExpression =  std::make_shared<EqualsExpression>(readField1, readField2);
    auto selection = std::make_shared<Selection>(equalsExpression);
 
-   Record({Value<Integer>(1), Value<Integer>(1)});
+   Record({Value<Int32>(1), Value<Int32>(1)});
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

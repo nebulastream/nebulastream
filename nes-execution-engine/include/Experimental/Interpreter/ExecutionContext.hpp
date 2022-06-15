@@ -15,8 +15,14 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_EXECUTIONCONTEXT_HPP_
 #include <Experimental/Interpreter/DataValue/MemRef.hpp>
 #include <Experimental/Interpreter/DataValue/Value.hpp>
+#include <Experimental/Interpreter/WorkerContext.hpp>
+#include <Experimental/Interpreter/PipelineContext.hpp>
 #include <memory>
 #include <unordered_map>
+
+namespace NES::Runtime {
+class WorkerContext;
+}
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Operator;
 class RecordBuffer;
@@ -24,21 +30,19 @@ class OperatorState {
   public:
     virtual ~OperatorState() = default;
 };
-class ExecutionContext {
+class RuntimeExecutionContext {
   public:
-    ExecutionContext(Value<MemRef> pipelineContext, Value<MemRef> workerContext);
+    RuntimeExecutionContext(Value<MemRef> executionContext);
     void setLocalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state);
     void setGlobalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(const Operator* op);
-    OperatorState* getGlobalState(const Operator* op);
-    void emitBuffer(const RecordBuffer& rb);
-    Value<MemRef> allocateBuffer();
+    WorkerContext getWorkerContext();
+    PipelineContext getPipelineContext();
 
   private:
     std::unordered_map<const Operator*, std::unique_ptr<OperatorState>> localStateMap;
     std::unordered_map<const Operator*, std::unique_ptr<OperatorState>> globalStateMap;
-    Value<MemRef> pipelineContext;
-    Value<MemRef> workerContext;
+    Value<MemRef> executionContext;
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

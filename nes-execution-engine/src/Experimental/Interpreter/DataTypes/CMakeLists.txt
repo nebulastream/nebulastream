@@ -13,4 +13,11 @@
 
 add_source_files(nes-execution-engine
         Value.cpp
+        Boolean.cpp
+        InvocationPlugin.cpp
+        BooleanInvocationPlugin.cpp
+        MemRefInvocationPlugin.cpp
         )
+
+add_subdirectory(Integer)
+add_subdirectory(Float)

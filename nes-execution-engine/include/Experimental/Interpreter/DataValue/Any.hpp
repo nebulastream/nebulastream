@@ -15,6 +15,7 @@
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ANY_HPP_
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/Utility/CastUtils.hpp>
 #include <memory>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
@@ -22,7 +23,7 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Any;
 typedef std::shared_ptr<Any> AnyPtr;
 
-class Any : public TypeCastable {
+class Any : public Typed {
   public:
     template<typename type, typename... Args>
     static std::unique_ptr<type> create(Args&&... args) {
@@ -30,11 +31,23 @@ class Any : public TypeCastable {
     }
 
     virtual std::unique_ptr<Any> copy() = 0;
-    virtual IR::Operations::Operation::BasicType getType() = 0;
     virtual ~Any() = default;
 
-    Any(Kind k) : TypeCastable(k){};
+    template<typename Type>
+    const Type& staticCast() const {
+        return static_cast<const Type&>(*this);
+    }
+
+    Any(const TypeIdentifier* identifier) : Typed(identifier){};
 };
+
+class TraceableType : public Any{
+  public:
+    TraceableType(const TypeIdentifier* identifier): Any(identifier){}
+    static const TraceableType& asTraceableType(const Any&);
+    virtual IR::Types::StampPtr getType() const = 0;
+};
+
 
 template<class X, class Y>
     requires(std::is_same<Any, X>::value)
@@ -55,7 +68,7 @@ inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& value) {
 
 template<class X, class Y>
     requires(std::is_base_of<Y, X>::value == false && std::is_same<Any, X>::value == false)
-inline std::unique_ptr<X> cast(const std::unique_ptr<Y>& ) {
+inline std::unique_ptr<X> cast(const std::unique_ptr<Y>&) {
     // copy value value
     return nullptr;
     //return std::unique_ptr<X>{static_cast<X*>(value.get())};

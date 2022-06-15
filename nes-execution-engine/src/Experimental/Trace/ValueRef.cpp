@@ -14,13 +14,14 @@
 
 #include <Experimental/Trace/TraceContext.hpp>
 #include <Experimental/Trace/ValueRef.hpp>
+#include <Experimental/NESIR/Types/StampFactory.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
-ValueRef createNextRef(IR::Operations::Operation::BasicType type) {
+ValueRef createNextRef(IR::Types::StampPtr type) {
     auto ctx = getThreadLocalTraceContext();
     if (ctx) {
         return ctx->createNextRef(type);
     }
-    return ValueRef(0, 0, IR::Operations::Operation::VOID);
+    return ValueRef(0, 0, IR::Types::StampFactory::createVoidStamp());
 }
 }// namespace NES::ExecutionEngine::Experimental::Trace

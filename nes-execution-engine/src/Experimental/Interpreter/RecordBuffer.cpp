@@ -11,60 +11,105 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Experimental/Interpreter/FunctionCall.hpp>
+#include <Experimental/Interpreter/ProxyFunctions.hpp>
 #include <Experimental/Interpreter/Record.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/Interpreter/FunctionCall.hpp>
-#include <Experimental/Interpreter/Operations/AddOp.hpp>
-#include <Experimental/Interpreter/Operations/AndOp.hpp>
-#include <Experimental/Interpreter/Operations/DivOp.hpp>
-#include <Experimental/Interpreter/Operations/EqualsOp.hpp>
-#include <Experimental/Interpreter/Operations/LessThenOp.hpp>
-#include <Experimental/Interpreter/Operations/MulOp.hpp>
-#include <Experimental/Interpreter/Operations/NegateOp.hpp>
-#include <Experimental/Interpreter/Operations/OrOp.hpp>
-#include <Experimental/Interpreter/Operations/SubOp.hpp>
-#include <Experimental/Interpreter/ProxyFunctions.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
-RecordBuffer::RecordBuffer(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> tupleBufferRef)
-    : memoryLayout(memoryLayout), tupleBufferRef(tupleBufferRef) {}
+RecordBuffer::RecordBuffer(Value<MemRef> tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
 
-Value<Integer> RecordBuffer::getNumRecords() {
-    return FunctionCall<>("TupleBuffer.getNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples, tupleBufferRef);
+Value<UInt64> RecordBuffer::getNumRecords() {
+    return FunctionCall<>("TupleBuffer.getNumberOfTuples",
+                          Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples,
+                          tupleBufferRef);
 }
 
-Record RecordBuffer::read(Value<Integer> recordIndex) {
+Value<> load(PhysicalTypePtr type, Value<MemRef> memRef) {
+    if (type->isBasicType()) {
+        auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
+        switch (basicType->nativeType) {
+            case BasicPhysicalType::INT_8: {
+                return memRef.load<Int8>();
+            };
+            case BasicPhysicalType::INT_16: {
+                return memRef.load<Int16>();
+            };
+            case BasicPhysicalType::INT_32: {
+                return memRef.load<Int32>();
+            };
+            case BasicPhysicalType::INT_64: {
+                return memRef.load<Int64>();
+            };
+            case BasicPhysicalType::UINT_8: {
+                return memRef.load<UInt8>();
+            };
+            case BasicPhysicalType::UINT_16: {
+                return memRef.load<UInt16>();
+            };
+            case BasicPhysicalType::UINT_32: {
+                return memRef.load<UInt32>();
+            };
+            case BasicPhysicalType::UINT_64: {
+                return memRef.load<UInt64>();
+            };
+            case BasicPhysicalType::FLOAT: {
+                return memRef.load<Float>();
+            };
+            case BasicPhysicalType::DOUBLE: {
+                return memRef.load<Double>();
+            };
+            default: {
+                NES_NOT_IMPLEMENTED();
+            };
+        }
+    }
+    NES_NOT_IMPLEMENTED();
+}
+
+Record RecordBuffer::read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+                          Value<MemRef> bufferAddress,
+                          Value<UInt64> recordIndex) {
     // read all fields
     // TODO add support for columnar layout
-    auto fieldSizes = memoryLayout->getFieldSizes();
-    auto tupleSize = memoryLayout->getTupleSize();
-    auto bufferAddress = getBuffer();
+    auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(memoryLayout);
+    auto tupleSize = rowLayout->getTupleSize();
     std::vector<Value<Any>> fieldValues;
-    for (auto fieldSize : fieldSizes) {
-        auto fieldOffset = tupleSize * recordIndex + fieldSize;
-        auto fieldAddress = bufferAddress + fieldOffset;
+    for (uint64_t i = 0; i < rowLayout->getSchema()->getSize(); i++) {
+        auto fieldOffset = rowLayout->getFieldOffSets()[i];
+        auto offset = tupleSize * recordIndex + fieldOffset;
+        auto fieldAddress = bufferAddress + offset;
         auto memRef = fieldAddress.as<MemRef>();
-        auto value = load<Integer>(memRef);
+        auto value = load(memoryLayout->getPhysicalTypes()[i], memRef);
         fieldValues.emplace_back(value);
     }
     return Record(fieldValues);
 }
 
-void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
+void RecordBuffer::write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& rec) {
     auto fieldSizes = memoryLayout->getFieldSizes();
     auto tupleSize = memoryLayout->getTupleSize();
     auto bufferAddress = getBuffer();
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
         auto fieldOffset = tupleSize * recordIndex + fieldSizes[i];
         auto fieldAddress = bufferAddress + fieldOffset;
-        auto value = rec.read(i).as<Integer>();
+        auto value = rec.read(i).as<Int64>();
         auto memRef = fieldAddress.as<MemRef>();
-        store<Integer>(memRef, value);
+        memRef.store(value);
     }
 }
-void RecordBuffer::setNumRecords(Value<Integer> value) {
-    FunctionCall<>("TupleBuffer.setNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, value);
+void RecordBuffer::setNumRecords(Value<UInt64> value) {
+    FunctionCall<>("TupleBuffer.setNumberOfTuples",
+                   Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples,
+                   tupleBufferRef,
+                   value);
 }
 Value<MemRef> RecordBuffer::getBuffer() {
     return FunctionCall<>("TupleBuffer.getBuffer", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);

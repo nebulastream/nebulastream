@@ -12,18 +12,20 @@
     limitations under the License.
 */
 
-#include "Experimental/NESIR/Operations/Operation.hpp"
+#include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/Types/VoidStamp.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-StoreOperation::StoreOperation(std::string valueArgName, std::string addressArgName)
-    : Operation(OperationType::StoreOp), valueArgName(valueArgName), addressArgName(addressArgName) {}
+StoreOperation::StoreOperation(OperationPtr value, OperationPtr address)
+    : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()), value(value), address(address) {}
 
-std::string StoreOperation::getValueArgName() { return valueArgName; }
-std::string StoreOperation::getAddressArgName() { return addressArgName; }
+OperationPtr StoreOperation::getValue() { return value.lock(); }
+
+OperationPtr StoreOperation::getAddress() { return address.lock(); }
 
 std::string StoreOperation::toString() {
-    return "StoreOperation(" + valueArgName + ", " + addressArgName + ")";
+    return "store(" + getValue()->getIdentifier() + ", " + getAddress()->getIdentifier() + ")";
 }
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

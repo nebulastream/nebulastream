@@ -43,7 +43,7 @@ class TraceContext {
     bool isExpectedOperation(OpCode operation);
     std::shared_ptr<OperationRef> isKnownOperation(Tag& tag);
     std::shared_ptr<ExecutionTrace> getExecutionTrace();
-    ValueRef createNextRef(IR::Operations::Operation::BasicType type);
+    ValueRef createNextRef(IR::Types::StampPtr type);
 
   private:
     uint64_t createStartAddress();

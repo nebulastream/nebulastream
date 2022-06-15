@@ -16,30 +16,29 @@
 #define NES_IFOPERATION_HPP
 
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlockInvocation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class IfOperation : public Operation {
   public:
-    IfOperation(std::string boolArgName, std::vector<std::string> thenBlockArgs = {}, std::vector<std::string> elseBlockArgs = {});
+    IfOperation(OperationPtr booleanValue);
     ~IfOperation() override = default;
 
-    std::string getBoolArgName();
+    OperationPtr getValue();
 
-    BasicBlockPtr setThenBranchBlock(BasicBlockPtr thenBlock);
-    BasicBlockPtr setElseBranchBlock(BasicBlockPtr elseBlock);
-
-    BasicBlockPtr getThenBranchBlock();
-    BasicBlockPtr getElseBranchBlock();
-    std::vector<std::string> getThenBlockArgs();
-    std::vector<std::string> getElseBlockArgs();
+    BasicBlockInvocation& getTrueBlockInvocation();
+    BasicBlockInvocation& getFalseBlockInvocation();
+    BasicBlockPtr getMergeBlock();
+    void setMergeBlock(BasicBlockPtr mergeBlock);
+    bool hasFalseCase();
 
     std::string toString() override;
+
   private:
-    std::string boolArgName;
-    BasicBlockPtr thenBranchBlock;
-    BasicBlockPtr elseBranchBlock;
-    std::vector<std::string> thenBlockArgs;
-    std::vector<std::string> elseBlockArgs;
+    OperationWPtr booleanValue;
+    BasicBlockInvocation trueBlockInvocation;
+    BasicBlockInvocation falseBlockInvocation;
+    std::weak_ptr<BasicBlock> mergeBlock;
 };
 }// namespace NES
 #endif//NES_IFOPERATION_HPP

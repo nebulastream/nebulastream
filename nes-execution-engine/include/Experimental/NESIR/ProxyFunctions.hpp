@@ -19,6 +19,7 @@
 inline __attribute__((always_inline)) void printValueFromMLIR(uint64_t value) {
     printf("Add Result: %ld\n\n", value);
 }
+
 namespace NES {
 class ProxyFunctions {
     public:

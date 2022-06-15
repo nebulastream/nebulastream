@@ -26,19 +26,17 @@ namespace NES::ExecutionEngine::Experimental::Interpreter {
 class Record;
 class RecordBuffer {
   public:
-    explicit RecordBuffer(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> tupleBufferRef);
+    explicit RecordBuffer(Value<MemRef> tupleBufferRef);
     ~RecordBuffer() = default;
-    Record read(Value<Integer> recordIndex);
-    Value<Integer> getNumRecords();
+    Record
+    read(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<MemRef> bufferAddress, Value<UInt64> recordIndex);
+    Value<UInt64> getNumRecords();
     Value<MemRef> getBuffer();
-    void write(Value<Integer> recordIndex, Record& record);
-
-  private:
-    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    void write(const Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout, Value<UInt64> recordIndex, Record& record);
 
   public:
     Value<MemRef> tupleBufferRef;
-    void setNumRecords(Value<Integer> value);
+    void setNumRecords(Value<UInt64> value);
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;

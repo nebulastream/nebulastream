@@ -54,4 +54,5 @@ void NES__Runtime__TupleBuffer__setCreationTimestamp(void* thisPtr, uint64_t val
     return thisPtr_->setCreationTimestamp(value);
 }
 
+
 }// namespace NES::Runtime::ProxyFunctions
