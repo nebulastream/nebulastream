@@ -17,6 +17,7 @@
 
 #include <API/Query.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <future>
 
@@ -97,7 +98,7 @@ class QueryService {
     bool validateAndQueueStopQueryRequest(QueryId queryId);
 
     /**
-     * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
+     * Register the request to fail shared query plan.
      *
      * @warning: this method is primarily designed to be called only by the system.
      *

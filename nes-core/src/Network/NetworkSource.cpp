@@ -123,8 +123,10 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
                     "NetworkSource::stop only supports HardStop or Failure :: partition " << nesPartition);
     if (running.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NetworkSource: stop called on " << nesPartition);
-        auto newReconf = ReconfigurationMessage(-1, -1, HardEndOfStream, DataSource::shared_from_base<DataSource>());
-        queryManager->addReconfigurationMessage(-1, -1, newReconf, false);
+        int invalidId = -1;
+        auto newReconf =
+            ReconfigurationMessage(invalidId, invalidId, HardEndOfStream, DataSource::shared_from_base<DataSource>());
+        queryManager->addReconfigurationMessage(invalidId, invalidId, newReconf, false);
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         NES_DEBUG("NetworkSource: stop called on " << nesPartition << " sent hard eos");
@@ -196,16 +198,24 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
     NES::DataSource::postReconfigurationCallback(task);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     switch (task.getType()) {
-        case Runtime::FailEndOfStream: { terminationType = Runtime::QueryTerminationType::Failure; break; }
-        case Runtime::HardEndOfStream: { terminationType = Runtime::QueryTerminationType::HardStop; break; }
-        case Runtime::SoftEndOfStream: { terminationType = Runtime::QueryTerminationType::Graceful; break; }
+        case Runtime::FailEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::Failure;
+            break;
+        }
+        case Runtime::HardEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::HardStop;
+            break;
+        }
+        case Runtime::SoftEndOfStream: {
+            terminationType = Runtime::QueryTerminationType::Graceful;
+            break;
+        }
         default: {
             break;
         }
     }
     if (Runtime::QueryTerminationType::Invalid != terminationType) {
-        NES_DEBUG("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer "
-                  << nesPartition.toString());
+        NES_DEBUG("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer " << nesPartition.toString());
         networkManager->unregisterSubpartitionConsumer(nesPartition);
         bool expected = true;
         if (running.compare_exchange_strong(expected, false)) {
