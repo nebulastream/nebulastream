@@ -395,8 +395,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                OperatorId operatorId,
                                OriginId originId,
                                size_t numSourceLocalBuffers,
-                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                               SourceDescriptor::InputFormat inputFormat);
+                               const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 #endif
 
 /**

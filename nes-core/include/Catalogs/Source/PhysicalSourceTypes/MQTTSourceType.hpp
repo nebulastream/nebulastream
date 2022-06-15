@@ -131,12 +131,18 @@ class MQTTSourceType : public PhysicalSourceType {
     /**
      * @brief Get input data format
      */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getInputFormat() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<Configurations::InputFormat>> getInputFormat() const;
 
     /**
      * @brief Set input data format
      */
     void setInputFormat(std::string inputFormat);
+
+    /**
+     * @brief Sets the input data format given as Configuration::InputFormat
+     * @param inputFormatValue
+     */
+    void setInputFormat(Configurations::InputFormat inputFormatValue);
 
   private:
     /**
@@ -163,7 +169,7 @@ class MQTTSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption qos;
     Configurations::BoolConfigOption cleanSession;
     Configurations::FloatConfigOption flushIntervalMS;
-    Configurations::StringConfigOption inputFormat;
+    Configurations::InputFormatConfigOption inputFormat;
 };
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_

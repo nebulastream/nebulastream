@@ -30,7 +30,6 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
 
   public:
-    enum InputFormat { JSON, CSV };
 
     /**
      * @brief Creates a new source descriptor with a logicalSourceName.

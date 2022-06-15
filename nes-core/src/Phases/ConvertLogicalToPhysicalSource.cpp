@@ -142,8 +142,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                 operatorId,
                                 originId,
                                 numSourceLocalBuffers,
-                                successors,
-                                mqttSourceDescriptor->getInputFormat());
+                                successors);
 #endif
 #ifdef ENABLE_OPC_BUILD
     } else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {

@@ -110,8 +110,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
                                        OPERATORID,
                                        ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
-                                       SUCCESSORS,
-                                       INPUTFORMAT);
+                                       SUCCESSORS);
 
     SUCCEED();
 }
@@ -135,8 +134,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        OPERATORID,
                                        ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
-                                       SUCCESSORS,
-                                       INPUTFORMAT);
+                                       SUCCESSORS);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
@@ -163,8 +161,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
                                        OPERATORID,
                                        ORIGINID,
                                        NUMSOURCELOCALBUFFERS,
-                                       SUCCESSORS,
-                                       INPUTFORMAT);
+                                       SUCCESSORS);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;

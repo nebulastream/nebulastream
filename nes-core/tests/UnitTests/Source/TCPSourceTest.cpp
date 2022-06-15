@@ -17,6 +17,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -24,6 +25,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -34,27 +37,20 @@
 #include <Services/QueryCatalogService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
+#include <arpa/inet.h>
 
-#ifndef OPERATORID
 #define OPERATORID 1
-#endif
 
-#ifndef ORIGINID
 #define ORIGINID 1
-#endif
 
-#ifndef NUMSOURCELOCALBUFFERS
 #define NUMSOURCELOCALBUFFERS 12
-#endif
 
-#ifndef SUCCESSORS
 #define SUCCESSORS                                                                                                               \
     {}
-#endif
 
-#ifndef INPUTFORMAT
-#define INPUTFORMAT SourceDescriptor::InputFormat::JSON
-#endif
+#define MAX 80
+#define PORT 9999
+#define SA struct sockaddr
 
 namespace NES {
 
@@ -102,14 +98,14 @@ class TCPSourceTest : public Testing::NESBaseTest {
  */
 TEST_F(TCPSourceTest, TCPSourceInit) {
 
-    auto mqttSource = createTCPSource(test_schema,
-                                      bufferManager,
-                                      queryManager,
-                                      tcpSourceType,
-                                      OPERATORID,
-                                      ORIGINID,
-                                      NUMSOURCELOCALBUFFERS,
-                                      SUCCESSORS);
+    auto tcpSource = createTCPSource(test_schema,
+                                     bufferManager,
+                                     queryManager,
+                                     tcpSourceType,
+                                     OPERATORID,
+                                     ORIGINID,
+                                     NUMSOURCELOCALBUFFERS,
+                                     SUCCESSORS);
 
     SUCCEED();
 }
@@ -133,11 +129,9 @@ TEST_F(TCPSourceTest, TCPSourcePrint) {
                                      SUCCESSORS);
 
     std::string expected = "TCPSOURCE(SCHEMA(var:INTEGER ), TCPSourceType => {\nsocketHost: 127.0.0.1\nsocketPort: "
-                           "5000\nsocketDomain: 2\nsocketType: 1\n}";
+                           "5000\nsocketDomain: 2\nsocketType: 1\ninputFormat: 1\n}";
 
     EXPECT_EQ(tcpSource->toString(), expected);
-
-    std::cout << tcpSource->toString() << std::endl;
 
     SUCCEED();
 }
@@ -145,22 +139,47 @@ TEST_F(TCPSourceTest, TCPSourcePrint) {
 /**
  * Tests if obtained value is valid.
  */
-TEST_F(TCPSourceTest, DISABLED_TCPSourceValue) {
+TEST_F(TCPSourceTest, TCPSourceConnectWithClient) {
 
-    auto test_schema = Schema::create()->addField("var", UINT32);
-    auto mqttSource = createTCPSource(test_schema,
-                                      bufferManager,
-                                      queryManager,
-                                      tcpSourceType,
-                                      OPERATORID,
-                                      ORIGINID,
-                                      NUMSOURCELOCALBUFFERS,
-                                      SUCCESSORS);
-    auto tuple_buffer = mqttSource->receiveData();
+    tcpSourceType->setSocketPort(9999);
+    tcpSourceType->setSocketDomainViaString("AF_INET");
+    tcpSourceType->setSocketTypeViaString("SOCK_STREAM");
+    tcpSourceType->setInputFormat(Configurations::InputFormat::CSV);
+
+    auto test_schema = Schema::create()->addField("id", UINT32)->addField("value", DataTypeFactory::createFixedChar(8));
+    auto tcpSource = createTCPSource(test_schema,
+                                     bufferManager,
+                                     queryManager,
+                                     tcpSourceType,
+                                     OPERATORID,
+                                     ORIGINID,
+                                     NUMSOURCELOCALBUFFERS,
+                                     SUCCESSORS);
+
+    auto tuple_buffer = tcpSource->receiveData();
+
+    int sockfd, connfd;
+    struct sockaddr_in servaddr, cli;
+
+    // socket create and verification
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    bzero(&servaddr, sizeof(servaddr));
+
+    // assign IP, PORT
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_port = htons(PORT);
+
+    char buff[10] = "0, hello";
+
+    write(sockfd, buff, sizeof(buff));
+
+    // close the socket
+    close(sockfd);
+
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
-    auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
-    value = *tuple;
+    std::cout << tuple_buffer->getBuffer() << std::endl;
     uint64_t expected = 43;
     NES_DEBUG("MQTTSOURCETEST::TEST_F(MQTTSourceTest, MQTTSourceValue) expected value is: " << expected
                                                                                             << ". Received value is: " << value);

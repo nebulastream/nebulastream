@@ -61,6 +61,9 @@ MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMa
     if (sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
         flushIntervalMS->setValue(std::stof(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
     }
+    if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
+        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second);
+    }
 }
 
 MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
@@ -104,7 +107,7 @@ MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
     }
     if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
-        inputFormat->setValue(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
+        inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
     }
 }
 
@@ -136,8 +139,8 @@ MQTTSourceType::MQTTSourceType()
       flushIntervalMS(Configurations::ConfigurationOption<float>::create("flushIntervalMS",
                                                                          -1,
                                                                          "tupleBuffer flush interval in milliseconds")),
-      inputFormat(Configurations::ConfigurationOption<std::string>::create(Configurations::INPUT_FORMAT_CONFIG,
-                                                                           "JSON",
+      inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(Configurations::INPUT_FORMAT_CONFIG,
+                                                                           Configurations::InputFormat::JSON,
                                                                            "input data format")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
@@ -185,7 +188,7 @@ Configurations::BoolConfigOption MQTTSourceType::getCleanSession() const { retur
 
 Configurations::FloatConfigOption MQTTSourceType::getFlushIntervalMS() const { return flushIntervalMS; }
 
-Configurations::StringConfigOption MQTTSourceType::getInputFormat() const { return inputFormat; }
+Configurations::InputFormatConfigOption MQTTSourceType::getInputFormat() const { return inputFormat; }
 
 void MQTTSourceType::setUrl(std::string urlValue) { url->setValue(std::move(urlValue)); }
 
@@ -201,7 +204,9 @@ void MQTTSourceType::setCleanSession(bool cleanSessionValue) { cleanSession->set
 
 void MQTTSourceType::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
-void MQTTSourceType::setInputFormat(std::string inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
+void MQTTSourceType::setInputFormat(std::string inputFormatValue) { inputFormat->setInputFormatEnum(std::move(inputFormatValue)); }
+
+void MQTTSourceType::setInputFormat(Configurations::InputFormat inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
 
 void MQTTSourceType::reset() {
     setUrl(url->getDefaultValue());

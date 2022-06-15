@@ -130,6 +130,12 @@ class TCPSourceType : public PhysicalSourceType {
      */
     void setSocketTypeViaString(std::string type);
 
+    /**
+     * @brief Sets the input data format given as Configuration::InputFormat
+     * @param inputFormatValue
+     */
+    void setInputFormat(Configurations::InputFormat inputFormatValue);
+
   private:
     /**
      * @brief constructor to create a new TCP source type object initialized with values from sourceConfigMap
@@ -152,6 +158,7 @@ class TCPSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption socketPort;
     Configurations::IntConfigOption socketDomain;
     Configurations::IntConfigOption socketType;
+    Configurations::InputFormatConfigOption inputFormat;
 };
 }// namespace NES
 #endif//NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP

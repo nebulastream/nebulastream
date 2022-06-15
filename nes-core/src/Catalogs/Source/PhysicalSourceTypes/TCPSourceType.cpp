@@ -46,6 +46,9 @@ TCPSourceType::TCPSourceType(std::map<std::string, std::string> sourceConfigMap)
     if (sourceConfigMap.find(Configurations::SOCKET_TYPE_CONFIG) != sourceConfigMap.end()) {
         setSocketTypeViaString(sourceConfigMap.find(Configurations::SOCKET_TYPE_CONFIG)->second);
     }
+    if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
+        inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
+    }
 }
 
 TCPSourceType::TCPSourceType(Yaml::Node yamlConfig) : TCPSourceType() {
@@ -71,6 +74,10 @@ TCPSourceType::TCPSourceType(Yaml::Node yamlConfig) : TCPSourceType() {
         && yamlConfig[Configurations::SOCKET_TYPE_CONFIG].As<std::string>() != "\n") {
         setSocketTypeViaString(yamlConfig[Configurations::SOCKET_TYPE_CONFIG].As<std::string>());
     }
+    if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
+        inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
+    }
 }
 
 TCPSourceType::TCPSourceType()
@@ -94,7 +101,11 @@ TCPSourceType::TCPSourceType()
           "SOCK_SEQPACKET Provides  a  sequenced,  reliable,  two-way connection-based data transmission path for "
           "datagrams  of  fixed maximum  length;  a consumer is required to read an entire packet with each input system call, "
           "SOCK_RAW Provides raw network protocol access, "
-          "SOCK_RDM Provides a reliable datagram layer that does not  guarantee ordering")) {
+          "SOCK_RDM Provides a reliable datagram layer that does not  guarantee ordering")),
+      inputFormat(Configurations::ConfigurationOption<Configurations::InputFormat>::create(
+          Configurations::INPUT_FORMAT_CONFIG,
+          Configurations::CSV,
+          "Source type defines how the data will arrive in NES. Current Option: CSV (comma separated list)")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -105,6 +116,7 @@ std::string TCPSourceType::toString() {
     ss << socketPort->toStringNameCurrentValue();
     ss << socketDomain->toStringNameCurrentValue();
     ss << socketType->toStringNameCurrentValue();
+    ss << inputFormat->toStringNameCurrentValue();
     ss << "}";
     return ss.str();
 }
@@ -117,7 +129,8 @@ bool TCPSourceType::equal(const PhysicalSourceTypePtr& other) {
     return socketHost->getValue() == otherSourceConfig->socketHost->getValue()
         && socketPort->getValue() == otherSourceConfig->socketPort->getValue()
         && socketDomain->getValue() == otherSourceConfig->socketDomain->getValue()
-        && socketType->getValue() == otherSourceConfig->socketType->getValue();
+        && socketType->getValue() == otherSourceConfig->socketType->getValue()
+        && inputFormat->getValue() == otherSourceConfig->inputFormat->getValue();
 }
 
 void TCPSourceType::reset() {
@@ -125,6 +138,7 @@ void TCPSourceType::reset() {
     setSocketPort(socketPort->getDefaultValue());
     setSocketDomain(AF_INET);
     setSocketType(SOCK_STREAM);
+    setInputFormat(inputFormat->getDefaultValue());
 }
 
 Configurations::StringConfigOption TCPSourceType::getSocketHost() const { return socketHost; }
@@ -163,6 +177,10 @@ void TCPSourceType::setSocketTypeViaString(std::string typeValue) {
     } else if (strcasecmp(typeValue.c_str(), "SOCK_RDM") == 0) {
         setSocketType(SOCK_RDM);
     }
+}
+
+void TCPSourceType::setInputFormat(Configurations::InputFormat inputFormatValue) {
+    inputFormat->setValue(std::move(inputFormatValue));
 }
 
 }// namespace NES

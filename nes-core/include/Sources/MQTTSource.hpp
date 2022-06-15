@@ -56,8 +56,7 @@ class MQTTSource : public DataSource {
                         OriginId originId,
                         size_t numSourceLocalBuffers,
                         GatheringMode::Value gatheringMode,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                        SourceDescriptor::InputFormat inputFormat);
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
@@ -103,11 +102,7 @@ class MQTTSource : public DataSource {
      * @return topic
      */
     std::string const& getTopic() const;
-    /**
-     * @brief getter for inputFormat
-     * @return inputFormat
-     */
-    SourceDescriptor::InputFormat getInputFormat() const;
+
     /**
      * @brief getter for tupleSize
      * @return tupleSize
@@ -175,7 +170,6 @@ class MQTTSource : public DataSource {
     std::string clientId;
     std::string user;
     std::string topic;
-    SourceDescriptor::InputFormat inputFormat;
     mqtt::async_clientPtr client;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
