@@ -24,12 +24,12 @@ class RequestType {
     /**
      * @brief Represents various request types.
      *
-     * Registered: Query is registered to be scheduled to the worker nodes (added to the queue).
-     * Optimizing: Coordinator is optimizing the query.
-     * Running: Query is now running successfully.
-     * MarkedForHardStop: A request arrived into the system for stopping a query and system marks the query for stopping (added to the queue).
-     * Stopped: Query was explicitly stopped either by system or by user.
-     * Failed: Query failed because of some reason.
+     * Add: Add query.
+     * Stop: Stop query.
+     * Restart: Restart query.
+     * Fail: Fail query.
+     * Migrate: Migrate query.
+     * Update: Update running query.
      */
     enum Value : uint8_t {
         Add = 0,

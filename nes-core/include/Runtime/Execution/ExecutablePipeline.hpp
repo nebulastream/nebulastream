@@ -83,8 +83,8 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
 
     /**
      * @brief Execute a pipeline stage
-     * @param inputBuffer
-     * @param workerContext
+     * @param inputBuffer: the input buffer on which to execute the pipeline stage
+     * @param workerContext: the worker context
      * @return true if no error occurred
      */
     ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
@@ -111,13 +111,13 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
 
     /**
      * @brief Fails pipeline stage
-     * @return
+     * @return true if successful
      */
     bool fail();
 
     /**
     * @brief Get id of pipeline stage
-    * @return
+    * @return pipeline id
     */
     uint64_t getPipelineId() const;
 

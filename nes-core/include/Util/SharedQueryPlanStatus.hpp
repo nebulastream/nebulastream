@@ -28,6 +28,7 @@ class SharedQueryPlanStatus {
     /**
      * @brief Represents various states a Shared query Plan goes through.
      *
+     * Created: Shared query plan was just created
      * Deployed: Shared Query Plan was deployed successfully.
      * Updated: A request arrived into the system that either added or removed operators from a Shared Query Plan.
      * Stopped: Shared Query Plan was stopped by user.

@@ -150,7 +150,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     ASSERT_EQ(getExecutionPlanJsonReturn.serialize(), expected);
 
     NES_INFO("RESTEndpointTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     stopWorker(*wrk1);
@@ -345,7 +345,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     EXPECT_TRUE(catalogEntries.at(0).has_string_field("queryString"));
 
     NES_INFO("RESTEndpointTest: Remove query");
-    //queryService->validateAndQueueStopQueryRequest(queryId);
+    ;
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
     stopWorker(*wrk1);
