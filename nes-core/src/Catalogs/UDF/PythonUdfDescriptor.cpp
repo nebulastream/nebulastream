@@ -26,7 +26,7 @@ if (methodName.empty()) {
 }
 // Note: For python >= 3.7 there is no limit on the number of arguments
 if (numberOfArgs < 0 || numberOfArgs > 255) {
-    throw UdfException("The number of arguments of a Python UDF must not be between 0 and 255");
+    throw UdfException("The number of arguments of a Python UDF must be between 0 and 255");
 }
 if (returnType == nullptr || returnType->isUndefined()) {
     throw UdfException("A defined return type for a Python UDF must be set");

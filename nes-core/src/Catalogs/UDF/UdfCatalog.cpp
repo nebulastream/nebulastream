@@ -22,23 +22,10 @@ namespace NES::Catalogs {
 
 std::unique_ptr<UdfCatalog> UdfCatalog::create() { return std::make_unique<UdfCatalog>(); }
 
-// TODO comment about Clang-tidy
-void UdfCatalog::registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor) {
-    NES_DEBUG("Registering Java UDF '" << name << "'");
+void UdfCatalog::registerUdf(const std::string& name, UdfDescriptorPtr descriptor) {
+    NES_DEBUG("Registering UDF '" << name << "'");
     if (descriptor == nullptr) {
-        throw UdfException("Java UDF descriptor must not be null");
-    }
-    if (auto success = udfStore.insert({name, descriptor}).second; !success) {
-        std::stringstream ss;
-        ss << "Java UDF '" << name << "' already exists";
-        throw UdfException(ss.str());
-    }
-}
-
-void UdfCatalog::registerPythonUdf(const std::string& name, PythonUdfDescriptorPtr descriptor) {
-    NES_DEBUG("Registering Python UDF '" << name << "'");
-    if (descriptor == nullptr) {
-        throw UdfException("Python UDF descriptor must not be null");
+        throw UdfException("UDF descriptor must not be null");
     }
     if (auto success = udfStore.insert({name, descriptor}).second; !success) {
         std::stringstream ss;
@@ -47,27 +34,14 @@ void UdfCatalog::registerPythonUdf(const std::string& name, PythonUdfDescriptorP
     }
 }
 
-JavaUdfDescriptorPtr UdfCatalog::getJavaUdfDescriptor(const std::string& name) {
-    NES_DEBUG("Looking up descriptor for Java UDF '" << name << "'");
-    auto entry = udfStore.find(name);
-    if (entry == udfStore.end()) {
-        NES_DEBUG("Java UDF '" << name << "' does not exist");
-        return nullptr;
-    }
-    return dynamic_pointer_cast<JavaUdfDescriptor>(entry->second);
-}
-
-PythonUdfDescriptorPtr UdfCatalog::getPythonUdfDescriptor(const std::string& name) {
+UdfDescriptorPtr UdfCatalog::getUdfDescriptor(const std::string& name) {
     NES_DEBUG("Looking up descriptor for UDF '" << name << "'");
     auto entry = udfStore.find(name);
     if (entry == udfStore.end()) {
-        NES_DEBUG("Python UDF '" << name << "' does not exist");
+        NES_DEBUG("UDF '" << name << "' does not exist");
         return nullptr;
     }
-    if (auto pythonUdfDescriptor = dynamic_pointer_cast<PythonUdfDescriptor>(entry->second)) {
-        return pythonUdfDescriptor;
-    }
-    return nullptr;
+    return entry->second;
 }
 
 bool UdfCatalog::removeUdf(const std::string& name) {
