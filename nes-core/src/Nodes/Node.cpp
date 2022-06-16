@@ -108,79 +108,79 @@ bool Node::addParent(const NodePtr newNode) {
     return true;
 }
 
-bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
+//bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode) {
+//
+//    //Perform sanity checks
+//    if (newNode.get() == this) {
+//        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+//        return false;
+//    }
+//
+//    if (vectorContainsTheNode(parents, newNode)) {
+//        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+//        return false;
+//    }
+//
+//    //replace this with the new node in all its parent
+//    NES_DEBUG("Node: Create temporary copy of this nodes parents.");
+//    std::vector<NodePtr> copyOfParents = parents;
+//
+//    for (auto& parent : copyOfParents) {
+//        for (uint64_t i = 0; i < parent->children.size(); i++) {
+//            if (parent->children[i] == shared_from_this()) {
+//                parent->children[i] = newNode;
+//                NES_DEBUG("Node: Add copy of this nodes parent as parent to the input node.");
+//                if (!newNode->addParent(parent)) {
+//                    NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+//                    return false;
+//                }
+//            }
+//        }
+//    }
+//
+//    NES_INFO("Node: Remove all parents of this node.");
+//    removeAllParent();
+//
+//    if (!addParent(newNode)) {
+//        NES_ERROR("Node: Unable to add input node as parent to this node.");
+//        return false;
+//    }
+//    return true;
+//}
 
-    //Perform sanity checks
-    if (newNode.get() == this) {
-        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
-        return false;
-    }
-
-    if (vectorContainsTheNode(parents, newNode)) {
-        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
-        return false;
-    }
-
-    //replace this with the new node in all its parent
-    NES_DEBUG("Node: Create temporary copy of this nodes parents.");
-    std::vector<NodePtr> copyOfParents = parents;
-
-    for (auto& parent : copyOfParents) {
-        for (uint64_t i = 0; i < parent->children.size(); i++) {
-            if (parent->children[i] == shared_from_this()) {
-                parent->children[i] = newNode;
-                NES_DEBUG("Node: Add copy of this nodes parent as parent to the input node.");
-                if (!newNode->addParent(parent)) {
-                    NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
-                    return false;
-                }
-            }
-        }
-    }
-
-    NES_INFO("Node: Remove all parents of this node.");
-    removeAllParent();
-
-    if (!addParent(newNode)) {
-        NES_ERROR("Node: Unable to add input node as parent to this node.");
-        return false;
-    }
-    return true;
-}
-
-bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
-
-    if (newNode.get() == this) {
-        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
-        return false;
-    }
-
-    if (vectorContainsTheNode(children, newNode)) {
-        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
-        return false;
-    }
-
-    NES_INFO("Node: Create temporary copy of this nodes parents.");
-    std::vector<NodePtr> copyOfChildren = children;
-
-    NES_INFO("Node: Remove all childs of this node.");
-    removeChildren();
-
-    if (!addChild(newNode)) {
-        NES_ERROR("Node: Unable to add input node as parent to this node.");
-        return false;
-    }
-
-    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
-    for (const NodePtr& child : copyOfChildren) {
-        if (!newNode->addChild(child)) {
-            NES_ERROR("Node: Unable to add child of this node as child to input node.");
-            return false;
-        }
-    }
-
-    return true;
-}
+//bool Node::insertBetweenThisAndChildNodes(const NodePtr& newNode) {
+//
+//    if (newNode.get() == this) {
+//        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+//        return false;
+//    }
+//
+//    if (vectorContainsTheNode(children, newNode)) {
+//        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+//        return false;
+//    }
+//
+//    NES_INFO("Node: Create temporary copy of this nodes parents.");
+//    std::vector<NodePtr> copyOfChildren = children;
+//
+//    NES_INFO("Node: Remove all childs of this node.");
+//    removeChildren();
+//
+//    if (!addChild(newNode)) {
+//        NES_ERROR("Node: Unable to add input node as parent to this node.");
+//        return false;
+//    }
+//
+//    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
+//    for (const NodePtr& child : copyOfChildren) {
+//        if (!newNode->addChild(child)) {
+//            NES_ERROR("Node: Unable to add child of this node as child to input node.");
+//            return false;
+//        }
+//    }
+//
+//    return true;
+//}
 
 void Node::removeAllParent() {
     NES_INFO("Node: Removing all parents for current node");
@@ -228,57 +228,57 @@ bool Node::removeParent(NodePtr const& node) {
     return false;
 }
 
-bool Node::replace(NodePtr newNode) { return replace(std::move(newNode), shared_from_this()); }
-
-bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
-
-    if (!newNode || !oldNode) {
-        NES_ERROR("Node: Can't replace null node");
-        return false;
-    }
-
-    if (shared_from_this() == oldNode) {
-        insertBetweenThisAndParentNodes(newNode);
-        removeAndJoinParentAndChildren();
-        return true;
-    }
-
-    if (oldNode->isIdentical(newNode)) {
-        NES_WARNING("Node: the new node was the same so will skip replace operation.");
-        return true;
-    }
-
-    if (!oldNode->equal(newNode)) {
-        // newNode is already inside children or parents and it's not oldNode
-        if (find(children, newNode) || find(parents, newNode)) {
-            NES_DEBUG("Node: the new node is already part of the children or predessessors of the current node.");
-            return false;
-        }
-    }
-
-    bool success = removeChild(oldNode);
-    if (success) {
-        children.push_back(newNode);
-        for (auto&& currentNode : oldNode->children) {
-            newNode->addChild(currentNode);
-        }
-        return true;
-    }
-    NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
-
-    success = removeParent(oldNode);
-    NES_DEBUG("Node: remove parent old node:" << oldNode->toString());
-    if (success) {
-        parents.push_back(newNode);
-        for (auto&& currentNode : oldNode->parents) {
-            newNode->addParent(currentNode);
-        }
-        return true;//TODO: I think this is wrong
-    }
-    NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
-
-    return false;
-}
+//bool Node::replace(const NodePtr& newNode) { return replace(newNode, shared_from_this()); }
+//
+//bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode) {
+//
+//    if (!newNode || !oldNode) {
+//        NES_ERROR("Node: Can't replace null node");
+//        return false;
+//    }
+//
+//    if (shared_from_this() == oldNode) {
+//        insertBetweenThisAndParentNodes(newNode);
+//        removeAndJoinParentAndChildren();
+//        return true;
+//    }
+//
+//    if (oldNode->isIdentical(newNode)) {
+//        NES_WARNING("Node: the new node was the same so will skip replace operation.");
+//        return true;
+//    }
+//
+//    if (!oldNode->equal(newNode)) {
+//        // newNode is already inside children or parents and it's not oldNode
+//        if (find(children, newNode) || find(parents, newNode)) {
+//            NES_DEBUG("Node: the new node is already part of the children or predessessors of the current node.");
+//            return false;
+//        }
+//    }
+//
+//    bool success = removeChild(oldNode);
+//    if (success) {
+//        children.push_back(newNode);
+//        for (auto&& currentNode : oldNode->children) {
+//            newNode->addChild(currentNode);
+//        }
+//        return true;
+//    }
+//    NES_ERROR("Node: could not remove child from  old node:" << oldNode->toString());
+//
+//    success = removeParent(oldNode);
+//    NES_DEBUG("Node: remove parent old node:" << oldNode->toString());
+//    if (success) {
+//        parents.push_back(newNode);
+//        for (auto&& currentNode : oldNode->parents) {
+//            newNode->addParent(currentNode);
+//        }
+//        return true;//TODO: I think this is wrong
+//    }
+//    NES_ERROR("Node: could not remove parent from  old node:" << oldNode->toString());
+//
+//    return false;
+//}
 
 bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
     auto node = findRecursively(shared_from_this(), oldNode);
@@ -339,30 +339,30 @@ bool Node::removeAndLevelUpChildren(const NodePtr& node) {
     return false;
 }
 
-bool Node::removeAndJoinParentAndChildren() {
-    try {
-        NES_DEBUG("Node: Joining parents with children");
-
-        std::vector<NodePtr> childCopy = this->children;
-        std::vector<NodePtr> parentCopy = this->parents;
-        for (auto& parent : parentCopy) {
-            for (auto& child : childCopy) {
-
-                NES_DEBUG("Node: Add child of this node as child of this node's parent");
-                parent->addChild(child);
-
-                NES_DEBUG("Node: remove this node as parent of the child");
-                child->removeParent(shared_from_this());
-            }
-            parent->removeChild(shared_from_this());
-            NES_DEBUG("Node: remove this node as child of this node's parents");
-        }
-        return true;
-    } catch (...) {
-        NES_ERROR("Node: Error ocurred while joining this node's children and parents");
-        return false;
-    }
-}
+//bool Node::removeAndJoinParentAndChildren() {
+//    try {
+//        NES_DEBUG("Node: Joining parents with children");
+//
+//        std::vector<NodePtr> childCopy = this->children;
+//        std::vector<NodePtr> parentCopy = this->parents;
+//        for (auto& parent : parentCopy) {
+//            for (auto& child : childCopy) {
+//
+//                NES_DEBUG("Node: Add child of this node as child of this node's parent");
+//                parent->addChild(child);
+//
+//                NES_DEBUG("Node: remove this node as parent of the child");
+//                child->removeParent(shared_from_this());
+//            }
+//            parent->removeChild(shared_from_this());
+//            NES_DEBUG("Node: remove this node as child of this node's parents");
+//        }
+//        return true;
+//    } catch (...) {
+//        NES_ERROR("Node: Error ocurred while joining this node's children and parents");
+//        return false;
+//    }
+//}
 
 void Node::clear() {
     children.clear();

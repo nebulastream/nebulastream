@@ -70,18 +70,6 @@ class OperatorNode : public Node {
     bool hasMultipleChildrenOrParents();
 
     /**
-    * @brief return if the operator has multiple children
-    * @return bool
-    */
-    bool hasMultipleChildren();
-
-    /**
-    * @brief return if the operator has multiple children
-    * @return bool
-    */
-    bool hasMultipleParents();
-
-    /**
      * @brief method to add a child to this node
      * @param newNode
      * @return bool indicating success
@@ -94,6 +82,42 @@ class OperatorNode : public Node {
     * @return bool indicating success
     */
     bool addParent(NodePtr newNode) override;
+
+    /**
+     * @brief Remove this operator and joins the parent of this operator with the children of this operator.
+     * @return bool true if successful
+     */
+    virtual bool removeAndJoinParentAndChildren();
+
+    /**
+     * @brief Add input operator as parent to this operator and move the parents of this node as parent to the input operator.
+     * If the operator is already exists as parent then skip the operation
+     * @return true if operation succeeded else false
+     */
+    bool insertBetweenThisAndParentNodes(const OperatorNodePtr& newOperator);
+
+    /**
+    * @brief Add input operator as child to this operator and add the input operator as new parent to the old operator's children
+    * @return true if operation succeeded else false
+    */
+    bool insertBetweenThisAndChildNodes(const OperatorNodePtr& newNode);
+
+    /**
+     * @brief replace an old operator with new operator
+     * Old operator is the upstream operator of this operator, remove old operator as this operator's child and add new operator.
+     * Assign all child operators of the old operator to the children of new operator.
+     * If there's duplicated children among old and new operators, the children from new operator will overwrite them.
+     * @param newOperator: Operator to replace with
+     * @param oldOperator: operator to replace
+     */
+    bool replace(const OperatorNodePtr& newOperator, const OperatorNodePtr& oldOperator);
+
+    /**
+     * @brief replace current operator with new operator
+     * @param newOperator: new operator to replace this operator with
+     * @return true if successful
+     */
+    bool replace(const OperatorNodePtr& newOperator);
 
     /**
      * @brief Get the operator with input operator id

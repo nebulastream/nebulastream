@@ -13,6 +13,8 @@
 */
 
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
@@ -36,10 +38,6 @@ bool OperatorNode::hasMultipleChildrenOrParents() {
     NES_DEBUG("OperatorNode: has multiple children " << hasMultipleChildren << " or has multiple parent " << hasMultipleParent);
     return hasMultipleChildren || hasMultipleParent;
 }
-
-bool OperatorNode::hasMultipleChildren() { return !getChildren().empty() && getChildren().size() > 1; }
-
-bool OperatorNode::hasMultipleParents() { return !getParents().empty() && getParents().size() > 1; }
 
 OperatorNodePtr OperatorNode::duplicate() {
     NES_INFO("OperatorNode: Create copy of the operator");
@@ -144,6 +142,245 @@ bool OperatorNode::addParent(NodePtr newNode) {
         return true;
     }
     NES_DEBUG("OperatorNode: the node is already part of its parent so skip add parent operation.");
+    return false;
+}
+
+bool OperatorNode::removeAndJoinParentAndChildren() {
+    try {
+        NES_DEBUG("OperatorNode: Joining parents with children for operator " + this->toString());
+
+        if (this->instanceOf<JoinLogicalOperatorNode>() || this->instanceOf<Experimental::BatchJoinLogicalOperatorNode>()) {
+            NES_ERROR("OperatorNode: Can not remove a join operator and attach its children to the downstream operator");
+            return false;
+        }
+
+        std::vector<NodePtr> childCopy = this->children;
+        std::vector<NodePtr> parentCopy = this->parents;
+
+        for (auto& parent : parentCopy) {
+
+            //If parent is a logical binary operator then maintain the left and the right operator ids
+            if (parent->instanceOf<LogicalBinaryOperatorNode>()) {
+
+                auto logicalBinaryOperator = parent->as<LogicalBinaryOperatorNode>();
+                bool isRightUpStreamOperator = logicalBinaryOperator->isRightUpstreamOperatorId(id);
+                bool isLeftUpStreamOperator = logicalBinaryOperator->isLeftUpstreamOperatorId(id);
+
+                //Assertions to make sure the operator was in one of the two lists (xor)
+                NES_ASSERT(isLeftUpStreamOperator != isRightUpStreamOperator,
+                           "An Operator must be and can only be either the left or right upstream operator.");
+
+                for (auto& child : childCopy) {
+
+                    NES_TRACE("OperatorNode: Add child of this node as child of this node's parent");
+                    parent->addChild(child);
+
+                    if (isRightUpStreamOperator) {
+                        logicalBinaryOperator->addRightUpStreamOperatorId(child->as<LogicalOperatorNode>()->getId());
+                    } else {
+                        logicalBinaryOperator->addLeftUpStreamOperatorId(child->as<LogicalOperatorNode>()->getId());
+                    }
+
+                    NES_TRACE("OperatorNode: remove this node as parent of the child");
+                    child->removeParent(shared_from_this());
+                }
+
+                if (isRightUpStreamOperator) {
+                    logicalBinaryOperator->removeRightUpstreamOperatorId(id);
+                } else {
+                    logicalBinaryOperator->removeLeftUpstreamOperatorId(id);
+                }
+
+            } else {
+                for (auto& child : childCopy) {
+
+                    NES_TRACE("OperatorNode: Add child of this node as child of this node's parent");
+                    parent->addChild(child);
+
+                    NES_TRACE("OperatorNode: remove this node as parent of the child");
+                    child->removeParent(shared_from_this());
+                }
+            }
+            parent->removeChild(shared_from_this());
+            NES_DEBUG("OperatorNode: remove this operator as upstream of its downstream operator");
+        }
+        return true;
+    } catch (...) {
+        NES_ERROR("OperatorNode: Error occurred while joining this operator's upstream and downstream operators");
+        return false;
+    }
+}
+
+bool OperatorNode::insertBetweenThisAndParentNodes(const OperatorNodePtr& newOperator) {
+
+    if (newOperator->instanceOf<LogicalBinaryOperatorNode>()) {
+        NES_ERROR("OperatorNode: Can not insert a binary operator between two operators. We do not have logic to define left or "
+                  "the right side.");
+        return false;
+    }
+
+    //Perform sanity checks
+    if (newOperator.get() == this) {
+        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    if (find(parents, newOperator)) {
+        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    //replace this with the new node in all its parent
+    NES_DEBUG("Node: Create temporary copy of this nodes parents.");
+    std::vector<NodePtr> copyOfParents = parents;
+    for (auto& parent : copyOfParents) {
+
+        if (parent->instanceOf<LogicalBinaryOperatorNode>()) {
+
+            auto logicalBinaryOperator = parent->as<LogicalBinaryOperatorNode>();
+            bool isRightUpStreamOperator = logicalBinaryOperator->isRightUpstreamOperatorId(id);
+            bool isLeftUpStreamOperator = logicalBinaryOperator->isLeftUpstreamOperatorId(id);
+
+            //Assertions to make sure the operator was in one of the two lists (xor)
+            NES_ASSERT(isLeftUpStreamOperator != isRightUpStreamOperator,
+                       "An Operator must be and can only be either the left or right upstream operator.");
+
+            auto grandChildren = parent->getChildren();
+            for (uint64_t i = 0; i < grandChildren.size(); i++) {
+
+                if (grandChildren[i] == shared_from_this()) {
+                    grandChildren[i] = newOperator;
+                    NES_TRACE("Node: Add copy of this nodes parent as parent to the input node.");
+                    if (!newOperator->addParent(parent)) {
+                        NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+                        return false;
+                    }
+
+                    if (isRightUpStreamOperator) {
+                        logicalBinaryOperator->addRightUpStreamOperatorId(newOperator->getId());
+                    } else {
+                        logicalBinaryOperator->addLeftUpStreamOperatorId(newOperator->getId());
+                    }
+                }
+            }
+
+            //Remove id of this operator from the list
+            if (isRightUpStreamOperator) {
+                logicalBinaryOperator->removeRightUpstreamOperatorId(id);
+            } else {
+                logicalBinaryOperator->removeLeftUpstreamOperatorId(id);
+            }
+
+        } else {
+            auto grandChildren = parent->getChildren();
+            for (uint64_t i = 0; i < grandChildren.size(); i++) {
+                if (grandChildren[i] == shared_from_this()) {
+                    grandChildren[i] = newOperator;
+                    NES_TRACE("Node: Add copy of this nodes parent as parent to the input node.");
+                    if (!newOperator->addParent(parent)) {
+                        NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        parent->removeChild(shared_from_this());
+    }
+
+    if (!addParent(newOperator)) {
+        NES_ERROR("Node: Unable to add input node as parent to this node.");
+        return false;
+    }
+    return true;
+}
+
+bool OperatorNode::insertBetweenThisAndChildNodes(const OperatorNodePtr& newNode) {
+
+    if (newNode.get() == this) {
+        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    if (find(children, newNode)) {
+        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
+        return false;
+    }
+
+    NES_INFO("Node: Create temporary copy of this nodes parents.");
+    std::vector<NodePtr> copyOfChildren = children;
+
+    NES_INFO("Node: Remove all childs of this node.");
+    removeChildren();
+
+    if (!addChild(newNode)) {
+        NES_ERROR("Node: Unable to add input node as parent to this node.");
+        return false;
+    }
+
+    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
+    for (const NodePtr& child : copyOfChildren) {
+        if (!newNode->addChild(child)) {
+            NES_ERROR("Node: Unable to add child of this node as child to input node.");
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool OperatorNode::replace(const OperatorNodePtr& newOperator) {
+    return replace(newOperator, shared_from_this()->as<OperatorNode>());
+}
+
+bool OperatorNode::replace(const OperatorNodePtr& newOperator, const OperatorNodePtr& oldOperator) {
+
+    if (!newOperator || !oldOperator) {
+        NES_ERROR("Node: Can't replace null node");
+        return false;
+    }
+
+    if (shared_from_this() == oldOperator) {
+        insertBetweenThisAndParentNodes(newOperator);
+        removeAndJoinParentAndChildren();
+        return true;
+    }
+
+    if (oldOperator->isIdentical(newOperator)) {
+        NES_WARNING("Node: the new node was the same so will skip replace operation.");
+        return true;
+    }
+
+    //new Operator is not
+    if (!oldOperator->equal(newOperator)) {
+        // newNode is already inside children or parents and it's not oldNode
+        if (find(children, newOperator) || find(parents, newOperator)) {
+            NES_DEBUG("Node: the new node is already part of the children or predessessors of the current node.");
+            return false;
+        }
+    }
+
+    bool success = removeChild(oldOperator);
+    if (success) {
+        children.push_back(newOperator);
+        for (auto&& currentNode : oldOperator->getChildren()) {
+            newOperator->addChild(currentNode);
+        }
+        return true;
+    }
+    NES_ERROR("Node: could not remove child from  old node:" << oldOperator->toString());
+
+    success = removeParent(oldOperator);
+    NES_DEBUG("Node: remove parent old node:" << oldOperator->toString());
+    if (success) {
+        parents.push_back(newOperator);
+        for (auto&& currentNode : oldOperator->getParents()) {
+            newOperator->addParent(currentNode);
+        }
+        return true;//TODO: I think this is wrong
+    }
+    NES_ERROR("Node: could not remove parent from  old node:" << oldOperator->toString());
+
     return false;
 }
 

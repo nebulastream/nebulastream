@@ -76,26 +76,27 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     void removeChildren();
 
-    /**
-     * @brief replace an old node with new now
-     * 1) old node is the child of current node, remove old node
-     *    from current nodes's children and add new node to current noed's
-     *    children. If old node has children, unionWith the children of old nodes
-     *    and new nodes's children. If there's duplicated children among old nodes and
-     *    new nodes's children, the children in new noeds will overwrite that
-     *    inside old noeds's.
-     * 2)
-     * @param newNode
-     * @param oldNode
-     */
-    bool replace(const NodePtr& newNode, const NodePtr& oldNode);
+//    /**
+//     * @brief replace an old node with new now
+//     * 1) old node is the child of current node, remove old node
+//     *    from current nodes's children and add new node to current noed's
+//     *    children. If old node has children, unionWith the children of old nodes
+//     *    and new nodes's children. If there's duplicated children among old nodes and
+//     *    new nodes's children, the children in new noeds will overwrite that
+//     *    inside old noeds's.
+//     * 2)
+//     * @param newNode
+//     * @param oldNode
+//     */
+//    virtual bool replace(const NodePtr& newNode, const NodePtr& oldNode);
+//
+//    /**
+//     * @brief replace current node with new node
+//     * @param newNode
+//     * @return
+//     */
+//    virtual bool replace(const NodePtr& newNode);
 
-    /**
-     * @brief replace current node with new node
-     * @param newNode
-     * @return
-     */
-    bool replace(NodePtr newNode);
     /**
      * @brief swap given old node by new node
      * @param newNode the node to mount at oldNode parents instead of oldNode
@@ -118,12 +119,12 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     bool removeAndLevelUpChildren(NodePtr const& node);
 
-    /**
-     * @brief Remove this node as child to its parents and as parent to its children. Once done, the method joins the
-     * parent and children together.
-     * @return bool true if successful
-     */
-    bool removeAndJoinParentAndChildren();
+//    /**
+//     * @brief Remove this node as child to its parents and as parent to its children. Once done, the method joins the
+//     * parent and children together.
+//     * @return bool true if successful
+//     */
+//    virtual bool removeAndJoinParentAndChildren();
 
     /**
      * @brief clear all parents and children
@@ -286,18 +287,18 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::vector<NodePtr> getAllLeafNodes();
 
-    /**
-     * @brief Add input node as parent to the current node and move the parents of current node as parent to the input node.
-     * If the node is already exists as parent then skip the operation
-     * @return true if operation succeeded else false
-     */
-    bool insertBetweenThisAndParentNodes(NodePtr const& newNode);
-
-    /**
-    * @brief Add input node as child to the current node and add the input node as new parent to the old child
-    * @return true if operation succeeded else false
-    */
-    bool insertBetweenThisAndChildNodes(NodePtr const& newNode);
+//    /**
+//     * @brief Add input node as parent to the current node and move the parents of current node as parent to the input node.
+//     * If the node is already exists as parent then skip the operation
+//     * @return true if operation succeeded else false
+//     */
+//    virtual bool insertBetweenThisAndParentNodes(NodePtr const& newNode);
+//
+//    /**
+//    * @brief Add input node as child to the current node and add the input node as new parent to the old child
+//    * @return true if operation succeeded else false
+//    */
+//    virtual bool insertBetweenThisAndChildNodes(NodePtr const& newNode);
 
     /**
      * @brief To string method for the current node.
@@ -343,6 +344,14 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::vector<NodePtr> children{};
 
+    /**
+     * @brief check if an node is in given vector and returns it
+     * @param nodes
+     * @param nodeToFind
+     * @return return node if the given node is found, otherwise nullpointer
+     */
+    static NodePtr find(std::vector<NodePtr> const& nodes, NodePtr const& nodeToFind);
+
   private:
     /**
     * @brief helper function of getNodeType() function
@@ -364,14 +373,6 @@ class Node : public std::enable_shared_from_this<Node> {
      * @return return true if the given node is found, otherwise false
      */
     bool vectorContainsTheNode(const std::vector<NodePtr>& nodes, NodePtr const& nodeToFind);
-
-    /**
-     * @brief check if an node is in given vector and returns it
-     * @param nodes
-     * @param nodeToFind
-     * @return return node if the given node is found, otherwise nullpointer
-     */
-    static NodePtr find(std::vector<NodePtr> const& nodes, NodePtr const& nodeToFind);
 
     /********************************************************************************
      *                   Helper functions                                           *

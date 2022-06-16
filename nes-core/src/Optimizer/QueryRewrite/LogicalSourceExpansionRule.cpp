@@ -154,10 +154,14 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                             NES_ASSERT(isLeftUpStreamOperator != isRightUpStreamOperator,
                                        "An Operator must be and can only be either the left or right upstream operator.");
 
+                            // if the operator belong to left upstream operators. Remove the identifier of the copied operator and
+                            // add a new identifier of the new operator
                             if (isLeftUpStreamOperator) {
                                 binaryOperator->removeLeftUpstreamOperatorId(operatorNode->getId());
                                 binaryOperator->addLeftUpStreamOperatorId(newOperatorId);
                             } else if (isRightUpStreamOperator) {
+                                // if the operator belong to right upstream operators. Remove the identifier of the copied operator and
+                                // add a new identifier of the new operator
                                 binaryOperator->removeRightUpstreamOperatorId(operatorNode->getId());
                                 binaryOperator->addRightUpStreamOperatorId(newOperatorId);
                             }
