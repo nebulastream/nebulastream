@@ -39,16 +39,11 @@ std::string WindowLogicalOperatorNode::toStringForJSON() const {
     std::stringstream ss;
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    ss << "WINDOW(OP-" << id << ") ";
-    if (windowType->isTumblingWindow()){
-        ss << "Type: TUMBLING WINDOW ";
-    } else {
-        ss << "Type: SLIDING WINDOW ";
-    }
-    ss << "Aggregation: ";
+    ss << "WINDOWAGG(OP-" << id << ", ";
     for (auto agg : windowAggregation) {
         ss << agg->getTypeAsString() << ";";
     }
+    ss << ")";
     return ss.str();
 }
 
