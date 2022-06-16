@@ -32,7 +32,7 @@ class MetricCollector {
   protected:
     //  -- Constructors --
     MetricCollector();
-    MetricCollector(std::shared_ptr<TopologyNodeId> nodeId);
+    MetricCollector(TopologyNodeId nodeId);
     MetricCollector(const MetricCollector&) = default;
     MetricCollector(MetricCollector&&) = default;
     //  -- Assignment --
@@ -73,16 +73,16 @@ class MetricCollector {
      * Getter for nodeId
      * @return the nodeId
      */
-    const std::shared_ptr<TopologyNodeId> getNodeId() const;
+    TopologyNodeId getNodeId() const;
 
     /**
      * Setter for nodeId
      * @param NodeId
      */
-    void setNodeId(const std::shared_ptr<TopologyNodeId> NodeId);
+    void setNodeId(const TopologyNodeId nodeId);
 
   private:
-    std::shared_ptr<TopologyNodeId> nodeId;
+    TopologyNodeId nodeId;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;

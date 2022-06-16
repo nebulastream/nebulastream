@@ -34,12 +34,14 @@ RegistrationMetrics AbstractSystemResourcesReader::readRegistrationMetrics() {
 }
 
 CpuMetricsWrapper AbstractSystemResourcesReader::readCpuStats() {
-    CpuMetricsWrapper output{};
+    std::vector<CpuMetrics> arr{CpuMetrics()};
+    CpuMetricsWrapper output{std::move(arr)};
     return output;
 }
 
 NetworkMetricsWrapper AbstractSystemResourcesReader::readNetworkStats() {
-    NetworkMetricsWrapper output{};
+    std::vector<NetworkMetrics> arr{NetworkMetrics()};
+    NetworkMetricsWrapper output{std::move(arr)};
     return output;
 }
 

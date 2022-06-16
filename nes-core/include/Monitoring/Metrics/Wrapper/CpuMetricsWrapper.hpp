@@ -28,7 +28,7 @@ class CpuMetricsWrapper {
   public:
     CpuMetricsWrapper() = default;
     CpuMetricsWrapper(uint64_t nodeId);
-    explicit CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
+    CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.
