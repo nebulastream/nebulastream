@@ -35,6 +35,23 @@ std::string WindowLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+std::string WindowLogicalOperatorNode::toStringForJSON() const {
+    std::stringstream ss;
+    auto windowType = windowDefinition->getWindowType();
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    ss << "WINDOW(OP-" << id << ") ";
+    if (windowType->isTumblingWindow()){
+        ss << "Type: TUMBLING WINDOW ";
+    } else {
+        ss << "Type: SLIDING WINDOW ";
+    }
+    ss << "Aggregation: ";
+    for (auto agg : windowAggregation) {
+        ss << agg->getTypeAsString() << ";";
+    }
+    return ss.str();
+}
+
 bool WindowLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return equal(rhs) && (rhs->as<WindowLogicalOperatorNode>()->getId() == id) && !rhs->instanceOf<CentralWindowOperator>();
 }

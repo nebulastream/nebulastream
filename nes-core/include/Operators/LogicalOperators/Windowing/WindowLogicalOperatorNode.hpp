@@ -26,6 +26,7 @@ class WindowLogicalOperatorNode : public WindowOperatorNode {
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     std::string toString() const override;
+    std::string toStringForJSON() const;
     OperatorNodePtr copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;

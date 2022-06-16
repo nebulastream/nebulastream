@@ -51,8 +51,6 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
         operatorType = "FILTER";
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         operatorType = "MAP";
-    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
-        operatorType = "MERGE";
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         operatorType = "WINDOW";
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
@@ -214,11 +212,17 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 
         // use the id of the current operator to fill the id field
         node["id"] = web::json::value::string(std::to_string(childLogicalOperatorNode->getId()));
-        // use concatenation of <operator type>(OP-<operator id>) to fill name field
-        // e.g. FILTER(OP-1)
-        node["name"] =
-            web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
 
+        if (childOPeratorType == "WINDOW") {
+            // window operator node needs more information, therefore we added information about window type and aggregation
+            node["name"] = web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toStringForJSON());
+            std::cout << childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toStringForJSON() << std::endl;
+        } else {
+            // use concatenation of <operator type>(OP-<operator id>) to fill name field
+            // e.g. FILTER(OP-1)
+            node["name"] =
+                web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
+        }
         node["nodeType"] = web::json::value::string(childOPeratorType);
 
         // store current node JSON object to the `nodes` JSON array
@@ -226,10 +230,21 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
 
         // Create an edge JSON object for current operator
         auto edge = web::json::value::object();
-        edge["source"] =
-            web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
-        edge["target"] = web::json::value::string(getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
 
+        if (childOPeratorType == "WINDOW") {
+            // window operator node needs more information, therefore we added information about window type and aggregation
+            edge["source"] =
+                web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toStringForJSON());
+        } else {
+            edge["source"] =
+                web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
+        }
+
+        if (getOperatorType(root) == "WINDOW") {
+            edge["target"] = web::json::value::string(root->as<WindowLogicalOperatorNode>()->toStringForJSON());
+        } else {
+            edge["target"] = web::json::value::string(getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
+        }
         // store current edge JSON object to `edges` JSON array
         edges.push_back(edge);
 
