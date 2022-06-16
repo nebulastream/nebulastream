@@ -107,7 +107,7 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
                 successMessageImpl(request, node, web::http::status_codes::OK);
                 return;
             } catch (const std::exception& exc) {
-                NES_ERROR("QueryController: handleGet -query-status: Exception occurred while retreiving query status"
+                NES_ERROR("QueryController: handleGet -query-status: Exception occurred while retrieving query status"
                           "request:"
                           << exc.what());
                 handleException(request, exc);
@@ -264,7 +264,7 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
     }
     QueryId queryId = std::stoi(parameters.find("queryId")->second);
     if (path[1] == "stop-query") {
-        NES_DEBUG("QueryController: Request received for stoping a query");
+        NES_DEBUG("QueryController: Request received for stopping a query");
         try {
             bool success = queryService->validateAndQueueStopQueryRequest(queryId);
             //Prepare the response
