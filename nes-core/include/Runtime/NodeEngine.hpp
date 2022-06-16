@@ -318,13 +318,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * Getter for node Id
      * @return the node id
      */
-    const std::shared_ptr<TopologyNodeId> getNodeId() const;
+    TopologyNodeId getNodeId() const;
 
     /**
      * Setter for node ID
      * @param NodeId
      */
-    void setNodeId(const std::shared_ptr<TopologyNodeId> NodeId);
+    void setNodeId(const TopologyNodeId NodeId);
 
     /**
      * @brief Updates the physical sources on the node engine
@@ -355,7 +355,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         bool sourceSharing);
 
   private:
-    std::shared_ptr<TopologyNodeId> nodeId;
+    TopologyNodeId nodeId;
     std::vector<PhysicalSourcePtr> physicalSources;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;

@@ -51,8 +51,8 @@ TEST_F(ResourcesReaderTest, testAbstractSystemResourcesReader) {
     auto resourcesReader = std::make_shared<AbstractSystemResourcesReader>();
     ASSERT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeMetrics{});
     ASSERT_TRUE(resourcesReader->readRegistrationMetrics() == RegistrationMetrics{});
-    ASSERT_TRUE(resourcesReader->readCpuStats() == CpuMetricsWrapper{});
-    ASSERT_TRUE(resourcesReader->readNetworkStats() == NetworkMetricsWrapper{});
+    ASSERT_TRUE(resourcesReader->readCpuStats().size() == 1);
+    ASSERT_TRUE(resourcesReader->readNetworkStats().size() == 1);
     ASSERT_TRUE(resourcesReader->readMemoryStats() == MemoryMetrics{});
     ASSERT_TRUE(resourcesReader->readDiskStats() == DiskMetrics{});
     ASSERT_TRUE(resourcesReader->getWallTimeInNs() == 0);

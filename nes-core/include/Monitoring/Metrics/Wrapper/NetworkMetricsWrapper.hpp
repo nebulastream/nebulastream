@@ -19,6 +19,8 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
+#include <vector>
+
 namespace NES {
 
 /**
@@ -28,6 +30,7 @@ class NetworkMetricsWrapper {
   public:
     NetworkMetricsWrapper() = default;
     NetworkMetricsWrapper(uint64_t nodeId);
+    NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
 
     /**
      * @brief Writes a wrapper object to a given TupleBuffer.

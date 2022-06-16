@@ -636,8 +636,8 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorker
     bool monitoring = true;
     uint64_t worker_count = 1;
     std::vector<NesWorkerPtr> workers;
-    uint64_t localBuffers = 2;
-    uint64_t globalBuffers = 1024*8;
+    uint64_t localBuffers = 4;
+    uint64_t globalBuffers = 1024*40;
 
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;

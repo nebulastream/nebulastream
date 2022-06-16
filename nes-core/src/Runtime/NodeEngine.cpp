@@ -58,7 +58,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker,
                        bool sourceSharing)
-    : nodeId(std::make_shared<TopologyNodeId>(INVALID_TOPOLOGY_NODE_ID)), physicalSources(std::move(physicalSources)),
+    : nodeId(INVALID_TOPOLOGY_NODE_ID), physicalSources(std::move(physicalSources)),
       hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
       queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)),
@@ -608,8 +608,8 @@ void NodeEngine::setMetricStore(MetricStorePtr metricStore) {
     NES_ASSERT(metricStore != nullptr, "NodeEngine: MetricStore is null.");
     this->metricStore = metricStore;
 }
-const std::shared_ptr<TopologyNodeId> NodeEngine::getNodeId() const { return nodeId; }
-void NodeEngine::setNodeId(const std::shared_ptr<TopologyNodeId> NodeId) { nodeId = NodeId; }
+TopologyNodeId NodeEngine::getNodeId() const { return nodeId; }
+void NodeEngine::setNodeId(const TopologyNodeId NodeId) { nodeId = NodeId; }
 
 void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     this->physicalSources = std::move(physicalSources);

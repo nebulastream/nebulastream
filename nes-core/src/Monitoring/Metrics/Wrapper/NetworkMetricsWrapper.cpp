@@ -28,6 +28,15 @@ namespace NES {
 
 NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
 
+NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) {
+    if (!arr.empty()) {
+        networkMetrics = std::move(arr);
+    } else {
+        NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Object cannot be allocated with less than 0 cores.");
+    }
+    NES_TRACE("NetworkMetricsWrapper: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
+}
+
 void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto schema = NetworkMetrics::getSchema("");
     auto totalSize = schema->getSchemaSizeInBytes() * size();
