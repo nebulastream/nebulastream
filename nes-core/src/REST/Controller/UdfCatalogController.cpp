@@ -92,7 +92,7 @@ void UdfCatalogController::handleGetUdfDescriptor(web::http::http_request& reque
     if (!found) {
         return;
     }
-    auto udfDescriptor = udfCatalog->getJavaUdfDescriptor(udfName);
+    auto udfDescriptor = UdfDescriptor::as<JavaUdfDescriptor>(udfCatalog->getUdfDescriptor(udfName));
     GetJavaUdfDescriptorResponse response;
     if (udfDescriptor == nullptr) {
         // Signal that the UDF does not exist in the catalog.
@@ -128,10 +128,10 @@ void UdfCatalogController::handleListUdfs(web::http::http_request& request) {
 }
 
 void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoints(path, {"getJavaUdfDescriptor", "listUdfs"}, request)) {
+    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoints(path, {"getUdfDescriptor", "listUdfs"}, request)) {
         return;
     }
-    if (path[1] == "getJavaUdfDescriptor") {
+    if (path[1] == "getUdfDescriptor") {
         handleGetUdfDescriptor(request);
     } else if (path[1] == "listUdfs") {
         handleListUdfs(request);
@@ -142,7 +142,7 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
 }
 
 void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) {
-    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoint(path, "registerJavaUdf", request)) {
+    if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoint(path, "registerUdf", request)) {
         return;
     }
     auto udfCatalog = this->udfCatalog;
@@ -171,7 +171,7 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
                                                                    serializedInstance,
                                                                    javaUdfByteCodeList);
                 NES_DEBUG("Registering Java UDF '" << javaUdfRequest.udf_name() << "'.'");
-                udfCatalog->registerJavaUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
+                udfCatalog->registerUdf(javaUdfRequest.udf_name(), javaUdfDescriptor);
             } catch (const UdfException& e) {
                 NES_WARNING("Exception occurred during UDF registration: " << e.what());
                 // Just return the exception message to the client, not the stack trace.

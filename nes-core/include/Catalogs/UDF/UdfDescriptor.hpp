@@ -35,6 +35,11 @@ virtual ~UdfDescriptor() = default;
  */
 [[nodiscard]] const std::string& getMethodName() const { return methodName; }
 
+template<class UdfDescriptor>
+static std::shared_ptr<UdfDescriptor> as(UdfDescriptorPtr ptr) {
+    return std::dynamic_pointer_cast<UdfDescriptor>(ptr);
+}
+
 private:
 const std::string methodName;
 

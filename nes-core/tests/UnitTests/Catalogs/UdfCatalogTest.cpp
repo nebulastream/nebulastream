@@ -54,9 +54,9 @@ TEST_F(UdfCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
     auto udfName = "my_udf"s;
     auto udfDescriptor = createJavaDescriptor();
     // when
-    udfCatalog.registerJavaUdf(udfName, udfDescriptor);
+    udfCatalog.registerUdf(udfName, udfDescriptor);
     // then
-    ASSERT_EQ(udfDescriptor, udfCatalog.getJavaUdfDescriptor(udfName));
+    ASSERT_EQ(udfDescriptor, UdfDescriptor::as<JavaUdfDescriptor>(udfCatalog.getUdfDescriptor(udfName)));
 }
 
 /**
@@ -65,39 +65,27 @@ TEST_F(UdfCatalogTest, RetrieveRegisteredJavaUdfDescriptor) {
 TEST_F(UdfCatalogTest, RetrieveRegisteredPythonUdfDescriptor) {
     auto udfName = "py_udf"s;
     auto udfDescriptor = createPythonDescriptor();
-    udfCatalog.registerPythonUdf(udfName, udfDescriptor);
-    ASSERT_EQ(udfDescriptor, udfCatalog.getPythonUdfDescriptor(udfName));
-}
-
-TEST_F(UdfCatalogTest, RetrieveCorrectUdfDescriptors) {
-    auto pyUdfName = "py_udf"s;
-    auto javaUdfName = "java_udf"s;
-    auto pyUdfDescriptor = createPythonDescriptor();
-    auto javaUdfDescriptor = createJavaDescriptor();
-    udfCatalog.registerPythonUdf(pyUdfName, pyUdfDescriptor);
-    udfCatalog.registerJavaUdf(javaUdfName, javaUdfDescriptor);
-
-    auto wrongUdfDescriptor = udfCatalog.getPythonUdfDescriptor(javaUdfName);
-    ASSERT_EQ(wrongUdfDescriptor, nullptr);
+    udfCatalog.registerUdf(udfName, udfDescriptor);
+    ASSERT_EQ(udfDescriptor, udfCatalog.getUdfDescriptor(udfName));
 }
 
 TEST_F(UdfCatalogTest, RegisteredDescriptorMustNotBeNull) {
-    EXPECT_THROW(udfCatalog.registerJavaUdf("my_udf", nullptr), UdfException);
+    EXPECT_THROW(udfCatalog.registerUdf("my_udf", nullptr), UdfException);
 }
 
 TEST_F(UdfCatalogTest, CannotRegisterUdfUnderExistingName) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = createJavaDescriptor();
-    udfCatalog.registerJavaUdf(udfName, udfDescriptor1);
+    udfCatalog.registerUdf(udfName, udfDescriptor1);
     // then
     auto udfDescriptor2 = createJavaDescriptor();
-    EXPECT_THROW(udfCatalog.registerJavaUdf(udfName, udfDescriptor2), UdfException);
+    EXPECT_THROW(udfCatalog.registerUdf(udfName, udfDescriptor2), UdfException);
 }
 
 // Test behavior of GetUdfDescriptor
 
-TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getJavaUdfDescriptor("unknown_udf"), nullptr); }
+TEST_F(UdfCatalogTest, ReturnNullptrIfUdfIsNotKnown) { ASSERT_EQ(udfCatalog.getUdfDescriptor("unknown_udf"), nullptr); }
 
 // Test behavior of RemoveUdf
 
@@ -107,7 +95,7 @@ TEST_F(UdfCatalogTest, SignalRemovalOfUdf) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = createJavaDescriptor();
-    udfCatalog.registerJavaUdf(udfName, udfDescriptor);
+    udfCatalog.registerUdf(udfName, udfDescriptor);
     // then
     ASSERT_EQ(udfCatalog.removeUdf(udfName), true);
 }
@@ -116,21 +104,21 @@ TEST_F(UdfCatalogTest, AfterRemovalTheUdfDoesNotExist) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor = createJavaDescriptor();
-    udfCatalog.registerJavaUdf(udfName, udfDescriptor);
+    udfCatalog.registerUdf(udfName, udfDescriptor);
     udfCatalog.removeUdf(udfName);
     // then
-    ASSERT_EQ(udfCatalog.getJavaUdfDescriptor(udfName), nullptr);
+    ASSERT_EQ(udfCatalog.getUdfDescriptor(udfName), nullptr);
 }
 
 TEST_F(UdfCatalogTest, AfterRemovalUdfWithSameNameCanBeAddedAgain) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = createJavaDescriptor();
-    udfCatalog.registerJavaUdf(udfName, udfDescriptor1);
+    udfCatalog.registerUdf(udfName, udfDescriptor1);
     udfCatalog.removeUdf(udfName);
     // then
     auto udfDescriptor2 = createJavaDescriptor();
-    EXPECT_NO_THROW(udfCatalog.registerJavaUdf(udfName, udfDescriptor2));
+    EXPECT_NO_THROW(udfCatalog.registerUdf(udfName, udfDescriptor2));
 }
 
 // Test behavior of RemoveUdf
@@ -139,7 +127,7 @@ TEST_F(UdfCatalogTest, ReturnListOfKnownUds) {
     // given
     auto udfName = "my_udf"s;
     auto udfDescriptor1 = createJavaDescriptor();
-    udfCatalog.registerJavaUdf(udfName, udfDescriptor1);
+    udfCatalog.registerUdf(udfName, udfDescriptor1);
     // then
     auto udfs = udfCatalog.listUdfs();
     // In gmock, we could use ASSERT_EQ(udfs, ContainerEq({ udfName }));

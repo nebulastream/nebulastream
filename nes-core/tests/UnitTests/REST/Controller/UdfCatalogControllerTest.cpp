@@ -128,11 +128,11 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     auto request = web::http::http_request{web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller
-    udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
+    udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerUdf"}, request);
     // then the HTTP response is OK
     verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the catalog contains a Java UDF descriptor representing the Java UDF
-    auto javaUdfDescriptor = udfCatalog->getJavaUdfDescriptor(javaUdfRequest.udf_name());
+    auto javaUdfDescriptor = UdfDescriptor::as<JavaUdfDescriptor>(udfCatalog->getUdfDescriptor(javaUdfRequest.udf_name()));
     ASSERT_NE(javaUdfDescriptor, nullptr);
     auto descriptorMessage = javaUdfRequest.java_udf_descriptor();
     ASSERT_EQ(javaUdfDescriptor->getClassName(), descriptorMessage.udf_class_name());
@@ -166,7 +166,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     auto request = web::http::http_request{web::http::methods::POST};
     request.set_body(javaUdfRequest.SerializeAsString());
     // when that message is passed to the controller (which should cause an exception)
-    udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
+    udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerUdf"}, request);
     // then the response is BadRequest
     verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
     // make sure the response does not contain the stack trace
@@ -190,7 +190,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
                                                        JavaSerializedInstance{1},
                                                        JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
     auto udfName = "my_udf"s;
-    udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
+    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to remove the UDF
     auto request = web::http::http_request{web::http::methods::DEL};
     request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName="s + udfName);
@@ -198,7 +198,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
     // then the response is OK
     verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the UDF does no longer exist in the catalog
-    ASSERT_EQ(udfCatalog->getJavaUdfDescriptor(udfName), nullptr);
+    ASSERT_EQ(UdfDescriptor::as<JavaUdfDescriptor>(udfCatalog->getUdfDescriptor(udfName)), nullptr);
     // and the response shows that the UDF was removed
     web::json::value json;
     json["removed"] = web::json::value(true);
@@ -261,11 +261,11 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
                                                        JavaSerializedInstance{1},
                                                        JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
     auto udfName = "my_udf"s;
-    udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
+    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to get the UDF descriptor
     auto request = web::http::http_request{web::http::methods::GET};
-    request.set_request_uri(UdfCatalogController::path_prefix + "/getJavaUdfDescriptor?udfName="s + udfName);
-    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getJavaUdfDescriptor"}, request);
+    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName="s + udfName);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is OK
     verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the response message indicates that the UDF was found
@@ -282,8 +282,8 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
 TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist) {
     // when a REST message is passed to the controller to get the UDF descriptor of an UDF that does not exist
     auto request = web::http::http_request{web::http::methods::GET};
-    request.set_request_uri(UdfCatalogController::path_prefix + "/getJavaUdfDescriptor?udfName=unknownUdf"s);
-    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getJavaUdfDescriptor"}, request);
+    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName=unknownUdf"s);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is OK
     verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the response message indicates that the UDF was not found
@@ -294,8 +294,8 @@ TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist)
 TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
     // when a REST message is passed to the controller that is missing the udfName parameter
     auto request = web::http::http_request{web::http::methods::GET};
-    request.set_request_uri(UdfCatalogController::path_prefix + "/getJavaUdfDescriptor"s);
-    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getJavaUdfDescriptor"}, request);
+    request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor"s);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is BadRequest
     verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
@@ -304,8 +304,8 @@ TEST_F(UdfCatalogControllerTest, HandleGetTreatsSuperfluousParametersAreAnErrorC
     // when a REST message is passed to the controller that is contains parameters other than the udfName parameter
     auto request = web::http::http_request{web::http::methods::GET};
     request.set_request_uri(UdfCatalogController::path_prefix
-                            + "/getJavaUdfDescriptor?udfName=some_udf&unknownParameter=unknownValue"s);
-    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getJavaUdfDescriptor"}, request);
+                            + "/getUdfDescriptor?udfName=some_udf&unknownParameter=unknownValue"s);
+    udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is BadRequest
     verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
@@ -335,7 +335,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
                                                        JavaSerializedInstance{1},
                                                        JavaUdfByteCodeList{{"some_package.my_udf"s, JavaByteCode{1}}});
     auto udfName = "my_udf"s;
-    udfCatalog->registerJavaUdf(udfName, javaUdfDescriptor);
+    udfCatalog->registerUdf(udfName, javaUdfDescriptor);
     // when a REST message is passed to the controller to get a list of the UDFs
     auto request = web::http::http_request{web::http::methods::GET};
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "listUdfs"}, request);

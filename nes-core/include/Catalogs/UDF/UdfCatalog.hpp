@@ -41,35 +41,20 @@ class UdfCatalog {
     static std::unique_ptr<UdfCatalog> create();
 
     /**
-     * @brief Register the descriptor data of a Java UDF.
-     * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
-     * @param descriptor The implementation data of the UDF.
-     * @throws UdfException If descriptor is nullptr or if a UDF under the name is already registered.
-     */
-    // TODO #2079 use unique_ptr here to make sure that UdfCatalog takes ownership of the descriptor object
-    void registerJavaUdf(const std::string& name, JavaUdfDescriptorPtr descriptor);
-
-    /**
-     * @brief Register the descriptor data of a Python UDF.
+     * UDFs can not share the same name, even if they are implemented in different programming languages
+     * @brief Register the descriptor data of a UDF.
      * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @param descriptor The implementation data of the UDF.
      * @throws UdfException If descriptor is a nullptr or if a UDF under the name is already registered.
      */
-    void registerPythonUdf(const std::string& name, PythonUdfDescriptorPtr descriptor);
+    void registerUdf(const std::string& name, UdfDescriptorPtr descriptor);
 
     /**
-     * @brief Retrieve the implementation data for a Java UDF.
+     * @brief Retrieve the implementation data for a UDF.
      * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @return The implementation data of the UDF, or nullptr if the UDF is not registered.
      */
-    JavaUdfDescriptorPtr getJavaUdfDescriptor(const std::string& name);
-
-    /**
-     * @brief Retrieve the implementation data for a Python UDF.
-     * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
-     * @return The implementation data of the UDF, or nullptr if the UDF is not registered.
-     */
-    PythonUdfDescriptorPtr getPythonUdfDescriptor(const std::string& name);
+    UdfDescriptorPtr getUdfDescriptor(const std::string& name);
 
     /**
      * @brief Remove the UDF from the catalog.
