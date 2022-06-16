@@ -126,9 +126,6 @@ using namespace NES;
 
         EXPECT_TRUE(1 == (2-1));
 
-
-
-
     }
 
 
