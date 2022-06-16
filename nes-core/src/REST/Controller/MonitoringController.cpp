@@ -30,7 +30,7 @@ MonitoringController::MonitoringController(MonitoringServicePtr mService, Runtim
 }
 
 void MonitoringController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
-    NES_DEBUG("MonitoringController: Processing GET request");
+    NES_INFO("MonitoringController: Processing GET request");
     if (path[1] == "start") {
         NES_DEBUG("MonitoringController: GET start monitoring streams");
         auto metricsJson = monitoringService->startMonitoringStreams();
@@ -39,6 +39,11 @@ void MonitoringController::handleGet(const std::vector<utility::string_t>& path,
     } else if (path[1] == "stop") {
         NES_DEBUG("MonitoringController: GET stop monitoring streams");
         auto metricsJson = monitoringService->stopMonitoringStreams();
+        successMessageImpl(message, metricsJson);
+        return;
+    } else if (path[1] == "streams") {
+        NES_DEBUG("MonitoringController: GET monitoring streams");
+        auto metricsJson = monitoringService->getMonitoringStreams();
         successMessageImpl(message, metricsJson);
         return;
     } else if (path[1] == "storage") {

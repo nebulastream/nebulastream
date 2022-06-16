@@ -26,6 +26,7 @@ TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort
 
 TopologyNodePtr
 TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
+    NES_DEBUG("TopologyNode: Creating node with ID " << id << " and resources " << resources);
     return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources);
 }
 
@@ -49,11 +50,12 @@ void TopologyNode::increaseResources(uint16_t freedCapacity) {
 }
 
 void TopologyNode::reduceResources(uint16_t usedCapacity) {
-    if (usedCapacity <= resources) {
+    NES_DEBUG("TopologyNode: Reducing resources " << usedCapacity << " of " << resources);
+    if (usedCapacity > resources) {
         NES_WARNING("PhysicalNode: amount of resources to be used should not be more than actual resources");
     }
 
-    if (usedCapacity <= (resources - usedResources)) {
+    if (usedCapacity > (resources - usedResources)) {
         NES_WARNING("PhysicalNode: amount of resources to be used should not be more than available resources");
     }
     usedResources = usedResources + usedCapacity;

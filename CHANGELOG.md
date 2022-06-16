@@ -1428,7 +1428,7 @@
 - march is set too aggressive [\#1335](https://github.com/nebulastream/nebulastream/issues/1335)
 - Add WatermarkAssigner Test in WindowDeploymentTest [\#1333](https://github.com/nebulastream/nebulastream/issues/1333)
 - Test CPPCheck [\#1330](https://github.com/nebulastream/nebulastream/issues/1330)
-- !! should be replaced by .isValid method [\#1328](https://github.com/nebulastream/nebulastream/issues/1328)
+- !! should be replaced by .isValidAll method [\#1328](https://github.com/nebulastream/nebulastream/issues/1328)
 - Distinguish between Unary and Binary logical operators [\#1325](https://github.com/nebulastream/nebulastream/issues/1325)
 - Remove Operator id from LogicalSourceDescriptor [\#1323](https://github.com/nebulastream/nebulastream/issues/1323)
 - Gathering intervals between 0 and 1 [\#1319](https://github.com/nebulastream/nebulastream/issues/1319)

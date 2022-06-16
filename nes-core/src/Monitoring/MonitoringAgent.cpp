@@ -51,20 +51,13 @@ MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, Mon
     return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled);
 }
 
-void MonitoringAgent::startContinuousMonitoring(NesWorkerPtr) {
-    if (enabled) {
-        NES_NOT_IMPLEMENTED();
-    } else {
-        NES_INFO("MonitoringAgent: Monitoring disabled.");
-    }
-}
-
 const std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() const {
     std::vector<MetricPtr> output;
     if (enabled) {
         NES_DEBUG("MonitoringAgent: Monitoring enabled, reading metrics for getMetricsFromPlan().");
         for (auto type : monitoringPlan->getMetricTypes()) {
             auto collector = catalog->getMetricCollector(type);
+            collector->setNodeId(nodeId);
             MetricPtr metric = collector->readMetric();
             output.emplace_back(metric);
         }
@@ -86,6 +79,7 @@ web::json::value MonitoringAgent::getMetricsAsJson() {
         for (auto type : monitoringPlan->getMetricTypes()) {
             NES_INFO("MonitoringAgent: Collecting metrics of type " << toString(type));
             auto collector = catalog->getMetricCollector(type);
+            collector->setNodeId(nodeId);
             auto metric = collector->readMetric();
             metricsJson[toString(metric->getMetricType())] = asJson(metric);
         }
@@ -120,5 +114,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
     NES_WARNING("MonitoringAgent: Monitoring is disabled, registering of physical monitoring streams not possible.");
     return false;
 }
+
+void MonitoringAgent::setNodeId(TopologyNodeId nodeId) { this->nodeId = nodeId; }
 
 }// namespace NES

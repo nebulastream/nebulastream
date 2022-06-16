@@ -63,6 +63,14 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
     return "--" + NUMBER_OF_SLOTS_CONFIG + "=" + std::to_string(coordinatorPort);
 }
 
+[[nodiscard]] std::string numLocalBuffers(uint64_t localBuffers) {
+    return "--" + NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG + "=" + std::to_string(localBuffers);
+}
+
+[[nodiscard]] std::string numGlobalBuffers(uint64_t globalBuffers) {
+    return "--" + NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG + "=" + std::to_string(globalBuffers);
+}
+
 [[nodiscard]] std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
 
 [[nodiscard]] std::string sourceType(std::string sourceType) {
@@ -107,6 +115,8 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 [[nodiscard]] std::string coordinatorHealthCheckWaitTime(uint64_t coordinatorWaitTime) {
     return "--healthCheckWaitTime=" + std::to_string(coordinatorWaitTime);
 }
+
+[[nodiscard]] std::string enableMonitoring() { return "--enableMonitoring=true"; }
 
 /**
    * @brief start a new instance of a nes coordinator with a set of configuration flags
@@ -167,6 +177,13 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
 [[nodiscard]] bool checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, const std::string& restPort = "8081");
 
 /**
+     * @brief This method is used for checking if the submitted query is running
+     * @param queryId: Id of the query
+     * @return true if is running within the timeout, else false
+     */
+[[nodiscard]] bool checkRunningOrTimeout(QueryId queryId, const std::string& restPort = "8081");
+
+/**
      * @brief This method is used for stop a query
      * @param queryId: Id of the query
      * @return if stopped
@@ -179,6 +196,14 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
      * @return if stopped
      */
 [[nodiscard]] web::json::value startQueryViaRest(const string& queryString, const std::string& restPort = "8081");
+
+/**
+     * @brief This method is used for making a monitoring rest call.
+     * param1 the rest call
+     * param2 the rest port
+     * @return the json
+     */
+[[nodiscard]] web::json::value makeMonitoringRestCall(const string& restCall, const std::string& restPort = "8081");
 
 /**
    * @brief This method is used adding a logical source
