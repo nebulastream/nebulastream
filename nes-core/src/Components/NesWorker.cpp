@@ -50,8 +50,8 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, MetricStorePtr metricStore)
-    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort),
-      topologyNodeId(INVALID_TOPOLOGY_NODE_ID), metricStore(metricStore) {
+    : workerConfig(workerConfig), localWorkerRpcPort(workerConfig->rpcPort), topologyNodeId(INVALID_TOPOLOGY_NODE_ID),
+      metricStore(metricStore) {
     setThreadName("NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(workerConfig->coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -285,6 +285,7 @@ bool NesWorker::connect() {
                                                                  locationWrapper->isMobileNode());
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
+    monitoringAgent->setNodeId(topologyNodeId);
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;

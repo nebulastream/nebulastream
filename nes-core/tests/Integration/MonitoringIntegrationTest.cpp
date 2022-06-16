@@ -50,6 +50,8 @@ using std::cout;
 using std::endl;
 namespace NES {
 
+uint16_t timeout = 15;
+
 class MonitoringIntegrationTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
@@ -66,228 +68,112 @@ class MonitoringIntegrationTest : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
+    uint64_t noWorkers = 2;
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->enableMonitoring = (true);
-    coordinatorConfig->restPort = *restPort;
-    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf1->enableMonitoring = (true);
-    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf2->enableMonitoring = (true);
+    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test2"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
 
-    cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    ASSERT_NE(port, 0ull);
-    cout << "coordinator started successfully" << endl;
+    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test1"),
+                                           TestUtils::workerHealthCheckWaitTime(1)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
+    auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
+    //TODO: This should be addressed by issue 2803
+    ASSERT_EQ(jsons.size(), noWorkers + 1);
+}
 
-    cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart2);
-    cout << "worker2 started successfully" << endl;
+TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
+    uint64_t noWorkers = 2;
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    bool retConWrk1 = wrk1->connect();
-    ASSERT_TRUE(retConWrk1);
-    cout << "worker 1 connected " << endl;
+    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test2"),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableMonitoring()});
 
-    bool retConWrk2 = wrk2->connect();
-    ASSERT_TRUE(retConWrk2);
-    cout << "worker 2 connected " << endl;
+    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test1"),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableMonitoring()});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
-    // requesting the monitoring data
-    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-
-    auto const nodeNumber = static_cast<std::size_t>(3U);
-    ASSERT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
-    auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
+    auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
-    ASSERT_EQ(jsons.size(), nodeNumber);
-    auto rootId = crd->getTopology()->getRoot()->getId();
-    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+    ASSERT_EQ(jsons.size(), noWorkers + 1);
 
-    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
-        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
-                 + std::to_string(port + 10));
+    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
         auto json = jsons[std::to_string(i)];
         NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::isValidAll(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::checkNodeIds(json, i));
     }
-
-    bool retStopWrk1 = wrk1->stop(false);
-    ASSERT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(false);
-    ASSERT_TRUE(retStopWrk2);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    ASSERT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+TEST_F(MonitoringIntegrationTest, requestStoredMetricsViaRest) {
+    uint64_t noWorkers = 2;
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->enableMonitoring = (true);
-    coordinatorConfig->restPort = *restPort;
-    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf1->enableMonitoring = (true);
-    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf2->enableMonitoring = (true);
+    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test2"),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableMonitoring()});
 
-    cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    ASSERT_NE(port, 0ull);
-    cout << "coordinator started successfully" << endl;
+    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test1"),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableMonitoring()});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
-
-    cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart2);
-    cout << "worker2 started successfully" << endl;
-
-    bool retConWrk1 = wrk1->connect();
-    ASSERT_TRUE(retConWrk1);
-    cout << "worker 1 connected " << endl;
-
-    bool retConWrk2 = wrk2->connect();
-    ASSERT_TRUE(retConWrk2);
-    cout << "worker 2 connected " << endl;
-
-    // requesting the monitoring data
-    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-
-    auto const nodeNumber = static_cast<std::size_t>(3U);
-    ASSERT_TRUE(crd->getMonitoringService()->isMonitoringEnabled());
-    auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
+    auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
     NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
-    ASSERT_EQ(jsons.size(), nodeNumber);
-    auto rootId = crd->getTopology()->getRoot()->getId();
-    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+    ASSERT_EQ(jsons.size(), noWorkers + 1);
 
-    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
-        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
-                 + std::to_string(port + 10));
+    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
         auto json = jsons[std::to_string(i)];
-        ASSERT_TRUE(json.has_field("registration"));
-        json = json["registration"];
-
-        for (int j = 0; j < (int) json.size(); j++) {
-            auto data = json.at(j)["value"];
-            ASSERT_TRUE(
-                MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), data));
-        }
+        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+        auto jsonRegistration = json["registration"][0]["value"];
+        ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(),
+                                                                jsonRegistration));
+        ASSERT_EQ(jsonRegistration["NODE_ID"], i);
     }
-
-    bool retStopWrk1 = wrk1->stop(false);
-    ASSERT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(false);
-    ASSERT_TRUE(retStopWrk2);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    ASSERT_TRUE(retStopCord);
-}
-
-TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
-    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
-    bool monitoring = false;
-
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->enableMonitoring = (monitoring);
-    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf1->enableMonitoring = (monitoring);
-    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
-    wrkConf2->enableMonitoring = (monitoring);
-
-    cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    ASSERT_NE(port, 0ull);
-    cout << "coordinator started successfully" << endl;
-
-    cout << "start worker 1" << endl;
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart1);
-    cout << "worker1 started successfully" << endl;
-
-    cout << "start worker 2" << endl;
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
-    ASSERT_TRUE(retStart2);
-    cout << "worker2 started successfully" << endl;
-
-    bool retConWrk1 = wrk1->connect();
-    ASSERT_TRUE(retConWrk1);
-    cout << "worker 1 connected " << endl;
-
-    bool retConWrk2 = wrk2->connect();
-    ASSERT_TRUE(retConWrk2);
-    cout << "worker 2 connected " << endl;
-
-    // requesting the monitoring data
-    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-
-    auto const nodeNumber = static_cast<std::size_t>(3U);
-
-    ASSERT_FALSE(crd->getMonitoringService()->isMonitoringEnabled());
-
-    auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
-    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
-
-    ASSERT_EQ(jsons.size(), nodeNumber);
-    auto rootId = crd->getTopology()->getRoot()->getId();
-    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
-
-    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
-        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
-                 + std::to_string(port + 10));
-        auto json = jsons[std::to_string(i)];
-        ASSERT_TRUE(json.has_field("registration"));
-        json = json["registration"];
-        for (int j = 0; j < (int) json.size(); j++) {
-            auto data = json.at(j)["value"];
-            ASSERT_TRUE(
-                MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), data));
-        }
-    }
-
-    bool retStopWrk1 = wrk1->stop(false);
-    ASSERT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(false);
-    ASSERT_TRUE(retStopWrk2);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    ASSERT_TRUE(retStopCord);
 }
 
 TEST_F(MonitoringIntegrationTest, requestDiskMetricsWithMonitoringSinkMultiWorker) {
@@ -632,85 +518,63 @@ TEST_F(MonitoringIntegrationTest, requestMemoryMetricsWithMonitoringSinkMultiWor
     }
 }
 
-TEST_F(MonitoringIntegrationTest, requestAllMetricsWithMonitoringSinkMultiWorkerWithMonitoringManager) {
-    bool monitoring = true;
-    uint64_t worker_count = 1;
-    std::vector<NesWorkerPtr> workers;
+TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
+    uint64_t noWorkers = 2;
     uint64_t localBuffers = 4;
-    uint64_t globalBuffers = 1024*40;
+    uint64_t globalBuffers = 1024 * 40;
+    std::set<std::string> expectedMonitoringStreams{"wrapped_network", "wrapped_cpu", "memory", "disk"};
 
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->enableMonitoring = monitoring;
-    coordinatorConfig->numberOfBuffersInSourceLocalBufferPool = localBuffers;
-    coordinatorConfig->numberOfBuffersInGlobalBufferManager = globalBuffers;
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::enableMonitoring(),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::numberOfSlots(50),
+                                                    TestUtils::numLocalBuffers(localBuffers),
+                                                    TestUtils::numGlobalBuffers(globalBuffers)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    NES_INFO("MultipleJoinsTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    auto monitoringService = crd->getMonitoringService();
-    auto metricSize = MonitoringPlan::defaultCollectors().size();
+    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test2"),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableMonitoring(),
+                                           TestUtils::enableDebug(),
+                                           TestUtils::numberOfSlots(50),
+                                           TestUtils::numLocalBuffers(localBuffers),
+                                           TestUtils::numGlobalBuffers(globalBuffers)});
 
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    ASSERT_NE(port, 0UL);
-    NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
+    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                           TestUtils::dataPort(0),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                           TestUtils::sourceType("DefaultSource"),
+                                           TestUtils::logicalSourceName("default_logical"),
+                                           TestUtils::physicalSourceName("test1"),
+                                           TestUtils::workerHealthCheckWaitTime(1),
+                                           TestUtils::enableMonitoring(),
+                                           TestUtils::enableDebug(),
+                                           TestUtils::numberOfSlots(50),
+                                           TestUtils::numLocalBuffers(localBuffers),
+                                           TestUtils::numGlobalBuffers(globalBuffers)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
-    for (uint64_t i = 0; i <= worker_count; i++) {
-        WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-        workerConfig->coordinatorPort = *rpcCoordinatorPort;
-        workerConfig->numberOfSlots = (12);
-        workerConfig->numberOfBuffersInGlobalBufferManager = globalBuffers;
-        workerConfig->numberOfBuffersInSourceLocalBufferPool = localBuffers;
-        workerConfig->numberOfBuffersPerWorker = 4;
-        workerConfig->enableMonitoring = (monitoring);
+    auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
+    NES_INFO("MonitoringIntegrationTest: Started monitoring streams " << jsonStart);
+    ASSERT_EQ(jsonStart.size(), expectedMonitoringStreams.size());
 
-        NES_DEBUG("MultipleJoinsTest: Start worker " << i);
-        NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
-        workers.emplace_back(wrk);
-        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-        ASSERT_TRUE(retStart);
-        NES_INFO("MultipleJoinsTest: Worker " << i << " started successfully");
+    ASSERT_TRUE(MetricValidator::waitForMonitoringStreamsOrTimeout(expectedMonitoringStreams, 10, *restPort));
+    auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
 
-        ASSERT_EQ(wrk->getWorkerConfiguration()->physicalSources.size(), MonitoringPlan::defaultCollectors().size());
-    }
-
-    auto queryIdsJson = monitoringService->startMonitoringStreams();
-    NES_INFO("MonitoringIntegrationTest: " << queryIdsJson);
-    auto queryIds = monitoringService->getMonitoringManager()->getDeployedMonitoringQueries();
-    ASSERT_EQ(queryIds.size(), metricSize);
-    ASSERT_EQ(queryIdsJson.size(), metricSize);
-
-    QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService();
-    auto globalQueryPlan = crd->getGlobalQueryPlan();
-    for (auto queryIdPair : queryIds) {
-        auto queryId = queryIdPair.second;
-        NES_DEBUG("MultiThreadedTest: Validating query " << queryId);
-        ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
-        for (uint64_t i = 0; i <= worker_count; i++) {
-            ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(workers[i], queryId, globalQueryPlan, 2));
-        }
-    }
-    ASSERT_TRUE(monitoringService->stopMonitoringStreams().as_bool());
-
-    for (uint64_t i = 0; i <= worker_count; i++) {
-        NES_DEBUG("MultipleJoinsTest: Stop worker " << i);
-        auto wrk = workers[i];
-        bool retStopWrk = wrk->stop(true);
-        ASSERT_TRUE(retStopWrk);
-    }
-
-    auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
     // test network metrics
-    for (uint64_t nodeId = 1; nodeId <= workers.size(); nodeId++) {
-        StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
-        NES_INFO("MetricStoreTest: Stored metrics for ID " << nodeId << ": " << MetricUtils::toJson(storedMetrics));
-        ASSERT_EQ(storedMetrics->size(), 5);
+    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+        NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID " << i);
+        auto json = jsonMetrics[std::to_string(i)];
+        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
+        ASSERT_TRUE(MetricValidator::isValidAllStorage(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
+        ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(json, i));
     }
-
-    NES_DEBUG("MultipleJoinsTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    ASSERT_TRUE(retStopCord);
-    NES_DEBUG("MultipleJoinsTest: Test finished");
 }
 
 }// namespace NES

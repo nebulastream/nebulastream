@@ -17,6 +17,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Topology/TopologyNodeId.hpp>
 #include <memory>
 #include <unordered_map>
 
@@ -59,13 +60,6 @@ class MonitoringAgent {
     [[nodiscard]] bool isEnabled() const;
 
     /**
-     * @brief Create monitoring sources for the provided MonitoringPlan and handle them as data sources within the NES engine.
-     * If monitoring is disabled this method is not doing anything.
-     * @param nesWorker
-    */
-    void startContinuousMonitoring(NesWorkerPtr nesWorker);
-
-    /**
      * @brief Getter for the MonitoringPlan
      * @return Ptr to the MonitoringPlan
     */
@@ -90,7 +84,14 @@ class MonitoringAgent {
      */
     bool addMonitoringStreams(const Configurations::WorkerConfigurationPtr workerConfig);
 
+    /**
+     * @brief Set the node ID of the topology
+     * @param nodeId
+     */
+    void setNodeId(TopologyNodeId nodeId);
+
   private:
+    TopologyNodeId nodeId;
     MonitoringPlanPtr monitoringPlan;
     MonitoringCatalogPtr catalog;
     bool enabled;

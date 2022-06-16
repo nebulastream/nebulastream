@@ -28,6 +28,8 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <chrono>
 #include <cpprest/json.h>
 
 namespace NES {
@@ -189,11 +191,11 @@ class MetricValidator {
         return check;
     }
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+    static bool isValidAll(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-            NES_WARNING("MetricValidator: AbstractReader used for DiskMetrics. Returning true");
+            NES_WARNING("MetricValidator: AbstractReader used. Returning true");
             return true;
         }
 
@@ -234,6 +236,66 @@ class MetricValidator {
             check = false;
         } else {
             auto numFields = json["memory"].size();
+            if (numFields < 13) {
+                NES_ERROR("MetricValidator: Values for wrapped_network missing");
+                check = false;
+            }
+        }
+        return check;
+    }
+
+    static bool isValidAllStorage(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+        bool check = true;
+
+        if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
+            NES_WARNING("MetricValidator: AbstractReader used. Returning true");
+            return true;
+        }
+
+        if (!json.has_field("registration")) {
+            NES_ERROR("MetricValidator: Missing field registration");
+            check = false;
+        } else {
+            check = isValidRegistrationMetrics(reader, json["registration"][0]["value"]);
+        }
+
+        if (!json.has_field("disk")) {
+            NES_ERROR("MetricValidator: Missing field disk");
+            check = false;
+        } else {
+            if (!(json["disk"][0]["value"].size() == 6U)) {
+                NES_ERROR("MetricValidator: Values for disk missing");
+                check = false;
+            }
+        }
+
+        if (!json.has_field("wrapped_cpu")) {
+            NES_ERROR("MetricValidator: Missing field wrapped cpu");
+            check = false;
+        } else {
+            auto numCpuFields = json["wrapped_cpu"][0]["value"].size();
+            if (numCpuFields <= 1) {
+                NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
+                check = false;
+            }
+        }
+
+        if (!json.has_field("wrapped_network")) {
+            NES_ERROR("MetricValidator: Missing field wrapped network");
+            check = false;
+        } else {
+            auto numFields = json["wrapped_network"][0]["value"].size();
+            if (numFields < 1) {
+                NES_ERROR("MetricValidator: Values for wrapped_network missing");
+                check = false;
+            }
+        }
+
+        if (!json.has_field("memory")) {
+            NES_ERROR("MetricValidator: Missing field memory");
+            check = false;
+        } else {
+            auto numFields = json["memory"][0]["value"].size();
             if (numFields < 13) {
                 NES_ERROR("MetricValidator: Values for wrapped_network missing");
                 check = false;
@@ -293,6 +355,33 @@ class MetricValidator {
         return check;
     }
 
+    static bool checkNodeIds(web::json::value json, uint64_t nodeId) {
+        bool check = true;
+        for (auto iter = json.as_object().cbegin(); iter != json.as_object().cend(); ++iter) {
+            // This change lets you get the string straight up from "first"
+            const utility::string_t& str = iter->first;
+            const web::json::value& v = iter->second;
+            if (json[str].has_field("NODE_ID") && json[str]["NODE_ID"] != nodeId) {
+                NES_ERROR("MetricValidator: Wrong node ID for " << str << " where " << json[str]["NODE_ID"] << "!=" << nodeId);
+                check = false;
+            }
+        }
+        return check;
+    }
+
+    static bool checkNodeIdsStorage(web::json::value json, uint64_t nodeId) {
+        bool check = true;
+        for (auto iter = json.as_object().cbegin(); iter != json.as_object().cend(); ++iter) {
+            // This change lets you get the string straight up from "first"
+            const utility::string_t& str = iter->first;
+            if (json[str][0]["value"].has_field("NODE_ID") && json[str][0]["value"]["NODE_ID"] != nodeId) {
+                NES_ERROR("MetricValidator: Wrong node ID for " << str << " where " << json[str]["NODE_ID"] << "!=" << nodeId);
+                check = false;
+            }
+        }
+        return check;
+    }
+
     static bool checkNodeIds(MetricPtr metric, uint64_t nodeId) {
         if (metric->getMetricType() == DiskMetric) {
             auto parsedMetrics = metric->getValue<DiskMetrics>();
@@ -322,6 +411,36 @@ class MetricValidator {
         } else {
             return false;
         }
+    }
+
+    static bool
+    waitForMonitoringStreamsOrTimeout(std::set<std::string> monitoringStreams, uint16_t maxTimeout, uint64_t restPort) {
+        for (int i = 0; i < maxTimeout; i++) {
+            auto json = TestUtils::makeMonitoringRestCall("storage", std::to_string(restPort));
+            NES_INFO("MetricValidator: Testing metric call " << json);
+            bool missing = false;
+            for (uint64_t nodeId = 1; nodeId <= json.size(); nodeId++) {
+                for (auto stream : monitoringStreams) {
+                    if (!json[std::to_string(nodeId)].has_field(stream)) {
+                        NES_ERROR("MetricValidator: Missing metric " << stream << " for node " << nodeId);
+                        missing = true;
+                        break;
+                    }
+                }
+                if (missing) {
+                    break;
+                }
+            }
+
+            if (missing) {
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+            } else {
+                NES_INFO("MetricValidator: All metrics available");
+                return true;
+            }
+        }
+        NES_ERROR("MetricValidator: Timeout passed");
+        return false;
     }
 };
 

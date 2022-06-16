@@ -75,15 +75,21 @@ class MonitoringService {
 
     /**
      * @brief Starts the monitoring streams for monitoring data.
-     * @return a json with all query IDs and the status indicated by the registered MonitoringPlan.
+     * @return true if initiated
     */
     web::json::value startMonitoringStreams();
 
     /**
      * @brief Starts the monitoring streams for monitoring data.
-     * @return a json with all query IDs and the status indicated by the registered MonitoringPlan.
+     * @return true if initiated
     */
     web::json::value stopMonitoringStreams();
+
+    /**
+     * @brief Gets the monitoring streams for monitoring data.
+     * @return a json with all query IDs and the status indicated by the registered MonitoringPlan.
+    */
+    web::json::value getMonitoringStreams();
 
     /**
      * @brief Getter for MonitoringManager

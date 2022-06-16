@@ -107,7 +107,7 @@ bool MonitoringService::isMonitoringEnabled() const { return enableMonitoring; }
 
 web::json::value MonitoringService::startMonitoringStreams() {
     web::json::value output{};
-    auto queryIds = monitoringManager->startOrRedeployMonitoringQueries(true);
+    auto queryIds = monitoringManager->startOrRedeployMonitoringQueries(false);
 
     web::json::value elem{};
     int i = 0;
@@ -121,8 +121,23 @@ web::json::value MonitoringService::startMonitoringStreams() {
 }
 
 web::json::value MonitoringService::stopMonitoringStreams() {
-    bool success = monitoringManager->stopRunningMonitoringQueries(true);
-    return web::json::value::boolean(success);
+    monitoringManager->stopRunningMonitoringQueries(false);
+    return web::json::value::boolean(true);
+}
+
+web::json::value MonitoringService::getMonitoringStreams() {
+    web::json::value output{};
+    auto queryIds = monitoringManager->getDeployedMonitoringQueries();
+
+    web::json::value elem{};
+    int i = 0;
+    for (auto queryIdPair : queryIds) {
+        elem["logical_stream"] = web::json::value::string(queryIdPair.first);
+        elem["query_ID"] = web::json::value::number(queryIdPair.second);
+        output[i++] = elem;
+    }
+
+    return output;
 }
 
 }// namespace NES
