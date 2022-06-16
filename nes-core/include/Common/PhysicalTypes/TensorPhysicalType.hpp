@@ -12,11 +12,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_TENSORPHYSICALTYPE_HPP
-#define NES_TENSORPHYSICALTYPE_HPP
+#ifndef NES_INCLUDE_COMMON_PHYSICALTYPES_TENSORPHYSICALTYPE_HPP
+#define NES_INCLUDE_COMMON_PHYSICALTYPES_TENSORPHYSICALTYPE_HPP
 
 #include <Common/DataTypes/TensorType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -27,8 +28,9 @@ class TensorPhysicalType final : public PhysicalType {
                               std::vector<size_t> shape,
                               PhysicalTypePtr component,
                               TensorMemoryFormat tensorMemoryFormat) noexcept
-        : PhysicalType(std::move(dataType)), shape(std::move(shape)), physicalComponentType(std::move(component)), tensorMemoryFormat(tensorMemoryFormat) {
-        for (auto dimension : shape) {
+        : PhysicalType(std::move(dataType)), shape(std::move(shape)), physicalComponentType(std::move(component)),
+          tensorMemoryFormat(tensorMemoryFormat) {
+        for (auto dimension : this->shape) {
             totalSize *= dimension;
         }
     }
@@ -42,7 +44,10 @@ class TensorPhysicalType final : public PhysicalType {
      * @param component the physical component type of this array.
      * @return PhysicalTypePtr
      */
-    static inline PhysicalTypePtr create(const DataTypePtr& type, std::vector<size_t> shape, PhysicalTypePtr const& component, TensorMemoryFormat tensorMemoryFormat) noexcept {
+    static inline PhysicalTypePtr create(const DataTypePtr& type,
+                                         std::vector<size_t> shape,
+                                         PhysicalTypePtr const& component,
+                                         TensorMemoryFormat tensorMemoryFormat) noexcept {
         return std::make_shared<TensorPhysicalType>(type, shape, component, tensorMemoryFormat);
     }
 
@@ -88,4 +93,4 @@ class TensorPhysicalType final : public PhysicalType {
 
 }// namespace NES
 
-#endif//NES_TENSORPHYSICALTYPE_HPP
+#endif//NES_INCLUDE_COMMON_PHYSICALTYPES_TENSORPHYSICALTYPE_HPP

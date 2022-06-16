@@ -54,43 +54,35 @@ class TensorTest : public Testing::NESBaseTest {
 * Test deploying join with same data and same schema
  * */
 TEST_F(TensorTest, testCreateTensorInSchema) {
-    struct Window {
-        uint64_t value;
-        uint64_t id;
-        uint64_t timestamp;
+
+    struct Vector {
+        float durationMonth;
+        float creditAmount;
+        float score;
+        float age25;
     };
 
-    struct Window2 {
-        uint64_t value;
-        uint64_t id;
-        uint64_t timestamp;
-    };
+    std::vector<std::size_t> shape;
+    shape.push_back(4);
 
-    auto tensorSchema = Schema::create()
-                            ->addField("value", DataTypeFactory::createUInt64());
+    auto tensorSchema = Schema::create()->addField("value", DataTypeFactory::createTensor(shape, "FLOAT32", "DENSE"));
 
-    auto window2Schema = Schema::create()
-                             ->addField("value", DataTypeFactory::createUInt64())
-                             ->addField("id", DataTypeFactory::createUInt64())
-                             ->addField("timestamp", DataTypeFactory::createUInt64());
+    auto test = tensorSchema->getSchemaSizeInBytes();
 
-    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
-    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Vector), test);
 
     auto csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType->setNumberOfBuffersToProduce(2);
-    csvSourceType->setSkipHeader(true);
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "GermanCreditAge25.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setNumberOfBuffersToProduce(0);
+    csvSourceType->setSkipHeader(false);
 
-    string query =
-        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(1000))))";
+    std::string outputFilePath = getTestResourceFolder() / "tensorTest.out";
+
+    string query = R"(Query::from("tensorTest"))";
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                                  .addLogicalSource("window1", windowSchema)
-                                  .addLogicalSource("window2", window2Schema)
-                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType)
-                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType)
+                                  .addLogicalSource("tensorTest", tensorSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("tensorTest", csvSourceType)
                                   .validate()
                                   .setupTopology();
 
@@ -123,3 +115,4 @@ TEST_F(TensorTest, testCreateTensorInSchema) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
+}// namespace NES

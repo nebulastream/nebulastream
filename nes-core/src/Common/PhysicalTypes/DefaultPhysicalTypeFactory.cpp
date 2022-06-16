@@ -38,6 +38,8 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
         return getPhysicalType(DataType::as<Float>(dataType));
     } else if (dataType->isArray()) {
         return getPhysicalType(DataType::as<ArrayType>(dataType));
+    } else if (dataType->isTensor()) {
+        return getPhysicalType(DataType::as<TensorType>(dataType));
     } else if (dataType->isChar()) {
         return getPhysicalType(DataType::as<Char>(dataType));
     }

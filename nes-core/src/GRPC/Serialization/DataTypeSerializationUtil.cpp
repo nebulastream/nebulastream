@@ -57,8 +57,26 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         auto const arrayType = DataType::as<ArrayType>(dataType);
         serializedArray.set_dimensions(arrayType->length);
         serializeDataType(arrayType->component, serializedArray.mutable_componenttype());
-
         serializedDataType->mutable_details()->PackFrom(serializedArray);
+    } else if (dataType->isTensor()) {
+        serializedDataType->set_type(SerializableDataType_Type_TENSOR);
+
+        // store dimension and datatype into ArrayDetails by invoking this function recursively.
+        auto serializedTensor = SerializableDataType_TensorDetails();
+        auto const tensorType = DataType::as<TensorType>(dataType);
+        SerializableDataType_TensorDetails_TensorMemoryType memoryType;
+        switch (tensorType->tensorMemoryFormat) {
+            case DENSE: memoryType = SerializableDataType_TensorDetails_TensorMemoryType_DENSE; break;
+        }
+        //todo: filling shape this way doesn't work need other way
+        serializedTensor.set_tensormemorytype(memoryType);
+        uint16_t index = 0;
+        for(uint64_t dimension : tensorType->shape){
+            serializedTensor.set_shape(index, dimension);
+            index++;
+        }
+        serializeDataType(tensorType->component, serializedTensor.mutable_componenttype());
+        serializedDataType->mutable_details()->PackFrom(serializedTensor);
     } else {
         NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
     }
@@ -99,6 +117,8 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(SerializableDataType*
         return DataTypeFactory::createChar();
     } else if (serializedDataType->type() == SerializableDataType_Type_ARRAY) {
         return deserializeArrayType(serializedDataType);
+    } else if (serializedDataType->type() == SerializableDataType_Type_TENSOR) {
+        return deserializeTensorType(serializedDataType);
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: data type which is to be serialized not registered. "
                             "Deserialization is not possible");
@@ -122,11 +142,10 @@ std::shared_ptr<TensorType> DataTypeSerializationUtil::deserializeTensorType(Ser
 
     //get component data type
     auto componentType = deserializeDataType(tensorDetails.release_componenttype());
-    std::vector< std::size_t> shape(tensorDetails.shape().begin(), tensorDetails.shape().end());
+    std::vector<std::size_t> shape(tensorDetails.shape().begin(), tensorDetails.shape().end());
     TensorMemoryFormat tensorType = static_cast<TensorMemoryFormat>(tensorDetails.tensormemorytype());
     return std::make_shared<TensorType>(shape, componentType, tensorType);
 }
-
 
 SerializableDataValue* DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType,
                                                                      SerializableDataValue* serializedDataValue) {
