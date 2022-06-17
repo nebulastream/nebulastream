@@ -130,7 +130,7 @@ TEST_F(QueryControllerTest, testCorrectExecuteQuery) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     TopologyNodePtr topologyNode = TopologyNode::create(1, "0", 0, 0, 1);
     SourceCatalogEntryPtr entry =
-        SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
+        SourceCatalogEntry::create(physicalSource, sourceCatalog->getLogicalSource("default_logical"), topologyNode);
     ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
     web::http::http_request msg(web::http::methods::POST);
     //set query string
@@ -434,7 +434,7 @@ TEST_F(QueryControllerTest, testNonExistentSchemaAttribtue) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "default_physical", DefaultSourceType::create());
     TopologyNodePtr topologyNode = TopologyNode::create(1, "0", 0, 0, 1);
     SourceCatalogEntryPtr entry =
-        SourceCatalogEntry::create(physicalSource, sourceCatalog->getSourceForLogicalSource("default_logical"), topologyNode);
+        SourceCatalogEntry::create(physicalSource, sourceCatalog->getLogicalSource("default_logical"), topologyNode);
     ASSERT_TRUE(sourceCatalog->addPhysicalSource("default_logical", entry));
     web::http::http_request msg(web::http::methods::POST);
     //set query string

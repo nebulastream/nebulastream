@@ -113,7 +113,7 @@ class SourceCatalog {
    * @return smart pointer to a newly created source
    * @note the source will also contain the schema
    */
-    LogicalSourcePtr getSourceForLogicalSource(const std::string& logicalSourceName);
+    LogicalSourcePtr getLogicalSource(const std::string& logicalSourceName);
 
     /**
    * @brief method to return the source for an existing logical source or throw exception
@@ -121,7 +121,7 @@ class SourceCatalog {
    * @return smart pointer to a newly created source
    * @note the source will also contain the schema
    */
-    LogicalSourcePtr getSourceForLogicalSourceOrThrowException(const std::string& logicalSourceName);
+    LogicalSourcePtr getLogicalSourceOrThrowException(const std::string& logicalSourceName);
 
     /**
    * @brief test if logical source with this name exists in the log to schema mapping

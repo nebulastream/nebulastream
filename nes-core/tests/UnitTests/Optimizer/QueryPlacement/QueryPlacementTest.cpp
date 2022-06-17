@@ -102,7 +102,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         sourceCatalog->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
+        auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
 
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
@@ -974,7 +974,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
 
     sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -1103,7 +1103,7 @@ TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
 
     sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -1241,7 +1241,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -1354,7 +1354,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     sourceCatalog->addLogicalSource(sourceName, schema);
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource(sourceName);
+    auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);

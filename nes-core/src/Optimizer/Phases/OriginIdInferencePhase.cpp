@@ -15,17 +15,17 @@
 #include <Exceptions/RuntimeException.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 
 namespace NES::Optimizer {
 
-OriginIdInferenceRule::OriginIdInferenceRule() {}
+OriginIdInferencePhase::OriginIdInferencePhase() {}
 
-OriginIdInferenceRulePtr OriginIdInferenceRule::create() {
-    return std::make_shared<OriginIdInferenceRule>(OriginIdInferenceRule());
+OriginIdInferencePhasePtr OriginIdInferencePhase::create() {
+    return std::make_shared<OriginIdInferencePhase>(OriginIdInferencePhase());
 }
 
-QueryPlanPtr OriginIdInferenceRule::apply(QueryPlanPtr queryPlan) {
+QueryPlanPtr OriginIdInferencePhase::apply(QueryPlanPtr queryPlan) {
     // origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = 1;
     // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.

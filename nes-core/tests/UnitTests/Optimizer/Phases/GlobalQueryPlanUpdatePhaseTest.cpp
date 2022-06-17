@@ -352,7 +352,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                                 ->addField("X", NES::UINT64)
                                 ->addField("Y", NES::UINT64);
     sourceCatalog->addLogicalSource("example", schema);
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource("example");
+    auto logicalSource = sourceCatalog->getLogicalSource("example");
 
     auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
     auto physicalSource = PhysicalSource::create("example", "test1");

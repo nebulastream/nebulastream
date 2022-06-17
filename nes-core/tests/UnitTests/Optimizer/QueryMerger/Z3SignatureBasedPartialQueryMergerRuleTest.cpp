@@ -75,7 +75,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
 
-        auto logicalSourceCar = sourceCatalog->getSourceForLogicalSource("car");
+        auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
         SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
@@ -84,7 +84,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry2);
 
-        auto logicalSourceBike = sourceCatalog->getSourceForLogicalSource("bike");
+        auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
         SourceCatalogEntryPtr sourceCatalogEntry3 =
             std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
@@ -93,7 +93,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public Testing::TestWithError
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry3);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry4);
 
-        auto logicalSourceTruck = sourceCatalog->getSourceForLogicalSource("truck");
+        auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
         SourceCatalogEntryPtr sourceCatalogEntry5 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
