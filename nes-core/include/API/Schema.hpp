@@ -190,7 +190,7 @@ class Schema {
 
     /**
      * @brief method to get the qualifier of the source with $
-     * @return qualifier with
+     * @return qualifier with $
      */
     std::string getQualifierNameForSystemGeneratedFieldsWithSeparator();
 
