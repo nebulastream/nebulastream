@@ -82,6 +82,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
 }
 
 bool UnionLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<UnionLogicalOperatorNode>(); }
+
 void UnionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("UnionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
@@ -100,6 +101,28 @@ void UnionLogicalOperatorNode::inferStringSignature() {
     //Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
+}
+
+void UnionLogicalOperatorNode::inferInputOrigins() {
+
+    // in the default case we collect all input origins from the children/upstream operators
+    std::vector<uint64_t> leftInputOriginIds;
+    for (auto child : this->children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferInputOrigins();
+        auto childInputOriginIds = childOperator->getOutputOriginIds();
+        leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+    }
+    this->leftInputOriginIds = leftInputOriginIds;
+
+    //    std::vector<uint64_t> rightInputOriginIds;
+    //    for (auto child : this->getRightOperators()) {
+    //        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+    //        childOperator->inferInputOrigins();
+    //        auto childInputOriginIds = childOperator->getOutputOriginIds();
+    //        rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+    //    }
+    //    this->rightInputOriginIds;
 }
 
 }// namespace NES

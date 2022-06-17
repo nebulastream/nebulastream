@@ -62,7 +62,16 @@ bool JoinLogicalOperatorNode::inferSchema() {
     FieldAccessExpressionNodePtr leftJoinKey = joinDefinition->getLeftJoinKey();
     auto leftJoinKeyName = leftJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-        if ((*itr)->hasFieldName(leftJoinKeyName)) {
+
+        bool fieldExists;
+        //If field name contains qualifier
+        if (leftJoinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+            fieldExists = (*itr)->contains(leftJoinKeyName);
+        } else {
+            fieldExists = ((*itr)->hasFieldName(leftJoinKeyName) != nullptr);
+        }
+
+        if (fieldExists) {
             leftInputSchema->copyFields(*itr);
             leftJoinKey->inferStamp(leftInputSchema);
             //remove the schema from distinct schema list
@@ -75,11 +84,10 @@ bool JoinLogicalOperatorNode::inferSchema() {
     //Find the schema for right join key
     FieldAccessExpressionNodePtr rightJoinKey = joinDefinition->getRightJoinKey();
     auto rightJoinKeyName = rightJoinKey->getFieldName();
-    for (auto& schema : distinctSchemas) {
-        if (schema->hasFieldName(rightJoinKeyName)) {
-            rightInputSchema->copyFields(schema);
-            rightJoinKey->inferStamp(rightInputSchema);
-        }
+    if (distinctSchemas[0]->hasFieldName(rightJoinKeyName)) {
+        rightInputSchema->copyFields(distinctSchemas[0]);
+        rightJoinKey->inferStamp(rightInputSchema);
+        distinctSchemas.clear();
     }
 
     //Check if left input schema was identified
@@ -96,15 +104,16 @@ bool JoinLogicalOperatorNode::inferSchema() {
         throw TypeInferenceException("JoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 
+    NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
+    NES_ASSERT(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
+    NES_ASSERT(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
+
     //Check that both left and right schema should be different
     if (rightInputSchema->equals(leftInputSchema, false)) {
         NES_ERROR("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
         throw TypeInferenceException("JoinLogicalOperatorNode: Found both left and right input schema to be same.");
     }
 
-    NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
-    NES_ASSERT(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
-    NES_ASSERT(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
     //Infer stamp of window definition
     auto windowType = joinDefinition->getWindowType();
     windowType->inferStamp(leftInputSchema);
@@ -175,7 +184,5 @@ void JoinLogicalOperatorNode::inferStringSignature() {
 }
 
 std::vector<OriginId> JoinLogicalOperatorNode::getOutputOriginIds() { return OriginIdAssignmentOperator::getOutputOriginIds(); }
-
-void JoinLogicalOperatorNode::inferInputOrigins() {}
 
 }// namespace NES
