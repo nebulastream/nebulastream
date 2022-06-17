@@ -331,9 +331,9 @@ target_link_libraries(distribute-window-rule-test nes-tests)
 add_test(NAME distribute-window-rule-test COMMAND distribute-window-rule-test)
 
 # DistributeWindowRuleTest
-add_executable(originid-inference-rule-test "UnitTests/Optimizer/QueryRewrite/OriginIdInferencePhaseTest.cpp")
-target_link_libraries(originid-inference-rule-test nes-tests)
-add_test(NAME originid-inference-rule-test COMMAND originid-inference-rule-test)
+add_executable(originid-inference-phase-test "UnitTests/Optimizer/Phases/OriginIdInferencePhaseTest.cpp")
+target_link_libraries(originid-inference-phase-test nes-tests)
+add_test(NAME originid-inference-phase-test COMMAND originid-inference-phase-test)
 
 # SerializationUtilTest
 add_executable(serialize-operator-test "UnitTests/Serialization/SerializationUtilTest.cpp")
