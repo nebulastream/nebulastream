@@ -69,6 +69,8 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
     auto root = topology->getRoot();
     NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
     metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId());
+    StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(root->getId());
+    metricsJson[std::to_string(root->getId())]["registration"] = MetricUtils::toJson(tMetrics)["registration"][0]["value"];
 
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());
 
@@ -76,6 +78,9 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(tNode->getId()));
         metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId());
+
+        StoredNodeMetricsPtr tMetrics = monitoringManager->getMonitoringDataFromMetricStore(tNode->getId());
+        metricsJson[std::to_string(tNode->getId())]["registration"] = MetricUtils::toJson(tMetrics)["registration"][0]["value"];
     }
     NES_INFO("MonitoringService: MetricTypes from coordinator received \n" + metricsJson.serialize());
 

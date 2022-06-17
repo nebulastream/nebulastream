@@ -699,6 +699,11 @@ add_executable(resources-reader-test "UnitTests/Monitoring/ResourcesReaderTest.c
 target_link_libraries(resources-reader-test nes-tests)
 add_test(NAME resources-reader-test COMMAND resources-reader-test)
 
+# MonitoringQueriesTest
+add_executable(monitoring-queries-test "UnitTests/Monitoring/MonitoringQueriesTest.cpp")
+target_link_libraries(monitoring-queries-test nes-tests)
+add_test(NAME monitoring-queries-test COMMAND monitoring-queries-test)
+
 # MetricCollectorTest
 add_executable(metric-collector-test "UnitTests/Monitoring/MetricCollectorTest.cpp")
 target_link_libraries(metric-collector-test nes-tests)
