@@ -1,0 +1,202 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
+
+#include "../../tests/util/MetricValidator.hpp"
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+//#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/MetricCollectors/MetricCollectorType.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/MonitoringManager.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/Storage/AbstractMetricStore.hpp>
+
+#include <Runtime/BufferManager.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
+
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestUtils.hpp>
+#include <Util/UtilityFunctions.hpp>
+
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MonitoringSourceType.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <Services/MonitoringService.hpp>
+#include <Services/QueryService.hpp>
+#include <cpprest/json.h>
+#include <cstdint>
+#include <memory>
+#include <regex>
+
+using std::cout;
+using std::endl;
+namespace NES {
+
+uint16_t timeout = 15;
+
+class MonitoringQueriesTest : public Testing::NESBaseTest {
+  public:
+    Runtime::BufferManagerPtr bufferManager;
+
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("MonitoringQueriesTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup MonitoringQueriesTest test class.");
+    }
+
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
+        NES_INFO("MonitoringQueriesTest: Setting up test with rpc port " << rpcCoordinatorPort << ", rest port " << restPort);
+    }
+
+    NesCoordinatorPtr createCoordinator() {
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->enableMonitoring = true;
+        return std::make_shared<NesCoordinator>(coordinatorConfig);
+    }
+
+    NesWorkerPtr createWorker(PhysicalSourcePtr phSource) {
+        WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+        workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig->numberOfSlots = (12);
+        workerConfig->enableMonitoring = (true);
+        workerConfig->physicalSources.add(phSource);
+        return std::make_shared<NesWorker>(std::move(workerConfig));
+    }
+
+    std::string createQueryString(std::string logicalStream, std::string metricCollectorString) {
+        std::string query = R"(Query::from("%LOGS%").sink(MonitoringSinkDescriptor::create(MetricCollectorType::%COLLECTOR%));)";
+        query = std::regex_replace(query, std::regex("%LOGS%"), logicalStream);
+        query = std::regex_replace(query, std::regex("%COLLECTOR%"), metricCollectorString);
+        return query;
+    }
+
+    void runMetricsQueryTest(uint64_t workerCnt, MetricCollectorType collectorType, SchemaPtr schema, MetricType expectedType) {
+        std::vector<NesWorkerPtr> workers;
+        MetricType retMetricType = MetricUtils::createMetricFromCollectorType(collectorType)->getMetricType();
+        ASSERT_EQ(retMetricType, expectedType);
+        MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(collectorType);
+        std::string metricCollectorStr = NES::toString(collectorType);
+
+        NesCoordinatorPtr crd = createCoordinator();
+        NES_INFO("MonitoringQueriesTest: Start coordinator");
+        uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+        EXPECT_NE(port, 0UL);
+        //register logical schema
+        crd->getSourceCatalogService()->registerLogicalSource("logTestMetricStream", schema);
+        NES_DEBUG("MonitoringQueriesTest: Coordinator started successfully");
+
+        for (uint64_t i = 0; i < workerCnt; i++) {
+            NES_DEBUG("MonitoringQueriesTest: Start worker 1");
+            NesWorkerPtr wrk = createWorker(PhysicalSource::create("logTestMetricStream", "physMetricSource", sourceType));
+            bool retStart1 = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+            EXPECT_TRUE(retStart1);
+            NES_INFO("MonitoringQueriesTest: Worker1 started successfully");
+            workers.emplace_back(wrk);
+        }
+
+        QueryServicePtr queryService = crd->getQueryService();
+        QueryCatalogServicePtr queryCatalogService = crd->getQueryCatalogService(); /*register logical schema qnv*/
+
+        NES_INFO("MonitoringQueriesTest: Submit query");
+        auto query = createQueryString("logTestMetricStream", metricCollectorStr);
+        QueryId queryId =
+            queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+
+        GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+        EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
+        for (auto wrk : workers) {
+            EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk, queryId, globalQueryPlan, 2));
+        }
+        EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+
+        NES_DEBUG("MonitoringQueriesTest: Remove query");
+        ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+        NES_DEBUG("MonitoringQueriesTest: Stop query");
+        ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
+
+        auto cnt = 1;
+        for (auto wrk : workers) {
+            NES_DEBUG("MonitoringQueriesTest: Stop worker " << cnt);
+            bool retStopWrk3 = wrk->stop(true);
+            EXPECT_TRUE(retStopWrk3);
+        }
+
+        NES_DEBUG("MonitoringQueriesTest: Stop Coordinator");
+        //TODO: If this gets removed we receive random folly exceptions
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        bool retStopCord = crd->stopCoordinator(false);
+        EXPECT_TRUE(retStopCord);
+        NES_DEBUG("MonitoringQueriesTest: Test finished");
+
+        auto metricStore = crd->getMonitoringService()->getMonitoringManager()->getMetricStore();
+
+        // test disk metrics
+        for (uint64_t nodeId = 2; nodeId <= workerCnt + 1; nodeId++) {
+            StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(nodeId);
+            ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(),
+                                                 storedMetrics,
+                                                 expectedType,
+                                                 nodeId,
+                                                 2));
+        }
+    }
+};
+
+TEST_F(MonitoringQueriesTest, testDiskMetricsQueryWithStorage) {
+    NES_INFO("MonitoringQueryTest: Testing disk metrics query");
+    uint64_t workerCnt = 3;
+    MetricCollectorType collectorType = MetricCollectorType::DISK_COLLECTOR;
+    SchemaPtr schema = DiskMetrics::getSchema("");
+    MetricType expectedType = MetricType::DiskMetric;
+    runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
+}
+
+TEST_F(MonitoringQueriesTest, testCpuMetricsQueryWithStorage) {
+    NES_INFO("MonitoringQueryTest: Testing cpu metrics query");
+    uint64_t workerCnt = 3;
+    MetricCollectorType collectorType = MetricCollectorType::CPU_COLLECTOR;
+    SchemaPtr schema = CpuMetrics::getSchema("");
+    MetricType expectedType = MetricType::WrappedCpuMetrics;
+    runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
+}
+
+TEST_F(MonitoringQueriesTest, testMemoryMetricsQueryWithStorage) {
+    NES_INFO("MonitoringQueryTest: Testing memory metrics query");
+    uint64_t workerCnt = 3;
+    MetricCollectorType collectorType = MetricCollectorType::MEMORY_COLLECTOR;
+    SchemaPtr schema = MemoryMetrics::getSchema("");
+    MetricType expectedType = MetricType::MemoryMetric;
+    runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
+}
+
+TEST_F(MonitoringQueriesTest, testNetworkMetricsQueryWithStorage) {
+    NES_INFO("MonitoringQueryTest: Testing network metrics query");
+    uint64_t workerCnt = 3;
+    MetricCollectorType collectorType = MetricCollectorType::NETWORK_COLLECTOR;
+    SchemaPtr schema = NetworkMetrics::getSchema("");
+    MetricType expectedType = MetricType::WrappedNetworkMetrics;
+    runMetricsQueryTest(workerCnt, collectorType, schema, expectedType);
+}
+
+}// namespace NES

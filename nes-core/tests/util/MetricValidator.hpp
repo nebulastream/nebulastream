@@ -39,6 +39,22 @@ namespace NES {
  */
 class MetricValidator {
   public:
+    static bool isValid(AbstractSystemResourcesReaderPtr reader, MetricPtr metric) {
+        if (metric->getMetricType() == DiskMetric) {
+            return isValid(reader, metric->getValue<DiskMetrics>());
+        } else if (metric->getMetricType() == MemoryMetric) {
+            return isValid(reader, metric->getValue<MemoryMetrics>());
+        } else if (metric->getMetricType() == RegistrationMetric) {
+            return isValid(reader, metric->getValue<RegistrationMetrics>());
+        } else if (metric->getMetricType() == WrappedCpuMetrics) {
+            return isValid(reader, metric->getValue<CpuMetricsWrapper>());
+        } else if (metric->getMetricType() == WrappedNetworkMetrics) {
+            return isValid(reader, metric->getValue<NetworkMetricsWrapper>());
+        } else {
+            return false;
+        }
+    };
+
     static bool isValid(AbstractSystemResourcesReaderPtr reader, RuntimeMetrics metrics) {
         bool check = true;
 
@@ -191,12 +207,58 @@ class MetricValidator {
         return check;
     }
 
+    static bool isValid(AbstractSystemResourcesReaderPtr reader,
+                        StoredNodeMetricsPtr storedMetrics,
+                        MetricType expectedType,
+                        TopologyNodeId expectedNodeId,
+                        uint64_t expectedSize) {
+        bool check = true;
+
+        if (!storedMetrics->contains(expectedType)) {
+            NES_ERROR("MetricValidator: Metrics for node " << expectedNodeId << " are missing type " << toString(expectedType));
+            return false;
+        }
+
+        auto metricVec = storedMetrics->at(expectedType);
+        TimestampMetricPtr pairedNetworkMetric = metricVec->at(0);
+        MetricPtr retMetric = pairedNetworkMetric->second;
+
+        NES_INFO("MetricValidator: Stored metrics for ID " << expectedNodeId << ": " << MetricUtils::toJson(storedMetrics));
+        if (retMetric->getMetricType() != expectedType) {
+            NES_ERROR("MetricValidator: MetricType is not as expected " << toString(retMetric->getMetricType())
+                                                                        << " != " << toString(expectedType));
+            check = false;
+        }
+
+        if (!MetricValidator::isValid(reader, retMetric)) {
+            check = false;
+        }
+
+        if (!MetricValidator::checkNodeIds(retMetric, expectedNodeId)) {
+            check = false;
+        }
+
+        if (storedMetrics->size() != expectedSize) {
+            NES_ERROR("MetricValidator: Stored metrics do not match expected size " << storedMetrics->size()
+                                                                                    << " != " << expectedSize);
+            check = false;
+        }
+        return check;
+    }
+
     static bool isValidAll(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
             NES_WARNING("MetricValidator: AbstractReader used. Returning true");
             return true;
+        }
+
+        if (!json.has_field("registration")) {
+            NES_ERROR("MetricValidator: Missing field registration");
+            check = false;
+        } else {
+            check = isValidRegistrationMetrics(reader, json["registration"]);
         }
 
         if (!json.has_field("disk")) {
@@ -245,13 +307,12 @@ class MetricValidator {
     }
 
     static bool isValidAllStorage(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
-        bool check = true;
-
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
             NES_WARNING("MetricValidator: AbstractReader used. Returning true");
             return true;
         }
 
+        bool check = true;
         if (!json.has_field("registration")) {
             NES_ERROR("MetricValidator: Missing field registration");
             check = false;
@@ -374,8 +435,8 @@ class MetricValidator {
         for (auto iter = json.as_object().cbegin(); iter != json.as_object().cend(); ++iter) {
             // This change lets you get the string straight up from "first"
             const utility::string_t& str = iter->first;
-            if (json[str][0]["value"].has_field("NODE_ID") && json[str][0]["value"]["NODE_ID"] != nodeId) {
-                NES_ERROR("MetricValidator: Wrong node ID for " << str << " where " << json[str]["NODE_ID"] << "!=" << nodeId);
+            auto jsonMetric = json[str][0]["value"];
+            if (!checkNodeIds(jsonMetric, nodeId)) {
                 check = false;
             }
         }

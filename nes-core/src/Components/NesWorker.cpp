@@ -287,7 +287,7 @@ bool NesWorker::connect() {
     topologyNodeId = coordinatorRpcClient->getId();
     monitoringAgent->setNodeId(topologyNodeId);
     if (successPRCRegister) {
-        NES_DEBUG("NesWorker::registerNode rpc register success");
+        NES_DEBUG("NesWorker::registerNode rpc register success with id " << topologyNodeId);
         connected = true;
         nodeEngine->setNodeId(topologyNodeId);
         healthCheckService = std::make_shared<WorkerHealthCheckService>(coordinatorRpcClient,
