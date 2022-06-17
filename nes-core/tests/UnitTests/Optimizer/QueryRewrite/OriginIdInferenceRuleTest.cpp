@@ -378,10 +378,10 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
                      .byKey(Attribute("value"))
                      .apply(Sum(Attribute("x")))
                      .joinWith(Query::from("A")
-                                   .map(Attribute("x") = Attribute("id")))
-//                                   .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(3)))
-//                                   .byKey(Attribute("value"))
-//                                   .apply(Sum(Attribute("x"))))
+                                   .map(Attribute("x") = Attribute("id"))
+                                   .window(TumblingWindow::of(EventTime(Attribute("id")), Seconds(3)))
+                                   .byKey(Attribute("value"))
+                                   .apply(Sum(Attribute("x"))))
                      .where(Attribute("id"))
                      .equalsTo(Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("x")), Seconds(3)))
@@ -397,7 +397,8 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
     ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 3);
 
     auto joinOps = updatedQueryPlan->getOperatorByType<JoinLogicalOperatorNode>();
-
+    ASSERT_EQ(joinOps[0]->getLeftInputOriginIds().size(), 1);
+    ASSERT_EQ(joinOps[0]->getRightInputOriginIds().size(), 1);
     ASSERT_EQ(joinOps[0]->getOutputOriginIds().size(), 1);
 
     // the source should always expose its own origin id as an output

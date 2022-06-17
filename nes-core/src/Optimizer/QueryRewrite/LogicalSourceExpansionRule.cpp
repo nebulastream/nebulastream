@@ -206,11 +206,6 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
                     "LogicalSourceExpansionRule: Unable to remove non-blocking upstream operator from the blocking operator");
             }
 
-            if (downStreamOperator->instanceOf<LogicalBinaryOperatorNode>()) {
-
-                downStreamOperator->as<LogicalBinaryOperatorNode>();
-            }
-
             // Add to the current operator information about operator id of the removed downStreamOperator.
             // We will use this information post expansion to re-add the connection later.
             addBlockingDownStreamOperator(operatorNode, downStreamOperator->as_if<OperatorNode>()->getId());
