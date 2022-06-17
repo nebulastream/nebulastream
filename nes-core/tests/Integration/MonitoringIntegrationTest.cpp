@@ -52,9 +52,6 @@ class MonitoringIntegrationTest : public Testing::NESBaseTest {
 };
 
 TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
-    std::string outputFilePath = getTestResourceFolder() / "requestStoredRegistrationMetricsDisabled.out";
-    remove(outputFilePath.c_str());
-
     uint64_t noWorkers = 2;
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
@@ -83,9 +80,6 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
 }
 
 TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
-    std::string outputFilePath = getTestResourceFolder() / "requestAllMetricsViaRest.out";
-    remove(outputFilePath.c_str());
-
     uint64_t noWorkers = 2;
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
                                                     TestUtils::restPort(*restPort),
@@ -127,9 +121,6 @@ TEST_F(MonitoringIntegrationTest, requestAllMetricsViaRest) {
 }
 
 TEST_F(MonitoringIntegrationTest, requestStoredMetricsViaRest) {
-    std::string outputFilePath = getTestResourceFolder() / "requestStoredMetricsViaRest.out";
-    remove(outputFilePath.c_str());
-
     uint64_t noWorkers = 2;
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableMonitoring()});
@@ -171,9 +162,6 @@ TEST_F(MonitoringIntegrationTest, requestStoredMetricsViaRest) {
 }
 
 TEST_F(MonitoringIntegrationTest, requestAllMetricsFromMonitoringStreams) {
-    std::string outputFilePath = getTestResourceFolder() / "requestAllMetricsFromMonitoringStreams.out";
-    remove(outputFilePath.c_str());
-
     uint64_t noWorkers = 2;
     uint64_t localBuffers = 64;
     uint64_t globalBuffers = 1024 * 128;
