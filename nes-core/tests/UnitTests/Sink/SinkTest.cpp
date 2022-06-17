@@ -570,8 +570,8 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
 }
 
 TEST_F(SinkTest, testMonitoringSink) {
-    auto nodeId1 = std::make_shared<TopologyNodeId>(4711);
-    auto nodeId2 = std::make_shared<TopologyNodeId>(7356);
+    auto nodeId1 = TopologyNodeId(4711);
+    auto nodeId2 = TopologyNodeId(7356);
 
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
@@ -610,7 +610,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
     // test disk metrics
-    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(static_cast<uint64_t>(*nodeId1.get()));
+    StoredNodeMetricsPtr storedMetrics = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId1));
     auto metricVec = storedMetrics->at(MetricType::DiskMetric);
     TimestampMetricPtr pairedDiskMetric = metricVec->at(0);
     MetricPtr retMetric = pairedDiskMetric->second;
@@ -621,7 +621,7 @@ TEST_F(SinkTest, testMonitoringSink) {
     ASSERT_EQ(parsedMetrics, typedMetric);
 
     // test cpu metrics
-    StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(*nodeId2.get()));
+    StoredNodeMetricsPtr storedMetricsCpu = metricStore->getAllMetrics(static_cast<uint64_t>(nodeId2));
     auto metricVecCpu = storedMetricsCpu->at(MetricType::WrappedCpuMetrics);
     TimestampMetricPtr pairedCpuMetric = metricVecCpu->at(0);
     MetricPtr retMetricCpu = pairedCpuMetric->second;
