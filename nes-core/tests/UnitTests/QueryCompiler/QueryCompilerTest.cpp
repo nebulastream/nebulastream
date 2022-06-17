@@ -29,9 +29,9 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
@@ -238,7 +238,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
-    auto inferOriginPhase = Optimizer::OriginIdInferenceRule::create();
+    auto inferOriginPhase = Optimizer::OriginIdInferencePhase::create();
     queryPlan = inferOriginPhase->apply(queryPlan);
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();
@@ -290,7 +290,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
-    auto inferOriginPhase = Optimizer::OriginIdInferenceRule::create();
+    auto inferOriginPhase = Optimizer::OriginIdInferencePhase::create();
     queryPlan = inferOriginPhase->apply(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);

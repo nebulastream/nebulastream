@@ -37,7 +37,7 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -100,7 +100,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         optimizerConfiguration.distributedWindowCombinerThreshold = 4;
         distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
-        originIdInferenceRule = Optimizer::OriginIdInferenceRule::create();
+        originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     }
 
     void cleanUpPlan(Runtime::Execution::ExecutableQueryPlanPtr plan) {
@@ -135,7 +135,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
         queryPlan = typeInferencePhase->execute(queryPlan);
         queryPlan = distributeWindowRule->apply(queryPlan);
-        queryPlan = originIdInferenceRule->apply(queryPlan);
+        queryPlan = originIdInferencePhase->apply(queryPlan);
         queryPlan = typeInferencePhase->execute(queryPlan);
         auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
         auto queryCompiler = TestUtils::createTestQueryCompiler(options);
@@ -148,7 +148,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
     Runtime::NodeEnginePtr nodeEngine;
     Optimizer::DistributeWindowRulePtr distributeWindowRule;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::OriginIdInferenceRulePtr originIdInferenceRule;
+    Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
 };
 
 /**

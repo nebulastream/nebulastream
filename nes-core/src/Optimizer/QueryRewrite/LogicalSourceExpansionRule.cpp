@@ -134,9 +134,12 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                         operatorNode->setId(Util::getNextOperatorId());
                         blockingOperator->addChild(operatorNode);
                     }
+                    //Remove the property
+                    operatorNode->removeProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
+                } else {
+                    //Assign new operator id
+                    operatorNode->setId(Util::getNextOperatorId());
                 }
-                //Remove the property
-                operatorNode->removeProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
             }
         }
     }

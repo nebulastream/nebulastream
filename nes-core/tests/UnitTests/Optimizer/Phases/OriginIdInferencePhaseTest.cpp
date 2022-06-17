@@ -42,7 +42,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
@@ -115,6 +114,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
     auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
@@ -144,6 +145,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     // the source should always expose its own origin id as an output
     auto sourceOperators = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
@@ -301,6 +304,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
     auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -321,6 +326,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
 
     auto updatedQueryPlan = typeInferencePhase->execute(queryPlan);
     updatedQueryPlan = topologySpecificQueryRewritePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
+    updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
     auto sourceOps = updatedQueryPlan->getOperatorByType<SourceLogicalOperatorNode>();
     auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
