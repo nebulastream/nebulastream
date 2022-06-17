@@ -85,13 +85,13 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
                     duplicatedFilterOperator->setId(Util::getNextOperatorId());
                     //Inset it between currently traversed node and its parent
-                    if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
+                    if (!node->as_if<OperatorNode>()->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
                     isFilterAboveUnionOperator = !nodesToProcess.empty();
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
-                             && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
+                             && node->as_if<OperatorNode>()->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
@@ -110,13 +110,13 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
                     duplicatedFilterOperator->setId(Util::getNextOperatorId());
                     //Inset it between currently traversed node and its parent
-                    if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
+                    if (!node->as_if<OperatorNode>()->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
                     isFilterAboveUnionOperator = !nodesToProcess.empty();
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
-                             && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
+                             && node->as_if<OperatorNode>()->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                 }

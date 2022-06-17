@@ -39,10 +39,10 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan) {
             auto projectOperator = constructProjectOperator(rightInputSchema, leftInputSchema);
             auto childrenToUnionOperator = unionOperator->getChildren();
             for (auto& child : childrenToUnionOperator) {
-                auto childOutputSchema = child->as<LogicalOperatorNode>()->getOutputSchema();
+                auto childOutputSchema = child->as<OperatorNode>()->getOutputSchema();
                 //Find the child that matches the right schema and inset the project operator there
                 if (rightInputSchema->equals(childOutputSchema, false)) {
-                    child->insertBetweenThisAndParentNodes(projectOperator);
+                    child->as_if<OperatorNode>()->insertBetweenThisAndParentNodes(projectOperator);
                     break;
                 }
             }

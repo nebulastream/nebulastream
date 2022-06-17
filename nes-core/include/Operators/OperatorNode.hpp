@@ -100,7 +100,7 @@ class OperatorNode : public Node {
     * @brief Add input operator as child to this operator and add the input operator as new parent to the old operator's children
     * @return true if operation succeeded else false
     */
-    bool insertBetweenThisAndChildNodes(const OperatorNodePtr& newNode);
+    bool insertBetweenThisAndChildNodes(const OperatorNodePtr& newOperator);
 
     /**
      * @brief replace an old operator with new operator

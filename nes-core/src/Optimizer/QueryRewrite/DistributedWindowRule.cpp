@@ -204,7 +204,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice operator" << windowDef->toString());
         auto sliceOp = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef);
-        child->insertBetweenThisAndParentNodes(sliceOp);
+        child->as_if<OperatorNode>()->insertBetweenThisAndParentNodes(sliceOp);
     }
 }
 

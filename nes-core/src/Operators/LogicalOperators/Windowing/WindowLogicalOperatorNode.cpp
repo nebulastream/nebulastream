@@ -36,10 +36,7 @@ std::string WindowLogicalOperatorNode::toString() const {
 }
 
 bool WindowLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
-    bool eq = equal(rhs);
-    bool idCmp = rhs->as<WindowLogicalOperatorNode>()->getId() == id;
-    bool typeInfer = rhs->instanceOf<CentralWindowOperator>();
-    return eq && idCmp && !typeInfer;
+    return equal(rhs) && (rhs->as<WindowLogicalOperatorNode>()->getId() == id) && !rhs->instanceOf<CentralWindowOperator>();
 }
 
 bool WindowLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<WindowLogicalOperatorNode>(); }
