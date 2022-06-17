@@ -61,17 +61,15 @@ bool JoinLogicalOperatorNode::inferSchema() {
     //Find the schema for left join key
     FieldAccessExpressionNodePtr leftJoinKey = joinDefinition->getLeftJoinKey();
     auto leftJoinKeyName = leftJoinKey->getFieldName();
+    bool fieldExistsInSchema;
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-
-        bool fieldExists;
         //If field name contains qualifier
         if (leftJoinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
-            fieldExists = (*itr)->contains(leftJoinKeyName);
+            fieldExistsInSchema = (*itr)->contains(leftJoinKeyName);
         } else {
-            fieldExists = ((*itr)->hasFieldName(leftJoinKeyName) != nullptr);
+            fieldExistsInSchema = ((*itr)->hasFieldName(leftJoinKeyName) != nullptr);
         }
-
-        if (fieldExists) {
+        if (fieldExistsInSchema) {
             leftInputSchema->copyFields(*itr);
             leftJoinKey->inferStamp(leftInputSchema);
             //remove the schema from distinct schema list
@@ -81,13 +79,30 @@ bool JoinLogicalOperatorNode::inferSchema() {
         itr++;
     }
 
+    if (!fieldExistsInSchema) {
+        NES_ERROR("JoinLogicalOperatorNode: Unable to find left join key " + leftJoinKeyName + " in schemas.");
+        throw TypeInferenceException("JoinLogicalOperatorNode: Unable to find left join key " + leftJoinKeyName + " in schemas.");
+    }
+
     //Find the schema for right join key
     FieldAccessExpressionNodePtr rightJoinKey = joinDefinition->getRightJoinKey();
     auto rightJoinKeyName = rightJoinKey->getFieldName();
-    if (distinctSchemas[0]->hasFieldName(rightJoinKeyName)) {
+    //If field name contains qualifier
+    if (rightJoinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+        fieldExistsInSchema = distinctSchemas[0]->contains(rightJoinKeyName);
+    } else {
+        fieldExistsInSchema = (distinctSchemas[0]->hasFieldName(rightJoinKeyName) != nullptr);
+    }
+    if (fieldExistsInSchema) {
         rightInputSchema->copyFields(distinctSchemas[0]);
         rightJoinKey->inferStamp(rightInputSchema);
-        distinctSchemas.clear();
+    }
+    distinctSchemas.clear();
+
+    if (!fieldExistsInSchema) {
+        NES_ERROR("JoinLogicalOperatorNode: Unable to find right join key " + rightJoinKeyName + " in schemas.");
+        throw TypeInferenceException("JoinLogicalOperatorNode: Unable to find right join key " + rightJoinKeyName
+                                     + " in schemas.");
     }
 
     //Check if left input schema was identified

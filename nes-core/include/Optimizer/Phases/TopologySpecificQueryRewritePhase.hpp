@@ -41,9 +41,6 @@ using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
 class DistributeJoinRule;
 using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
 
-class OriginIdInferencePhase;
-using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferencePhase>;
-
 /**
  * @brief This phase is responsible for re-writing the query plan based on the topology information.
  */
@@ -71,7 +68,6 @@ class TopologySpecificQueryRewritePhase {
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     DistributeWindowRulePtr distributeWindowRule;
     DistributeJoinRulePtr distributeJoinRule;
-    OriginIdInferenceRulePtr originIdInferenceRule;
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_PHASES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP_
