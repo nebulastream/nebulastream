@@ -723,6 +723,8 @@ add_test(NAME user-defined-monitoring-test COMMAND user-defined-monitoring-test)
 add_executable(monitoring-integration-test "Integration/MonitoringIntegrationTest.cpp")
 target_link_libraries(monitoring-integration-test nes-tests)
 add_test(NAME monitoring-integration-test COMMAND monitoring-integration-test)
+set_tests_properties(monitoring-integration-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+add_dependencies(monitoring-integration-test nesCoordinator nesWorker)
 
 ### MemorySourceIntegrationTest ###
 add_executable(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp")

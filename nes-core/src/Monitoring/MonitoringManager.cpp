@@ -194,7 +194,7 @@ bool MonitoringManager::registerLogicalMonitoringStreams(const Configurations::C
         }
         return true;
     }
-    NES_ERROR("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
+    NES_WARNING("MonitoringManager: Monitoring is disabled, registering of logical monitoring streams not possible.");
     return false;
 }
 

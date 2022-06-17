@@ -229,7 +229,7 @@ bool TestUtils::addLogicalSource(const string& schemaString, const std::string& 
 
 bool TestUtils::waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers) {
     auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";
-    NES_INFO("TestUtil: Executen GET request on URI " << baseUri);
+    NES_INFO("TestUtil: Executing GET request on URI " << baseUri);
     web::json::value json_return;
     web::http::client::http_client client(baseUri);
     size_t nodeNo = 0;
