@@ -38,7 +38,7 @@ QueryPlanPtr OriginIdInferenceRule::apply(QueryPlanPtr queryPlan) {
         if (auto logicalOperator = rootOperators->as_if<LogicalOperatorNode>()) {
             logicalOperator->inferInputOrigins();
         } else {
-            throw Exceptions::RuntimeException("During OriginIdInferenceRule all root operators have to be LogicalOperatorNodes");
+            throw Exceptions::RuntimeException("During OriginIdInferencePhase all root operators have to be LogicalOperatorNodes");
         }
     }
     return queryPlan;

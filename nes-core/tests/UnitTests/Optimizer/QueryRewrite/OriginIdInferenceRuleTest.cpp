@@ -62,7 +62,7 @@ class OriginIdInferenceRuleTest : public testing::Test {
     void SetUp() override {
         NES::Logger::setupLogging("OriginIdInferenceRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup OriginIdInferenceRuleTest test case.");
-        originIdInferenceRule = Optimizer::OriginIdInferenceRule::create();
+        originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
         SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);

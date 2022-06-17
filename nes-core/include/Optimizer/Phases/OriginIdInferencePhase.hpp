@@ -20,11 +20,11 @@
 
 namespace NES::Optimizer {
 
-class OriginIdInferenceRule;
-using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferenceRule>;
+class OriginIdInferencePhase;
+using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferencePhase>;
 
 /**
- * @brief The OriginIdInferenceRule traverses the operator tree and assigns origin ids to operators.
+ * @brief The OriginIdInferencePhase traverses the operator tree and assigns origin ids to operators.
  *
  * In general, origin ids are emitted from sources, windows or other stateful operators and are used to identify the origin of records.
  * This is crucial for stateful operators, which have to make guarantees over the order of records in the stream (see WatermarkProcessor)
@@ -34,10 +34,10 @@ using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferenceRule>;
  * These origin ids are unique to a specific query.
  * 2. It processes all operators and assigns the input and output origin ids.
 */
-class OriginIdInferenceRule : public BaseRewriteRule {
+class OriginIdInferencePhase : public BaseRewriteRule {
   public:
     static OriginIdInferenceRulePtr create();
-    virtual ~OriginIdInferenceRule() = default;
+    virtual ~OriginIdInferencePhase() = default;
 
     /**
      * @brief Apply the rule to the Query plan
@@ -47,7 +47,7 @@ class OriginIdInferenceRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    explicit OriginIdInferenceRule();
+    explicit OriginIdInferencePhase();
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_ORIGINIDINFERENCERULE_HPP_

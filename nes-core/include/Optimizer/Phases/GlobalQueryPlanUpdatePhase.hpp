@@ -56,6 +56,9 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
+class OriginIdInferencePhase;
+using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
+
 class TopologySpecificQueryRewritePhase;
 using TopologySpecificQueryRewritePhasePtr = std::shared_ptr<TopologySpecificQueryRewritePhase>;
 
@@ -108,6 +111,7 @@ class GlobalQueryPlanUpdatePhase {
     TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
+    OriginIdInferencePhasePtr originIdInferencePhase;
     MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
     z3::ContextPtr z3Context;
 };
