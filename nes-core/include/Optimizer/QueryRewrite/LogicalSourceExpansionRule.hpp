@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <Operators/OperatorId.hpp>
 #include <memory>
 #include <set>
 
@@ -35,7 +36,7 @@ namespace NES::Optimizer {
 class LogicalSourceExpansionRule;
 using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
-const std::string LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS = "ListOfBlockingParents";
+const std::string LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS = "ListOfBlockingDownStreamOperatorIds";
 
 /**
  * @brief This class will expand the logical query graph by adding information about the physical sources and expand the
@@ -113,21 +114,21 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      * operator and its information is stored in the operators property.
      * @param operatorNode : operator to check for connected blocking operator
      */
-    void removeConnectedBlockingOperators(const OperatorNodePtr& operatorNode);
+    void removeConnectedBlockingOperators(const NodePtr& operatorNode);
 
     /**
-     * @brief Remove the upstream blocking operator from the operator and add the upstream operator id to its properties
-     * @param operatorNode operator to add property and remove upstream operator from
-     * @param upstreamOperator operator to remove
+     * @brief Add the upstream operator id to the operator property
+     * @param operatorNode operator whose property needs to be updated
+     * @param downStreamOperatorId id of the downstream operator to add
      */
-    void removeAndAddBlockingUpstreamOperator(const OperatorNodePtr& operatorNode, const OperatorNodePtr& upstreamOperator);
+    void addBlockingDownStreamOperator(const NodePtr& operatorNode, OperatorId downStreamOperatorId);
 
     /**
      * @brief Check if the input operator is a blocking operator or not (operator that can't be expanded, for example, Window Join or Union)
      * @param operatorNode : operator to check
      * @return true if blocking else false
      */
-    bool isBlockingOperator(const OperatorNodePtr& operatorNode);
+    bool isBlockingOperator(const NodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_

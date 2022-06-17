@@ -65,19 +65,19 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public Testing::TestWithErrorHand
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
 
-        auto logicalSourceCar = sourceCatalog->getSourceForLogicalSource("car");
+        auto logicalSourceCar = sourceCatalog->getLogicalSource("car");
         auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
         SourceCatalogEntryPtr sourceCatalogEntry1 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
         sourceCatalog->addPhysicalSource("car", sourceCatalogEntry1);
 
-        auto logicalSourceBike = sourceCatalog->getSourceForLogicalSource("bike");
+        auto logicalSourceBike = sourceCatalog->getLogicalSource("bike");
         auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
         SourceCatalogEntryPtr sourceCatalogEntry2 =
             std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
         sourceCatalog->addPhysicalSource("bike", sourceCatalogEntry2);
 
-        auto logicalSourceTruck = sourceCatalog->getSourceForLogicalSource("truck");
+        auto logicalSourceTruck = sourceCatalog->getLogicalSource("truck");
         auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
         SourceCatalogEntryPtr sourceCatalogEntry3 =
             std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);

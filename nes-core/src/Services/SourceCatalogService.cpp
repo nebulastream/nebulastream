@@ -43,7 +43,7 @@ bool SourceCatalogService::registerPhysicalSource(TopologyNodePtr topologyNode,
               << topologyNode->getId() << " physical source=" << physicalSourceName << " logical source=" << logicalSourceName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalSource);
     auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
-    auto logicalSource = sourceCatalog->getSourceForLogicalSource(logicalSourceName);
+    auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
     bool success = sourceCatalog->addPhysicalSource(logicalSourceName, sce);
     if (!success) {

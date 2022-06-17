@@ -21,7 +21,7 @@
 namespace NES::Optimizer {
 
 class OriginIdInferencePhase;
-using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferencePhase>;
+using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
 
 /**
  * @brief The OriginIdInferencePhase traverses the operator tree and assigns origin ids to operators.
@@ -36,7 +36,7 @@ using OriginIdInferenceRulePtr = std::shared_ptr<OriginIdInferencePhase>;
 */
 class OriginIdInferencePhase : public BaseRewriteRule {
   public:
-    static OriginIdInferenceRulePtr create();
+    static OriginIdInferencePhasePtr create();
     virtual ~OriginIdInferencePhase() = default;
 
     /**

@@ -35,7 +35,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -51,17 +51,17 @@
 using namespace NES;
 using namespace Configurations;
 
-class OriginIdInferenceRuleTest : public testing::Test {
+class OriginIdInferencePhaseTest : public testing::Test {
 
   public:
-    Optimizer::OriginIdInferenceRulePtr originIdInferenceRule;
+    Optimizer::OriginIdInferencePhasePtr originIdInferenceRule;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        NES::Logger::setupLogging("OriginIdInferenceRuleTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup OriginIdInferenceRuleTest test case.");
+        NES::Logger::setupLogging("OriginIdInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
         SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
@@ -71,10 +71,10 @@ class OriginIdInferenceRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Setup OriginIdInferenceRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup OriginIdInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down OriginIdInferenceRuleTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down OriginIdInferencePhaseTest test class."); }
 
     void setupTopologyNodeAndSourceCatalog(const SourceCatalogPtr& sourceCatalog) {
         NES_INFO("Setup FilterPushDownTest test case.");
@@ -82,7 +82,7 @@ class OriginIdInferenceRuleTest : public testing::Test {
 
         auto schemaA = Schema::create()->addField("id", INT32)->addField("value", UINT32);
         sourceCatalog->addLogicalSource("A", schemaA);
-        LogicalSourcePtr logicalSourceA = sourceCatalog->getSourceForLogicalSource("A");
+        LogicalSourcePtr logicalSourceA = sourceCatalog->getLogicalSource("A");
 
         PhysicalSourcePtr physicalSourceA1 = PhysicalSource::create("A", "A1", DefaultSourceType::create());
         SourceCatalogEntryPtr sceA1 = std::make_shared<SourceCatalogEntry>(physicalSourceA1, logicalSourceA, physicalNode);
@@ -94,7 +94,7 @@ class OriginIdInferenceRuleTest : public testing::Test {
 
         auto schemaB = Schema::create()->addField("id", INT32)->addField("value", UINT32);
         sourceCatalog->addLogicalSource("B", schemaB);
-        LogicalSourcePtr logicalSourceB = sourceCatalog->getSourceForLogicalSource("B");
+        LogicalSourcePtr logicalSourceB = sourceCatalog->getLogicalSource("B");
 
         PhysicalSourcePtr physicalSourceB1 = PhysicalSource::create("B", "B1", DefaultSourceType::create());
         SourceCatalogEntryPtr sceB1 = std::make_shared<SourceCatalogEntry>(physicalSourceB1, logicalSourceB, physicalNode);
@@ -105,7 +105,7 @@ class OriginIdInferenceRuleTest : public testing::Test {
 /**
  * @brief Tests inference on a query plan with a single source.
  */
-TEST_F(OriginIdInferenceRuleTest, testRuleForSinglePhysicalSource) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("B"))->as<SourceLogicalOperatorNode>();
@@ -134,7 +134,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSinglePhysicalSource) {
 /**
  * @brief Tests inference on a query plan with a single source.
  */
-TEST_F(OriginIdInferenceRuleTest, testRuleForMultiplePhysicalSources) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
@@ -165,7 +165,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultiplePhysicalSources) {
  * @brief Tests inference on a query plan with multiple sources.
  * Thus the root operator should contain the origin ids from all sources.
  */
-TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSources) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source1 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
@@ -203,7 +203,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSources) {
  * @brief Tests inference on a query plan with multiple sources and intermediate unary operators.
  * Thus the all intermediate operators should contain the origin ids from all sources.
  */
-TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndIntermediateUnaryOperators) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnaryOperators) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source1 =
         LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperatorNode>();
@@ -248,7 +248,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndIntermediateUnary
  * @brief Tests inference on a query plan with multiple sources and a central window operator.
  * Thus the root operator should contain the origin id from the window operator and the window operator from all sources.
  */
-TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndWindow) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
                        ->as<SourceLogicalOperatorNode>();
@@ -293,7 +293,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForMultipleSourcesAndWindow) {
     ASSERT_EQ(sink->getInputOriginIds()[0], window->getOriginId());
 }
 
-TEST_F(OriginIdInferenceRuleTest, testRuleForUnionOperators) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators) {
 
     auto query = Query::from("A").unionWith(Query::from("B")).sink(NullOutputSinkDescriptor::create());
 
@@ -313,7 +313,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForUnionOperators) {
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOps[0]->getOutputOriginIds()[0]);
 }
 
-TEST_F(OriginIdInferenceRuleTest, testRuleForSelfUnionOperators) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
 
     auto query = Query::from("A").unionWith(Query::from("A")).sink(NullOutputSinkDescriptor::create());
 
@@ -340,7 +340,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSelfUnionOperators) {
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOutputOriginIds[0]);
 }
 
-TEST_F(OriginIdInferenceRuleTest, testRuleForSelfJoinOperator) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
 
     auto query = Query::from("A")
                      .joinWith(Query::from("A").as("C"))
@@ -380,7 +380,7 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForSelfJoinOperator) {
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], joinOutputOriginIds[0]);
 }
 
-TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) {
 
     auto query = Query::from("B")
                      .unionWith(Query::from("A"))
@@ -413,22 +413,4 @@ TEST_F(OriginIdInferenceRuleTest, testRuleForJoinAggregationAndUnionOperators) {
     ASSERT_EQ(joinOps[0]->getLeftInputOriginIds().size(), 1);
     ASSERT_EQ(joinOps[0]->getRightInputOriginIds().size(), 1);
     ASSERT_EQ(joinOps[0]->getOutputOriginIds().size(), 1);
-
-    // the source should always expose its own origin id as an output
-    //    ASSERT_EQ(source1->getOutputOriginIds().size(), 1);
-    //    ASSERT_EQ(source1->getOutputOriginIds()[0], source1->getOriginId());
-    //
-    //    // the window should always have one input origin id.
-    //    ASSERT_EQ(window->getInputOriginIds().size(), 3);
-    //
-    //    // input origin ids of the window should contain all origin ids from the sources.
-    //    ASSERT_EQ(window->getInputOriginIds()[0], source1->getOriginId());
-    //    ASSERT_EQ(window->getInputOriginIds()[1], source2->getOriginId());
-    //    ASSERT_EQ(window->getInputOriginIds()[2], source3->getOriginId());
-    //
-    //    // the sink should always have one input origin id.
-    //    ASSERT_EQ(sink->getInputOriginIds().size(), 1);
-    //
-    //    // input origin ids of the sink should be the same as the window operator origin id
-    //    ASSERT_EQ(sink->getInputOriginIds()[0], window->getOriginId());
 }

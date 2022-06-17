@@ -45,7 +45,7 @@ bool CentralWindowOperator::isIdentical(NodePtr const& rhs) const {
 
 bool CentralWindowOperator::equal(NodePtr const& rhs) const {
     return rhs->instanceOf<CentralWindowOperator>()
-        && rhs->as<WindowOperatorNode>()->getWindowDefinition()->equal(this->getWindowDefinition());
+        && rhs->as<CentralWindowOperator>()->getWindowDefinition()->equal(this->getWindowDefinition());
 }
 
 OperatorNodePtr CentralWindowOperator::copy() {

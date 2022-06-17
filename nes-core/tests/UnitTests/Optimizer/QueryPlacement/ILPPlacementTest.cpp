@@ -105,7 +105,7 @@ class ILPPlacementTest : public Testing::TestWithErrorHandling<testing::Test> {
 
         sourceCatalogForILP = std::make_shared<SourceCatalog>(queryParsingService);
         sourceCatalogForILP->addLogicalSource(sourceName, schema);
-        auto logicalSource = sourceCatalogForILP->getSourceForLogicalSource(sourceName);
+        auto logicalSource = sourceCatalogForILP->getLogicalSource(sourceName);
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
         csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
