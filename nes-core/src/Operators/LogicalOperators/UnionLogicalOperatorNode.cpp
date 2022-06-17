@@ -114,15 +114,6 @@ void UnionLogicalOperatorNode::inferInputOrigins() {
         leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
     }
     this->leftInputOriginIds = leftInputOriginIds;
-
-    //    std::vector<uint64_t> rightInputOriginIds;
-    //    for (auto child : this->getRightOperators()) {
-    //        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
-    //        childOperator->inferInputOrigins();
-    //        auto childInputOriginIds = childOperator->getOutputOriginIds();
-    //        rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
-    //    }
-    //    this->rightInputOriginIds;
 }
 
 }// namespace NES
