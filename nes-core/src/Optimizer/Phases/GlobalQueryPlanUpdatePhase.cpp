@@ -18,6 +18,7 @@
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -52,6 +53,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogServicePtr qu
         || optimizerConfiguration.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
 
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
+    originIdInferencePhase = OriginIdInferencePhase::create();
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(sourceCatalog, optimizerConfiguration);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfiguration.memoryLayoutPolicy);
@@ -91,11 +93,9 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
                     NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                     queryPlan = typeInferencePhase->execute(queryPlan);
-                    queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 1", queryPlan);
 
                     NES_DEBUG("QueryProcessingService: Performing query choose memory layout phase: " << queryId);
                     setMemoryLayoutPhase->execute(queryPlan);
-                    queryCatalogService->addUpdatedQueryPlan(queryId, "Set Memory Layout Phase 1", queryPlan);
 
                     NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                     queryPlan = queryRewritePhase->execute(queryPlan);
@@ -107,14 +107,12 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
                     queryPlan = typeInferencePhase->execute(queryPlan);
-                    queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 2", queryPlan);
 
                     NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
                     signatureInferencePhase->execute(queryPlan);
 
                     NES_INFO("Before " << queryPlan->toString());
                     queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
-
                     if (!queryPlan) {
                         throw log4cxx::helpers::Exception(
                             "QueryProcessingService: Failed during query topology specific rewrite phase for query: "
@@ -123,11 +121,19 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
                     queryPlan = typeInferencePhase->execute(queryPlan);
+
                     if (!queryPlan) {
                         throw log4cxx::helpers::Exception("QueryProcessingService: Failed during Type inference phase for query: "
                                                           + std::to_string(queryId));
                     }
-                    queryCatalogService->addUpdatedQueryPlan(queryId, "Type Inference Phase 3", queryPlan);
+
+                    queryPlan = originIdInferencePhase->apply(queryPlan);
+
+                    if (!queryPlan) {
+                        throw log4cxx::helpers::Exception(
+                            "QueryProcessingService: Failed during origin id inference phase for query: "
+                            + std::to_string(queryId));
+                    }
 
                     queryPlan = setMemoryLayoutPhase->execute(queryPlan);
                     if (!queryPlan) {
@@ -135,7 +141,6 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                             "QueryProcessingService: Failed during Memory Layout Selection phase for query: "
                             + std::to_string(queryId));
                     }
-                    queryCatalogService->addUpdatedQueryPlan(queryId, "Set Memory Layout Phase 2", queryPlan);
 
                     queryCatalogService->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);
                     NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);

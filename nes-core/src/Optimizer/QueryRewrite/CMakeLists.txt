@@ -20,5 +20,4 @@ add_source_files(nes-core
         LogicalSourceExpansionRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
         RenameSourceToProjectOperatorRule.cpp
-        OriginIdInferenceRule.cpp
 )
