@@ -306,8 +306,7 @@ void AbstractQueryManager::updateStatistics(const Task& task,
     } else {
         using namespace std::string_literals;
 
-        NES_ERROR("queryToStatisticsMap not set for "s + std::to_string(queryId)
-                                           + " this should only happen for testing");
+        NES_ERROR("queryToStatisticsMap not set for "s + std::to_string(queryId) + " this should only happen for testing");
     }
 #endif
 }

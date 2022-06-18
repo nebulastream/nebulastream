@@ -20,11 +20,11 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <set>
 #include <unordered_map>
-#include <atomic>
 
 namespace NES {
 

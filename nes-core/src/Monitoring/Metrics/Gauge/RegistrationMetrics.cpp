@@ -40,9 +40,9 @@ RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
 }
 
 RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& metrics)
-    : nodeId(0), totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()), totalCPUJiffies(metrics.totalcpujiffies()),
-      cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()), isMoving(metrics.ismoving()),
-      hasBattery(metrics.hasbattery()) {
+    : nodeId(0), totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()),
+      totalCPUJiffies(metrics.totalcpujiffies()), cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()),
+      isMoving(metrics.ismoving()), hasBattery(metrics.hasbattery()) {
     NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
 }
 
