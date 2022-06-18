@@ -68,7 +68,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      * @brief default constructor which creates a sensor node with a metric store
      * @note this will create the worker actor using the default worker config
      */
-    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, MetricStorePtr metricStore=nullptr);
+    NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, MetricStorePtr metricStore = nullptr);
 
     /**
      * @brief default dtor

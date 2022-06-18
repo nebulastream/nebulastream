@@ -142,7 +142,6 @@ class NESBaseTest : public Testing::TestWithErrorHandling<testing::Test> {
     std::promise<bool> testCompletion;
     std::atomic<bool> testCompletionSet{false};
     static constexpr uint64_t WAIT_TIME_SETUP = 5;
-
 };
 }// namespace Testing
 
