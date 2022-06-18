@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.2.49](https://github.com/nebulastream/nebulastream/tree/v0.2.49) (2022-06-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.48...v0.2.49)
+
+#### Monitoring 🚥
+
+- Enable user defined monitoring as data streams [\#2620](https://github.com/nebulastream/nebulastream/issues/2620)
+
+## [v0.2.48](https://github.com/nebulastream/nebulastream/tree/v0.2.48) (2022-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.47...v0.2.48)
+
 ## [v0.2.47](https://github.com/nebulastream/nebulastream/tree/v0.2.47) (2022-06-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.2.46...v0.2.47)
@@ -1428,7 +1440,7 @@
 - march is set too aggressive [\#1335](https://github.com/nebulastream/nebulastream/issues/1335)
 - Add WatermarkAssigner Test in WindowDeploymentTest [\#1333](https://github.com/nebulastream/nebulastream/issues/1333)
 - Test CPPCheck [\#1330](https://github.com/nebulastream/nebulastream/issues/1330)
-- !! should be replaced by .isValidAll method [\#1328](https://github.com/nebulastream/nebulastream/issues/1328)
+- !! should be replaced by .isValid method [\#1328](https://github.com/nebulastream/nebulastream/issues/1328)
 - Distinguish between Unary and Binary logical operators [\#1325](https://github.com/nebulastream/nebulastream/issues/1325)
 - Remove Operator id from LogicalSourceDescriptor [\#1323](https://github.com/nebulastream/nebulastream/issues/1323)
 - Gathering intervals between 0 and 1 [\#1319](https://github.com/nebulastream/nebulastream/issues/1319)
