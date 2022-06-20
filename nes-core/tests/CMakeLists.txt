@@ -704,11 +704,6 @@ add_executable(monitoring-queries-test "UnitTests/Monitoring/MonitoringQueriesTe
 target_link_libraries(monitoring-queries-test nes-tests)
 add_test(NAME monitoring-queries-test COMMAND monitoring-queries-test)
 
-# MonitoringOptimizerTest
-add_executable(monitoring-optimizer-test "UnitTests/Monitoring/MonitoringOptimizerTest.cpp")
-target_link_libraries(monitoring-optimizer-test nes-tests)
-add_test(NAME monitoring-optimizer-test COMMAND monitoring-optimizer-test)
-
 # MetricCollectorTest
 add_executable(metric-collector-test "UnitTests/Monitoring/MetricCollectorTest.cpp")
 target_link_libraries(metric-collector-test nes-tests)

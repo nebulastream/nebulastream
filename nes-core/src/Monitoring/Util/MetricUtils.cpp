@@ -70,7 +70,7 @@ web::json::value MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
             uint64_t timestamp = metric->first;
             MetricPtr metricVal = metric->second;
             web::json::value jMetric = asJson(metricVal);
-            jsonMetricVal["received"] = web::json::value::number(timestamp);
+            jsonMetricVal["timestamp"] = web::json::value::number(timestamp);
             jsonMetricVal["value"] = jMetric;
             arr[i++] = jsonMetricVal;
         }

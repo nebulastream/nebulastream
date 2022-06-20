@@ -18,7 +18,6 @@
 // clang-format: on
 
 #include "../../../tests/util/MetricValidator.hpp"
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
@@ -69,10 +68,6 @@ class MetricCollectorTest : public Testing::NESBaseTest {
 };
 
 TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
-    //nodeID needs always to be the first field
-    AttributeFieldPtr nodeIdField = NetworkMetrics::getSchema("")->get(0);
-    ASSERT_EQ(nodeIdField->getName(), "node_id");
-
     auto networkCollector = NetworkCollector();
     networkCollector.setNodeId(nodeId);
     MetricPtr networkMetric = networkCollector.readMetric();
@@ -97,10 +92,6 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
-    //nodeID needs always to be the first field
-    AttributeFieldPtr nodeIdField = NetworkMetrics::getSchema("")->get(0);
-    ASSERT_EQ(nodeIdField->getName(), "node_id");
-
     auto readMetrics = reader->readNetworkStats();
     readMetrics.setNodeId(nodeId);
 
@@ -132,10 +123,6 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
-    //nodeID needs always to be the first field
-    AttributeFieldPtr nodeIdField = CpuMetrics::getSchema("")->get(0);
-    ASSERT_EQ(nodeIdField->getName(), "node_id");
-
     auto cpuCollector = CpuCollector();
     cpuCollector.setNodeId(nodeId);
     MetricPtr cpuMetric = cpuCollector.readMetric();
@@ -160,10 +147,6 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
-    //nodeID needs always to be the first field
-    AttributeFieldPtr nodeIdField = CpuMetrics::getSchema("")->get(0);
-    ASSERT_EQ(nodeIdField->getName(), "node_id");
-
     auto readMetrics = reader->readCpuStats();
     readMetrics.setNodeId(nodeId);
 
@@ -195,10 +178,6 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
 }
 
 TEST_F(MetricCollectorTest, testDiskCollector) {
-    //nodeID needs always to be the first field
-    AttributeFieldPtr nodeIdField = DiskMetrics::getSchema("")->get(0);
-    ASSERT_EQ(nodeIdField->getName(), "node_id");
-
     auto diskCollector = DiskCollector();
     diskCollector.setNodeId(nodeId);
     MetricPtr diskMetric = diskCollector.readMetric();
@@ -220,10 +199,6 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
 }
 
 TEST_F(MetricCollectorTest, testMemoryCollector) {
-    //nodeID needs always to be the first field
-    AttributeFieldPtr nodeIdField = MemoryMetrics::getSchema("")->get(0);
-    ASSERT_EQ(nodeIdField->getName(), "node_id");
-
     auto memoryCollector = MemoryCollector();
     memoryCollector.setNodeId(nodeId);
 

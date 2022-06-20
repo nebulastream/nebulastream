@@ -26,7 +26,7 @@ namespace NES {
  */
 class CpuMetricsWrapper {
   public:
-    CpuMetricsWrapper();
+    CpuMetricsWrapper() = default;
     CpuMetricsWrapper(uint64_t nodeId);
     CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
 
@@ -66,9 +66,6 @@ class CpuMetricsWrapper {
     uint64_t getNodeId() const;
     void setNodeId(uint64_t nodeId);
 
-    uint64_t getTimestamp() const;
-    void setTimestamp(uint64_t nodeId);
-
     /**
      * @brief Returns the metrics as json
      * @return Json containing the metrics
@@ -81,7 +78,6 @@ class CpuMetricsWrapper {
   private:
     std::vector<CpuMetrics> cpuMetrics;
     uint64_t nodeId;
-    uint64_t timestamp;
 } __attribute__((packed));
 
 /**
