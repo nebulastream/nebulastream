@@ -31,15 +31,9 @@ WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWin
 
 std::string WindowLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "WINDOW(" << id << ")";
-    return ss.str();
-}
-
-std::string WindowLogicalOperatorNode::toStringForJSON() const {
-    std::stringstream ss;
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    ss << "WINDOWAGG(OP-" << id << ", ";
+    ss << "WINDOW AGGREGATION(OP-" << id << ", ";
     for (auto agg : windowAggregation) {
         ss << agg->getTypeAsString() << ";";
     }
