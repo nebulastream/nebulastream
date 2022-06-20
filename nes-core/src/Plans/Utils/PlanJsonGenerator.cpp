@@ -52,7 +52,7 @@ std::string PlanJsonGenerator::getOperatorType(const OperatorNodePtr& operatorNo
     } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
         operatorType = "MAP";
     } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-        operatorType = "WINDOW";
+        operatorType = "WINDOW AGGREGATION";
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         operatorType = "JOIN";
     } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
@@ -213,10 +213,10 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
         // use the id of the current operator to fill the id field
         node["id"] = web::json::value::string(std::to_string(childLogicalOperatorNode->getId()));
 
-        if (childOPeratorType == "WINDOW") {
+        if (childOPeratorType == "WINDOW AGGREGATION") {
             // window operator node needs more information, therefore we added information about window type and aggregation
-            node["name"] = web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toStringForJSON());
-            std::cout << childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toStringForJSON() << std::endl;
+            node["name"] = web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
+            std::cout << childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString() << std::endl;
         } else {
             // use concatenation of <operator type>(OP-<operator id>) to fill name field
             // e.g. FILTER(OP-1)
@@ -231,17 +231,17 @@ void PlanJsonGenerator::getChildren(OperatorNodePtr const& root,
         // Create an edge JSON object for current operator
         auto edge = web::json::value::object();
 
-        if (childOPeratorType == "WINDOW") {
+        if (childOPeratorType == "WINDOW AGGREGATION") {
             // window operator node needs more information, therefore we added information about window type and aggregation
             edge["source"] =
-                web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toStringForJSON());
+                web::json::value::string(childLogicalOperatorNode->as<WindowLogicalOperatorNode>()->toString());
         } else {
             edge["source"] =
                 web::json::value::string(childOPeratorType + "(OP-" + std::to_string(childLogicalOperatorNode->getId()) + ")");
         }
 
-        if (getOperatorType(root) == "WINDOW") {
-            edge["target"] = web::json::value::string(root->as<WindowLogicalOperatorNode>()->toStringForJSON());
+        if (getOperatorType(root) == "WINDOW AGGREGATION") {
+            edge["target"] = web::json::value::string(root->as<WindowLogicalOperatorNode>()->toString());
         } else {
             edge["target"] = web::json::value::string(getOperatorType(root) + "(OP-" + std::to_string(root->getId()) + ")");
         }
