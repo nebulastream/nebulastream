@@ -12,15 +12,5 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        ExpressionNode.cpp
-        ConstantValueExpressionNode.cpp
-        FieldAccessExpressionNode.cpp
-        BinaryExpressionNode.cpp
-        UnaryExpressionNode.cpp
-        FieldAssignmentExpressionNode.cpp
-        FieldRenameExpressionNode.cpp
+        PythonUdfExpressionNode.cpp
 )
-add_subdirectory(LogicalExpressions)
-add_subdirectory(ArithmeticalExpressions)
-add_subdirectory(GeographyExpressions)
-add_subdirectory(UdfCallExpressions)
