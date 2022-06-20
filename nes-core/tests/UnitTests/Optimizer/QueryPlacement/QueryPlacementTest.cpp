@@ -24,6 +24,7 @@
 #include <NesBaseTest.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -397,12 +398,12 @@ TEST_F(QueryPlacementTest, testPartialPlacementWithSingleOperator) {
 TEST_F(QueryPlacementTest, testPartialPlacementWithMultipleOperators) {
 
     setupDiamondTopologyAndSourceCatalog({1, 2, 2, 1});
-    Query query = Query::from("car").filter(Attribute("id") < 45).map(Attribute("newId") = 2).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").map(Attribute("newId") = 2).sink(PrintSinkDescriptor::create());
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
+    typeInferencePhase->execute(queryPlan);
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite =
         Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, Configurations::OptimizerConfiguration());
@@ -411,10 +412,15 @@ TEST_F(QueryPlacementTest, testPartialPlacementWithMultipleOperators) {
 
     auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
     auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto map1 = queryPlan->getRootOperators()[0]->getChildren()[0]->as<MapLogicalOperatorNode>();
+    auto mapOpSchema1 = map1->getOutputSchema();
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, false);
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    auto mapOpSchema2 = queryPlan->getRootOperators()[0]->getChildren()[0]->as<MapLogicalOperatorNode>()->getOutputSchema();
+    ASSERT_TRUE(mapOpSchema1->equals(mapOpSchema2,true));
+
 
     //Assertion
     ASSERT_EQ(executionNodes.size(), 3u);
@@ -433,7 +439,8 @@ TEST_F(QueryPlacementTest, testPartialPlacementWithMultipleOperators) {
     auto exeNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark);
     NES_DEBUG(exeNode->getTopologyNode()->getMaintenanceFlag());
     QueryPlanPtr queryToMigrate = globalExecutionPlan->getExecutionNodeByNodeId(nodeToMark)->getQuerySubPlans(queryId)[0];
-    sharedQueryPlan->markAsDeployed();
+    sharedQueryPlan->markAsDeployed(); //this would happen after a query has been processed. I use this status to tell if partial placement should take place
+    typeInferencePhase->execute(sharedQueryPlan->getQueryPlan());
     queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     //Assertion
