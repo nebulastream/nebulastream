@@ -41,8 +41,8 @@ class UdfCatalog {
     static std::unique_ptr<UdfCatalog> create();
 
     /**
-     * UDFs can not share the same name, even if they are implemented in different programming languages
-     * @brief Register the descriptor data of a UDF.
+     * @brief Register the descriptor data of a UDF. UDFs can not share the same name,
+     * even if they are implemented in different programming languages.
      * @param name The name of the UDF as it is used in queryIdAndCatalogEntryMapping.
      * @param descriptor The implementation data of the UDF.
      * @throws UdfException If descriptor is a nullptr or if a UDF under the name is already registered.
