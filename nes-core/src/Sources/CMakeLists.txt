@@ -44,3 +44,7 @@ if(NES_USE_MQTT)
             MQTTSource.cpp
     )
 endif()
+if(NES_USE_SIMDJSON)
+    add_source_files(nes-core
+            JSONSource.cpp)
+endif()

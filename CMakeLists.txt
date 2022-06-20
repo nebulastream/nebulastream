@@ -14,7 +14,8 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v18)
+#set(VCPKG_BINARY_VERSION v18)
+set(VCPKG_BINARY_VERSION v18-simdjson)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -69,6 +70,7 @@ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
 project(NES CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
+#set(CMAKE_CXX_COMPILER /usr/bin/g++)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
 # Find project version
@@ -433,6 +435,15 @@ if (NES_USE_MQTT)
     set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
+
+# Library containing simdjson parser
+if (NES_USE_SIMDJSON)
+    #message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+    find_package(simdjson CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} simdjson::simdjson) # TODO
+    add_compile_definitions(ENABLE_SIMDJSON_BUILD)
+    message(STATUS "Using simdjson")
+endif (NES_USE_SIMDJSON)
 
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
