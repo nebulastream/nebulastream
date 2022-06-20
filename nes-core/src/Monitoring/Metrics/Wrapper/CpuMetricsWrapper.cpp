@@ -22,18 +22,11 @@
 #include <cpprest/json.h>
 
 namespace NES {
-CpuMetricsWrapper::CpuMetricsWrapper() : nodeId(0), timestamp(0) {}
+CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
 
-CpuMetricsWrapper::CpuMetricsWrapper(uint64_t nodeId) : nodeId(nodeId), timestamp(0) {}
-
-CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) : CpuMetricsWrapper() {
+CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
     if (!arr.empty()) {
         cpuMetrics = std::move(arr);
-
-        if (!cpuMetrics.empty()) {
-            this->nodeId = cpuMetrics[0].nodeId;
-            this->timestamp = cpuMetrics[0].timestamp;
-        }
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
@@ -51,7 +44,6 @@ void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleI
 
     for (unsigned int i = 0; i < size(); i++) {
         CpuMetrics metrics = getValue(i);
-        metrics.timestamp = timestamp;
         metrics.nodeId = nodeId;
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
@@ -70,7 +62,6 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
     }
     cpuMetrics = std::move(cpuList);
     nodeId = cpuMetrics[0].nodeId;
-    timestamp = cpuMetrics[0].timestamp;
 }
 
 uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
@@ -122,17 +113,6 @@ void CpuMetricsWrapper::setNodeId(uint64_t nodeId) {
     if (!cpuMetrics.empty()) {
         for (auto& nMetric : cpuMetrics) {
             nMetric.nodeId = this->nodeId;
-        }
-    }
-}
-
-uint64_t CpuMetricsWrapper::getTimestamp() const { return timestamp; }
-
-void CpuMetricsWrapper::setTimestamp(uint64_t nodeId) {
-    this->timestamp = nodeId;
-    if (!cpuMetrics.empty()) {
-        for (auto& nMetric : cpuMetrics) {
-            nMetric.timestamp = this->timestamp;
         }
     }
 }

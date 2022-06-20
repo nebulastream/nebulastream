@@ -26,18 +26,11 @@
 
 namespace NES {
 
-NetworkMetricsWrapper::NetworkMetricsWrapper() : nodeId(0), timestamp(0) {}
+NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId) : nodeId(nodeId) {}
 
-NetworkMetricsWrapper::NetworkMetricsWrapper(uint64_t nodeId) : nodeId(nodeId), timestamp(0) {}
-
-NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) : NetworkMetricsWrapper() {
+NetworkMetricsWrapper::NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr) {
     if (!arr.empty()) {
         networkMetrics = std::move(arr);
-
-        if (!networkMetrics.empty()) {
-            this->nodeId = networkMetrics[0].nodeId;
-            this->timestamp = networkMetrics[0].timestamp;
-        }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Object cannot be allocated with less than 0 cores.");
     }
@@ -54,7 +47,6 @@ void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tu
     for (unsigned int i = 0; i < size(); i++) {
         NetworkMetrics metrics = getNetworkValue(i);
         metrics.nodeId = nodeId;
-        metrics.timestamp = timestamp;
         metrics.writeToBuffer(buf, tupleIndex + i);
     }
 }
@@ -72,7 +64,6 @@ void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t t
     }
     networkMetrics = std::move(interfaceList);
     nodeId = networkMetrics[0].nodeId;
-    timestamp = networkMetrics[0].timestamp;
 }
 
 NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) const {
@@ -85,7 +76,6 @@ NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) cons
 
 void NetworkMetricsWrapper::addNetworkMetrics(NetworkMetrics&& nwValue) {
     nwValue.nodeId = this->nodeId;
-    nwValue.timestamp = this->timestamp;
     networkMetrics.emplace_back(nwValue);
 }
 
@@ -141,17 +131,6 @@ void NetworkMetricsWrapper::setNodeId(uint64_t nodeId) {
     if (!networkMetrics.empty()) {
         for (auto& nMetric : networkMetrics) {
             nMetric.nodeId = this->nodeId;
-        }
-    }
-}
-
-uint64_t NetworkMetricsWrapper::getTimestamp() const { return timestamp; }
-
-void NetworkMetricsWrapper::setTimestamp(uint64_t nodeId) {
-    this->timestamp = nodeId;
-    if (!networkMetrics.empty()) {
-        for (auto& nMetric : networkMetrics) {
-            nMetric.timestamp = this->timestamp;
         }
     }
 }
