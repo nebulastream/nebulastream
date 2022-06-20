@@ -23,11 +23,15 @@
 
 namespace NES {
 
-DiskMetrics::DiskMetrics() : nodeId(0), fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
+DiskMetrics::DiskMetrics()
+    : timestamp(0), nodeId(0),
+      fBsize(0), fFrsize(0), fBlocks(0), fBfree(0), fBavail(0) {}
 
 SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
+                           ->addField(prefix + "timestamp", BasicType::UINT64)
+
                            ->addField(prefix + "F_BSIZE", BasicType::UINT64)
                            ->addField(prefix + "F_FRSIZE", BasicType::UINT64)
                            ->addField(prefix + "F_BLOCKS", BasicType::UINT64)
@@ -47,6 +51,7 @@ void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) 
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<uint64_t>(timestamp);
     buffer[tupleIndex][cnt++].write<uint64_t>(fBsize);
     buffer[tupleIndex][cnt++].write<uint64_t>(fFrsize);
     buffer[tupleIndex][cnt++].write<uint64_t>(fBlocks);
@@ -62,6 +67,7 @@ void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
 
     int cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    timestamp = buffer[tupleIndex][cnt++].read<uint64_t>();
     fBsize = buffer[tupleIndex][cnt++].read<uint64_t>();
     fFrsize = buffer[tupleIndex][cnt++].read<uint64_t>();
     fBlocks = buffer[tupleIndex][cnt++].read<uint64_t>();
@@ -71,6 +77,7 @@ void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
 
 web::json::value DiskMetrics::toJson() const {
     web::json::value metricsJson{};
+    metricsJson["timestamp"] = web::json::value::number(timestamp);
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
     metricsJson["F_BSIZE"] = web::json::value::number(fBsize);
     metricsJson["F_FRSIZE"] = web::json::value::number(fFrsize);
@@ -81,8 +88,8 @@ web::json::value DiskMetrics::toJson() const {
 }
 
 bool DiskMetrics::operator==(const DiskMetrics& rhs) const {
-    return nodeId == rhs.nodeId && fBavail == rhs.fBavail && fBfree == rhs.fBfree && fBlocks == rhs.fBlocks
-        && fBsize == rhs.fBsize && fFrsize == rhs.fFrsize;
+    return timestamp == rhs.timestamp && nodeId == rhs.nodeId && fBavail == rhs.fBavail && fBfree == rhs.fBfree
+        && fBlocks == rhs.fBlocks && fBsize == rhs.fBsize && fFrsize == rhs.fFrsize;
 }
 
 bool DiskMetrics::operator!=(const DiskMetrics& rhs) const { return !(rhs == *this); }

@@ -28,7 +28,7 @@ namespace NES {
  */
 class NetworkMetricsWrapper {
   public:
-    NetworkMetricsWrapper() = default;
+    NetworkMetricsWrapper();
     NetworkMetricsWrapper(uint64_t nodeId);
     NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
 
@@ -62,6 +62,9 @@ class NetworkMetricsWrapper {
     uint64_t getNodeId() const;
     void setNodeId(uint64_t nodeId);
 
+    uint64_t getTimestamp() const;
+    void setTimestamp(uint64_t nodeId);
+
     /**
      * @brief Returns the metrics as json
      * @return Json containing the metrics
@@ -74,6 +77,7 @@ class NetworkMetricsWrapper {
   private:
     std::vector<NetworkMetrics> networkMetrics;
     uint64_t nodeId;
+    uint64_t timestamp;
 } __attribute__((packed));
 
 /**
