@@ -16,7 +16,6 @@
 #define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_ORIGINIDINFERENCERULE_HPP_
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES::Optimizer {
 
@@ -34,7 +33,7 @@ using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
  * These origin ids are unique to a specific query.
  * 2. It processes all operators and assigns the input and output origin ids.
 */
-class OriginIdInferencePhase : public BaseRewriteRule {
+class OriginIdInferencePhase {
   public:
     static OriginIdInferencePhasePtr create();
     virtual ~OriginIdInferencePhase() = default;
@@ -44,7 +43,7 @@ class OriginIdInferencePhase : public BaseRewriteRule {
      * @param queryPlanPtr : The original query plan
      * @return The updated query plan
      */
-    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+    QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
   private:
     explicit OriginIdInferencePhase();

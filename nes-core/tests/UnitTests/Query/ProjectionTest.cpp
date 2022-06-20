@@ -595,7 +595,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-    queryPlan = originIdInferencePhase->apply(queryPlan);
+    queryPlan = originIdInferencePhase->execute(queryPlan);
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);

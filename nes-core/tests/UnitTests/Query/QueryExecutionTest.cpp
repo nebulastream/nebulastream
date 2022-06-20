@@ -135,7 +135,7 @@ class QueryExecutionTest : public Testing::TestWithErrorHandling<testing::Test> 
         QueryCompilation::QueryCompilerOptionsPtr options = QueryCompilation::QueryCompilerOptions::createDefaultOptions()) {
         queryPlan = typeInferencePhase->execute(queryPlan);
         queryPlan = distributeWindowRule->apply(queryPlan);
-        queryPlan = originIdInferencePhase->apply(queryPlan);
+        queryPlan = originIdInferencePhase->execute(queryPlan);
         queryPlan = typeInferencePhase->execute(queryPlan);
         auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
         auto queryCompiler = TestUtils::createTestQueryCompiler(options);
