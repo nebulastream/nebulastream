@@ -191,6 +191,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
 }
 
 CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
+    uint64_t timestamp = getWallTimeInNs();
     std::string metricLocation = "/proc/stat";
     unsigned int numCpuMetrics = std::thread::hardware_concurrency() + 1;
     auto cpu = std::vector<CpuMetrics>(numCpuMetrics);
@@ -221,6 +222,7 @@ CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
                 name[len] = '\0';
 
                 auto cpuStats = CpuMetrics();
+                cpuStats.timestamp = timestamp;
                 cpuStats.coreNum = i;
                 cpuStats.user = std::stoul(tokens[1]);
                 cpuStats.nice = std::stoul(tokens[2]);
@@ -244,8 +246,10 @@ CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
 }
 
 NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
+    uint64_t timestamp = getWallTimeInNs();
     std::string metricLocation = "/proc/net/dev";
     auto output = NetworkMetricsWrapper();
+    output.setTimestamp(timestamp);
 
     if (access(metricLocation.c_str(), F_OK) == -1) {
         return AbstractSystemResourcesReader::readNetworkStats();
@@ -350,6 +354,7 @@ MemoryMetrics LinuxSystemResourcesReader::readMemoryStats() {
             NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading memory stats");
         }
 
+        output.timestamp = getWallTimeInNs();
         output.TOTAL_RAM = sinfo->totalram;
         output.TOTAL_SWAP = sinfo->totalswap;
         output.FREE_RAM = sinfo->freeram;
@@ -382,6 +387,7 @@ DiskMetrics LinuxSystemResourcesReader::readDiskStats() {
             NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: Error reading disk stats");
         }
 
+        output.timestamp = getWallTimeInNs();
         output.fBsize = svfs->f_bsize;
         output.fFrsize = svfs->f_frsize;
         output.fBlocks = svfs->f_blocks;

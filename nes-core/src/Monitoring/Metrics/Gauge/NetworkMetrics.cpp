@@ -25,14 +25,16 @@
 namespace NES {
 
 NetworkMetrics::NetworkMetrics()
-    : nodeId(0), interfaceName(0), rBytes(0), rPackets(0), rErrs(0), rDrop(0), rFifo(0), rFrame(0), rCompressed(0), rMulticast(0),
-      tBytes(0), tPackets(0), tErrs(0), tDrop(0), tFifo(0), tColls(0), tCarrier(0), tCompressed(0) {}
+    : timestamp(0), nodeId(0),
+      interfaceName(0), rBytes(0), rPackets(0), rErrs(0), rDrop(0), rFifo(0), rFrame(0), rCompressed(0), rMulticast(0), tBytes(0),
+      tPackets(0), tErrs(0), tDrop(0), tFifo(0), tColls(0), tCarrier(0), tCompressed(0) {}
 
 SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
     SchemaPtr schema = Schema::create(Schema::ROW_LAYOUT)
                            ->addField(prefix + "node_id", BasicType::UINT64)
+                           ->addField(prefix + "timestamp", BasicType::UINT64)
 
                            ->addField(prefix + "name", BasicType::UINT64)
                            ->addField(prefix + "rBytes", BasicType::UINT64)
@@ -67,6 +69,7 @@ void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId);
+    buffer[tupleIndex][cnt++].write<uint64_t>(timestamp);
     buffer[tupleIndex][cnt++].write<uint64_t>(interfaceName);
     buffer[tupleIndex][cnt++].write<uint64_t>(rBytes);
     buffer[tupleIndex][cnt++].write<uint64_t>(rPackets);
@@ -95,6 +98,7 @@ void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
 
     uint64_t cnt = 0;
     nodeId = buffer[tupleIndex][cnt++].read<uint64_t>();
+    timestamp = buffer[tupleIndex][cnt++].read<uint64_t>();
     interfaceName = buffer[tupleIndex][cnt++].read<uint64_t>();
     rBytes = buffer[tupleIndex][cnt++].read<uint64_t>();
     rPackets = buffer[tupleIndex][cnt++].read<uint64_t>();
@@ -118,7 +122,9 @@ void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
 web::json::value NetworkMetrics::toJson() const {
     web::json::value metricsJson{};
 
+    metricsJson["timestamp"] = web::json::value::number(timestamp);
     metricsJson["NODE_ID"] = web::json::value::number(nodeId);
+
     metricsJson["R_BYTES"] = web::json::value::number(rBytes);
     metricsJson["R_PACKETS"] = web::json::value::number(rPackets);
     metricsJson["R_ERRS"] = web::json::value::number(rErrs);
@@ -141,8 +147,8 @@ web::json::value NetworkMetrics::toJson() const {
 }
 
 bool NetworkMetrics::operator==(const NetworkMetrics& rhs) const {
-    return nodeId == rhs.nodeId && interfaceName == rhs.interfaceName && rBytes == rhs.rBytes && rPackets == rhs.rPackets
-        && rErrs == rhs.rErrs && rDrop == rhs.rDrop && rFifo == rhs.rFifo && rFrame == rhs.rFrame
+    return timestamp == rhs.timestamp && nodeId == rhs.nodeId && interfaceName == rhs.interfaceName && rBytes == rhs.rBytes
+        && rPackets == rhs.rPackets && rErrs == rhs.rErrs && rDrop == rhs.rDrop && rFifo == rhs.rFifo && rFrame == rhs.rFrame
         && rCompressed == rhs.rCompressed && rMulticast == rhs.rMulticast && tBytes == rhs.tBytes && tPackets == rhs.tPackets
         && tErrs == rhs.tErrs && tDrop == rhs.tDrop && tFifo == rhs.tFifo && tColls == rhs.tColls && tCarrier == rhs.tCarrier
         && tCompressed == rhs.tCompressed;
