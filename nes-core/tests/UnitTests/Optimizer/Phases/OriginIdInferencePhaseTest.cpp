@@ -21,23 +21,19 @@
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -65,8 +61,10 @@ class OriginIdInferencePhaseTest : public testing::Test {
         SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         setupTopologyNodeAndSourceCatalog(sourceCatalog);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
+        auto optimizerConfiguration = OptimizerConfiguration();
+        optimizerConfiguration.performDistributedWindowOptimization = false;
         topologySpecificQueryRewritePhase =
-            Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, OptimizerConfiguration());
+            Optimizer::TopologySpecificQueryRewritePhase::create(sourceCatalog, optimizerConfiguration);
     }
 
     /* Will be called before a test is executed. */
@@ -296,6 +294,10 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
     ASSERT_EQ(sink->getInputOriginIds()[0], window->getOriginId());
 }
 
+/**
+ * @brief: This test infer origin id for a union operator fetching data from two distinct sources.
+ * Therefore, the output origin ids for union operator should return 3 distinct ids. 2 for each physical source of A and 1 for physical source B.
+ */
 TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators) {
 
     auto query = Query::from("A").unionWith(Query::from("B")).sink(NullOutputSinkDescriptor::create());
@@ -318,6 +320,11 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators) {
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOps[0]->getOutputOriginIds()[0]);
 }
 
+/**
+ * @brief: This test infer origin id for a union operator fetching data from same sources.
+ * Therefore, the output origin ids for union operator should return 4 distinct ids. 2 for each physical source of A on the right
+ * side and 2 for physical source A on the left side.
+ */
 TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
 
     auto query = Query::from("A").unionWith(Query::from("A")).sink(NullOutputSinkDescriptor::create());
@@ -347,6 +354,11 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], unionOutputOriginIds[0]);
 }
 
+/**
+ * @brief: This test infer origin id for a join operator joining data from same source.
+ * Therefore, the output origin ids for join operator should return 4 distinct ids. 2 for each physical source of A on the left side
+ * and 2 for each physical source of A with alias C on the right side.
+ */
 TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
 
     auto query = Query::from("A")
@@ -387,6 +399,11 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
     ASSERT_EQ(sinkOps[0]->getOutputOriginIds()[0], joinOutputOriginIds[0]);
 }
 
+/**
+ * @brief: This test infer origin id for a query involving join, aggregation, and union operators.
+ * Therefore, the output origin ids for union operator should return 3 distinct ids. 2 for each physical source of A on the left side
+ * and 2 for each physical source of A with alias C on the right side.
+ */
 TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) {
 
     auto query = Query::from("B")
@@ -399,7 +416,7 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
                                    .map(Attribute("x") = Attribute("id"))
                                    .window(TumblingWindow::of(EventTime(Attribute("value")), Seconds(3)))
                                    .byKey(Attribute("id"))
-                                   .apply(Sum(Attribute("x"))))
+                                   .apply(Avg(Attribute("x"))))
                      .where(Attribute("id"))
                      .equalsTo(Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("x")), Seconds(3)))
@@ -412,10 +429,39 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
     updatedQueryPlan = typeInferencePhase->execute(updatedQueryPlan);
     updatedQueryPlan = originIdInferenceRule->apply(updatedQueryPlan);
 
+    // Assert on origin ids for union operator
     auto unionOps = updatedQueryPlan->getOperatorByType<UnionLogicalOperatorNode>();
-
     ASSERT_EQ(unionOps[0]->getOutputOriginIds().size(), 3);
 
+    // Assert on origin ids for union operator
+    auto windowOps = updatedQueryPlan->getOperatorByType<WindowOperatorNode>();
+    ASSERT_EQ(windowOps.size(), 2);
+
+    // Window aggregations
+    auto aggregations = windowOps[0]->getWindowDefinition()->getWindowAggregation();
+    ASSERT_EQ(aggregations.size(), 1);
+    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Sum) {
+        ASSERT_EQ(windowOps[0]->getInputOriginIds().size(), 3);
+    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Avg) {
+        ASSERT_EQ(windowOps[0]->getInputOriginIds().size(), 2);
+    } else {
+        FAIL();
+    }
+    ASSERT_EQ(windowOps[0]->getOutputOriginIds().size(), 1);
+
+    // Window aggregations
+    aggregations = windowOps[1]->getWindowDefinition()->getWindowAggregation();
+    ASSERT_EQ(aggregations.size(), 1);
+    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Sum) {
+        ASSERT_EQ(windowOps[1]->getInputOriginIds().size(), 3);
+    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Avg) {
+        ASSERT_EQ(windowOps[1]->getInputOriginIds().size(), 2);
+    } else {
+        FAIL();
+    }
+    ASSERT_EQ(windowOps[1]->getOutputOriginIds().size(), 1);
+
+    // Assert on origin ids for join operator
     auto joinOps = updatedQueryPlan->getOperatorByType<JoinLogicalOperatorNode>();
     ASSERT_EQ(joinOps[0]->getLeftInputOriginIds().size(), 1);
     ASSERT_EQ(joinOps[0]->getRightInputOriginIds().size(), 1);
