@@ -25,7 +25,7 @@ OriginIdInferencePhasePtr OriginIdInferencePhase::create() {
     return std::make_shared<OriginIdInferencePhase>(OriginIdInferencePhase());
 }
 
-QueryPlanPtr OriginIdInferencePhase::apply(QueryPlanPtr queryPlan) {
+QueryPlanPtr OriginIdInferencePhase::execute(QueryPlanPtr queryPlan) {
     // origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = 1;
     // set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
@@ -38,7 +38,8 @@ QueryPlanPtr OriginIdInferencePhase::apply(QueryPlanPtr queryPlan) {
         if (auto logicalOperator = rootOperators->as_if<LogicalOperatorNode>()) {
             logicalOperator->inferInputOrigins();
         } else {
-            throw Exceptions::RuntimeException("During OriginIdInferencePhase all root operators have to be LogicalOperatorNodes");
+            throw Exceptions::RuntimeException(
+                "During OriginIdInferencePhase all root operators have to be LogicalOperatorNodes");
         }
     }
     return queryPlan;

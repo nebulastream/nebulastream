@@ -106,14 +106,14 @@ void UnionLogicalOperatorNode::inferStringSignature() {
 void UnionLogicalOperatorNode::inferInputOrigins() {
 
     // in the default case we collect all input origins from the children/upstream operators
-    std::vector<uint64_t> leftInputOriginIds;
+    std::vector<uint64_t> combinedInputOriginIds;
     for (auto child : this->children) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
-        leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+        combinedInputOriginIds.insert(combinedInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
     }
-    this->leftInputOriginIds = leftInputOriginIds;
+    this->leftInputOriginIds = combinedInputOriginIds;
 }
 
 }// namespace NES

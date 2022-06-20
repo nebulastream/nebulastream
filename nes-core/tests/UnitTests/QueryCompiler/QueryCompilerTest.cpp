@@ -239,7 +239,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
     auto inferOriginPhase = Optimizer::OriginIdInferencePhase::create();
-    queryPlan = inferOriginPhase->apply(queryPlan);
+    queryPlan = inferOriginPhase->execute(queryPlan);
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
@@ -291,7 +291,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
     auto inferOriginPhase = Optimizer::OriginIdInferencePhase::create();
-    queryPlan = inferOriginPhase->apply(queryPlan);
+    queryPlan = inferOriginPhase->execute(queryPlan);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();
