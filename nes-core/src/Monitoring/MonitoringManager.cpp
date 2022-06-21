@@ -259,7 +259,7 @@ QueryId MonitoringManager::startOrRedeployMonitoringQuery(std::string monitoring
 
         // create new monitoring query
         NES_INFO("MonitoringManager: Creating query for " << monitoringStream);
-        queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+        queryId = queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
         if ((sync && waitForQueryToStart(queryId, std::chrono::seconds(60))) || (!sync)) {
             NES_INFO("MonitoringManager: Successfully started query " << queryId << "::" << monitoringStream);
             deployedMonitoringQueries.insert({monitoringStream, queryId});
@@ -300,7 +300,7 @@ bool MonitoringManager::stopRunningMonitoringQuery(std::string streamName, bool 
         auto queryId = deployedMonitoringQueries[streamName];
 
         NES_INFO("MonitoringManager: Stopping query " << queryId << " for " << metricType);
-        if (queryService->validateAndQueueStopRequest(queryId)) {
+        if (queryService->validateAndQueueStopQueryRequest(queryId)) {
             if ((sync && checkStoppedOrTimeout(queryId, std::chrono::seconds(60))) || (!sync)) {
                 NES_INFO("MonitoringManager: Query " << queryId << "::" << metricType << " terminated.");
             } else {
