@@ -121,7 +121,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         NES_INFO("MonitoringQueriesTest: Submit query");
         auto query = createQueryString("logTestMetricStream", metricCollectorStr);
         QueryId queryId =
-            queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+            queryService->validateAndQueueAddQueryRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
         GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
         EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalogService));
@@ -131,7 +131,7 @@ class MonitoringQueriesTest : public Testing::NESBaseTest {
         EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
         NES_DEBUG("MonitoringQueriesTest: Remove query");
-        ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+        ASSERT_TRUE(queryService->validateAndQueueStopQueryRequest(queryId));
         NES_DEBUG("MonitoringQueriesTest: Stop query");
         ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalogService));
 
