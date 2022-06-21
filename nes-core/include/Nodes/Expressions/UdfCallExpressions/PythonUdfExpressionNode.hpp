@@ -18,31 +18,58 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 
 namespace NES::Experimental {
 
 class ConstantValueExpressionNode;
-using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
+using ConstantValueExpressionNodePtr = std::shared_ptr<NES::ConstantValueExpressionNode>;
 
+/**
+ * @brief
+ */
 class PythonUdfExpressionNode : public ExpressionNode, public UdfCallExpressionNode {
   public:
     PythonUdfExpressionNode();
+    explicit PythonUdfExpressionNode(PythonUdfExpressionNode* other);
     ~PythonUdfExpressionNode() override = default;
 
-    ExpressionNodePtr create(ConstantValueExpressionNodePtr const& udfName, ExpressionNodePtr const& right);
+    /**
+    * @brief
+    */
+    static ExpressionNodePtr create(ConstantValueExpressionNodePtr const& udfName,
+                                    ConstantValueExpressionNodePtr const& functionArguments);
 
-    DataTypePtr getStamp();
+    /**
+    * @brief
+    */
+    void inferStamp(SchemaPtr schema) override;
 
-    [[nodiscard]] std::string toString() const override;
+    /**
+    * @brief
+    */
+    std::string toString() const override;
+
+    /**
+    * @brief
+    */
+    void setChildren(const ExpressionNodePtr& udfName, const ExpressionNodePtr& functionArguments);
+
+    /**
+    * @brief
+    */
+    ExpressionNodePtr getUdfName();
+
+    /**
+    * @brief
+    */
+    ExpressionNodePtr getFunctionArguments();
 
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
     ExpressionNodePtr copy() override;
-
-  private:
-
 };
 
 }// namespace NES::Experimental
