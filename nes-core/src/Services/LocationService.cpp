@@ -40,9 +40,9 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
     }
     auto schedule = nodePtr->getReconnectSchedule();
     web::json::value scheduleJson;
-    scheduleJson["pathStart"] = convertLocationToJson(schedule->getPathStart());
-    scheduleJson["pathEnd"] = convertLocationToJson(schedule->getPathEnd());
-    scheduleJson["indexUpdatePosition"] = convertLocationToJson(schedule->getLastIndexUpatePosition());
+    scheduleJson["pathStart"] = convertLocationToJson(*schedule->getPathStart());
+    scheduleJson["pathEnd"] = convertLocationToJson(*schedule->getPathEnd());
+    scheduleJson["indexUpdatePosition"] = convertLocationToJson(*schedule->getLastIndexUpatePosition());
 
     auto reconnectArray = web::json::value::array();
     int i = 0;
@@ -77,25 +77,25 @@ web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() 
 }
 
 
-web::json::value LocationService::convertLocationToJson(LocationPtr loc) {
+web::json::value LocationService::convertLocationToJson(Location loc) {
     web::json::value locJson;
-    if (loc) {
-        locJson[0] = loc->getLatitude();
-        locJson[1] = loc->getLongitude();
+    if (loc.isValid()) {
+        locJson[0] = loc.getLatitude();
+        locJson[1] = loc.getLongitude();
     } else {
         locJson = web::json::value::null();
     }
     return locJson;
 }
 
-web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc) {
+web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Location loc) {
     web::json::value nodeInfo;
     nodeInfo["id"] = web::json::value(id);
-    web::json::value locJson = convertLocationToJson(std::move(loc));
+    web::json::value locJson = convertLocationToJson(loc);
     nodeInfo["location"] = web::json::value(locJson);
     return nodeInfo;
 }
-bool LocationService::updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, LocationPtr location, Timestamp time) {
+bool LocationService::updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, Location location, Timestamp time) {
    if (locationIndex->updatePredictedReconnect(deviceId, reconnectNodeId, location, time)) {
        return true;
    } else if (topology->findNodeWithId(reconnectNodeId)) {

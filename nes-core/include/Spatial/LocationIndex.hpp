@@ -19,6 +19,7 @@
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
 #include <mutex>
+#include <Common/Location.hpp>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -110,7 +111,7 @@ class LocationIndex {
      * @brief get the locations of all the nodes in the mobileNodes map
      * @return a vector consisting of pairs containing node id and current location
      */
-    std::vector<std::pair<uint64_t, LocationPtr>> getAllMobileNodeLocations();
+    std::vector<std::pair<uint64_t, Location>> getAllMobileNodeLocations();
 
     /**
      * Experimental
@@ -118,9 +119,9 @@ class LocationIndex {
      */
     size_t getSizeOfPointIndex();
 
-    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, LocationPtr reconnectLocation, Timestamp reconnectTime);
+    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, Location reconnectLocation, Timestamp reconnectTime);
 
-    std::optional<std::tuple<uint64_t, LocationPtr, Timestamp>> getScheduledReconnect(uint64_t nodeId);
+    std::optional<std::tuple<uint64_t, Location, Timestamp>> getScheduledReconnect(uint64_t nodeId);
 
   private:
     /**
@@ -137,7 +138,7 @@ class LocationIndex {
 
     // a map containing all registered mobile nodes
     std::unordered_map<uint64_t, TopologyNodePtr> mobileNodes;
-    std::unordered_map<uint64_t, std::tuple<uint64_t, LocationPtr, Timestamp>> reconnectPredictionMap;
+    std::unordered_map<uint64_t, std::tuple<uint64_t, Location, Timestamp>> reconnectPredictionMap;
 #ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;

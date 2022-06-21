@@ -27,7 +27,7 @@ class ReconnectSchedule {
   public:
     ReconnectSchedule(Index::Experimental::LocationPtr pathBeginning, Index::Experimental::LocationPtr pathEnd,
                       Index::Experimental::LocationPtr lastIndexUpdatePosition,
-                      std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> reconnectVector);
+                      std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> reconnectVector);
 
     Index::Experimental::LocationPtr getPathStart() const;
 
@@ -35,14 +35,14 @@ class ReconnectSchedule {
 
     Index::Experimental::LocationPtr getLastIndexUpatePosition() const;
 
-    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> getReconnectVector() const;
+    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> getReconnectVector() const;
 
     static ReconnectSchedule Empty();
   private:
     Index::Experimental::LocationPtr pathStart;
     Index::Experimental::LocationPtr pathEnd;
     Index::Experimental::LocationPtr lastIndexUpdatePosition;
-    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>> reconnectVector;
+    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> reconnectVector;
 };
 }
 

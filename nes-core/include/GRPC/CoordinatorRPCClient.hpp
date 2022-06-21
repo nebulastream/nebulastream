@@ -216,9 +216,9 @@ class CoordinatorRPCClient {
      */
     bool notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId);
 
-    bool sendReconnectPrediction(uint64_t nodeId, std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp> scheduledReconnect);
+    bool sendReconnectPrediction(uint64_t nodeId, std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp> scheduledReconnect);
 
-    bool sendLocationUpdate(uint64_t nodeId, std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp> locationUpdate);
+    bool sendLocationUpdate(uint64_t nodeId, std::pair<NES::Spatial::Index::Experimental::Location, Timestamp> locationUpdate);
   private:
     uint64_t workerId;
     std::string address;

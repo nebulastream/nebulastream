@@ -30,14 +30,14 @@ NES::Spatial::Mobility::Experimental::ReconnectConfigurator::ReconnectConfigurat
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration) : worker(worker), coordinatorRpcClient(std::move(coordinatorRpcClient)) {
         locationUpdateThreshold = S2Earth::MetersToAngle(mobilityConfiguration->sendDevicePositionUpdateThreshold);
         locationUpdateInterval = mobilityConfiguration->sendLocationUpdateInterval;
-        sendUpdates = false;
+        sendUpdates = {false};
         if (mobilityConfiguration->pushDeviceLocationUpdates) {
-            sendUpdates = true;
-           sendLocationUpdateThread = std::make_shared<std::thread>(&ReconnectConfigurator::periodicallyUpdateLocation, this);
+            sendUpdates = {true};
+            sendLocationUpdateThread = std::make_shared<std::thread>(&ReconnectConfigurator::periodicallyUpdateLocation, this);
         }
 };
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::update(
-    const std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>& scheduledReconnect) {
+    const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect) {
     if (scheduledReconnect.has_value()) {
         uint64_t reconnectId = get<0>(scheduledReconnect.value());
         Timestamp timestamp = get<2>(scheduledReconnect.value());
@@ -51,7 +51,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::update(
         }
     } else if (lastTransmittedReconnectPrediction.has_value()) {
         NES_DEBUG("no reconnect point found after recalculation, telling coordinator to discard old reconnect")
-        coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>(0, {}, 0));
+        coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), std::tuple<uint64_t, Index::Experimental::Location, Timestamp>(0, {}, 0));
     }
     lastTransmittedReconnectPrediction = scheduledReconnect;
     return false;
@@ -66,7 +66,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::sendPeriodicLo
     if (locProvider) {
         auto currentLocationTuple = locProvider->getCurrentLocation();
         auto currentLocation = currentLocationTuple.first;
-        S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
+        S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
 
         std::unique_lock lock(reconnectConfigMutex);
         if (S1Angle(currentPoint, lastTransmittedLocation) > locationUpdateThreshold) {
@@ -82,7 +82,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::sendPeriodicLo
 void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallyUpdateLocation() {
     auto currentLocationTuple = worker.getLocationProvider()->getCurrentLocation();
     auto currentLocation = currentLocationTuple.first;
-    S2Point currentPoint(S2LatLng::FromDegrees(currentLocation->getLatitude(), currentLocation->getLongitude()));
+    S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
     NES_DEBUG("transmitting initial location")
     coordinatorRpcClient->sendLocationUpdate(worker.getWorkerId(), currentLocationTuple);
     std::unique_lock lock(reconnectConfigMutex);
@@ -94,8 +94,12 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallyUp
     }
 }
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::stopPeriodicUpdating() {
-    std::unique_lock lock(reconnectConfigMutex);
+    if (!sendUpdates) {
+        return false;
+    }
+    //std::unique_lock lock(reconnectConfigMutex);
     sendUpdates = false;
+    /*
     if (sendLocationUpdateThread->joinable()) {
         NES_DEBUG("ReconnectConfigurator: join location update thread")
         sendLocationUpdateThread->join();
@@ -104,6 +108,8 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::stopPeriodicUp
         NES_ERROR("Reconnect Configurator: location update thread not joinable")
         NES_THROW_RUNTIME_ERROR("error while stopping thread->join");
     }
+     */
+    return true;
 }
 
 }

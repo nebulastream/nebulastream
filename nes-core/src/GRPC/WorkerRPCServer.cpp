@@ -185,8 +185,8 @@ Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* re
     }
     auto loc = locationWrapper->getLocation();
     Coordinates* coord = reply->mutable_coord();
-    coord->set_lat(loc->getLatitude());
-    coord->set_lng(loc->getLongitude());
+    coord->set_lat(loc.getLatitude());
+    coord->set_lng(loc.getLongitude());
     return Status::OK;
 }
 
@@ -221,8 +221,8 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
         reconnectPoint->set_id(std::get<0>(elem));
         Coordinates* reconnectLocation = reconnectPoint->mutable_coord();
         auto loc = std::get<1>(elem);
-        reconnectLocation->set_lat(loc->getLatitude());
-        reconnectLocation->set_lng(loc->getLongitude());
+        reconnectLocation->set_lat(loc.getLatitude());
+        reconnectLocation->set_lng(loc.getLongitude());
         reconnectPoint->set_time(std::get<2>(elem));
     }
     return Status::OK;

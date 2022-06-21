@@ -56,7 +56,7 @@ using LocationPtr = std::shared_ptr<Location>;
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 }
 
 enum RpcClientModes { Register, Unregister, Start, Stop };
@@ -224,7 +224,7 @@ class WorkerRPCClient {
      * @param adress: the ip adress of the node
      * @return Location representing the nodes location or invalid if no such location exists
      */
-    static NES::Spatial::Index::Experimental::LocationPtr getLocation(const std::string& adress);
+    static NES::Spatial::Index::Experimental::Location getLocation(const std::string& adress);
 
     static NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule(const std::string& adress);
 

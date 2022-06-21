@@ -20,6 +20,7 @@
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
 #include <mutex>
+#include <Common/Location.hpp>
 
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
@@ -47,7 +48,7 @@ class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 
 class ReconnectConfigurator;
 using ReconnectConfiguratorPtr = std::shared_ptr<ReconnectConfigurator>;
@@ -76,12 +77,12 @@ class TrajectoryPredictor {
 
     size_t getSizeOfSpatialIndex();
 
-    std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> getNextReconnect();
+    std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> getNextReconnect();
 
-    std::tuple<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLocationAndTime();
+    std::tuple<Index::Experimental::Location, Timestamp> getLastReconnectLocationAndTime();
 
   private:
-    bool updatePredictedPath(const NES::Spatial::Index::Experimental::LocationPtr& oldLocation, const NES::Spatial::Index::Experimental::LocationPtr& currentLocation);
+    bool updatePredictedPath(const NES::Spatial::Index::Experimental::Location& oldLocation, const NES::Spatial::Index::Experimental::Location& currentLocation);
 
     void scheduleReconnects();
 
@@ -94,7 +95,7 @@ class TrajectoryPredictor {
 
     LocationProviderPtr locationProvider;
 
-    std::deque<std::pair<NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> locationBuffer;
+    std::deque<std::pair<NES::Spatial::Index::Experimental::Location, Timestamp>> locationBuffer;
 
     std::shared_ptr<std::thread> locationUpdateThread;
 
@@ -120,7 +121,7 @@ class TrajectoryPredictor {
 
     S1Angle defaultCoverageRadiusAngle;
     std::optional<S2Point> positionOfLastNodeIndexUpdate;
-    std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>> reconnectVector;
+    std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> reconnectVector;
     bool updateDownloadedNodeIndex(Index::Experimental::Location currentLocation);
     bool downloadFieldNodes();
 
@@ -129,7 +130,7 @@ class TrajectoryPredictor {
     double bufferAverageMovementSpeed;
     double allowedSpeedDifferenceFactor;
     bool updateAverageMovementSpeed();
-    std::tuple<Index::Experimental::LocationPtr, Timestamp> devicePositionTupleAtLastReconnect;
+    std::tuple<Index::Experimental::Location, Timestamp> devicePositionTupleAtLastReconnect;
 };
 
 }

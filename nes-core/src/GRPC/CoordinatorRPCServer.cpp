@@ -340,10 +340,10 @@ Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     SendScheduledReconnectReply* reply) {
     (void) reply;
     const ReconnectPoint& reconnectPoint = request->reconnect();
-    NES::Spatial::Index::Experimental::LocationPtr location;
+    NES::Spatial::Index::Experimental::Location location;
     if (reconnectPoint.has_coord()) {
         const Coordinates& coordinates = reconnectPoint.coord();
-        location = std::make_shared<NES::Spatial::Index::Experimental::Location>(coordinates.lat(), coordinates.lng());
+        location = NES::Spatial::Index::Experimental::Location(coordinates.lat(), coordinates.lng());
     } else {
         NES_DEBUG("incoming request did not contain coordinates")
     }
