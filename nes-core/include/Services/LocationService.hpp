@@ -70,10 +70,10 @@ class LocationService {
 
     web::json::value requestReconnectScheduleAsJson(uint64_t nodeId);
 
-    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, LocationPtr location, Timestamp time);
+    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, Location location, Timestamp time);
 
   private:
-    static web::json::value convertLocationToJson(LocationPtr loc);
+    static web::json::value convertLocationToJson(Location loc);
     /**
      * Use a node id and a LocationPtr to construct a Json representation containing these values.
      * @param id : the nodes id
@@ -87,7 +87,7 @@ class LocationService {
             ]
         }
      */
-    static web::json::value convertNodeLocationInfoToJson(uint64_t id, LocationPtr loc);
+    static web::json::value convertNodeLocationInfoToJson(uint64_t id, Location loc);
 
     LocationIndexPtr locationIndex;
     TopologyPtr topology;

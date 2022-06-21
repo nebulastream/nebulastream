@@ -448,7 +448,7 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     }
 }
 
-Spatial::Index::Experimental::LocationPtr WorkerRPCClient::getLocation(const std::string& adress) {
+Spatial::Index::Experimental::Location WorkerRPCClient::getLocation(const std::string& adress) {
     NES_DEBUG("WorkerRPCClient: Requesting location from " << adress)
     ClientContext context;
     GetLocationRequest request;
@@ -459,9 +459,9 @@ Spatial::Index::Experimental::LocationPtr WorkerRPCClient::getLocation(const std
     Status status = workerStub->GetLocation(&context, request, &reply);
     if (reply.has_coord()) {
         auto coord = reply.coord();
-        return std::make_shared<Spatial::Index::Experimental::Location>(coord.lat(), coord.lng());
+        return {coord.lat(), coord.lng()};
     }
-    return std::make_shared<Spatial::Index::Experimental::Location>();
+    return {};
 }
 
 NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getReconnectSchedule(const std::string& adress) {
@@ -480,11 +480,11 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         auto start = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathstart());
         auto end = std::make_shared<Spatial::Index::Experimental::Location>(schedule.pathend());
         auto lastUpdatePosition = std::make_shared<Spatial::Index::Experimental::Location>(schedule.lastindexupdateposition());
-        auto vec = std::make_shared<std::vector<std::tuple<uint64_t, Spatial::Index::Experimental::LocationPtr , Timestamp>>>();
+        auto vec = std::make_shared<std::vector<std::tuple<uint64_t, Spatial::Index::Experimental::Location, Timestamp>>>();
         for (int i = 0; i < schedule.reconnectpoints_size(); ++i) {
             const auto& reconnectData = schedule.reconnectpoints(i);
-            auto loc = std::make_shared<NES::Spatial::Index::Experimental::Location>(reconnectData.coord().lat(), reconnectData.coord().lng());
-            vec->push_back(std::tuple<uint64_t, NES::Spatial::Index::Experimental::LocationPtr, Timestamp>(reconnectData.id(), loc, reconnectData.time()));
+            auto loc = NES::Spatial::Index::Experimental::Location(reconnectData.coord().lat(), reconnectData.coord().lng());
+            vec->push_back(std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>(reconnectData.id(), loc, reconnectData.time()));
         }
         return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(
             start, end, lastUpdatePosition, vec);

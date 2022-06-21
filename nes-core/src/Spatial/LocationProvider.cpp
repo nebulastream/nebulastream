@@ -24,7 +24,7 @@ namespace NES::Spatial::Mobility::Experimental {
 
 LocationProvider::LocationProvider(Index::Experimental::WorkerSpatialType spatialType, Index::Experimental::Location fieldNodeLoc) {
     this->spatialType = spatialType;
-    this->fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(fieldNodeLoc);
+    this->fixedLocationCoordinates = fieldNodeLoc;
 }
 
 //todo: use enum for mobile, field, none
@@ -36,21 +36,21 @@ bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Lo
     if (spatialType != Index::Experimental::WorkerSpatialType::FIELD_NODE) {
         return false;
     }
-    fixedLocationCoordinates = std::make_shared<Index::Experimental::Location>(geoLoc);
+    fixedLocationCoordinates = geoLoc;
     return true;
 }
 
-Index::Experimental::LocationPtr LocationProvider::getLocation() {
+Index::Experimental::Location LocationProvider::getLocation() {
     switch (spatialType) {
         case Index::Experimental::WorkerSpatialType::MOBILE_NODE:
             return getCurrentLocation().first;
         case Index::Experimental::WorkerSpatialType::FIELD_NODE:
             return fixedLocationCoordinates;
         case Index::Experimental::WorkerSpatialType::NO_LOCATION:
-            return std::make_shared<Index::Experimental::Location>();
+            return {};
         case Index::Experimental::WorkerSpatialType::INVALID:
             NES_WARNING("Location Provider has invalid spatial type")
-            return std::make_shared<Index::Experimental::Location>();
+            return {};
     }
 }
 
@@ -62,8 +62,8 @@ LocationProvider::getNodeIdsInRange(Index::Experimental::Location coord, double 
 
 std::vector<std::pair<uint64_t, Index::Experimental::Location>> LocationProvider::getNodeIdsInRange(double radius) {
     auto coord = getLocation();
-    if (coord->isValid()) {
-        return getNodeIdsInRange(*coord, radius);
+    if (coord.isValid()) {
+        return getNodeIdsInRange(coord, radius);
     }
     NES_WARNING("Trying to get the nodes in the range of a node without location");
     return {};
@@ -74,8 +74,8 @@ void LocationProvider::setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinat
     coordinatorRpcClient = coordinatorClient;
 }
 
-std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProvider::getCurrentLocation() {
-    return {Index::Experimental::LocationPtr(), 0};
+std::pair<Index::Experimental::Location, Timestamp> LocationProvider::getCurrentLocation() {
+    return {Index::Experimental::Location(), 0};
 }
 
 LocationProviderPtr LocationProvider::create(Configurations::WorkerConfigurationPtr workerConfig,

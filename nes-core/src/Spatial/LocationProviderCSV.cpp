@@ -58,7 +58,7 @@ LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationP
 
         //construct a pair containing a location and the time at which the device is at exactly that point
         // and sve it to a vector containing all waypoints
-        std::pair waypoint(std::make_shared<Index::Experimental::Location>(Index::Experimental::Location::fromString(locString)),
+        std::pair waypoint(Index::Experimental::Location::fromString(locString),
                            time);
         waypoints.push_back(waypoint);
     }
@@ -68,7 +68,7 @@ LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationP
     nextWaypoint = waypoints.begin();
 }
 
-std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getCurrentLocation() {
+std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurrentLocation() {
     //get the time the request is made so we can compare it to the timestamps in the list of waypoints
     Timestamp requestTime = getTimestamp();
 
@@ -90,8 +90,8 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
 
     //if we have not reached the final position yet, we draw the path between the last waypoint we passed and the next waypoint ahead of us
     //as an s2 polyline
-    S2Point prev(S2LatLng::FromDegrees(prevWaypoint->first->getLatitude(), prevWaypoint->first->getLongitude()));
-    S2Point post(S2LatLng::FromDegrees(nextWaypoint->first->getLatitude(), nextWaypoint->first->getLongitude()));
+    S2Point prev(S2LatLng::FromDegrees(prevWaypoint->first.getLatitude(), prevWaypoint->first.getLongitude()));
+    S2Point post(S2LatLng::FromDegrees(nextWaypoint->first.getLatitude(), nextWaypoint->first.getLongitude()));
     std::vector<S2Point> pointVec;
     pointVec.push_back(prev);
     pointVec.push_back(post);
@@ -108,10 +108,10 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
     //we use the fraction to interpolate the point on path where the device is located if it
     //travels at constant speed from prevWaypoint to nextWaypoint
     S2LatLng resultS2(path.Interpolate(fraction));
-    auto result = std::make_shared<Index::Experimental::Location>(resultS2.lat().degrees(), resultS2.lng().degrees());
+    auto result = Index::Experimental::Location(resultS2.lat().degrees(), resultS2.lng().degrees());
 
     NES_TRACE("Retrieving s2-interpolated location");
-    NES_TRACE("Location: " << result->toString() << "; Time: " << prevWaypoint->second)
+    NES_TRACE("Location: " << result.toString() << "; Time: " << prevWaypoint->second)
 
     return {result, requestTime};
 #else
@@ -123,7 +123,7 @@ std::pair<Index::Experimental::LocationPtr, Timestamp> LocationProviderCSV::getC
 }
 
 Timestamp LocationProviderCSV::getStarttime() const { return startTime; }
-const std::vector<std::pair<Index::Experimental::LocationPtr, Timestamp>>& LocationProviderCSV::getWaypoints() {
+const std::vector<std::pair<Index::Experimental::Location, Timestamp>>& LocationProviderCSV::getWaypoints() {
     return waypoints;
 }
 

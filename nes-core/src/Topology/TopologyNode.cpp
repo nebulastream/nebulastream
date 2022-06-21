@@ -141,7 +141,7 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
 
 //bool TopologyNode::isFieldNode() { return (bool) fixedCoordinates; }
 
-Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
+Spatial::Index::Experimental::Location TopologyNode::getCoordinates() {
     std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
     switch (spatialType) {
         case Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE:
@@ -150,10 +150,10 @@ Spatial::Index::Experimental::LocationPtr TopologyNode::getCoordinates() {
         case Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE:
             return fixedCoordinates;
         case Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION:
-            return nullptr;
+            return {};
         case Spatial::Index::Experimental::WorkerSpatialType::INVALID:
             NES_WARNING("trying to access location of a node with invalid spatial tyep")
-            return nullptr;
+            return {};
     }
 }
 
@@ -171,7 +171,7 @@ void TopologyNode::setFixedCoordinates(double latitude, double longitude) {
 }
 
 void TopologyNode::setFixedCoordinates(Spatial::Index::Experimental::Location geoLoc) {
-    fixedCoordinates = std::make_shared<Spatial::Index::Experimental::Location>(geoLoc);
+    fixedCoordinates = geoLoc;
 }
 
 void TopologyNode::setSpatialType(Spatial::Index::Experimental::WorkerSpatialType workerSpatialType) { this->spatialType = workerSpatialType; }

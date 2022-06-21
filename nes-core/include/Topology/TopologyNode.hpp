@@ -33,7 +33,7 @@ enum class WorkerSpatialType;
 
 namespace Spatial::Mobility::Experimental {
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 }
 
 /**
@@ -168,7 +168,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
-    NES::Spatial::Index::Experimental::LocationPtr getCoordinates();
+    NES::Spatial::Index::Experimental::Location getCoordinates();
 
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
 
@@ -212,7 +212,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
-    NES::Spatial::Index::Experimental::LocationPtr fixedCoordinates;
+    NES::Spatial::Index::Experimental::Location fixedCoordinates;
     NES::Spatial::Index::Experimental::WorkerSpatialType spatialType;
 
     /**

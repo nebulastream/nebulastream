@@ -272,7 +272,7 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
-    locIndex->initializeFieldNodeCoordinates(node2, *(node2->getCoordinates()));
+    locIndex->initializeFieldNodeCoordinates(node2, (node2->getCoordinates()));
 
     //no mobile nodes added yet. List should be empty
     web::http::http_request msg0(web::http::methods::GET);
@@ -307,6 +307,7 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     auto mobilityConfiguration3 = std::make_shared<NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
     mobilityConfiguration3->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
     mobilityConfiguration3->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
+    mobilityConfiguration3->pushDeviceLocationUpdates.setValue(false);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3), std::move(mobilityConfiguration3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart3);

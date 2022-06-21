@@ -22,6 +22,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <Common/Location.hpp>
 
 namespace NES {
 class NesWorker;
@@ -58,16 +59,16 @@ namespace Mobility::Experimental {
          * @param scheduledReconnect
          * @return
          */
-        bool update(const std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>>& scheduledReconnect);
+        bool update(const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect);
         bool reconnect(uint64_t oldParent, uint64_t newParent);
         std::tuple<Index::Experimental::LocationPtr, Timestamp> getLastReconnectLcationAndTime();
 
       private:
-        std::atomic<bool> sendUpdates;
+        std::atomic<bool> sendUpdates{};
         std::recursive_mutex reconnectConfigMutex;
         NesWorker& worker;
         CoordinatorRPCCLientPtr coordinatorRpcClient;
-        std::optional<std::tuple<uint64_t, Index::Experimental::LocationPtr, Timestamp>> lastTransmittedReconnectPrediction;
+        std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> lastTransmittedReconnectPrediction;
         S2Point lastTransmittedLocation;
         S1Angle locationUpdateThreshold;
         uint64_t locationUpdateInterval;

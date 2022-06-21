@@ -258,8 +258,12 @@ bool NesWorker::stop(bool) {
         }
 
         if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
-            trajectoryPredictor->stopReconnectPlanning();
-            reconnectConfigurator->stopPeriodicUpdating();
+            if (trajectoryPredictor) {
+                trajectoryPredictor->stopReconnectPlanning();
+            }
+            if (reconnectConfigurator) {
+                reconnectConfigurator->stopPeriodicUpdating();
+            }
             NES_DEBUG("joined mobility threads");
         }
         rpcServer.reset();
@@ -289,7 +293,7 @@ bool NesWorker::connect() {
                                                                  nodeEngine->getNetworkManager()->getServerDataPort(),
                                                                  workerConfig->numberOfSlots,
                                                                  registrationMetrics,
-                                                                 *(locationProvider->getLocation()),
+                                                                 locationProvider->getLocation(),
                                                                  locationProvider->getSpatialType());
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();

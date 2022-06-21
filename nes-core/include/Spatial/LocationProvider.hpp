@@ -19,6 +19,7 @@
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
 #include <Util/Experimental/WorkerSpatialType.hpp>
+#include <Common/Location.hpp>
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
 #include <s2/s2point.h>
@@ -61,7 +62,7 @@ class TrajectoryPredictor;
 using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
 
 class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<const ReconnectSchedule>;
+using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 
 class LocationProvider {
   public:
@@ -96,7 +97,7 @@ class LocationProvider {
      * containing a nullopt_t if the node does not have a location
      * @return optional containing the Location
      */
-    Index::Experimental::LocationPtr getLocation();
+    Index::Experimental::Location getLocation();
 
     /**
      * Experimental
@@ -143,10 +144,10 @@ class LocationProvider {
      * @brief get the last known location of the device
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
-    virtual std::pair<Index::Experimental::LocationPtr, Timestamp> getCurrentLocation();
+    virtual std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation();
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    Index::Experimental::LocationPtr fixedLocationCoordinates;
+    Index::Experimental::Location fixedLocationCoordinates;
     Index::Experimental::WorkerSpatialType spatialType;
 
     TrajectoryPredictorPtr trajectoryPredictor;
