@@ -109,7 +109,7 @@ bool QueryCatalogService::checkAndMarkForFailure(SharedQueryId sharedQueryId, Qu
         QueryStatus::Value currentQueryStatus = queryCatalogEntry->getQueryStatus();
         if (currentQueryStatus == QueryStatus::MarkedForFailure || currentQueryStatus == QueryStatus::Failed
             || currentQueryStatus == QueryStatus::Stopped) {
-            NES_WARNING("QueryCatalogService: Query can not be marked fro failure as query in "
+            NES_WARNING("QueryCatalogService: Query can not be marked for failure as query in "
                         << queryCatalogEntry->getQueryStatusAsString() << " status.");
             return false;
         }
