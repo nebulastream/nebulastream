@@ -35,9 +35,9 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
