@@ -18,6 +18,7 @@
 #include <Plans/Global/Query/SharedQueryId.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 #include <memory>
+#include <string>
 
 namespace NES {
 

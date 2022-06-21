@@ -13,7 +13,6 @@
 */
 
 #include <WorkQueues/RequestTypes/FailQueryRequest.hpp>
-#include <string>
 
 namespace NES {
 
