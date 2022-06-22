@@ -15,10 +15,10 @@
 #ifndef NES_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
 #define NES_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
 
-#include <string>
-#include <memory>
-#include <Common/DataTypes/DataType.hpp>
 #include <Catalogs/UDF/UdfDescriptor.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <memory>
+#include <string>
 
 namespace NES::Catalogs {
 
@@ -26,33 +26,28 @@ class PythonUdfDescriptor;
 using PythonUdfDescriptorPtr = std::shared_ptr<PythonUdfDescriptor>;
 
 class PythonUdfDescriptor : public UdfDescriptor {
-public:
+  public:
+    PythonUdfDescriptor(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType);
 
-PythonUdfDescriptor(const std::string& methodName,
-                    int numberOfArgs,
-                    DataTypePtr& returnType);
+    static PythonUdfDescriptorPtr create(const std::string& methodName, int numberOfArgs, DataTypePtr& returnType) {
+        return std::make_shared<PythonUdfDescriptor>(methodName, numberOfArgs, returnType);
+    }
 
-static PythonUdfDescriptorPtr create(const std::string& methodName,
-                                     int numberOfArgs,
-                                     DataTypePtr& returnType) {
-    return std::make_shared<PythonUdfDescriptor>(methodName, numberOfArgs, returnType);
-}
-
-/**
+    /**
  * @brief Return the number of arguments for the UDF.
  * @return The number of arguments of the UDF method.
  */
-[[nodiscard]] int getNumberOfArgs() const { return numberOfArgs; }
+    [[nodiscard]] int getNumberOfArgs() const { return numberOfArgs; }
 
-/**
+    /**
  * @brief Return the number of arguments for the UDF.
  * @return The name of the UDF method.
  */
-[[nodiscard]] DataTypePtr getReturnType() const { return returnType; }
+    [[nodiscard]] DataTypePtr getReturnType() const { return returnType; }
 
-private:
-const int numberOfArgs;
-const DataTypePtr returnType;
+  private:
+    const int numberOfArgs;
+    const DataTypePtr returnType;
 };
 }// namespace NES::Catalogs
 #endif// NES_INCLUDE_CATALOGS_UDF_PYTHONUDFDESCRIPTOR_HPP_
