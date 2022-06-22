@@ -15,12 +15,7 @@
 #ifndef NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
 #define NES_GEOLOCATION_LOCATIONPROVIDERCSV_HPP
 #include <Spatial/LocationProvider.hpp>
-#include <Common/Location.hpp>
 #include <vector>
-
-namespace NES::Spatial::Index::Experimental {
-enum class WorkerSpatialType;
-}
 
 namespace NES::Spatial::Mobility::Experimental {
 
@@ -30,7 +25,8 @@ namespace NES::Spatial::Mobility::Experimental {
  */
 class LocationProviderCSV : public LocationProvider {
   public:
-    LocationProviderCSV(const std::string& csvPath);
+    explicit LocationProviderCSV(const std::string& csvPath);
+
     /**
      * @brief construct a location source that reads from a csv in the format "<latitude>, <longitued>; <offset from starttime in nanosec>
      * @param csvPath: The path of the csv file
@@ -41,7 +37,6 @@ class LocationProviderCSV : public LocationProvider {
      * @brief default destructor
      */
     ~LocationProviderCSV() override = default;
-    ;
 
     /**
      *
@@ -57,10 +52,13 @@ class LocationProviderCSV : public LocationProvider {
      */
     std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation() override;
 
+    /**
+     * @brief return a vector containing all the waypoints read from the csv file
+     * @return a vector of pairs of Locations and Timestamps
+     */
     const std::vector<std::pair<Index::Experimental::Location, Timestamp>>& getWaypoints();
 
   private:
-
     Timestamp startTime;
     std::vector<std::pair<Index::Experimental::Location, Timestamp>> waypoints;
     std::vector<std::pair<Index::Experimental::Location, Timestamp>>::iterator nextWaypoint;

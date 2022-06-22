@@ -220,14 +220,21 @@ class WorkerRPCClient {
     /**
      * @brief method to check the location of any node. If the node is a mobile node, its current loction will be returned.
      * If the node is a field node, its fixed location will be returned. If the node does not have a known location, an
-     * invlid location will be returned
+     * invalid location will be returned
      * @param adress: the ip adress of the node
      * @return Location representing the nodes location or invalid if no such location exists
      */
     static NES::Spatial::Index::Experimental::Location getLocation(const std::string& adress);
 
+    /**
+     * @brief method to obtain the reconnect schedule calculated by a mobile worker containing beginning and end locations of the
+     * mobile workers predicted path, the position of the last node index update at the device side and a vector containing the
+     * scheduled reconnects. If the device is not a mobile device, then the returned schedule will have all its members set to
+     * nullptr
+     * @param adress: the ip adress of the node
+     * @return a ReconnectSchedule object
+     */
     static NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule(const std::string& adress);
-
 
   private:
 };

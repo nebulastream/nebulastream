@@ -174,7 +174,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":"
                                                                                           << localWorkerRpcPort.load());
 
-
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
         bool con = connect();
@@ -260,11 +259,12 @@ bool NesWorker::stop(bool) {
         if (locationProvider->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
             if (trajectoryPredictor) {
                 trajectoryPredictor->stopReconnectPlanning();
+                NES_DEBUG("triggered stopping of reconnect planner thread");
             }
             if (reconnectConfigurator) {
                 reconnectConfigurator->stopPeriodicUpdating();
+                NES_DEBUG("triggered stopping of location update push thread");
             }
-            NES_DEBUG("joined mobility threads");
         }
         rpcServer.reset();
         rpcThread.reset();

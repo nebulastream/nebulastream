@@ -14,6 +14,10 @@ namespace Configurations::Spatial::Mobility::Experimental {
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
 
+/**
+ * @brief this class stores the configuration options necessary for mobile devices
+ */
+
 class WorkerMobilityConfiguration : public BaseConfiguration {
   public:
     /**
@@ -35,41 +39,72 @@ class WorkerMobilityConfiguration : public BaseConfiguration {
                                      30,
                                      "The amount of past locations to be recorded in order to predict the future trajectory"};
 
+    /**
+     * @brief defines after how many path prediction update steps a new location should be saved to the buffer
+     */
     UIntOption locationBufferSaveRate = {LOCATION_BUFFER_SAVE_RATE_CONFIG,
                            4,
                            "Determines after how many location updates a new location will be inserted in the location buffer"};
 
+    /**
+     * @brief defines the minimum distance in meters between the current predicted path and the device position that will lead to a recalculation of the prediction
+     */
     UIntOption pathDistanceDelta = {PATH_DISTANCE_DELTA_CONFIG,
                                     20,
                                     "when deviating further than delta meters from the current predicted path, an update of the prediction will be triggered"};
 
+    /**
+     * @brief defines the radius of the circle used to determine the area within which all field node data will be downloaded during an update of the local index
+     */
     UIntOption nodeInfoDownloadRadius = {NODE_INFO_DOWNLOAD_RADIUS_CONFIG,
                                          10000,
                                          "The radius in meters in which nodes will be downloaded"};
 
+    /**
+     * @brief defines the distance from the edge of the covered by the current node index which when reached will trigger an update.
+     * Needs to be less than nodeInfoDownloadRadius to avoid cconstant redownloading. Needs to be more than coverage to avoid
+     * scheduling suboptimal reconnects
+     */
     UIntOption nodeIndexUpdateThreshold = {NODE_INDEX_UPDATE_THRESHOLD_CONFIG,
                                            2000,
-                                           "Trigger download of new node info when the device is less than threshold away from the boundary of the area covered by the current info"};//todo: make a check, that this is not less than the coverage and not more then the save radius
+                                           "Trigger download of new node info when the device is less than threshold away from the boundary of the area covered by the current info"};
 
+    /**
+     * @brief the distance in meters from the geographical position of a field node within which we assume the connection
+     * between the mobile devices and the field node to be reasonably fast
+     */
     UIntOption defaultCoverageRadius = {DEFAULT_COVERAGE_RADIUS_CONFIG,
                                         1000,
                                         "The coverage in meters each field node is assumed to have"};
 
+    /**
+     * @brief the length of the path to be predicted
+     */
     UIntOption pathPredictionLength = {PATH_PREDICTION_LENGTH_CONFIG,
                                        10000,
                                        "The Length of the predicted path to be computed"};
 
+    /**
+     * @brief the distance in meters which a device has to move before it informs the coordinator about the location change
+     */
     UIntOption sendDevicePositionUpdateThreshold = {SEND_DEVICE_LOCATION_UPDATE_THRESHOLD_CONFIG,
                                                     10,
                                                     "The distance in meters after which the device will report it's new position in meters"};
 
+    /**
+     * @brief a boolean to define if the worker should inform the coordinator about a change in position which is larger than a certain threshold
+     */
     BoolOption pushDeviceLocationUpdates = {PUSH_DEVICE_LOCATION_UPDATES_CONFIG,
                                             true,
                                             "determines if position updates should be sent to the coordinator"};
 
+    /**
+     * @brief the time between 2 checks if the location has changes more than the defined threshold and a location update might
+     * have to be sent to the coordinator
+     */
     UIntOption sendLocationUpdateInterval = {SEND_LOCATION_UPDATE_INTERVAL_CONFIG,
                                              10000,
-                                             "the sleep amount between 2 checks if a locatin update should be sent to the coordinator"};
+                                             "the sleep amount between 2 checks if a location update should be sent to the coordinator"};
 
     /**
      * @brief specify from which kind of interface a mobile worker can obtain its current location. This can for example be a GPS device or

@@ -29,15 +29,37 @@ class ReconnectSchedule {
                       Index::Experimental::LocationPtr lastIndexUpdatePosition,
                       std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> reconnectVector);
 
-    Index::Experimental::LocationPtr getPathStart() const;
+    /**
+     * getter function for the start location of the current predicted path
+     * @return a smart pointer to a location object with the coordinates of the path beginning
+     */
+    [[nodiscard]] Index::Experimental::LocationPtr getPathStart() const;
 
-    Index::Experimental::LocationPtr getPathEnd() const ;
+    /**
+     * getter function for the end location of the current predicted path
+     * @return a smart pointer to a location object with the coordinates of the path end
+     */
+    [[nodiscard]] Index::Experimental::LocationPtr getPathEnd() const ;
 
-    Index::Experimental::LocationPtr getLastIndexUpatePosition() const;
+    /**
+     * getter function for the location at which the device was located when the last download of field node location data
+     * to the local spatial index happened
+     * @return a smart pointer to a location object with the coordinates of the device position of the time of updating
+     */
+    [[nodiscard]] Index::Experimental::LocationPtr getLastIndexUpdatePosition() const;
 
-    std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> getReconnectVector() const;
+    /**
+     * getter function for the vector containing the scheduled reconnects
+     * @return a vector containing tuples consisting of expected next parent id, estimated reconnect location, estimated reconnect time
+     */
+    [[nodiscard]] std::shared_ptr<std::vector<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>> getReconnectVector() const;
 
+    /**
+     * return a reconnect schedule object which does not contain any values to represent that no prediction exists
+     * @return a reconnect schedule with all its members set to nullptr
+     */
     static ReconnectSchedule Empty();
+
   private:
     Index::Experimental::LocationPtr pathStart;
     Index::Experimental::LocationPtr pathEnd;

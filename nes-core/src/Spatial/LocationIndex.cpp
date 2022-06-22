@@ -190,20 +190,20 @@ size_t LocationIndex::getSizeOfPointIndex() {
 #endif
 }
 
-bool LocationIndex::updatePredictedReconnect(uint64_t deviceid, uint64_t reconnectNodeId, Location reconnectLocation, Timestamp reconnectTime) {
+bool LocationIndex::updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location reconnectLocation, Timestamp reconnectTime) {
     std::unique_lock lock(locationIndexMutex);
-    if (mobileNodes.contains(deviceid)) {
-        NES_DEBUG("LocationIndex: Updating reconnect prediciton for node " << deviceid)
+    if (mobileNodes.contains(mobileWorkerId)) {
+        NES_DEBUG("LocationIndex: Updating reconnect prediciton for node " << mobileWorkerId)
         if (reconnectLocation.isValid()) {
             NES_DEBUG("New reconnect prediction: id=" << reconnectNodeId << " location=" << reconnectLocation.toString()
                                                       << " time=" << reconnectTime)
         } else {
             NES_DEBUG("reconnect location is nullptr, overwriting previously scheduled connect with empty connect")
         }
-        reconnectPredictionMap[deviceid] = {reconnectNodeId, reconnectLocation, reconnectTime};
+        reconnectPredictionMap[mobileWorkerId] = {reconnectNodeId, reconnectLocation, reconnectTime};
         return true;
     }
-    NES_DEBUG("trying to update reconnect prediction but could not find a mobile node with id " << deviceid)
+    NES_DEBUG("trying to update reconnect prediction but could not find a mobile node with id " << mobileWorkerId)
     return false;
 }
 std::optional<std::tuple<uint64_t, Location, Timestamp>> LocationIndex::getScheduledReconnect(uint64_t nodeId) {

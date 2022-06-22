@@ -489,6 +489,7 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr WorkerRPCClient::getR
         return std::make_shared<NES::Spatial::Mobility::Experimental::ReconnectSchedule>(
             start, end, lastUpdatePosition, vec);
     }
+    //if no schedule was received, return an empty schedule
     return std::make_shared<Spatial::Mobility::Experimental::ReconnectSchedule>(Spatial::Mobility::Experimental::ReconnectSchedule::Empty());
 }
 

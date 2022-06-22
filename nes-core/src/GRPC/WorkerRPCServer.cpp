@@ -26,8 +26,12 @@
 
 namespace NES {
 
-WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, Monitoring::MonitoringAgentPtr monitoringAgent, NES::Spatial::Mobility::Experimental::LocationProviderPtr nodeLocationWrapper, NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor)
-    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)), locationWrapper(std::move(nodeLocationWrapper)), trajectoryPredictor(std::move(trajectoryPredictor)) {
+WorkerRPCServer::WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
+                                 Monitoring::MonitoringAgentPtr monitoringAgent,
+                                 NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
+                                 NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor)
+    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)),
+      locationProvider(std::move(locationProvider)), trajectoryPredictor(std::move(trajectoryPredictor)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 
@@ -179,11 +183,11 @@ WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkReques
 Status WorkerRPCServer::GetLocation(ServerContext*, const GetLocationRequest* request, GetLocationReply* reply) {
     (void) request;
     NES_DEBUG("WorkerRPCServer received location request")
-    if (!locationWrapper) {
-        NES_DEBUG("WorkerRPCServer: locationWrapper not set")
+    if (!locationProvider) {
+        NES_DEBUG("WorkerRPCServer: locationProvider not set")
         return Status::CANCELLED;
     }
-    auto loc = locationWrapper->getLocation();
+    auto loc = locationProvider->getLocation();
     Coordinates* coord = reply->mutable_coord();
     coord->set_lat(loc.getLatitude());
     coord->set_lng(loc.getLongitude());
@@ -200,7 +204,6 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     auto schedule = trajectoryPredictor->getReconnectSchedule();
     ReconnectSchedule* scheduleMsg = reply->mutable_schedule();
 
-    //todo: set these to empty, if there is no value
     auto startLoc = schedule->getPathStart();
     Coordinates* startCoord = scheduleMsg->mutable_pathstart();
     startCoord->set_lat(startLoc->getLatitude());
@@ -211,7 +214,7 @@ Status WorkerRPCServer::GetReconnectSchedule(ServerContext*, const GetReconnectS
     endCoord->set_lat(endLoc->getLatitude());
     endCoord->set_lng(endLoc->getLongitude());
 
-    auto updateLocation = schedule->getLastIndexUpatePosition();
+    auto updateLocation = schedule->getLastIndexUpdatePosition();
     Coordinates* updateCoordinates = scheduleMsg->mutable_lastindexupdateposition();
     updateCoordinates->set_lat(updateLocation->getLatitude());
     updateCoordinates->set_lng(updateLocation->getLongitude());

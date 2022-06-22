@@ -42,16 +42,14 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
     web::json::value scheduleJson;
     scheduleJson["pathStart"] = convertLocationToJson(*schedule->getPathStart());
     scheduleJson["pathEnd"] = convertLocationToJson(*schedule->getPathEnd());
-    scheduleJson["indexUpdatePosition"] = convertLocationToJson(*schedule->getLastIndexUpatePosition());
+    scheduleJson["indexUpdatePosition"] = convertLocationToJson(*schedule->getLastIndexUpdatePosition());
 
     auto reconnectArray = web::json::value::array();
     int i = 0;
-    //todo: make nullcheck here
     if (schedule->getReconnectVector()) {
         for (auto elem : *(schedule->getReconnectVector())) {
             web::json::value elemJson;
             elemJson["id"] = std::get<0>(elem);
-            //loc = std::get<1>(elem);
             elemJson["reconnectPoint"] = convertLocationToJson(std::get<1>(elem));
             elemJson["time"] = std::get<2>(elem);
             reconnectArray[i] = elemJson;
@@ -59,9 +57,7 @@ web::json::value LocationService::requestReconnectScheduleAsJson(uint64_t nodeId
         }
     }
     scheduleJson["reconnectPoints"] = reconnectArray;
-    //todo: insert vector also
     return scheduleJson;
-
 }
 
 web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() {
@@ -77,11 +73,11 @@ web::json::value LocationService::requestLocationDataFromAllMobileNodesAsJson() 
 }
 
 
-web::json::value LocationService::convertLocationToJson(Location loc) {
+web::json::value LocationService::convertLocationToJson(Location location) {
     web::json::value locJson;
-    if (loc.isValid()) {
-        locJson[0] = loc.getLatitude();
-        locJson[1] = loc.getLongitude();
+    if (location.isValid()) {
+        locJson[0] = location.getLatitude();
+        locJson[1] = location.getLongitude();
     } else {
         locJson = web::json::value::null();
     }
@@ -95,8 +91,8 @@ web::json::value LocationService::convertNodeLocationInfoToJson(uint64_t id, Loc
     nodeInfo["location"] = web::json::value(locJson);
     return nodeInfo;
 }
-bool LocationService::updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, Location location, Timestamp time) {
-   if (locationIndex->updatePredictedReconnect(deviceId, reconnectNodeId, location, time)) {
+bool LocationService::updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location location, Timestamp time) {
+   if (locationIndex->updatePredictedReconnect(mobileWorkerId, reconnectNodeId, location, time)) {
        return true;
    } else if (topology->findNodeWithId(reconnectNodeId)) {
        NES_DEBUG("node exists but is not a mobile node")

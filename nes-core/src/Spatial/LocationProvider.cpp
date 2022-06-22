@@ -27,9 +27,6 @@ LocationProvider::LocationProvider(Index::Experimental::WorkerSpatialType spatia
     this->fixedLocationCoordinates = fieldNodeLoc;
 }
 
-//todo: use enum for mobile, field, none
-//bool LocationProvider::isFieldNode() { return fixedLocationCoordinates->isValid() && !spatialType; }
-
 Index::Experimental::WorkerSpatialType LocationProvider::getSpatialType() const { return spatialType; };
 
 bool LocationProvider::setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc) {
@@ -54,7 +51,6 @@ Index::Experimental::Location LocationProvider::getLocation() {
     }
 }
 
-
 std::vector<std::pair<uint64_t, Index::Experimental::Location>>
 LocationProvider::getNodeIdsInRange(Index::Experimental::Location coord, double radius) {
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
@@ -75,6 +71,7 @@ void LocationProvider::setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinat
 }
 
 std::pair<Index::Experimental::Location, Timestamp> LocationProvider::getCurrentLocation() {
+    //location provider base class will always return invalid current locations
     return {Index::Experimental::Location(), 0};
 }
 
@@ -82,14 +79,9 @@ LocationProviderPtr LocationProvider::create(Configurations::WorkerConfiguration
                                NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig) {
     if (!mobilityConfig) {
         if (workerConfig->spatialType.getValue() == Index::Experimental::WorkerSpatialType::MOBILE_NODE) {
-            /*
-            NES_FATAL_ERROR("Spatial type is set to mobile but there is no mobility config. Cannot create location provider")
-            exit(EXIT_FAILURE);
-             */
             NES_WARNING("Worker spatial type is set to mobile but there is no mobility config. Using default config")
         }
         mobilityConfig = std::make_shared<Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration>();
-        //return std::make_shared<NES::Spatial::Mobility::Experimental::LocationProvider>(workerConfig->spatialType, workerConfig->locationCoordinates);
     }
 
     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;

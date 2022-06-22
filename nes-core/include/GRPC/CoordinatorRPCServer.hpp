@@ -234,8 +234,23 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                                    const ::SoftStopCompletionMessage* request,
                                    ::SoftStopCompletionReply* response) override;
 
+    /**
+     * @brief inform the coordinator that a mobile devices reconnect prediction has changed
+     * @param request : sent from worker to coordinator containing the id of the mobile device and the scheduled reconnect
+     * consisting of the id of the field node which the mobile device expects to connect to and the location and time at which
+     * the reconnect is expected to happen
+     * @param reply : sent from coordinator to worker not containing any data
+     * @return OK if the coordinator succesfully recorded the data, CANCELLED otherwise
+     */
     Status SendScheduledReconnect(ServerContext*, const SendScheduledReconnectRequest* request, SendScheduledReconnectReply* reply) override;
 
+    /**
+     * @brief inform the coordinator that the devices location has changed
+     * @param request : sent from worker to coordinator containing the id of the mobile device, its new location and the time
+     * when this location was recorded
+     * @param reply : sent from coordinator to worker containing no data
+     * @return OK in any case
+     */
     Status SendLocationUpdate(ServerContext*, const LocationUpdateRequest* request, LocationUpdateReply* reply) override;
 
   private:

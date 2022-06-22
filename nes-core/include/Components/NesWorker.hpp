@@ -86,7 +86,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig, Monitoring::MetricStorePtr metricStore = nullptr);
 
     /**
-     * @brief constructor used for mobile nodes accecpting a mobility config as second parameter
+     * @brief constructor used for mobile nodes accepting a mobility config as second parameter
      * @param workerConfig
      * @param mobilityConfig
      */
@@ -248,11 +248,16 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
     /**
-     * get the class containing all location info on this worker if it is a field node or mobile node
+     * get the class containing all location info on this worker if it is a field node and the functionality to
+     * query the current position if it is a field node
      * @return
      */
     NES::Spatial::Mobility::Experimental::LocationProviderPtr getLocationProvider();
 
+    /**
+     * get the class taking care of the trajectory prediction of mobile devices. Will return nullptr if the node is not mobile
+     * @return
+     */
     NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr getTrajectoryPredictor();
 
   private:

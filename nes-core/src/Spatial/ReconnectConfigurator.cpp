@@ -27,41 +27,54 @@ namespace NES {
 NES::Spatial::Mobility::Experimental::ReconnectConfigurator::ReconnectConfigurator(
         NesWorker& worker,
         CoordinatorRPCClientPtr coordinatorRpcClient,
-        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration) : worker(worker), coordinatorRpcClient(std::move(coordinatorRpcClient)) {
+        const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration) :
+                                                                                                                    worker(worker),
+                                                                                                                    coordinatorRpcClient(std::move(coordinatorRpcClient)) {
         locationUpdateThreshold = S2Earth::MetersToAngle(mobilityConfiguration->sendDevicePositionUpdateThreshold);
         locationUpdateInterval = mobilityConfiguration->sendLocationUpdateInterval;
-        sendUpdates = {false};
+        sendUpdates = false;
         if (mobilityConfiguration->pushDeviceLocationUpdates) {
-            sendUpdates = {true};
-            sendLocationUpdateThread = std::make_shared<std::thread>(&ReconnectConfigurator::periodicallyUpdateLocation, this);
+            sendUpdates = true;
+            sendLocationUpdateThread = std::make_shared<std::thread>(&ReconnectConfigurator::periodicallySendLocationUpdates, this);
         }
 };
-bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::update(
+bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateScheduledReconnect(
     const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect) {
+    bool predictionChanged = false;
     if (scheduledReconnect.has_value()) {
+        // the new value represents a valid prediction
         uint64_t reconnectId = get<0>(scheduledReconnect.value());
         Timestamp timestamp = get<2>(scheduledReconnect.value());
         std::unique_lock lock(reconnectConfigMutex);
         if (!lastTransmittedReconnectPrediction.has_value()) {
+            // previously there was no prediction. we now inform the coordinator that a prediction exists
             NES_DEBUG("transmitting predicted reconnect point. previous prediction did not exist")
             coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), scheduledReconnect.value());
+            predictionChanged = true;
         } else if (reconnectId != get<0>(lastTransmittedReconnectPrediction.value()) || timestamp != get<2>(lastTransmittedReconnectPrediction.value())) {
+            // there was a previous prediction but its values differ from the current one. Inform coordinator about the new prediciton
             NES_DEBUG("transmitting predicted reconnect point. current prediction differs from previous prediction")
             coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), scheduledReconnect.value());
+            lastTransmittedReconnectPrediction = scheduledReconnect;
+            predictionChanged = true;
         }
     } else if (lastTransmittedReconnectPrediction.has_value()) {
+        // a previous trajectory led to the calculation of a prediction. But there is no prediction (yet) for the current trajectory
+        // inform coordinator, that the old prediction is not valid anymore
         NES_DEBUG("no reconnect point found after recalculation, telling coordinator to discard old reconnect")
         coordinatorRpcClient->sendReconnectPrediction(worker.getWorkerId(), std::tuple<uint64_t, Index::Experimental::Location, Timestamp>(0, {}, 0));
+        predictionChanged = true;
     }
     lastTransmittedReconnectPrediction = scheduledReconnect;
-    return false;
+    return predictionChanged;
 }
+
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::reconnect(uint64_t oldParent, uint64_t newParent) {
-    //todo: tell nesWorker to buffer
+    //todo #2864: tell nesWorker to buffer
     return worker.replaceParent(oldParent, newParent);
 }
 
-void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::sendPeriodicLocationUpdate() {
+void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThresholdAndSendLocationUpdate() {
     auto locProvider = worker.getLocationProvider();
     if (locProvider) {
         auto currentLocationTuple = locProvider->getCurrentLocation();
@@ -79,7 +92,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::sendPeriodicLo
     }
 }
 
-void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallyUpdateLocation() {
+void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallySendLocationUpdates() {
     auto currentLocationTuple = worker.getLocationProvider()->getCurrentLocation();
     auto currentLocation = currentLocationTuple.first;
     S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
@@ -89,26 +102,16 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallyUp
     lastTransmittedLocation = currentPoint;
     lock.unlock();
     while (sendUpdates) {
-        sendPeriodicLocationUpdate();
+        checkThresholdAndSendLocationUpdate();
         std::this_thread::sleep_for(std::chrono::milliseconds(locationUpdateInterval));
     }
 }
+
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::stopPeriodicUpdating() {
     if (!sendUpdates) {
         return false;
     }
-    //std::unique_lock lock(reconnectConfigMutex);
     sendUpdates = false;
-    /*
-    if (sendLocationUpdateThread->joinable()) {
-        NES_DEBUG("ReconnectConfigurator: join location update thread")
-        sendLocationUpdateThread->join();
-        return true;
-    } else {
-        NES_ERROR("Reconnect Configurator: location update thread not joinable")
-        NES_THROW_RUNTIME_ERROR("error while stopping thread->join");
-    }
-     */
     return true;
 }
 
