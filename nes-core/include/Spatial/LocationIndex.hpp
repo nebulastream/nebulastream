@@ -119,8 +119,22 @@ class LocationIndex {
      */
     size_t getSizeOfPointIndex();
 
-    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, Location reconnectLocation, Timestamp reconnectTime);
+    /**
+     * @brief update the information saved at the coordinator side about a mobile devices predicted next reconnect
+     * @param mobileWorkerId : The id of the mobile worker whose predicted reconnect has changed
+     * @param reconnectNodeId : The id of the expected new parent after the next reconnect
+     * @param reconnectLocation : The expected location at which the device will reconnect
+     * @param time : The expected time at which the device will reconnect
+     * @return true if the information was processed correctly
+     */
+    bool updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location reconnectLocation, Timestamp reconnectTime);
 
+    /**
+     * @brief get the next scheduled reconnect for a mobile node if there is one saved at the coordinator side
+     * @param nodeId : The id of the mobileWorker
+     * @return an optional containing the id of the expected new parent, the expected location of the reconnect and the expected time
+     * of the reconnect. If no record can be found for this id the return value is nullopt.
+     */
     std::optional<std::tuple<uint64_t, Location, Timestamp>> getScheduledReconnect(uint64_t nodeId);
 
   private:

@@ -19,7 +19,6 @@
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
 #include <Util/Experimental/WorkerSpatialType.hpp>
-#include <Common/Location.hpp>
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
 #include <s2/s2point.h>
@@ -41,6 +40,7 @@ class Location;
 using LocationPtr = std::shared_ptr<Location>;
 
 }// namespace NES::Spatial::Index::Experimental
+
 namespace Configurations {
 
 class WorkerConfiguration;
@@ -57,22 +57,12 @@ namespace NES::Spatial::Mobility::Experimental {
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
-//TODO: do we need thais here?
 class TrajectoryPredictor;
 using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
-
-class ReconnectSchedule;
-using ReconnectSchedulePtr = std::shared_ptr<ReconnectSchedule>;
 
 class LocationProvider {
   public:
     explicit LocationProvider(Index::Experimental::WorkerSpatialType spatialType, Index::Experimental::Location fieldNodeLoc);
-
-    /*
-    LocationProvider(bool spatialType, Index::Experimental::Location fieldNodeLoc,
-                        uint64_t parentid,
-                        NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration);
-                        */
 
     /**
      * @brief default destructor
@@ -81,21 +71,15 @@ class LocationProvider {
 
     /**
      * Experimental
-     * @brief checks if this Worker runs on a non-mobile device with a known location (Field Node)
-     */
-    //bool isFieldNode();
-
-    /**
-     * Experimental
-     * @brief check if this worker runs on a mobile device
+     * @brief check if this worker runs on a mobile device, has a fixed location, of if there is no location data available
      */
     [[nodiscard]] Index::Experimental::WorkerSpatialType getSpatialType() const;
 
     /**
      * Experimental
-     * @brief returns an optional containing a Location object if the node has a fixed location or
-     * containing a nullopt_t if the node does not have a location
-     * @return optional containing the Location
+     * @brief get the workers location.
+     * @return Location object containig the current location if the worker runs on a mobile device, the fixed location if
+     * the worker is a field node or an invalid location if there is no known location
      */
     Index::Experimental::Location getLocation();
 
@@ -125,17 +109,20 @@ class LocationProvider {
      */
     bool setFixedLocationCoordinates(const Index::Experimental::Location& geoLoc);
 
-
+    /**
+     * @brief pass a pointer to this worker coordinator rpc client, so the location provider can query information from the coordinator
+     * @param coordinatorClient : a smart pointer to the coordinator rpc client object
+     */
     void setCoordinatorRPCCLient(CoordinatorRPCClientPtr coordinatorClient);
 
 
-    //todo: update parameters in comments
     /**
      * Experimental
-     * @brief construct a mobile worker location provider. This function is experimental.
-     * @param type defines the the subclass of locationProvider to be used
-     * @param config the config parameters for the location provider
-     * @return
+     * @brief construct a mobile workers location provider. The supplied worker mobility configuration will be used to determine
+     * which subclass of LocationProvider should be used. This function is experimental.
+     * @param workerConfig : this workers WorkerConfiguration
+     * @param mobilityConfig : this worker Mobility configuration
+     * @return a smart pointer to an object of the LocationProvider class or one of its subclasses
      */
     static LocationProviderPtr create(Configurations::WorkerConfigurationPtr workerConfig,
                                    NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig);
@@ -145,6 +132,7 @@ class LocationProvider {
      * @return a pair containing a goegraphical location and the time when this location was recorded
      */
     virtual std::pair<Index::Experimental::Location, Timestamp> getCurrentLocation();
+
   private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
     Index::Experimental::Location fixedLocationCoordinates;
@@ -152,6 +140,5 @@ class LocationProvider {
 
     TrajectoryPredictorPtr trajectoryPredictor;
 };
-
 }//namespace NES::Spatial::Mobility::Experimental
 #endif//NES_GEOLOCATION_LOCATIONSERVICE_HPP

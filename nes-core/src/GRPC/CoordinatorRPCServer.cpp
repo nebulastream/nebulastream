@@ -335,6 +335,7 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
     response->set_success(success);
     return Status::OK;
 }
+
 Status CoordinatorRPCServer::SendScheduledReconnect(ServerContext*,
                                                     const SendScheduledReconnectRequest* request,
                                                     SendScheduledReconnectReply* reply) {
@@ -358,6 +359,6 @@ CoordinatorRPCServer::SendLocationUpdate(ServerContext*, const LocationUpdateReq
     (void) reply;
     auto coordinates = request->coord();
     NES_DEBUG("Coordinator received location update from node with id " << request->id() << " which reports [" << coordinates.lat() << ", " << coordinates.lng() << "] at TS " << request->time());
-    //todo: what to do here?
+    //todo #2862: update coordinator trajectory prediction
     return Status::OK;
 }

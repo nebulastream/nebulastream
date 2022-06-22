@@ -77,6 +77,9 @@ int main(int argc, char** argv) {
         }
 
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
+        if (!workerConfiguration->mobilityConfigPath.getValue().empty()) {
+            NES_INFO("Found mobility configuration with settings: " << std::endl << mobilityConfiguration->toString());
+        }
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration), std::move(mobilityConfiguration));
         Exceptions::installGlobalErrorListener(nesWorker);
 

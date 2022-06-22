@@ -216,8 +216,23 @@ class CoordinatorRPCClient {
      */
     bool notifySoftStopCompleted(QueryId queryId, QuerySubPlanId querySubPlanId);
 
+    /**
+     * @brief this method is used by a mobile worker to inform the coordinator that location or time of the next expected reconnect
+     * have changed or that the worker expects a reconnect to a different parent than the previously scheduled one
+     * @param nodeId The id of the calling worker
+     * @param scheduledReconnect a tuple containing the id of the new parent. The location where the reconnect is scheduled to happen
+     * and the expected time of the reconnect
+     * @return true if the information was succesfully saved at coordinator side
+     */
     bool sendReconnectPrediction(uint64_t nodeId, std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp> scheduledReconnect);
 
+    /**
+     * @brief this method can be called by a mobile worker to tell the coordinator, that the mobile devices position has changed
+     * @param nodeId the id of the calling worker
+     * @param locationUpdate a tuple containing the mobile devices location and a timestamp indicating when the device was located
+     * at the transmitted position
+     * @return true if the information has benn succesfully processed
+     */
     bool sendLocationUpdate(uint64_t nodeId, std::pair<NES::Spatial::Index::Experimental::Location, Timestamp> locationUpdate);
   private:
     uint64_t workerId;

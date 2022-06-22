@@ -68,14 +68,64 @@ class LocationService {
      */
     web::json::value requestLocationDataFromAllMobileNodesAsJson();
 
+    /**
+     * @brief get information about a mobile workers predicted trajectory the last update position of the devices local
+     * node index and the scheduled reconnects of the device
+     * @param nodeId : the id of the mobile device
+     * @return a json in the format:
+     * {
+        "indexUpdatePosition": [
+            <latitude>
+            <longitude>
+        ],
+        "pathEnd": [
+            <latitude>
+            <longitude>
+        ],
+        "pathStart": [
+            <latitude>
+            <longitude>
+        ],
+        "reconnectPoints": [
+            {
+                "id": <parent id>,
+                "reconnectPoint": [
+                    <latitude>
+                    <longitude>
+                ],
+                "time": <timestamp>
+            },
+            ...
+        ]
+        }
+     */
     web::json::value requestReconnectScheduleAsJson(uint64_t nodeId);
 
-    bool updatePredictedReconnect(uint64_t deviceId, uint64_t reconnectNodeId, Location location, Timestamp time);
+    /**
+     * @brief update the information saved at the coordinator side about a mobile devices predicted next reconnect
+     * @param mobileWorkerId : The id of the mobile worker whose predicted reconnect has changed
+     * @param reconnectNodeId : The id of the expected new parent after the next reconnect
+     * @param location : The expected location at which the device will reconnect
+     * @param time : The expected time at which the device will reconnect
+     * @return true if the information was processed correctly
+     */
+    bool updatePredictedReconnect(uint64_t mobileWorkerId, uint64_t reconnectNodeId, Location location, Timestamp time);
 
   private:
-    static web::json::value convertLocationToJson(Location loc);
+
     /**
-     * Use a node id and a LocationPtr to construct a Json representation containing these values.
+     * @brief convert a Location to a json representing the same coordinates
+     * @param location : The location object to convert
+     * @return a json array in the format:
+     * [
+     *   <latitude>,
+     *   <longitude>,
+     * ]
+     */
+    static web::json::value convertLocationToJson(Location location);
+
+    /**
+     * Use a node id and a Location to construct a Json representation containing these values.
      * @param id : the nodes id
      * @param loc : the nodes location. if this is a nullptr then the "location" attribute of the returned json will be null.
      * @return a json in the format:

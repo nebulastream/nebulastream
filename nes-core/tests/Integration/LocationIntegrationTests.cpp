@@ -599,25 +599,23 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 
     auto waypoints = std::dynamic_pointer_cast<NES::Spatial::Mobility::Experimental::LocationProviderCSV>(wrk1->getLocationProvider())->getWaypoints();
     auto reconnectSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
-    while (!reconnectSchedule->getLastIndexUpatePosition()) {
+    while (!reconnectSchedule->getLastIndexUpdatePosition()) {
         NES_DEBUG("reconnect schedule does not yet contain index update position")
         reconnectSchedule = wrk1->getTrajectoryPredictor()->getReconnectSchedule();
     }
 
     size_t waypointCounter = 1;
-    //bool nextWayPointIsCovered = false;
     std::vector<bool> waypointCovered(waypoints.size(), false);
     S2Polyline lastPredictedPath;
     Timestamp lastPredictePathRetrievalTime;
     uint64_t parentId = 0;
-    //expect the predicted reconnect times to be
-    //double allowedTimePredictionError = 0.1;
-    Timestamp allowedTimeDiff = 15000000000; //15 seconds
+    //TODO we currently only test the accuracy of the last prediction before the reconnect. Which in many cases might happen shortly before the reconnect. testin the accuracy of earlier predictions should also be done
+    Timestamp allowedTimeDiff = 150000000; //0.15 seconds
+    std::optional<Timestamp> firstPrediction;
     auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
     std::tuple<NES::Spatial::Index::Experimental::Location, Timestamp> lastReconnectPositionAndTime = std::tuple(NES::Spatial::Index::Experimental::Location(), 0);
-    std::optional<std::tuple<unsigned long, NES::Spatial::Index::Experimental::Location, unsigned long>> predictedReconnect = std::nullopt;
+    std::optional<std::tuple<unsigned long, NES::Spatial::Index::Experimental::Location, Timestamp>> predictedReconnect = std::nullopt;
     std::optional<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> oldPredictedReconnect = std::nullopt;
-    //bool reconnected = true;
     bool stabilizedSchedule = false;
     int reconnectCounter = 0;
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> checkVectorForCoordinatorPrediction;
@@ -628,7 +626,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     //keep looping until the final waypoint is reached
     for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation(); workerLocation.first != waypoints.back().first; workerLocation = wrk1->getLocationProvider()->getCurrentLocation()) {
         //test local node index
-        NES::Spatial::Index::Experimental::LocationPtr indexUpdatePosition = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpatePosition();
+        NES::Spatial::Index::Experimental::LocationPtr indexUpdatePosition =
+            wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpdatePosition();
         if (indexUpdatePosition) {
             S2ClosestPointQuery<uint64_t> query(&nodeIndex);
             query.mutable_options()->set_max_distance(
@@ -642,7 +641,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     NES::Spatial::Index::Experimental::Location loc;
                     loc = wrk1->getTrajectoryPredictor()->getNodeLocationById(result.data());
                     if (!loc.isValid()) {
-                        auto newDownloadPos = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpatePosition();
+                        auto newDownloadPos =
+                            wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpdatePosition();
                         if (newDownloadPos) {
                             NES_DEBUG("new downloaded position is not null, checking if it changed and breaking out of loop")
                             EXPECT_NE(*indexUpdatePosition, *(newDownloadPos));
@@ -654,7 +654,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     EXPECT_TRUE(S2::ApproxEquals(NES::Spatial::Index::Experimental::locationToS2Point(loc), result.point()));
                 }
             } else {
-                auto newDownloadPos = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpatePosition();
+                auto newDownloadPos = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getLastIndexUpdatePosition();
                 EXPECT_NE(*indexUpdatePosition, *(newDownloadPos));
                 break;
             }
@@ -709,7 +709,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     EXPECT_EQ(lastPredictedPath.Equals(pathNew), waypointCovered[waypointCounter]);
 
                     if (waypointCovered[waypointCounter]) {
-                        auto newPredictedReconnect = wrk1->getTrajectoryPredictor()->getNextReconnect();
+                        auto newPredictedReconnect = wrk1->getTrajectoryPredictor()->getNextPredictedReconnect();
                         auto updatedLastReconnect = wrk1->getTrajectoryPredictor()->getLastReconnectLocationAndTime();
                         //the path covered the waypoint, but the new schedule is not necessarily computed yet, therefore we need to keep querying for the prediction
                         if(newPredictedReconnect && (!get<0>(lastReconnectPositionAndTime).isValid()
@@ -718,6 +718,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                                  || /*we are reconnected to a new node*/ get<1>(newPredictedReconnect.value()) != get<1>(oldPredictedReconnect.value()))) {
                                 NES_TRACE("path stabilized after reconnect")
                                 predictedReconnect = newPredictedReconnect;
+                                firstPrediction = get<2>(predictedReconnect.value());
                         }
                         if (predictedReconnect && get<1>(predictedReconnect.value()) == get<1>(newPredictedReconnect.value())
                             && get<2>(predictedReconnect.value()) != get<2>(newPredictedReconnect.value())) {
@@ -725,6 +726,12 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                             predictedReconnect = newPredictedReconnect;
                         }
                         }
+
+                        /*
+                        if (!firstPrediction && predictedReconnect) {
+                           firstPrediction = get<2>(predictedReconnect.value());
+                        }
+                         */
                     }
                 }
             }
@@ -745,6 +752,9 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     EXPECT_NE(get<1>(updatedLastReconnect), 0);
                     EXPECT_LT(abs((long long) get<2>(predictedReconnect.value()) - (long long) get<1>(updatedLastReconnect)),
                               allowedTimeDiff);
+                    EXPECT_LT(abs((long long) firstPrediction.value() - (long long) get<1>(updatedLastReconnect)),
+                              allowedTimeDiff);
+                    firstPrediction = std::nullopt;
                     reconnectCounter++;
 
                     //check if the predicted position was already sent to the coordinator before. If not check if it is present now

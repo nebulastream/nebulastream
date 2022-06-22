@@ -177,14 +177,16 @@ class WorkerConfiguration : public BaseConfiguration {
         locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
 
     /**
-     * @brief specify if the worker is running on a mobile device. If this option is set, setting the fixedLocationCoordinates
-     * option as well will have no effect and the worker will be considered mobile and not a field node
+     * @brief specify if the worker is running on a mobile device, if it is a field node with a known fixed loction, or if it
+     * does not have a known location.
      */
-    //BoolOption spatialType = {IS_MOBILE_CONFIG, false, "define if this worker is running on a mobile device"};
     EnumOption<NES::Spatial::Index::Experimental::WorkerSpatialType> spatialType = {SPATIAL_TYPE_CONFIG,
                                                                                     NES::Spatial::Index::Experimental::WorkerSpatialType::NO_LOCATION,
                                                                                     "specifies if the worker has no known location or if it is a field node or mobile node"};
 
+    /**
+     * @brief specifies the path to a yaml file containing a mobility configuration
+     */
     StringOption mobilityConfigPath = {MOBILITY_CONFIG_PATH_CONFIG, "", "the configuration data for the location wrapper class"};
 
     /**
@@ -268,7 +270,6 @@ class WorkerConfiguration : public BaseConfiguration {
     }
 };
 }// namespace Configurations
-// namespace Configurations
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_

@@ -52,7 +52,7 @@ class TopologyManagerService {
      * @param cpu the cpu capacity of the worker
      * @param nodeProperties of the to be added sensor
      * @param coordinates: an optional containing either the node location in as a Location object if the node is a field node, or nullopt_t for non field nodes
-     * @param isMobile: indicates if this worker is running on a fixed location device or on a mobile device
+     * @param spatialType: indicates if this worker is running on a fixed location device or on a mobile device or if there is no location data available
      * @return id of node
      */
     uint64_t registerNode(const std::string& address,

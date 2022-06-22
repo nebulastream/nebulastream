@@ -24,20 +24,12 @@
 
 namespace NES::Spatial::Mobility::Experimental {
 
-/*
-LocationProviderCSV::LocationProviderCSV(bool spatialType, Index::Experimental::Location fieldNodeLoc,
-                                   uint64_t parentId,
-                                   NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr configuration, const std::string& csvPath) : LocationProvider(spatialType, fieldNodeLoc, parentId, configuration) {
-    startTime = getTimestamp();
-    readMovementSimulationDataFromCsv(std::move(csvPath));
-}
- */
 LocationProviderCSV::LocationProviderCSV(const std::string& csvPath) : LocationProvider(Index::Experimental::WorkerSpatialType::MOBILE_NODE, {}) {
     startTime = getTimestamp();
-    readMovementSimulationDataFromCsv(std::move(csvPath));
+    readMovementSimulationDataFromCsv(csvPath);
 }
 
-    void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& csvPath) {
+void LocationProviderCSV::readMovementSimulationDataFromCsv(const std::string& csvPath) {
     std::string csvLine;
     std::ifstream inputStream(csvPath);
     std::string locString;
@@ -123,8 +115,8 @@ std::pair<Index::Experimental::Location, Timestamp> LocationProviderCSV::getCurr
 }
 
 Timestamp LocationProviderCSV::getStarttime() const { return startTime; }
+
 const std::vector<std::pair<Index::Experimental::Location, Timestamp>>& LocationProviderCSV::getWaypoints() {
     return waypoints;
 }
-
 }// namespace NES::Spatial::Mobility::Experimental

@@ -18,6 +18,10 @@
 #include <WorkerLocation.grpc.pb.h>
 
 namespace NES::Spatial::Index::Experimental {
+
+/**
+ * this enum defines different types workers can have regarding their spacial information
+ */
 enum class WorkerSpatialType {
     NO_LOCATION = 0, //the worker does not have a known location
     FIELD_NODE = 1, //the worker has a known fixed location that will not change after its creation

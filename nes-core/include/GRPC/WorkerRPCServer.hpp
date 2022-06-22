@@ -43,7 +43,10 @@ using TrajectoryPredictorPtr = std::shared_ptr<TrajectoryPredictor>;
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
-    WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, Monitoring::MonitoringAgentPtr monitoringAgent, NES::Spatial::Mobility::Experimental::LocationProviderPtr locationWrapper, NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor);
+    WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
+                    Monitoring::MonitoringAgentPtr monitoringAgent,
+                    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
+                    NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -68,11 +71,10 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetReconnectSchedule(ServerContext*, const GetReconnectScheduleRequest* request, GetReconnectScheduleReply* reply) override;
 
-
   private:
     Runtime::NodeEnginePtr nodeEngine;
     Monitoring::MonitoringAgentPtr monitoringAgent;
-    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationWrapper;
+    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider;
     NES::Spatial::Mobility::Experimental::TrajectoryPredictorPtr trajectoryPredictor;
 };
 
