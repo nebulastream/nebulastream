@@ -24,8 +24,6 @@
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
-#include <Experimental/NESIR/Operations/MulOperation.hpp>
-#include <Experimental/NESIR/Operations/NegateOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
@@ -87,7 +85,6 @@ class MLIRGenerator {
     std::vector<std::string> jitProxyFunctionSymbols;
     std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
     std::unordered_set<std::string> inductionVars;
-    std::unordered_map<std::string, mlir::Block*> blockMapping;
     // Utility
     mlir::RewriterBase::InsertPoint* globalInsertPoint;
     mlir::Value globalString;
@@ -101,33 +98,19 @@ class MLIRGenerator {
      * @param parentBlock MLIR Block that new operation is inserted into.
      */
     void generateMLIR(const IR::Operations::OperationPtr& operation, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> funcOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> funcOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> loopOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
     void generateMLIR(std::shared_ptr<IR::Operations::ConstantIntOperation> constIntOp,
                       std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::AddIntOperation> addIntOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::MulOperation> addIntOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::NegateOperation> addIntOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-
-    void generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::AddIntOperation> addIntOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
 
     void generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
-    void generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp,
-                      std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
+    void generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, std::unordered_map<std::string, mlir::Value>& blockArgs);
     void generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperation> proxyCallOp,
                       std::unordered_map<std::string, mlir::Value>& blockArgs);
 
@@ -187,12 +170,6 @@ class MLIRGenerator {
 
     //
     IR::Operations::OperationPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel);
-    void generateIfCase(mlir::scf::IfOp mlirIfOp,
-                        std::shared_ptr<IR::Operations::IfOperation> ifOp,
-                        IR::BasicBlockPtr caseBlock,
-                        std::vector<std::string> caseBlockArguments,
-                        IR::Operations::OperationPtr ifOpTerminatorOp,
-                        std::unordered_map<std::string, mlir::Value>& frame);
 };
 }// namespace NES::ExecutionEngine::Experimental::MLIR
 #endif//NES_INCLUDE_EXPERIMENTAL_NESABSTRACTIONTOMLIR_HPP_

@@ -13,5 +13,4 @@
 
 add_source_files(nes-execution-engine NESIR.cpp ExternalDataSource.cpp)
 add_subdirectory(BasicBlocks)
-add_subdirectory(Util)
 add_subdirectory(Operations)

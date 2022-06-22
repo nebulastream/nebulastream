@@ -25,6 +25,5 @@ add_source_files(nes-execution-engine
         CompareOperation.cpp
         ReturnOperation.cpp
         BranchOperation.cpp
-        MulOperation.cpp
-        NegateOperation.cpp
+
 )
