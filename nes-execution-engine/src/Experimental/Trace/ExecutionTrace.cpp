@@ -130,8 +130,8 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
 */
     // remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
-    oldBlock.operations.emplace_back(Operation(JMP, ValueRef(0, 0), {oldBlockRef}));
-    auto operation = Operation(JMP, ValueRef(0, 0), {BlockRef(mergedBlockId)});
+    oldBlock.operations.emplace_back(Operation(JMP, ValueRef(0, 0, IR::Operations::Operation::VOID), {oldBlockRef}));
+    auto operation = Operation(JMP, ValueRef(0, 0, IR::Operations::Operation::VOID), {BlockRef(mergedBlockId)});
     addOperation(operation);
 
     mergeBlock.predecessors.emplace_back(blockIndex);

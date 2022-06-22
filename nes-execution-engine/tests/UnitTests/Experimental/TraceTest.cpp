@@ -24,9 +24,9 @@
 #include <Experimental/Interpreter/Operators/Scan.hpp>
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
-#include <Experimental/Trace/SSACreationPhase.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
+#include <Experimental/Trace/Phases/SSACreationPhase.hpp>
+#include <Experimental/Trace/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -644,10 +644,10 @@ TEST_F(TraceTest, emitQueryTest) {
 
     auto pctx = MockedPipelineExecutionContext();
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0);
+    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1);
+    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunction([&scan, &executionContext, &recordBuffer]() {
@@ -681,15 +681,15 @@ TEST_F(TraceTest, selectionQueryTest) {
     auto address = std::addressof(buffer);
     auto value = (int64_t) address;
     auto memRef = Value<MemRef>(std::make_unique<MemRef>(value));
-    memRef.ref = Trace::ValueRef(INT32_MAX, 0);
+    memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
     auto pctx = MockedPipelineExecutionContext();
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1);
+    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2);
+    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::Operation::INT8PTR);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunction([&scan, &executionContext, &recordBuffer]() {

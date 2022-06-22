@@ -18,4 +18,6 @@ add_source_files(nes-execution-engine
         Selection.cpp
         Emit.cpp
         Map.cpp
+        Aggregation.cpp
+        AggregationFunction.cpp
         )

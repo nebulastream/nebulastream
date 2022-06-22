@@ -50,7 +50,7 @@ class Operation {
         GetDataBuffer = 1,
         Other = 50
     };
-    enum OperationType{LoopOp, AddOp, LoadOp, StoreOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp, 
+    enum OperationType{LoopOp, AddOp, MulOp, NegateOp, LoadOp, StoreOp, ConstantOp, AddressOp, FunctionOp, BranchOp, IfOp,
                        CompareOp, ReturnOp, ProxyCallOp};
 
     explicit Operation(OperationType opType);

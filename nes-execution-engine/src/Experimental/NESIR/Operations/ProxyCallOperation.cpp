@@ -16,10 +16,10 @@
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, 
+ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string functionName, std::string identifier,
                                         std::vector<std::string> inputArgNames, std::vector<Operation::BasicType> inputArgTypes,
                                         Operation::BasicType resultType) 
-    : Operation(Operation::ProxyCallOp), proxyCallType(proxyCallType), identifier(identifier), inputArgNames(std::move(inputArgNames)),
+    : Operation(Operation::ProxyCallOp), proxyCallType(proxyCallType), functionName(functionName), identifier(identifier), inputArgNames(std::move(inputArgNames)),
       inputArgTypes(inputArgTypes), resultType(resultType) {}
 
     Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
@@ -38,5 +38,7 @@ ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string 
         }
         return baseString + ")";
     }
-    
-}// namespace NES
+    const std::string& ProxyCallOperation::getFunctionName() const { return functionName; }
+    void ProxyCallOperation::setFunctionName(const std::string& functionName) { ProxyCallOperation::functionName = functionName; }
+
+    }// namespace NES

@@ -16,6 +16,8 @@
 #include <Experimental/Interpreter/Operators/Operator.hpp>
 namespace NES::ExecutionEngine::Experimental::Interpreter {
 
+void Operator::setup(ExecutionContext& ) const {}
+
 void Operator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const {
     if (hasChildren()) {
         child->open(executionCtx, rb);

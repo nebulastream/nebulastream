@@ -21,7 +21,7 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class FunctionOperation : public Operation {
   public:
-    explicit FunctionOperation(std::string  name, std::vector<Operation::BasicType> inputArgs, std::vector<std::string> inputArgNames,
+    explicit FunctionOperation(std::string name, std::vector<Operation::BasicType> inputArgs, std::vector<std::string> inputArgNames,
                                Operation::BasicType outputArg);
     ~FunctionOperation() override = default;
 

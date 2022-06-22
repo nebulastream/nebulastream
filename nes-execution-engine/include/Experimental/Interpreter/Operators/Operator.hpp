@@ -23,6 +23,8 @@ using ExecuteOperatorPtr = std::shared_ptr<ExecutableOperator>;
 class TraceContext;
 class Operator {
   public:
+
+    virtual void setup(ExecutionContext& executionCtx) const;
     /**
      * @brief Open is called for each record buffer and is used to initializes execution local state.
      * @param recordBuffer

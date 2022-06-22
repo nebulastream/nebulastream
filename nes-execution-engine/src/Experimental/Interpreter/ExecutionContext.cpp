@@ -46,8 +46,17 @@ void ExecutionContext::setLocalOperatorState(const Operator* op, std::unique_ptr
     localStateMap.insert(std::make_pair(op, std::move(state)));
 }
 
+void ExecutionContext::setGlobalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state) {
+    globalStateMap.insert(std::make_pair(op, std::move(state)));
+}
+
 OperatorState* ExecutionContext::getLocalState(const Operator* op) {
     auto& value = localStateMap[op];
+    return value.get();
+}
+
+OperatorState* ExecutionContext::getGlobalState(const Operator* op){
+    auto& value = globalStateMap[op];
     return value.get();
 }
 

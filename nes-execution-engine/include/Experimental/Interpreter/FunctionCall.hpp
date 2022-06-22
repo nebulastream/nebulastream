@@ -98,6 +98,9 @@ auto transformReturn(Arg argument) {
     if constexpr (std::is_same<Arg, void*>::value) {
         return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
     }
+    if constexpr (std::is_same<Arg, uint8_t *>::value) {
+        return Value<MemRef>(std::make_unique<MemRef>((int64_t) argument));
+    }
 }
 
 template<typename R>
