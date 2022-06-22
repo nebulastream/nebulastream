@@ -438,9 +438,8 @@ endif (NES_USE_MQTT)
 
 # Library containing simdjson parser
 if (NES_USE_SIMDJSON)
-    #message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
     find_package(simdjson CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} simdjson::simdjson) # TODO
+    set(LIBRARIES ${LIBRARIES} simdjson::simdjson)
     add_compile_definitions(ENABLE_SIMDJSON_BUILD)
     message(STATUS "Using simdjson")
 endif (NES_USE_SIMDJSON)

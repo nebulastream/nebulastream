@@ -17,6 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
+#include <simdjson.h>
 #include <string>
 #include <utility>
 
@@ -27,6 +28,8 @@ JSONParser::JSONParser(uint64_t numberOfSchemaFields,
                        std::vector<NES::PhysicalTypePtr> physicalTypes)
     : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
       physicalTypes(std::move(physicalTypes)) {}
+
+JSONParser::JSONParser(std::vector<PhysicalTypePtr> physical_types) : Parser(physical_types){};
 
 bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                               uint64_t tupleCount,
@@ -57,4 +60,18 @@ bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
     }
     return true;
 }
+
+bool JSONParser::writeInputTupleToTupleBuffer(simdjson::ondemand::document_reference doc,
+                                               uint64_t tupleCount,
+                                               Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                               const SchemaPtr& schema) {
+    // TODO
+    /*
+     * for field in schema
+     *      auto val = doc.next()
+     *      writeIntoTupleBuffer<field.type>(val)
+     */
+    return true;
+}
+
 }// namespace NES

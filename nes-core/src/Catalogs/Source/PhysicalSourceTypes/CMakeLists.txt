@@ -17,6 +17,7 @@ add_source_files(nes-core
         LambdaSourceType.cpp
         BenchmarkSourceType.cpp
         CSVSourceType.cpp
+        JsonSourceType.cpp
         BinarySourceType.cpp
         DefaultSourceType.cpp
         KafkaSourceType.cpp

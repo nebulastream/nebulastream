@@ -195,6 +195,7 @@ const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 //Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
 const std::string CSV_SOURCE_CONFIG = "CSVSource";
+const std::string JSON_SOURCE_CONFIG = "JSONSource";
 const std::string BINARY_SOURCE_CONFIG = "BinarySource";
 const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
 const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
@@ -216,6 +217,8 @@ const std::string FILE_PATH_CONFIG = "filePath";
 
 const std::string SKIP_HEADER_CONFIG = "skipHeader";
 const std::string DELIMITER_CONFIG = "delimiter";
+
+const std::string JSON_FORMAT = "jsonFormat";
 
 const std::string URL_CONFIG = "url";
 const std::string CLIENT_ID_CONFIG = "clientId";

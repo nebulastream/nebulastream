@@ -17,6 +17,7 @@
 
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/Parser.hpp>
+#include <simdjson.h>
 
 namespace NES {
 class JSONParser : public Parser {
@@ -32,6 +33,8 @@ class JSONParser : public Parser {
                std::vector<std::string> schemaKeys,
                std::vector<NES::PhysicalTypePtr> physicalTypes);
 
+    JSONParser(std::vector<PhysicalTypePtr> physical_types);
+
     /**
    * @brief takes a json tuple as string, parses it using cpprest and calls Parser::writeFieldValueToTupleBuffer() for every value in the tuple
    * @param jsonTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
@@ -44,10 +47,15 @@ class JSONParser : public Parser {
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema) override;
 
+    bool writeInputTupleToTupleBuffer(simdjson::ondemand::document_reference doc,
+                                                  uint64_t tupleCount,
+                                                  Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                                  const SchemaPtr& schema);
   private:
     uint64_t numberOfSchemaFields;
     std::vector<std::string> schemaKeys;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
+
 };
 }// namespace NES
 #endif// NES_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

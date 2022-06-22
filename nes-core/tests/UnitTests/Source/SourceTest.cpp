@@ -44,6 +44,7 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
+#include <Sources/JSONSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
@@ -1970,6 +1971,74 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
 
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+class JSONSourceProxy : public JSONSource {
+  public:
+    JSONSourceProxy(SchemaPtr schema,
+                    Runtime::BufferManagerPtr bufferManager,
+                    Runtime::QueryManagerPtr queryManager,
+                    JSONSourceTypePtr sourceConfig,
+                    OperatorId operatorId,
+                    OriginId originId,
+                    size_t numSourceLocalBuffers,
+                    GatheringMode::Value gatheringMode)
+        : JSONSource(schema,
+                     bufferManager,
+                     queryManager,
+                     sourceConfig,
+                     operatorId,
+                     originId,
+                     numSourceLocalBuffers,
+                     gatheringMode){};
+
+  private:
+    FRIEND_TEST(SourceTest, testJSONSource);
+};
+
+TEST_F(SourceTest, testJSONSource) { // TODO remove
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "example.json";
+    JSONSourceTypePtr sourceConfig = JSONSourceType::create();
+    sourceConfig->setFilePath(filePath);
+
+    JSONSourceProxy jsonSource(this->schema,
+                               this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(),
+                               sourceConfig,
+                               this->operatorId,
+                               this->originId,
+                               this->numSourceLocalBuffersDefault,
+                               GatheringMode::INTERVAL_MODE);
+    std::tuple<int64_t, std::string> tuple = jsonSource.parse();
+    EXPECT_EQ(get<0>(tuple), int64_t(1));
+    EXPECT_EQ(get<1>(tuple), "value");
+}
+
+TEST_F(SourceTest, testJSONSourceRegion) {
+    SchemaPtr schemaRegion = Schema::create() // TODO move to setup method
+        ->addField("R_REGIONKEY", INT8)
+        ->addField("R_NAME", DataTypeFactory::createFixedChar(16))
+        ->addField("R_COMMENT", DataTypeFactory::createFixedChar(128));
+
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "tpch_region.json";
+    JSONSourceTypePtr sourceConfig = JSONSourceType::create();
+    sourceConfig->setFilePath(filePath);
+    sourceConfig->setJSONFormat(JSON);
+
+    JSONSourceProxy jsonSource(schemaRegion,
+                               this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(),
+                               sourceConfig,
+                               this->operatorId,
+                               this->originId,
+                               this->numSourceLocalBuffersDefault,
+                               GatheringMode::INTERVAL_MODE);
+    jsonSource.parse();
+}
+
+TEST_F(SourceTest, testJSONSourceRegionND) {
+    std::string filePath = std::string(TEST_DATA_DIRECTORY) + "tpch_region.ndjson";
+    // TODO
 }
 
 }// namespace NES

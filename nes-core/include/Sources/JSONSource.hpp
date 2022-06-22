@@ -1,24 +1,55 @@
 #ifndef NES_NES_CORE_INCLUDE_SOURCES_JSONSOURCE_H_
 #define NES_NES_CORE_INCLUDE_SOURCES_JSONSOURCE_H_
 #include "DataSource.hpp"
+#include <Catalogs/Source/PhysicalSourceTypes/JSONSourceType.hpp>
+#include <simdjson.h>
 #ifdef ENABLE_SIMDJSON_BUILD
 
 namespace NES {
+
+class JSONParser;
+using JSONParserPtr = std::shared_ptr<JSONParser>;
+/**
+ * @brief this class implements a JSON input source
+ */
 class JSONSource : public DataSource {
   public:
     explicit JSONSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
+                        JSONSourceTypePtr jsonSourceType,
                         OperatorId operatorId,
                         OriginId originId,
                         size_t numSourceLocalBuffers,
                         GatheringMode::Value gatheringMode);
 
     std::optional<Runtime::TupleBuffer> receiveData() override;
+    void fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer&);
     std::string toString() const override;
     SourceType getType() const override;
-    std::tuple<int64_t, std::string> parse(const std::string& filepath);
+
+    /**
+     * @brief Get file path for the JSON file
+     */
+    std::string getFilePath() const;
+
+    /**
+     * @brief getter for source config
+     * @return JSONSourceType
+     */
+    const JSONSourceTypePtr& getSourceConfig() const;
+
+  protected:
+    simdjson::ondemand::parser parser;
+
+  private:
+    JSONParserPtr inputParser;
+    std::vector<PhysicalTypePtr> physicalTypes;
+    JSONSourceTypePtr jsonSourceType;
+    std::string filePath;
+    JSONFormat jsonFormat;
 };
+using JSONSourcePtr = std::shared_ptr<JSONSource>;
 }//namespace NES
 
 #endif//ENABLE_SIMDJSON_BUILD
