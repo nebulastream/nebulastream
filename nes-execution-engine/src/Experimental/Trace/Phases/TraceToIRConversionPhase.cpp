@@ -16,8 +16,8 @@
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/MulOperation.hpp>
-#include <Experimental/NESIR/Operations/NegateOperation.hpp>
+//#include <Experimental/NESIR/Operations/MulOperation.hpp>
+//#include <Experimental/NESIR/Operations/NegateOperation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
@@ -234,19 +234,17 @@ void TraceToIRConversionPhase::IRConversionContext::processAdd(int32_t, IR::Basi
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processSub(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
-void TraceToIRConversionPhase::IRConversionContext::processMul(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
-    auto constOperation = std::make_shared<IR::Operations::MulOperation>(createValueIdentifier(operation.result),
-                                                                         createValueIdentifier(operation.input[0]),
-                                                                         createValueIdentifier(operation.input[1]));
-    currentBlock->addOperation(constOperation);
+void TraceToIRConversionPhase::IRConversionContext::processMul(int32_t, IR::BasicBlockPtr&, Operation&) {
+    // auto constOperation = std::make_shared<IR::Operations::MulOperation>(createValueIdentifier(operation.result),
+    //                                                                      createValueIdentifier(operation.input[0]),
+    //                                                                      createValueIdentifier(operation.input[1]));
+    // currentBlock->addOperation(constOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processDiv(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
-void TraceToIRConversionPhase::IRConversionContext::processNegate(int32_t,
-                                                                  IR::BasicBlockPtr& currentBlock,
-                                                                  Operation& operation) {
-    auto constOperation = std::make_shared<IR::Operations::NegateOperation>(createValueIdentifier(operation.result),
-                                                                            createValueIdentifier(operation.input[0]));
-    currentBlock->addOperation(constOperation);
+void TraceToIRConversionPhase::IRConversionContext::processNegate(int32_t, IR::BasicBlockPtr&, Operation&) {
+    // auto constOperation = std::make_shared<IR::Operations::NegateOperation>(createValueIdentifier(operation.result),
+    //                                                                         createValueIdentifier(operation.input[0]));
+    // currentBlock->addOperation(constOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
                                                                     IR::BasicBlockPtr& currentBlock,
@@ -269,9 +267,12 @@ void TraceToIRConversionPhase::IRConversionContext::processEquals(int32_t,
 void TraceToIRConversionPhase::IRConversionContext::processAnd(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
 void TraceToIRConversionPhase::IRConversionContext::processOr(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
 void TraceToIRConversionPhase::IRConversionContext::processLoad(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
+    //auto constOperation = std::make_shared<IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
+    //                                                                      createValueIdentifier(operation.input[0]),
+    //                                                                      IR::Operations::Operation::BasicType::VOID);
+    //currentBlock->addOperation(constOperation);
     auto constOperation = std::make_shared<IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
-                                                                          createValueIdentifier(operation.input[0]),
-                                                                          IR::Operations::Operation::BasicType::VOID);
+                                                                          createValueIdentifier(operation.input[0]));
     currentBlock->addOperation(constOperation);
 }
 void TraceToIRConversionPhase::IRConversionContext::processStore(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
@@ -280,7 +281,7 @@ void TraceToIRConversionPhase::IRConversionContext::processStore(int32_t, IR::Ba
     currentBlock->addOperation(constOperation);
 }
 
-void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
+void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t, IR::BasicBlockPtr&, Operation& operation) {
 
     auto inputReferences = std::vector<std::string>{};
     auto types = std::vector<IR::Operations::Operation::BasicType>{};
@@ -294,7 +295,7 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t, IR::Bas
 
     auto resultType = std::holds_alternative<None>(operation.result) ? IR::Operations::Operation::BasicType::VOID
                                                                      : std::get<ValueRef>(operation.result).type;
-    auto constOperation =
+    /*auto constOperation =
         std::make_shared<IR::Operations::ProxyCallOperation>(IR::Operations::ProxyCallOperation::ProxyCallType::Other,
                                                              functionCallTarget.mangledName,
                                                              createValueIdentifier(operation.result),
@@ -302,6 +303,7 @@ void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t, IR::Bas
                                                              types,
                                                              resultType);
     currentBlock->addOperation(constOperation);
+     */
 }
 
 bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(int32_t scope,

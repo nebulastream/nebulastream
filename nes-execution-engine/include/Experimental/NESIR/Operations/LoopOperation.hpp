@@ -15,30 +15,18 @@
 #ifndef NES_LOOPOPERATION_HPP
 #define NES_LOOPOPERATION_HPP
 
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <vector>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-
-class LoopInfo {
-  public:
-};
-
-class CountedLoopInfo {
-  public:
-    const int64_t lowerBoundValue;
-    const int64_t greaterBoundValue;
-    const int64_t stepSizeValue;
-};
-
 /**
  * @brief Iterates over a buffer. Loads a record on each iteration. Contains operations which are nested inside of the LoopBlock.
  * Points to other BasicBlocks if there is control flow.
  */
 class LoopOperation : public Operation {
   public:
-    enum LoopType { ForLoop };
+    enum LoopType{ForLoop};
     LoopOperation(LoopType loopType, const std::vector<std::string>& loopBlockArgs = {});
     ~LoopOperation() override = default;
 
@@ -54,5 +42,5 @@ class LoopOperation : public Operation {
     std::vector<std::string> loopBlockArgs;
     BasicBlockPtr loopHeadBlock;
 };
-}// namespace NES::ExecutionEngine::Experimental::IR::Operations
+}// namespace NES
 #endif//NES_LoopOperation_HPP

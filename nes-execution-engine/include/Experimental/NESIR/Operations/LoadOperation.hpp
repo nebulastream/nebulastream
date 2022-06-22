@@ -20,18 +20,16 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(std::string identifier, std::string argName, BasicType type);
+    explicit LoadOperation(std::string identifier, std::string argName);
     ~LoadOperation() override = default;
 
     std::string getIdentifier();
     std::string getArgName();
-    BasicType getType();
 
     std::string toString() override;
   private:
     std::string identifier;
     std::string argName;
-    BasicType type;
 };
 }// namespace NES
 #endif//NES_LOADOPERATION_HPP

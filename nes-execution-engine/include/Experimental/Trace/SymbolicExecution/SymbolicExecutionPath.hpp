@@ -4,15 +4,14 @@
 
 namespace NES::ExecutionEngine::Experimental::Trace {
 
+/**
+ * @brief The SymbolicExecutionPath represents all tags in one specific execution.
+ */
 class SymbolicExecutionPath {
   public:
     void append(bool outcome, Tag& tag);
-    std::tuple<bool, Tag> operator[](uint64_t size){
-        return path[size];
-    }
-    uint64_t getSize(){
-        return path.size();
-    };
+    std::tuple<bool, Tag> operator[](uint64_t size);
+    uint64_t getSize();
   private:
     std::vector<std::tuple<bool, Tag>> path;
 };
