@@ -16,8 +16,8 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-LoadOperation::LoadOperation(std::string identifier, std::string argName, BasicType type)
-    : Operation(OperationType::LoadOp), identifier(std::move(identifier)), argName(std::move(argName)), type(type) {}
+LoadOperation::LoadOperation(std::string identifier, std::string argName)
+    : Operation(OperationType::LoadOp), identifier(std::move(identifier)), argName(std::move(argName)) {}
 
 std::string LoadOperation::getIdentifier() { return identifier; }
 std::string LoadOperation::getArgName() { return argName; }

@@ -33,7 +33,7 @@
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstantIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-#include <Experimental/NESIR/Util/NesIrVizDumpHandler.hpp>
+#include <Experimental/Utility/NesIrVizDumpHandler.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>

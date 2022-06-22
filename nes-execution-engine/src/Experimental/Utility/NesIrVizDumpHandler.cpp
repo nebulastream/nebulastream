@@ -4,7 +4,7 @@
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <Experimental/NESIR/Util/NesIrVizDumpHandler.hpp>
+#include <Experimental/Utility/NesIrVizDumpHandler.hpp>
 #include <filesystem>
 #include <set>
 
