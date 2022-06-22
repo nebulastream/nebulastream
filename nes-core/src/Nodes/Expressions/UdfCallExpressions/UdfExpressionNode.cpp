@@ -12,40 +12,40 @@
     limitations under the License.
 */
 #ifdef PYTHON_UDF_ENABLED
-#include <Nodes/Expressions/UdfCallExpressions/PythonUdfExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Nodes/Expressions/UdfCallExpressions/UdfExpressionNode.hpp>
 
 namespace NES::Experimental {
 
-PythonUdfExpressionNode::PythonUdfExpressionNode(PythonUdfExpressionNode* other) : ExpressionNode(other) {
+UdfExpressionNode::UdfExpressionNode(UdfExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getUdfName()->copy());
     addChildWithEqual(getFunctionArguments()->copy());
 }
 
-std::string PythonUdfExpressionNode::toString() const {
+std::string UdfExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "PYTHON(" << children[0]->toString() << "," << children[1]->toString() << ")";
+    ss << "CALL(" << children[0]->toString() << "," << children[1]->toString() << ")";
     return ss.str();
 }
 
-ExpressionNodePtr PythonUdfExpressionNode::copy() {
-    return std::make_shared<PythonUdfExpressionNode>(PythonUdfExpressionNode(this));
+ExpressionNodePtr UdfExpressionNode::copy() {
+    return std::make_shared<UdfExpressionNode>(UdfExpressionNode(this));
 }
 
-ExpressionNodePtr PythonUdfExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
+ExpressionNodePtr UdfExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
                                                   const ConstantValueExpressionNodePtr& functionArguments) {
-    auto pythonUdfExpressionNode = std::make_shared<PythonUdfExpressionNode>();
+    auto pythonUdfExpressionNode = std::make_shared<UdfExpressionNode>();
     pythonUdfExpressionNode->setChildren(udfName, functionArguments);
     return pythonUdfExpressionNode;
 }
 
-void PythonUdfExpressionNode::setChildren(const ExpressionNodePtr& udfName, const ExpressionNodePtr& functionArguments) {
+void UdfExpressionNode::setChildren(const ExpressionNodePtr& udfName, const ExpressionNodePtr& functionArguments) {
     addChild(udfName);
     addChild(functionArguments);
 }
 
-void PythonUdfExpressionNode::inferStamp(SchemaPtr schema) {
+void UdfExpressionNode::inferStamp(SchemaPtr schema) {
     auto left = getUdfName();
     auto right = getFunctionArguments();
     left->inferStamp(schema);
@@ -53,18 +53,18 @@ void PythonUdfExpressionNode::inferStamp(SchemaPtr schema) {
 
     if (!left->getStamp()->isCharArray() || !right->getStamp()->isArray()) {
         throw std::logic_error(
-            "PythonUdfExpressionNode: Error during stamp inference. Types need to be Text and Array but Left was:"
+            "UdfExpressionNode: Error during stamp inference. Types need to be Text and Array but Left was:"
             + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
     }
     //TODO: Figure out return type
     stamp = DataTypeFactory::createInt32();
 }
 
-ExpressionNodePtr PythonUdfExpressionNode::getUdfName() {
+ExpressionNodePtr UdfExpressionNode::getUdfName() {
     return children[0]->as<NES::ConstantValueExpressionNode>();
 }
 
-ExpressionNodePtr PythonUdfExpressionNode::getFunctionArguments() {
+ExpressionNodePtr UdfExpressionNode::getFunctionArguments() {
     return children[1]->as<NES::ConstantValueExpressionNode>();
 }
 
