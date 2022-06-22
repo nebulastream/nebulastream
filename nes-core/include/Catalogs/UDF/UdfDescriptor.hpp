@@ -24,25 +24,24 @@ class UdfDescriptor;
 using UdfDescriptorPtr = std::shared_ptr<UdfDescriptor>;
 
 class UdfDescriptor {
-public:
-explicit UdfDescriptor(const std::string&  methodName) : methodName(methodName) {};
+  public:
+    explicit UdfDescriptor(const std::string& methodName) : methodName(methodName){};
 
-virtual ~UdfDescriptor() = default;
+    virtual ~UdfDescriptor() = default;
 
-/**
+    /**
  * @brief Return the name of the UDF method.
  * @return The name of the UDF method.
  */
-[[nodiscard]] const std::string& getMethodName() const { return methodName; }
+    [[nodiscard]] const std::string& getMethodName() const { return methodName; }
 
-template<class UdfDescriptor>
-static std::shared_ptr<UdfDescriptor> as(UdfDescriptorPtr ptr) {
-    return std::dynamic_pointer_cast<UdfDescriptor>(ptr);
-}
+    template<class UdfDescriptor>
+    static std::shared_ptr<UdfDescriptor> as(UdfDescriptorPtr ptr) {
+        return std::dynamic_pointer_cast<UdfDescriptor>(ptr);
+    }
 
-private:
-const std::string methodName;
-
+  private:
+    const std::string methodName;
 };
-}
+}// namespace NES::Catalogs
 #endif

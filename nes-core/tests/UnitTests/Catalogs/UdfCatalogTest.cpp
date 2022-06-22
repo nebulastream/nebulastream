@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std::string_literals;
 

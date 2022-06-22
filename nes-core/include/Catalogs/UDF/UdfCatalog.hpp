@@ -19,9 +19,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Catalogs/UDF/PythonUdfDescriptor.hpp>
 #include <Catalogs/UDF/UdfDescriptor.hpp>
-#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 
 namespace NES::Catalogs {
 
