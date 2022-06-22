@@ -41,15 +41,17 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
     }
 
     auto compiler = languageCompiler->second;
-    auto asyncResult = std::async(std::launch::async, [compiler, request, this]() {
+    auto useCache = this->useCompilationCache;
+    auto cache = this->compilationCache;
+    auto asyncResult = std::async(std::launch::async, [compiler, request, useCache, cache]() {
         auto sourceCode = *request->getSourceCode();
-        if (useCompilationCache) {
-            if (compilationCache->contains(sourceCode)) {
+        if (useCache) {
+            if (cache->contains(sourceCode)) {
                 NES_DEBUG("Reuse existing binary instead of compiling it");
-                return compilationCache->get(sourceCode);
+                return cache->get(sourceCode);
             } else {
                 auto result = compiler->compile(request);
-                compilationCache->insert(sourceCode, result);
+                cache->insert(sourceCode, result);
                 return result;
             }
         } else {
