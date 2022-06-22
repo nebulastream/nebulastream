@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+//TODO Change to UDF_ENABLED? since it is also implemented for other languages
 #ifdef PYTHON_UDF_ENABLED
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_PYTHONUDFEXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_PYTHONUDFEXPRESSIONNODE_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
@@ -28,11 +29,11 @@ using ConstantValueExpressionNodePtr = std::shared_ptr<NES::ConstantValueExpress
 /**
  * @brief
  */
-class PythonUdfExpressionNode : public ExpressionNode, public UdfCallExpressionNode {
+class UdfExpressionNode : public ExpressionNode, public UdfCallExpressionNode {
   public:
-    PythonUdfExpressionNode();
-    explicit PythonUdfExpressionNode(PythonUdfExpressionNode* other);
-    ~PythonUdfExpressionNode() override = default;
+    UdfExpressionNode();
+    explicit UdfExpressionNode(UdfExpressionNode* other);
+    ~UdfExpressionNode() override = default;
 
     /**
     * @brief
@@ -74,5 +75,5 @@ class PythonUdfExpressionNode : public ExpressionNode, public UdfCallExpressionN
 
 }// namespace NES::Experimental
 
-#endif//NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_PYTHONUDFEXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
 #endif// PYTHON_UDF_ENABLED
