@@ -28,12 +28,15 @@ class ExecutionContext {
   public:
     ExecutionContext(Value<MemRef> pipelineContext, Value<MemRef> workerContext);
     void setLocalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state);
+    void setGlobalOperatorState(const Operator* op, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(const Operator* op);
+    OperatorState* getGlobalState(const Operator* op);
     void emitBuffer(const RecordBuffer& rb);
     Value<MemRef> allocateBuffer();
 
   private:
     std::unordered_map<const Operator*, std::unique_ptr<OperatorState>> localStateMap;
+    std::unordered_map<const Operator*, std::unique_ptr<OperatorState>> globalStateMap;
     Value<MemRef> pipelineContext;
     Value<MemRef> workerContext;
 };

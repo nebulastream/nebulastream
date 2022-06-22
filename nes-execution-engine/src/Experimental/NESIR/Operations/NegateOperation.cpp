@@ -12,26 +12,17 @@
     limitations under the License.
 */
 
-#ifndef NES_LOADOPERATION_HPP
-#define NES_LOADOPERATION_HPP
-
-#include <Experimental/NESIR/Operations/Operation.hpp>
-
+#include <Experimental/NESIR/Operations/NegateOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-class LoadOperation : public Operation {
-  public:
-    explicit LoadOperation(std::string identifier, std::string argName, BasicType type);
-    ~LoadOperation() override = default;
+NegateOperation::NegateOperation(std::string identifier, std::string argName)
+    : Operation(OperationType::NegateOp), identifier(std::move(identifier)), argName(std::move(argName)) {}
 
-    std::string getIdentifier();
-    std::string getArgName();
-    BasicType getType();
 
-    std::string toString() override;
-  private:
-    std::string identifier;
-    std::string argName;
-    BasicType type;
-};
+std::string NegateOperation::toString() {
+    return "NegateOperation" + identifier + "(" + argName + ")";
+}
+bool NegateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
+
+std::string NegateOperation::getIdentifier() { return identifier; }
+std::string NegateOperation::getArgName() { return argName; }
 }// namespace NES
-#endif//NES_LOADOPERATION_HPP

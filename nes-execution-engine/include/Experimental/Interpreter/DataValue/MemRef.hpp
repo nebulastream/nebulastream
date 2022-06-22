@@ -26,7 +26,7 @@ class MemRef : public Any {
     MemRef(MemRef&& a) : MemRef(a.value) {}
     MemRef(MemRef& a) : MemRef(a.value) {}
     MemRef(Integer& a) : MemRef(a.value) {}
-    std::unique_ptr<Any> copy() { return std::make_unique<MemRef>(this->value); }
+    std::unique_ptr<Any> copy() override { return std::make_unique<MemRef>(this->value); }
     std::unique_ptr<MemRef> add(std::unique_ptr<MemRef>& otherValue) const {
         return std::make_unique<MemRef>(value + otherValue->value);
     };
@@ -39,7 +39,7 @@ class MemRef : public Any {
     template<class ValueType>
     void store(ValueType value) { std::make_unique<Integer>(value); }
 
-
+    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::INT8PTR; }
     const int64_t value;
 };
 

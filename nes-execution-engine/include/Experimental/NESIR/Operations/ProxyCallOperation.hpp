@@ -21,11 +21,13 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class ProxyCallOperation : public Operation {
   public:
-    ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, std::vector<std::string> inputArgNames,
+    ProxyCallOperation(ProxyCallType proxyCallType, std::string functionName, std::string identifier, std::vector<std::string> inputArgNames,
                        std::vector<Operation::BasicType> inputArgTypes, Operation::BasicType resultType);
     ~ProxyCallOperation() override = default;
 
     ProxyCallType getProxyCallType();
+    const std::string& getFunctionName() const;
+    void setFunctionName(const std::string& functionName);
     std::string getIdentifier();
     std::vector<std::string> getInputArgNames();
     std::vector<Operation::BasicType> getInputArgTypes();
@@ -35,6 +37,7 @@ class ProxyCallOperation : public Operation {
 
   private:
     ProxyCallType proxyCallType;
+    std::string functionName;
     std::string identifier;
     std::vector<std::string> inputArgNames; // We need this to get the correct input args from the value map.
     std::vector<Operation::BasicType> inputArgTypes;

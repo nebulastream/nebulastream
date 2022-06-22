@@ -14,6 +14,7 @@
 #ifndef NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ANY_HPP_
 #define NES_NES_EXECUTION_INCLUDE_INTERPRETER_DATAVALUE_ANY_HPP_
 #include <Experimental/Interpreter/Util/Casting.hpp>
+#include <Experimental/NESIR/Operations/Operation.hpp>
 #include <memory>
 
 namespace NES::ExecutionEngine::Experimental::Interpreter {
@@ -29,6 +30,7 @@ class Any : public TypeCastable {
     }
 
     virtual std::unique_ptr<Any> copy() = 0;
+    virtual IR::Operations::Operation::BasicType getType() = 0;
     virtual ~Any() = default;
 
     Any(Kind k) : TypeCastable(k){};

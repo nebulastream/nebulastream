@@ -36,7 +36,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] int32_t getScopeLevel();
-    [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
+    [[nodiscard]] std::vector<Operations::OperationPtr>& getOperations();
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::string> getInputArgs();
     [[nodiscard]] std::vector<Operations::Operation::BasicType> getInputArgTypes();

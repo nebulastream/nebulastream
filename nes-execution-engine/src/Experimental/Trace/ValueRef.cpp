@@ -16,11 +16,11 @@
 #include <Experimental/Trace/ValueRef.hpp>
 
 namespace NES::ExecutionEngine::Experimental::Trace {
-ValueRef createNextRef() {
+ValueRef createNextRef(IR::Operations::Operation::BasicType type) {
     auto ctx = getThreadLocalTraceContext();
     if (ctx) {
-        return ctx->createNextRef();
+        return ctx->createNextRef(type);
     }
-    return ValueRef(0, 0);
+    return ValueRef(0, 0, IR::Operations::Operation::VOID);
 }
 }// namespace NES::ExecutionEngine::Experimental::Trace

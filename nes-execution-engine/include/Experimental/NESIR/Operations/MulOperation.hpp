@@ -12,26 +12,30 @@
     limitations under the License.
 */
 
-#ifndef NES_LOADOPERATION_HPP
-#define NES_LOADOPERATION_HPP
+#ifndef NES_MULOPERATION_HPP
+#define NES_MULOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-class LoadOperation : public Operation {
+
+//Todo: Decide: Leave type
+class MulOperation : public Operation {
   public:
-    explicit LoadOperation(std::string identifier, std::string argName, BasicType type);
-    ~LoadOperation() override = default;
+    MulOperation(std::string identifier, std::string leftArgName, std::string rightArgName);
+    ~MulOperation() override = default;
 
     std::string getIdentifier();
-    std::string getArgName();
-    BasicType getType();
+    std::string getLeftArgName();
+    std::string getRightArgName();
 
     std::string toString() override;
+    bool classof(const Operation* Op);
+
   private:
     std::string identifier;
-    std::string argName;
-    BasicType type;
+    std::string leftArgName;
+    std::string rightArgName;
 };
 }// namespace NES
-#endif//NES_LOADOPERATION_HPP
+#endif//NES_ADDINTOPERATION_HPP

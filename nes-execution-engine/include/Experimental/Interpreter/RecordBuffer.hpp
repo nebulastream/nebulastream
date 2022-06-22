@@ -30,6 +30,7 @@ class RecordBuffer {
     ~RecordBuffer() = default;
     Record read(Value<Integer> recordIndex);
     Value<Integer> getNumRecords();
+    Value<MemRef> getBuffer();
     void write(Value<Integer> recordIndex, Record& record);
 
   private:

@@ -74,7 +74,7 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
         }
         case Operations::Operation::OperationType::IfOp: {
             auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
-            BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(ifOp->getThenBranchBlock(), 
+            BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(ifOp->getThenBranchBlock(),
                                                                   ifOp->getThenBranchBlock()->getScopeLevel() -1);
             dumpHelper(ifOp->getThenBranchBlock());
             if(ifOp->getElseBranchBlock() && ifOp->getElseBranchBlock()->getScopeLevel() >= scopeLevel) {
@@ -112,7 +112,7 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
 
 void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation> funcOp) { 
     out << funcOp->toString() << " {";
-    dumpHelper(funcOp->getFunctionBasicBlock()); 
+    dumpHelper(funcOp->getFunctionBasicBlock());
     out << "}\n";
 }
 
