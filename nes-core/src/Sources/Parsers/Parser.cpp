@@ -125,12 +125,133 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                 break;
             }
         }
-    } else {// char array(string) case
+    } else if (physicalType->isArrayType()) {// char array(string) case
         // obtain pointer from buffer to fill with content via strcpy
         char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
         // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
         // improve behavior with json library
         strcpy(value, (json) ? inputString.substr(1, inputString.size() - 2).c_str() : inputString.c_str());
+    }
+    tupleBuffer.setNumberOfTuples(tupleCount);
+}
+
+void Parser::writeFieldValuesToTupleBuffer(std::vector<std::string> values,
+                                           uint64_t schemaFieldIndex,
+                                           Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                           const TensorTypePtr tensor,
+                                           uint64_t tupleCount) {
+
+    NES_DEBUG("PARSER::writeFieldValuesToTupleBuffer: schemaFieldIndex: " << schemaFieldIndex);
+
+    auto physicalTensor = DefaultPhysicalTypeFactory().getPhysicalType(tensor->component);
+    auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalTensor);
+
+    NES_DEBUG("PARSER: basic Physical Type: " << basicPhysicalType->toString());
+
+    switch (basicPhysicalType->nativeType) {
+        case NES::BasicPhysicalType::INT_8: {
+            std::vector<int8_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return int8_t(std::atoi(str.c_str()));
+            });
+            int8_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<int8_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::INT_16: {
+            std::vector<int16_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return int16_t(std::atoi(str.c_str()));
+            });
+            int16_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<int16_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::INT_32: {
+            std::vector<int32_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return int32_t(std::atoi(str.c_str()));
+            });
+            int32_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<int32_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::INT_64: {
+            std::vector<int64_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return int64_t(std::atoi(str.c_str()));
+            });
+            int64_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<int64_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::UINT_8: {
+            std::vector<uint8_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return uint8_t(std::atoi(str.c_str()));
+            });
+            uint8_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<uint8_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::UINT_16: {
+            std::vector<uint16_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return uint16_t(std::atoi(str.c_str()));
+            });
+            uint16_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<uint16_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::UINT_32: {
+            std::vector<uint32_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return uint32_t(std::atoi(str.c_str()));
+            });
+            uint32_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<uint32_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::UINT_64: {
+            std::vector<uint64_t> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return uint64_t(std::stoi(str));
+            });
+            uint64_t* address = tupleBuffer[tupleCount][schemaFieldIndex].read<uint64_t*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::FLOAT: {
+            std::vector<float> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return std::stof(str.c_str());
+            });
+            float* address = tupleBuffer[tupleCount][schemaFieldIndex].read<float*>();
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            break;
+        }
+        case NES::BasicPhysicalType::DOUBLE: {
+            std::vector<double> converter;
+            std::transform(values.begin(), values.end(), std::back_inserter(converter), [](const std::string& str) {
+                return std::atof(str.c_str());
+            });
+            NES_TRACE("PARSER::writeFieldValuesToTupleBuffer: totalSize: " << tensor->totalSize);
+            double* address = tupleBuffer[tupleCount][schemaFieldIndex].read<double*>();
+            NES_TRACE("PARSER::writeFieldValuesToTupleBuffer: obtained address");
+            std::copy_n(std::make_move_iterator(converter.begin()), tensor->totalSize, address);
+            NES_TRACE("PARSER::writeFieldValuesToTupleBuffer: copied tensor into address");
+            break;
+        }
+        case NES::BasicPhysicalType::CHAR: {
+            //verify that only a single char was transmitted
+            NES_ERROR("Cannot read CHAR into Tensor");
+            break;
+        }
+        case NES::BasicPhysicalType::BOOLEAN: {
+            //verify that a valid bool was transmitted (valid{true,false,0,1})
+            NES_ERROR("Cannot read BOOLEAN into Tensor");
+            break;
+        }
     }
     tupleBuffer.setNumberOfTuples(tupleCount);
 }

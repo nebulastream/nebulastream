@@ -21,6 +21,9 @@ namespace NES {
 
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
+
+class TensorType;
+using TensorTypePtr = std::shared_ptr<TensorType>;
 /**
  * @brief Base class for all input data parsers in NES
  */
@@ -62,6 +65,12 @@ class Parser {
                                       bool json,
                                       const SchemaPtr& schema,
                                       uint64_t tupleCount);
+
+    void writeFieldValuesToTupleBuffer(std::vector<std::string> values,
+                                       uint64_t schemaFieldIndex,
+                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                       const TensorTypePtr tensor,
+                                       uint64_t tupleCount);
 
   private:
     std::vector<PhysicalTypePtr> physicalTypes;

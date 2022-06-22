@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <Common/DataTypes/DataType.hpp>
 #include <vector>
+#include <iostream>
 
 namespace NES {
 
@@ -28,7 +29,6 @@ enum TensorMemoryFormat { DENSE };
 class TensorType : public DataType {
 
   public:
-
     /**
      * @brief constructs a new Tensor
      * @param shape gives the shape of the tensor, i.e. the number of elements in each dimension where the position i of the int in the vector describes the size of ith
@@ -36,7 +36,12 @@ class TensorType : public DataType {
      * @param component data type of the entries in tensor, currently limited to numeric data types
      * @param tensorMemoryFormat the type of underlying data structure for saving in memory, the tensor should use
      */
-    inline TensorType(std::vector<std::size_t> shape, DataTypePtr component, TensorMemoryFormat tensorType) noexcept : shape(shape), component(std::move(component)), tensorMemoryFormat(tensorType) {}
+    inline TensorType(std::vector<std::size_t> shape, DataTypePtr component, TensorMemoryFormat tensorType) noexcept
+        : shape(std::move(shape)), component(std::move(component)), tensorMemoryFormat(tensorType) {
+        for (auto dimension : this->shape){
+            totalSize *= dimension;
+        }
+    }
 
     virtual ~TensorType() = default;
 
@@ -70,9 +75,8 @@ class TensorType : public DataType {
     const std::vector<std::size_t> shape;
     DataTypePtr const component;
     TensorMemoryFormat const tensorMemoryFormat;
-
+    size_t totalSize = 1;
 };
-
 
 }// namespace NES
 

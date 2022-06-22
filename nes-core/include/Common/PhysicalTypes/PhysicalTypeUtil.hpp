@@ -17,6 +17,7 @@
 
 #include <Common/ExecutableType/NESType.hpp>
 #include <cstdint>
+#include <iostream>
 
 namespace NES::PhysicalTypes {
 
@@ -166,11 +167,17 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType) {
     } else if constexpr (IsDouble<Type>) {
         return isDouble(std::move(physicalType));
     } else if constexpr (std::is_pointer_v<Type>) {
-        return isArray(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getArrayComponent(physicalType));
-    } else if constexpr (std::is_pointer_v<Type>) {
-        return isTensor(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getTensorComponent(physicalType));
+        if (isArray(physicalType)){
+            return isArray(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getArrayComponent(physicalType));
+        } else {
+            return isTensor(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getTensorComponent(physicalType));
+        }
     } else if constexpr (std::is_base_of_v<NESType, Type>) {
-        return physicalType->isArrayType();
+        if (isArray(physicalType)) {
+            return physicalType->isArrayType();
+        } else {
+            return physicalType->isTensorType();
+        }
     }
     return false;
 }

@@ -19,7 +19,6 @@
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Parsers/CSVTensorParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
@@ -93,7 +92,6 @@ CSVSource::CSVSource(SchemaPtr schema,
     }
 
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
-    this->tensorParser = std::make_shared<CSVTensorParser>(physicalTypes, delimiter);
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
@@ -160,14 +158,10 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
                 currentPositionInFile = input.tellg();
             }
         }
-        if (!schema->fields[0]->getDataType()->isTensor()) {
             std::getline(input, line);
             NES_TRACE("CSVSource line=" << tupleCount << " val=" << line);
             // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
             inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema);
-        } else {
-            tensorParser->writeInputTupleToTensor(std::move(input), tupleCount, buffer, schema, generatedTuplesThisPass);
-        }
         tupleCount++;
     }//end of while
 

@@ -179,6 +179,13 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(serializedArray);
     EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->isEquals(deserializedArray));
 
+    // serialize and deserialize tensor
+    std::vector<size_t> shape = {5};
+    auto* serializedTensor =
+        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createTensor(shape, "FLOAT32", "DENSE"));
+    auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(serializedArray);
+    EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->isEquals(deserializedArray));
+
     /*
    std::string json_string;
    google::protobuf::util::MessageToJsonString(type, &json_string);

@@ -13,8 +13,11 @@
 */
 
 #include <API/Schema.hpp>
+#include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Exceptions/RuntimeException.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,7 +36,6 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                              const SchemaPtr& schema) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
-
     std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
 
     if (values.size() != schema->getSize()) {
@@ -43,9 +45,27 @@ bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                            + " Schema: " + schema->toString() + " Line: " + csvInputLine);
     }
     // iterate over fields of schema and cast string values to correct type
+    size_t columnIter = 0;
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];
-        writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, false, schema, tupleCount);
+        if (!field->isTensorType()) {
+            writeFieldValueToTupleBuffer(values[columnIter], j, tupleBuffer, false, schema, tupleCount);
+            columnIter++;
+        } else {
+            auto tensorDataType = schema->fields[j]->getDataType();
+            auto tensor = tensorDataType->as<TensorType>(tensorDataType);
+            NES_TRACE("CSVParser::parseCSVLine: tensor size: "<< tensor->totalSize);
+            NES_TRACE("CSVParser::parseCSVLine: current columIter: "<< columnIter);
+            NES_TRACE("CSVParser::parseCSVLine: input vector size: "<< values.size());
+            std::vector<std::string> tensorValues;
+            try {
+                tensorValues = {values.begin() + columnIter, values.begin() + columnIter + tensor->totalSize};
+            } catch (std::exception& exception) {
+                NES_ERROR("CSVParser::parseCSVLine: cannot create tensor from input data. Reason: " << exception.what());
+            }
+            writeFieldValuesToTupleBuffer(tensorValues, j, tupleBuffer, tensor, tupleCount);
+            columnIter += tensor->totalSize;
+        }
     }
     return true;
 }

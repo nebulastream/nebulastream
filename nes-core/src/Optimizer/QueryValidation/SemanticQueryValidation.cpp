@@ -152,8 +152,6 @@ void SemanticQueryValidation::findAndReplaceAll(std::string& data, const std::st
 void SemanticQueryValidation::logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan,
                                                          const SourceCatalogPtr& sourceCatalog) {
 
-    std::cout << "Are you entering here?" << std::endl;
-
     // Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators();
 

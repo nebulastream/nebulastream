@@ -15,5 +15,4 @@ add_source_files(nes-core
         Parser.cpp
         JSONParser.cpp
         CSVParser.cpp
-        CSVTensorParser.cpp
 )

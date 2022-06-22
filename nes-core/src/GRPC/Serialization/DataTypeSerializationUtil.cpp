@@ -68,13 +68,8 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         switch (tensorType->tensorMemoryFormat) {
             case DENSE: memoryType = SerializableDataType_TensorDetails_TensorMemoryType_DENSE; break;
         }
-        //todo: filling shape this way doesn't work need other way
         serializedTensor.set_tensormemorytype(memoryType);
-        uint16_t index = 0;
-        for(uint64_t dimension : tensorType->shape){
-            serializedTensor.set_shape(index, dimension);
-            index++;
-        }
+        *serializedTensor.mutable_shape() = {tensorType->shape.begin(), tensorType->shape.end()};
         serializeDataType(tensorType->component, serializedTensor.mutable_componenttype());
         serializedDataType->mutable_details()->PackFrom(serializedTensor);
     } else {
