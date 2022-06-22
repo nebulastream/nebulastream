@@ -39,10 +39,11 @@ Record RecordBuffer::read(Value<Integer> recordIndex) {
     // TODO add support for columnar layout
     auto fieldSizes = memoryLayout->getFieldSizes();
     auto tupleSize = memoryLayout->getTupleSize();
+    auto bufferAddress = getBuffer();
     std::vector<Value<Any>> fieldValues;
     for (auto fieldSize : fieldSizes) {
         auto fieldOffset = tupleSize * recordIndex + fieldSize;
-        auto fieldAddress = this->tupleBufferRef + fieldOffset;
+        auto fieldAddress = bufferAddress + fieldOffset;
         auto memRef = fieldAddress.as<MemRef>();
         auto value = load<Integer>(memRef);
         fieldValues.emplace_back(value);
@@ -53,9 +54,10 @@ Record RecordBuffer::read(Value<Integer> recordIndex) {
 void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
     auto fieldSizes = memoryLayout->getFieldSizes();
     auto tupleSize = memoryLayout->getTupleSize();
+    auto bufferAddress = getBuffer();
     for (uint64_t i = 0; i < fieldSizes.size(); i++) {
         auto fieldOffset = tupleSize * recordIndex + fieldSizes[i];
-        auto fieldAddress = this->tupleBufferRef + fieldOffset;
+        auto fieldAddress = bufferAddress + fieldOffset;
         auto value = rec.read(i).as<Integer>();
         auto memRef = fieldAddress.as<MemRef>();
         store<Integer>(memRef, value);
@@ -63,6 +65,9 @@ void RecordBuffer::write(Value<Integer> recordIndex, Record& rec) {
 }
 void RecordBuffer::setNumRecords(Value<Integer> value) {
     FunctionCall<>("TupleBuffer.setNumberOfTuples",Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, value);
+}
+Value<MemRef> RecordBuffer::getBuffer() {
+    return FunctionCall<>("TupleBuffer.getBuffer", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);
 }
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

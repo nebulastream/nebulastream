@@ -28,8 +28,8 @@
 #include <Experimental/Interpreter/Util/Casting.hpp>
 #include <Experimental/Trace/ConstantValue.hpp>
 #include <Experimental/Trace/OpCode.hpp>
-#include <Experimental/Trace/TraceContext.hpp>
 #include <Experimental/Trace/SymbolicExecution/SymbolicExecutionContext.hpp>
+#include <Experimental/Trace/TraceContext.hpp>
 #include <Experimental/Trace/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <memory>
@@ -42,7 +42,8 @@ class BaseValue {
 template<class ValueType = Any>
 class Value : BaseValue {
   public:
-    Value(std::unique_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(Trace::createNextRef()){};
+    Value(std::unique_ptr<ValueType> wrappedValue)
+        : value(std::move(wrappedValue)), ref(Trace::createNextRef(value->getType())){};
     Value(std::unique_ptr<ValueType> wrappedValue, Trace::ValueRef& ref) : value(std::move(wrappedValue)), ref(ref){};
 
     Value(int value) : Value(std::make_unique<Integer>(value)) {
@@ -64,7 +65,7 @@ class Value : BaseValue {
     Value(Value<OType>&& other) noexcept : value(std::exchange(other.value, nullptr)), ref(other.ref) {}
 
     // copy assignment
-    Value& operator=(const Value& other) { return *this = Value(other); }
+    Value& operator=(const Value& other) { return *this = Value<ValueType>(other); }
 
     // move assignment
     template<class OType>

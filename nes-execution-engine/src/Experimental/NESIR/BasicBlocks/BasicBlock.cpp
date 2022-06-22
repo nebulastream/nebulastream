@@ -28,7 +28,7 @@ BasicBlock::BasicBlock(std::string identifier, int32_t scopeLevel, std::vector<O
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 int32_t BasicBlock::getScopeLevel() { return scopeLevel; }
-std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
+std::vector<Operations::OperationPtr>& BasicBlock::getOperations() { return operations; }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::string> BasicBlock::getInputArgs() { return inputArgs; }
 std::vector<Operations::Operation::BasicType> BasicBlock::getInputArgTypes() { return inputArgTypes; }

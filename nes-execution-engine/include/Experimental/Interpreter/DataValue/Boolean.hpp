@@ -30,6 +30,8 @@ class Boolean : public Any {
     bool getValue() { return value; }
 
     const bool value;
+
+    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::BOOLEAN; }
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter
