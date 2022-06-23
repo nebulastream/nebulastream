@@ -291,6 +291,7 @@ TEST_F(TraceTest, ifElseConditionTest) {
         Trace::getThreadLocalTraceContext()->reset();
         ifElseCondition(false);
     });
+    std::cout << *executionTrace << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace << std::endl;
     auto basicBlocks = executionTrace->getBlocks();

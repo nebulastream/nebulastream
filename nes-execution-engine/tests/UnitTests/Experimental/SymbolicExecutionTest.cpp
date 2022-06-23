@@ -288,6 +288,7 @@ TEST_F(SymbolicExecutionTest, ifElseConditionTest) {
     auto executionTrace = Trace::traceFunctionSymbolically([]() {
         ifElseCondition(true);
     });
+    std::cout << *executionTrace << std::endl;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     std::cout << *executionTrace << std::endl;
     auto basicBlocks = executionTrace->getBlocks();

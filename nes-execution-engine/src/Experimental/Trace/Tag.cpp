@@ -31,19 +31,21 @@ std::ostream& operator<<(std::ostream& os, const Tag& tag) {
 }
 
 Tag Tag::createTag(uint64_t startAddress) {
-    void* buffer[20];
     // In the following we use backtrace from glibc to extract the return address pointers.
-    int size = backtrace(buffer, 20);
+    void* tagBuffer[MAX_TAG_SIZE];
+    int size = backtrace(tagBuffer, MAX_TAG_SIZE);
     std::vector<TagAddress> addresses;
+
+    // truncate tags to startAddress
     for (int i = 0; i < size; i++) {
-        auto address = (TagAddress) buffer[i];
+        auto address = (TagAddress) tagBuffer[i];
         if (address == startAddress) {
             size = i;
             break;
         }
     }
-    for (int i = 0; i < size - 2; i++) {
-        auto address = (TagAddress) buffer[i];
+    for (int i = 0; i < size - 1; i++) {
+        auto address = (TagAddress) tagBuffer[i];
         addresses.push_back(address);
     }
     return {addresses};

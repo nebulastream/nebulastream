@@ -32,6 +32,7 @@ using TagAddress = uint64_t;
  */
 class Tag {
   public:
+    static constexpr uint64_t MAX_TAG_SIZE = 20;
     /**
      * @brief The hasher enables to leverage the tag in a std::map
      */

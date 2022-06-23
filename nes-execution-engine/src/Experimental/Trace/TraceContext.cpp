@@ -193,7 +193,7 @@ void TraceContext::trace(Operation& operation) {
                 // std::cout << "----------- CONTROL_FLOW_MERGE ------------" << std::endl;
                 // std::cout << "----------- LAST OPERATION << " << operation << " ref (" << ref->blockId << "-" << ref->operationId
                 //           << ")-----------" << std::endl;
-                //std::cout << *executionTrace.get() << std::endl;
+                std::cout << *executionTrace.get() << std::endl;
                 auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
                 auto mergeOperation = mergeBlock.operations.front();
                 currentOperationCounter = 1;
