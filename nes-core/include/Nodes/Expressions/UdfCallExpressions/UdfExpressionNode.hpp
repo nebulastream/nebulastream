@@ -14,8 +14,8 @@
 
 //TODO Change to UDF_ENABLED? since it is also implemented for other languages
 #ifdef PYTHON_UDF_ENABLED
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfCallExpressionNode.hpp>
@@ -38,9 +38,15 @@ class UdfExpressionNode : public ExpressionNode, public UdfCallExpressionNode {
     /**
     * @brief
     */
-    static ExpressionNodePtr create(ConstantValueExpressionNodePtr const& udfName,
-                                    ConstantValueExpressionNodePtr const& functionArguments);
+    template<typename ConstantValueExpressionNodePtr>
+    static ExpressionNodePtr create(ConstantValueExpressionNodePtr udfName);
 
+    /**
+     * @brief
+     */
+    template<typename ConstantValueExpressionNodePtr, typename... FieldAccessExpressionNodePtr>
+    static ExpressionNodePtr create(ConstantValueExpressionNodePtr udfName,
+                                    FieldAccessExpressionNodePtr... functionArguments);
     /**
     * @brief
     */
@@ -54,7 +60,7 @@ class UdfExpressionNode : public ExpressionNode, public UdfCallExpressionNode {
     /**
     * @brief
     */
-    void setChildren(const ExpressionNodePtr& udfName, const ExpressionNodePtr& functionArguments);
+    void setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments);
 
     /**
     * @brief
@@ -75,5 +81,5 @@ class UdfExpressionNode : public ExpressionNode, public UdfCallExpressionNode {
 
 }// namespace NES::Experimental
 
-#endif//NES_INCLUDE_NODES_EXPRESSIONS_FUNCTIONCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_UDFCALLEXPRESSIONS_UDFEXPRESSIONNODE_HPP_
 #endif// PYTHON_UDF_ENABLED
