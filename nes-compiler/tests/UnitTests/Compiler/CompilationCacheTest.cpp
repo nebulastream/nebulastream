@@ -13,8 +13,8 @@
 */
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationCache.hpp>
+#include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/DynamicObject.hpp>
 #include <Compiler/JITCompiler.hpp>
@@ -52,7 +52,6 @@ class CompilationCacheTest : public Testing::TestWithErrorHandling<testing::Test
     static void TearDownTestCase() { std::cout << "Tear down JITCompilerTest test class." << std::endl; }
 
     std::shared_ptr<JITCompiler> compiler;
-
 };
 
 /**
@@ -65,7 +64,6 @@ TEST_F(CompilationCacheTest, cacheSource) {
     auto result = CompilationResult(std::shared_ptr<DynamicObject>(), Timer(""));
     compilationCache.insert(sourceCode, result);
     ASSERT_TRUE(compilationCache.contains(sourceCode));
-
 }
 
 }// namespace NES::Compiler
