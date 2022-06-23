@@ -161,7 +161,8 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
      */
     QueryPlanPtr updateJoinOrder(QueryPlanPtr oldPlan,
                                  AbstractJoinPlanOperatorPtr finalPlan,
-                                 const std::vector<SourceLogicalOperatorNodePtr> sourceOperators);
+                                 const std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
+                                 std::vector<SinkLogicalOperatorNodePtr> vector);
     /**
      * provides the joinOrder in a readable string format. -- is invoked recursively
      * @param joinOrder
@@ -264,7 +265,8 @@ class JoinOrderOptimizationRule : public BaseRewriteRule {
     QueryPlanPtr updateSequenceOrder(QueryPlanPtr oldPlan,
                                      AbstractJoinPlanOperatorPtr finalPlan,
                                      const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                     TimeSequenceList* pList);
+                                     TimeSequenceList* pList,
+                                     std::vector<SinkLogicalOperatorNodePtr> vector);
     FilterLogicalOperatorNodePtr constructSequence(const AbstractJoinPlanOperatorPtr& leftChild,
                                                    const AbstractJoinPlanOperatorPtr& rightChild,
                                                    const Join::LogicalJoinDefinitionPtr& joinDefinition,

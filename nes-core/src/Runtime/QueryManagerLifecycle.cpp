@@ -241,11 +241,16 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
 
 bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     bool ret = true;
-    NES_DEBUG("AbstractQueryManager::failQuery: query=" << qep->getQueryId());
+    NES_DEBUG("AbstractQueryManager::failQuery: query=" << qep->getQueryId() << " Query Status: ");
     switch (qep->getStatus()) {
-        case Execution::ExecutableQueryPlanStatus::ErrorState:
-        case Execution::ExecutableQueryPlanStatus::Finished:
+        case Execution::ExecutableQueryPlanStatus::ErrorState:{
+            NES_DEBUG("Error State")
+        }
+        case Execution::ExecutableQueryPlanStatus::Finished:{
+            NES_DEBUG("Finished")
+        }
         case Execution::ExecutableQueryPlanStatus::Stopped: {
+            NES_DEBUG("STOPPED")
             return true;
         }
         case Execution::ExecutableQueryPlanStatus::Invalid: {
@@ -253,6 +258,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
             break;
         }
         default: {
+            NES_DEBUG("Other, mb running")
             break;
         }
     }

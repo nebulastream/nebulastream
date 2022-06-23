@@ -79,7 +79,6 @@ using namespace NES;
         auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
         queryPlan = joinOrderOptimizationRule->apply(queryPlan);
 
-
         //NES_DEBUG(queryPlan->toString());
 
 
@@ -128,24 +127,46 @@ using namespace NES;
 
     }
 
+/**
+* Tests reordering without a sink.
+* As sink shall be the root operator, this has different semantics when replacing the sink, then without a sink.
+*/
+TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsNoSink){
+       Query query = Query::from("Quantity").seqWith(Query::from("Velocity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                         .seqWith(Query::from("Temperature")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                         .seqWith(Query::from("Humidity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
 
-    TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4Streams){
-/*        Query subQuery1 = Query::from("Quantity").seqWith(Query::from("Velocity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
-        Query subQuery2 = Query::from("Temperature").seqWith(Query::from("Humidity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
-        Query query = subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("peter")), Minutes(5)));
-        */
+       QueryPlanPtr queryPlan = query.getQueryPlan();
 
+       NES_DEBUG(queryPlan->toString())
+
+       auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
+       queryPlan = joinOrderOptimizationRule->apply(queryPlan);
+
+       NES_DEBUG(queryPlan->toString())
+
+    }
+
+    /**
+     * Tests reordering without a sink.
+     * As sink shall be the root operator, this has different semantics when replacing the sink, then without a sink.
+     */
+    TEST_F(JoinOrderOptimizationRuleTest, sequencePattern4StreamsWithSink){
         Query query = Query::from("Quantity").seqWith(Query::from("Velocity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
-            .seqWith(Query::from("Temperature")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
-            .seqWith(Query::from("Humidity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
+                          .seqWith(Query::from("Temperature")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)))
+                          .seqWith(Query::from("Humidity")).window(TumblingWindow::of(EventTime(Attribute("ts")),Minutes(5)));
+        // add sink to query
+        query.sink(FileSinkDescriptor::create("sequencePattern4StreamsWithSink.csv", "CSV_FORMAT", "OVERWRITE"));
 
         QueryPlanPtr queryPlan = query.getQueryPlan();
 
+        NES_DEBUG("Old QueryPlan")
         NES_DEBUG(queryPlan->toString())
 
         auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
         queryPlan = joinOrderOptimizationRule->apply(queryPlan);
 
+        NES_DEBUG("New QueryPlan")
         NES_DEBUG(queryPlan->toString())
 
     }
@@ -166,22 +187,17 @@ using namespace NES;
                                           )
                               .filter(Attribute("Temperature$ts") < Attribute("Humidity$ts"));
 
-        // TODO how can i use left joins bigger time stamp here?
         Query query = subQuery1.joinWith(subQuery2).where(Attribute("ts")).equalsTo(Attribute("ts")).window(TumblingWindow::of(
             EventTime(Attribute("ts")),Minutes(5))).filter(Attribute("Velocity$ts") < Attribute("Temperature$ts"));
 
-
-           // subQuery1.seqWith(subQuery2).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(10)));
         QueryPlanPtr queryPlan = query.getQueryPlan();
-
+        NES_DEBUG("Old QueryPlan")
         NES_DEBUG(queryPlan->toString())
 
         auto joinOrderOptimizationRule = Optimizer::JoinOrderOptimizationRule::create();
         queryPlan = joinOrderOptimizationRule->apply(queryPlan);
-
+        NES_DEBUG("New QueryPlan")
         NES_DEBUG(queryPlan->toString())
-
-
     }
 
     // Q2 -- will probably not be optimized as it is a Cartesian product

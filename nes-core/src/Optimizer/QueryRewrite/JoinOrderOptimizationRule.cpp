@@ -23,6 +23,7 @@ limitations under the License.
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <set>
 #include <Windowing/WindowTypes/WindowType.hpp>
@@ -120,6 +121,9 @@ namespace NES::Optimizer {
             // This vector holds information about all "possible" joins. In case of CEP (sequence): Cartesian Products with possible time-orderings, ASP: matching joinkeys
             std::vector<Join::JoinEdgePtr> joinEdges;
 
+            // save the Sink operator as this will need to be set as the root after updating the plan
+            auto sinks = queryPlan->getSinkOperators();
+
             if (isCEP){
                 // Alongside joins (cartesian products) we need the respective time-based filter operators
                 std::vector<FilterLogicalOperatorNodePtr> filters;
@@ -151,7 +155,7 @@ namespace NES::Optimizer {
                     optimizeSequenceOrder(sources, globalSequenceOrder, abstractJoinOperators, joinOperators);
 
                 // TODO: Rewrite this function
-                queryPlan = updateSequenceOrder(queryPlan, finalPlan, sourceOperators, globalSequenceOrder);
+                queryPlan = updateSequenceOrder(queryPlan, finalPlan, sourceOperators, globalSequenceOrder, sinks);
 
                 NES_DEBUG(queryPlan->toString());
 
@@ -174,7 +178,7 @@ namespace NES::Optimizer {
             // print join order
             std::cout << printJoinOrder(joinOrder) << std::endl;
 
-            queryPlan = updateJoinOrder(queryPlan, finalPlan, sourceOperators);
+            queryPlan = updateJoinOrder(queryPlan, finalPlan, sourceOperators, sinks);
 
             NES_DEBUG(queryPlan->toString());
 
@@ -840,7 +844,8 @@ namespace NES::Optimizer {
     // Builds a new query plan based on the updated joinOrder.
     QueryPlanPtr JoinOrderOptimizationRule::updateJoinOrder(QueryPlanPtr oldPlan,
                                                             AbstractJoinPlanOperatorPtr finalPlan,
-                                                            const std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {
+                                                            const std::vector<SourceLogicalOperatorNodePtr> sourceOperators,
+                                                            std::vector<SinkLogicalOperatorNodePtr> sinks) {
         // copy current plan
         QueryPlanPtr newPlan = oldPlan.get()->copy();
 
@@ -861,7 +866,17 @@ namespace NES::Optimizer {
             return oldPlan;
         }
 
-        newPlan->replaceRootOperator(newPlan->getRootOperators()[0], topJoin);
+        // in case there is a sink
+        OperatorNodePtr top = topJoin;
+        if(sinks.size() > 0){
+            NES_DEBUG("Found a total of " <<  sinks.size() <<" Sink operators in the queryPlan")
+            auto sink = sinks[0];
+            sink->removeChildren();
+            sink->addChild(topJoin);
+            top = sink;
+        }
+
+        newPlan->replaceRootOperator(newPlan->getRootOperators()[0], top);
         NES_DEBUG(newPlan->toString());
 
         return newPlan;
@@ -871,7 +886,8 @@ namespace NES::Optimizer {
     QueryPlanPtr JoinOrderOptimizationRule::updateSequenceOrder(QueryPlanPtr oldPlan,
                                                                 AbstractJoinPlanOperatorPtr finalPlan,
                                                                 const std::vector<SourceLogicalOperatorNodePtr> sources,
-                                                                TimeSequenceList* pList) {
+                                                                TimeSequenceList* pList,
+                                                                std::vector<SinkLogicalOperatorNodePtr> sinks) {
         // copy current plan
         QueryPlanPtr newPlan = oldPlan.get()->copy();
 
@@ -895,7 +911,16 @@ namespace NES::Optimizer {
             return oldPlan;
         }
 
-        newPlan->replaceRootOperator(newPlan->getRootOperators()[0], topSequence);
+        OperatorNodePtr top = topSequence;
+        if(sinks.size() > 0){
+            NES_DEBUG("Found a total of " <<  sinks.size() <<" Sink operators in the queryPlan")
+            auto sink = sinks[0];
+            sink->removeChildren();
+            sink->addChild(topSequence);
+            top = sink;
+        }
+
+        newPlan->replaceRootOperator(newPlan->getRootOperators()[0], top);
         NES_DEBUG(newPlan->toString());
 
         return newPlan;
@@ -1282,21 +1307,31 @@ namespace NES::Optimizer {
             // keys need to be equivalent to e.g. string "Temperature" leftChild->optimizerPlanOperator->sourceNode->getSourceDescriptor->logicalsourcename
             // The left keys look like: -_-_Quantity_Velocity_Temperature+leftKey_20, where the relevant part is the name before +leftKey
             // extract relevant name for comparison
-            size_t pos = leftKeyName.find('+');
+            size_t pos = leftKeyName.find("cep_leftkey");
             std::string derivedLeftKeyName = leftKeyName.substr(0, pos);
             while(derivedLeftKeyName.find('_') != std::string::npos){
                 pos = derivedLeftKeyName.find_last_of('_');
                 derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
             }
 
+            // In case there is an additional sourcename added with $
+            pos = derivedLeftKeyName.find("$");
+            if (pos != std::string::npos) {
+               derivedLeftKeyName = derivedLeftKeyName.substr(0, pos);
+            }
             if(leftChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedLeftKeyName){
                 leftDefinition = joinDefinition;
             }
 
             // right keys look like Velocity+rightKey_4, where the relevant part is everything before the +
-            pos = rightKeyName.find('+');
+            pos = rightKeyName.find("cep_rightkey");
             std::string derivedRightKeyName = rightKeyName.substr(0, pos);
 
+            // in case of sourceName$sourceName
+            pos = derivedRightKeyName.find("$");
+            if (pos != std::string::npos) {
+                derivedRightKeyName = derivedRightKeyName.substr(0, pos);
+            }
             if(rightChild->getSourceNode()->getSourceDescriptor()->getLogicalSourceName() == derivedRightKeyName){
                     rightDefinition = joinDefinition;
             }
@@ -1326,13 +1361,13 @@ namespace NES::Optimizer {
     float JoinOrderOptimizationRule::getJoinSelectivity(Join::LogicalJoinDefinitionPtr joinDefinition) {
         // Extract names of the join partners and check if this combination has a unique selectivity.
         // Mind the order is VERY important here.
-        size_t pos = joinDefinition->getLeftJoinKey()->getFieldName().find('+');
+        size_t pos = joinDefinition->getLeftJoinKey()->getFieldName().find("cep_leftkey"); // test, was find('+') before
         std::string derivedLeftKeyName = joinDefinition->getLeftJoinKey()->getFieldName().substr(0, pos);
         while(derivedLeftKeyName.find('_') != std::string::npos){
             pos = derivedLeftKeyName.find_last_of('_');
             derivedLeftKeyName = derivedLeftKeyName.substr(pos+1);
         }
-        pos = joinDefinition->getRightJoinKey()->getFieldName().find('+');
+        pos = joinDefinition->getRightJoinKey()->getFieldName().find("cep_rightkey"); // test, was find('+') before
         std::string derivedRightKeyName = joinDefinition->getRightJoinKey()->getFieldName().substr(0, pos);
 
         // --- -- - -- - - -- -

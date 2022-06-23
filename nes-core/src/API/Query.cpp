@@ -178,7 +178,7 @@ std::string keyAssignmentRight(std::string consumedSources) {
     //first, get unique ids for the key attributes
     auto cepRightId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepRightKey = consumedSources + "+rightKey_" + std::to_string(cepRightId);
+    std::string cepRightKey = consumedSources + "cep_rightkey" + std::to_string(cepRightId);
     return cepRightKey;
 }
 
@@ -186,7 +186,7 @@ std::string keyAssignmentLeft(std::string consumedSources) {
     //first, get unique ids for the key attributes
     auto cepLeftId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepLeftKey = consumedSources + "+leftKey_" + std::to_string(cepLeftId);
+    std::string cepLeftKey = consumedSources + "cep_leftkey" + std::to_string(cepLeftId);
     return cepLeftKey;
 }
 
