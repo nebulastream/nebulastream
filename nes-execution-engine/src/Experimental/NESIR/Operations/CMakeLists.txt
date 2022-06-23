@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_subdirectory(ArithmeticOperations)
+add_subdirectory(LogicalOperations)
 
 add_source_files(nes-execution-engine
         Operation.cpp
@@ -24,7 +25,6 @@ add_source_files(nes-execution-engine
         FunctionOperation.cpp
         IfOperation.cpp
         ProxyCallOperation.cpp
-        CompareOperation.cpp
         ReturnOperation.cpp
         BranchOperation.cpp
 )

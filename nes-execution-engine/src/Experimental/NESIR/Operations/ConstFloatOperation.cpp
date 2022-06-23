@@ -20,7 +20,7 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 ConstFloatOperation::ConstFloatOperation(std::string identifier, double constantValue, uint8_t numBits)
-    : Operation(OperationType::ConstFloatOp), identifier(std::move(identifier)), constantValue(constantValue), numBits(numBits){}
+    : Operation(OperationType::ConstFloatOp, FLOAT), identifier(std::move(identifier)), constantValue(constantValue), numBits(numBits){}
 
 std::string ConstFloatOperation::getIdentifier() { return identifier; }
 double ConstFloatOperation::getConstantFloatValue() { return constantValue; }

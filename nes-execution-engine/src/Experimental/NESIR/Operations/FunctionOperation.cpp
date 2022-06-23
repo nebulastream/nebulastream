@@ -20,7 +20,7 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 FunctionOperation::FunctionOperation(std::string name, std::vector<PrimitiveStamp> inputArgs,
                                      std::vector<std::string> inputArgNames,
                                      PrimitiveStamp outputArg)
-    : Operation(OperationType::FunctionOp), name(std::move(name)), inputArgs(std::move(inputArgs)), 
+    : Operation(OperationType::FunctionOp, outputArg), name(std::move(name)), inputArgs(std::move(inputArgs)),
       inputArgNames(std::move(inputArgNames)), outputArg(outputArg) {}
 
 const std::string& FunctionOperation::getName() const { return name; }

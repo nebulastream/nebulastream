@@ -16,7 +16,7 @@
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/NESIR.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstFloatOperation.hpp>

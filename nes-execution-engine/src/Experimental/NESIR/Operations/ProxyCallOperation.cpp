@@ -19,7 +19,7 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, 
                                         std::vector<std::string> inputArgNames, std::vector<PrimitiveStamp> inputArgTypes,
                                        PrimitiveStamp resultType)
-    : Operation(Operation::ProxyCallOp), proxyCallType(proxyCallType), identifier(identifier), inputArgNames(std::move(inputArgNames)),
+    : Operation(Operation::ProxyCallOp, resultType), proxyCallType(proxyCallType), identifier(identifier), inputArgNames(std::move(inputArgNames)),
       inputArgTypes(inputArgTypes), resultType(resultType) {}
 
     Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }

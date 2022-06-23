@@ -19,7 +19,7 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 ReturnOperation::ReturnOperation(uint8_t returnOpCode) 
-    : Operation(Operation::ReturnOp), returnOpCode(returnOpCode){}
+    : Operation(Operation::ReturnOp, VOID), returnOpCode(returnOpCode){}
 
     uint8_t ReturnOperation::getReturnOpCode() { return returnOpCode; }
 

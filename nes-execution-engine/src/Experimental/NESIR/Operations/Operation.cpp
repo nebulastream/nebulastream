@@ -16,7 +16,8 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-Operation::Operation(OperationType opType) : opType(opType) {}
+Operation::Operation(OperationType opType, PrimitiveStamp stamp) : opType(opType), stamp(stamp) {}
 Operation::OperationType Operation::getOperationType() const { return opType; }
+PrimitiveStamp Operation::getStamp() const { return stamp; }
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

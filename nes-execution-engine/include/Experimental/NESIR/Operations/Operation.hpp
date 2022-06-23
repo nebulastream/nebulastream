@@ -15,32 +15,48 @@
 #ifndef NES_OPERATION_HPP
 #define NES_OPERATION_HPP
 
-#include <memory>
 #include <Experimental/NESIR/Types/BasicTypes.hpp>
+#include <memory>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class Operation {
   public:
-    enum ProxyCallType{
-        GetNumTuples = 0, 
-        SetNumTuples = 1,
-        GetDataBuffer = 2,
-        Other = 50
+    enum ProxyCallType { GetNumTuples = 0, SetNumTuples = 1, GetDataBuffer = 2, Other = 50 };
+    enum OperationType {
+        LoopOp,
+        AddOp,
+        LoadOp,
+        StoreOp,
+        ConstIntOp,
+        ConstFloatOp,
+        AddressOp,
+        FunctionOp,
+        BranchOp,
+        IfOp,
+        CompareOp,
+        ReturnOp,
+        ProxyCallOp,
+        DivOp,
+        MulOp,
+        SubOp,
+        OrOp,
+        AndOp,
+        NegateOp,
     };
-    enum OperationType{LoopOp, AddIntOp, AddFloatOp, LoadOp, StoreOp, ConstIntOp, ConstFloatOp, AddressOp, FunctionOp, BranchOp, IfOp,
-                       CompareOp, ReturnOp, ProxyCallOp, DivIntOp, DivFloatOp, MulIntOp, MulFloatOp, SubIntOp, SubFloatOp};
 
-    explicit Operation(OperationType opType);
+    explicit Operation(OperationType opType, PrimitiveStamp stamp);
     virtual ~Operation() = default;
 
     virtual std::string toString() = 0;
     OperationType getOperationType() const;
+    PrimitiveStamp getStamp() const;
 
   private:
     OperationType opType;
+    PrimitiveStamp stamp;
 };
 using OperationPtr = std::shared_ptr<Operation>;
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_OPERATION_HPP

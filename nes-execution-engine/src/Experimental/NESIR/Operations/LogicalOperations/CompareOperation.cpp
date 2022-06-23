@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 CompareOperation::CompareOperation(std::string identifier, std::string leftArgName, std::string rightArgName, 
                                     Comparator comparator) 
-    : Operation(Operation::CompareOp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)), 
+    : Operation(Operation::CompareOp, BOOLEAN), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)),
       rightArgName(std::move(rightArgName)), comparator(comparator) {}
 
 std::string CompareOperation::getIdentifier() { return identifier; }

@@ -18,7 +18,7 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 BranchOperation::BranchOperation(const std::vector<std::string>& nextBlockArgs)
-    : Operation(OperationType::BranchOp), nextBlockArgs(nextBlockArgs) {}
+    : Operation(OperationType::BranchOp, VOID), nextBlockArgs(nextBlockArgs) {}
 
 BasicBlockPtr BranchOperation::setNextBlock(BasicBlockPtr nextBlock) { 
     this->nextBlock = std::move(nextBlock);

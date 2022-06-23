@@ -12,8 +12,8 @@
 # limitations under the License.
 
 add_source_files(nes-execution-engine
-        AddOperation.cpp
-        SubOperation.cpp
-        DivOperation.cpp
-        MulOperation.cpp
-)
+        AndOperation.cpp
+        OrOperation.cpp
+        NegateOperation.cpp
+        CompareOperation.cpp
+        )

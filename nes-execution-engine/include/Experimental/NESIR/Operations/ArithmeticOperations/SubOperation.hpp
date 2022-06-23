@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#ifndef NES_MULINTOPERATION_HPP
-#define NES_MULINTOPERATION_HPP
+#ifndef NES_SUBINTOPERATION_HPP
+#define NES_SUBINTOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-class MulIntOperation : public Operation {
+class SubOperation : public Operation {
   public:
-    MulIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName);
-    ~MulIntOperation() override = default;
+    SubOperation(std::string identifier, std::string leftArgName, std::string rightArgName, PrimitiveStamp stamp);
+    ~SubOperation() override = default;
 
     std::string getIdentifier();
     std::string getLeftArgName();
@@ -37,4 +37,4 @@ class MulIntOperation : public Operation {
     std::string rightArgName;
 };
 }// namespace NES
-#endif//NES_MULINTOPERATION_HPP
+#endif//NES_SUBINTOPERATION_HPP

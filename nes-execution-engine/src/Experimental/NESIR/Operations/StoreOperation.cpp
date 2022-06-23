@@ -18,7 +18,7 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 StoreOperation::StoreOperation(std::string valueArgName, std::string addressArgName)
-    : Operation(OperationType::StoreOp), valueArgName(valueArgName), addressArgName(addressArgName) {}
+    : Operation(OperationType::StoreOp, VOID), valueArgName(valueArgName), addressArgName(addressArgName) {}
 
 std::string StoreOperation::getValueArgName() { return valueArgName; }
 std::string StoreOperation::getAddressArgName() { return addressArgName; }

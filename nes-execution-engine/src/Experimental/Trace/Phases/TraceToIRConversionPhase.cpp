@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 //#include <Experimental/NESIR/Operations/MulOperation.hpp>
@@ -116,9 +115,8 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             auto valueRef = get<ConstantValue>(operation.input[0]);
             // TODO check data type
             auto intValue = std::static_pointer_cast<Interpreter::Integer>(valueRef.value);
-            auto constOperation = std::make_shared<IR::Operations::ConstIntOperation>(createValueIdentifier(operation.result),
-                                                                                         intValue->value,
-                                                                                         64);
+            auto constOperation =
+                std::make_shared<IR::Operations::ConstIntOperation>(createValueIdentifier(operation.result), intValue->value, 64);
             currentIrBlock->addOperation(constOperation);
             return;
         };

@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#ifndef NES_ADDINTOPERATION_HPP
-#define NES_ADDINTOPERATION_HPP
+#ifndef NES_DIVFLOATOPERATION_HPP
+#define NES_DIVFLOATOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-class AddIntOperation : public Operation {
+class DivOperation : public Operation {
   public:
-    AddIntOperation(std::string identifier, std::string leftArgName, std::string rightArgName);
-    ~AddIntOperation() override = default;
+    DivOperation(std::string identifier, std::string leftArgName, std::string rightArgName, PrimitiveStamp stamp);
+    ~DivOperation() override = default;
 
     std::string getIdentifier();
     std::string getLeftArgName();
@@ -37,4 +37,4 @@ class AddIntOperation : public Operation {
     std::string rightArgName;
 };
 }// namespace NES
-#endif//NES_ADDINTOPERATION_HPP
+#endif//NES_DIVFLOATOPERATION_HPP

@@ -16,7 +16,7 @@
 #include <utility>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 LoopOperation::LoopOperation(LoopType loopType, const std::vector<std::string>& loopBlockArgs)
-    : Operation(Operation::LoopOp), loopType(loopType), loopBlockArgs(std::move(loopBlockArgs)) {}
+    : Operation(Operation::LoopOp, VOID), loopType(loopType), loopBlockArgs(std::move(loopBlockArgs)) {}
 
 LoopOperation::LoopType LoopOperation::getLoopType() { return loopType; }
 std::vector<std::string> LoopOperation::getLoopBlockArgs() { return loopBlockArgs; }

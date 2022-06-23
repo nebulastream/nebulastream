@@ -12,36 +12,31 @@
     limitations under the License.
 */
 
+#include <API/Query.hpp>
+#include <Experimental/MLIR/MLIRUtility.hpp>
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Operations/AddressOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Experimental/NESIR/Operations/BranchOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
+#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
+#include <Experimental/NESIR/Operations/IfOperation.hpp>
+#include <Experimental/NESIR/Operations/LoadOperation.hpp>
+#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
+#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include <Experimental/NESIR/Operations/StoreOperation.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <gtest/gtest.h>
-
-#include <API/Query.hpp>
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <llvm/ExecutionEngine/JITSymbol.h>
+#include <memory>
 #include <mlir/IR/AsmState.h>
 #include <mlir/Pass/PassManager.h>
 #include <mlir/Transforms/DialectConversion.h>
-#include <llvm/ExecutionEngine/JITSymbol.h>
-
-#include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
-#include <Experimental/NESIR/Operations/AddressOperation.hpp>
-#include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
-#include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-#include <Experimental/NESIR/Operations/LoadOperation.hpp>
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/StoreOperation.hpp>
-
-#include <Experimental/NESIR/Operations/IfOperation.hpp>
-
-#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
-#include <Experimental/NESIR/Operations/CompareOperation.hpp>
-#include <Experimental/NESIR/Operations/ReturnOperation.hpp>
-#include <memory>
 #include <unordered_map>
 
 using namespace std;
@@ -203,12 +198,11 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFAdd) {
     auto nesIR = std::make_shared<NESIR>();
 
     nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
-        ->addFunctionBasicBlock(
-            createBB("executeBodyBB", 0, {})
-                ->addOperation(std::make_shared<ConstIntOperation>("int1", 5, 64))
-                ->addOperation(std::make_shared<ConstIntOperation>("int2", 4, 64))
-                ->addOperation(std::make_shared<AddIntOperation>("add", "int1", "int2"))
-                ->addOperation(make_shared<ReturnOperation>(0)));
+        ->addFunctionBasicBlock(createBB("executeBodyBB", 0, {})
+                                    ->addOperation(std::make_shared<ConstIntOperation>("int1", 5, 64))
+                                    ->addOperation(std::make_shared<ConstIntOperation>("int2", 4, 64))
+                                    ->addOperation(std::make_shared<AddOperation>("add", "int1", "int2", Operations::INT64))
+                                    ->addOperation(make_shared<ReturnOperation>(0)));
 
     // NESIR to MLIR
     auto mlirUtility = new MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
@@ -281,15 +275,13 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                                                                 std::vector<std::string>{"iOp"}))
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
-                                ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             PrimitiveStamp::INT64,
-                                                                             9,
-                                                                             1,
-                                                                             "iOp",
-                                                                             "getInDataBufOp"))
+                                ->addOperation(
+                                    make_shared<
+                                        AddressOperation>("inputAddressOp", PrimitiveStamp::INT64, 9, 1, "iOp", "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
-                                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                                ->addOperation(
+                                    std::make_shared<AddOperation>("loopBodyAddOp", "loadValOp", "const42Op", Operations::INT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
@@ -310,7 +302,11 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                                         ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
                                         ->addNextBlock(
                                             saveBB(createBB("loopEndBB", 2, {Operations::INT64}, "iOp"), savedBBs, "loopEndBB")
-                                                ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                                                ->addOperation(make_shared<AddOperation>(
+                                                    "loopEndIncIOp",
+                                                    "iOp",
+                                                    "const1Op",
+                                                    ExecutionEngine::Experimental::IR::Operations::INT64))
                                                 ->addOperation(
                                                     std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
                                                 ->addNextBlock(savedBBs["loopHeadBB"]))))
@@ -391,15 +387,13 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                                                                 std::vector<std::string>{"iOp"}))
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
-                                ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             PrimitiveStamp::INT64,
-                                                                             9,
-                                                                             1,
-                                                                             "iOp",
-                                                                             "getInDataBufOp"))
+                                ->addOperation(
+                                    make_shared<
+                                        AddressOperation>("inputAddressOp", PrimitiveStamp::INT64, 9, 1, "iOp", "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
-                                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                                ->addOperation(
+                                    std::make_shared<AddOperation>("loopBodyAddOp", "loadValOp", "const42Op", Operations::INT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<AddressOperation>("outputAddressOp",
                                                                              PrimitiveStamp::INT64,
@@ -420,15 +414,20 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                                         ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
                                         ->addNextBlock(
                                             saveBB(createBB("loopEndBB", 2, {Operations::INT64}, "iOp"), savedBBs, "loopEndBB")
-                                                ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                                                ->addOperation(make_shared<AddOperation>("loopEndIncIOp",
+                                                                                         "iOp",
+                                                                                         "const1Op",
+                                                                                         Operations::INT64))
                                                 ->addOperation(
                                                     std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
                                                 ->addNextBlock(savedBBs["loopHeadBB"])))
                                 ->addElseBlock(
                                     createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "outputAddressOp")
                                         ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
+                                        ->addOperation(std::make_shared<AddOperation>("elseAddOp",
+                                                                                      "loopBodyAddOp",
+                                                                                      "const8Op",
+                                                                                      Operations::INT64))
                                         ->addOperation(make_shared<StoreOperation>("elseAddOp", "outputAddressOp"))
                                         ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
                                         ->addNextBlock(savedBBs["loopEndBB"])))
@@ -509,15 +508,13 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                                                                 std::vector<std::string>{"iOp"}))
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
-                                ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             PrimitiveStamp::INT64,
-                                                                             9,
-                                                                             1,
-                                                                             "iOp",
-                                                                             "getInDataBufOp"))
+                                ->addOperation(
+                                    make_shared<
+                                        AddressOperation>("inputAddressOp", PrimitiveStamp::INT64, 9, 1, "iOp", "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
-                                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                                ->addOperation(
+                                    std::make_shared<AddOperation>("loopBodyAddOp", "loadValOp", "const42Op", Operations::INT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
                                                                              "loopBodyAddOp",
@@ -528,8 +525,10 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                                                                         std::vector<std::string>{}))
                                 ->addThenBlock(
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp")
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                                        ->addOperation(std::make_shared<AddOperation>("thenAddOp",
+                                                                                      "loopBodyAddOp",
+                                                                                      "const46Op",
+                                                                                      Operations::INT64))
                                         ->addOperation(
                                             std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "thenAddOp"}))
                                         ->addNextBlock(
@@ -547,18 +546,22 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                                                                                              "iOp",
                                                                                              "getOutDataBufOp"))
                                                 ->addOperation(make_shared<StoreOperation>("ifAddResult", "outputAddressOp"))
-                                                ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                                                ->addOperation(make_shared<AddOperation>("loopEndIncIOp",
+                                                                                         "iOp",
+                                                                                         "const1Op",
+                                                                                         Operations::INT64))
                                                 ->addOperation(
                                                     std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
                                                 ->addNextBlock(savedBBs["loopHeadBB"])))
-                                ->addElseBlock(
-                                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp")
-                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
-                                        ->addOperation(
-                                            std::make_shared<BranchOperation>(std::vector<std::string>{"iOp", "elseAddOp"}))
-                                        ->addNextBlock(savedBBs["loopEndBB"])))
+                                ->addElseBlock(createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp")
+                                                   ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
+                                                   ->addOperation(std::make_shared<AddOperation>("elseAddOp",
+                                                                                                 "loopBodyAddOp",
+                                                                                                 "const8Op",
+                                                                                                 Operations::INT64))
+                                                   ->addOperation(std::make_shared<BranchOperation>(
+                                                       std::vector<std::string>{"iOp", "elseAddOp"}))
+                                                   ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
@@ -646,15 +649,13 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                                 std::vector<std::string>{"iOp"}))
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
-                                ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             PrimitiveStamp::INT64,
-                                                                             9,
-                                                                             1,
-                                                                             "iOp",
-                                                                             "getInDataBufOp"))
+                                ->addOperation(
+                                    make_shared<
+                                        AddressOperation>("inputAddressOp", PrimitiveStamp::INT64, 9, 1, "iOp", "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
-                                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                                ->addOperation(
+                                    std::make_shared<AddOperation>("loopBodyAddOp", "loadValOp", "const42Op", Operations::INT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
@@ -667,8 +668,10 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                              std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}))
                                 ->addThenBlock(
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                                        ->addOperation(std::make_shared<AddOperation>("thenAddOp",
+                                                                                      "loopBodyAddOp",
+                                                                                      "const46Op",
+                                                                                      Operations::INT64))
                                         ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
                                         ->addOperation(make_shared<CompareOperation>("nestedIfCompare",
                                                                                      "thenAddOp",
@@ -692,9 +695,10 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                                     "ifBranchVal"),
                                                            savedBBs,
                                                            "loopEndBB")
-                                                        ->addOperation(make_shared<AddIntOperation>("loopEndAddResult",
-                                                                                                    "ifAddResult",
-                                                                                                    "ifBranchVal"))
+                                                        ->addOperation(make_shared<AddOperation>("loopEndAddResult",
+                                                                                                 "ifAddResult",
+                                                                                                 "ifBranchVal",
+                                                                                                 Operations::INT64))
                                                         ->addOperation(make_shared<AddressOperation>("outputAddressOp",
                                                                                                      PrimitiveStamp::INT64,
                                                                                                      8,
@@ -703,29 +707,32 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                                                                      "getOutDataBufOp"))
                                                         ->addOperation(
                                                             make_shared<StoreOperation>("loopEndAddResult", "outputAddressOp"))
-                                                        ->addOperation(
-                                                            make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
+                                                        ->addOperation(make_shared<AddOperation>("loopEndIncIOp",
+                                                                                                 "iOp",
+                                                                                                 "const1Op",
+                                                                                                 Operations::INT64))
                                                         ->addOperation(std::make_shared<BranchOperation>(
                                                             std::vector<std::string>{"loopEndIncIOp"}))
                                                         ->addNextBlock(savedBBs["loopHeadBB"])))
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
-                                                ->addOperation(
-                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
-                                                ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
-                                                                                                 "thenAddOp",
-                                                                                                 "thenElseBranchVal"))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
+                                                ->addOperation(std::make_shared<AddOperation>("thenElseAddOp",
+                                                                                              "thenAddOp",
+                                                                                              "thenElseBranchVal",
+                                                                                              Operations::INT64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "thenElseAddOp", "thenElseBranchVal"}))
                                                 ->addNextBlock(savedBBs["loopEndBB"])))
-                                ->addElseBlock(
-                                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
-                                        ->addOperation(std::make_shared<BranchOperation>(
-                                            std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
-                                        ->addNextBlock(savedBBs["loopEndBB"])))
+                                ->addElseBlock(createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                                                   ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
+                                                   ->addOperation(std::make_shared<AddOperation>("elseAddOp",
+                                                                                                 "loopBodyAddOp",
+                                                                                                 "const8Op",
+                                                                                                 Operations::INT64))
+                                                   ->addOperation(std::make_shared<BranchOperation>(
+                                                       std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
+                                                   ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
@@ -813,15 +820,13 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                                 std::vector<std::string>{"iOp"}))
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
-                                ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             PrimitiveStamp::INT64,
-                                                                             9,
-                                                                             1,
-                                                                             "iOp",
-                                                                             "getInDataBufOp"))
+                                ->addOperation(
+                                    make_shared<
+                                        AddressOperation>("inputAddressOp", PrimitiveStamp::INT64, 9, 1, "iOp", "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
-                                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                                ->addOperation(
+                                    std::make_shared<AddOperation>("loopBodyAddOp", "loadValOp", "const42Op", Operations::INT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
@@ -834,8 +839,10 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                              std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}))
                                 ->addThenBlock(
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                                        ->addOperation(std::make_shared<AddOperation>("thenAddOp",
+                                                                                      "loopBodyAddOp",
+                                                                                      "const46Op",
+                                                                                      Operations::INT64))
                                         ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
                                         ->addOperation(make_shared<CompareOperation>("nestedIfCompare",
                                                                                      "thenAddOp",
@@ -859,24 +866,26 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                                     "ifBranchVal"),
                                                            savedBBs,
                                                            "nestedIfFollowUpBB")
-                                                        ->addOperation(make_shared<AddIntOperation>("afterIfBBAddOp",
-                                                                                                    "nestedIfAddResult",
-                                                                                                    "ifBranchVal"))
+                                                        ->addOperation(make_shared<AddOperation>("afterIfBBAddOp",
+                                                                                                 "nestedIfAddResult",
+                                                                                                 "ifBranchVal",
+                                                                                                 Operations::INT64))
                                                         ->addOperation(std::make_shared<BranchOperation>(
                                                             std::vector<std::string>{"iOp", "afterIfBBAddOp", "ifBranchVal"}))
                                                         ->addNextBlock(
-                                                            saveBB(
-                                                                createBB("loopEndBB",
-                                                                         2,
-                                                                         {Operations::INT64, Operations::INT64, Operations::INT64},
-                                                                         "iOp",
-                                                                         "ifAddResult",
-                                                                         "ifBranchVal"),
-                                                                savedBBs,
-                                                                "loopEndBB")
-                                                                ->addOperation(make_shared<AddIntOperation>("loopEndAddResult",
-                                                                                                            "ifAddResult",
-                                                                                                            "ifBranchVal"))
+                                                            saveBB(createBB(
+                                                                       "loopEndBB",
+                                                                       2,
+                                                                       {Operations::INT64, Operations::INT64, Operations::INT64},
+                                                                       "iOp",
+                                                                       "ifAddResult",
+                                                                       "ifBranchVal"),
+                                                                   savedBBs,
+                                                                   "loopEndBB")
+                                                                ->addOperation(make_shared<AddOperation>("loopEndAddResult",
+                                                                                                         "ifAddResult",
+                                                                                                         "ifBranchVal",
+                                                                                                         Operations::INT64))
                                                                 ->addOperation(
                                                                     make_shared<AddressOperation>("outputAddressOp",
                                                                                                   PrimitiveStamp::INT64,
@@ -886,30 +895,32 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                                                                   "getOutDataBufOp"))
                                                                 ->addOperation(make_shared<StoreOperation>("loopEndAddResult",
                                                                                                            "outputAddressOp"))
-                                                                ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp",
-                                                                                                            "iOp",
-                                                                                                            "const1Op"))
+                                                                ->addOperation(make_shared<AddOperation>("loopEndIncIOp",
+                                                                                                         "iOp",
+                                                                                                         "const1Op",
+                                                                                                         Operations::INT64))
                                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                                     std::vector<std::string>{"loopEndIncIOp"}))
                                                                 ->addNextBlock(savedBBs["loopHeadBB"]))))
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "thenAddOp", "branchVal")
-                                                ->addOperation(
-                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
-                                                ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
-                                                                                                 "thenAddOp",
-                                                                                                 "thenElseBranchVal"))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
+                                                ->addOperation(std::make_shared<AddOperation>("thenElseAddOp",
+                                                                                              "thenAddOp",
+                                                                                              "thenElseBranchVal",
+                                                                                              Operations::INT64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "thenElseAddOp", "thenElseBranchVal"}))
                                                 ->addNextBlock(savedBBs["nestedIfFollowUpBB"])))
-                                ->addElseBlock(
-                                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
-                                        ->addOperation(std::make_shared<BranchOperation>(
-                                            std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
-                                        ->addNextBlock(savedBBs["loopEndBB"])))
+                                ->addElseBlock(createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                                                   ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
+                                                   ->addOperation(std::make_shared<AddOperation>("elseAddOp",
+                                                                                                 "loopBodyAddOp",
+                                                                                                 "const8Op",
+                                                                                                 Operations::INT64))
+                                                   ->addOperation(std::make_shared<BranchOperation>(
+                                                       std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
+                                                   ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR
@@ -996,15 +1007,13 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                 std::vector<std::string>{"iOp"}))
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
-                                ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             PrimitiveStamp::INT64,
-                                                                             9,
-                                                                             1,
-                                                                             "iOp",
-                                                                             "getInDataBufOp"))
+                                ->addOperation(
+                                    make_shared<
+                                        AddressOperation>("inputAddressOp", PrimitiveStamp::INT64, 9, 1, "iOp", "getInDataBufOp"))
                                 ->addOperation(make_shared<LoadOperation>("loadValOp", "inputAddressOp"))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const42Op", 42, 64))
-                                ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
+                                ->addOperation(
+                                    std::make_shared<AddOperation>("loopBodyAddOp", "loadValOp", "const42Op", Operations::INT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("branchVal", 0, 64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<CompareOperation>("loopBodyIfCompareOp",
@@ -1017,8 +1026,10 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                              std::vector<std::string>{"iOp", "loopBodyAddOp", "branchVal"}))
                                 ->addThenBlock(
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("thenAddOp", "loopBodyAddOp", "const46Op"))
+                                        ->addOperation(std::make_shared<AddOperation>("thenAddOp",
+                                                                                      "loopBodyAddOp",
+                                                                                      "const46Op",
+                                                                                      Operations::INT64))
                                         ->addOperation(std::make_shared<ConstIntOperation>("const100Op", 100, 64))
                                         ->addOperation(std::make_shared<ConstIntOperation>("jOp", 0, 64))
                                         ->addOperation(make_shared<CompareOperation>("nestedIfCompare",
@@ -1047,9 +1058,10 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                     "ifBranchVal"),
                                                            savedBBs,
                                                            "nestedIfFollowUpBB")
-                                                        ->addOperation(make_shared<AddIntOperation>("afterIfBBAddOp",
-                                                                                                    "nestedIfAddResult",
-                                                                                                    "ifBranchVal"))
+                                                        ->addOperation(make_shared<AddOperation>("afterIfBBAddOp",
+                                                                                                 "nestedIfAddResult",
+                                                                                                 "ifBranchVal",
+                                                                                                 Operations::INT64))
                                                         ->addOperation(make_shared<LoopOperation>(
                                                             LoopOperation::ForLoop,
                                                             std::vector<
@@ -1082,9 +1094,10 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                 ->addThenBlock(
                                                                     createBB("nestedLoopBodyBB", 4, {}, "jOp", "loopAddInput")
                                                                         ->addOperation(
-                                                                            make_shared<AddIntOperation>("nestedLoopAddOp",
-                                                                                                         "loopAddInput",
-                                                                                                         "loopAddInput"))
+                                                                            make_shared<AddOperation>("nestedLoopAddOp",
+                                                                                                      "loopAddInput",
+                                                                                                      "loopAddInput",
+                                                                                                      Operations::INT64))
                                                                         ->addOperation(make_shared<ProxyCallOperation>(
                                                                             Operation::ProxyCallType::Other,
                                                                             "printValueFromMLIR",
@@ -1092,9 +1105,10 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                             std::vector<PrimitiveStamp>{},
                                                                             PrimitiveStamp::VOID))
                                                                         ->addOperation(
-                                                                            make_shared<AddIntOperation>("nestedLoopEndIncJOp",
-                                                                                                         "jOp",
-                                                                                                         "const1Op"))
+                                                                            make_shared<AddOperation>("nestedLoopEndIncJOp",
+                                                                                                      "jOp",
+                                                                                                      "const1Op",
+                                                                                                      Operations::INT64))
                                                                         ->addOperation(std::make_shared<BranchOperation>(
                                                                             std::vector<std::string>{"iOp",
                                                                                                      "nestedLoopEndIncJOp",
@@ -1113,44 +1127,47 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                            savedBBs,
                                                                            "loopEndBB")
                                                                         ->addOperation(
-                                                                            make_shared<AddIntOperation>("loopEndAddResult",
-                                                                                                         "ifAddResult",
-                                                                                                         "ifBranchVal"))
-                                                                        ->addOperation(make_shared<AddressOperation>(
-                                                                            "outputAddressOp",
-                                                                            PrimitiveStamp::INT64,
-                                                                            8,
-                                                                            0,
-                                                                            "iOp",
-                                                                            "getOutDataBufOp"))
+                                                                            make_shared<AddOperation>("loopEndAddResult",
+                                                                                                      "ifAddResult",
+                                                                                                      "ifBranchVal",
+                                                                                                      Operations::INT64))
+                                                                        ->addOperation(
+                                                                            make_shared<AddressOperation>("outputAddressOp",
+                                                                                                          PrimitiveStamp::INT64,
+                                                                                                          8,
+                                                                                                          0,
+                                                                                                          "iOp",
+                                                                                                          "getOutDataBufOp"))
                                                                         ->addOperation(
                                                                             make_shared<StoreOperation>("loopEndAddResult",
                                                                                                         "outputAddressOp"))
                                                                         ->addOperation(
-                                                                            make_shared<AddIntOperation>("loopEndIncIOp",
-                                                                                                         "iOp",
-                                                                                                         "const1Op"))
+                                                                            make_shared<AddOperation>("loopEndIncIOp",
+                                                                                                      "iOp",
+                                                                                                      "const1Op",
+                                                                                                      Operations::INT64))
                                                                         ->addOperation(std::make_shared<BranchOperation>(
                                                                             std::vector<std::string>{"loopEndIncIOp"}))
                                                                         ->addNextBlock(savedBBs["loopHeadBB"])))))
                                         ->addElseBlock(
                                             createBB("thenElseBB", 4, {}, "iOp", "jOp", "thenAddOp", "branchVal")
-                                                ->addOperation(
-                                                    std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
-                                                ->addOperation(std::make_shared<AddIntOperation>("thenElseAddOp",
-                                                                                                 "thenAddOp",
-                                                                                                 "thenElseBranchVal"))
+                                                ->addOperation(std::make_shared<ConstIntOperation>("thenElseBranchVal", 47, 64))
+                                                ->addOperation(std::make_shared<AddOperation>("thenElseAddOp",
+                                                                                              "thenAddOp",
+                                                                                              "thenElseBranchVal",
+                                                                                              Operations::INT64))
                                                 ->addOperation(std::make_shared<BranchOperation>(
                                                     std::vector<std::string>{"iOp", "jOp", "thenElseAddOp", "thenElseBranchVal"}))
                                                 ->addNextBlock(savedBBs["nestedIfFollowUpBB"])))
-                                ->addElseBlock(
-                                    createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
-                                        ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
-                                        ->addOperation(
-                                            std::make_shared<AddIntOperation>("elseAddOp", "loopBodyAddOp", "const8Op"))
-                                        ->addOperation(std::make_shared<BranchOperation>(
-                                            std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
-                                        ->addNextBlock(savedBBs["loopEndBB"])))
+                                ->addElseBlock(createBB("elseBB", 3, {}, "iOp", "loopBodyAddOp", "branchVal")
+                                                   ->addOperation(std::make_shared<ConstIntOperation>("const8Op", 8, 64))
+                                                   ->addOperation(std::make_shared<AddOperation>("elseAddOp",
+                                                                                                 "loopBodyAddOp",
+                                                                                                 "const8Op",
+                                                                                                 Operations::INT64))
+                                                   ->addOperation(std::make_shared<BranchOperation>(
+                                                       std::vector<std::string>{"iOp", "elseAddOp", "const8Op"}))
+                                                   ->addNextBlock(savedBBs["loopEndBB"])))
                         ->addElseBlock(createBB("executeReturnBB", 1, {})->addOperation(make_shared<ReturnOperation>(0)))));
 
     // NESIR to MLIR

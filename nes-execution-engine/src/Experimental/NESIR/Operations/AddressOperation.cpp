@@ -19,7 +19,7 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 AddressOperation::AddressOperation(std::string identifier,
                                    PrimitiveStamp dataType, uint64_t getRecordWidth,
                                    uint64_t fieldOffset, std::string recordIdxName, std::string addressSourceName)
-    : Operation(Operation::AddressOp), identifier(std::move(identifier)), dataType(dataType),
+    : Operation(Operation::AddressOp, dataType), identifier(std::move(identifier)), dataType(dataType),
       recordWidth(getRecordWidth), fieldOffset(fieldOffset), recordIdxName(recordIdxName), addressSourceName(addressSourceName) {}
 
 std::string AddressOperation::getIdentifier() { return identifier; }

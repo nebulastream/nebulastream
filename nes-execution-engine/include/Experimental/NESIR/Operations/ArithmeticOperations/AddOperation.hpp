@@ -12,17 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_DIVFLOATOPERATION_HPP
-#define NES_DIVFLOATOPERATION_HPP
+#ifndef NES_ADDFLOATOPERATION_HPP
+#define NES_ADDFLOATOPERATION_HPP
 
 #include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-class DivFloatOperation : public Operation {
+//Todo: Decide: Leave type
+class AddOperation : public Operation {
   public:
-    DivFloatOperation(std::string identifier, std::string leftArgName, std::string rightArgName);
-    ~DivFloatOperation() override = default;
+    AddOperation(std::string identifier,
+                 std::string leftArgName,
+                 std::string rightArgName,
+                 PrimitiveStamp stamp);
+    ~AddOperation() override = default;
 
     std::string getIdentifier();
     std::string getLeftArgName();
@@ -37,4 +41,4 @@ class DivFloatOperation : public Operation {
     std::string rightArgName;
 };
 }// namespace NES
-#endif//NES_DIVFLOATOPERATION_HPP
+#endif//NES_ADDFLOATOPERATION_HPP

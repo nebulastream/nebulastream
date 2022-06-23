@@ -12,37 +12,29 @@
     limitations under the License.
 */
 
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
-
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/Operations/AddressOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddFloatOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/AddIntOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/DivFloatOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/DivIntOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/MulFloatOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/MulIntOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/SubFloatOperation.hpp>
-#include <Experimental/NESIR/Operations/ArithmeticOperations/SubIntOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstFloatOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
-#include <Experimental/NESIR/Operations/LoadOperation.hpp>
-#include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <Experimental/NESIR/Operations/StoreOperation.hpp>
-
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
-
-#include "Experimental/NESIR/BasicBlocks/BasicBlock.hpp"
-#include "Experimental/NESIR/Operations/Operation.hpp"
-#include "Experimental/NESIR/Operations/ProxyCallOperation.hpp"
-#include <Experimental/NESIR/Operations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/LoadOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/LoopOperation.hpp>
+#include <Experimental/NESIR/Operations/Operation.hpp>
+#include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/ReturnOperation.hpp>
+#include <Experimental/NESIR/Operations/StoreOperation.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 
 namespace NES {
 
@@ -264,17 +256,25 @@ TEST_F(MLIRGeneratorArithmeticOpsTest, printSimpleNESIRwithAddOperation) {
                                 ->addOperation(std::make_shared<LoadOperation>("double", "inBufAddrOp10"))
 
                                 ->addOperation(std::make_shared<ConstIntOperation>("int64Const1", 65, /*bits*/ 64))
-                                ->addOperation(std::make_shared<SubIntOperation>("subInt64", "int64", "int64Const1"))
-                                ->addOperation(std::make_shared<SubIntOperation>("subUInt64", "uint64", "int64Const1"))
+                                ->addOperation(
+                                    std::make_shared<SubOperation>("subInt64", "int64", "int64Const1", PrimitiveStamp::INT64))
+                                ->addOperation(
+                                    std::make_shared<SubOperation>("subUInt64", "uint64", "int64Const1", PrimitiveStamp::UINT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("int64Const2", -3, /*bits*/ 64))
-                                ->addOperation(std::make_shared<MulIntOperation>("mulInt64", "int64", "int64Const2"))
-                                ->addOperation(std::make_shared<DivIntOperation>("divInt64", "int64", "int64Const2", true))
+                                ->addOperation(
+                                    std::make_shared<MulOperation>("mulInt64", "int64", "int64Const2", PrimitiveStamp::INT64))
+                                ->addOperation(
+                                    std::make_shared<DivOperation>("divInt64", "int64", "int64Const2", PrimitiveStamp::INT64))
                                 ->addOperation(std::make_shared<ConstIntOperation>("uint64Const2", 3, /*bits*/ 64))
-                                ->addOperation(std::make_shared<DivIntOperation>("divUInt64", "uint64", "uint64Const2", false))
+                                ->addOperation(
+                                    std::make_shared<DivOperation>("divUInt64", "uint64", "uint64Const2", PrimitiveStamp::UINT64))
                                 ->addOperation(std::make_shared<ConstFloatOperation>("doubleConst", -4.2, /*bits*/ 64))
-                                ->addOperation(std::make_shared<MulFloatOperation>("mulDouble", "double", "doubleConst"))
-                                ->addOperation(std::make_shared<DivFloatOperation>("divDouble", "double", "doubleConst"))
-                                ->addOperation(std::make_shared<SubFloatOperation>("subDouble", "double", "doubleConst"))
+                                ->addOperation(
+                                    std::make_shared<MulOperation>("mulDouble", "double", "doubleConst", PrimitiveStamp::DOUBLE))
+                                ->addOperation(
+                                    std::make_shared<DivOperation>("divDouble", "double", "doubleConst", PrimitiveStamp::DOUBLE))
+                                ->addOperation(
+                                    std::make_shared<SubOperation>("subDouble", "double", "doubleConst", PrimitiveStamp::DOUBLE))
                                 ->addOperation(
                                     std::make_shared<AddressOperation>("outBufAddrOp0", INT64, 64, 0, "iOp", "getOutDataBufOp"))
                                 ->addOperation(
