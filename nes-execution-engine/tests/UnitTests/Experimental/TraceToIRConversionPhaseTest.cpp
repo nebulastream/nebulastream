@@ -27,7 +27,6 @@
 #include <Experimental/Interpreter/Operators/Selection.hpp>
 #include <Experimental/Interpreter/RecordBuffer.hpp>
 #include <Experimental/MLIR/MLIRUtility.hpp>
-#include <Experimental/NESIR/Phase/LoopInferencePhase.hpp>
 #include <Experimental/Trace/ExecutionTrace.hpp>
 #include <Experimental/Trace/Phases/SSACreationPhase.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
@@ -127,7 +126,6 @@ TEST_F(TraceToIRConversionPhaseTest, sumLoopTest) {
     std::cout << *execution.get() << std::endl;
     auto ir = irCreationPhase.apply(execution);
     std::cout << ir->toString() << std::endl;
-    IR::LoopInferencePhase().apply(ir);
 
     // create and print MLIR
     auto mlirUtility = new MLIR::MLIRUtility("/home/rudi/mlir/generatedMLIR/locationTest.mlir", false);
