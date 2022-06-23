@@ -14,5 +14,4 @@
 
 add_source_files(nes-execution-engine
         NESIRDumpHandler.cpp
-        NesIrVizDumpHandler.cpp
         )
