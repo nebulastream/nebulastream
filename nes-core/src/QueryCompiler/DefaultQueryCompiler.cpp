@@ -46,8 +46,8 @@ DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const& option
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
       bufferOptimizationPhase(phaseFactory->createBufferOptimizationPhase(options)),
       predicationOptimizationPhase(phaseFactory->createPredicationOptimizationPhase(options)),
-      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))), sourceSharing(sourceSharing)
-       {}
+      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options, std::move(jitCompiler))),
+      sourceSharing(sourceSharing) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const& options,
                                               Phases::PhaseFactoryPtr const& phaseFactory,

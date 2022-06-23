@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_
 #define NES_INCLUDE_CATALOGS_UDF_UDFDESCRIPTOR_HPP_
 
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
 
 namespace NES::Catalogs {
 

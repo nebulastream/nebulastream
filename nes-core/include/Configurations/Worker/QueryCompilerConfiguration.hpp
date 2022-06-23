@@ -80,7 +80,11 @@ class QueryCompilerConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&compilationStrategy, &pipeliningStrategy, &outputBufferOptimizationLevel, &windowingStrategy, &useCompilationCache};
+        return {&compilationStrategy,
+                &pipeliningStrategy,
+                &outputBufferOptimizationLevel,
+                &windowingStrategy,
+                &useCompilationCache};
     }
 };
 

@@ -203,12 +203,13 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                NES::collectAndPrintStacktrace());
         }
         auto cppCompiler = (!this->languageCompiler) ? Compiler::CPPCompiler::create() : this->languageCompiler;
-        auto jitCompiler = (!this->jitCompiler) ? Compiler::JITCompilerBuilder()
-                                                      .registerLanguageCompiler(cppCompiler)
-                                                      .setUseCompilationCache(workerConfiguration->queryCompiler.useCompilationCache.getValue())
+        auto jitCompiler = (!this->jitCompiler)
+            ? Compiler::JITCompilerBuilder()
+                  .registerLanguageCompiler(cppCompiler)
+                  .setUseCompilationCache(workerConfiguration->queryCompiler.useCompilationCache.getValue())
 
-                                                      .build()
-                                                : this->jitCompiler;
+                  .build()
+            : this->jitCompiler;
         auto phaseFactory = (!this->phaseFactory) ? QueryCompilation::Phases::DefaultPhaseFactory::create() : this->phaseFactory;
         auto queryCompilationOptions = createQueryCompilationOptions(workerConfiguration->queryCompiler);
         queryCompilationOptions->setNumSourceLocalBuffers(workerConfiguration->numberOfBuffersInSourceLocalBufferPool.getValue());
