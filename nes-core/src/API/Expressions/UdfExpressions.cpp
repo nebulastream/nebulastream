@@ -19,21 +19,19 @@
 
 namespace NES::Experimental {
 
-ExpressionNodePtr CALL(NES::ExpressionItem udfName, NES::ExpressionItem arguments) {
+ExpressionNodePtr CALL(const NES::ExpressionItem& udfName, const NES::ExpressionItem& argument) {
     auto udfNameExpression = udfName.getExpressionNode();
     if (!udfNameExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
         NES_ERROR("UDF name has to be a ConstantValueExpression but it was a " + udfNameExpression->toString());
     }
 
-    auto argumentsExpression = arguments.getExpressionNode();
-    if (!argumentsExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
-        NES_ERROR("UDF arguments have to be a ConstantValueExpression but it was a " + argumentsExpression->toString());
+    auto argumentExpression = argument.getExpressionNode();
+    if (!argumentExpression->instanceOf<NES::ConstantValueExpressionNode>()) {
+        NES_ERROR("UDF argument has to be a ConstantValueExpression but it was a " + argumentExpression->toString());
     }
-
     auto udfNameConstantValueExpression = udfNameExpression->as<NES::ConstantValueExpressionNode>();
-    auto argumentsConstantValueExpression = argumentsExpression->as<NES::ConstantValueExpressionNode>();
+    auto argumentsConstantValueExpression = argumentExpression->as<NES::ConstantValueExpressionNode>();
     return UdfExpressionNode::create(udfNameConstantValueExpression, argumentsConstantValueExpression);
 }
-
 
 }// namespace NES::Experimental

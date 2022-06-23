@@ -12,9 +12,13 @@
     limitations under the License.
 */
 #ifdef PYTHON_UDF_ENABLED
+#include "Nodes/Expressions/FieldAccessExpressionNode.hpp"
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
+#include <Nodes/Expressions/UdfCallExpressions/UdfArgumentsNode.hpp>
 #include <Nodes/Expressions/UdfCallExpressions/UdfExpressionNode.hpp>
+#include <utility>
 
 namespace NES::Experimental {
 
@@ -23,26 +27,30 @@ UdfExpressionNode::UdfExpressionNode(UdfExpressionNode* other) : ExpressionNode(
     addChildWithEqual(getFunctionArguments()->copy());
 }
 
-std::string UdfExpressionNode::toString() const {
-    std::stringstream ss;
-    ss << "CALL(" << children[0]->toString() << "," << children[1]->toString() << ")";
-    return ss.str();
-}
-
 ExpressionNodePtr UdfExpressionNode::copy() {
     return std::make_shared<UdfExpressionNode>(UdfExpressionNode(this));
 }
 
-ExpressionNodePtr UdfExpressionNode::create(const ConstantValueExpressionNodePtr& udfName,
-                                                  const ConstantValueExpressionNodePtr& functionArguments) {
-    auto pythonUdfExpressionNode = std::make_shared<UdfExpressionNode>();
-    pythonUdfExpressionNode->setChildren(udfName, functionArguments);
-    return pythonUdfExpressionNode;
+template<typename ConstantValueExpressionNodePtr>
+ExpressionNodePtr UdfExpressionNode::create(const ConstantValueExpressionNodePtr udfName) {
+    auto udfExpressionNode = std::make_shared<UdfExpressionNode>();
+    udfExpressionNode->setChildren(udfName, nullptr);
+    return udfExpressionNode;
 }
 
-void UdfExpressionNode::setChildren(const ExpressionNodePtr& udfName, const ExpressionNodePtr& functionArguments) {
+template<typename ConstantValueExpressionNodePtr, typename... Args>
+ExpressionNodePtr UdfExpressionNode::create(const ConstantValueExpressionNodePtr udfName,
+                                            Args... functionArguments) {
+    auto udfExpressionNode = std::make_shared<UdfExpressionNode>();
+    std::vector<FieldAccessExpressionNodePtr> arguments({functionArguments...});
+    udfExpressionNode->setChildren(udfName, arguments);
+    return udfExpressionNode;
+}
+
+void UdfExpressionNode::setChildren(const ExpressionNodePtr& udfName, std::vector<ExpressionNodePtr> functionArguments) {
     addChild(udfName);
-    addChild(functionArguments);
+    auto tmp = UdfArgumentsNode::create(std::move(functionArguments));
+    addChild(tmp);
 }
 
 void UdfExpressionNode::inferStamp(SchemaPtr schema) {
@@ -60,6 +68,12 @@ void UdfExpressionNode::inferStamp(SchemaPtr schema) {
     stamp = DataTypeFactory::createInt32();
 }
 
+std::string UdfExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << "CALL(" << children[0]->toString() << "," << children[1]->toString() << ")";
+    return ss.str();
+}
+
 ExpressionNodePtr UdfExpressionNode::getUdfName() {
     return children[0]->as<NES::ConstantValueExpressionNode>();
 }
@@ -67,6 +81,7 @@ ExpressionNodePtr UdfExpressionNode::getUdfName() {
 ExpressionNodePtr UdfExpressionNode::getFunctionArguments() {
     return children[1]->as<NES::ConstantValueExpressionNode>();
 }
+
 
 }// namespace NES::Experimental
 #endif

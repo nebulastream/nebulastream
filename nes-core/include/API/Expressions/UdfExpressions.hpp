@@ -28,7 +28,7 @@ using ExpressionNodePtr = std::shared_ptr<NES::ExpressionNode>;
 /**
  * @brief
 **/
-ExpressionNodePtr CALL(ExpressionItem udfName, ExpressionItem arguments);
+ExpressionNodePtr CALL(ExpressionItem udfName, ExpressionNodePtr arguments...);
 
 }// namespace NES::Experimental
 
