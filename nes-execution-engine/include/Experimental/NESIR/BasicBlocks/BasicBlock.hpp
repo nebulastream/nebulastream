@@ -32,14 +32,14 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
                         int32_t scopeLevel,
                         std::vector<Operations::OperationPtr> operations,
                         std::vector<std::string> inputArgs,
-                        std::vector<Operations::Operation::BasicType> inputArgTypes);
+                        std::vector<Operations::PrimitiveStamp> inputArgTypes);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
     [[nodiscard]] int32_t getScopeLevel();
     [[nodiscard]] std::vector<Operations::OperationPtr> getOperations();
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::string> getInputArgs();
-    [[nodiscard]] std::vector<Operations::Operation::BasicType> getInputArgTypes();
+    [[nodiscard]] std::vector<Operations::PrimitiveStamp> getInputArgTypes();
 
     // NESIR Assembly
     std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
@@ -55,7 +55,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     int32_t scopeLevel;
     std::vector<Operations::OperationPtr> operations;
     std::vector<std::string> inputArgs;
-    std::vector<Operations::Operation::BasicType> inputArgTypes;
+    std::vector<Operations::PrimitiveStamp> inputArgTypes;
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 

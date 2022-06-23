@@ -16,7 +16,7 @@
 
 namespace NES::ExecutionEngine::Experimental::IR {
     ExternalDataSource::ExternalDataSource(ExternalDataSourceType externalDataSourceType, std::string identfifier,
-                           std::vector<Operations::Operation::BasicType> types) : externalDataSourceType(externalDataSourceType), identifier(identfifier), types(types) {}
+                           std::vector<Operations::PrimitiveStamp> types) : externalDataSourceType(externalDataSourceType), identifier(identfifier), types(types) {}
 
     ExternalDataSource::ExternalDataSourceType ExternalDataSource::getExternalDataSourceType() const {
         return externalDataSourceType;
@@ -26,7 +26,7 @@ namespace NES::ExecutionEngine::Experimental::IR {
         return identifier;
     }
 
-    const std::vector<Operations::Operation::BasicType>& ExternalDataSource::getTypes() const {
+    const std::vector<Operations::PrimitiveStamp>& ExternalDataSource::getTypes() const {
         return types;
     }
 

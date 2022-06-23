@@ -17,8 +17,9 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-FunctionOperation::FunctionOperation(std::string name, std::vector<Operation::BasicType> inputArgs, 
-                                     std::vector<std::string> inputArgNames, Operation::BasicType outputArg)
+FunctionOperation::FunctionOperation(std::string name, std::vector<PrimitiveStamp> inputArgs,
+                                     std::vector<std::string> inputArgNames,
+                                     PrimitiveStamp outputArg)
     : Operation(OperationType::FunctionOp), name(std::move(name)), inputArgs(std::move(inputArgs)), 
       inputArgNames(std::move(inputArgNames)), outputArg(outputArg) {}
 
@@ -32,8 +33,8 @@ BasicBlockPtr FunctionOperation::addFunctionBasicBlock(BasicBlockPtr functionBas
 BasicBlockPtr FunctionOperation::getFunctionBasicBlock() {
     return functionBasicBlock;
 }
-const std::vector<Operation::BasicType>& FunctionOperation::getInputArgs() const { return inputArgs; }
-Operation::BasicType FunctionOperation::getOutputArg() const { return outputArg; }
+const std::vector<PrimitiveStamp>& FunctionOperation::getInputArgs() const { return inputArgs; }
+PrimitiveStamp FunctionOperation::getOutputArg() const { return outputArg; }
 
 
 std::string FunctionOperation::toString() {

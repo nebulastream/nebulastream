@@ -17,7 +17,6 @@
 #include <gtest/gtest.h>
 
 #include <API/Query.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <mlir/IR/AsmState.h>
 #include <mlir/Pass/PassManager.h>
@@ -61,58 +60,58 @@ class MLIRNESIRTest_ArithmeticOps : public testing::Test {
     static void TearDownTestCase() { NES_INFO("MLIRNESIRTest test class TearDownTestCase."); }
 };
 
-void printBuffer(std::vector<Operations::Operation::BasicType> types, uint64_t numTuples, int8_t* bufferPointer) {
+void printBuffer(std::vector<Operations::PrimitiveStamp> types, uint64_t numTuples, int8_t* bufferPointer) {
     for (uint64_t i = 0; i < numTuples; ++i) {
         printf("------------\nTuple Nr. %lu\n------------\n", i + 1);
         for (auto type : types) {
             switch (type) {
-                case Operation::BasicType::INT1: {
+                case PrimitiveStamp::INT1: {
                     printf("Value(INT1): %d \n", *bufferPointer);
                     bufferPointer += 1;
                     break;
                 }
-                case Operation::BasicType::INT8: {
+                case PrimitiveStamp::INT8: {
                     printf("Value(INT8): %d \n", *bufferPointer);
                     bufferPointer += 1;
                     break;
                 }
-                case Operation::BasicType::INT16: {
+                case PrimitiveStamp::INT16: {
                     int16_t* value = (int16_t*) bufferPointer;
                     printf("Value(INT16): %d \n", *value);
                     bufferPointer += 2;
                     break;
                 }
-                case Operation::BasicType::INT32: {
+                case PrimitiveStamp::INT32: {
                     int32_t* value = (int32_t*) bufferPointer;
                     printf("Value(INT32): %d \n", *value);
                     bufferPointer += 4;
                     break;
                 }
-                case Operation::BasicType::INT64: {
+                case PrimitiveStamp::INT64: {
                     int64_t* value = (int64_t*) bufferPointer;
                     printf("Value(INT64): %ld \n", *value);
                     bufferPointer += 8;
                     break;
                 }
-                case Operation::BasicType::BOOLEAN: {
+                case PrimitiveStamp::BOOLEAN: {
                     bool* value = (bool*) bufferPointer;
                     printf("Value(BOOL): %s \n", (*value) ? "true" : "false");
                     bufferPointer += 1;
                     break;
                 }
-                case Operation::BasicType::CHAR: {
+                case PrimitiveStamp::CHAR: {
                     char* value = (char*) bufferPointer;
                     printf("Value(CHAR): %c \n", *value);
                     bufferPointer += 1;
                     break;
                 }
-                case Operation::BasicType::FLOAT: {
+                case PrimitiveStamp::FLOAT: {
                     float* value = (float*) bufferPointer;
                     printf("Value(FLOAT): %f \n", *value);
                     bufferPointer += 4;
                     break;
                 }
-                case Operation::BasicType::DOUBLE: {
+                case PrimitiveStamp::DOUBLE: {
                     double* value = (double*) bufferPointer;
                     printf("Value(DOUBLE): %f \n", *value);
                     bufferPointer += 8;
@@ -127,27 +126,27 @@ void printBuffer(std::vector<Operations::Operation::BasicType> types, uint64_t n
 shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::ProxyCallType proxyCallType, bool getInputTB) {
     std::vector<string> getInputDataBufArgs{"inputTupleBuffer"};
     std::vector<string> getOutputDataBufArgs{"outputTupleBuffer"};
-    std::vector<Operation::BasicType> proxyDataBufferReturnArgs{Operation::BasicType::INT8PTR};
+    std::vector<PrimitiveStamp> proxyDataBufferReturnArgs{PrimitiveStamp::INT8PTR};
     if (proxyCallType == ProxyCallOperation::GetDataBuffer) {
         if (getInputTB) {
             return make_shared<ProxyCallOperation>(Operation::GetDataBuffer,
                                                    "getInDataBufOp",
                                                    getInputDataBufArgs,
                                                    proxyDataBufferReturnArgs,
-                                                   Operation::BasicType::INT8PTR);
+                                                   PrimitiveStamp::INT8PTR);
         } else {
             return make_shared<ProxyCallOperation>(Operation::GetDataBuffer,
                                                    "getOutDataBufOp",
                                                    getOutputDataBufArgs,
                                                    proxyDataBufferReturnArgs,
-                                                   Operation::BasicType::INT8PTR);
+                                                   PrimitiveStamp::INT8PTR);
         }
     } else {
         return make_shared<ProxyCallOperation>(Operation::GetNumTuples,
                                                "getNumTuplesOp",
                                                getInputDataBufArgs,
                                                proxyDataBufferReturnArgs,
-                                               Operation::BasicType::INT64);
+                                               PrimitiveStamp::INT64);
     }
 }
 
@@ -171,7 +170,7 @@ pair<NES::Runtime::TupleBuffer, NES::Runtime::TupleBuffer> createInAndOutputBuff
 }
 
 template<typename... Args>
-BasicBlockPtr createBB(std::string identifier, int level, std::vector<Operation::BasicType> argTypes, Args... args) {
+BasicBlockPtr createBB(std::string identifier, int level, std::vector<PrimitiveStamp> argTypes, Args... args) {
     std::vector<std::string> argList({args...});
     return make_shared<BasicBlock>(identifier, level, std::vector<OperationPtr>{}, argList, argTypes);
 }
@@ -194,16 +193,16 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFAdd) {
     auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other,
                                                         "printValueFromMLIR",
                                                         std::vector<string>{"iOp"},
-                                                        std::vector<Operation::BasicType>{},
-                                                        Operation::BasicType::VOID);
+                                                        std::vector<PrimitiveStamp>{},
+                                                        PrimitiveStamp::VOID);
 
     //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
-    std::vector<Operation::BasicType> executeArgTypes{};
+    std::vector<PrimitiveStamp> executeArgTypes{};
     std::vector<std::string> executeArgNames{};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<NESIR>();
 
-    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {})
                 ->addOperation(std::make_shared<ConstIntOperation>("int1", 5, 64))
@@ -219,7 +218,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFAdd) {
     mlirUtility->runJit(false);
 
     // Print OutputBuffer after execution.
-    std::vector<Operation::BasicType> types{Operation::INT64};
+    std::vector<PrimitiveStamp> types{Operations::INT64};
     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }
@@ -253,16 +252,16 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
     auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other,
                                                         "printValueFromMLIR",
                                                         std::vector<string>{"iOp"},
-                                                        std::vector<Operation::BasicType>{},
-                                                        Operation::BasicType::VOID);
+                                                        std::vector<PrimitiveStamp>{},
+                                                        PrimitiveStamp::VOID);
 
     //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
-    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<PrimitiveStamp> executeArgTypes{Operations::INT8PTR, Operations::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<NESIR>();
 
-    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
                 ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
@@ -283,7 +282,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
                                 ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             Operation::BasicType::INT64,
+                                                                             PrimitiveStamp::INT64,
                                                                              9,
                                                                              1,
                                                                              "iOp",
@@ -302,7 +301,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                                 ->addThenBlock(
                                     createBB("thenBB", 3, {}, "iOp", "loopBodyAddOp")
                                         ->addOperation(make_shared<AddressOperation>("outputAddressOp",
-                                                                                     Operation::BasicType::INT64,
+                                                                                     PrimitiveStamp::INT64,
                                                                                      8,
                                                                                      0,
                                                                                      "iOp",
@@ -310,7 +309,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
                                         ->addOperation(make_shared<StoreOperation>("loopBodyAddOp", "outputAddressOp"))
                                         ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
                                         ->addNextBlock(
-                                            saveBB(createBB("loopEndBB", 2, {Operation::INT64}, "iOp"), savedBBs, "loopEndBB")
+                                            saveBB(createBB("loopEndBB", 2, {Operations::INT64}, "iOp"), savedBBs, "loopEndBB")
                                                 ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
                                                 ->addOperation(
                                                     std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
@@ -325,7 +324,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIFtest) {
     mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
     // Print OutputBuffer after execution.
-    std::vector<Operation::BasicType> types{Operation::INT64};
+    std::vector<PrimitiveStamp> types{Operations::INT64};
     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }
@@ -363,16 +362,16 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
     auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other,
                                                         "printValueFromMLIR",
                                                         std::vector<string>{"iOp"},
-                                                        std::vector<Operation::BasicType>{},
-                                                        Operation::BasicType::VOID);
+                                                        std::vector<PrimitiveStamp>{},
+                                                        PrimitiveStamp::VOID);
 
     //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
-    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<PrimitiveStamp> executeArgTypes{Operations::INT8PTR, Operations::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<NESIR>();
 
-    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
                 ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
@@ -393,7 +392,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
                                 ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             Operation::BasicType::INT64,
+                                                                             PrimitiveStamp::INT64,
                                                                              9,
                                                                              1,
                                                                              "iOp",
@@ -403,7 +402,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                                 ->addOperation(std::make_shared<AddIntOperation>("loopBodyAddOp", "loadValOp", "const42Op"))
                                 ->addOperation(std::make_shared<ConstIntOperation>("const46Op", 46, 64))
                                 ->addOperation(make_shared<AddressOperation>("outputAddressOp",
-                                                                             Operation::BasicType::INT64,
+                                                                             PrimitiveStamp::INT64,
                                                                              8,
                                                                              0,
                                                                              "iOp",
@@ -420,7 +419,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
                                         ->addOperation(make_shared<StoreOperation>("loopBodyAddOp", "outputAddressOp"))
                                         ->addOperation(std::make_shared<BranchOperation>(std::vector<std::string>{"iOp"}))
                                         ->addNextBlock(
-                                            saveBB(createBB("loopEndBB", 2, {Operation::INT64}, "iOp"), savedBBs, "loopEndBB")
+                                            saveBB(createBB("loopEndBB", 2, {Operations::INT64}, "iOp"), savedBBs, "loopEndBB")
                                                 ->addOperation(make_shared<AddIntOperation>("loopEndIncIOp", "iOp", "const1Op"))
                                                 ->addOperation(
                                                     std::make_shared<BranchOperation>(std::vector<std::string>{"loopEndIncIOp"}))
@@ -443,7 +442,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElse) {
     mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
     // Print OutputBuffer after execution.
-    std::vector<Operation::BasicType> types{Operation::INT64};
+    std::vector<PrimitiveStamp> types{Operations::INT64};
     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }
@@ -481,16 +480,16 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
     auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other,
                                                         "printValueFromMLIR",
                                                         std::vector<string>{"iOp"},
-                                                        std::vector<Operation::BasicType>{},
-                                                        Operation::BasicType::VOID);
+                                                        std::vector<PrimitiveStamp>{},
+                                                        PrimitiveStamp::VOID);
 
     //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
-    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<PrimitiveStamp> executeArgTypes{Operations::INT8PTR, Operations::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<NESIR>();
 
-    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
                 ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
@@ -511,7 +510,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
                                 ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             Operation::BasicType::INT64,
+                                                                             PrimitiveStamp::INT64,
                                                                              9,
                                                                              1,
                                                                              "iOp",
@@ -536,13 +535,13 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
                                         ->addNextBlock(
                                             saveBB(createBB("loopEndBB",
                                                             2,
-                                                            {Operation::INT64, Operation::INT64},
+                                                            {Operations::INT64, Operations::INT64},
                                                             "iOp",
                                                             "ifAddResult"),
                                                    savedBBs,
                                                    "loopEndBB")
                                                 ->addOperation(make_shared<AddressOperation>("outputAddressOp",
-                                                                                             Operation::BasicType::INT64,
+                                                                                             PrimitiveStamp::INT64,
                                                                                              8,
                                                                                              0,
                                                                                              "iOp",
@@ -570,7 +569,7 @@ TEST(MLIRNESIRTEST_IF, simpleNESIRIfElseFollowUp) {
     mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
     // Print OutputBuffer after execution.
-    std::vector<Operation::BasicType> types{Operation::INT64};
+    std::vector<PrimitiveStamp> types{Operations::INT64};
     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }
@@ -618,16 +617,16 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
     auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other,
                                                         "printValueFromMLIR",
                                                         std::vector<string>{"iOp"},
-                                                        std::vector<Operation::BasicType>{},
-                                                        Operation::BasicType::VOID);
+                                                        std::vector<PrimitiveStamp>{},
+                                                        PrimitiveStamp::VOID);
 
     //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
-    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<PrimitiveStamp> executeArgTypes{Operations::INT8PTR, Operations::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<NESIR>();
 
-    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
                 ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
@@ -648,7 +647,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
                                 ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             Operation::BasicType::INT64,
+                                                                             PrimitiveStamp::INT64,
                                                                              9,
                                                                              1,
                                                                              "iOp",
@@ -687,7 +686,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                 ->addNextBlock(
                                                     saveBB(createBB("loopEndBB",
                                                                     2,
-                                                                    {Operation::INT64, Operation::INT64, Operation::INT64},
+                                                                    {Operations::INT64, Operations::INT64, Operations::INT64},
                                                                     "iOp",
                                                                     "ifAddResult",
                                                                     "ifBranchVal"),
@@ -697,7 +696,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
                                                                                                     "ifAddResult",
                                                                                                     "ifBranchVal"))
                                                         ->addOperation(make_shared<AddressOperation>("outputAddressOp",
-                                                                                                     Operation::BasicType::INT64,
+                                                                                                     PrimitiveStamp::INT64,
                                                                                                      8,
                                                                                                      0,
                                                                                                      "iOp",
@@ -737,7 +736,7 @@ TEST(MLIRNESIRTEST_IF_NESTED, NESIRIfElseNestedMultipleFollowUps) {
     mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
     // Print OutputBuffer after execution.
-    std::vector<Operation::BasicType> types{Operation::INT64};
+    std::vector<PrimitiveStamp> types{Operations::INT64};
     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }
@@ -785,16 +784,16 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
     auto proxyPrintOp = make_shared<ProxyCallOperation>(Operation::ProxyCallType::Other,
                                                         "printValueFromMLIR",
                                                         std::vector<string>{"iOp"},
-                                                        std::vector<Operation::BasicType>{},
-                                                        Operation::BasicType::VOID);
+                                                        std::vector<PrimitiveStamp>{},
+                                                        PrimitiveStamp::VOID);
 
     //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
-    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<PrimitiveStamp> executeArgTypes{Operations::INT8PTR, Operations::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<NESIR>();
 
-    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
                 ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
@@ -815,7 +814,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
                                 ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             Operation::BasicType::INT64,
+                                                                             PrimitiveStamp::INT64,
                                                                              9,
                                                                              1,
                                                                              "iOp",
@@ -854,7 +853,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                 ->addNextBlock(
                                                     saveBB(createBB("nestedIfFollowUpBB",
                                                                     3,
-                                                                    {Operation::INT64, Operation::INT64, Operation::INT64},
+                                                                    {Operations::INT64, Operations::INT64, Operations::INT64},
                                                                     "iOp",
                                                                     "nestedIfAddResult",
                                                                     "ifBranchVal"),
@@ -869,7 +868,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                             saveBB(
                                                                 createBB("loopEndBB",
                                                                          2,
-                                                                         {Operation::INT64, Operation::INT64, Operation::INT64},
+                                                                         {Operations::INT64, Operations::INT64, Operations::INT64},
                                                                          "iOp",
                                                                          "ifAddResult",
                                                                          "ifBranchVal"),
@@ -880,7 +879,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
                                                                                                             "ifBranchVal"))
                                                                 ->addOperation(
                                                                     make_shared<AddressOperation>("outputAddressOp",
-                                                                                                  Operation::BasicType::INT64,
+                                                                                                  PrimitiveStamp::INT64,
                                                                                                   8,
                                                                                                   0,
                                                                                                   "iOp",
@@ -921,7 +920,7 @@ TEST(MLIRNESIRTEST_IF_NESTED_FOLLOWUP, NESIRIfElseNestedMultipleFollowUps) {
     mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
     // Print OutputBuffer after execution.
-    std::vector<Operation::BasicType> types{Operation::INT64};
+    std::vector<PrimitiveStamp> types{Operations::INT64};
     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }
@@ -972,12 +971,12 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
     auto inAndOutputBuffer = createInAndOutputBuffers();
 
     //Setup: Execute function args - A map that allows to save and reuse defined BBs - NESIR module.
-    std::vector<Operation::BasicType> executeArgTypes{Operation::INT8PTR, Operation::INT8PTR};
+    std::vector<PrimitiveStamp> executeArgTypes{Operations::INT8PTR, Operations::INT8PTR};
     std::vector<std::string> executeArgNames{"inputTupleBuffer", "outputTupleBuffer"};
     std::unordered_map<std::string, BasicBlockPtr> savedBBs;
     auto nesIR = std::make_shared<NESIR>();
 
-    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operation::INT64))
+    nesIR->addRootOperation(std::make_shared<FunctionOperation>("execute", executeArgTypes, executeArgNames, Operations::INT64))
         ->addFunctionBasicBlock(
             createBB("executeBodyBB", 0, {}, "inputTupleBuffer", "outputTupleBuffer")
                 ->addOperation(std::make_shared<ConstIntOperation>("iOp", 0, 64))
@@ -998,7 +997,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                         ->addThenBlock(
                             createBB("loopBodyBB", 2, {}, "iOp")
                                 ->addOperation(make_shared<AddressOperation>("inputAddressOp",
-                                                                             Operation::BasicType::INT64,
+                                                                             PrimitiveStamp::INT64,
                                                                              9,
                                                                              1,
                                                                              "iOp",
@@ -1038,10 +1037,10 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                 ->addNextBlock(
                                                     saveBB(createBB("nestedIfFollowUpBB",
                                                                     3,
-                                                                    {Operation::INT64,
-                                                                     Operation::INT64,
-                                                                     Operation::INT64,
-                                                                     Operation::INT64},
+                                                                    {Operations::INT64,
+                                                                     Operations::INT64,
+                                                                     Operations::INT64,
+                                                                     Operations::INT64},
                                                                     "iOp",
                                                                     "jOp",
                                                                     "nestedIfAddResult",
@@ -1090,8 +1089,8 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                             Operation::ProxyCallType::Other,
                                                                             "printValueFromMLIR",
                                                                             std::vector<string>{"nestedLoopAddOp"},
-                                                                            std::vector<Operation::BasicType>{},
-                                                                            Operation::BasicType::VOID))
+                                                                            std::vector<PrimitiveStamp>{},
+                                                                            PrimitiveStamp::VOID))
                                                                         ->addOperation(
                                                                             make_shared<AddIntOperation>("nestedLoopEndIncJOp",
                                                                                                          "jOp",
@@ -1105,9 +1104,9 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                 ->addElseBlock(
                                                                     saveBB(createBB("loopEndBB",
                                                                                     2,
-                                                                                    {Operation::INT64,
-                                                                                     Operation::INT64,
-                                                                                     Operation::INT64},
+                                                                                    {Operations::INT64,
+                                                                                     Operations::INT64,
+                                                                                     Operations::INT64},
                                                                                     "iOp",
                                                                                     "ifAddResult",
                                                                                     "ifBranchVal"),
@@ -1119,7 +1118,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
                                                                                                          "ifBranchVal"))
                                                                         ->addOperation(make_shared<AddressOperation>(
                                                                             "outputAddressOp",
-                                                                            Operation::BasicType::INT64,
+                                                                            PrimitiveStamp::INT64,
                                                                             8,
                                                                             0,
                                                                             "iOp",
@@ -1162,7 +1161,7 @@ TEST(MLIRNESIRTEST_NESTED_WITH_LOOP, NESIRIfElseNestedLoop) {
     mlirUtility->runJit(false, addressof(inAndOutputBuffer.first), addressof(inAndOutputBuffer.second));
 
     // Print OutputBuffer after execution.
-    std::vector<Operation::BasicType> types{Operation::INT64};
+    std::vector<PrimitiveStamp> types{Operations::INT64};
     auto outputBufferPointer = inAndOutputBuffer.second.getBuffer<int8_t>();
     printBuffer(types, numTuples, outputBufferPointer);
 }

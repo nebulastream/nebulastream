@@ -16,13 +16,14 @@
 #include <string>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-AddressOperation::AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t getRecordWidth, 
+AddressOperation::AddressOperation(std::string identifier,
+                                   PrimitiveStamp dataType, uint64_t getRecordWidth,
                                    uint64_t fieldOffset, std::string recordIdxName, std::string addressSourceName)
     : Operation(Operation::AddressOp), identifier(std::move(identifier)), dataType(dataType),
       recordWidth(getRecordWidth), fieldOffset(fieldOffset), recordIdxName(recordIdxName), addressSourceName(addressSourceName) {}
 
 std::string AddressOperation::getIdentifier() { return identifier; }
-Operation::BasicType AddressOperation::getDataType() { return dataType; }
+PrimitiveStamp AddressOperation::getDataType() { return dataType; }
 uint64_t AddressOperation::getRecordWidthInBytes() { return recordWidth; }
 uint64_t AddressOperation::getFieldOffsetInBytes() { return fieldOffset; }
 std::string AddressOperation::getRecordIdxName() { return recordIdxName; }

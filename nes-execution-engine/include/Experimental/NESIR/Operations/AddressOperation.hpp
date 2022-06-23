@@ -21,12 +21,13 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class AddressOperation : public Operation {
 public:
-    explicit AddressOperation(std::string identifier, Operation::BasicType dataType, uint64_t recordWidthInBytes, 
+    explicit AddressOperation(std::string identifier,
+                            PrimitiveStamp dataType, uint64_t recordWidthInBytes,
                               uint64_t fieldOffsetInBytes, std::string recordIdxName, std::string addressSourceName);
     ~AddressOperation() override = default;
 
     std::string getIdentifier();
-    Operation::BasicType getDataType();
+    PrimitiveStamp getDataType();
     uint64_t getRecordWidthInBytes();
     uint64_t getFieldOffsetInBytes();
     std::string getRecordIdxName();
@@ -36,7 +37,7 @@ public:
     static bool classof(const Operation *Op);
 private:
     std::string identifier;
-    Operation::BasicType dataType;
+    PrimitiveStamp dataType;
     uint64_t recordWidth;
     uint64_t fieldOffset;
     std::string recordIdxName;

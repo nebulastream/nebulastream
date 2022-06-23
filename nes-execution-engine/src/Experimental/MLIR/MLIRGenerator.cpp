@@ -53,29 +53,29 @@ namespace NES::ExecutionEngine::Experimental::MLIR {
 //==-----------------------==//
 //==-- UTILITY FUNCTIONS --==//
 //==-----------------------==//
-mlir::Type MLIRGenerator::getMLIRType(IR::Operations::Operation::BasicType type) {
+mlir::Type MLIRGenerator::getMLIRType(IR::Operations::PrimitiveStamp type) {
     switch (type) {
-        case IR::Operations::Operation::INT1:
-        case IR::Operations::Operation::BOOLEAN: return builder->getIntegerType(1);
-        case IR::Operations::Operation::INT8:
-        case IR::Operations::Operation::UINT8:
-        case IR::Operations::Operation::CHAR: return builder->getIntegerType(8);
-        case IR::Operations::Operation::UINT16:
-        case IR::Operations::Operation::INT16: return builder->getIntegerType(16);
-        case IR::Operations::Operation::UINT32:
-        case IR::Operations::Operation::INT32: return builder->getIntegerType(32);
-        case IR::Operations::Operation::UINT64:
-        case IR::Operations::Operation::INT64: return builder->getIntegerType(64);
-        case IR::Operations::Operation::FLOAT: return mlir::Float32Type::get(context);
-        case IR::Operations::Operation::DOUBLE: return mlir::Float64Type::get(context);
-        case IR::Operations::Operation::INT8PTR: return mlir::LLVM::LLVMPointerType::get(builder->getI8Type());
-        case IR::Operations::Operation::VOID: return mlir::LLVM::LLVMVoidType::get(context);
+        case IR::Operations::INT1:
+        case IR::Operations::BOOLEAN: return builder->getIntegerType(1);
+        case IR::Operations::INT8:
+        case IR::Operations::UINT8:
+        case IR::Operations::CHAR: return builder->getIntegerType(8);
+        case IR::Operations::UINT16:
+        case IR::Operations::INT16: return builder->getIntegerType(16);
+        case IR::Operations::UINT32:
+        case IR::Operations::INT32: return builder->getIntegerType(32);
+        case IR::Operations::UINT64:
+        case IR::Operations::INT64: return builder->getIntegerType(64);
+        case IR::Operations::FLOAT: return mlir::Float32Type::get(context);
+        case IR::Operations::DOUBLE: return mlir::Float64Type::get(context);
+        case IR::Operations::INT8PTR: return mlir::LLVM::LLVMPointerType::get(builder->getI8Type());
+        case IR::Operations::VOID: return mlir::LLVM::LLVMVoidType::get(context);
 
         default: return builder->getIntegerType(32);
     }
 }
 
-std::vector<mlir::Type> MLIRGenerator::getMLIRType(std::vector<IR::Operations::Operation::BasicType> types) {
+std::vector<mlir::Type> MLIRGenerator::getMLIRType(std::vector<IR::Operations::PrimitiveStamp> types) {
     std::vector<mlir::Type> resultTypes;
     for (auto type : types) {
         resultTypes.push_back(getMLIRType(type));
@@ -263,7 +263,7 @@ void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_ma
         generateMLIR(operation, blockArgs);
     }
     // Generate Args for next block
-    if (terminatorOp->getOperationType() == IR::Operations::Operation::BranchOp) {
+    if (terminatorOp->getOperationType() ==IR::Operations::Operation::BranchOp) {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(terminatorOp);
         if (basicBlock->getScopeLevel() <= branchOp->getNextBlock()->getScopeLevel()) {
             generateMLIR(branchOp->getNextBlock(), blockArgs);
@@ -714,7 +714,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
             for (auto arg : proxyCallOp->getInputArgNames()) {
                 functionArgs.push_back(blockArgs[arg]);
             }
-            if (proxyCallOp->getResultType() != IR::Operations::Operation::VOID) {
+            if (proxyCallOp->getResultType() != IR::Operations::VOID) {
                 builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
                                               getMLIRType(proxyCallOp->getResultType()),
                                               functionRef,

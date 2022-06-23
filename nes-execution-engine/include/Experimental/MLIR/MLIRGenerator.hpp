@@ -157,14 +157,14 @@ class MLIRGenerator {
      * @param type: NES basic type.
      * @return mlir::Type: MLIR Type.
      */
-    mlir::Type getMLIRType(IR::Operations::Operation::BasicType type);
+    mlir::Type getMLIRType(IR::Operations::PrimitiveStamp type);
 
     /**
      * @brief Get MLIR Type from a basic NES type.
      * @param type: NES basic type.
      * @return mlir::Type: MLIR Type.
      */
-    std::vector<mlir::Type> getMLIRType(std::vector<IR::Operations::Operation::BasicType> types);
+    std::vector<mlir::Type> getMLIRType(std::vector<IR::Operations::PrimitiveStamp> types);
 
     /**
      * @brief Get a constant MLIR Integer.
@@ -180,7 +180,7 @@ class MLIRGenerator {
      * @param type: Basic NES type.
      * @return int8_t: Bit width.
      */
-    int8_t getBitWidthFromType(IR::Operations::Operation::BasicType type);
+    int8_t getBitWidthFromType(IR::Operations::PrimitiveStamp type);
 
     //
     IR::Operations::OperationPtr findLastTerminatorOp(IR::BasicBlockPtr thenBlock, int ifParentBlockLevel);

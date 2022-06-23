@@ -22,7 +22,7 @@
 
 namespace NES::ExecutionEngine::Experimental::IR {
 BasicBlock::BasicBlock(std::string identifier, int32_t scopeLevel, std::vector<Operations::OperationPtr> operations, std::vector<std::string> inputArgs,
-                       std::vector<Operations::Operation::BasicType> inputArgTypes)
+                       std::vector<Operations::PrimitiveStamp> inputArgTypes)
     : identifier(std::move(identifier)), scopeLevel(scopeLevel), operations(std::move(operations)), inputArgs(std::move(inputArgs)), 
       inputArgTypes(std::move(inputArgTypes)) {}
 
@@ -31,7 +31,7 @@ int32_t BasicBlock::getScopeLevel() { return scopeLevel; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
 std::vector<std::string> BasicBlock::getInputArgs() { return inputArgs; }
-std::vector<Operations::Operation::BasicType> BasicBlock::getInputArgTypes() { return inputArgTypes; }
+std::vector<Operations::PrimitiveStamp> BasicBlock::getInputArgTypes() { return inputArgTypes; }
 
 void BasicBlock::popOperation() { operations.pop_back(); }
 

@@ -33,18 +33,11 @@ std::shared_ptr<IR::NESIR> TraceToIRConversionPhase::apply(std::shared_ptr<Execu
 std::shared_ptr<IR::NESIR> TraceToIRConversionPhase::IRConversionContext::process() {
     auto& rootBlock = trace->getBlocks().front();
     auto rootIrBlock = processBlock(0, rootBlock);
-
-    auto arguments = std::vector<std::string>{};
-    auto argumentTypes = std::vector<IR::Operations::Operation::BasicType>{};
-    for (auto argument : rootBlock.arguments) {
-        arguments.push_back(createValueIdentifier(argument));
-        argumentTypes.push_back(argument.type);
-    }
-
-    auto functionOperation = std::make_shared<IR::Operations::FunctionOperation>("execute",
-                                                                                 argumentTypes,
-                                                                                 arguments,
-                                                                                 IR::Operations::Operation::INT64);
+    auto functionOperation =
+        std::make_shared<IR::Operations::FunctionOperation>("execute",
+                                                            /*argumentTypes*/ std::vector<IR::Operations::PrimitiveStamp>{},
+                                                            /*arguments*/ std::vector<std::string>{},
+                                                            IR::Operations::INT64);
     functionOperation->addFunctionBasicBlock(rootIrBlock);
     ir->addRootOperation(functionOperation);
     return ir;
@@ -52,10 +45,10 @@ std::shared_ptr<IR::NESIR> TraceToIRConversionPhase::IRConversionContext::proces
 
 IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::processBlock(int32_t scope, Block& block) {
     std::vector<std::string> blockArgumentIdentifiers;
-    std::vector<IR::Operations::Operation::BasicType> blockArgumentTypes;
+    std::vector<IR::Operations::PrimitiveStamp> blockArgumentTypes;
     for (auto& arg : block.arguments) {
         blockArgumentIdentifiers.emplace_back(createValueIdentifier(arg));
-        blockArgumentTypes.emplace_back(arg.type);
+        blockArgumentTypes.emplace_back(IR::Operations::PrimitiveStamp::INT64);
     }
     IR::BasicBlockPtr irBasicBlock = std::make_shared<IR::BasicBlock>(std::to_string(block.blockId),
                                                                       scope,

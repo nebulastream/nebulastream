@@ -21,15 +21,15 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class FunctionOperation : public Operation {
   public:
-    explicit FunctionOperation(std::string  name, std::vector<Operation::BasicType> inputArgs, std::vector<std::string> inputArgNames,
-                               Operation::BasicType outputArg);
+    explicit FunctionOperation(std::string  name, std::vector<PrimitiveStamp> inputArgs, std::vector<std::string> inputArgNames,
+                               PrimitiveStamp outputArg);
     ~FunctionOperation() override = default;
 
     [[nodiscard]] const std::string& getName() const;
     BasicBlockPtr addFunctionBasicBlock(BasicBlockPtr functionBasicBlock);
     BasicBlockPtr getFunctionBasicBlock();
-    [[nodiscard]] const std::vector<Operation::BasicType>& getInputArgs() const;
-    [[nodiscard]] BasicType getOutputArg() const;
+    [[nodiscard]] const std::vector<PrimitiveStamp>& getInputArgs() const;
+    [[nodiscard]] PrimitiveStamp getOutputArg() const;
     [[nodiscard]] const std::vector<std::string>& getInputArgNames() const;
 
     std::string toString() override;
@@ -37,9 +37,9 @@ class FunctionOperation : public Operation {
   private:
     std::string name;
     BasicBlockPtr functionBasicBlock;
-    std::vector<Operation::BasicType> inputArgs;
+    std::vector<PrimitiveStamp> inputArgs;
     std::vector<std::string> inputArgNames;
-    BasicType outputArg;
+    PrimitiveStamp outputArg;
 };
 }// namespace NES
 
