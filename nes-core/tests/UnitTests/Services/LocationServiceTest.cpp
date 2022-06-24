@@ -77,14 +77,17 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     //setting coordinates for field node which should not show up in the response when querying for mobile nodes
     node2->setFixedCoordinates(13.4, -23);
     node2->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE);
+#ifdef S2DEF
     TopologyNodePtr node3 = TopologyNode::create(3, "127.0.0.1", rpcPortWrk3, 0, 0);
     node3->setSpatialType(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
+#endif
 
     topology->setAsRoot(node1);
     topology->addNewTopologyNodeAsChild(node1, node2);
 
     locIndex->initializeFieldNodeCoordinates(node2, (node2->getCoordinates()));
 
+#ifdef S2DEF
     NES_INFO("start worker 3");
     WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
     wrkConf3->rpcPort = rpcPortWrk3;
@@ -97,6 +100,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     EXPECT_TRUE(retStart3);
     topology->addNewTopologyNodeAsChild(node1, node3);
     locIndex->addMobileNode(node3);
+#endif
 
     // test querying for node which does not exist in the system
     EXPECT_EQ(service->requestNodeLocationDataAsJson(1234), web::json::value::null());
@@ -113,6 +117,7 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
     EXPECT_EQ(cmpJson["location"][1].as_integer(), -23);
 
     //test getting location of a mobile node
+#ifdef S2DEF
     cmpJson = service->requestNodeLocationDataAsJson(3);
     EXPECT_EQ(cmpJson["id"], 3);
     EXPECT_EQ(cmpJson["location"][0], 52.55227464714949);
@@ -120,8 +125,10 @@ TEST_F(LocationServiceTest, testRequestSingleNodeLocation) {
 
     bool retStopWrk3 = wrk3->stop(false);
     EXPECT_TRUE(retStopWrk3);
+#endif
 }
 
+#ifdef S2DEF
 TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
@@ -220,6 +227,7 @@ TEST_F(LocationServiceTest, testRequestAllMobileNodeLocations) {
     bool retStopWrk4 = wrk4->stop(false);
     EXPECT_TRUE(retStopWrk4);
 }
+#endif
 
 TEST_F(LocationServiceTest, testConvertingToJson) {
     double lat = 10.5;

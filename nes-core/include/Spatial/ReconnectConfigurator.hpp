@@ -17,12 +17,15 @@
 #include <memory>
 #include <optional>
 #include <Util/TimeMeasurement.hpp>
-#include <s2/s2point.h>
-#include <s2/s1angle.h>
 #include <thread>
 #include <atomic>
 #include <mutex>
 #include <Common/Location.hpp>
+
+#ifdef S2DEF
+#include <s2/s2point.h>
+#include <s2/s1angle.h>
+#endif
 
 namespace NES {
 class NesWorker;
@@ -91,8 +94,10 @@ namespace Mobility::Experimental {
         NesWorker& worker;
         CoordinatorRPCCLientPtr coordinatorRpcClient;
         std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> lastTransmittedReconnectPrediction;
+#ifdef S2DEF
         S2Point lastTransmittedLocation;
         S1Angle locationUpdateThreshold;
+#endif
         uint64_t locationUpdateInterval;
         std::shared_ptr<std::thread> sendLocationUpdateThread;
 

@@ -54,6 +54,7 @@ bool LocationIndex::setFieldNodeCoordinates(const TopologyNodePtr& node, Locatio
     nodePointIndex.Add(newLoc, node);
 #else
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
+    std::unique_lock lock(locationIndexMutex);
 #endif
     node->setFixedCoordinates(geoLoc);
     lock.unlock();

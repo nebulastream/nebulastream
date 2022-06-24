@@ -158,18 +158,15 @@ class TopologyNode : public Node {
 
     /**
      * Experimental
-     * @brief indicates if the node is a field node (a node with a fixed and known location)
-     * @return true if a location is set
-     */
-    //bool isFieldNode();
-
-    /**
-     * Experimental
      * @brief get the geographical coordinates of this topology node.
      * @return The geographical coordinates of the node in case the node is a field node. nullopt_t otherwise
      */
     NES::Spatial::Index::Experimental::Location getCoordinates();
 
+    /**
+     * Experimental
+     * @return a smart pointer to this nodes reconnect schedule or nullptr if the node is not a mobile node
+     */
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePtr getReconnectSchedule();
 
     /**

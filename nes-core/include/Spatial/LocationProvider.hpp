@@ -19,6 +19,7 @@
 #include <vector>
 #include <Util/TimeMeasurement.hpp>
 #include <Util/Experimental/WorkerSpatialType.hpp>
+#include <Common/Location.hpp>
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
 #include <s2/s2point.h>
