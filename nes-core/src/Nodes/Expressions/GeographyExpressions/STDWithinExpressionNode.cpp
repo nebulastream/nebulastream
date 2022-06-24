@@ -22,77 +22,62 @@ STDWithinExpressionNode::STDWithinExpressionNode() : ExpressionNode(DataTypeFact
 
 STDWithinExpressionNode::STDWithinExpressionNode(STDWithinExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getPoint()->copy());
-    addChildWithEqual(getWKT()->copy());
-    addChildWithEqual(getDistance()->copy());
+    addChildWithEqual(getCircle()->copy());
 }
 
-ExpressionNodePtr STDWithinExpressionNode::create(const GeographyFieldsAccessExpressionNodePtr& point,
-                                                  const ConstantValueExpressionNodePtr& wkt,
-                                                  const ConstantValueExpressionNodePtr& distance) {
+ExpressionNodePtr STDWithinExpressionNode::create(GeographyFieldsAccessExpressionNodePtr const& point,
+                                                  ShapeExpressionNodePtr const& shapeExpression) {
     auto stDWithinNode = std::make_shared<STDWithinExpressionNode>();
-    stDWithinNode->setChildren(point, wkt, distance);
+    stDWithinNode->setChildren(point, shapeExpression);
     return stDWithinNode;
 }
 
 bool STDWithinExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STDWithinExpressionNode>()) {
         auto otherAndNode = rhs->as<STDWithinExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint()) && getWKT()->equal(otherAndNode->getWKT())
-            && getDistance()->equal(otherAndNode->getDistance());
+        return getPoint()->equal(otherAndNode->getPoint())
+            && getCircle()->equal(otherAndNode->getCircle());
     }
     return false;
 }
 
 std::string STDWithinExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "ST_DWITHIN(" << children[0]->toString() << ", " << children[1]->toString() << ", " << children[2]->toString() << ")";
+    ss << "ST_DWITHIN(" << children[0]->toString() << ", " << children[1]->toString() << ")";
     return ss.str();
 }
 
 void STDWithinExpressionNode::setChildren(ExpressionNodePtr const& point,
-                                          ExpressionNodePtr const& wkt,
-                                          ExpressionNodePtr const& distance) {
+                                          ShapeExpressionNodePtr const& circle) {
     addChildWithEqual(point);
-    addChildWithEqual(wkt);
-    addChildWithEqual(distance);
+    addChildWithEqual(circle);
 }
 
 ExpressionNodePtr STDWithinExpressionNode::getPoint() const {
-    if (children.size() != 3) {
-        NES_FATAL_ERROR("An ST_DWithin Expression should always have three children, but it has: " << children.size());
+    if (children.size() != 2) {
+        NES_FATAL_ERROR("An ST_DWithin Expression should always have two children, but it has: " << children.size());
     }
     return children[0]->as<GeographyFieldsAccessExpressionNode>();
 }
 
-ExpressionNodePtr STDWithinExpressionNode::getWKT() const {
-    if (children.size() != 3) {
-        NES_FATAL_ERROR("An ST_DWithin Expression should always have three children, but it has: " << children.size());
+ShapeExpressionNodePtr STDWithinExpressionNode::getCircle() const {
+    if (children.size() != 2) {
+        NES_FATAL_ERROR("An ST_DWithin Expression should always have two children, but it has: " << children.size());
     }
-    return children[1]->as<ConstantValueExpressionNode>();
-}
-
-ExpressionNodePtr STDWithinExpressionNode::getDistance() const {
-    if (children.size() != 3) {
-        NES_FATAL_ERROR("An ST_DWithin Expression should always have three children, but it has: " << children.size());
-    }
-    return children[2]->as<ConstantValueExpressionNode>();
+    return children[1]->as<CircleExpressionNode>();
 }
 
 void STDWithinExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto point = getPoint();
-    auto wkt = getWKT();
-    auto distance = getDistance();
+    auto circle = getCircle();
     point->inferStamp(schema);
-    wkt->inferStamp(schema);
-    distance->inferStamp(schema);
+    auto shapeType = circle->getShapeType();
 
-    // check sub expressions if they are the correct type
-    if (!point->getStamp()->isFloat() || !wkt->getStamp()->isCharArray() || !distance->getStamp()->isNumeric()) {
+    if (!point->getStamp()->isFloat() || shapeType != ShapeType::Circle) {
         throw std::logic_error(
-            "ST_DWithinExpressionNode: Error during stamp inference. Types need to be Float and Text but Point was:"
-            + point->getStamp()->toString() + ", WKT was: " + wkt->getStamp()->toString()
-            + ", and the Distance was: " + distance->getStamp()->toString());
+            "ST_DWithinExpressionNode: Error during type inference. AccessTypes need to be Float and shape type needs"
+            "to be Circle but Point was:" + point->getStamp()->toString() + ", shape was: " + circle->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();

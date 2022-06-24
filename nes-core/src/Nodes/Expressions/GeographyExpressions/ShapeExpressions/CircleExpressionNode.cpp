@@ -1,0 +1,68 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Nodes/Node.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
+
+namespace NES {
+CircleExpressionNode::CircleExpressionNode(CircleExpressionNode* other)
+    : ShapeExpressionNode(other->type) {
+    latitude = other->getLongitude();
+    longitude = other->getLongitude();
+    distance = other->getDistance();
+}
+
+CircleExpressionNode::CircleExpressionNode(double latitude,
+                                           double longitude,
+                                           double distance)
+    : ShapeExpressionNode(ShapeType::Circle),
+      latitude(latitude),
+      longitude(longitude),
+      distance(distance) {}
+
+ShapeExpressionNodePtr CircleExpressionNode::create(double latitude,
+                                                    double longitude,
+                                                    double distance) {
+    auto circleNode = std::make_shared<CircleExpressionNode>(latitude, longitude, distance);
+    return circleNode;
+}
+
+bool CircleExpressionNode::equal(NodePtr const& rhs) const {
+    if (rhs->instanceOf<CircleExpressionNode>()) {
+        auto otherNode = rhs->as<CircleExpressionNode>();
+        return getLatitude() == otherNode->getLatitude()
+            && getLongitude() == otherNode->getLongitude()
+            && getDistance() == otherNode->getDistance();
+    }
+    return false;
+}
+
+std::string CircleExpressionNode::toString() const {
+    std::stringstream ss;
+    ss << "CIRCLE(lat: " << latitude << ", lon: " << longitude << ", dist: " << distance << ")";
+    return ss.str();
+}
+
+double CircleExpressionNode::getLatitude() const { return latitude; }
+
+double CircleExpressionNode::getLongitude() const { return longitude; }
+
+double CircleExpressionNode::getDistance() const { return distance; }
+
+ShapeExpressionNodePtr CircleExpressionNode::copy() {
+    return std::make_shared<CircleExpressionNode>(CircleExpressionNode(this));
+}
+
+}// namespace NES

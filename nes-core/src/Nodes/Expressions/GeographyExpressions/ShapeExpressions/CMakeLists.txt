@@ -12,9 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        GeographyFieldsAccessExpressionNode.cpp
-        STWithinExpressionNode.cpp
-        STDWithinExpressionNode.cpp
-        STKnnExpressionNode.cpp
+        ShapeExpressionNode.cpp
+        CircleExpressionNode.cpp
+        PointExpressionNode.cpp
+        PolygonExpressionNode.cpp
+        RectangleExpressionNode.cpp
         )
-add_subdirectory(ShapeExpressions)
