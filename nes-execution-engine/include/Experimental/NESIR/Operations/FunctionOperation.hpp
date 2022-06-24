@@ -15,13 +15,15 @@
 #ifndef NES_FUNCTIONOPERATION_HPP
 #define NES_FUNCTIONOPERATION_HPP
 
-#include <Experimental/NESIR/Operations/Operation.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Operations/Operation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class FunctionOperation : public Operation {
   public:
-    explicit FunctionOperation(std::string  name, std::vector<PrimitiveStamp> inputArgs, std::vector<std::string> inputArgNames,
+    explicit FunctionOperation(std::string name,
+                               std::vector<PrimitiveStamp> inputArgs,
+                               std::vector<std::string> inputArgNames,
                                PrimitiveStamp outputArg);
     ~FunctionOperation() override = default;
 
@@ -33,7 +35,8 @@ class FunctionOperation : public Operation {
     [[nodiscard]] const std::vector<std::string>& getInputArgNames() const;
 
     std::string toString() override;
-    static bool classof(const Operation *Op);
+    static bool classof(const Operation* Op);
+
   private:
     std::string name;
     BasicBlockPtr functionBasicBlock;
@@ -41,6 +44,6 @@ class FunctionOperation : public Operation {
     std::vector<std::string> inputArgNames;
     PrimitiveStamp outputArg;
 };
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
 
 #endif//NES_FUNCTIONOPERATION_HPP

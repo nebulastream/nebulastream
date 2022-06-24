@@ -21,18 +21,18 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class NegateOperation : public Operation {
   public:
-    NegateOperation(std::string identifier, std::string input);
+    NegateOperation(std::string identifier, OperationPtr input);
     ~NegateOperation() override = default;
 
     std::string getIdentifier();
-    std::string getInput();
+    OperationPtr getInput();
 
     std::string toString() override;
     bool classof(const Operation* Op);
 
   private:
     std::string identifier;
-    std::string input;
+    OperationWPtr input;
 };
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_AND_OPERATION_HPP

@@ -43,6 +43,7 @@ class Operation {
         OrOp,
         AndOp,
         NegateOp,
+        BasicBlockArgument
     };
 
     explicit Operation(OperationType opType, PrimitiveStamp stamp);
@@ -57,6 +58,7 @@ class Operation {
     PrimitiveStamp stamp;
 };
 using OperationPtr = std::shared_ptr<Operation>;
+using OperationWPtr = std::weak_ptr<Operation>;
 
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_OPERATION_HPP

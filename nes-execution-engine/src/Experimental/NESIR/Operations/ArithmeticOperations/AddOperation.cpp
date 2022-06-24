@@ -15,14 +15,16 @@
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-AddOperation::AddOperation(std::string identifier, std::string leftArgName, std::string rightArgName, PrimitiveStamp stamp)
-    : Operation(OperationType::AddOp, stamp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)),
-      rightArgName(std::move(rightArgName)) {}
+AddOperation::AddOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp)
+    : Operation(OperationType::AddOp, stamp), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+      rightInput(std::move(rightInput)) {}
 
-std::string AddOperation::toString() { return "AddOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")"; }
+std::string AddOperation::toString() {
+    return "AddOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
+}
 bool AddOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
 std::string AddOperation::getIdentifier() { return identifier; }
-std::string AddOperation::getLeftArgName() { return leftArgName; }
-std::string AddOperation::getRightArgName() { return rightArgName; }
+OperationPtr AddOperation::getLeftInput() { return leftInput.lock(); }
+OperationPtr AddOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

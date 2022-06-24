@@ -15,17 +15,17 @@
 #include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <string>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-DivOperation::DivOperation(std::string identifier, std::string leftArgName, std::string rightArgName, PrimitiveStamp stamp)
-    : Operation(OperationType::DivOp, stamp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)),
-                rightArgName(std::move(rightArgName)) {}
+DivOperation::DivOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp)
+    : Operation(OperationType::DivOp, stamp), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+      rightInput(std::move(rightInput)) {}
 
 
 std::string DivOperation::toString() {
-    return "DivOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")";
+    return "DivOperation" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
 }
 bool DivOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::DivOp; }
 
 std::string DivOperation::getIdentifier() { return identifier; }
-std::string DivOperation::getLeftArgName() { return leftArgName; }
-std::string DivOperation::getRightArgName() { return rightArgName; }
+OperationPtr DivOperation::getLeftInput() { return leftInput.lock(); }
+OperationPtr DivOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES

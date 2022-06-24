@@ -12,31 +12,35 @@
     limitations under the License.
 */
 
+#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
-#include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
 #include <cstdint>
 #include <memory>
 #include <utility>
 
 namespace NES::ExecutionEngine::Experimental::IR {
-BasicBlock::BasicBlock(std::string identifier, int32_t scopeLevel, std::vector<Operations::OperationPtr> operations, std::vector<std::string> inputArgs,
-                       std::vector<Operations::PrimitiveStamp> inputArgTypes)
-    : identifier(std::move(identifier)), scopeLevel(scopeLevel), operations(std::move(operations)), inputArgs(std::move(inputArgs)), 
-      inputArgTypes(std::move(inputArgTypes)) {}
+BasicBlock::BasicBlock(std::string identifier,
+                       int32_t scopeLevel,
+                       std::vector<Operations::OperationPtr> operations,
+                       std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments)
+    : identifier(std::move(identifier)), scopeLevel(scopeLevel), operations(std::move(operations)),
+      arguments(std::move(arguments)) {}
 
 std::string BasicBlock::getIdentifier() { return identifier; }
 int32_t BasicBlock::getScopeLevel() { return scopeLevel; }
 std::vector<Operations::OperationPtr> BasicBlock::getOperations() { return operations; }
 Operations::OperationPtr BasicBlock::getTerminatorOp() { return operations.back(); }
-std::vector<std::string> BasicBlock::getInputArgs() { return inputArgs; }
-std::vector<Operations::PrimitiveStamp> BasicBlock::getInputArgTypes() { return inputArgTypes; }
+std::vector<std::shared_ptr<Operations::BasicBlockArgument>> BasicBlock::getArguments() { return arguments; }
 
 void BasicBlock::popOperation() { operations.pop_back(); }
 
 // NESIR Assembly
-std::shared_ptr<BasicBlock> BasicBlock::addOperation(Operations::OperationPtr operation) { operations.push_back(operation); return shared_from_this(); }
+std::shared_ptr<BasicBlock> BasicBlock::addOperation(Operations::OperationPtr operation) {
+    operations.push_back(operation);
+    return shared_from_this();
+}
 std::shared_ptr<BasicBlock> BasicBlock::addLoopHeadBlock(BasicBlockPtr loopHeadBlock) {
     std::static_pointer_cast<Operations::LoopOperation>(this->operations.back())->setLoopHeadBlock(loopHeadBlock);
     return shared_from_this();
@@ -54,4 +58,4 @@ std::shared_ptr<BasicBlock> BasicBlock::addElseBlock(std::shared_ptr<BasicBlock>
     return shared_from_this();
 }
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR

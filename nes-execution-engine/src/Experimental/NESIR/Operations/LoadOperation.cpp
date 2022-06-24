@@ -16,14 +16,14 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-LoadOperation::LoadOperation(std::string identifier, std::string argName)
-    : Operation(OperationType::LoadOp, VOID), identifier(std::move(identifier)), argName(std::move(argName)) {}
+LoadOperation::LoadOperation(std::string identifier, OperationPtr address)
+    : Operation(OperationType::LoadOp, VOID), identifier(std::move(identifier)), address(std::move(address)) {}
 
 std::string LoadOperation::getIdentifier() { return identifier; }
-std::string LoadOperation::getArgName() { return argName; }
+OperationPtr LoadOperation::getAddress() { return address.lock(); }
 
 std::string LoadOperation::toString() {
-    return "LoadOperation_" + identifier + "(" + argName + ")";
+    return "LoadOperation_" + identifier + "(" + getAddress()->toString() + ")";
 }
 
 }// namespace NES

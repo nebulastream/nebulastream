@@ -15,14 +15,16 @@
 #include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-OrOperation::OrOperation(std::string identifier, std::string leftArgName, std::string rightArgName)
-    : Operation(OperationType::OrOp, BOOLEAN), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)),
-      rightArgName(std::move(rightArgName)) {}
+OrOperation::OrOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput)
+    : Operation(OperationType::OrOp, BOOLEAN), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+      rightInput(std::move(rightInput)) {}
 
-std::string OrOperation::toString() { return "OrOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")"; }
+std::string OrOperation::toString() {
+    return "OrOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
+}
 bool OrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
 std::string OrOperation::getIdentifier() { return identifier; }
-std::string OrOperation::getLeftArgName() { return leftArgName; }
-std::string OrOperation::getRightArgName() { return rightArgName; }
+OperationPtr OrOperation::getLeftInput() { return leftInput.lock(); }
+OperationPtr OrOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

@@ -182,8 +182,12 @@ std::shared_ptr<ProxyCallOperation> getProxyCallOperation(ProxyCallOperation::Pr
 
 template<typename... Args>
 BasicBlockPtr createBB(std::string identifier, int level, std::vector<PrimitiveStamp> argTypes, Args... args) {
+    std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments;
     std::vector<std::string> argList({args...});
-    return std::make_shared<BasicBlock>(identifier, level, std::vector<OperationPtr>{}, argList, argTypes);
+    for (uint64_t i = 0; i < argTypes.size(); i++) {
+        arguments.emplace_back(std::make_shared<Operations::BasicBlockArgument>(argList[i], argTypes[i]));
+    }
+    return std::make_shared<BasicBlock>(identifier, level, std::vector<OperationPtr>{}, arguments);
 }
 
 BasicBlockPtr

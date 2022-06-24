@@ -21,20 +21,20 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class DivOperation : public Operation {
   public:
-    DivOperation(std::string identifier, std::string leftArgName, std::string rightArgName, PrimitiveStamp stamp);
+    DivOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp);
     ~DivOperation() override = default;
 
     std::string getIdentifier();
-    std::string getLeftArgName();
-    std::string getRightArgName();
+    OperationPtr getLeftInput();
+    OperationPtr getRightInput();
 
     std::string toString() override;
     bool classof(const Operation* Op);
 
   private:
     std::string identifier;
-    std::string leftArgName;
-    std::string rightArgName;
+    OperationWPtr leftInput;
+    OperationWPtr rightInput;
 };
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_DIVFLOATOPERATION_HPP

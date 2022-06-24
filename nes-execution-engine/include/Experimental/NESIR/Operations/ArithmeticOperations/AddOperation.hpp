@@ -22,23 +22,20 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 //Todo: Decide: Leave type
 class AddOperation : public Operation {
   public:
-    AddOperation(std::string identifier,
-                 std::string leftArgName,
-                 std::string rightArgName,
-                 PrimitiveStamp stamp);
+    AddOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp);
     ~AddOperation() override = default;
 
     std::string getIdentifier();
-    std::string getLeftArgName();
-    std::string getRightArgName();
+    OperationPtr getLeftInput();
+    OperationPtr getRightInput();
 
     std::string toString() override;
     bool classof(const Operation* Op);
 
   private:
     std::string identifier;
-    std::string leftArgName;
-    std::string rightArgName;
+    OperationWPtr leftInput;
+    OperationWPtr rightInput;
 };
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_ADDFLOATOPERATION_HPP

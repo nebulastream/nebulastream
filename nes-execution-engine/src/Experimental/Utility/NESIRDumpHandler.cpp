@@ -95,10 +95,10 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock) {
         int32_t indent = basicBlock->getScopeLevel()+1;
         visitedBlocks.emplace(basicBlock->getIdentifier());
         out << '\n' << std::string(basicBlock->getScopeLevel() * 4, ' ') << basicBlock->getIdentifier() << '(';
-        if(basicBlock->getInputArgs().size() > 0) {
-            out << basicBlock->getInputArgs().at(0);
-            for(int i = 1; i < (int) basicBlock->getInputArgs().size(); ++i) {
-                out << ", " << basicBlock->getInputArgs().at(i);
+        if(basicBlock->getArguments().size() > 0) {
+            out << basicBlock->getArguments().at(0);
+            for(int i = 1; i < (int) basicBlock->getArguments().size(); ++i) {
+                out << ", " << basicBlock->getArguments().at(i);
             }
         }
         out << "):" << '\n';

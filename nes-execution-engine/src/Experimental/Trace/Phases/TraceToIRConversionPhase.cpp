@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
 //#include <Experimental/NESIR/Operations/MulOperation.hpp>
 //#include <Experimental/NESIR/Operations/NegateOperation.hpp>
@@ -43,11 +43,12 @@ std::shared_ptr<IR::NESIR> TraceToIRConversionPhase::IRConversionContext::proces
 }
 
 IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::processBlock(int32_t scope, Block& block) {
-    std::vector<std::string> blockArgumentIdentifiers;
-    std::vector<IR::Operations::PrimitiveStamp> blockArgumentTypes;
+    std::vector<std::shared_ptr<IR::Operations::BasicBlockArgument>> blockArgumentIdentifiers;
     for (auto& arg : block.arguments) {
-        blockArgumentIdentifiers.emplace_back(createValueIdentifier(arg));
-        blockArgumentTypes.emplace_back(IR::Operations::PrimitiveStamp::INT64);
+        auto blockArgument = std::make_shared<IR::Operations::BasicBlockArgument>(createValueIdentifier(arg),
+                                                                                  IR::Operations::PrimitiveStamp::INT64);
+
+        blockArgumentIdentifiers.emplace_back(blockArgument);
     }
     IR::BasicBlockPtr irBasicBlock = std::make_shared<IR::BasicBlock>(std::to_string(block.blockId),
                                                                       scope,

@@ -20,41 +20,42 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class CompareOperation : public Operation {
   public:
-    enum Comparator{
-      // Comparator < 6 is signed int.
-      IEQ = 0,
-      INE = 1,
-      ISLT = 2,
-      ISLE = 3,
-      ISGT = 4,
-      ISGE = 5,
-      // Comparator (> 5 && < 10) is unsigned int.
-      IULT = 6,
-      IULE = 7,
-      IUGT = 8,
-      IUGE = 9,
-      // Comparator > 9 is float.
-      FOLT = 10,
-      FOLE = 11,
-      FOGT = 12,
-      FOGE = 13,
-      FOEQ = 14,
-      FONE = 15
+    enum Comparator {
+        // Comparator < 6 is signed int.
+        IEQ = 0,
+        INE = 1,
+        ISLT = 2,
+        ISLE = 3,
+        ISGT = 4,
+        ISGE = 5,
+        // Comparator (> 5 && < 10) is unsigned int.
+        IULT = 6,
+        IULE = 7,
+        IUGT = 8,
+        IUGE = 9,
+        // Comparator > 9 is float.
+        FOLT = 10,
+        FOLE = 11,
+        FOGT = 12,
+        FOGE = 13,
+        FOEQ = 14,
+        FONE = 15
     };
-    CompareOperation(std::string identifier, std::string leftArgName, std::string rightArgName, Comparator comparator);
+    CompareOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
     ~CompareOperation() override = default;
 
     std::string getIdentifier();
-    std::string getLeftArgName();
-    std::string getRightArgName();
+    OperationPtr getLeftInput();
+    OperationPtr getRightInput();
     Comparator getComparator();
 
     std::string toString() override;
+
   private:
     std::string identifier;
-    std::string leftArgName;
-    std::string rightArgName;
+    OperationWPtr leftInput;
+    OperationWPtr rightInput;
     Comparator comparator;
 };
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
 #endif//NES_COMPAREOPERATION_HPP

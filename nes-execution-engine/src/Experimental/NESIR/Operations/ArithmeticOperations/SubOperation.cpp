@@ -15,14 +15,13 @@
 #include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <string>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-SubOperation::SubOperation(std::string identifier, std::string leftArgName, std::string rightArgName, PrimitiveStamp stamp)
-    : Operation(OperationType::SubOp, stamp), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)),
-      rightArgName(std::move(rightArgName)) {}
-
-std::string SubOperation::toString() { return "SubIntOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")"; }
+SubOperation::SubOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp)
+    : Operation(OperationType::SubOp, stamp), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+      rightInput(std::move(rightInput)) {}
+std::string SubOperation::toString() { return "SubOperation" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")"; }
 bool SubOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::SubOp; }
 
 std::string SubOperation::getIdentifier() { return identifier; }
-std::string SubOperation::getLeftArgName() { return leftArgName; }
-std::string SubOperation::getRightArgName() { return rightArgName; }
+OperationPtr SubOperation::getLeftInput() { return leftInput.lock(); }
+OperationPtr SubOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

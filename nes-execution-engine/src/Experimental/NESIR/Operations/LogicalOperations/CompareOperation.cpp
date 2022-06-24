@@ -15,18 +15,18 @@
 #include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-CompareOperation::CompareOperation(std::string identifier, std::string leftArgName, std::string rightArgName, 
+CompareOperation::CompareOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput,
                                     Comparator comparator) 
-    : Operation(Operation::CompareOp, BOOLEAN), identifier(std::move(identifier)), leftArgName(std::move(leftArgName)),
-      rightArgName(std::move(rightArgName)), comparator(comparator) {}
+    : Operation(Operation::CompareOp, BOOLEAN), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+      rightInput(std::move(rightInput)), comparator(comparator) {}
 
 std::string CompareOperation::getIdentifier() { return identifier; }
-std::string CompareOperation::getLeftArgName() { return leftArgName; }
-std::string CompareOperation::getRightArgName() { return rightArgName; }
+OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
+OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }
 CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
 
 std::string CompareOperation::toString() { 
-    return "CompareOperation_" + identifier + "(" + leftArgName + ", " + rightArgName + ")";
+    return "CompareOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
 }
 
 }// namespace NES

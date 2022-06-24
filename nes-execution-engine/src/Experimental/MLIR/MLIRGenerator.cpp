@@ -271,10 +271,10 @@ void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_ma
         } else {
             for (int i = 0; i < (int) branchOp->getNextBlockArgs().size(); ++i) {
                 // If higher level block arg names are different, add values with new names and delete old entries.
-                auto nextArgName = branchOp->getNextBlock()->getInputArgs().at(i);
-                if (!(nextArgName == branchOp->getNextBlockArgs().at(i)) && !inductionVars.contains(nextArgName)) {
+                auto nextBlockArg = branchOp->getNextBlock()->getArguments().at(i);
+                if (!(nextBlockArg->getIdentifier() == branchOp->getNextBlockArgs().at(i)) && !inductionVars.contains(nextBlockArg->getIdentifier())) {
                     auto nameChangeNode = blockArgs.extract(branchOp->getNextBlockArgs().at(i));
-                    nameChangeNode.key() = nextArgName;
+                    nameChangeNode.key() = nextBlockArg->getIdentifier();
                     blockArgs.insert(std::move(nameChangeNode));
                 }
             }
@@ -283,10 +283,10 @@ void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_ma
         auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(terminatorOp);
         for (int i = 0; i < (int) loopOp->getLoopBlockArgs().size(); ++i) {
             // If higher level block arg names are different, add values with new names and delete old entries.
-            auto nextArgName = loopOp->getLoopHeadBlock()->getInputArgs().at(i);
-            if (!(nextArgName == loopOp->getLoopBlockArgs().at(i)) && !inductionVars.contains(nextArgName)) {
+            auto nextBlockArg = loopOp->getLoopHeadBlock()->getArguments().at(i);
+            if (!(nextBlockArg->getIdentifier() == loopOp->getLoopBlockArgs().at(i)) && !inductionVars.contains(nextBlockArg->getIdentifier())) {
                 auto nameChangeNode = blockArgs.extract(loopOp->getLoopBlockArgs().at(i));
-                nameChangeNode.key() = nextArgName;
+                nameChangeNode.key() = nextBlockArg->getIdentifier();
                 blockArgs.insert(std::move(nameChangeNode));
             }
         }
@@ -424,10 +424,10 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     } else {
         loopTerminatorArgs = std::static_pointer_cast<IR::Operations::IfOperation>(loopTerminatorOp)->getElseBlockArgs();
     }
-    auto loopHeadBBArgs = loopOp->getLoopHeadBlock()->getInputArgs();
+    auto loopHeadBBArgs = loopOp->getLoopHeadBlock()->getArguments();
     for (int i = 0; i < (int) loopHeadBBArgs.size(); ++i) {
-        if (loopHeadBBArgs.at(i) != loopTerminatorArgs.at(i) && loopHeadBBArgs.at(i) != loopInductionVarName) {
-            iteratorArgs.push_back(blockArgs[loopHeadBBArgs.at(i)]);
+        if (loopHeadBBArgs.at(i)->getIdentifier() != loopTerminatorArgs.at(i) && loopHeadBBArgs.at(i)->getIdentifier() != loopInductionVarName) {
+            iteratorArgs.push_back(blockArgs[loopHeadBBArgs.at(i)->getIdentifier()]);
             yieldOpArgs.push_back(loopTerminatorArgs.at(i));
         }
     }
@@ -460,14 +460,14 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
         builder->create<mlir::scf::YieldOp>(getNameLoc("forYield"), forYieldOps);
     }
     //Todo We have update the values according to the 'afterLoopBB' value names
-    for (int i = 0; i < (int) afterLoopBB->getInputArgs().size(); ++i) {
+    for (int i = 0; i < (int) afterLoopBB->getArguments().size(); ++i) {
         // If higher level block arg names are different, add values with new names and delete old entries.
-        auto nextArgName = afterLoopBB->getInputArgs().at(i);
+        auto nextArgName = afterLoopBB->getArguments().at(i);
         auto nextBlockArgs = std::static_pointer_cast<IR::Operations::IfOperation>(loopOp->getLoopHeadBlock()->getTerminatorOp())
                                  ->getElseBlockArgs();
-        if (!(nextArgName == nextBlockArgs.at(i)) && !inductionVars.contains(nextArgName)) {
+        if (!(nextArgName->getIdentifier() == nextBlockArgs.at(i)) && !inductionVars.contains(nextArgName->getIdentifier())) {
             auto nameChangeNode = blockArgs.extract(nextBlockArgs.at(i));
-            nameChangeNode.key() = nextArgName;
+            nameChangeNode.key() = nextArgName->getIdentifier();
             blockArgs.insert(std::move(nameChangeNode));
         }
     }
@@ -756,7 +756,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
     IR::BasicBlockPtr afterIfOpBlock = (ifOpTerminatorOp->getOperationType() == IR::Operations::Operation::BranchOp)
         ? std::static_pointer_cast<IR::Operations::BranchOperation>(ifOpTerminatorOp)->getNextBlock()
         : std::static_pointer_cast<IR::Operations::IfOperation>(ifOpTerminatorOp)->getElseBranchBlock();
-    std::vector<std::string> afterIfOpBlockArgs = afterIfOpBlock->getInputArgs();
+    auto afterIfOpBlockArgs = afterIfOpBlock->getArguments();
 
     // Create MLIR-IF-Operation
     mlir::scf::IfOp mlirIfOp;
@@ -766,14 +766,14 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
     bool hasElse = (ifOp->getElseBranchBlock() != nullptr);
     bool requiresYield = false;
     for (auto nextBlockArg : afterIfOpBlockArgs) {
-        if (!inductionVars.contains(nextBlockArg)) {
+        if (!inductionVars.contains(nextBlockArg->getIdentifier())) {
             requiresYield = true;
             break;
         }
     }
     if (requiresYield) {
-        for (auto afterIfBlockArgType : afterIfOpBlock->getInputArgTypes()) {
-            mlirIfOpResultTypes.push_back(getMLIRType(afterIfBlockArgType));
+        for (auto afterIfBlockArgType : afterIfOpBlock->getArguments()) {
+            mlirIfOpResultTypes.push_back(getMLIRType(afterIfBlockArgType->getStamp()));
         }
     }
     mlirIfOp = builder->create<mlir::scf::IfOp>(getNameLoc("ifOperation"),
@@ -791,7 +791,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
     if (requiresYield) {
         std::vector<mlir::Value> ifYieldOps;
         for (auto afterIfBlockArg : afterIfOpBlockArgs) {
-            ifYieldOps.push_back(ifBlockArgs[afterIfBlockArg]);
+            ifYieldOps.push_back(ifBlockArgs[afterIfBlockArg->getIdentifier()]);
         }
         builder->create<mlir::scf::YieldOp>(getNameLoc("ifYield"), ifYieldOps);
         // No else case, but yielding required. Insert hollow else case with duplicated if-yield.
@@ -808,7 +808,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
             if (ifOp->getElseBranchBlock() != nullptr) {
                 generateMLIR(ifOp->getElseBranchBlock(), elseBlockArgs);
                 for (auto afterIfBlockArg : afterIfOpBlockArgs) {
-                    elseYieldOps.push_back(elseBlockArgs[afterIfBlockArg]);
+                    elseYieldOps.push_back(elseBlockArgs[afterIfBlockArg->getIdentifier()]);
                 }
                 builder->create<mlir::scf::YieldOp>(getNameLoc("elseYield"), elseYieldOps);
             }
@@ -818,8 +818,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::IfOperation> if
     // Back to IfOp scope. Get all yielded result values from IfOperation, write to blockArgs and proceed.
     builder->restoreInsertionPoint(currentInsertionPoint);
     if (requiresYield) {
-        for (int i = 0; i < (int) afterIfOpBlock->getInputArgs().size(); ++i) {
-            blockArgs[afterIfOpBlock->getInputArgs().at(i)] = mlirIfOp.getResult(i);
+        for (int i = 0; i < (int) afterIfOpBlock->getArguments().size(); ++i) {
+            blockArgs[afterIfOpBlock->getArguments().at(i)->getIdentifier()] = mlirIfOp.getResult(i);
         }
     }
     if (afterIfOpBlock->getScopeLevel() == (ifOp->getThenBranchBlock()->getScopeLevel()) - 1) {

@@ -17,13 +17,13 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-StoreOperation::StoreOperation(std::string valueArgName, std::string addressArgName)
-    : Operation(OperationType::StoreOp, VOID), valueArgName(valueArgName), addressArgName(addressArgName) {}
+StoreOperation::StoreOperation(OperationPtr value, OperationPtr address)
+    : Operation(OperationType::StoreOp, VOID), value(value), address(address) {}
 
-std::string StoreOperation::getValueArgName() { return valueArgName; }
-std::string StoreOperation::getAddressArgName() { return addressArgName; }
+OperationPtr StoreOperation::getValue() { return value.lock(); }
+OperationPtr StoreOperation::getAddress() { return address.lock(); }
 
 std::string StoreOperation::toString() {
-    return "StoreOperation(" + valueArgName + ", " + addressArgName + ")";
+    return "StoreOperation(" + getValue()->toString() + ", " + getAddress()->toString() + ")";
 }
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations
