@@ -62,7 +62,6 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
-        //todo: do we also need to remove wit this function when dealing with a mobile node?
         if (nodeToRemove->getSpatialType() == NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE) {
             locationIndex->removeNodeFromSpatialIndex(nodeToRemove);
         }

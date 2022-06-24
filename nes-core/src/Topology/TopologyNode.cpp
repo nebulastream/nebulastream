@@ -139,8 +139,6 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     return true;
 }
 
-//bool TopologyNode::isFieldNode() { return (bool) fixedCoordinates; }
-
 Spatial::Index::Experimental::Location TopologyNode::getCoordinates() {
     std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
     switch (spatialType) {
