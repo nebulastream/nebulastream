@@ -16,10 +16,9 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-LoadOperation::LoadOperation(std::string identifier, OperationPtr address)
-    : Operation(OperationType::LoadOp, VOID), identifier(std::move(identifier)), address(std::move(address)) {}
+LoadOperation::LoadOperation(OperationIdentifier identifier,  OperationPtr address)
+    : Operation(OperationType::LoadOp, identifier, VOID), address(std::move(address)) {}
 
-std::string LoadOperation::getIdentifier() { return identifier; }
 OperationPtr LoadOperation::getAddress() { return address.lock(); }
 
 std::string LoadOperation::toString() {

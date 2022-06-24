@@ -19,10 +19,9 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-ConstIntOperation::ConstIntOperation(std::string identifier, int64_t constantValue, uint8_t numBits)
-    : Operation(OperationType::ConstIntOp, INT64), identifier(std::move(identifier)), constantValue(constantValue), numBits(numBits){}
+ConstIntOperation::ConstIntOperation(OperationIdentifier identifier,  int64_t constantValue, uint8_t numBits)
+    : Operation(OperationType::ConstIntOp, identifier, INT64), constantValue(constantValue), numBits(numBits){}
 
-std::string ConstIntOperation::getIdentifier() { return identifier; }
 int64_t ConstIntOperation::getConstantIntValue() { return constantValue; }
 int8_t ConstIntOperation::getNumBits() { return numBits; }
 bool ConstIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }

@@ -21,18 +21,14 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class AndOperation : public Operation {
   public:
-    AndOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput);
+    AndOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~AndOperation() override = default;
-
-    std::string getIdentifier();
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
-
     std::string toString() override;
     bool classof(const Operation* Op);
 
   private:
-    std::string identifier;
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };

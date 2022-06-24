@@ -21,10 +21,8 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class ConstIntOperation : public Operation {
   public:
-    explicit ConstIntOperation(std::string identifier, int64_t constantValue, uint8_t numBits);
+    explicit ConstIntOperation(OperationIdentifier identifier,  int64_t constantValue, uint8_t numBits);
     ~ConstIntOperation() override = default;
-
-    std::string getIdentifier();
     int64_t getConstantIntValue();
     int8_t getNumBits();
 
@@ -34,7 +32,6 @@ class ConstIntOperation : public Operation {
     std::string toString() override;
     static bool classof(const Operation* Op);
   private:
-  std::string identifier;
     int64_t constantValue; // Can also hold uInts
     int8_t numBits;
 };

@@ -38,7 +38,7 @@ void Aggregation::setup(ExecutionContext& executionCtx) const {
     auto address = std::addressof(*state.get());
     auto value = (int64_t) address;
     auto val = Value<MemRef>(std::make_unique<MemRef>(value));
-    val.ref = Trace::ValueRef(INT32_MAX, 10, IR::Operations::Operation::INT8PTR);
+    val.ref = Trace::ValueRef(INT32_MAX, 10, IR::Operations::INT8PTR);
 
     globalState->threadLocalAggregationSlots.push_back(val);
     executionCtx.setGlobalOperatorState(this, std::move(globalState));

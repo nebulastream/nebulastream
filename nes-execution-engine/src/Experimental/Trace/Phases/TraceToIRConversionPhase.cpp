@@ -12,11 +12,15 @@
     limitations under the License.
 */
 
+#include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/MulOperation.hpp>
+#include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Experimental/NESIR/Operations/LoadOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/NegateOperation.hpp>
+#include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Experimental/NESIR/Operations/LoopOperation.hpp>
-//#include <Experimental/NESIR/Operations/MulOperation.hpp>
-//#include <Experimental/NESIR/Operations/NegateOperation.hpp>
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 #include <Experimental/NESIR/Operations/StoreOperation.hpp>
 #include <Experimental/Trace/Phases/TraceToIRConversionPhase.hpp>
@@ -43,73 +47,77 @@ std::shared_ptr<IR::NESIR> TraceToIRConversionPhase::IRConversionContext::proces
 }
 
 IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::processBlock(int32_t scope, Block& block) {
-    std::vector<std::shared_ptr<IR::Operations::BasicBlockArgument>> blockArgumentIdentifiers;
+    // create new frame and block
+    ValueFrame blockFrame;
+    std::vector<std::shared_ptr<IR::Operations::BasicBlockArgument>> blockArguments;
     for (auto& arg : block.arguments) {
-        auto blockArgument = std::make_shared<IR::Operations::BasicBlockArgument>(createValueIdentifier(arg),
-                                                                                  IR::Operations::PrimitiveStamp::INT64);
-
-        blockArgumentIdentifiers.emplace_back(blockArgument);
+        auto argumentIdentifier = createValueIdentifier(arg);
+        auto blockArgument =
+            std::make_shared<IR::Operations::BasicBlockArgument>(argumentIdentifier, IR::Operations::PrimitiveStamp::INT64);
+        blockArguments.emplace_back(blockArgument);
+        blockFrame.setValue(argumentIdentifier, blockArgument);
     }
+
     IR::BasicBlockPtr irBasicBlock = std::make_shared<IR::BasicBlock>(std::to_string(block.blockId),
                                                                       scope,
                                                                       /*operations*/ std::vector<IR::Operations::OperationPtr>{},
-                                                                      /*arguments*/ blockArgumentIdentifiers,
-                                                                      /*argumentTypes*/ blockArgumentTypes);
+                                                                      /*arguments*/ blockArguments);
     blockMap[block.blockId] = irBasicBlock;
     for (auto& operation : block.operations) {
-        processOperation(scope, block, irBasicBlock, operation);
+        processOperation(scope, blockFrame, block, irBasicBlock, operation);
     }
     return irBasicBlock;
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t scope,
+                                                                     ValueFrame& frame,
                                                                      Block& currentBlock,
                                                                      IR::BasicBlockPtr& currentIrBlock,
                                                                      Operation& operation) {
 
     switch (operation.op) {
         case ADD: {
-            processAdd(scope, currentIrBlock, operation);
+            processAdd(scope, frame, currentIrBlock, operation);
             return;
         };
         case SUB: {
-            processSub(scope, currentIrBlock, operation);
+            processSub(scope, frame, currentIrBlock, operation);
             return;
         };
         case DIV: {
-            processDiv(scope, currentIrBlock, operation);
+            processDiv(scope, frame, currentIrBlock, operation);
             return;
         };
         case MUL: {
-            processMul(scope, currentIrBlock, operation);
+            processMul(scope, frame, currentIrBlock, operation);
             return;
         };
         case EQUALS: {
-            processEquals(scope, currentIrBlock, operation);
+            processEquals(scope, frame, currentIrBlock, operation);
             return;
         };
         case LESS_THAN: {
-            processLessThan(scope, currentIrBlock, operation);
+            processLessThan(scope, frame, currentIrBlock, operation);
             return;
         };
         case NEGATE: {
-            processNegate(scope, currentIrBlock, operation);
+            processNegate(scope, frame, currentIrBlock, operation);
             return;
         };
         case AND: {
-            processAnd(scope, currentIrBlock, operation);
+            processAnd(scope, frame, currentIrBlock, operation);
             return;
         };
         case OR: {
-            processOr(scope, currentIrBlock, operation);
+            processOr(scope, frame, currentIrBlock, operation);
             return;
         };
         case CMP: {
-            processCMP(scope, currentBlock, currentIrBlock, operation);
+            processCMP(scope, frame, currentBlock, currentIrBlock, operation);
             return;
         };
         case JMP: {
-            processJMP(scope, currentIrBlock, operation);
+            processJMP(scope, frame, currentIrBlock, operation);
             return;
         };
         case CONST: {
@@ -128,19 +136,22 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(int32_t sco
             return;
         };
         case LOAD: {
-            processLoad(scope, currentIrBlock, operation);
+            processLoad(scope, frame, currentIrBlock, operation);
             return;
         };
         case STORE: {
-            processStore(scope, currentIrBlock, operation);
+            processStore(scope, frame, currentIrBlock, operation);
             return;
         };
-        case CALL: processCall(scope, currentIrBlock, operation); return;
+        case CALL: processCall(scope, frame, currentIrBlock, operation); return;
     }
     //  NES_NOT_IMPLEMENTED();
 }
 
-void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope, IR::BasicBlockPtr& block, Operation& operation) {
+void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope,
+                                                               ValueFrame&,
+                                                               IR::BasicBlockPtr& block,
+                                                               Operation& operation) {
     std::cout << "current block " << operation << std::endl;
     auto blockRef = get<BlockRef>(operation.input[0]);
     auto branchOperation = std::make_shared<IR::Operations::BranchOperation>(createBlockArguments(blockRef));
@@ -178,6 +189,7 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(int32_t scope, IR
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processCMP(int32_t scope,
+                                                               ValueFrame&,
                                                                Block&,
                                                                IR::BasicBlockPtr& currentIrBlock,
                                                                Operation& operation) {
@@ -212,91 +224,171 @@ std::vector<std::string> TraceToIRConversionPhase::IRConversionContext::createBl
 
 std::string TraceToIRConversionPhase::IRConversionContext::createValueIdentifier(InputVariant val) {
     if (holds_alternative<ValueRef>(val)) {
-        auto valueRef = get<ValueRef>(val);
+        auto valueRef = std::get<ValueRef>(val);
         return std::to_string(valueRef.blockId) + "_" + std::to_string(valueRef.operationId);
     } else
         return "";
 }
 
-void TraceToIRConversionPhase::IRConversionContext::processAdd(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
-    auto constOperation = std::make_shared<IR::Operations::AddIntOperation>(createValueIdentifier(operation.result),
-                                                                            createValueIdentifier(operation.input[0]),
-                                                                            createValueIdentifier(operation.input[1]));
-    currentBlock->addOperation(constOperation);
+void TraceToIRConversionPhase::IRConversionContext::processAdd(int32_t,
+                                                               ValueFrame& frame,
+                                                               IR::BasicBlockPtr& currentBlock,
+                                                               Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto addOperation = std::make_shared<IR::Operations::AddOperation>(resultIdentifier, leftInput, rightInput);
+    frame.setValue(resultIdentifier, addOperation);
+    currentBlock->addOperation(addOperation);
 }
 
-void TraceToIRConversionPhase::IRConversionContext::processSub(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
-void TraceToIRConversionPhase::IRConversionContext::processMul(int32_t, IR::BasicBlockPtr&, Operation&) {
-    // auto constOperation = std::make_shared<IR::Operations::MulOperation>(createValueIdentifier(operation.result),
-    //                                                                      createValueIdentifier(operation.input[0]),
-    //                                                                      createValueIdentifier(operation.input[1]));
-    // currentBlock->addOperation(constOperation);
+void TraceToIRConversionPhase::IRConversionContext::processSub(int32_t,
+                                                               ValueFrame& frame,
+                                                               IR::BasicBlockPtr& currentBlock,
+                                                               Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto subOperation = std::make_shared<IR::Operations::SubOperation>(resultIdentifier, leftInput, rightInput);
+    frame.setValue(resultIdentifier, subOperation);
+    currentBlock->addOperation(subOperation);
 }
-void TraceToIRConversionPhase::IRConversionContext::processDiv(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
-void TraceToIRConversionPhase::IRConversionContext::processNegate(int32_t, IR::BasicBlockPtr&, Operation&) {
-    // auto constOperation = std::make_shared<IR::Operations::NegateOperation>(createValueIdentifier(operation.result),
-    //                                                                         createValueIdentifier(operation.input[0]));
-    // currentBlock->addOperation(constOperation);
+void TraceToIRConversionPhase::IRConversionContext::processMul(int32_t,
+                                                               ValueFrame& frame,
+                                                               IR::BasicBlockPtr& currentBlock,
+                                                               Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto mulOperation = std::make_shared<IR::Operations::MulOperation>(resultIdentifier, leftInput, rightInput);
+    frame.setValue(resultIdentifier, mulOperation);
+    currentBlock->addOperation(mulOperation);
 }
-void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
-                                                                    IR::BasicBlockPtr& currentBlock,
-                                                                    Operation& operation) {
-    auto constOperation = std::make_shared<IR::Operations::CompareOperation>(createValueIdentifier(operation.result),
-                                                                             createValueIdentifier(operation.input[0]),
-                                                                             createValueIdentifier(operation.input[1]),
-                                                                             IR::Operations::CompareOperation::Comparator::ISLT);
-    currentBlock->addOperation(constOperation);
+void TraceToIRConversionPhase::IRConversionContext::processDiv(int32_t,
+                                                               ValueFrame& frame,
+                                                               IR::BasicBlockPtr& currentBlock,
+                                                               Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto divOperation = std::make_shared<IR::Operations::DivOperation>(resultIdentifier, leftInput, rightInput);
+    frame.setValue(resultIdentifier, divOperation);
+    currentBlock->addOperation(divOperation);
 }
-void TraceToIRConversionPhase::IRConversionContext::processEquals(int32_t,
+void TraceToIRConversionPhase::IRConversionContext::processNegate(int32_t,
+                                                                  ValueFrame& frame,
                                                                   IR::BasicBlockPtr& currentBlock,
                                                                   Operation& operation) {
-    auto constOperation = std::make_shared<IR::Operations::CompareOperation>(createValueIdentifier(operation.result),
-                                                                             createValueIdentifier(operation.input[0]),
-                                                                             createValueIdentifier(operation.input[1]),
-                                                                             IR::Operations::CompareOperation::Comparator::IEQ);
-    currentBlock->addOperation(constOperation);
+    auto input = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto negateOperation = std::make_shared<IR::Operations::NegateOperation>(resultIdentifier, input);
+    frame.setValue(resultIdentifier, negateOperation);
+    currentBlock->addOperation(negateOperation);
 }
-void TraceToIRConversionPhase::IRConversionContext::processAnd(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
-void TraceToIRConversionPhase::IRConversionContext::processOr(int32_t, IR::BasicBlockPtr&, Operation&) { NES_NOT_IMPLEMENTED(); }
-void TraceToIRConversionPhase::IRConversionContext::processLoad(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
+void TraceToIRConversionPhase::IRConversionContext::processLessThan(int32_t,
+                                                                    ValueFrame& frame,
+                                                                    IR::BasicBlockPtr& currentBlock,
+                                                                    Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto compareOperation =
+        std::make_shared<IR::Operations::CompareOperation>(resultIdentifier,
+                                                           leftInput,
+                                                           rightInput,
+                                                           IR::Operations::CompareOperation::Comparator::ISLT);
+    frame.setValue(resultIdentifier, compareOperation);
+    currentBlock->addOperation(compareOperation);
+}
+void TraceToIRConversionPhase::IRConversionContext::processEquals(int32_t,
+                                                                  ValueFrame& frame,
+                                                                  IR::BasicBlockPtr& currentBlock,
+                                                                  Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto compareOperation = std::make_shared<IR::Operations::CompareOperation>(resultIdentifier,
+                                                                               leftInput,
+                                                                               rightInput,
+                                                                               IR::Operations::CompareOperation::Comparator::IEQ);
+    frame.setValue(resultIdentifier, compareOperation);
+    currentBlock->addOperation(compareOperation);
+}
+void TraceToIRConversionPhase::IRConversionContext::processAnd(int32_t,
+                                                               ValueFrame& frame,
+                                                               IR::BasicBlockPtr& currentBlock,
+                                                               Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto andOperation = std::make_shared<IR::Operations::AndOperation>(resultIdentifier, leftInput, rightInput);
+    frame.setValue(resultIdentifier, andOperation);
+    currentBlock->addOperation(andOperation);
+}
+void TraceToIRConversionPhase::IRConversionContext::processOr(int32_t,
+                                                              ValueFrame& frame,
+                                                              IR::BasicBlockPtr& currentBlock,
+                                                              Operation& operation) {
+    auto leftInput = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto rightInput = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto orOperation = std::make_shared<IR::Operations::OrOperation>(resultIdentifier, leftInput, rightInput);
+    frame.setValue(resultIdentifier, orOperation);
+    currentBlock->addOperation(orOperation);
+}
+void TraceToIRConversionPhase::IRConversionContext::processLoad(int32_t,
+                                                                ValueFrame& frame,
+                                                                IR::BasicBlockPtr& currentBlock,
+                                                                Operation& operation) {
+    // TODO add load data type
     //auto constOperation = std::make_shared<IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
     //                                                                      createValueIdentifier(operation.input[0]),
     //                                                                      IR::Operations::Operation::BasicType::VOID);
     //currentBlock->addOperation(constOperation);
-    auto constOperation = std::make_shared<IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
-                                                                          createValueIdentifier(operation.input[0]));
-    currentBlock->addOperation(constOperation);
+    auto address = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto loadOperation = std::make_shared<IR::Operations::LoadOperation>(resultIdentifier, address);
+    frame.setValue(resultIdentifier, loadOperation);
+    currentBlock->addOperation(loadOperation);
 }
-void TraceToIRConversionPhase::IRConversionContext::processStore(int32_t, IR::BasicBlockPtr& currentBlock, Operation& operation) {
-    auto constOperation = std::make_shared<IR::Operations::StoreOperation>(createValueIdentifier(operation.input[1]),
-                                                                           createValueIdentifier(operation.input[0]));
-    currentBlock->addOperation(constOperation);
+void TraceToIRConversionPhase::IRConversionContext::processStore(int32_t,
+                                                                 ValueFrame& frame,
+                                                                 IR::BasicBlockPtr& currentBlock,
+                                                                 Operation& operation) {
+    auto address = frame.getValue(createValueIdentifier(operation.input[1]));
+    auto value = frame.getValue(createValueIdentifier(operation.input[0]));
+    auto storeOperation = std::make_shared<IR::Operations::StoreOperation>(address, value);
+    currentBlock->addOperation(storeOperation);
 }
 
-void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t, IR::BasicBlockPtr&, Operation& operation) {
+void TraceToIRConversionPhase::IRConversionContext::processCall(int32_t,
+                                                                ValueFrame& frame,
+                                                                IR::BasicBlockPtr& currentBlock,
+                                                                Operation& operation) {
 
-    auto inputReferences = std::vector<std::string>{};
-    auto types = std::vector<IR::Operations::Operation::BasicType>{};
+    auto inputArguments = std::vector<IR::Operations::OperationWPtr>{};
     auto functionCallTarget = std::get<FunctionCallTarget>(operation.input[0]);
 
     for (uint32_t i = 1; i < operation.input.size(); i++) {
-        inputReferences.push_back(createValueIdentifier(operation.input[i]));
-        auto type = std::get<ValueRef>(operation.input[i]);
-        types.push_back(type.type);
+        auto input = frame.getValue(createValueIdentifier(operation.input[i]));
+        inputArguments.emplace_back(input);
     }
 
-    auto resultType = std::holds_alternative<None>(operation.result) ? IR::Operations::Operation::BasicType::VOID
+    auto resultType = std::holds_alternative<None>(operation.result) ? IR::Operations::PrimitiveStamp::VOID
                                                                      : std::get<ValueRef>(operation.result).type;
-    /*auto constOperation =
+    auto resultIdentifier = createValueIdentifier(operation.result);
+    auto proxyCallOperation =
         std::make_shared<IR::Operations::ProxyCallOperation>(IR::Operations::ProxyCallOperation::ProxyCallType::Other,
-                                                             functionCallTarget.mangledName,
-                                                             createValueIdentifier(operation.result),
-                                                             inputReferences,
-                                                             types,
+                                                             //    functionCallTarget.mangledName,
+                                                             resultIdentifier,
+                                                             inputArguments,
                                                              resultType);
-    currentBlock->addOperation(constOperation);
-     */
+    if (resultType != IR::Operations::VOID) {
+        frame.setValue(resultIdentifier, proxyCallOperation);
+    }
+    currentBlock->addOperation(proxyCallOperation);
 }
+
 
 bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(int32_t scope,
                                                                   uint32_t parentBlockId,

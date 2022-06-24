@@ -15,17 +15,16 @@
 #include <Experimental/NESIR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <string>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-DivOperation::DivOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp)
-    : Operation(OperationType::DivOp, stamp), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+DivOperation::DivOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
+    : Operation(OperationType::DivOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {}
 
 
 std::string DivOperation::toString() {
-    return "DivOperation" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
+    return "DivOperation" + identifier + "(" + getLeftInput()->getIdentifier() + ", " + getRightInput()->getIdentifier() + ")";
 }
 bool DivOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::DivOp; }
 
-std::string DivOperation::getIdentifier() { return identifier; }
 OperationPtr DivOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr DivOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES

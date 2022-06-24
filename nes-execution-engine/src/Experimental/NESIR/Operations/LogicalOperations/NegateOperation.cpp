@@ -15,12 +15,10 @@
 #include <Experimental/NESIR/Operations/LogicalOperations/NegateOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-NegateOperation::NegateOperation(std::string identifier, OperationPtr input)
-    : Operation(OperationType::NegateOp, BOOLEAN), identifier(std::move(identifier)), input(std::move(input)) {}
+NegateOperation::NegateOperation(OperationIdentifier identifier, OperationPtr input)
+    : Operation(OperationType::NegateOp, identifier, BOOLEAN), input(std::move(input)) {}
 
-std::string NegateOperation::toString() { return "NegateOperation_" + identifier + "(" + getInput()->toString() + ")"; }
+std::string NegateOperation::toString() { return "NegateOperation_" + identifier + "(" + getInput()->getIdentifier() + ")"; }
 bool NegateOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
-
-std::string NegateOperation::getIdentifier() { return identifier; }
 OperationPtr NegateOperation::getInput() { return input.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

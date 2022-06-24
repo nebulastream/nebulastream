@@ -15,18 +15,19 @@
 #include <Experimental/NESIR/Operations/LogicalOperations/CompareOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-CompareOperation::CompareOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput,
-                                    Comparator comparator) 
-    : Operation(Operation::CompareOp, BOOLEAN), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+CompareOperation::CompareOperation(OperationIdentifier identifier,
+                                   OperationPtr leftInput,
+                                   OperationPtr rightInput,
+                                   Comparator comparator)
+    : Operation(Operation::CompareOp,identifier, BOOLEAN), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)), comparator(comparator) {}
 
-std::string CompareOperation::getIdentifier() { return identifier; }
 OperationPtr CompareOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr CompareOperation::getRightInput() { return rightInput.lock(); }
 CompareOperation::Comparator CompareOperation::getComparator() { return comparator; }
 
-std::string CompareOperation::toString() { 
-    return "CompareOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
+std::string CompareOperation::toString() {
+    return "CompareOperation_" + identifier + "(" + getLeftInput()->getIdentifier() + ", " + getRightInput()->getIdentifier() + ")";
 }
 
-}// namespace NES
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

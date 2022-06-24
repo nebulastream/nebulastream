@@ -15,16 +15,16 @@
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-AddOperation::AddOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp)
-    : Operation(OperationType::AddOp, stamp), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+AddOperation::AddOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
+    : Operation(OperationType::AddOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {}
 
 std::string AddOperation::toString() {
-    return "AddOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
+    return "AddOperation_" + getIdentifier() + "(" + getLeftInput()->getIdentifier() + ", " + getRightInput()->getIdentifier()
+        + ")";
 }
 bool AddOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
-std::string AddOperation::getIdentifier() { return identifier; }
 OperationPtr AddOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr AddOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

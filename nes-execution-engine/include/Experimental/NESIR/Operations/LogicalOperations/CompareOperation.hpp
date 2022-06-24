@@ -41,10 +41,9 @@ class CompareOperation : public Operation {
         FOEQ = 14,
         FONE = 15
     };
-    CompareOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
+    CompareOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput, Comparator comparator);
     ~CompareOperation() override = default;
 
-    std::string getIdentifier();
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
     Comparator getComparator();
@@ -52,7 +51,6 @@ class CompareOperation : public Operation {
     std::string toString() override;
 
   private:
-    std::string identifier;
     OperationWPtr leftInput;
     OperationWPtr rightInput;
     Comparator comparator;

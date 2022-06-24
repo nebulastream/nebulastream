@@ -21,10 +21,9 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class DivOperation : public Operation {
   public:
-    DivOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp);
+    DivOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~DivOperation() override = default;
 
-    std::string getIdentifier();
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
 
@@ -32,7 +31,6 @@ class DivOperation : public Operation {
     bool classof(const Operation* Op);
 
   private:
-    std::string identifier;
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };

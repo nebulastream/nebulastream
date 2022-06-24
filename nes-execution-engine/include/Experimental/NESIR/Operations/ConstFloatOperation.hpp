@@ -21,10 +21,9 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class ConstFloatOperation : public Operation {
   public:
-    explicit ConstFloatOperation(std::string identifier, double constantValue, uint8_t numBits);
+    explicit ConstFloatOperation(OperationIdentifier identifier,  double constantValue, uint8_t numBits);
     ~ConstFloatOperation() override = default;
 
-    std::string getIdentifier();
     double getConstantFloatValue();
     int8_t getNumBits();
 
@@ -34,7 +33,6 @@ class ConstFloatOperation : public Operation {
     std::string toString() override;
     static bool classof(const Operation* Op);
   private:
-  std::string identifier;
     double constantValue;
     int8_t numBits;
 };

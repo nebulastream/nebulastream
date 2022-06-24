@@ -147,9 +147,9 @@ TEST_F(TraceToIRConversionPhaseTest, emitQueryTest) {
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
+    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
+    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT8PTR);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
@@ -180,13 +180,13 @@ TEST_F(TraceToIRConversionPhaseTest, aggQueryTest) {
     scan.setChild(aggregation);
 
     auto memRef = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
+    memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
+    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT8PTR);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>(MemRef(0)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::Operation::INT8PTR);
+    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::INT8PTR);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     aggregation->setup(executionContext);

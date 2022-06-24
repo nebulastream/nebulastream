@@ -634,9 +634,9 @@ void emitTest(Runtime::BufferManagerPtr bm) {
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
+    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) 0));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
+    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT8PTR);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunctionSymbolically([&scan, &executionContext, &recordBuffer]() {
@@ -681,15 +681,15 @@ TEST_F(SymbolicExecutionTest, selectionQueryTest) {
     auto address = std::addressof(buffer);
     auto value = (int64_t) address;
     auto memRef = Value<MemRef>(std::make_unique<MemRef>(value));
-    memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::Operation::INT8PTR);
+    memRef.ref = Trace::ValueRef(INT32_MAX, 0, IR::Operations::INT8PTR);
     RecordBuffer recordBuffer = RecordBuffer(memoryLayout, memRef);
 
     auto pctx = MockedPipelineExecutionContext();
     auto memRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(pctx)));
-    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::Operation::INT8PTR);
+    memRefPCTX.ref = Trace::ValueRef(INT32_MAX, 1, IR::Operations::INT8PTR);
     auto wctx = Runtime::WorkerContext(0, bm, 10);
     auto wctxRefPCTX = Value<MemRef>(std::make_unique<MemRef>((int64_t) std::addressof(wctx)));
-    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::Operation::INT8PTR);
+    wctxRefPCTX.ref = Trace::ValueRef(INT32_MAX, 2, IR::Operations::INT8PTR);
     ExecutionContext executionContext = ExecutionContext(memRefPCTX, wctxRefPCTX);
 
     auto execution = Trace::traceFunction([&scan, &executionContext, &recordBuffer]() {

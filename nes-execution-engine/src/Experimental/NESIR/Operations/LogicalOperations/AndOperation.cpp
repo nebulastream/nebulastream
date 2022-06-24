@@ -15,16 +15,15 @@
 #include <Experimental/NESIR/Operations/LogicalOperations/AndOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-AndOperation::AndOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::AndOp, BOOLEAN), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+AndOperation::AndOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput)
+    : Operation(OperationType::AndOp, identifier, BOOLEAN), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {}
 
 std::string AndOperation::toString() {
-    return "AndOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
+    return "AndOperation_" + identifier + "(" + getLeftInput()->getIdentifier() + ", " + getRightInput()->getIdentifier() + ")";
 }
 bool AndOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
 
-std::string AndOperation::getIdentifier() { return identifier; }
 OperationPtr AndOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr AndOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

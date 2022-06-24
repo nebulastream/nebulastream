@@ -31,7 +31,7 @@ class Integer : public Any {
         return std::make_unique<Integer>(value + otherValue->value);
     };
 
-    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::INT64; }
+    IR::Operations::PrimitiveStamp getType() override { return IR::Operations::INT64; }
 
     std::unique_ptr<Integer> sub(std::unique_ptr<Integer>& otherValue) const {
         return std::make_unique<Integer>(value - otherValue->value);

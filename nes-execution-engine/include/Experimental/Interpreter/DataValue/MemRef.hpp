@@ -39,7 +39,7 @@ class MemRef : public Any {
     template<class ValueType>
     void store(ValueType value) { std::make_unique<Integer>(value); }
 
-    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::INT8PTR; }
+    IR::Operations::PrimitiveStamp getType() override { return IR::Operations::INT8PTR; }
     const int64_t value;
 };
 

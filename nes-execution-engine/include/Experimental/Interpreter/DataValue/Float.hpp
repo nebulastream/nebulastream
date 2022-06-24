@@ -29,7 +29,7 @@ class Float : public Any {
         return std::make_unique<Float>(value + otherValue->value);
     };
 
-    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::DOUBLE; }
+    IR::Operations::PrimitiveStamp getType() override { return IR::Operations::DOUBLE; }
     ~Float() {}
 
     const float value;

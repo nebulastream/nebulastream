@@ -22,7 +22,7 @@ class None {};
 class ValueRef {
   public:
     ValueRef() : blockId(), operationId(){};
-    ValueRef(uint32_t blockId, uint32_t operationId, IR::Operations::Operation::BasicType type) : blockId(blockId), operationId(operationId), type(type){};
+    ValueRef(uint32_t blockId, uint32_t operationId, IR::Operations::PrimitiveStamp type) : blockId(blockId), operationId(operationId), type(type){};
     ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type) {}
     ValueRef& operator=(const ValueRef& other) {
         this->operationId = other.operationId;
@@ -32,7 +32,7 @@ class ValueRef {
     }
     uint32_t blockId;
     uint32_t operationId;
-    IR::Operations::Operation::BasicType type;
+    IR::Operations::PrimitiveStamp type;
     bool operator==(const ValueRef& rhs) const;
     bool operator!=(const ValueRef& rhs) const;
     friend std::ostream& operator<<(std::ostream& os, const ValueRef& tag);
@@ -46,7 +46,7 @@ struct ValueRefHasher {
     }
 };
 
-ValueRef createNextRef(IR::Operations::Operation::BasicType type);
+ValueRef createNextRef(IR::Operations::PrimitiveStamp type);
 
 }
 

@@ -15,16 +15,13 @@
 #include <Experimental/NESIR/Operations/LogicalOperations/OrOperation.hpp>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-OrOperation::OrOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::OrOp, BOOLEAN), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {}
+OrOperation::OrOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
+    : Operation(OperationType::OrOp, identifier, BOOLEAN), leftInput(std::move(leftInput)), rightInput(std::move(rightInput)) {}
 
 std::string OrOperation::toString() {
     return "OrOperation_" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")";
 }
 bool OrOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
-
-std::string OrOperation::getIdentifier() { return identifier; }
 OperationPtr OrOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr OrOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

@@ -76,10 +76,10 @@ mlir::Type MLIRGenerator::getMLIRType(IR::Operations::PrimitiveStamp type) {
     }
 }
 
-std::vector<mlir::Type> MLIRGenerator::getMLIRType(std::vector<IR::Operations::PrimitiveStamp> types) {
+std::vector<mlir::Type> MLIRGenerator::getMLIRType(std::vector<IR::Operations::OperationPtr> types) {
     std::vector<mlir::Type> resultTypes;
     for (auto type : types) {
-        resultTypes.push_back(getMLIRType(type));
+        resultTypes.push_back(getMLIRType(type->getStamp()));
     }
     return resultTypes;
 }
@@ -272,7 +272,8 @@ void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_ma
             for (int i = 0; i < (int) branchOp->getNextBlockArgs().size(); ++i) {
                 // If higher level block arg names are different, add values with new names and delete old entries.
                 auto nextBlockArg = branchOp->getNextBlock()->getArguments().at(i);
-                if (!(nextBlockArg->getIdentifier() == branchOp->getNextBlockArgs().at(i)) && !inductionVars.contains(nextBlockArg->getIdentifier())) {
+                if (!(nextBlockArg->getIdentifier() == branchOp->getNextBlockArgs().at(i))
+                    && !inductionVars.contains(nextBlockArg->getIdentifier())) {
                     auto nameChangeNode = blockArgs.extract(branchOp->getNextBlockArgs().at(i));
                     nameChangeNode.key() = nextBlockArg->getIdentifier();
                     blockArgs.insert(std::move(nameChangeNode));
@@ -284,7 +285,8 @@ void MLIRGenerator::generateMLIR(IR::BasicBlockPtr basicBlock, std::unordered_ma
         for (int i = 0; i < (int) loopOp->getLoopBlockArgs().size(); ++i) {
             // If higher level block arg names are different, add values with new names and delete old entries.
             auto nextBlockArg = loopOp->getLoopHeadBlock()->getArguments().at(i);
-            if (!(nextBlockArg->getIdentifier() == loopOp->getLoopBlockArgs().at(i)) && !inductionVars.contains(nextBlockArg->getIdentifier())) {
+            if (!(nextBlockArg->getIdentifier() == loopOp->getLoopBlockArgs().at(i))
+                && !inductionVars.contains(nextBlockArg->getIdentifier())) {
                 auto nameChangeNode = blockArgs.extract(loopOp->getLoopBlockArgs().at(i));
                 nameChangeNode.key() = nextBlockArg->getIdentifier();
                 blockArgs.insert(std::move(nameChangeNode));
@@ -401,14 +403,14 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     auto loopBodyBB = loopIfOp->getThenBranchBlock();
     auto afterLoopBB = loopIfOp->getElseBranchBlock();
 
-    std::string loopInductionVarName = compareOp->getLeftArgName();
+    std::string loopInductionVarName = compareOp->getLeftInput()->getIdentifier();
     inductionVars.emplace(loopInductionVarName);
 
     // Define index variables for loop.
     // For now we assume that loops always use the "i" as the induction var and always increase "i" by one each step.
     auto lowerBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("LowerBound"),
                                                                 builder->getIndexType(),
-                                                                blockArgs[compareOp->getLeftArgName()]);
+                                                                blockArgs[compareOp->getLeftInput()->getIdentifier()]);
     auto stepSize =
         builder->create<mlir::arith::IndexCastOp>(getNameLoc("Stepsize"), builder->getIndexType(), blockArgs["const1Op"]);
 
@@ -426,7 +428,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     }
     auto loopHeadBBArgs = loopOp->getLoopHeadBlock()->getArguments();
     for (int i = 0; i < (int) loopHeadBBArgs.size(); ++i) {
-        if (loopHeadBBArgs.at(i)->getIdentifier() != loopTerminatorArgs.at(i) && loopHeadBBArgs.at(i)->getIdentifier() != loopInductionVarName) {
+        if (loopHeadBBArgs.at(i)->getIdentifier() != loopTerminatorArgs.at(i)
+            && loopHeadBBArgs.at(i)->getIdentifier() != loopInductionVarName) {
             iteratorArgs.push_back(blockArgs[loopHeadBBArgs.at(i)->getIdentifier()]);
             yieldOpArgs.push_back(loopTerminatorArgs.at(i));
         }
@@ -435,7 +438,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     insertComment("// For Loop Start");
     auto upperBound = builder->create<mlir::arith::IndexCastOp>(getNameLoc("UpperBound"),
                                                                 builder->getIndexType(),
-                                                                blockArgs[compareOp->getRightArgName()]);
+                                                                blockArgs[compareOp->getRightInput()->getIdentifier()]);
 
     auto forLoop = builder->create<mlir::scf::ForOp>(getNameLoc("forLoop"), lowerBound, upperBound, stepSize, iteratorArgs);
     //Replace header input args that are changed in body with dynamic iter args from ForOp.
@@ -448,9 +451,10 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoopOperation> 
     // Set Insertion Point(IP) to loop BasicBlock. Process all Operations in loop BasicBlock. Restore IP to parent's BasicBlock.
     builder->setInsertionPointToStart(forLoop.getBody());
     std::unordered_map<std::string, mlir::Value> loopBodyArgs = blockArgs;
-    loopBodyArgs[compareOp->getLeftArgName()] = builder->create<mlir::arith::IndexCastOp>(getNameLoc("InductionVar Cast"),
-                                                                                          builder->getI64Type(),
-                                                                                          forLoop.getInductionVar());
+    loopBodyArgs[compareOp->getLeftInput()->getIdentifier()] =
+        builder->create<mlir::arith::IndexCastOp>(getNameLoc("InductionVar Cast"),
+                                                  builder->getI64Type(),
+                                                  forLoop.getInductionVar());
     generateMLIR(loopBodyBB, loopBodyArgs);
     if (yieldOpArgs.size() > 0) {
         std::vector<mlir::Value> forYieldOps;
@@ -512,8 +516,9 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddressOperatio
 void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp,
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("LoadOp.\n");
-    blockArgs.emplace(std::pair{loadOp->getIdentifier(),
-                                builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), blockArgs[loadOp->getArgName()])});
+    blockArgs.emplace(std::pair{
+        loadOp->getIdentifier(),
+        builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), blockArgs[loadOp->getAddress()->getIdentifier()])});
 }
 
 // No Recursion. No dependencies. Requires addressMap insertion.
@@ -555,23 +560,26 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> a
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     if (addOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
         || addOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
-        blockArgs.emplace(std::pair{addOp->getIdentifier(),
-                                    builder->create<mlir::LLVM::FAddOp>(getNameLoc("binOpResult"),
-                                                                        blockArgs[addOp->getLeftArgName()].getType(),
-                                                                        blockArgs[addOp->getLeftArgName()],
-                                                                        blockArgs[addOp->getRightArgName()],
-                                                                        mlir::LLVM::FastmathFlags::fast)});
+        blockArgs.emplace(
+            std::pair{addOp->getIdentifier(),
+                      builder->create<mlir::LLVM::FAddOp>(getNameLoc("binOpResult"),
+                                                          blockArgs[addOp->getLeftInput()->getIdentifier()].getType(),
+                                                          blockArgs[addOp->getLeftInput()->getIdentifier()],
+                                                          blockArgs[addOp->getRightInput()->getIdentifier()],
+                                                          mlir::LLVM::FastmathFlags::fast)});
     } else {
-        if (!inductionVars.contains(addOp->getLeftArgName())) {
+        if (!inductionVars.contains(addOp->getLeftInput()->getIdentifier())) {
             if (!blockArgs.contains(addOp->getIdentifier())) {
-                blockArgs.emplace(std::pair{addOp->getIdentifier(),
-                                            builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
-                                                                               blockArgs[addOp->getLeftArgName()],
-                                                                               blockArgs[addOp->getRightArgName()])});
+                blockArgs.emplace(
+                    std::pair{addOp->getIdentifier(),
+                              builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
+                                                                 blockArgs[addOp->getLeftInput()->getIdentifier()],
+                                                                 blockArgs[addOp->getRightInput()->getIdentifier()])});
             } else {
-                blockArgs[addOp->getIdentifier()] = builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
-                                                                                       blockArgs[addOp->getLeftArgName()],
-                                                                                       blockArgs[addOp->getRightArgName()]);
+                blockArgs[addOp->getIdentifier()] =
+                    builder->create<mlir::LLVM::AddOp>(getNameLoc("binOpResult"),
+                                                       blockArgs[addOp->getLeftInput()->getIdentifier()],
+                                                       blockArgs[addOp->getRightInput()->getIdentifier()]);
             }
         }
     }
@@ -585,16 +593,17 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::SubOperation> s
         blockArgs.emplace(
             std::pair{subIntOp->getIdentifier(),
                       builder->create<mlir::LLVM::FSubOp>(getNameLoc("binOpResult"),
-                                                          // blockArgs[subFloatOp->getLeftArgName()].getType(),
-                                                          blockArgs[subIntOp->getLeftArgName()],
-                                                          blockArgs[subIntOp->getRightArgName()],
+                                                          // blockArgs[subFloatOp->getLeftInput()->getIdentifier()].getType(),
+                                                          blockArgs[subIntOp->getLeftInput()->getIdentifier()],
+                                                          blockArgs[subIntOp->getRightInput()->getIdentifier()],
                                                           mlir::LLVM::FMFAttr::get(context, mlir::LLVM::FastmathFlags::fast))});
     } else {
-        blockArgs.emplace(std::pair{subIntOp->getIdentifier(),
-                                    builder->create<mlir::LLVM::SubOp>(getNameLoc("binOpResult"),
-                                                                       // blockArgs[subIntOp->getLeftArgName()].getType(),
-                                                                       blockArgs[subIntOp->getLeftArgName()],
-                                                                       blockArgs[subIntOp->getRightArgName()])});
+        blockArgs.emplace(
+            std::pair{subIntOp->getIdentifier(),
+                      builder->create<mlir::LLVM::SubOp>(getNameLoc("binOpResult"),
+                                                         // blockArgs[subIntOp->getLeftInput()->getIdentifier()].getType(),
+                                                         blockArgs[subIntOp->getLeftInput()->getIdentifier()],
+                                                         blockArgs[subIntOp->getRightInput()->getIdentifier()])});
     }
 }
 
@@ -603,18 +612,20 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::MulOperation> m
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     if (mulOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
         || mulOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
-        blockArgs.emplace(std::pair{mulOp->getIdentifier(),
-                                    builder->create<mlir::LLVM::FMulOp>(getNameLoc("binOpResult"),
-                                                                        blockArgs[mulOp->getLeftArgName()].getType(),
-                                                                        blockArgs[mulOp->getLeftArgName()],
-                                                                        blockArgs[mulOp->getRightArgName()],
-                                                                        mlir::LLVM::FastmathFlags::fast)});
+        blockArgs.emplace(
+            std::pair{mulOp->getIdentifier(),
+                      builder->create<mlir::LLVM::FMulOp>(getNameLoc("binOpResult"),
+                                                          blockArgs[mulOp->getLeftInput()->getIdentifier()].getType(),
+                                                          blockArgs[mulOp->getLeftInput()->getIdentifier()],
+                                                          blockArgs[mulOp->getRightInput()->getIdentifier()],
+                                                          mlir::LLVM::FastmathFlags::fast)});
     } else {
-        blockArgs.emplace(std::pair{mulOp->getIdentifier(),
-                                    builder->create<mlir::LLVM::MulOp>(getNameLoc("binOpResult"),
-                                                                       blockArgs[mulOp->getLeftArgName()].getType(),
-                                                                       blockArgs[mulOp->getLeftArgName()],
-                                                                       blockArgs[mulOp->getRightArgName()])});
+        blockArgs.emplace(
+            std::pair{mulOp->getIdentifier(),
+                      builder->create<mlir::LLVM::MulOp>(getNameLoc("binOpResult"),
+                                                         blockArgs[mulOp->getLeftInput()->getIdentifier()].getType(),
+                                                         blockArgs[mulOp->getLeftInput()->getIdentifier()],
+                                                         blockArgs[mulOp->getRightInput()->getIdentifier()])});
     }
 }
 
@@ -623,26 +634,29 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::DivOperation> d
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     if (divIntOp->getStamp() == IR::Operations::PrimitiveStamp::FLOAT
         || divIntOp->getStamp() == IR::Operations::PrimitiveStamp::DOUBLE) {
-        blockArgs.emplace(std::pair{divIntOp->getIdentifier(),
-                                    builder->create<mlir::LLVM::FDivOp>(getNameLoc("binOpResult"),
-                                                                        blockArgs[divIntOp->getLeftArgName()].getType(),
-                                                                        blockArgs[divIntOp->getLeftArgName()],
-                                                                        blockArgs[divIntOp->getRightArgName()],
-                                                                        mlir::LLVM::FastmathFlags::fast)});
+        blockArgs.emplace(
+            std::pair{divIntOp->getIdentifier(),
+                      builder->create<mlir::LLVM::FDivOp>(getNameLoc("binOpResult"),
+                                                          blockArgs[divIntOp->getLeftInput()->getIdentifier()].getType(),
+                                                          blockArgs[divIntOp->getLeftInput()->getIdentifier()],
+                                                          blockArgs[divIntOp->getRightInput()->getIdentifier()],
+                                                          mlir::LLVM::FastmathFlags::fast)});
     } else {
-        auto resultType = blockArgs[divIntOp->getLeftArgName()].getType();
+        auto resultType = blockArgs[divIntOp->getLeftInput()->getIdentifier()].getType();
         if (resultType.isSignedInteger()) {
-            blockArgs.emplace(std::pair{divIntOp->getIdentifier(),
-                                        builder->create<mlir::LLVM::SDivOp>(getNameLoc("binOpResult"),
-                                                                            resultType,
-                                                                            blockArgs[divIntOp->getLeftArgName()],
-                                                                            blockArgs[divIntOp->getRightArgName()])});
+            blockArgs.emplace(
+                std::pair{divIntOp->getIdentifier(),
+                          builder->create<mlir::LLVM::SDivOp>(getNameLoc("binOpResult"),
+                                                              resultType,
+                                                              blockArgs[divIntOp->getLeftInput()->getIdentifier()],
+                                                              blockArgs[divIntOp->getRightInput()->getIdentifier()])});
         } else {
-            blockArgs.emplace(std::pair{divIntOp->getIdentifier(),
-                                        builder->create<mlir::LLVM::UDivOp>(getNameLoc("binOpResult"),
-                                                                            resultType,
-                                                                            blockArgs[divIntOp->getLeftArgName()],
-                                                                            blockArgs[divIntOp->getRightArgName()])});
+            blockArgs.emplace(
+                std::pair{divIntOp->getIdentifier(),
+                          builder->create<mlir::LLVM::UDivOp>(getNameLoc("binOpResult"),
+                                                              resultType,
+                                                              blockArgs[divIntOp->getLeftInput()->getIdentifier()],
+                                                              blockArgs[divIntOp->getRightInput()->getIdentifier()])});
         }
     }
 }
@@ -652,8 +666,8 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::StoreOperation>
                                  std::unordered_map<std::string, mlir::Value>& blockArgs) {
     printf("StoreOp\n");
     builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"),
-                                         blockArgs[storeOp->getValueArgName()],
-                                         blockArgs[storeOp->getAddressArgName()]);
+                                         blockArgs[storeOp->getValue()->getIdentifier()],
+                                         blockArgs[storeOp->getAddress()->getIdentifier()]);
 }
 
 // No recursion. Dependencies. Does NOT require addressMap insertion.
@@ -679,12 +693,12 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
                                         builder
                                             ->create<mlir::CallOp>(getNameLoc("memberCall"),
                                                                    memberFunctions[IR::Operations::Operation::GetDataBuffer],
-                                                                   blockArgs[proxyCallOp->getInputArgNames().at(0)])
+                                                                   blockArgs[proxyCallOp->getInputArguments().at(0)->getIdentifier()])
                                             .getResult(0)});
             break;
         case IR::Operations::Operation::SetNumTuples: {
-            std::vector<mlir::Value> operands = {blockArgs[proxyCallOp->getInputArgNames().at(0)],
-                                                 blockArgs[proxyCallOp->getInputArgNames().at(1)]};
+            std::vector<mlir::Value> operands = {blockArgs[proxyCallOp->getInputArguments().at(0)->getIdentifier()],
+                                                 blockArgs[proxyCallOp->getInputArguments().at(1)->getIdentifier()]};
             blockArgs.emplace(std::pair{proxyCallOp->getIdentifier(),
                                         builder
                                             ->create<mlir::CallOp>(getNameLoc("memberCall"),
@@ -698,7 +712,7 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
                                         builder
                                             ->create<mlir::CallOp>(getNameLoc("memberCall"),
                                                                    memberFunctions[IR::Operations::Operation::GetNumTuples],
-                                                                   blockArgs[proxyCallOp->getInputArgNames().at(0)])
+                                                                   blockArgs[proxyCallOp->getInputArguments().at(0)->getIdentifier()])
                                             .getResult(0)});
             break;
         default:
@@ -708,12 +722,12 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::ProxyCallOperat
             } else {
                 functionRef = insertExternalFunction(proxyCallOp->getIdentifier(),
                                                      getMLIRType(proxyCallOp->getResultType()),
-                                                     getMLIRType(proxyCallOp->getInputArgTypes()),
+                                                     getMLIRType(proxyCallOp->getInputArguments()),
                                                      true);
             }
             std::vector<mlir::Value> functionArgs;
-            for (auto arg : proxyCallOp->getInputArgNames()) {
-                functionArgs.push_back(blockArgs[arg]);
+            for (auto arg : proxyCallOp->getInputArguments()) {
+                functionArgs.push_back(blockArgs[arg->getIdentifier()]);
             }
             if (proxyCallOp->getResultType() != IR::Operations::VOID) {
                 builder->create<mlir::LLVM::CallOp>(getNameLoc("printFunc"),
@@ -733,17 +747,19 @@ void MLIRGenerator::generateMLIR(std::shared_ptr<IR::Operations::CompareOperatio
     printf("CompareOperation identifier: %s\n", compareOp->getIdentifier().c_str());
     // Comparator Enum < 10 is either a signed or unsigned Integer comparison.
     if (compareOp->getComparator() < 10) {
-        blockArgs.emplace(std::pair{compareOp->getIdentifier(),
-                                    builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
-                                                                         convertToIntMLIRComparison(compareOp->getComparator()),
-                                                                         blockArgs[compareOp->getLeftArgName()],
-                                                                         blockArgs[compareOp->getRightArgName()])});
+        blockArgs.emplace(
+            std::pair{compareOp->getIdentifier(),
+                      builder->create<mlir::arith::CmpIOp>(getNameLoc("comparison"),
+                                                           convertToIntMLIRComparison(compareOp->getComparator()),
+                                                           blockArgs[compareOp->getLeftInput()->getIdentifier()],
+                                                           blockArgs[compareOp->getRightInput()->getIdentifier()])});
     } else {
-        blockArgs.emplace(std::pair{compareOp->getIdentifier(),
-                                    builder->create<mlir::arith::CmpFOp>(getNameLoc("comparison"),
-                                                                         convertToFloatMLIRComparison(compareOp->getComparator()),
-                                                                         blockArgs[compareOp->getLeftArgName()],
-                                                                         blockArgs[compareOp->getRightArgName()])});
+        blockArgs.emplace(
+            std::pair{compareOp->getIdentifier(),
+                      builder->create<mlir::arith::CmpFOp>(getNameLoc("comparison"),
+                                                           convertToFloatMLIRComparison(compareOp->getComparator()),
+                                                           blockArgs[compareOp->getLeftInput()->getIdentifier()],
+                                                           blockArgs[compareOp->getRightInput()->getIdentifier()])});
     }
 }
 

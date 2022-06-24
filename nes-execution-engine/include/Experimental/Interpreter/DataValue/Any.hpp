@@ -30,7 +30,7 @@ class Any : public TypeCastable {
     }
 
     virtual std::unique_ptr<Any> copy() = 0;
-    virtual IR::Operations::Operation::BasicType getType() = 0;
+    virtual IR::Operations::PrimitiveStamp getType() = 0;
     virtual ~Any() = default;
 
     Any(Kind k) : TypeCastable(k){};

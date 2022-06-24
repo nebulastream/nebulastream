@@ -15,11 +15,12 @@
 #define NES_NES_EXECUTION_ENGINE_INCLUDE_EXPERIMENTAL_TRACE_TRACETOIRCONVERSIONPHASE_HPP_
 #include <Experimental/Interpreter/DataValue/Integer.hpp>
 #include <Experimental/NESIR/BasicBlocks/BasicBlock.hpp>
+#include <Experimental/NESIR/Frame.hpp>
 #include <Experimental/NESIR/NESIR.hpp>
 #include <Experimental/NESIR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Experimental/NESIR/Operations/BranchOperation.hpp>
-#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/ConstFloatOperation.hpp>
+#include <Experimental/NESIR/Operations/ConstIntOperation.hpp>
 #include <Experimental/NESIR/Operations/FunctionOperation.hpp>
 #include <Experimental/NESIR/Operations/IfOperation.hpp>
 #include <Experimental/NESIR/Operations/Operation.hpp>
@@ -34,6 +35,7 @@ class TraceToIRConversionPhase {
     std::shared_ptr<IR::NESIR> apply(std::shared_ptr<ExecutionTrace> trace);
 
   private:
+    using ValueFrame = IR::Frame<std::string, IR::Operations::OperationPtr>;
     class IRConversionContext {
       public:
         IRConversionContext(std::shared_ptr<ExecutionTrace> trace) : trace(trace), ir(std::make_shared<IR::NESIR>()){};
@@ -41,21 +43,29 @@ class TraceToIRConversionPhase {
 
       private:
         IR::BasicBlockPtr processBlock(int32_t scope, Block& block);
-        void processOperation(int32_t scope, Block& currentBlock, IR::BasicBlockPtr& currentIRBlock, Operation& operation);
-        void processJMP(int32_t scope, IR::BasicBlockPtr& block, Operation& operation);
-        void processCMP(int32_t scope, Block& currentBlock, IR::BasicBlockPtr& currentIRBlock, Operation& operation);
-        void processAdd(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processSub(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processMul(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processDiv(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processEquals(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processLessThan(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processNegate(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processAnd(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processOr(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processLoad(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processStore(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
-        void processCall(int32_t scope, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processOperation(int32_t scope,
+                              ValueFrame& frame,
+                              Block& currentBlock,
+                              IR::BasicBlockPtr& currentIRBlock,
+                              Operation& operation);
+        void processJMP(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& block, Operation& operation);
+        void processCMP(int32_t scope,
+                        ValueFrame& frame,
+                        Block& currentBlock,
+                        IR::BasicBlockPtr& currentIRBlock,
+                        Operation& operation);
+        void processAdd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processSub(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processMul(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processDiv(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processEquals(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processLessThan(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processNegate(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processAnd(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processOr(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processLoad(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processStore(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
+        void processCall(int32_t scope, ValueFrame& frame, IR::BasicBlockPtr& currentBlock, Operation& operation);
         bool isBlockInLoop(int32_t scope, uint32_t parentBlock, uint32_t currentBlock);
         std::vector<std::string> createBlockArguments(BlockRef val);
         std::string createValueIdentifier(InputVariant val);

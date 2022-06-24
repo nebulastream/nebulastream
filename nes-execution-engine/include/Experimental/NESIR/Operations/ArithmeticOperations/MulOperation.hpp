@@ -21,10 +21,9 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class MulOperation : public Operation {
   public:
-    MulOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp);
+    MulOperation(OperationIdentifier identifier,  OperationPtr leftInput, OperationPtr rightInput);
     ~MulOperation() override = default;
 
-    std::string getIdentifier();
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
 
@@ -32,7 +31,6 @@ class MulOperation : public Operation {
     bool classof(const Operation* Op);
 
   private:
-    std::string identifier;
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };

@@ -19,7 +19,7 @@
 #include <memory>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-
+using OperationIdentifier = std::string;
 class Operation {
   public:
     enum ProxyCallType { GetNumTuples = 0, SetNumTuples = 1, GetDataBuffer = 2, Other = 50 };
@@ -46,15 +46,17 @@ class Operation {
         BasicBlockArgument
     };
 
+    explicit Operation(OperationType opType, OperationIdentifier identifier, PrimitiveStamp stamp);
     explicit Operation(OperationType opType, PrimitiveStamp stamp);
     virtual ~Operation() = default;
-
+    OperationIdentifier getIdentifier();
     virtual std::string toString() = 0;
     OperationType getOperationType() const;
     PrimitiveStamp getStamp() const;
 
-  private:
+  protected:
     OperationType opType;
+    OperationIdentifier identifier;
     PrimitiveStamp stamp;
 };
 using OperationPtr = std::shared_ptr<Operation>;

@@ -12,31 +12,35 @@
     limitations under the License.
 */
 
-
 #include <Experimental/NESIR/Operations/ProxyCallOperation.hpp>
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType, std::string identifier, 
-                                        std::vector<std::string> inputArgNames, std::vector<PrimitiveStamp> inputArgTypes,
+ProxyCallOperation::ProxyCallOperation(ProxyCallType proxyCallType,
+                                       OperationIdentifier identifier,
+                                       std::vector<OperationWPtr> inputArguments,
                                        PrimitiveStamp resultType)
-    : Operation(Operation::ProxyCallOp, resultType), proxyCallType(proxyCallType), identifier(identifier), inputArgNames(std::move(inputArgNames)),
-      inputArgTypes(inputArgTypes), resultType(resultType) {}
+    : Operation(Operation::ProxyCallOp, identifier, resultType), proxyCallType(proxyCallType),
+      inputArguments(std::move(inputArguments)), resultType(resultType) {}
 
-    Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
-    std::string ProxyCallOperation::getIdentifier() { return identifier; }
-    std::vector<std::string> ProxyCallOperation::getInputArgNames() { return inputArgNames; }
-    std::vector<PrimitiveStamp> ProxyCallOperation::getInputArgTypes() { return inputArgTypes; }
-    PrimitiveStamp ProxyCallOperation::getResultType() { return resultType; }
-
-    std::string ProxyCallOperation::toString() {
-        std::string baseString = "ProxyCallOperation_" + identifier + "(";
-        if(inputArgNames.size() > 0) {
-            baseString += inputArgNames[0];
-            for(int i = 1; i < (int) inputArgNames.size(); ++i) { 
-                baseString += ", " + inputArgNames.at(i);
-            }
-        }
-        return baseString + ")";
+Operation::ProxyCallType ProxyCallOperation::getProxyCallType() { return proxyCallType; }
+std::vector<OperationPtr> ProxyCallOperation::getInputArguments() {
+    std::vector<OperationPtr> args;
+    for (auto input : inputArguments) {
+        args.emplace_back(input.lock());
     }
+    return args;
+}
+PrimitiveStamp ProxyCallOperation::getResultType() { return resultType; }
 
-}// namespace NES
+std::string ProxyCallOperation::toString() {
+    std::string baseString = "ProxyCallOperation_" + identifier + "(";
+    if (inputArguments.size() > 0) {
+        baseString += inputArguments[0].lock()->getIdentifier();
+        for (int i = 1; i < (int) inputArguments.size(); ++i) {
+            baseString += ", " + inputArguments.at(i).lock()->getIdentifier();
+        }
+    }
+    return baseString + ")";
+}
+
+}// namespace NES::ExecutionEngine::Experimental::IR::Operations

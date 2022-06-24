@@ -21,19 +21,15 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class SubOperation : public Operation {
   public:
-    SubOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp);
+    SubOperation(OperationIdentifier  identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~SubOperation() override = default;
 
-    std::string getIdentifier();
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
-    std::string getRightArgName();
-
     std::string toString() override;
     bool classof(const Operation* Op);
 
   private:
-    std::string identifier;
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };

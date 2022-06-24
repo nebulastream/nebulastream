@@ -21,10 +21,9 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
 class OrOperation : public Operation {
   public:
-    OrOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput);
+    OrOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~OrOperation() override = default;
 
-    std::string getIdentifier();
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
 
@@ -32,7 +31,6 @@ class OrOperation : public Operation {
     bool classof(const Operation* Op);
 
   private:
-    std::string identifier;
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };

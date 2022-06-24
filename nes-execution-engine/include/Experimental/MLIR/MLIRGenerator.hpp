@@ -156,7 +156,7 @@ class MLIRGenerator {
      * @param type: NES basic type.
      * @return mlir::Type: MLIR Type.
      */
-    std::vector<mlir::Type> getMLIRType(std::vector<IR::Operations::PrimitiveStamp> types);
+    std::vector<mlir::Type> getMLIRType(std::vector<IR::Operations::OperationPtr> types);
 
     /**
      * @brief Get a constant MLIR Integer.

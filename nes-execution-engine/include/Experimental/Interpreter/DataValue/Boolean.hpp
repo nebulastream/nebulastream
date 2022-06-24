@@ -31,7 +31,7 @@ class Boolean : public Any {
 
     const bool value;
 
-    IR::Operations::Operation::BasicType getType() override { return IR::Operations::Operation::BOOLEAN; }
+    IR::Operations::PrimitiveStamp getType() override { return IR::Operations::BOOLEAN; }
 };
 
 }// namespace NES::ExecutionEngine::Experimental::Interpreter

@@ -20,16 +20,11 @@
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 class LoadOperation : public Operation {
   public:
-    explicit LoadOperation(std::string identifier, OperationPtr address);
+    explicit LoadOperation(OperationIdentifier identifier,  OperationPtr address);
     ~LoadOperation() override = default;
-
-    std::string getIdentifier();
     OperationPtr getAddress();
-
     std::string toString() override;
-
   private:
-    std::string identifier;
     OperationWPtr address;
 };
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

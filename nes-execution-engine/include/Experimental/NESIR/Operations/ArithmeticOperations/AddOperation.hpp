@@ -22,18 +22,13 @@ namespace NES::ExecutionEngine::Experimental::IR::Operations {
 //Todo: Decide: Leave type
 class AddOperation : public Operation {
   public:
-    AddOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp);
+    AddOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~AddOperation() override = default;
-
-    std::string getIdentifier();
     OperationPtr getLeftInput();
     OperationPtr getRightInput();
-
     std::string toString() override;
     bool classof(const Operation* Op);
-
   private:
-    std::string identifier;
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };

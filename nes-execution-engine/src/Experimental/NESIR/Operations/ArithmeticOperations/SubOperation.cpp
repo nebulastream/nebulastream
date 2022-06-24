@@ -15,13 +15,13 @@
 #include <Experimental/NESIR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <string>
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
-SubOperation::SubOperation(std::string identifier, OperationPtr leftInput, OperationPtr rightInput, PrimitiveStamp stamp)
-    : Operation(OperationType::SubOp, stamp), identifier(std::move(identifier)), leftInput(std::move(leftInput)),
+SubOperation::SubOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
+    : Operation(OperationType::SubOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
       rightInput(std::move(rightInput)) {}
-std::string SubOperation::toString() { return "SubOperation" + identifier + "(" + getLeftInput()->toString() + ", " + getRightInput()->toString() + ")"; }
+std::string SubOperation::toString() {
+    return "SubOperation" + identifier + "(" + getLeftInput()->getIdentifier() + ", " + getRightInput()->getIdentifier() + ")";
+}
 bool SubOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::SubOp; }
-
-std::string SubOperation::getIdentifier() { return identifier; }
 OperationPtr SubOperation::getLeftInput() { return leftInput.lock(); }
 OperationPtr SubOperation::getRightInput() { return rightInput.lock(); }
 }// namespace NES::ExecutionEngine::Experimental::IR::Operations

@@ -19,10 +19,9 @@
 
 namespace NES::ExecutionEngine::Experimental::IR::Operations {
 
-ConstFloatOperation::ConstFloatOperation(std::string identifier, double constantValue, uint8_t numBits)
-    : Operation(OperationType::ConstFloatOp, FLOAT), identifier(std::move(identifier)), constantValue(constantValue), numBits(numBits){}
+ConstFloatOperation::ConstFloatOperation(OperationIdentifier identifier,  double constantValue, uint8_t numBits)
+    : Operation(OperationType::ConstFloatOp, identifier, FLOAT), constantValue(constantValue), numBits(numBits){}
 
-std::string ConstFloatOperation::getIdentifier() { return identifier; }
 double ConstFloatOperation::getConstantFloatValue() { return constantValue; }
 int8_t ConstFloatOperation::getNumBits() { return numBits; }
 bool ConstFloatOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }
