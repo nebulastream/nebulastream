@@ -22,36 +22,39 @@ STKnnExpressionNode::STKnnExpressionNode() : ExpressionNode(DataTypeFactory::cre
 
 STKnnExpressionNode::STKnnExpressionNode(STKnnExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getPoint()->copy());
-    addChildWithEqual(getWKT()->copy());
+    addChildWithEqual(getQueryPoint()->copy());
     addChildWithEqual(getK()->copy());
 }
 
 ExpressionNodePtr STKnnExpressionNode::create(const GeographyFieldsAccessExpressionNodePtr& point,
-                                              const ConstantValueExpressionNodePtr& wkt,
+                                              const ShapeExpressionNodePtr& queryPoint,
                                               const ConstantValueExpressionNodePtr& k) {
     auto stKnnNode = std::make_shared<STKnnExpressionNode>();
-    stKnnNode->setChildren(point, wkt, k);
+    stKnnNode->setChildren(point, queryPoint, k);
     return stKnnNode;
 }
 
 bool STKnnExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STKnnExpressionNode>()) {
-        auto otherAndNode = rhs->as<STKnnExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint()) && getWKT()->equal(otherAndNode->getWKT())
-            && getK()->equal(otherAndNode->getK());
+        auto otherNode = rhs->as<STKnnExpressionNode>();
+        return getPoint()->equal(otherNode->getPoint())
+            && getQueryPoint()->equal(otherNode->getQueryPoint())
+            && getK()->equal(otherNode->getK());
     }
     return false;
 }
 
 std::string STKnnExpressionNode::toString() const {
     std::stringstream ss;
-    ss << "ST_Knn(" << children[0]->toString() << ", " << children[1]->toString() << ", " << children[2]->toString() << ")";
+    ss << "ST_KNN(" << children[0]->toString() << ", " << children[1]->toString() << ", " << children[2]->toString() << ")";
     return ss.str();
 }
 
-void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt, ExpressionNodePtr const& k) {
+void STKnnExpressionNode::setChildren(ExpressionNodePtr const& point,
+                                      ShapeExpressionNodePtr const& queryPoint,
+                                      ExpressionNodePtr const& k) {
     addChildWithEqual(point);
-    addChildWithEqual(wkt);
+    addChildWithEqual(queryPoint);
     addChildWithEqual(k);
 }
 
@@ -62,11 +65,11 @@ ExpressionNodePtr STKnnExpressionNode::getPoint() const {
     return children[0]->as<GeographyFieldsAccessExpressionNode>();
 }
 
-ExpressionNodePtr STKnnExpressionNode::getWKT() const {
+ShapeExpressionNodePtr STKnnExpressionNode::getQueryPoint() const {
     if (children.size() != 3) {
         NES_FATAL_ERROR("An ST_Knn Expression should always have three children, but it has: " << children.size());
     }
-    return children[1]->as<ConstantValueExpressionNode>();
+    return children[1]->as<ShapeExpressionNode>();
 }
 
 ExpressionNodePtr STKnnExpressionNode::getK() const {
@@ -79,24 +82,26 @@ ExpressionNodePtr STKnnExpressionNode::getK() const {
 void STKnnExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto point = getPoint();
-    auto wkt = getWKT();
+    auto queryPoint = getQueryPoint();
     auto k = getK();
     point->inferStamp(schema);
-    wkt->inferStamp(schema);
+    auto shapeType = queryPoint->getShapeType();
     k->inferStamp(schema);
 
     // check sub expressions if they are the correct type
-    if (!point->getStamp()->isFloat() || !wkt->getStamp()->isCharArray() || !k->getStamp()->isNumeric()) {
+    if (!point->getStamp()->isFloat() || shapeType != ShapeType::Point || !k->getStamp()->isNumeric()) {
         throw std::logic_error(
-            "ST_KnnExpressionNode: Error during stamp inference. Types need to be Float and Text but Point was:"
-            + point->getStamp()->toString() + ", WKT was: " + wkt->getStamp()->toString()
-            + ", and the k was: " + k->getStamp()->toString());
+            "ST_KnnExpressionNode: Error during stamp inference. Types need to be Float, ShapeType should be Point,"
+            "and K should numeric and Text but Point was: " + point->getStamp()->toString() + ", QueryPoint was: "
+            + queryPoint->toString() + ", and the k was: " + k->getStamp()->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();
     NES_TRACE("ST_KnnExpressionNode: The following stamp was assigned: " << toString());
 }
 
-ExpressionNodePtr STKnnExpressionNode::copy() { return std::make_shared<STKnnExpressionNode>(STKnnExpressionNode(this)); }
+ExpressionNodePtr STKnnExpressionNode::copy() {
+    return std::make_shared<STKnnExpressionNode>(STKnnExpressionNode(this));
+}
 
 }// namespace NES

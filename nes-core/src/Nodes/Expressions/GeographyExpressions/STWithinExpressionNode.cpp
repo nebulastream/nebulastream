@@ -18,24 +18,26 @@
 #include <Nodes/Expressions/GeographyExpressions/STWithinExpressionNode.hpp>
 
 namespace NES {
+
 STWithinExpressionNode::STWithinExpressionNode() : ExpressionNode(DataTypeFactory::createBoolean()) {}
 
 STWithinExpressionNode::STWithinExpressionNode(STWithinExpressionNode* other) : ExpressionNode(other) {
     addChildWithEqual(getPoint()->copy());
-    addChildWithEqual(getWKT()->copy());
+    addChildWithEqual(getShape()->copy());
 }
 
 ExpressionNodePtr STWithinExpressionNode::create(const GeographyFieldsAccessExpressionNodePtr& point,
-                                                 const ConstantValueExpressionNodePtr& wkt) {
+                                                 const ShapeExpressionNodePtr& shapeExpression) {
     auto stWithinNode = std::make_shared<STWithinExpressionNode>();
-    stWithinNode->setChildren(point, wkt);
+    stWithinNode->setChildren(point, shapeExpression);
     return stWithinNode;
 }
 
 bool STWithinExpressionNode::equal(NodePtr const& rhs) const {
     if (rhs->instanceOf<STWithinExpressionNode>()) {
-        auto otherAndNode = rhs->as<STWithinExpressionNode>();
-        return getPoint()->equal(otherAndNode->getPoint()) && getWKT()->equal(otherAndNode->getWKT());
+        auto otherNode = rhs->as<STWithinExpressionNode>();
+        return getPoint()->equal(otherNode->getPoint())
+            && getShape()->equal(otherNode->getShape());
     }
     return false;
 }
@@ -46,9 +48,10 @@ std::string STWithinExpressionNode::toString() const {
     return ss.str();
 }
 
-void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt) {
+void STWithinExpressionNode::setChildren(ExpressionNodePtr const& point,
+                                         ShapeExpressionNodePtr const& shapeExpression) {
     addChildWithEqual(point);
-    addChildWithEqual(wkt);
+    addChildWithEqual(shapeExpression);
 }
 
 ExpressionNodePtr STWithinExpressionNode::getPoint() const {
@@ -58,25 +61,27 @@ ExpressionNodePtr STWithinExpressionNode::getPoint() const {
     return children[0]->as<GeographyFieldsAccessExpressionNode>();
 }
 
-ExpressionNodePtr STWithinExpressionNode::getWKT() const {
+ShapeExpressionNodePtr STWithinExpressionNode::getShape() const {
     if (children.size() != 2) {
         NES_FATAL_ERROR("An STWithin Expression should always have two children, but it has: " << children.size());
     }
-    return children[1]->as<ConstantValueExpressionNode>();
+    return children[1]->as<ShapeExpressionNode>();
 }
 
 void STWithinExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
-    auto left = getPoint();
-    auto right = getWKT();
-    left->inferStamp(schema);
-    right->inferStamp(schema);
+    auto point = getPoint();
+    auto shape = getShape();
+    point->inferStamp(schema);
+    auto shapeType = shape->getShapeType();
+    auto validShape = (shapeType == ShapeType::Rectangle) || (shapeType == ShapeType::Polygon);
 
     // both sub expressions have to be numerical
-    if (!left->getStamp()->isFloat() || !right->getStamp()->isCharArray()) {
+    if (!point->getStamp()->isFloat() || !validShape) {
         throw std::logic_error(
-            "STWithinExpressionNode: Error during stamp inference. Types need to be Float and Text but Left was:"
-            + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
+            "STWithinExpressionNode: Error during stamp inference. AccessType need to be Float and ShapeType needs to be"
+            " Polygon or Rectangle but the Point access type was: " + point->getStamp()->toString() + ", and the shape was: "
+            + shape->toString());
     }
 
     stamp = DataTypeFactory::createBoolean();

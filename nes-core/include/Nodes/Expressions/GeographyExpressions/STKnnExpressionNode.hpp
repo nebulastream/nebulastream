@@ -14,12 +14,18 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STKNNEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STKNNEXPRESSIONNODE_HPP_
+
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+
 namespace NES {
 
 class ConstantValueExpressionNode;
 using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
+
+class ShapeExpressionNode;
+using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
 
 /**
  * @brief This node represents ST_KNN predicate, where ST stands for Spatial Type and
@@ -38,19 +44,22 @@ class STKnnExpressionNode : public ExpressionNode {
      * @param point is the GeographyFieldsAccessExpression which accesses two fields
      * in the schema, the first of which should be the latitude and the second should
      * be the longitude.
-     * @param wkt represents the well-known text (WKT) of a polygon.
+     * @param queryPoint represents the query point (shape type should be point).
      * @param k represents the value for parameter k in the query.
      */
     static ExpressionNodePtr create(GeographyFieldsAccessExpressionNodePtr const& point,
-                                    ConstantValueExpressionNodePtr const& wkt,
+                                    ShapeExpressionNodePtr const& queryPoint,
                                     ConstantValueExpressionNodePtr const& k);
+
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt, ExpressionNodePtr const& k);
+    void setChildren(ExpressionNodePtr const& point,
+                     ShapeExpressionNodePtr const& queryPoint,
+                     ExpressionNodePtr const& k);
 
     /**
      * @brief gets the point.
@@ -60,7 +69,7 @@ class STKnnExpressionNode : public ExpressionNode {
     /**
      * @brief gets the wkt.
      */
-    ExpressionNodePtr getWKT() const;
+    ShapeExpressionNodePtr getQueryPoint() const;
 
     /**
      * @brief gets the parameter k.

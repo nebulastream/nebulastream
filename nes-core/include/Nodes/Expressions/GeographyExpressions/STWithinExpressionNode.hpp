@@ -14,12 +14,14 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STWITHINEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STWITHINEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+
 namespace NES {
 
-class ConstantValueExpressionNode;
-using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
+class ShapeExpressionNode;
+using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
 
 /**
  * @brief This node represents ST_WITHIN predicate, where ST stands for Spatial Type.
@@ -30,15 +32,10 @@ using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNo
  * within a geometric object or not. For now, the geometric object will be limited to
  * a rectangle. ST_Within is supposed to be used with the filter operator as follows:
  *
- * stream.filter(ST_WITHIN(Attribute("latitude"), Attribute("longitude"), WKT_POLYGON))
+ * stream.filter(ST_WITHIN(Attribute("latitude"), Attribute("longitude"), SHAPE))
  *
- * where latitude, and longitude represent the attributes lat/long in the stream, and
- * WKT_POLYGON is the well-known text (WKT) representation of a rectangle (i.e., Envelope
- * as defined by OGC: see https://postgis.net/docs/ST_Envelope.html for more details).
- *
- * WKT_POLYGON can be defined either by the bounding coordinates of the envelope
- * (i.e., (min_lat, min_long), (max_lat, max_long), or all four coordinates of the
- * envelope as defined in the link above.
+ * where latitude, and longitude represent the attributes lat/long in the schema, and
+ * SHAPE is one of Circle, Rectangle, or Polygon.
  */
 class STWithinExpressionNode : public ExpressionNode {
   public:
@@ -49,17 +46,19 @@ class STWithinExpressionNode : public ExpressionNode {
      * @param point is the GeographyFieldsAccessExpression which accesses two fields
      * in the schema, the first of which should be the latitude and the second should
      * be the longitude.
-     * @param wkt represents the well-known text (WKT) of a polygon.
+     * @param shape represents either a polygon or a rectangle.
      */
     static ExpressionNodePtr create(GeographyFieldsAccessExpressionNodePtr const& point,
-                                    ConstantValueExpressionNodePtr const& wkt);
+                                    ShapeExpressionNodePtr const& shape);
+
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt);
+    void setChildren(ExpressionNodePtr const& point,
+                     ShapeExpressionNodePtr const& shape);
 
     /**
      * @brief gets the point (or the left child).
@@ -67,9 +66,9 @@ class STWithinExpressionNode : public ExpressionNode {
     ExpressionNodePtr getPoint() const;
 
     /**
-     * @brief gets the wkt (the right child).
+     * @brief gets the shape.
      */
-    ExpressionNodePtr getWKT() const;
+    ShapeExpressionNodePtr getShape() const;
 
     /**
      * @brief Infers the stamp of the STWITHIN expression node.

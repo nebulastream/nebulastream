@@ -14,12 +14,15 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STDWITHINEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_GEOGRAPHYEXPRESSIONS_STDWITHINEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+
 #include <Nodes/Expressions/GeographyExpressions/GeographyFieldsAccessExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/ShapeExpressionNode.hpp>
+#include <Nodes/Expressions/GeographyExpressions/ShapeExpressions/CircleExpressionNode.hpp>
+
 namespace NES {
 
-class ConstantValueExpressionNode;
-using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
+class ShapeExpressionNode;
+using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
 
 /**
  * @brief This node represents ST_DWithin predicate, where ST stands for Spatial type,
@@ -31,11 +34,12 @@ using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNo
  * object will be limited to another point, and the distance is assumed to be in meters.
  * ST_DWithin is supposed to be used with the filter operator as follows:
  *
- * stream.filter(ST_DWITHIN(Attribute("latitude"), Attribute("longitude"), WKT_POINT, distance))
- *
- * where latitude, and longitude represent the attributes lat/long in the stream, and
- * WKT_POINT is the well-known text representation of the query point, and the distance
- * is the distance (defined in meters).
+ * stream.filter(ST_DWITHIN(Attribute("latitude"), Attribute("longitude"), SHAPE)
+*
+* where latitude, and longitude represent the attributes lat/long in the stream, and
+* SHAPE is a circle. A circle can be defined as follows: CIRCLE(lat, lon, radius)
+ * where lat/lon are latitude and longitude of the query point and the radius defines
+* the distance (in meters) for the ST_DWITHIN predicate .
  */
 class STDWithinExpressionNode : public ExpressionNode {
   public:
@@ -46,19 +50,19 @@ class STDWithinExpressionNode : public ExpressionNode {
      * @param point is the GeographyFieldsAccessExpression which accesses two fields
      * in the schema, the first of which should be the latitude and the second should
      * be the longitude.
-     * @param wkt represents the well-known text (WKT) of a polygon.
-     * @param distance represents the distance.
+     * @param shapeExpression a circle expression node.
      */
     static ExpressionNodePtr create(GeographyFieldsAccessExpressionNodePtr const& point,
-                                    ConstantValueExpressionNodePtr const& wkt,
-                                    ConstantValueExpressionNodePtr const& distance);
+                                    ShapeExpressionNodePtr const& shapeExpression);
+
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief set the children node of this expression.
      */
-    void setChildren(ExpressionNodePtr const& point, ExpressionNodePtr const& wkt, ExpressionNodePtr const& distance);
+    void setChildren(ExpressionNodePtr const& point,
+                     ShapeExpressionNodePtr const& circle);
 
     /**
      * @brief gets the point.
@@ -66,14 +70,9 @@ class STDWithinExpressionNode : public ExpressionNode {
     ExpressionNodePtr getPoint() const;
 
     /**
-     * @brief gets the wkt.
+     * @brief gets the circle.
      */
-    ExpressionNodePtr getWKT() const;
-
-    /**
-     * @brief gets the wkt.
-     */
-    ExpressionNodePtr getDistance() const;
+    ShapeExpressionNodePtr getCircle() const;
 
     /**
      * @brief Infers the stamp of the ST_DWITHIN expression node.

@@ -17,12 +17,65 @@
 
 namespace NES {
 
-class ExpressionNode;
 class ExpressionItem;
+
+class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
+class ShapeExpressionNode;
+using ShapeExpressionNodePtr = std::shared_ptr<ShapeExpressionNode>;
+
 /**
- * @brief Defines common spatial operations between expression nodes.
+ * @brief Defines common spatial shapes.
+ */
+
+/**
+ * @brief Defines a circle shape. A user can define a circle as follows:
+ * CIRCLE(29.381726, 79.453078, 100.0), where the
+ * @param latitude defines the latitude of the center of the circle.
+ * @param longitude defines the longitude of the center of the circle.
+ * @param radius defines the radius of the circle.
+ */
+ShapeExpressionNodePtr CIRCLE(double latitude,
+                              double longitude,
+                              double radius);
+
+/**
+ * @brief Defines a point shape. A user can define a point as follows:
+ * POINT(29.393136,79.450638), where the
+ * @param latitude defines the latitude of the point.
+ * @param longitude defines the longitude of the point.
+ */
+ShapeExpressionNodePtr POINT(double latitude,
+                             double longitude);
+
+/**
+ * @brief Defines a rectangle shape. A user can define a rectangle as follows:
+ * RECTANGLE(29.388829, 79.453806, 29.389843, 79.454933), where the
+ * @param latitude_low defines the latitude of the bottom-left (south-west) point
+ * of the rectangle.
+ * @param longitude_low defines the longitude of the bottom-left (south-west) point
+ * of the rectangle.
+ * @param latitude_high defines the latitude of the top-right (north-east) point
+ * of the rectangle.
+ * @param longitude_high defines the longitude of the top-right (north-east) point
+ * of the rectangle.
+ */
+ShapeExpressionNodePtr RECTANGLE(double latitude_low,
+                                 double longitude_low,
+                                 double latitude_high,
+                                 double longitude_high);
+
+/**
+ * @brief Defines a polygon shape. The user can define a polygon as follows:
+ * POLYGON({29.396018, 79.435183, 29.375910, 79.449621, 29.363619, 79.46852, 29.372501,
+ * 79.475521, 29.401183, 79.451892}) where,
+ * @param coords are the coordinates of the polygon.
+ */
+ShapeExpressionNodePtr POLYGON(std::initializer_list<double> coords);
+
+/**
+ * @brief Defines common spatial predicates.
  */
 
 /**
@@ -31,20 +84,21 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
  * (i.e., whether a geometric object is within another geometric object or not). In NES,
  * we only expect the stream to report the GPS coordinates from a source (i.e., a Point).
  * Thus in NES, by using ST_WITHIN expression a user can filter points in the stream
- * which are within a geometric object or not. For now, the geometric object is limited
- * to a rectangle. ST_Within is supposed to be used with the filter operator as follows:
+ * which are within a geometric shape or not. The shape can be Circle, Polygon, or Rectangle.
+ * If the shape is Circle we internally call ST_DWithin. ST_Within is supposed to be used with
+ * the filter operator as follows:
  *
- * stream.filter(ST_WITHIN(Attribute("latitude"), Attribute("longitude"), WKT_POLYGON))
+ * stream.filter(ST_WITHIN(Attribute("latitude"), Attribute("longitude"), SHAPE))
  *
  * where latitude, and longitude represent the attributes lat/long in the schema, and
- * WKT_POLYGON is the well-known text (WKT) representation of a rectangle (i.e., Envelope
- * as defined by OGC: see https://postgis.net/docs/ST_Envelope.html for more details).
- *
- * WKT_POLYGON can be defined either by the bounding coordinates of the envelope
- * (i.e., (min_lat, min_long), (max_lat, max_long), or all four coordinates of the
- * envelope as defined in the link above.
+ * SHAPE is one of Circle, Rectangle, or Polygon.
+ * @see NES::CIRCLE
+ * @see NES::POLYGON
+ * @see NES::RECTANGLE
  */
-ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude, const ExpressionItem& longitude, const ExpressionItem& wkt);
+ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude,
+                            const ExpressionItem& longitude,
+                            const ShapeExpressionNodePtr& shapeExpression);
 
 /**
  * @brief This expression represents ST_DWithin predicate, where ST stands for Spatial
@@ -56,16 +110,16 @@ ExpressionNodePtr ST_WITHIN(const ExpressionItem& latitude, const ExpressionItem
  * geometric object is limited to a point, and the distance is assumed to be in meters.
  * ST_DWithin is supposed to be used with the filter operator as follows:
  *
- * stream.filter(ST_DWITHIN(Attribute("latitude"), Attribute("longitude"), WKT_POINT, distance))
+ * stream.filter(ST_DWITHIN(Attribute("latitude"), Attribute("longitude"), SHAPE)
  *
  * where latitude, and longitude represent the attributes lat/long in the stream, and
- * WKT_POINT is the well-known text representation of the query point, and the distance
- * is the distance in meters.
+ * SHAPE is a circle which constitutes of a lat/lon coordinate and a radius (radius defines
+ * the distance for the ST_DWITHIN predicate).
+ * @see NES::CIRCLE
  */
 ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitude,
                              const ExpressionItem& longitude,
-                             const ExpressionItem& wkt,
-                             const ExpressionItem& distance);
+                             const ShapeExpressionNodePtr& shapeExpression);
 
 /**
  * @brief This node represents ST_KNN predicate, where ST stands for Spatial Type and
@@ -73,10 +127,13 @@ ExpressionNodePtr ST_DWITHIN(const ExpressionItem& latitude,
  * nearest neighbors of a query point from a group of geometric objects. In NES, we will
  * combine ST_KNN expression with a window which would allow us to define the batch of
  * objects from which to select the "k" nearest neighbors of the query point. For now,
- * this expression remains unimplemented and an error is thrown.
+ * this expression remains unimplemented and an error is thrown. To define the query point:
+ * @see NES::POINT
  */
-ExpressionNodePtr
-ST_KNN(const ExpressionItem& latitude, const ExpressionItem& longitude, const ExpressionItem& wkt, const ExpressionItem& k);
+ExpressionNodePtr ST_KNN(const ExpressionItem& latitude,
+                         const ExpressionItem& longitude,
+                         const ShapeExpressionNodePtr& shapeExpression,
+                         const ExpressionItem& k);
 
 }// namespace NES
 
