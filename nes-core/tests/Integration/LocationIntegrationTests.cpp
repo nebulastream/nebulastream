@@ -209,10 +209,6 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     wrkConf1->locationCoordinates.setValue(NES::Spatial::Index::Experimental::Location::fromString(location2));
     wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
     mobilityConfiguration1->locationProviderType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    //wrkConf1->locationSourceType.setValue(NES::Spatial::Mobility::Experimental::LocationProviderType::CSV);
-    //wrkConf1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
-    //wrkConf1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testLocations.csv");
-    //wrkConf1->locationSourceConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "testTrajectoryUpdate.csv");
     mobilityConfiguration1->locationProviderConfig.setValue(std::string(TEST_DATA_DIRECTORY) + "singleLocation.csv");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1), std::move(mobilityConfiguration1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
@@ -245,8 +241,6 @@ TEST_F(LocationIntegrationTests, testMobileNodes) {
     EXPECT_EQ(wrk1->getLocationProvider()->getSpatialType(), NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
     EXPECT_EQ(wrk2->getLocationProvider()->getSpatialType(), NES::Spatial::Index::Experimental::WorkerSpatialType::FIELD_NODE);
 
-    //EXPECT_EQ(*(wrk1->getLocationProvider()->getLocation()),
-    //          NES::Spatial::Index::Experimental::Location(52.55227464714949, 13.351743136322877));
     EXPECT_EQ((wrk2->getLocationProvider()->getLocation()), NES::Spatial::Index::Experimental::Location::fromString(location2));
 
     TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
@@ -482,9 +476,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     NES::Logger::getInstance()->setLogLevel(LogLevel::LOG_DEBUG);
     size_t coverage = 5000;
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    //coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    //uint64_t rpcPortWrk1 = 6000;
-    //coordinatorConfig->restPort = 8081;
     NES_INFO("start coordinator")
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -494,11 +485,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     TopologyPtr topology = crd->getTopology();
     auto locIndex = topology->getLocationIndex();
 
-    //TopologyNodePtr node = TopologyNode::create(3, "127.0.0.1", 0, 0, 0);
     TopologyNodePtr node = topology->getRoot();
-    //TopologyNodePtr node2 = TopologyNode::create(4, "127.0.0.1", 1, 0, 0);
-    //node2->setFixedCoordinates(52.51, 13.4);
-    //topology->addNewTopologyNodeAsChild(node, node2);
     std::vector<NES::Spatial::Index::Experimental::Location> locVec = {
         {52.53024925374664, 13.440408001670573},
         {52.44959193751221, 12.994693532702838},
@@ -577,7 +564,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     NES_INFO("start worker 1");
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfiguration1 = Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfiguration::create();
-    //wrkConf1->rpcPort = rpcPortWrk1;
     wrkConf1->spatialType.setValue(NES::Spatial::Index::Experimental::WorkerSpatialType::MOBILE_NODE);
     wrkConf1->parentId.setValue(10006);
     mobilityConfiguration1->nodeInfoDownloadRadius.setValue(20000);
@@ -607,9 +593,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     size_t waypointCounter = 1;
     std::vector<bool> waypointCovered(waypoints.size(), false);
     S2Polyline lastPredictedPath;
-    Timestamp lastPredictePathRetrievalTime;
+    Timestamp lastPredictedPathRetrievalTime;
     uint64_t parentId = 0;
-    //TODO we currently only test the accuracy of the last prediction before the reconnect. Which in many cases might happen shortly before the reconnect. testin the accuracy of earlier predictions should also be done
     Timestamp allowedTimeDiff = 150000000; //0.15 seconds
     std::optional<Timestamp> firstPrediction;
     auto allowedReconnectPositionPredictionError = S2Earth::MetersToAngle(50);
@@ -620,8 +605,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     int reconnectCounter = 0;
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> checkVectorForCoordinatorPrediction;
     std::optional<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> delayedCoordinatorPredictionsToCheck;
-
-
 
     //keep looping until the final waypoint is reached
     for (auto workerLocation = wrk1->getLocationProvider()->getCurrentLocation(); workerLocation.first != waypoints.back().first; workerLocation = wrk1->getLocationProvider()->getCurrentLocation()) {
@@ -675,12 +658,11 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
         if (!waypointCovered[waypointCounter]) {
             auto pathStart = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getPathStart();
             auto pathEnd = wrk1->getTrajectoryPredictor()->getReconnectSchedule()->getPathEnd();
-            lastPredictePathRetrievalTime = getTimestamp();
+            lastPredictedPathRetrievalTime = getTimestamp();
             if (pathStart && pathEnd) {
                 if (pathStart->isValid() && pathEnd->isValid()) {
                     auto startPoint = NES::Spatial::Index::Experimental::locationToS2Point(*pathStart);
                     auto endPoint = NES::Spatial::Index::Experimental::locationToS2Point(*pathEnd);
-                    //todo: use this method if constructing polylien everywhere
                     lastPredictedPath = S2Polyline(std::vector({startPoint, endPoint}));
                     auto pathCurrentPosToWayPoint = S2Polyline(std::vector({NES::Spatial::Index::Experimental::locationToS2Point(workerLocation.first), NES::Spatial::Index::Experimental::locationToS2Point(nextWaypoint.first)}));
                     waypointCovered[waypointCounter] = lastPredictedPath.NearlyCovers(pathCurrentPosToWayPoint, S2Earth::MetersToAngle(1));
@@ -702,7 +684,8 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     EXPECT_TRUE(lastPredictedPath.Equals(pathNew));
                 }
 
-                if (workerLocation.second > lastPredictePathRetrievalTime + mobilityConfiguration1->pathPredictionUpdateInterval.getValue() * 1000000) {
+                if (workerLocation.second > lastPredictedPathRetrievalTime
+                        + mobilityConfiguration1->pathPredictionUpdateInterval.getValue() * 1000000) {
                     NES_TRACE("update interval passed, check stabilizing and node covering");
 
                     //if the path prediction stabilizedSchedule, we expect it to cover the next waypoint
@@ -719,19 +702,13 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                                 NES_TRACE("path stabilized after reconnect")
                                 predictedReconnect = newPredictedReconnect;
                                 firstPrediction = get<2>(predictedReconnect.value());
+                            }
+                            if (predictedReconnect && get<1>(predictedReconnect.value()) == get<1>(newPredictedReconnect.value())
+                                && get<2>(predictedReconnect.value()) != get<2>(newPredictedReconnect.value())) {
+                                NES_DEBUG("updating ETA")
+                                predictedReconnect = newPredictedReconnect;
+                            }
                         }
-                        if (predictedReconnect && get<1>(predictedReconnect.value()) == get<1>(newPredictedReconnect.value())
-                            && get<2>(predictedReconnect.value()) != get<2>(newPredictedReconnect.value())) {
-                            NES_DEBUG("updating ETA")
-                            predictedReconnect = newPredictedReconnect;
-                        }
-                        }
-
-                        /*
-                        if (!firstPrediction && predictedReconnect) {
-                           firstPrediction = get<2>(predictedReconnect.value());
-                        }
-                         */
                     }
                 }
             }
@@ -757,7 +734,7 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                     firstPrediction = std::nullopt;
                     reconnectCounter++;
 
-                    //check if the predicted position was already sent to the coordinator before. If not check if it is present now
+                    //check if the predicted position was already sent to the coordinator before. If not, check if it is present now
                     bool predictedAtCoord = false;
                     for (auto prediction = checkVectorForCoordinatorPrediction.begin(); prediction != checkVectorForCoordinatorPrediction.end(); ++prediction) {
                         NES_DEBUG("comparing prediction to node with id " << get<0>(*prediction))
@@ -768,12 +745,10 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
                        }
                     }
                     if (!predictedAtCoord) {
-                        //delayedCoordinatorPredictionsToCheck = predictedReconnect.value();
                         auto currentPredictionAtCoordinator = crd->getTopology()->getLocationIndex()->getScheduledReconnect(wrk1->getWorkerId());
                         EXPECT_EQ(get<0>(predictedReconnect.value()), get<0>(currentPredictionAtCoordinator.value()));
                     }
                     predictedReconnect = std::nullopt;
-                    //todo: this can be replaced by a bool right?
                     oldPredictedReconnect = predictedReconnect;
                 } else {
                     NES_DEBUG("no prediction!")
@@ -784,15 +759,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
 
         //testing record of scheduled reconnects on coordinator side
         auto currentPredictionAtCoordinator = crd->getTopology()->getLocationIndex()->getScheduledReconnect(wrk1->getWorkerId());
-        /*
-        if (currentPredictionAtCoordinator) {
-            //NES_TRACE("received prediction from coordinator with id " << get<0>(currentPredictionAtCoordinator.value()))
-            if (delayedCoordinatorPredictionsToCheck && get<0>(delayedCoordinatorPredictionsToCheck.value()) == get<0>(currentPredictionAtCoordinator.value())) {
-                delayedCoordinatorPredictionsToCheck = std::nullopt;
-                currentPredictionAtCoordinator = std::nullopt;
-            }
-        }
-         */
         if (currentPredictionAtCoordinator && (checkVectorForCoordinatorPrediction.empty() || get<0>(checkVectorForCoordinatorPrediction.back()) != get<0>(currentPredictionAtCoordinator.value()))) {
             NES_DEBUG("adding new prediction from coordinator")
             checkVectorForCoordinatorPrediction.push_back(currentPredictionAtCoordinator.value());
@@ -802,7 +768,6 @@ TEST_F(LocationIntegrationTests, testReconnecting) {
     //check if we caught all reconnects
     EXPECT_EQ(reconnectCounter, 6);
 
-    //std::getchar();
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
     bool retStopWrk1 = wrk1->stop(false);

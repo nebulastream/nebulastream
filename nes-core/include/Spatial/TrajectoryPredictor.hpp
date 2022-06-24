@@ -198,7 +198,6 @@ class TrajectoryPredictor {
     //prediction data
     uint64_t parentId;
     S2Point currentParentLocation;
-    NES::Timestamp endOfCoverageETA;
     S2PolylinePtr trajectoryLine;
     std::deque<std::pair<NES::Spatial::Index::Experimental::Location, Timestamp>> locationBuffer;
     S2PointIndex<uint64_t> fieldNodeIndex;

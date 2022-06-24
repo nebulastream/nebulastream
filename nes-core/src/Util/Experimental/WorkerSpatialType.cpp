@@ -60,4 +60,4 @@ SpatialType toProtobufEnum(WorkerSpatialType spatialType) {
             exit(EXIT_FAILURE);
     }
 }
-    }// namespace NES::Spatial::Mobility::Experimental
+}// namespace NES::Spatial::Mobility::Experimental
