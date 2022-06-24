@@ -17,11 +17,13 @@
 #include <Common/Location.hpp>
 #include <utility>
 #include <GRPC/CoordinatorRPCClient.hpp>
+#include <Spatial/LocationProviderCSV.hpp>
+#ifdef S2DEF
 #include <s2/s2point.h>
 #include <s2/s1angle.h>
 #include <s2/s2latlng.h>
 #include <s2/s2earth.h>
-#include <Spatial/LocationProviderCSV.hpp>
+#endif
 
 namespace NES {
 NES::Spatial::Mobility::Experimental::ReconnectConfigurator::ReconnectConfigurator(
@@ -30,13 +32,15 @@ NES::Spatial::Mobility::Experimental::ReconnectConfigurator::ReconnectConfigurat
         const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& mobilityConfiguration) :
                                                                                                                     worker(worker),
                                                                                                                     coordinatorRpcClient(std::move(coordinatorRpcClient)) {
-        locationUpdateThreshold = S2Earth::MetersToAngle(mobilityConfiguration->sendDevicePositionUpdateThreshold);
-        locationUpdateInterval = mobilityConfiguration->sendLocationUpdateInterval;
-        sendUpdates = false;
-        if (mobilityConfiguration->pushDeviceLocationUpdates) {
-            sendUpdates = true;
-            sendLocationUpdateThread = std::make_shared<std::thread>(&ReconnectConfigurator::periodicallySendLocationUpdates, this);
-        }
+    locationUpdateInterval = mobilityConfiguration->sendLocationUpdateInterval;
+    sendUpdates = false;
+#ifdef S2DEF
+    locationUpdateThreshold = S2Earth::MetersToAngle(mobilityConfiguration->sendDevicePositionUpdateThreshold);
+    if (mobilityConfiguration->pushDeviceLocationUpdates) {
+        sendUpdates = true;
+        sendLocationUpdateThread = std::make_shared<std::thread>(&ReconnectConfigurator::periodicallySendLocationUpdates, this);
+    }
+#endif
 };
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::updateScheduledReconnect(
     const std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>>& scheduledReconnect) {
@@ -74,6 +78,7 @@ bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::reconnect(uint
     return worker.replaceParent(oldParent, newParent);
 }
 
+#ifdef S2DEF
 void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::checkThresholdAndSendLocationUpdate() {
     auto locProvider = worker.getLocationProvider();
     if (locProvider) {
@@ -106,6 +111,7 @@ void NES::Spatial::Mobility::Experimental::ReconnectConfigurator::periodicallySe
         std::this_thread::sleep_for(std::chrono::milliseconds(locationUpdateInterval));
     }
 }
+#endif
 
 bool NES::Spatial::Mobility::Experimental::ReconnectConfigurator::stopPeriodicUpdating() {
     if (!sendUpdates) {

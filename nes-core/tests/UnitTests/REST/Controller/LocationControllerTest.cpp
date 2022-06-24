@@ -247,6 +247,7 @@ TEST_F(LocationControllerTest, testGETSingleLocation) {
     EXPECT_EQ(getLocResp2.at("location"), location);
 }
 
+#ifdef S2DEF
 TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     uint64_t rpcPortWrk1 = 6000;
     uint64_t rpcPortWrk2 = 6001;
@@ -410,4 +411,5 @@ TEST_F(LocationControllerTest, testGETAllMobileLocations) {
     bool retStopWrk4 = wrk4->stop(false);
     EXPECT_TRUE(retStopWrk4);
 }
+#endif
 }// namespace NES

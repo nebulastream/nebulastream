@@ -27,6 +27,7 @@
 namespace NES::Spatial::Mobility::Experimental {
 
 TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, const Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr& configuration, uint64_t parentId) : locationProvider(std::move(locationProvider)) {
+#ifdef S2DEF
     if (!(configuration->defaultCoverageRadius.getValue() < configuration->nodeIndexUpdateThreshold.getValue() < configuration-> nodeInfoDownloadRadius.getValue())) {
         NES_FATAL_ERROR("Default Coverage Radius: " << configuration->defaultCoverageRadius.getValue()
                                                     << ", node index update threshold: " << configuration->nodeIndexUpdateThreshold.getValue()
@@ -46,9 +47,16 @@ TrajectoryPredictor::TrajectoryPredictor(LocationProviderPtr locationProvider, c
     updatePrediction = false;
     allowedSpeedDifferenceFactor = 0.00001;
     bufferAverageMovementSpeed = 0;
+#else
+    (void) configuration;
+    (void) parentId;
+    NES_FATAL_ERROR("cannot construct trajectory predictor without s2 library");
+    exit(EXIT_FAILURE);
+#endif
 }
 
 Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSchedule() {
+#ifdef S2DEF
     std::shared_ptr<Index::Experimental::Location> start;
     std::shared_ptr<Index::Experimental::Location> end;
 
@@ -75,9 +83,14 @@ Mobility::Experimental::ReconnectSchedulePtr TrajectoryPredictor::getReconnectSc
     indexUpdatePosLock.unlock();
     return std::make_shared<Mobility::Experimental::ReconnectSchedule>(start, end, indexUpdatePointer,
         reconnectVectorPtr);
+#else
+    NES_WARNING("trying to get reconnect schedule but s2 library is not used")
+    return nullptr;
+#endif
 }
 
 bool TrajectoryPredictor::downloadFieldNodes(Index::Experimental::Location currentLocation) {
+#ifdef S2DEF
     NES_DEBUG("Downloading nodes in range")
     //get current position and download node information from coordinator
     auto nodeList = locationProvider->getNodeIdsInRange(currentLocation, nodeInfoDownloadRadius / 1000);
@@ -104,9 +117,15 @@ bool TrajectoryPredictor::downloadFieldNodes(Index::Experimental::Location curre
     positionOfLastNodeIndexUpdate = locationToS2Point(currentLocation);
     NES_TRACE("setting last index update position to " << currentLocation.toString())
     return true;
+#else
+    (void) currentLocation;
+    NES_WARNING("s2 library is needed to download field node information")
+    return false;
+#endif
 }
 
 void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconnectConfigurator) {
+#ifdef S2DEF
     if (updatePrediction) {
         NES_WARNING("there is already a prediction thread running, cannot start another one")
         return;
@@ -134,9 +153,14 @@ void TrajectoryPredictor::setUpReconnectPlanning(ReconnectConfiguratorPtr reconn
 
     //start reconnect planner thread
     locationUpdateThread = std::make_shared<std::thread>(&TrajectoryPredictor::startReconnectPlanning, this);
+#else
+    (void) reconnectConfigurator;
+    NES_WARNING("s2 library is needed to start reconnect planning")
+#endif
 }
 
 void TrajectoryPredictor::startReconnectPlanning() {
+#ifdef S2DEF
     //fill up the buffer before starting to calculate path
     for (size_t i = 0; i < locationBufferSize; ++i) {
         auto currentLocation = locationProvider->getCurrentLocation();
@@ -226,9 +250,13 @@ void TrajectoryPredictor::startReconnectPlanning() {
         //sleep for the specified amount of time
         std::this_thread::sleep_for(std::chrono::milliseconds(pathPredictionUpdateInterval));
     }
+#else
+    NES_WARNING("s2 library is needed to start reconnect planning")
+#endif
 }
 
 bool TrajectoryPredictor::updateAverageMovementSpeed() {
+#ifdef S2DEF
     Timestamp bufferTravelTime = locationBuffer.back().second - locationBuffer.front().second;
     S1Angle bufferDistance(locationToS2Point(locationBuffer.front().first), locationToS2Point(locationBuffer.back().first));
     double meanDegreesPerNanosec = bufferDistance.degrees() / bufferTravelTime;
@@ -239,6 +267,10 @@ bool TrajectoryPredictor::updateAverageMovementSpeed() {
        return true;
     }
     return false;
+#else
+    NES_WARNING("s2 library is needed to update average movement speed")
+    return false;
+#endif
 }
 
 bool TrajectoryPredictor::stopReconnectPlanning() {
@@ -250,6 +282,7 @@ bool TrajectoryPredictor::stopReconnectPlanning() {
 }
 
 bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Location currentLocation) {
+#ifdef S2DEF
     S2Point currentS2Point(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
     std::unique_lock nodeIndexLock(nodeIndexMutex);
     if (S1Angle(currentS2Point, positionOfLastNodeIndexUpdate.value()) > coveredRadiusWithoutThreshold) {
@@ -261,9 +294,15 @@ bool TrajectoryPredictor::updateDownloadedNodeIndex(Index::Experimental::Locatio
         return true;
     }
     return false;
+#else
+    (void) currentLocation;
+    NES_WARNING("s2 library is needed to update downloaded node index")
+    return false;
+#endif
 }
 
 bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental::Location& newPathStart, const Spatial::Index::Experimental::Location& currentLocation) {
+#ifdef S2DEF
     int vertexIndex = 0;
     int* vertexIndexPtr = &vertexIndex;
     S2Point currentPoint(S2LatLng::FromDegrees(currentLocation.getLatitude(), currentLocation.getLongitude()));
@@ -291,8 +330,15 @@ bool TrajectoryPredictor::updatePredictedPath(const Spatial::Index::Experimental
 
     //return false to indicate that the predicted path remains unchanged
     return false;
+#else
+    (void) newPathStart;
+    (void) currentLocation;
+    NES_WARNING("s2 library is needed to update predicted path")
+    return false;
+#endif
 }
 
+#ifdef S2DEF
 std::pair<S2Point, S1Angle> TrajectoryPredictor::findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage) {
     int vertexIndex = 0;
     auto projectedPoint = path->Project(coveringNode, &vertexIndex);
@@ -323,8 +369,10 @@ std::pair<S2Point, S1Angle> TrajectoryPredictor::findPathCoverage(const S2Polyli
     S2Point coverageEnd = S2::GetPointOnLine(projectedPoint, verticeSpan[1], coverageAngleOnLine);
     return {coverageEnd, coverageAngleOnLine};
 }
+#endif
 
 void TrajectoryPredictor::scheduleReconnects() {
+#ifdef S2DEF
     double remainingTime;
     std::unique_lock reconnectVectorLock(reconnectVectorMutex);
     std::unique_lock trajecotryLock(trajectoryLineMutex);
@@ -380,6 +428,9 @@ void TrajectoryPredictor::scheduleReconnects() {
             break;
         }
     }
+#else
+    NES_WARNING("s2 library is required to schedule reconnects")
+#endif
 }
 
 std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> TrajectoryPredictor::getNextPredictedReconnect() {
@@ -391,6 +442,7 @@ std::optional<std::tuple<uint64_t, Index::Experimental::Location, Timestamp>> Tr
     }
 }
 
+#ifdef S2DEF
 NES::Spatial::Index::Experimental::Location TrajectoryPredictor::getNodeLocationById(uint64_t id) {
     std::unique_lock lock(nodeIndexMutex);
     try {
@@ -404,6 +456,7 @@ size_t TrajectoryPredictor::getSizeOfSpatialIndex() {
     std::unique_lock lock(nodeIndexMutex);
     return fieldNodeMap.size();
 }
+#endif
 
 std::tuple<NES::Spatial::Index::Experimental::Location, Timestamp>
 TrajectoryPredictor::getLastReconnectLocationAndTime() {

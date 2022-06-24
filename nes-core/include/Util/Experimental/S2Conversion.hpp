@@ -14,6 +14,7 @@
 #ifndef NES_S2CONVERSION_HPP
 #define NES_S2CONVERSION_HPP
 
+#ifdef S2DEF
 #include <Common/Location.hpp>
 #include <s2/s2point.h>
 #include <s2/s2latlng.h>
@@ -27,5 +28,5 @@ Location s2pointToLocation(S2Point point) {
     return {latLng.lat().degrees(), latLng.lng().degrees()};
 }
 }
-
+#endif
 #endif//NES_S2CONVERSION_HPP

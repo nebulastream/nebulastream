@@ -5,11 +5,12 @@
 #include <thread>
 #include <Spatial/TrajectoryPredictor.hpp>
 
-//todo: insert ifdef
+#ifdef S2DEF
 #include <s2/s2point.h>
 #include <s2/s2earth.h>
 #include <s2/s2latlng.h>
 #include <s2/s2polyline.h>
+#endif
 
 namespace NES {
 
@@ -25,6 +26,7 @@ class TrajectoryPredictorTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down TrajectoryPredictor test class."); }
 };
 
+#ifdef S2DEF
 TEST_F(TrajectoryPredictorTest, testFindPathCoverage) {
    S2Point coveringPointOnLine;
    S1Angle coverage = S2Earth::MetersToAngle(1000);
@@ -75,4 +77,5 @@ TEST_F(TrajectoryPredictorTest, testFindPathCoverage) {
       EXPECT_TRUE(abs(coverage - S1Angle(result.first, coveringPointAwayFromPath)) < allowedError);
    }
 }
+#endif
 }

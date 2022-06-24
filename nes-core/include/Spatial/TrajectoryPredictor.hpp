@@ -15,12 +15,15 @@
 #ifndef NES_TRAJECTORYPREDICTOR_HPP
 #define NES_TRAJECTORYPREDICTOR_HPP
 
+#include <Common/Location.hpp>
+#include <Util/TimeMeasurement.hpp>
+#include <deque>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <thread>
 #include <vector>
-#include <Util/TimeMeasurement.hpp>
-#include <mutex>
-#include <Common/Location.hpp>
+#include <atomic>
 
 #ifdef S2DEF
 #include <s2/s1chord_angle.h>
@@ -37,7 +40,9 @@ class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
 }
 
+#ifdef S2DEF
 using S2PolylinePtr = std::shared_ptr<S2Polyline>;
+#endif
 namespace NES::Spatial::Index::Experimental {
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
@@ -103,7 +108,9 @@ class TrajectoryPredictor {
      * @return a pair containing an S2Point marking the end of the coverage and an S1Angle representing the distance between the
      * projected point closest to covering node and the end of coverage (half of the entire covered distance)
      */
+#ifdef S2DEF
     static std::pair<S2Point, S1Angle> findPathCoverage(const S2PolylinePtr& path, S2Point coveringNode, S1Angle coverage);
+#endif
 
     /**
      * @brief returns the location of a field node if it exists in the local index
@@ -188,21 +195,25 @@ class TrajectoryPredictor {
     uint64_t pathPredictionUpdateInterval;
     size_t locationBufferSize;
     size_t locationBufferSaveRate;
+    double nodeInfoDownloadRadius;
+#ifdef S2DEF
     S1Angle predictedPathLengthAngle;
     S1Angle pathDistanceDeltaAngle;
-    double nodeInfoDownloadRadius;
     S1Angle reconnectSearchRadius;
     S1Angle coveredRadiusWithoutThreshold;
     S1Angle defaultCoverageRadiusAngle;
+#endif
 
     //prediction data
-    uint64_t parentId;
+#ifdef S2DEF
     S2Point currentParentLocation;
     S2PolylinePtr trajectoryLine;
-    std::deque<std::pair<NES::Spatial::Index::Experimental::Location, Timestamp>> locationBuffer;
-    S2PointIndex<uint64_t> fieldNodeIndex;
     std::unordered_map<uint64_t, S2Point> fieldNodeMap;
     std::optional<S2Point> positionOfLastNodeIndexUpdate;
+    S2PointIndex<uint64_t> fieldNodeIndex;
+#endif
+    uint64_t parentId;
+    std::deque<std::pair<NES::Spatial::Index::Experimental::Location, Timestamp>> locationBuffer;
     std::vector<std::tuple<uint64_t, NES::Spatial::Index::Experimental::Location, Timestamp>> reconnectVector;
     double bufferAverageMovementSpeed;
     double allowedSpeedDifferenceFactor;
